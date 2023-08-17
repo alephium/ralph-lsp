@@ -29,3 +29,21 @@ lazy val `lsp-server` =
           "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % Versions.lsp4j
         )
     )
+
+lazy val `plugin-intellij` =
+  project
+    .enablePlugins(SbtIdeaPlugin)
+    .settings(
+      version := "0.0.1-SNAPSHOT",
+      scalaVersion := Versions.scala213,
+      ThisBuild / intellijPluginName := "Ralph LSP",
+      ThisBuild / intellijBuild := "232-EAP-SNAPSHOT",
+      ThisBuild / intellijPlatform := IntelliJPlatform.IdeaUltimate,
+      packageMethod := PackagingMethod.Standalone(),
+      Global / intellijAttachSources := true,
+      Compile / javacOptions ++= "--release" :: "17" :: Nil,
+      intellijPlugins += "com.intellij.properties".toPlugin,
+      libraryDependencies += "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5" withSources(),
+      Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
+      Test / unmanagedResourceDirectories += baseDirectory.value / "testResources"
+    )
