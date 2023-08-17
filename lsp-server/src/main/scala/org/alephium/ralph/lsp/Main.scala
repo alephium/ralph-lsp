@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp
 
 import org.alephium.ralph.lsp.server.RalphLangServer
+import org.eclipse.lsp4j.{MessageParams, MessageType}
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.eclipse.lsp4j.services.LanguageClient
 
@@ -30,6 +31,7 @@ object Main {
         .create()
 
     server.connect(launcher.getRemoteProxy)
+    launcher.getRemoteProxy.logMessage(new MessageParams(MessageType.Info, "Server started")) // Temporary test log message
     launcher.startListening().get()
   }
 }
