@@ -36,6 +36,9 @@ class RalphLangServer(private var _client: Option[LanguageClient] = None)(implic
   private def client: LanguageClient =
     _client.getOrElse(throw new Exception("Client not initialised.")) // Nope! Do better than the suggested lsp4j way.
 
+  private val textDocumentService =
+    new RalphTextDocumentService(client)
+
   override def connect(client: LanguageClient): Unit =
     _client = Some(client)
 
@@ -45,7 +48,7 @@ class RalphLangServer(private var _client: Option[LanguageClient] = None)(implic
     CompletableFuture.completedFuture(new InitializeResult(serverCapabilities()))
 
   override def getTextDocumentService: TextDocumentService =
-    new RalphTextDocumentService(client)
+    textDocumentService
 
   override def getWorkspaceService: WorkspaceService =
     RalphWorkspaceService
