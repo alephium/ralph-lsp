@@ -1,6 +1,6 @@
-# ralph-lsp
+# Base Template
 
-LSP server for Ralph.
+Base template for LSP server.
 
 # Download the jar
 
