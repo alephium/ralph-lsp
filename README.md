@@ -2,16 +2,6 @@
 
 Base template for LSP server.
 
-# Download the jar
-
-Download [ralph-lsp.jar](ralph-lsp.jar) from the project's root folder.
-
-Running the jar you should get a `Server started` json message:
-
-```
-{"jsonrpc":"2.0","method":"window/logMessage","params":{"type":3,"message":"Server started"}}
-```
-
 # Build the jar
 
 ```shell
@@ -19,6 +9,12 @@ sbt "project lsp-server; assembly;"
 ```
 
 Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar`
+
+Running the jar you should get a `Server started` json message:
+
+```
+{"jsonrpc":"2.0","method":"window/logMessage","params":{"type":3,"message":"Server started"}}
+```
 
 # Run LSP in IntelliJ (Ultimate)
 
