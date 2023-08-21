@@ -15,11 +15,11 @@ object RalphLangServer {
     val capabilities = new ServerCapabilities()
 
     capabilities.setCompletionProvider(new CompletionOptions(true, util.Arrays.asList(".")))
-    capabilities.setWorkspaceSymbolProvider(true)
+    //    capabilities.setWorkspaceSymbolProvider(true)
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
 
     capabilities.setDiagnosticProvider(new DiagnosticRegistrationOptions(true, false))
-    capabilities.setDocumentSymbolProvider(true)
+    //    capabilities.setDocumentSymbolProvider(true)
 
     capabilities
   }
