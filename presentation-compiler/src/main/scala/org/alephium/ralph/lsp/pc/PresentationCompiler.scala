@@ -1,32 +1,108 @@
 package org.alephium.ralph.lsp.pc
 
-import fastparse.Parsed
-import org.alephium.ralph.{Ast, StatelessParser}
-import org.alephium.ralph.error.CompilerError
+import org.alephium.ralph.lsp.pc.compiler.CompilerAccess
+import org.alephium.ralph.lsp.pc.completion.CodeCompleter
+import org.alephium.ralph.lsp.pc.data.Suggestion
+import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
+import org.alephium.ralph.CompilerOptions
+import org.alephium.ralphc.Config
+
+import java.net.URI
+import scala.util.Try
 
 /**
- * Implements functions for interactive programming in Ralph
- * accessing Ralph's core compiler.
+ * Implements the public API to be used for interactive programming in Ralph.
+ *
+ * PresentationCompiler is immutable.
+ *
+ * Internally [[PresentationCompiler]] depends on Ralph's core compiler.
  */
 object PresentationCompiler {
 
   /**
-   * Dumb compiler to test error reporting in IDE.
+   * Initial workspaces collects paths to all OnDisk ralph files.
    *
-   * TODO: Access actual Ralph compiler
+   * @param config compiler configuration file.
+   * @return
    */
-  def compile(code: String): Either[CompilerError.FormattableError, Ast.AssetScript] =
-    try
-      fastparse.parse(code, StatelessParser.assetScript(_)) match {
-        case Parsed.Success(ast, _) =>
-          Right[CompilerError.FormattableError, Ast.AssetScript](ast)
+  def initialiseWorkspace(config: Config): Try[WorkspaceState.UnCompiled] =
+    Workspace.initialise(config)
 
-        case failure: Parsed.Failure =>
-          Left(CompilerError.FastParseError(failure))
+  /**
+   * Parses and compiles the workspaces.
+   *
+   * Note: Parsing is executing lazily. If the code is already parsed, it will not be re-parsed and only be re-compiled.
+   *
+   * @param state           current workspace state
+   * @param compilerOptions Ralph core compiler configuration
+   * @param compiler        Target ralph compiler
+   * @return new workspace state
+   */
+  def parsedAndCompileWorkspace(state: WorkspaceState.UnCompiled,
+                                compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): WorkspaceState =
+    Workspace.parseAndCompile(
+      wsState = state,
+      compilerOptions = compilerOptions
+    )
+
+  /**
+   * Compile the code in preparation for deployment. The final step in compilation.
+   *
+   * The state of presentation compiler is not used here. All ralph code files are accessed from disk.
+   * LSP client should ensure that all files are flushed to disk.
+   *
+   * @param workspaceURI Workspace path
+   * @param config       Compiler configuration
+   * @param compiler     Target ralph compiler
+   * @return New workspace state that PresentationalCompiler can continue with.
+   */
+  def compileForDeployment(workspaceURI: URI,
+                           config: Config)(implicit compiler: CompilerAccess): WorkspaceState =
+    compiler
+      .compileForDeployment(
+        workspaceURI = workspaceURI,
+        config = config
+      )
+
+  /**
+   * Apply the code changes to the workspace state.
+   *
+   * @param fileURI      File updated
+   * @param updatedCode  Updated code
+   * @param currentState Current workspace state
+   * @return New workspace state.
+   */
+  def codeChanged(fileURI: URI,
+                  updatedCode: Option[String],
+                  currentState: WorkspaceState): WorkspaceState.UnCompiled = {
+    val newSourceCodeState =
+      updatedCode match {
+        case Some(newCode) =>
+          SourceCodeState.UnCompiled(fileURI, newCode)
+
+        case None =>
+          SourceCodeState.OnDisk(fileURI)
       }
-    catch {
-      case error: Error => // TODO: Error is untyped error data. This needs to be a typed error `FormattableError` with `SourcePosition` info.
-        Left(CompilerError.`Invalid number`(error.getMessage, 0)) // Temporarily use another/random error type
-    }
+
+    val updatedFileStates =
+      currentState.updateOrAdd(newSourceCodeState)
+
+    WorkspaceState.UnCompiled(updatedFileStates)
+  }
+
+  /**
+   * Execute code completing given the current workspace state.
+   */
+  def complete(line: Int,
+               character: Int,
+               uri: URI,
+               state: WorkspaceState): Array[Suggestion] =
+    CodeCompleter.complete(
+      line = line,
+      character = character,
+      uri = uri,
+      workspace = state
+    )
 
 }
