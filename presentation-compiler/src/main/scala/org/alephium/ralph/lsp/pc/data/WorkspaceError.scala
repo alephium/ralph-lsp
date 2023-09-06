@@ -3,6 +3,9 @@ package org.alephium.ralph.lsp.pc.data
 import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.SourceIndex
 
+/**
+ * Workspace level error
+ */
 case class WorkspaceError(exception: Throwable) extends FormattableError {
   override def title: String =
     exception.getMessage

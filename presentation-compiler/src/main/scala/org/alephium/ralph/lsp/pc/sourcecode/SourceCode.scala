@@ -12,11 +12,19 @@ import scala.util.{Failure, Success, Try}
 
 private[pc] object SourceCode {
 
+  /** Collects paths of all ralph files on disk */
   def initialise(path: Path): Try[ArraySeq[SourceCodeState.OnDisk]] =
     FileIO
       .getFiles(path, s".${PCConfig.RALPH_FILE_EXTENSION}")
       .map(_.map(SourceCodeState.OnDisk).to(ArraySeq))
 
+  /**
+   * Parse a source file, given its current sate.
+   *
+   * @param sourceState Current state of the source code
+   * @param compiler    Target compiler
+   * @return New source code state
+   */
   @tailrec
   def parse(sourceState: SourceCodeState)(implicit compiler: CompilerAccess): SourceCodeState =
     sourceState match {
@@ -38,25 +46,23 @@ private[pc] object SourceCode {
             )
         }
 
-      case parsed: SourceCodeState.Parsed =>
-        parsed
-
-      case compiled: SourceCodeState.Compiled =>
-        compiled
+      case parsed @ (_: SourceCodeState.Parsed | _: SourceCodeState.Compiled) =>
+        parsed // code is already in parsed state, return the same state
 
       case state: SourceCodeState.FailedState =>
+        // access the code from disk and parse it.
         getSourceCode(state.fileURI) match {
           case state: SourceCodeState.UnCompiled =>
+            // successfully accessed the code, now parse it.
             parse(state)
 
           case failed: SourceCodeState.FailedAccess =>
-            // maybe file does not exists.
-            // this will case this state to fail compilation and this error will get reported.
+            // Failed again: Maybe file does not exists. Return the error so the client gets reported.
             failed
         }
     }
 
-  private def getSourceCode(fileURI: URI): SourceCodeState.ReadState =
+  private def getSourceCode(fileURI: URI): SourceCodeState.AccessState =
     FileIO.readAllLines(fileURI) match {
       case Failure(exception) =>
         SourceCodeState.FailedAccess(fileURI, exception)

@@ -11,27 +11,38 @@ sealed trait SourceCodeState {
 
 object SourceCodeState {
 
-  sealed trait ReadState extends SourceCodeState
+  /** Represents: Code was access */
+  sealed trait AccessState extends SourceCodeState
+
+  /** Represents: Code is parsed */
   sealed trait ParsedState extends SourceCodeState
+
+  /** Represents: Code errored */
   sealed trait FailedState extends SourceCodeState
 
-  case class OnDisk(fileURI: URI) extends ReadState
+  /** The code is on disk */
+  case class OnDisk(fileURI: URI) extends AccessState
 
+  /** The code is in memory but not parsed or compiled */
   case class UnCompiled(fileURI: URI,
-                        code: String) extends ReadState
+                        code: String) extends AccessState
 
+  /** Represents: Was unable to access code */
   case class FailedAccess(fileURI: URI,
-                          exception: Throwable) extends FailedState with ReadState
+                          exception: Throwable) extends FailedState with AccessState
 
+  /** Represents: Code is successfully parsed */
   case class Parsed(fileURI: URI,
                     code: String,
                     parsedAST: Ast.MultiContract) extends ParsedState
 
+  /** Represents: Successful code compilation */
   case class Compiled(fileURI: URI,
                       code: String,
                       compiledCode: Seq[Either[CompiledContract, CompiledScript]],
                       previousState: SourceCodeState.Parsed) extends ParsedState
 
+  /** Represents: Failed but it stores previous successful parse so code-completion can use this state */
   case class Errored(fileURI: URI,
                      code: String,
                      errors: Seq[FormattableError],

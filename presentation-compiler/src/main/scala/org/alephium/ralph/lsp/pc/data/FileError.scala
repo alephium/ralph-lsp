@@ -15,6 +15,11 @@ object FileError {
   }
 }
 
+/**
+ * File level error.
+ *
+ * @param error error message
+ */
 case class FileError(error: String) extends FormattableError {
   override def title: String =
     s"Workspace error: $error"
