@@ -1,13 +1,15 @@
 lazy val `presentation-compiler` =
   project
     .settings(
-      scalaVersion := Versions.scala213,
+      scalaVersion := Version.scala213,
       libraryDependencies ++=
         Seq(
-          "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % Versions.lsp4j,
-          "org.alephium" %% "alephium-ralph" % Versions.ralph,
+          "org.alephium" %% "alephium-ralphc" % "2.0.0+206-cc55f429+20230825-0041-SNAPSHOT",
+          "com.outr" %% "scribe" % Version.scribe,
+          "com.outr" %% "scribe-file" % Version.scribe,
           "org.scalatest" %% "scalatest" % "3.2.16" % Test,
-          "org.scalatestplus" %% "scalacheck-1-17" % "3.2.16.0" % Test
+          "org.scalatestplus" %% "scalacheck-1-17" % "3.2.16.0" % Test,
+          "org.scalamock" %% "scalamock" % Version.scalaMock % Test
         )
     )
 
@@ -15,7 +17,7 @@ lazy val `lsp-server` =
   project
     .dependsOn(`presentation-compiler`)
     .settings(
-      scalaVersion := Versions.scala213,
+      scalaVersion := Version.scala213,
       scalacOptions += "-Xmixin-force-forwarders:false", //Duplicate RPC method initialized.
       assembly / mainClass := Some("org.alephium.ralph.lsp.Main"),
       assembly / assemblyJarName := "ralph-lsp.jar",
@@ -26,7 +28,9 @@ lazy val `lsp-server` =
       },
       libraryDependencies ++=
         Seq(
-          "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % Versions.lsp4j
+          "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % Version.lsp4j,
+          "org.scalatest" %% "scalatest" % "3.2.16" % Test,
+          "org.scalatestplus" %% "scalacheck-1-17" % "3.2.16.0" % Test,
         )
     )
 
@@ -35,9 +39,9 @@ lazy val `plugin-intellij` =
     .enablePlugins(SbtIdeaPlugin)
     .settings(
       version := "0.0.1-SNAPSHOT",
-      scalaVersion := Versions.scala213,
+      scalaVersion := Version.scala213,
       ThisBuild / intellijPluginName := "Ralph LSP",
-      ThisBuild / intellijBuild := "232-EAP-SNAPSHOT",
+      ThisBuild / intellijBuild := "232.9559-EAP-CANDIDATE-SNAPSHOT",
       ThisBuild / intellijPlatform := IntelliJPlatform.IdeaUltimate,
       packageMethod := PackagingMethod.Standalone(),
       Global / intellijAttachSources := true,

@@ -1,6 +1,5 @@
 package org.alephium.ralph.lsp.server
 
-import org.alephium.ralph.lsp.server.service.{RalphTextDocumentService, RalphWorkspaceService}
 import org.alephium.ralph.lsp.server.RalphLangServer.serverCapabilities
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.services._
@@ -36,9 +35,6 @@ class RalphLangServer(private var _client: Option[LanguageClient] = None)(implic
   private def client: LanguageClient =
     _client.getOrElse(throw new Exception("Client not initialised.")) // Nope! Do better than the suggested lsp4j way.
 
-  private val textDocumentService =
-    new RalphTextDocumentService(client)
-
   override def connect(client: LanguageClient): Unit =
     _client = Some(client)
 
@@ -47,11 +43,6 @@ class RalphLangServer(private var _client: Option[LanguageClient] = None)(implic
   override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] =
     CompletableFuture.completedFuture(new InitializeResult(serverCapabilities()))
 
-  override def getTextDocumentService: TextDocumentService =
-    textDocumentService
-
-  override def getWorkspaceService: WorkspaceService =
-    RalphWorkspaceService
 
   override def shutdown(): CompletableFuture[AnyRef] =
     CompletableFuture.completedFuture("TODO: shutdown")
@@ -59,4 +50,7 @@ class RalphLangServer(private var _client: Option[LanguageClient] = None)(implic
   override def exit(): Unit =
     ()
 
+  override def getTextDocumentService: TextDocumentService = ???
+
+  override def getWorkspaceService: WorkspaceService = ???
 }
