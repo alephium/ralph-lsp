@@ -11,10 +11,12 @@ class RalphLspServerDescriptor(project: Project) extends ProjectWideLspServerDes
   // TODO: Use BuildInfo or an sbt setting to configure this automatically
   private val jar = "/Users/simerplaha/IdeaProjects/ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar"
 
+  private val debugAgent = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000"
+
   def isSupportedFile(file: VirtualFile) =
-    file.getExtension == "ral"
+    file.getExtension == RalphConfig.RALPH_FILE_EXTENSION
 
   def createCommandLine(): GeneralCommandLine =
-    new GeneralCommandLine(System.getProperty("java.home") + "/bin/java", "-jar", jar)
+    new GeneralCommandLine(System.getProperty("java.home") + "/bin/java", "-jar", debugAgent, jar)
 
 }
