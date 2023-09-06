@@ -32,7 +32,7 @@ object PresentationCompiler {
   /**
    * Parses and compiles the workspaces.
    *
-   * Note: Parsing is executing lazily. If the code is already parsed, it will not be re-parsed and only be re-compiled.
+   * Note: Parsing is executed lazily. If the code is already parsed, it will not be re-parsed and only be re-compiled.
    *
    * @param state           current workspace state
    * @param compilerOptions Ralph core compiler configuration
