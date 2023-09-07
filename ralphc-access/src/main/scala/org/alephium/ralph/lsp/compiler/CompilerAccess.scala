@@ -1,7 +1,6 @@
 package org.alephium.ralph.lsp.compiler
 
 import org.alephium.ralph.{Ast, CompiledContract, CompiledScript, CompilerOptions}
-import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralphc.Config
 
@@ -23,7 +22,7 @@ trait CompilerAccess {
    * @param code the code to parse.
    * @return An error or the successfully parsed AST.
    */
-  def parseContracts(code: String): Either[CompilerError.FormattableError, Seq[Ast.ContractWithState]]
+  def parseContracts(code: String): Either[FormattableError, Seq[Ast.ContractWithState]]
 
   /**
    * Given parsed ast and compiler options, compile the contracts.

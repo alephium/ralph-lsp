@@ -1,7 +1,6 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.compiler.error.FileError
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
@@ -35,9 +34,10 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
 
   "parse" should {
     "not access compiler" when {
-      "the source-code is already parsed" in {
-        // compile should get accessed
-        implicit val compiler = mock[CompilerAccess]
+      "source-code is already parsed" in {
+        // compiler should not get accessed
+        implicit val compiler: CompilerAccess =
+          null
 
         // source test.ral is already parsed
         val currentState =
@@ -51,12 +51,13 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
         val newState = SourceCode.parse(currentState)
 
         // expect same state to get returned without accessing the compiler
-        currentState shouldBe newState
+        newState shouldBe currentState
       }
 
-      "the source-code is already compiled" in {
-        // compile should get accessed
-        implicit val compiler = mock[CompilerAccess]
+      "source-code is already compiled" in {
+        // compile should not get accessed
+        implicit val compiler: CompilerAccess =
+          null
 
         // source test.ral is already compiled
         val currentState =
@@ -71,7 +72,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
         val newState = SourceCode.parse(currentState)
 
         // expect same state to get returned without accessing the compiler
-        currentState shouldBe newState
+        newState shouldBe currentState
       }
     }
 
@@ -86,9 +87,10 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
         val expectedError =
           FileError("some error")
 
-        implicit val compiler = mock[CompilerAccess]
+        implicit val compiler: CompilerAccess =
+          mock[CompilerAccess]
 
-        (compiler.parseContracts _).expects(code).returns(Left(expectedError))
+        (compiler.parseContracts _).expects(code).returns(Left(expectedError)).once()
 
         val state =
           SourceCodeState.UnCompiled(
@@ -116,7 +118,8 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
         val code =
           "code"
 
-        implicit val compiler = mock[CompilerAccess]
+        implicit val compiler: CompilerAccess =
+          mock[CompilerAccess]
 
         (compiler.parseContracts _).expects(code).returns(Right(Seq.empty)).once()
 
