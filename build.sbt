@@ -1,17 +1,29 @@
-lazy val `presentation-compiler` =
+lazy val `ralphc-access` =
   project
     .settings(
       scalaVersion := Version.scala213,
       libraryDependencies ++=
         Seq(
           "org.alephium" %% "alephium-ralphc" % "2.0.0+206-cc55f429+20230825-0041-SNAPSHOT",
+          "org.scalatest" %% "scalatest" % "3.2.16" % Test,
+          "org.scalatestplus" %% "scalacheck-1-17" % "3.2.16.0" % Test,
+          "org.scalamock" %% "scalamock" % Version.scalaMock % Test
+        )
+    )
+
+lazy val `presentation-compiler` =
+  project
+    .settings(
+      scalaVersion := Version.scala213,
+      libraryDependencies ++=
+        Seq(
           "com.outr" %% "scribe" % Version.scribe,
           "com.outr" %% "scribe-file" % Version.scribe,
           "org.scalatest" %% "scalatest" % "3.2.16" % Test,
           "org.scalatestplus" %% "scalacheck-1-17" % "3.2.16.0" % Test,
           "org.scalamock" %% "scalamock" % Version.scalaMock % Test
         )
-    )
+    ).dependsOn(`ralphc-access`)
 
 lazy val `lsp-server` =
   project
