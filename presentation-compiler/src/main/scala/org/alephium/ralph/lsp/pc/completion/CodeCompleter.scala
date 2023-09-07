@@ -1,6 +1,5 @@
 package org.alephium.ralph.lsp.pc.completion
 
-import org.alephium.ralph.lsp.pc.data.Suggestion
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 import java.net.URI

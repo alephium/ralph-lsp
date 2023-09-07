@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.pc.data.Suggestion
+import org.alephium.ralph.lsp.pc.completion.Suggestion
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.eclipse.lsp4j._

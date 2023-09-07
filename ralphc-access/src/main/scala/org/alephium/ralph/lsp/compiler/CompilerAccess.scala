@@ -1,8 +1,8 @@
-package org.alephium.ralph.lsp.pc.compiler
+package org.alephium.ralph.lsp.compiler
 
-import org.alephium.ralph.{Ast, CompilerOptions}
+import org.alephium.ralph.{Ast, CompiledContract, CompiledScript, CompilerOptions}
 import org.alephium.ralph.error.CompilerError
-import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -28,8 +28,8 @@ trait CompilerAccess {
   /**
    * Given a parsed workspace returns a compiled workspace.
    */
-  def compileWorkspace(workspace: WorkspaceState.Parsed,
-                       options: CompilerOptions): WorkspaceState.Compiled
+  def compileContracts(contracts: Seq[Ast.ContractWithState],
+                       options: CompilerOptions): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]
 
   /**
    * All files are flushed to disk, this executes compilation
@@ -38,6 +38,6 @@ trait CompilerAccess {
    * @return Compiled workspace state that PresentationCompiler can continue with.
    */
   def compileForDeployment(workspaceURI: URI,
-                           config: Config): WorkspaceState.Compiled
+                           config: Config): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]
 
 }

@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp
 
-import org.alephium.ralph.lsp.pc.compiler.CompilerAccess
+import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.server.{RalphLangClient, RalphLangServer}
 import org.eclipse.lsp4j.jsonrpc.Launcher
 

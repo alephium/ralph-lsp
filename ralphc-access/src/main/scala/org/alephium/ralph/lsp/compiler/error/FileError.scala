@@ -1,18 +1,14 @@
-package org.alephium.ralph.lsp.pc.data
+package org.alephium.ralph.lsp.compiler.error
 
-import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.{Compiler, SourceIndex}
+import org.alephium.ralph.error.CompilerError.FormattableError
 
 object FileError {
-  def apply(error: Compiler.Error): FileError = {
-    scribe.error(error)
+  def apply(error: Compiler.Error): FileError =
     FileError(error.message)
-  }
 
-  def apply(error: Throwable): FileError = {
-    scribe.error(error)
+  def apply(error: Throwable): FileError =
     FileError(error.getMessage)
-  }
 }
 
 /**

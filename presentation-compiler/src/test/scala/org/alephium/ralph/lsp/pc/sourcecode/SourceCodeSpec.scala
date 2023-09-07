@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.lsp.pc.compiler.CompilerAccess
+import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.Ast
-import org.alephium.ralph.lsp.pc.data.FileError
+import org.alephium.ralph.lsp.compiler.error.FileError
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

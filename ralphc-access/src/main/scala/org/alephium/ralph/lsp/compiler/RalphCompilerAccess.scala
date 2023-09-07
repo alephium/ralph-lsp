@@ -1,15 +1,15 @@
-package org.alephium.ralph.lsp.pc.compiler
+package org.alephium.ralph.lsp.compiler
 
-import org.alephium.ralph.{Ast, CompiledContract, CompiledScript, CompilerOptions}
+import fastparse.Parsed
+import org.alephium.api.model.CompileProjectResult
+import org.alephium.ralph._
 import org.alephium.ralph.error.CompilerError
-import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.pc.data.FileError
-import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
-import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralphc.Config
+import org.alephium.ralph.error.CompilerError.{FastParseError, FormattableError}
+import org.alephium.ralph.lsp.compiler.error.WorkspaceError
+import org.alephium.ralphc.{Config, MetaInfo, Compiler => RalphC}
 
 import java.net.URI
-import scala.collection.immutable.ArraySeq
+import scala.collection.mutable
 
 /**
  * Implements ralph parsing and compilation functions accessing the ralph compiler code.
@@ -21,133 +21,86 @@ import scala.collection.immutable.ArraySeq
 private object RalphCompilerAccess extends CompilerAccess {
 
   def parseCode(code: String): Either[CompilerError.FormattableError, Ast.MultiContract] =
-    RalphcExtension.parseMultiContract(code)
+    try
+      fastparse.parse(code, StatefulParser.multiContract(_)) match {
+        case Parsed.Success(ast: Ast.MultiContract, _) =>
+          Right(ast)
 
-  def compileWorkspace(workspaceState: WorkspaceState.Parsed,
-                       options: CompilerOptions): WorkspaceState.Compiled = {
-    val contractsToCompile = workspaceState.sourceCodeStates.flatMap(_.parsedAST.contracts)
-    val astToCompile = Ast.MultiContract(contractsToCompile, None)
-    val compilationResult = RalphcExtension.compileMultiContract(astToCompile, options)
-    toWorkspaceState(workspaceState, compilationResult)
-  }
+        case failure: Parsed.Failure =>
+          Left(FastParseError(failure))
+      }
+    catch catchAllThrows
+
+  def compileContracts(contracts: Seq[Ast.ContractWithState],
+                       options: CompilerOptions): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])] =
+    try {
+      val multiContract =
+        Ast.MultiContract(contracts, None)
+
+      val extendedContracts =
+        multiContract.extendedContracts()
+
+      val statefulContracts =
+        extendedContracts
+          .genStatefulContracts()(options)
+          .map(_._1)
+
+      val statefulScripts =
+        extendedContracts.genStatefulScripts()(options)
+
+      Right((statefulContracts.toArray, statefulScripts.toArray))
+    } catch catchAllThrows
 
   override def compileForDeployment(workspaceURI: URI,
-                                    config: Config): WorkspaceState.Compiled = {
-    val compilationResult = RalphcExtension.compileForDeployment(workspaceURI, config)
-    // TODO: compileForDeployment does not use any information from presentation-compiler. It compiles from disk.
-    //       This should still return a valid [[WorkspaceState.Compiled]] state.
-    toWorkspaceState(
-      currentState = ???,
-      compilationResult = compilationResult
-    )
-  }
+                                    config: Config): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])] =
+    try {
+      val ralphc = RalphC(config)
+      ralphc.compileProject() match {
+        case Left(error) =>
+          Left(WorkspaceError(error))
 
-  private def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                               compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.Compiled =
-    compilationResult match {
-      case Left(workspaceError) =>
-        // File or sourcePosition position information is not available for this error,
-        // report it as a workspace error.
-        WorkspaceState.Compiled(
-          sourceCodeStates = currentState.sourceCodeStates, // SourceCode remains the same as existing state
-          workspaceErrors = ArraySeq(workspaceError), // errors to report
-          previousState = currentState,
-        )
-
-      case Right((compiledContracts, compiledScripts)) =>
-        buildCompiledWorkspaceState(
-          currentWorkspaceState = currentState,
-          compiledContracts = compiledContracts,
-          compiledScripts = compiledScripts
-        )
-    }
-
-  private def buildCompiledWorkspaceState(currentWorkspaceState: WorkspaceState.Parsed,
-                                          compiledContracts: Array[CompiledContract],
-                                          compiledScripts: Array[CompiledScript]): WorkspaceState.Compiled = {
-    val newSourceCodeStates =
-      currentWorkspaceState.sourceCodeStates map {
-        sourceCodeState =>
-          val matchedCode = // Map contracts and scripts to their fileURIs.
-            findMatchingContractOrScript(
-              parsedAstToCompile = sourceCodeState.parsedAST,
-              compiledContracts = compiledContracts,
-              compiledScripts = compiledScripts
-            )
-
-          val (errors, compiledCode) =
-            matchedCode.partitionMap(either => either)
-
-          if (errors.nonEmpty) // if true, return errors
-            SourceCodeState.Errored(
-              fileURI = sourceCodeState.fileURI,
-              code = sourceCodeState.code,
-              errors = errors,
-              previous = Some(sourceCodeState)
-            )
-          else // else, return successfully compiled
-            SourceCodeState.Compiled(
-              fileURI = sourceCodeState.fileURI,
-              code = sourceCodeState.code,
-              compiledCode = compiledCode,
-              previousState = sourceCodeState
-            )
-
+        case Right(result) =>
+          Right(buildSuccessfulCompilation(result, ralphc.metaInfos))
       }
+    } catch catchAllThrows
 
-    // new WorkspaceState
-    WorkspaceState.Compiled(
-      sourceCodeStates = newSourceCodeStates,
-      workspaceErrors = ArraySeq.empty,
-      previousState = currentWorkspaceState
-    )
+  private def buildSuccessfulCompilation(result: CompileProjectResult,
+                                         metaInfos: mutable.Map[String, MetaInfo]): (Array[CompiledContract], Array[CompiledScript]) = {
+    val scripts: Array[CompiledScript] = ???
+    //      result.scripts map {
+    //        script =>
+    //          val metaInfo = metaInfos(script.name)
+    //          val fileURI = getFileURI(metaInfo)
+    //          ???
+    //      }
+
+    val contracts: Array[CompiledContract] = ???
+    //      result.contracts map {
+    //        contract =>
+    //          val metaInfo = metaInfos(contract.name)
+    //          val fileURI = getFileURI(metaInfo)
+    //          ???
+    //      }
+
+    (contracts, scripts)
   }
 
-  private def findMatchingContractOrScript(parsedAstToCompile: Ast.MultiContract,
-                                           compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript]): Seq[Either[FileError, Either[CompiledContract, CompiledScript]]] =
-    parsedAstToCompile.contracts map {
-      contract =>
-        findMatchingContractOrScript(
-          contract = contract,
-          compiledContracts = compiledContracts,
-          compiledScripts = compiledScripts
-        )
-    }
+  /** Given the MetaInfo, fetch the file URI */
+  private def getFileURI(metaInfo: MetaInfo): URI =
+    metaInfo
+      .artifactPath
+      .getParent
+      .resolve(s"${metaInfo.name}.ral")
+      .toUri
 
-  private def findMatchingContractOrScript(contract: Ast.ContractWithState,
-                                           compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript]): Either[FileError, Either[CompiledContract, CompiledScript]] = {
-    val matchingContract = findMatchingContract(contract, compiledContracts)
-    val matchingScript = findMatchingScript(contract, compiledScripts)
+  private def catchAllThrows[T]: PartialFunction[Throwable, Either[FormattableError, T]] = {
+    case error: FormattableError =>
+      Left(error)
 
-    (matchingContract, matchingScript) match {
-      case (Some(contract), Some(_)) =>
-        // This is already disallowed by the ralph compiler.
-        // This should never occur in reality but this needed so type checks are covered.
-        val error = FileError(s"Found a contract and script with the same type name '${contract.ast.name}'")
-        Left(error)
+    case error: org.alephium.ralph.Compiler.Error =>
+      Left(WorkspaceError(error))
 
-      case (Some(contract), None) =>
-        Right(Left(contract))
-
-      case (None, Some(script)) =>
-        Right(Right(script))
-
-      case (None, None) =>
-        // Code submitted to compile should always return a result.
-        // This should never occur in reality but this needed so type checks are covered.
-        val error = FileError(s"Code '${contract.name}' not compiled.")
-        Left(error)
-    }
+    case error: Throwable =>
+      Left(WorkspaceError(error))
   }
-
-  private def findMatchingContract(contractsToCompile: Ast.ContractWithState,
-                                   compiledContracts: Array[CompiledContract]): Option[CompiledContract] =
-    compiledContracts.find(_.ast.name == contractsToCompile.name)
-
-  private def findMatchingScript(contractsToCompile: Ast.ContractWithState,
-                                 compiledScripts: Array[CompiledScript]): Option[CompiledScript] =
-    compiledScripts.find(_.ast.name == contractsToCompile.name)
-
 }

@@ -1,11 +1,10 @@
 package org.alephium.ralph.lsp.pc
 
-import org.alephium.ralph.lsp.pc.compiler.CompilerAccess
-import org.alephium.ralph.lsp.pc.completion.CodeCompleter
-import org.alephium.ralph.lsp.pc.data.Suggestion
+import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 import org.alephium.ralph.CompilerOptions
+import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -58,12 +57,12 @@ object PresentationCompiler {
    * @return New workspace state that PresentationalCompiler can continue with.
    */
   def compileForDeployment(workspaceURI: URI,
-                           config: Config)(implicit compiler: CompilerAccess): WorkspaceState =
-    compiler
-      .compileForDeployment(
-        workspaceURI = workspaceURI,
-        config = config
-      )
+                           config: Config)(implicit compiler: CompilerAccess): WorkspaceState = {
+    Workspace.compileForDeployment(
+      workspaceURI = workspaceURI,
+      config = config
+    )
+  }
 
   /**
    * Apply the code changes to the workspace state.

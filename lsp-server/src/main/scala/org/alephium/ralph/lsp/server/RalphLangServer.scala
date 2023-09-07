@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.server
 
+import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.PresentationCompiler
-import org.alephium.ralph.lsp.pc.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.config.IDEConfig
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.RalphLangServer._

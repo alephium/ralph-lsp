@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.data
+package org.alephium.ralph.lsp.compiler.error
 
 import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.SourceIndex
