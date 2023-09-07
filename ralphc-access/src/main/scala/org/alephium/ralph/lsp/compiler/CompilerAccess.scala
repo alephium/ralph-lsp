@@ -26,16 +26,13 @@ trait CompilerAccess {
   def parseCode(code: String): Either[CompilerError.FormattableError, Ast.MultiContract]
 
   /**
-   * Given a parsed workspace returns a compiled workspace.
+   * Given parsed ast and compiler options, compile the contracts.
    */
   def compileContracts(contracts: Seq[Ast.ContractWithState],
                        options: CompilerOptions): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]
 
   /**
-   * All files are flushed to disk, this executes compilation
-   * accessing files on disk.
-   *
-   * @return Compiled workspace state that PresentationCompiler can continue with.
+   * All files are flushed to disk. Compile workspace from disk to prepare for deployment.
    */
   def compileForDeployment(workspaceURI: URI,
                            config: Config): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]
