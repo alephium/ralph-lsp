@@ -1,7 +1,8 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.{Ast, CompiledContract, CompiledScript}
+import org.alephium.ralph.{CompiledContract, CompiledScript}
 import org.alephium.ralph.error.CompilerError.FormattableError
+import org.alephium.ralph.Ast.ContractWithState
 
 import java.net.URI
 
@@ -34,7 +35,7 @@ object SourceCodeState {
   /** Represents: Code is successfully parsed */
   case class Parsed(fileURI: URI,
                     code: String,
-                    parsedAST: Ast.MultiContract) extends ParsedState
+                    contracts: Seq[ContractWithState]) extends ParsedState
 
   /** Represents: Successful code compilation */
   case class Compiled(fileURI: URI,

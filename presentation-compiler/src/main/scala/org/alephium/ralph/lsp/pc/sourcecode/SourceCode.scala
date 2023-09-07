@@ -29,7 +29,7 @@ private[pc] object SourceCode {
   def parse(sourceState: SourceCodeState)(implicit compiler: CompilerAccess): SourceCodeState =
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
-        compiler.parseCode(code) match {
+        compiler.parseContracts(code) match {
           case Left(error) =>
             SourceCodeState.Errored(
               fileURI = fileURI,
@@ -42,7 +42,7 @@ private[pc] object SourceCode {
             SourceCodeState.Parsed(
               fileURI = fileURI,
               code = code,
-              parsedAST = parsedCode,
+              contracts = parsedCode,
             )
         }
 

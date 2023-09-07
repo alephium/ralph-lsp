@@ -5,6 +5,7 @@ import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.error.FileError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
+import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -53,7 +54,7 @@ private[pc] object Workspace {
         state
 
       case state: WorkspaceState.Parsed =>
-        val contractsToCompile = state.sourceCodeStates.flatMap(_.parsedAST.contracts)
+        val contractsToCompile = state.sourceCodeStates.flatMap(_.contracts)
         val compilationResult = compiler.compileContracts(contractsToCompile, compilerOptions)
         toWorkspaceState(
           currentState = state,
@@ -103,7 +104,7 @@ private[pc] object Workspace {
         sourceCodeState =>
           val matchedCode = // Map contracts and scripts to their fileURIs.
             findMatchingContractOrScript(
-              parsedAstToCompile = sourceCodeState.parsedAST,
+              parsedContracts = sourceCodeState.contracts,
               compiledContracts = compiledContracts,
               compiledScripts = compiledScripts
             )
@@ -135,10 +136,10 @@ private[pc] object Workspace {
     )
   }
 
-  private def findMatchingContractOrScript(parsedAstToCompile: Ast.MultiContract,
+  private def findMatchingContractOrScript(parsedContracts: Seq[ContractWithState],
                                            compiledContracts: Array[CompiledContract],
                                            compiledScripts: Array[CompiledScript]): Seq[Either[FileError, Either[CompiledContract, CompiledScript]]] =
-    parsedAstToCompile.contracts map {
+    parsedContracts map {
       contract =>
         findMatchingContractOrScript(
           contract = contract,

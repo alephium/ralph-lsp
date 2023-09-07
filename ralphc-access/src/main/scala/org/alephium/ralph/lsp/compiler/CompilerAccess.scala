@@ -6,6 +6,7 @@ import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralphc.Config
 
 import java.net.URI
+import scala.collection.immutable.Seq
 
 object CompilerAccess {
   def ralphc: CompilerAccess =
@@ -23,7 +24,7 @@ trait CompilerAccess {
    * @param code the code to parse.
    * @return An error or the successfully parsed AST.
    */
-  def parseCode(code: String): Either[CompilerError.FormattableError, Ast.MultiContract]
+  def parseContracts(code: String): Either[CompilerError.FormattableError, Seq[Ast.ContractWithState]]
 
   /**
    * Given parsed ast and compiler options, compile the contracts.

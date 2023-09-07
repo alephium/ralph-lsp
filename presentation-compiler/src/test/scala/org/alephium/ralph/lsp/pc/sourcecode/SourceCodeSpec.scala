@@ -44,7 +44,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
           SourceCodeState.Parsed(
             fileURI = URI.create("./test.ral"),
             code = "blah",
-            parsedAST = Ast.MultiContract(Seq.empty, None)
+            contracts = Seq.empty
           )
 
         // execute parse
@@ -88,7 +88,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
 
         implicit val compiler = mock[CompilerAccess]
 
-        (compiler.parseCode _).expects(code).returns(Left(expectedError))
+        (compiler.parseContracts _).expects(code).returns(Left(expectedError))
 
         val state =
           SourceCodeState.UnCompiled(
@@ -116,12 +116,9 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
         val code =
           "code"
 
-        val expected =
-          Ast.MultiContract(Seq.empty, None)
-
         implicit val compiler = mock[CompilerAccess]
 
-        (compiler.parseCode _).expects(code).returns(Right(expected))
+        (compiler.parseContracts _).expects(code).returns(Right(Seq.empty)).once()
 
         val state =
           SourceCodeState.UnCompiled(
@@ -135,7 +132,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
           SourceCodeState.Parsed(
             fileURI = fileURI,
             code = code,
-            parsedAST = expected
+            contracts = Seq.empty
           )
       }
     }

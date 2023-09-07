@@ -20,11 +20,11 @@ import scala.collection.mutable
 
 private object RalphCompilerAccess extends CompilerAccess {
 
-  def parseCode(code: String): Either[CompilerError.FormattableError, Ast.MultiContract] =
+  def parseContracts(code: String): Either[CompilerError.FormattableError, Seq[Ast.ContractWithState]] =
     try
       fastparse.parse(code, StatefulParser.multiContract(_)) match {
         case Parsed.Success(ast: Ast.MultiContract, _) =>
-          Right(ast)
+          Right(ast.contracts)
 
         case failure: Parsed.Failure =>
           Left(FastParseError(failure))
