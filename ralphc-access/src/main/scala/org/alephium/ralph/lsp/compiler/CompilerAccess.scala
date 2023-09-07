@@ -6,7 +6,6 @@ import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralphc.Config
 
 import java.net.URI
-import scala.collection.immutable.Seq
 
 object CompilerAccess {
   def ralphc: CompilerAccess =
