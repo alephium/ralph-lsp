@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.compiler.error.FileError
-import org.alephium.ralph.lsp.pc.config.GenTestData._
+import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
