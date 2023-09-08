@@ -2,7 +2,6 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.compiler.error.FileError
-import org.alephium.ralph.lsp.pc.config.GenTestData
 import org.alephium.ralph.lsp.pc.config.GenTestData._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
@@ -10,14 +9,14 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.TryValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import java.io.FileNotFoundException
 import java.net.URI
 import java.nio.file.{Files, Paths}
+import scala.util.Success
 
 class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with ScalaCheckDrivenPropertyChecks {
 
   "initialise" should {
-    "not throw exception" in {
+    "not throw exception on failure" in {
       implicit val compiler: CompilerAccess =
         CompilerAccess.ralphc
 
@@ -121,16 +120,15 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
 
       "existing failed state, returns another failed state for unable to access file on disk" in {
         forAll(genFailedAccessSourceCode()) {
-          fileNotFoundState =>
-            // compiler should not get accessed
+          failedAccessState =>
             implicit val compiler: CompilerAccess =
               CompilerAccess.ralphc
 
-            // code is un-compiled
-            val newState = SourceCode.parse(fileNotFoundState)
+            // the fileURI does not exists, so expect a failed state.
+            val newState = SourceCode.parse(failedAccessState)
 
             // expect error state with the origin code
-            newState.fileURI shouldBe fileNotFoundState.fileURI
+            newState.fileURI shouldBe failedAccessState.fileURI
             newState shouldBe a[SourceCodeState.FailedAccess]
         }
       }
@@ -138,33 +136,30 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
 
     "parsed state" when {
       "un-compiled returns a success" in {
-        val fileURI =
-          URI.create("some_file")
+        forAll(genFailedAccessSourceCode()) {
+          failedAccessState =>
+            implicit val compiler: CompilerAccess =
+              mock[CompilerAccess]
 
-        val code =
-          "code"
+            val code = "some code"
 
-        implicit val compiler: CompilerAccess =
-          mock[CompilerAccess]
+            // Code is read from disk (once)
+            (compiler.getSourceCode _).expects(failedAccessState.fileURI).returns(Success(code)).once()
 
-        // parseContracts should only be called once (not go into recursion) and error is reported to the user
-        (compiler.parseContracts _).expects(code).returns(Right(Seq.empty)).once()
+            // Code is parsed (once)
+            (compiler.parseContracts _).expects(code).returns(Right(Seq.empty)).once()
 
-        val state =
-          SourceCodeState.UnCompiled(
-            fileURI = fileURI,
-            code = code
-          )
+            // successfully parses the code
+            val newState = SourceCode.parse(failedAccessState)
 
-        val newState = SourceCode.parse(state)
-
-        // code is successfully parsed
-        newState shouldBe
-          SourceCodeState.Parsed(
-            fileURI = fileURI,
-            code = code,
-            contracts = Seq.empty
-          )
+            // expect error state with the origin code
+            newState shouldBe
+              SourceCodeState.Parsed(
+                fileURI = failedAccessState.fileURI,
+                code = code,
+                contracts = Seq.empty
+              )
+        }
       }
     }
   }

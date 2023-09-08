@@ -15,6 +15,7 @@ object GenTestData {
         URI.create(s"""$fileName.ral""")
     }
 
+  // TODO: Generate actual sourceCode
   val genSourceCode: Gen[String] =
     Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString)
 
@@ -54,9 +55,9 @@ object GenTestData {
         previous = parsed
       )
 
-  def genFailedAccessSourceCode(): Gen[SourceCodeState.FailedAccess] =
+  def genFailedAccessSourceCode(uri: Gen[URI] = genURI): Gen[SourceCodeState.FailedAccess] =
     for {
-      uri <- genURI
+      uri <- uri
       exceptionMessage <- Gen.alphaStr
     } yield
       SourceCodeState.FailedAccess(
