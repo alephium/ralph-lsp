@@ -13,7 +13,7 @@ import scala.collection.immutable.ArraySeq
 import scala.util.Try
 
 /**
- * Implements functions operating all source-code files within a workspace.
+ * Implements functions operating on all source-code files within a workspace.
  */
 private[pc] object Workspace {
 
