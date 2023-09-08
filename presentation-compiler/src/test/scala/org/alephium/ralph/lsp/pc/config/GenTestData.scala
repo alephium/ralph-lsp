@@ -55,6 +55,7 @@ object GenTestData {
         previous = parsed
       )
 
+  /** Failed access state only */
   def genFailedAccessSourceCode(uri: Gen[URI] = genURI): Gen[SourceCodeState.FailedAccess] =
     for {
       uri <- uri
@@ -65,6 +66,7 @@ object GenTestData {
         exception = new Exception(exceptionMessage)
       )
 
+  /** Either one of the failed source-code states */
   def genFailedSourceCodeState(code: Gen[String] = genSourceCode): Gen[SourceCodeState.FailedState] =
     Gen.oneOf(
       genErroredSourceCode(code),

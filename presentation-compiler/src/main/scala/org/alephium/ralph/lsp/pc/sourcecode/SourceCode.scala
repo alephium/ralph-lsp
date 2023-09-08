@@ -8,6 +8,9 @@ import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
 import scala.util.{Failure, Success, Try}
 
+/**
+ * Implements functions operating on source-code within a single file.
+ */
 private[pc] object SourceCode {
 
   /** Collects paths of all ralph files on disk */

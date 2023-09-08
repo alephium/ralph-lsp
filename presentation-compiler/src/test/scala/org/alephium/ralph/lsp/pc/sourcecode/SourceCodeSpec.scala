@@ -135,27 +135,27 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
     }
 
     "parsed state" when {
-      "un-compiled returns a success" in {
-        forAll(genFailedAccessSourceCode()) {
-          failedAccessState =>
+      "failed state returns a success" in {
+        forAll(genFailedSourceCodeState()) {
+          failedState =>
             implicit val compiler: CompilerAccess =
               mock[CompilerAccess]
 
             val code = "some code"
 
             // Code is read from disk (once)
-            (compiler.getSourceCode _).expects(failedAccessState.fileURI).returns(Success(code)).once()
+            (compiler.getSourceCode _).expects(failedState.fileURI).returns(Success(code)).once()
 
             // Code is parsed (once)
             (compiler.parseContracts _).expects(code).returns(Right(Seq.empty)).once()
 
             // successfully parses the code
-            val newState = SourceCode.parse(failedAccessState)
+            val newState = SourceCode.parse(failedState)
 
             // expect error state with the origin code
             newState shouldBe
               SourceCodeState.Parsed(
-                fileURI = failedAccessState.fileURI,
+                fileURI = failedState.fileURI,
                 code = code,
                 contracts = Seq.empty
               )

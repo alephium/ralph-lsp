@@ -12,6 +12,9 @@ import java.net.URI
 import scala.collection.immutable.ArraySeq
 import scala.util.Try
 
+/**
+ * Implements functions operating all source-code files within a workspace.
+ */
 private[pc] object Workspace {
 
   def initialise(config: Config)(implicit compiler: CompilerAccess): Try[WorkspaceState.UnCompiled] =
