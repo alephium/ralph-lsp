@@ -23,11 +23,11 @@ import scala.util.{Try, Using}
 
 private object RalphCompilerAccess extends CompilerAccess {
 
-  override def getSourceCode(fileURI: URI): Try[String] =
-    Using(Source.fromFile(fileURI))(_.mkString)
-
   def getSourceFiles(workspaceURI: Path): Try[Seq[Path]] =
     Try(RalphC.getSourceFiles(workspaceURI, ".ral"))
+
+  override def getSourceCode(fileURI: URI): Try[String] =
+    Using(Source.fromFile(fileURI))(_.mkString)
 
   def parseContracts(code: String): Either[CompilerError.FormattableError, Seq[Ast.ContractWithState]] =
     try
