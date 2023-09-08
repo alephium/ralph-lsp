@@ -12,7 +12,7 @@ object GenSourceCode {
 
   def genParsedSourceCode(code: Gen[String] = genSourceCode): Gen[SourceCodeState.Parsed] =
     for {
-      uri <- genURI
+      uri <- genFileNameURI()
       code <- code
     } yield
       SourceCodeState.Parsed(
@@ -23,7 +23,7 @@ object GenSourceCode {
 
   def genErroredSourceCode(code: Gen[String] = genSourceCode): Gen[SourceCodeState.Errored] =
     for {
-      uri <- genURI
+      uri <- genFileNameURI()
       code <- code
       errors <- genFormattableErrors(code)
       parsed <- Gen.option(genParsedSourceCode(Gen.const(code)))
@@ -36,7 +36,7 @@ object GenSourceCode {
       )
 
   /** Failed access state only */
-  def genFailedAccessSourceCode(uri: Gen[URI] = genURI): Gen[SourceCodeState.FailedAccess] =
+  def genFailedAccessSourceCode(uri: Gen[URI] = genFileNameURI()): Gen[SourceCodeState.FailedAccess] =
     for {
       uri <- uri
       exceptionMessage <- Gen.alphaStr
