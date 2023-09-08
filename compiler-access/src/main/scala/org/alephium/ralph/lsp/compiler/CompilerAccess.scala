@@ -14,7 +14,7 @@ object CompilerAccess {
 }
 
 /**
- * Functions required by PresentationCompiler.
+ * Defines functions that perform compiler specific IO operation.
  */
 trait CompilerAccess {
 
@@ -26,7 +26,7 @@ trait CompilerAccess {
   def getSourceFiles(workspaceURI: Path): Try[Seq[Path]]
 
   /**
-   * Fetch the source content of a file.
+   * Fetch the source-code of a file.
    *
    * @param fileURI source-code location.
    */
@@ -35,19 +35,21 @@ trait CompilerAccess {
   /**
    * Runs the parser phase.
    *
-   * @param code the code to parse.
-   * @return An error or the successfully parsed AST.
+   * @param code Code to parse.
+   * @return Parsing error or successfully parsed AST.
    */
   def parseContracts(code: String): Either[FormattableError, Seq[Ast.ContractWithState]]
 
   /**
-   * Given parsed ast and compiler options, compile the contracts.
+   * Given the parsed ast and compiler options, compile the contracts.
    */
   def compileContracts(contracts: Seq[Ast.ContractWithState],
                        options: CompilerOptions): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]
 
   /**
-   * All files are flushed to disk. Compile workspace from disk to prepare for deployment.
+   * Compile the entire workspace from disk and prepare for deployment.
+   *
+   * Prerequisite: All files are flushed to disk
    */
   def compileForDeployment(workspaceURI: URI,
                            config: Config): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]
