@@ -1,8 +1,6 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.pc.util.FileIO
-import org.alephium.ralph.lsp.pc.PCConfig
 
 import java.net.URI
 import java.nio.file.Path
@@ -13,10 +11,15 @@ import scala.util.{Failure, Success, Try}
 private[pc] object SourceCode {
 
   /** Collects paths of all ralph files on disk */
-  def initialise(path: Path): Try[ArraySeq[SourceCodeState.OnDisk]] =
-    FileIO
-      .getFiles(path, s".${PCConfig.RALPH_FILE_EXTENSION}")
-      .map(_.map(SourceCodeState.OnDisk).to(ArraySeq))
+  def initialise(path: Path)(implicit compiler: CompilerAccess): Try[ArraySeq[SourceCodeState.OnDisk]] =
+    compiler
+      .getSourceFiles(path)
+      .map {
+        _.map {
+          path =>
+            SourceCodeState.OnDisk(path.toUri)
+        }.to(ArraySeq)
+      }
 
   /**
    * Parse a source file, given its current sate.
@@ -62,8 +65,8 @@ private[pc] object SourceCode {
         }
     }
 
-  private def getSourceCode(fileURI: URI): SourceCodeState.AccessState =
-    FileIO.readAllLines(fileURI) match {
+  private def getSourceCode(fileURI: URI)(implicit compiler: CompilerAccess): SourceCodeState.AccessState =
+    compiler.getSourceCode(fileURI) match {
       case Failure(exception) =>
         SourceCodeState.FailedAccess(fileURI, exception)
 

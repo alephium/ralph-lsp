@@ -9,7 +9,10 @@ import org.alephium.ralph.lsp.compiler.error.WorkspaceError
 import org.alephium.ralphc.{Config, MetaInfo, Compiler => RalphC}
 
 import java.net.URI
+import java.nio.file.Path
 import scala.collection.mutable
+import scala.io.Source
+import scala.util.{Try, Using}
 
 /**
  * Implements ralph parsing and compilation functions accessing the ralph compiler code.
@@ -19,6 +22,12 @@ import scala.collection.mutable
  */
 
 private object RalphCompilerAccess extends CompilerAccess {
+
+  override def getSourceCode(fileURI: URI): Try[String] =
+    Using(Source.fromFile(fileURI))(_.mkString)
+
+  def getSourceFiles(workspaceURI: Path): Try[Seq[Path]] =
+    Try(RalphC.getSourceFiles(workspaceURI, ".ral"))
 
   def parseContracts(code: String): Either[CompilerError.FormattableError, Seq[Ast.ContractWithState]] =
     try
@@ -103,4 +112,5 @@ private object RalphCompilerAccess extends CompilerAccess {
     case error: Throwable =>
       Left(WorkspaceError(error))
   }
+
 }

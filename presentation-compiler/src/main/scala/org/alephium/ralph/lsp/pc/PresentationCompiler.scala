@@ -25,7 +25,7 @@ object PresentationCompiler {
    * @param config compiler configuration file.
    * @return
    */
-  def initialiseWorkspace(config: Config): Try[WorkspaceState.UnCompiled] =
+  def initialiseWorkspace(config: Config)(implicit compiler: CompilerAccess): Try[WorkspaceState.UnCompiled] =
     Workspace.initialise(config)
 
   /**

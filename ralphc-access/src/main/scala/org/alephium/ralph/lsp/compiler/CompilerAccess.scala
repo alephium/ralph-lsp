@@ -5,6 +5,8 @@ import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralphc.Config
 
 import java.net.URI
+import java.nio.file.Path
+import scala.util.Try
 
 object CompilerAccess {
   def ralphc: CompilerAccess =
@@ -15,6 +17,20 @@ object CompilerAccess {
  * Functions required by PresentationCompiler.
  */
 trait CompilerAccess {
+
+  /**
+   * Fetch all workspace source file locations.
+   *
+   * @param workspaceURI Project/workspace location.
+   */
+  def getSourceFiles(workspaceURI: Path): Try[Seq[Path]]
+
+  /**
+   * Fetch the source content of a file.
+   *
+   * @param fileURI source-code location.
+   */
+  def getSourceCode(fileURI: URI): Try[String]
 
   /**
    * Runs the parser phase.

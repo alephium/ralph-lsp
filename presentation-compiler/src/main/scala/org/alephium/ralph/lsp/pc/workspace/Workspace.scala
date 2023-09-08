@@ -14,7 +14,7 @@ import scala.util.Try
 
 private[pc] object Workspace {
 
-  def initialise(config: Config): Try[WorkspaceState.UnCompiled] =
+  def initialise(config: Config)(implicit compiler: CompilerAccess): Try[WorkspaceState.UnCompiled] =
     SourceCode
       .initialise(config.contractPath)
       .map(WorkspaceState.UnCompiled(_))
