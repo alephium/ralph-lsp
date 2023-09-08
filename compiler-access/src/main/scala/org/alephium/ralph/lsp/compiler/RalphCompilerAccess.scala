@@ -24,7 +24,7 @@ import scala.util.{Try, Using}
 private object RalphCompilerAccess extends CompilerAccess {
 
   def getSourceFiles(workspaceURI: Path): Try[Seq[Path]] =
-    Try(RalphC.getSourceFiles(workspaceURI, ".ral"))
+    Try(RalphC.getSourceFiles(workspaceURI, s".${CompilerAccess.RALPH_FILE_EXTENSION}"))
 
   override def getSourceCode(fileURI: URI): Try[String] =
     Using(Source.fromFile(fileURI))(_.mkString)

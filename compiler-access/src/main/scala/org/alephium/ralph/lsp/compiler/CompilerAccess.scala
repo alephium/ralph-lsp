@@ -9,6 +9,8 @@ import java.nio.file.Path
 import scala.util.Try
 
 object CompilerAccess {
+  val RALPH_FILE_EXTENSION = "ral"
+
   def ralphc: CompilerAccess =
     RalphCompilerAccess
 }
