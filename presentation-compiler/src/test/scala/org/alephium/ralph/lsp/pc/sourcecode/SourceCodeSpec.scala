@@ -2,24 +2,34 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.compiler.error.FileError
+import org.alephium.ralph.lsp.pc.config.GenTestData
+import org.alephium.ralph.lsp.pc.config.GenTestData._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.TryValues._
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+import java.io.FileNotFoundException
 import java.net.URI
 import java.nio.file.{Files, Paths}
 
-class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
+class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with ScalaCheckDrivenPropertyChecks {
 
   "initialise" should {
     "not throw exception" in {
+      implicit val compiler: CompilerAccess =
+        CompilerAccess.ralphc
+
       val nonExistingDir = Paths.get("initialise_test")
       // assert that it does not throw exception
       SourceCode.initialise(nonExistingDir).success.value shouldBe empty
     }
 
     "parse all ralph file names from disk" in {
+      implicit val compiler: CompilerAccess =
+        CompilerAccess.ralphc
+
       val dir = Files.createTempDirectory("initialise_test")
       val one = Files.createFile(dir.resolve("one.ral"))
       val two = Files.createFile(dir.resolve("two.ral"))
@@ -34,18 +44,10 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
 
   "parse" should {
     "not access compiler" when {
-      "source-code is already parsed" in {
-        // compiler should not get accessed
+      // compiler should not get accessed
+      def testNoCompilerAccess(currentState: SourceCodeState) = {
         implicit val compiler: CompilerAccess =
           null
-
-        // source test.ral is already parsed
-        val currentState =
-          SourceCodeState.Parsed(
-            fileURI = URI.create("./test.ral"),
-            code = "blah",
-            contracts = Seq.empty
-          )
 
         // execute parse
         val newState = SourceCode.parse(currentState)
@@ -54,13 +56,21 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
         newState shouldBe currentState
       }
 
-      "source-code is already compiled" in {
-        // compile should not get accessed
-        implicit val compiler: CompilerAccess =
-          null
+      "source-code is already parsed" in {
+        // State: source test.ral is already parsed
+        val parsedState =
+          SourceCodeState.Parsed(
+            fileURI = URI.create("./test.ral"),
+            code = "blah",
+            contracts = Seq.empty
+          )
 
-        // source test.ral is already compiled
-        val currentState =
+        testNoCompilerAccess(parsedState)
+      }
+
+      "source-code is already compiled" in {
+        // State: source test.ral is already compiled
+        val compiledState =
           SourceCodeState.Compiled(
             fileURI = URI.create("./test.ral"),
             code = "blah",
@@ -68,30 +78,29 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
             previousState = null
           )
 
-        // execute parse
-        val newState = SourceCode.parse(currentState)
-
-        // expect same state to get returned without accessing the compiler
-        newState shouldBe currentState
+        testNoCompilerAccess(compiledState)
       }
     }
 
     "return errored state" when {
-      "un-compiled returns an error" in {
+      "un-compiled state returns an error" in {
         val fileURI =
           URI.create("some_file")
 
         val code =
           "code"
 
+        // error returned from the compiler
         val expectedError =
           FileError("some error")
 
         implicit val compiler: CompilerAccess =
           mock[CompilerAccess]
 
+        // parseContracts should only be called once (not go into recursion) and error is reported to the user
         (compiler.parseContracts _).expects(code).returns(Left(expectedError)).once()
 
+        // code is un-compiled
         val state =
           SourceCodeState.UnCompiled(
             fileURI = fileURI,
@@ -100,6 +109,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
 
         val newState = SourceCode.parse(state)
 
+        // expect error state with the origin code
         newState shouldBe
           SourceCodeState.Errored(
             fileURI = fileURI,
@@ -107,6 +117,22 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
             errors = Seq(expectedError),
             previous = None
           )
+      }
+
+      "existing failed state, returns another failed state for unable to access file on disk" in {
+        forAll(genFailedAccessSourceCode()) {
+          fileNotFoundState =>
+            // compiler should not get accessed
+            implicit val compiler: CompilerAccess =
+              CompilerAccess.ralphc
+
+            // code is un-compiled
+            val newState = SourceCode.parse(fileNotFoundState)
+
+            // expect error state with the origin code
+            newState.fileURI shouldBe fileNotFoundState.fileURI
+            newState shouldBe a[SourceCodeState.FailedAccess]
+        }
       }
     }
 
@@ -121,6 +147,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
         implicit val compiler: CompilerAccess =
           mock[CompilerAccess]
 
+        // parseContracts should only be called once (not go into recursion) and error is reported to the user
         (compiler.parseContracts _).expects(code).returns(Right(Seq.empty)).once()
 
         val state =
@@ -131,6 +158,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory {
 
         val newState = SourceCode.parse(state)
 
+        // code is successfully parsed
         newState shouldBe
           SourceCodeState.Parsed(
             fileURI = fileURI,
