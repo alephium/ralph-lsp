@@ -63,7 +63,7 @@ object GenCommon {
     } yield
       CompilerError.`Invalid number`(errorMessage, errorIndex)
 
-  def genErrors(code: Gen[String] = genCode): Gen[List[FormattableError]] =
-    Gen.listOf(genError(code))
+  def genErrors(code: String): Gen[List[FormattableError]] =
+    Gen.listOf(genError(Gen.const(code)))
 
 }
