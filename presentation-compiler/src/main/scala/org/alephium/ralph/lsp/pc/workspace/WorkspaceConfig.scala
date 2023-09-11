@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.config
+package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.pc.util.FileIO
@@ -12,7 +12,7 @@ import scala.util.Try
 
 object WorkspaceConfig {
 
-  val FILE_NAME = "ralph-ide.json"
+  val FILE_NAME = "ralphc-config.json"
 
   val defaultConfig =
     Config(
@@ -30,7 +30,7 @@ object WorkspaceConfig {
   def readConfig(json: String): Try[Config] =
     Try(read[Config](json))
 
-  def readIDEConfig(workspaceURI: URI): Try[WorkspaceConfig] =
+  def readWorkspaceConfig(workspaceURI: URI): Try[WorkspaceConfig] =
     WorkspaceConfig.readConfig(workspaceURI) map {
       config =>
         WorkspaceConfig(

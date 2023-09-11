@@ -1,7 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.pc.config.WorkspaceConfig
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 
 import java.net.URI
@@ -31,11 +30,11 @@ object WorkspaceState {
 
   /** State: Source files are un-compiled or partially-compiled */
   case class UnCompiled(config: WorkspaceConfig,
-                        sourceCodeStates: ArraySeq[SourceCodeState]) extends WorkspaceState
+                        sourceCodeStates: ArraySeq[SourceCodeState]) extends WorkspaceState.Configured
 
   /** State: All source files parsed, therefore can be compiled */
   case class Parsed(config: WorkspaceConfig,
-                    sourceCodeStates: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState
+                    sourceCodeStates: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.Configured
 
   /**
    * Result of a compilation run.
@@ -46,7 +45,7 @@ object WorkspaceState {
    */
   case class Compiled(sourceCodeStates: ArraySeq[SourceCodeState],
                       workspaceErrors: ArraySeq[FormattableError],
-                      previousState: WorkspaceState.Parsed) extends WorkspaceState {
+                      previousState: WorkspaceState.Parsed) extends WorkspaceState.Configured {
     def config: WorkspaceConfig =
       previousState.config
   }

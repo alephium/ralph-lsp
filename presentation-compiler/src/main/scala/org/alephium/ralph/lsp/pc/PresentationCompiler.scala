@@ -2,11 +2,10 @@ package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
-import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceConfig, WorkspaceState}
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.pc.config.WorkspaceConfig
 import org.alephium.ralphc.Config
 
 import java.net.URI

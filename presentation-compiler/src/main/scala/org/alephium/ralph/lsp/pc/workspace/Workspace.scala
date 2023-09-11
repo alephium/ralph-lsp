@@ -6,7 +6,6 @@ import org.alephium.ralph.lsp.compiler.error.FileError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.Ast.ContractWithState
-import org.alephium.ralph.lsp.pc.config.WorkspaceConfig
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -23,12 +22,12 @@ private[pc] object Workspace {
       .map(WorkspaceState.UnCompiled(config, _))
 
   def parseAndCompile(wsState: WorkspaceState.UnCompiled,
-                      compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): WorkspaceState = {
+                      compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
     val parsed = Workspace.parse(wsState)
     Workspace.compileParsed(parsed, compilerOptions)
   }
 
-  def parse(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState = {
+  def parse(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
     val triedParsedStates =
       wsState.sourceCodeStates.map(SourceCode.parse)
 
@@ -48,7 +47,7 @@ private[pc] object Workspace {
   }
 
   def compileParsed(wsState: WorkspaceState,
-                    compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): WorkspaceState =
+                    compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
     wsState match {
       case state: WorkspaceState.UnCompiled =>
         state

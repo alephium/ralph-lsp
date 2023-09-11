@@ -2,8 +2,7 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.PresentationCompiler
-import org.alephium.ralph.lsp.pc.config.WorkspaceConfig
-import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceConfig, WorkspaceState}
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
@@ -54,7 +53,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     //        state.withClient {
     //          implicit client =>
     //            RalphLangClient.publish(
-    //              workspaceURI = ideConfig.workspaceURI,
+    //              workspaceURI = workspaceConfig.workspaceURI,
     //              workspace = workspaceState
     //            )
     //        }
@@ -117,12 +116,12 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
 
   def didCodeChange(fileURI: URI,
                     updatedCode: Option[String]): Unit =
-  //    state.withIDEConfig {
-  //      ideConfig =>
+  //    state.withworkspaceConfig {
+  //      workspaceConfig =>
   //        val (codeChangedState, serverStateVersion) =
   //          this.synchronized {
   //            val initialisedState =
-  //              getOrInitWorkspaceState(ideConfig)
+  //              getOrInitWorkspaceState(workspaceConfig)
   //
   //            val codeChangedState =
   //              PresentationCompiler.codeChanged(
@@ -138,20 +137,20 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   //        val compiledState =
   //          PresentationCompiler.parsedAndCompileWorkspace(
   //            state = codeChangedState,
-  //            compilerOptions = ideConfig.config.compilerOptions,
+  //            compilerOptions = workspaceConfig.config.compilerOptions,
   //          )
   //
   //        //        this.synchronized {
   //        //          if (this.state.version == serverStateVersion)
   //        setAndReportState(
-  //          ideConfig = ideConfig,
+  //          workspaceConfig = workspaceConfig,
   //          state = this.state.copy(workspaceStates = Some(compiledState))
   //        )
   //      //        }
   //    }
     ???
 
-  def getOrInitWorkspaceState(ideConfig: WorkspaceConfig): WorkspaceState =
+  def getOrInitWorkspaceState(workspaceConfig: WorkspaceConfig): WorkspaceState =
   //    this.synchronized {
   //      state.workspaceStates match {
   //        case Some(oldState) =>
@@ -159,7 +158,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   //
   //        case None =>
   //          val newWorkspaceState =
-  //            PresentationCompiler.initialiseWorkspace(ideConfig.config) match {
+  //            PresentationCompiler.initialiseWorkspace(workspaceConfig.config) match {
   //              case Left(exception) =>
   //                throw state.withClient {
   //                  implicit client =>
@@ -170,10 +169,10 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   //                workspaceState
   //            }
   //
-  //          state.withIDEConfig {
-  //            ideConfig =>
+  //          state.withworkspaceConfig {
+  //            workspaceConfig =>
   //              setAndReportState(
-  //                ideConfig = ideConfig,
+  //                workspaceConfig = workspaceConfig,
   //                state = state.copy(workspaceStates = Some(newWorkspaceState))
   //              )
   //          }
@@ -197,7 +196,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   //            line = line,
   //            character = character,
   //            uri = uri,
-  //            state = state.withIDEConfig(getOrInitWorkspaceState)
+  //            state = state.withworkspaceConfig(getOrInitWorkspaceState)
   //          )
   //
   //        val completionList =

@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.config
+package org.alephium.ralph.lsp.pc.workspace
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -7,7 +7,7 @@ import org.scalatest.TryValues._
 class WorkspaceConfigSpec extends AnyWordSpec with Matchers {
 
   "read config" should {
-    "parse ide config" in {
+    "parse workspace config" in {
       val config =
         """
           |{
