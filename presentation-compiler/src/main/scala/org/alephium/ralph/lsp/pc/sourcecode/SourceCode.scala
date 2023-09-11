@@ -1,12 +1,12 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
+import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 
 import java.net.URI
 import java.nio.file.Path
 import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
-import scala.util.{Failure, Success, Try}
 
 /**
  * Implements functions operating on source-code within a single file.
@@ -14,7 +14,7 @@ import scala.util.{Failure, Success, Try}
 private[pc] object SourceCode {
 
   /** Collects paths of all ralph files on disk */
-  def initialise(path: Path)(implicit compiler: CompilerAccess): Try[ArraySeq[SourceCodeState.OnDisk]] =
+  def initialise(path: Path)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, ArraySeq[SourceCodeState.OnDisk]] =
     compiler
       .getSourceFiles(path)
       .map {
@@ -70,10 +70,10 @@ private[pc] object SourceCode {
 
   private def getSourceCode(fileURI: URI)(implicit compiler: CompilerAccess): SourceCodeState.AccessState =
     compiler.getSourceCode(fileURI) match {
-      case Failure(exception) =>
-        SourceCodeState.FailedAccess(fileURI, exception)
+      case Left(error) =>
+        SourceCodeState.FailedAccess(fileURI, error)
 
-      case Success(sourceCode) =>
+      case Right(sourceCode) =>
         SourceCodeState.UnCompiled(fileURI, sourceCode)
     }
 

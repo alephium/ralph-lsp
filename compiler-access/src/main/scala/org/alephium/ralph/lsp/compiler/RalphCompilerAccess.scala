@@ -12,7 +12,7 @@ import java.net.URI
 import java.nio.file.Path
 import scala.collection.mutable
 import scala.io.Source
-import scala.util.{Try, Using}
+import scala.util.{Failure, Success, Using}
 
 /**
  * Implements ralph parsing and compilation functions accessing the ralph compiler code.
@@ -23,11 +23,19 @@ import scala.util.{Try, Using}
 
 private object RalphCompilerAccess extends CompilerAccess {
 
-  def getSourceFiles(workspaceURI: Path): Try[Seq[Path]] =
-    Try(RalphC.getSourceFiles(workspaceURI, s".${CompilerAccess.RALPH_FILE_EXTENSION}"))
+  def getSourceFiles(workspaceURI: Path): Either[FormattableError, Seq[Path]] =
+    try
+      Right(RalphC.getSourceFiles(workspaceURI, s".${CompilerAccess.RALPH_FILE_EXTENSION}"))
+    catch catchAllThrows
 
-  override def getSourceCode(fileURI: URI): Try[String] =
-    Using(Source.fromFile(fileURI))(_.mkString)
+  override def getSourceCode(fileURI: URI): Either[FormattableError, String] =
+    Using(Source.fromFile(fileURI))(_.mkString) match {
+      case Failure(exception) =>
+        catchAllThrows(exception)
+
+      case Success(code) =>
+        Right(code)
+    }
 
   def parseContracts(code: String): Either[CompilerError.FormattableError, Seq[Ast.ContractWithState]] =
     try

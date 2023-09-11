@@ -25,14 +25,14 @@ trait CompilerAccess {
    *
    * @param workspaceURI Project/workspace location.
    */
-  def getSourceFiles(workspaceURI: Path): Try[Seq[Path]]
+  def getSourceFiles(workspaceURI: Path): Either[FormattableError, Seq[Path]]
 
   /**
    * Fetch the source-code of a file.
    *
    * @param fileURI source-code location.
    */
-  def getSourceCode(fileURI: URI): Try[String]
+  def getSourceCode(fileURI: URI): Either[FormattableError, String]
 
   /**
    * Runs the parser phase.

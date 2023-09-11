@@ -10,14 +10,13 @@ import org.alephium.ralphc.Config
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
-import scala.util.Try
 
 /**
  * Implements functions operating on all source-code files within a workspace.
  */
 private[pc] object Workspace {
 
-  def initialise(config: Config)(implicit compiler: CompilerAccess): Try[WorkspaceState.UnCompiled] =
+  def initialise(config: Config)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
     SourceCode
       .initialise(config.contractPath)
       .map(WorkspaceState.UnCompiled(_))
