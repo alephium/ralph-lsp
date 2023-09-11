@@ -4,7 +4,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.TryValues._
 
-class IDEConfigSpec extends AnyWordSpec with Matchers {
+class WorkspaceConfigSpec extends AnyWordSpec with Matchers {
 
   "read config" should {
     "parse ide config" in {
@@ -24,8 +24,8 @@ class IDEConfigSpec extends AnyWordSpec with Matchers {
           |}
           |""".stripMargin
 
-      val expected = IDEConfig.defaultConfig
-      val actual = IDEConfig.readConfig(config).success.value
+      val expected = WorkspaceConfig.defaultConfig
+      val actual = WorkspaceConfig.readConfig(config).success.value
 
       actual shouldBe expected
     }

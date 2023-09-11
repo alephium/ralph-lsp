@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.PresentationCompiler
-import org.alephium.ralph.lsp.pc.config.IDEConfig
+import org.alephium.ralph.lsp.pc.config.WorkspaceConfig
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.eclipse.lsp4j._
@@ -151,7 +151,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   //    }
     ???
 
-  def getOrInitWorkspaceState(ideConfig: IDEConfig): WorkspaceState =
+  def getOrInitWorkspaceState(ideConfig: WorkspaceConfig): WorkspaceState =
   //    this.synchronized {
   //      state.workspaceStates match {
   //        case Some(oldState) =>

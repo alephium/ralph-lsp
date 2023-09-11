@@ -6,7 +6,7 @@ import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.pc.config.IDEConfig
+import org.alephium.ralph.lsp.pc.config.WorkspaceConfig
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -26,7 +26,7 @@ object PresentationCompiler {
    * @param config compiler configuration file.
    * @return
    */
-  def initialiseWorkspace(config: IDEConfig)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
+  def initialiseWorkspace(config: WorkspaceConfig)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
     Workspace.initialise(config)
 
   /**

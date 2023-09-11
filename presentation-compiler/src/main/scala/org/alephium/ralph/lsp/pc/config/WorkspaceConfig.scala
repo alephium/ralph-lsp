@@ -10,7 +10,7 @@ import java.net.URI
 import java.nio.file.Paths
 import scala.util.Try
 
-object IDEConfig {
+object WorkspaceConfig {
 
   val FILE_NAME = "ralph-ide.json"
 
@@ -24,16 +24,16 @@ object IDEConfig {
   def readConfig(workspaceURI: URI): Try[Config] =
     for {
       json <- FileIO.readAllLines(Paths.get(workspaceURI).resolve(FILE_NAME).toUri)
-      config <- IDEConfig.readConfig(json)
+      config <- WorkspaceConfig.readConfig(json)
     } yield config
 
   def readConfig(json: String): Try[Config] =
     Try(read[Config](json))
 
-  def readIDEConfig(workspaceURI: URI): Try[IDEConfig] =
-    IDEConfig.readConfig(workspaceURI) map {
+  def readIDEConfig(workspaceURI: URI): Try[WorkspaceConfig] =
+    WorkspaceConfig.readConfig(workspaceURI) map {
       config =>
-        IDEConfig(
+        WorkspaceConfig(
           workspaceURI = workspaceURI,
           config = config
         )
@@ -44,5 +44,5 @@ object IDEConfig {
 
 }
 
-final case class IDEConfig(workspaceURI: URI,
-                           config: Config)
+final case class WorkspaceConfig(workspaceURI: URI,
+                                 config: Config)

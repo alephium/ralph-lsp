@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.pc.config.IDEConfig
+import org.alephium.ralph.lsp.pc.config.WorkspaceConfig
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 
 import java.net.URI
@@ -12,7 +12,7 @@ sealed trait WorkspaceState
 object WorkspaceState {
 
   sealed trait Configured extends WorkspaceState {
-    def config: IDEConfig
+    def config: WorkspaceConfig
 
     /** A workspace contains multiple source files */
     def sourceCodeStates: ArraySeq[SourceCodeState]
@@ -30,11 +30,11 @@ object WorkspaceState {
   case class UnConfigured(workspaceURI: URI) extends WorkspaceState
 
   /** State: Source files are un-compiled or partially-compiled */
-  case class UnCompiled(config: IDEConfig,
+  case class UnCompiled(config: WorkspaceConfig,
                         sourceCodeStates: ArraySeq[SourceCodeState]) extends WorkspaceState
 
   /** State: All source files parsed, therefore can be compiled */
-  case class Parsed(config: IDEConfig,
+  case class Parsed(config: WorkspaceConfig,
                     sourceCodeStates: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState
 
   /**
@@ -47,7 +47,7 @@ object WorkspaceState {
   case class Compiled(sourceCodeStates: ArraySeq[SourceCodeState],
                       workspaceErrors: ArraySeq[FormattableError],
                       previousState: WorkspaceState.Parsed) extends WorkspaceState {
-    def config: IDEConfig =
+    def config: WorkspaceConfig =
       previousState.config
   }
 

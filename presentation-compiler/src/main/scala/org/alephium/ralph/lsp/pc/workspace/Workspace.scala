@@ -6,7 +6,7 @@ import org.alephium.ralph.lsp.compiler.error.FileError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.Ast.ContractWithState
-import org.alephium.ralph.lsp.pc.config.IDEConfig
+import org.alephium.ralph.lsp.pc.config.WorkspaceConfig
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -17,7 +17,7 @@ import scala.collection.immutable.ArraySeq
  */
 private[pc] object Workspace {
 
-  def initialise(config: IDEConfig)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
+  def initialise(config: WorkspaceConfig)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
     SourceCode
       .initialise(config.config.contractPath)
       .map(WorkspaceState.UnCompiled(config, _))
