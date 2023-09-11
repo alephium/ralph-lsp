@@ -119,7 +119,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
       }
 
       "existing failed state, returns another failed state for unable to access file on disk" in {
-        forAll(genFailedAccessSourceCode()) {
+        forAll(genFailedAccess()) {
           failedAccessState =>
             implicit val compiler: CompilerAccess =
               CompilerAccess.ralphc
@@ -136,7 +136,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
 
     "parsed state" when {
       "failed state returns a success" in {
-        forAll(genFailedSourceCodeState()) {
+        forAll(genFailed()) {
           failedState =>
             implicit val compiler: CompilerAccess =
               mock[CompilerAccess]

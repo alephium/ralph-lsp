@@ -1,11 +1,10 @@
 package org.alephium.ralph.lsp.pc
 
+import org.alephium.ralph.error.CompilerError
+import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceConfig, WorkspaceState}
-import org.alephium.ralph.CompilerOptions
-import org.alephium.ralph.error.CompilerError
-import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -38,12 +37,8 @@ object PresentationCompiler {
    * @param compiler        Target ralph compiler
    * @return new workspace state
    */
-  def parsedAndCompileWorkspace(state: WorkspaceState.UnCompiled,
-                                compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): WorkspaceState =
-    Workspace.parseAndCompile(
-      wsState = state,
-      compilerOptions = compilerOptions
-    )
+  def parsedAndCompileWorkspace(state: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState =
+    Workspace.parseAndCompile(state)
 
   /**
    * Compile the code in preparation for deployment. The final step in compilation.
@@ -57,12 +52,11 @@ object PresentationCompiler {
    * @return New workspace state that PresentationalCompiler can continue with.
    */
   def compileForDeployment(workspaceURI: URI,
-                           config: Config)(implicit compiler: CompilerAccess): WorkspaceState = {
+                           config: Config)(implicit compiler: CompilerAccess): WorkspaceState =
     Workspace.compileForDeployment(
       workspaceURI = workspaceURI,
       config = config
     )
-  }
 
   /**
    * Apply the code changes to the workspace state.

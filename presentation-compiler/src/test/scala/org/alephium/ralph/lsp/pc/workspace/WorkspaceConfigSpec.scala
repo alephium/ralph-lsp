@@ -24,7 +24,7 @@ class WorkspaceConfigSpec extends AnyWordSpec with Matchers {
           |}
           |""".stripMargin
 
-      val expected = WorkspaceConfig.defaultConfig
+      val expected = WorkspaceConfig.defaultRalphcConfig
       val actual = WorkspaceConfig.readConfig(config).success.value
 
       actual shouldBe expected

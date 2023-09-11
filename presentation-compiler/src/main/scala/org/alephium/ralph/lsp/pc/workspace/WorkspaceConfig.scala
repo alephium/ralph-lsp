@@ -14,14 +14,14 @@ object WorkspaceConfig {
 
   val FILE_NAME = "ralphc-config.json"
 
-  val defaultConfig =
+  val defaultRalphcConfig =
     Config(
       compilerOptions = CompilerOptions.Default,
       contractPath = Paths.get("./contracts"),
       artifactPath = Paths.get("./artifacts")
     )
 
-  def readConfig(workspaceURI: URI): Try[Config] =
+  def readRalphcConfig(workspaceURI: URI): Try[Config] =
     for {
       json <- FileIO.readAllLines(Paths.get(workspaceURI).resolve(FILE_NAME).toUri)
       config <- WorkspaceConfig.readConfig(json)
@@ -31,11 +31,11 @@ object WorkspaceConfig {
     Try(read[Config](json))
 
   def readWorkspaceConfig(workspaceURI: URI): Try[WorkspaceConfig] =
-    WorkspaceConfig.readConfig(workspaceURI) map {
-      config =>
+    WorkspaceConfig.readRalphcConfig(workspaceURI) map {
+      ralphcConfig =>
         WorkspaceConfig(
           workspaceURI = workspaceURI,
-          config = config
+          ralphcConfig = ralphcConfig
         )
     }
 
@@ -45,4 +45,4 @@ object WorkspaceConfig {
 }
 
 final case class WorkspaceConfig(workspaceURI: URI,
-                                 config: Config)
+                                 ralphcConfig: Config)

@@ -10,6 +10,13 @@ sealed trait WorkspaceState
 
 object WorkspaceState {
 
+  /**
+   * Workspace state with successfully configured config file.
+   *
+   * Parsing and compilation is implemented only for these types.
+   * Until then, the workspace remains in [[UnConfigured]] state where
+   * the user is reported errors in validating the ralphc-configuration file.
+   * */
   sealed trait Configured extends WorkspaceState {
     def config: WorkspaceConfig
 
@@ -26,6 +33,7 @@ object WorkspaceState {
     }
   }
 
+  /** State: IDE is initialised but the ralphc/workspace configuration file requires validation */
   case class UnConfigured(workspaceURI: URI) extends WorkspaceState
 
   /** State: Source files are un-compiled or partially-compiled */

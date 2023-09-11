@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.{Ast, CompiledContract, CompiledScript, CompilerOptions}
+import org.alephium.ralph.{Ast, CompiledContract, CompiledScript}
 import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.error.FileError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
@@ -18,13 +18,12 @@ private[pc] object Workspace {
 
   def initialise(config: WorkspaceConfig)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
     SourceCode
-      .initialise(config.config.contractPath)
+      .initialise(config.ralphcConfig.contractPath)
       .map(WorkspaceState.UnCompiled(config, _))
 
-  def parseAndCompile(wsState: WorkspaceState.UnCompiled,
-                      compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
+  def parseAndCompile(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
     val parsed = Workspace.parse(wsState)
-    Workspace.compileParsed(parsed, compilerOptions)
+    Workspace.compileParsed(parsed)
   }
 
   def parse(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
@@ -46,8 +45,7 @@ private[pc] object Workspace {
       WorkspaceState.Parsed(wsState.config, actualParsedStates)
   }
 
-  def compileParsed(wsState: WorkspaceState,
-                    compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
+  def compileParsed(wsState: WorkspaceState)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
     wsState match {
       case state: WorkspaceState.UnCompiled =>
         state
@@ -56,8 +54,15 @@ private[pc] object Workspace {
         state
 
       case state: WorkspaceState.Parsed =>
-        val contractsToCompile = state.sourceCodeStates.flatMap(_.contracts)
-        val compilationResult = compiler.compileContracts(contractsToCompile, compilerOptions)
+        val contractsToCompile =
+          state.sourceCodeStates.flatMap(_.contracts)
+
+        val compilationResult =
+          compiler.compileContracts(
+            contracts = contractsToCompile,
+            options = state.config.ralphcConfig.compilerOptions
+          )
+
         toWorkspaceState(
           currentState = state,
           compilationResult = compilationResult
