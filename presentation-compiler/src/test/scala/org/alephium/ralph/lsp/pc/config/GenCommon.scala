@@ -6,55 +6,64 @@ import org.alephium.ralph.lsp.compiler.CompilerAccess.RALPH_FILE_EXTENSION
 import org.scalacheck.Gen
 
 import java.net.URI
-import java.nio.file.FileSystems
+import java.nio.file.{Path, Paths}
 
 /**
  * Common test data generator used by all other data types.
  */
 object GenCommon {
 
-  val pathSeparator =
-    FileSystems.getDefault.getSeparator
-
-  /** a random name */
+  /** A random name. Restricted to 10 characters. */
   val genName: Gen[String] =
     Gen.listOfN(10, Gen.alphaChar).map(_.mkString)
 
-  // TODO: Generate actual sourceCode
+  /** Generate ralph code */
   val genCode: Gen[String] =
-    Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString)
+    Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString) // TODO: Generate actual sourceCode
 
-  def genFolder(nested: Boolean = true): Gen[URI] = {
+  /** Generate ralph code */
+  def genFolder(nested: Boolean = true): Gen[Path] = {
     val folders =
       if (nested)
         Gen.nonEmptyListOf(genName)
       else
         Gen.listOfN(1, genName)
 
-    val path =
-      folders.map(_.mkString(pathSeparator))
-
-    path.map(URI.create)
+    folders map {
+      folders =>
+        folders.foldLeft(Paths.get("")) {
+          case (path, folder) =>
+            path.resolve(folder)
+        }
+    }
   }
 
   /** Generates a file name with the extension. Optionally creates a nested folder path. */
-  def genFile(ext: String = RALPH_FILE_EXTENSION,
-              nested: Boolean = true): Gen[URI] =
+  def genFilePath(ext: String = RALPH_FILE_EXTENSION,
+                  nestedFolders: Boolean = true): Gen[Path] =
     for {
       fileName <- genName.map(fileName => s"$fileName.$ext")
-      folders <- genFolder(nested)
+      folders <- genFolder(nestedFolders)
     } yield
       folders.resolve(fileName)
 
-  /** Generate some error for this code */
-  def genFormattableError(forCode: String): Gen[FormattableError] =
+  def genFileURI(ext: String = RALPH_FILE_EXTENSION,
+                 nestedFolders: Boolean = true): Gen[URI] =
+    genFilePath(
+      ext = ext,
+      nestedFolders = nestedFolders
+    ).map(_.toUri)
+
+  /** Generate an error for this code */
+  def genError(code: Gen[String] = genCode): Gen[FormattableError] =
     for {
+      code <- code
       errorMessage <- Gen.alphaStr
-      errorIndex <- Gen.choose(0, forCode.length - 1)
+      errorIndex <- Gen.choose(0, code.length - 1)
     } yield
       CompilerError.`Invalid number`(errorMessage, errorIndex)
 
-  def genFormattableErrors(forCode: String): Gen[List[FormattableError]] =
-    Gen.listOf(genFormattableError(forCode))
+  def genErrors(code: Gen[String] = genCode): Gen[List[FormattableError]] =
+    Gen.listOf(genError(code))
 
 }

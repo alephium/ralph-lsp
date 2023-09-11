@@ -31,32 +31,34 @@ object GenWorkspace {
         ignoreCheckExternalCallerWarnings = ignoreCheckExternalCallerWarnings
       )
 
-  def genRalphcConfig(workspaceURI: URI): Gen[Config] =
+  def genRalphcConfig(workspaceURI: URI): Gen[Config] = {
+    val workspacePath = Paths.get(workspaceURI)
     for {
       compilerOptions <- genCompilerOptions()
-      contractPath <- genFolder().map(workspaceURI.resolve)
-      artifactPath <- genFolder().map(workspaceURI.resolve)
+      contractPath <- genFolder().map(workspacePath.resolve)
+      artifactPath <- genFolder().map(workspacePath.resolve)
     } yield
       Config(
         compilerOptions = compilerOptions,
-        contractPath = Paths.get(contractPath),
-        artifactPath = Paths.get(artifactPath)
+        contractPath = contractPath,
+        artifactPath = artifactPath
       )
+  }
 
   def genWorkspaceConfig(): Gen[WorkspaceConfig] =
     for {
       workspaceURI <- genFolder()
-      ralphcConfig <- genRalphcConfig(workspaceURI)
+      ralphcConfig <- genRalphcConfig(workspaceURI.toUri)
     } yield
       WorkspaceConfig(
-        workspaceURI = workspaceURI,
+        workspaceURI = workspaceURI.toUri,
         ralphcConfig = ralphcConfig
       )
 
   def genUnConfigured(): Gen[WorkspaceState.UnConfigured] =
     for {
       workspaceURI <- genFolder()
-    } yield WorkspaceState.UnConfigured(workspaceURI)
+    } yield WorkspaceState.UnConfigured(workspaceURI.toUri)
 
   def genUnCompiled(): Gen[WorkspaceState.UnCompiled] =
     for {
@@ -81,7 +83,7 @@ object GenWorkspace {
   def genCompiled(): Gen[WorkspaceState.Compiled] =
     for {
       sourceCodes <- Gen.listOf(GenSourceCode.genParsed())
-      errors <- Gen.sequence(sourceCodes.map(parsed => genFormattableErrors(parsed.code)))
+      errors <- Gen.sequence(sourceCodes.map(parsed => genErrors(parsed.code)))
       parsed <- GenWorkspace.genParsed()
     } yield
       WorkspaceState.Compiled(

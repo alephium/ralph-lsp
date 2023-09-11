@@ -16,7 +16,7 @@ object GenSourceCode {
 
   def genOnDisk(): Gen[SourceCodeState.OnDisk] =
     for {
-      fileURI <- genFile()
+      fileURI <- genFileURI()
     } yield
       SourceCodeState.OnDisk(
         fileURI = fileURI
@@ -24,7 +24,7 @@ object GenSourceCode {
 
   def genUnCompiled(code: Gen[String] = genCode): Gen[SourceCodeState.UnCompiled] =
     for {
-      fileURI <- genFile()
+      fileURI <- genFileURI()
       code <- code
     } yield
       SourceCodeState.UnCompiled(
@@ -34,7 +34,7 @@ object GenSourceCode {
 
   def genCompiled(code: Gen[String] = genCode): Gen[SourceCodeState.Compiled] =
     for {
-      fileURI <- genFile()
+      fileURI <- genFileURI()
       code <- code
       compiledCode <- genCompiledCode()
       parsedState <- genParsed()
@@ -48,7 +48,7 @@ object GenSourceCode {
 
   def genParsed(code: Gen[String] = genCode): Gen[SourceCodeState.Parsed] =
     for {
-      fileURI <- genFile()
+      fileURI <- genFileURI()
       code <- code
     } yield
       SourceCodeState.Parsed(
@@ -59,9 +59,9 @@ object GenSourceCode {
 
   def genErrored(code: Gen[String] = genCode): Gen[SourceCodeState.Errored] =
     for {
-      fileURI <- genFile()
+      fileURI <- genFileURI()
       code <- code
-      errors <- genFormattableErrors(code)
+      errors <- genErrors(code)
       parsed <- Gen.option(genParsed(Gen.const(code)))
     } yield
       SourceCodeState.Errored(
@@ -72,7 +72,7 @@ object GenSourceCode {
       )
 
   /** Failed access state only */
-  def genFailedAccess(fileURI: Gen[URI] = genFile()): Gen[SourceCodeState.FailedAccess] =
+  def genFailedAccess(fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.FailedAccess] =
     for {
       fileURI <- fileURI
       exceptionMessage <- Gen.alphaStr

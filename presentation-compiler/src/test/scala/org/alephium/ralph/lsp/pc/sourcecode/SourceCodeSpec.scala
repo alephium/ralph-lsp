@@ -96,7 +96,10 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
           mock[CompilerAccess]
 
         // parseContracts should only be called once (not go into recursion) and error is reported to the user
-        (compiler.parseContracts _).expects(code).returns(Left(expectedError)).once()
+        (compiler.parseContracts _)
+          .expects(code)
+          .returns(Left(expectedError))
+          .once()
 
         // code is un-compiled
         val state =
@@ -143,10 +146,16 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
             val code = "some code"
 
             // Code is read from disk (once)
-            (compiler.getSourceCode _).expects(failedState.fileURI).returns(Right(code)).once()
+            (compiler.getSourceCode _)
+              .expects(failedState.fileURI)
+              .returns(Right(code))
+              .once()
 
             // Code is parsed (once)
-            (compiler.parseContracts _).expects(code).returns(Right(Seq.empty)).once()
+            (compiler.parseContracts _)
+              .expects(code)
+              .returns(Right(Seq.empty))
+              .once()
 
             // successfully parses the code
             val newState = SourceCode.parse(failedState)

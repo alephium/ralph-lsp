@@ -16,6 +16,11 @@ import scala.collection.immutable.ArraySeq
  */
 private[pc] object Workspace {
 
+  /**
+   * Initialise a workspace for the given workspace config.
+   *
+   * @return URIs of all source-code files returned by the compiler.
+   * */
   def initialise(config: WorkspaceConfig)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
     SourceCode
       .initialise(config.contractURI)
