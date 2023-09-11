@@ -3,7 +3,6 @@ package org.alephium.ralph.lsp.pc.config
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.pc.util.FileIO
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
-import org.alephium.ralph.lsp.pc.PCConfig
 import org.alephium.ralphc.Config
 import upickle.default._
 
@@ -12,6 +11,8 @@ import java.nio.file.Paths
 import scala.util.Try
 
 object IDEConfig {
+
+  val FILE_NAME = "ralph-ide.json"
 
   val defaultConfig =
     Config(
@@ -22,7 +23,7 @@ object IDEConfig {
 
   def readConfig(workspaceURI: URI): Try[Config] =
     for {
-      json <- FileIO.readAllLines(Paths.get(workspaceURI).resolve(PCConfig.IDE_CONFIG_FILE_NAME).toUri)
+      json <- FileIO.readAllLines(Paths.get(workspaceURI).resolve(FILE_NAME).toUri)
       config <- IDEConfig.readConfig(json)
     } yield config
 

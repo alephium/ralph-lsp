@@ -6,7 +6,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.TryValues._
+import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.net.URI
@@ -22,7 +22,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
 
       val nonExistingDir = Paths.get("initialise_test")
       // assert that it does not throw exception
-      SourceCode.initialise(nonExistingDir).success.value shouldBe empty
+      SourceCode.initialise(nonExistingDir).value shouldBe empty
     }
 
     "parse all ralph file names from disk" in {
@@ -33,7 +33,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
       val one = Files.createFile(dir.resolve("one.ral"))
       val two = Files.createFile(dir.resolve("two.ral"))
 
-      SourceCode.initialise(dir).success.value shouldBe
+      SourceCode.initialise(dir).value shouldBe
         Seq(
           SourceCodeState.OnDisk(one.toUri),
           SourceCodeState.OnDisk(two.toUri)
@@ -144,7 +144,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
             val code = "some code"
 
             // Code is read from disk (once)
-            (compiler.getSourceCode _).expects(failedState.fileURI).returns(Success(code)).once()
+            (compiler.getSourceCode _).expects(failedState.fileURI).returns(Right(code)).once()
 
             // Code is parsed (once)
             (compiler.parseContracts _).expects(code).returns(Right(Seq.empty)).once()

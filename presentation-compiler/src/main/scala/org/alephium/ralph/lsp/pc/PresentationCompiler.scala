@@ -4,6 +4,7 @@ import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 import org.alephium.ralph.CompilerOptions
+import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralphc.Config
 
@@ -25,7 +26,7 @@ object PresentationCompiler {
    * @param config compiler configuration file.
    * @return
    */
-  def initialiseWorkspace(config: Config)(implicit compiler: CompilerAccess): Try[WorkspaceState.UnCompiled] =
+  def initialiseWorkspace(config: Config)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
     Workspace.initialise(config)
 
   /**

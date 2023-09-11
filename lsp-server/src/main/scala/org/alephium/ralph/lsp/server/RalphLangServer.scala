@@ -163,13 +163,13 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
         case None =>
           val newWorkspaceState =
             PresentationCompiler.initialiseWorkspace(ideConfig.config) match {
-              case Failure(exception) =>
+              case Left(exception) =>
                 throw state.withClient {
                   implicit client =>
                     RalphLangClient.log(exception)
                 }
 
-              case Success(workspaceState) =>
+              case Right(workspaceState) =>
                 workspaceState
             }
 
