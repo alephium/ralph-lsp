@@ -4,7 +4,6 @@ import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 
 import java.net.URI
-import java.nio.file.Path
 import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
 
@@ -14,15 +13,10 @@ import scala.collection.immutable.ArraySeq
 private[pc] object SourceCode {
 
   /** Collects paths of all ralph files on disk */
-  def initialise(path: Path)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, ArraySeq[SourceCodeState.OnDisk]] =
+  def initialise(fileURI: URI)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, ArraySeq[SourceCodeState.OnDisk]] =
     compiler
-      .getSourceFiles(path)
-      .map {
-        _.map {
-          path =>
-            SourceCodeState.OnDisk(path.toUri)
-        }.to(ArraySeq)
-      }
+      .getSourceFiles(fileURI)
+      .map(_.map(SourceCodeState.OnDisk).to(ArraySeq))
 
   /**
    * Parse a source file, given its current sate.

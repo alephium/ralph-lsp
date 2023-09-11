@@ -11,7 +11,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.net.URI
 import java.nio.file.{Files, Paths}
-import scala.util.Success
 
 class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with ScalaCheckDrivenPropertyChecks {
 
@@ -22,7 +21,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
 
       val nonExistingDir = Paths.get("initialise_test")
       // assert that it does not throw exception
-      SourceCode.initialise(nonExistingDir).value shouldBe empty
+      SourceCode.initialise(nonExistingDir.toUri).value shouldBe empty
     }
 
     "parse all ralph file names from disk" in {
@@ -33,7 +32,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
       val one = Files.createFile(dir.resolve("one.ral"))
       val two = Files.createFile(dir.resolve("two.ral"))
 
-      SourceCode.initialise(dir).value shouldBe
+      SourceCode.initialise(dir.toUri).value shouldBe
         Seq(
           SourceCodeState.OnDisk(one.toUri),
           SourceCodeState.OnDisk(two.toUri)

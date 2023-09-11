@@ -45,4 +45,10 @@ object WorkspaceConfig {
 }
 
 final case class WorkspaceConfig(workspaceURI: URI,
-                                 ralphcConfig: Config)
+                                 ralphcConfig: Config) {
+  def contractURI: URI =
+    ralphcConfig.contractPath.toUri
+
+  def artifactURI: URI =
+    ralphcConfig.artifactPath.toUri
+}

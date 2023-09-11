@@ -18,7 +18,7 @@ private[pc] object Workspace {
 
   def initialise(config: WorkspaceConfig)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
     SourceCode
-      .initialise(config.ralphcConfig.contractPath)
+      .initialise(config.contractURI)
       .map(WorkspaceState.UnCompiled(config, _))
 
   def parseAndCompile(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {

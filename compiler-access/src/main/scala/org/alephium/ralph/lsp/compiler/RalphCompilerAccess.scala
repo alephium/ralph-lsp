@@ -9,7 +9,7 @@ import org.alephium.ralph.lsp.compiler.error.WorkspaceError
 import org.alephium.ralphc.{Config, MetaInfo, Compiler => RalphC}
 
 import java.net.URI
-import java.nio.file.Path
+import java.nio.file.Paths
 import scala.collection.mutable
 import scala.io.Source
 import scala.util.{Failure, Success, Using}
@@ -23,9 +23,9 @@ import scala.util.{Failure, Success, Using}
 
 private object RalphCompilerAccess extends CompilerAccess {
 
-  def getSourceFiles(workspaceURI: Path): Either[FormattableError, Seq[Path]] =
+  def getSourceFiles(workspaceURI: URI): Either[FormattableError, Seq[URI]] =
     try
-      Right(RalphC.getSourceFiles(workspaceURI, s".${CompilerAccess.RALPH_FILE_EXTENSION}"))
+      Right(RalphC.getSourceFiles(Paths.get(workspaceURI), s".${CompilerAccess.RALPH_FILE_EXTENSION}").map(_.toUri))
     catch catchAllThrows
 
   override def getSourceCode(fileURI: URI): Either[FormattableError, String] =

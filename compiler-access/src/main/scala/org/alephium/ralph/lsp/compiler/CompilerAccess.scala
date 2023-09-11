@@ -5,7 +5,6 @@ import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralphc.Config
 
 import java.net.URI
-import java.nio.file.Path
 
 object CompilerAccess {
   val RALPH_FILE_EXTENSION = "ral"
@@ -24,7 +23,7 @@ trait CompilerAccess {
    *
    * @param workspaceURI Project/workspace location.
    */
-  def getSourceFiles(workspaceURI: Path): Either[FormattableError, Seq[Path]]
+  def getSourceFiles(workspaceURI: URI): Either[FormattableError, Seq[URI]]
 
   /**
    * Fetch the source-code of a file.
