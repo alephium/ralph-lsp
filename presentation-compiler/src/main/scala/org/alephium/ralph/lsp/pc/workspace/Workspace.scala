@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.compiler.error.FileError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.Ast.ContractWithState
+import org.alephium.ralph.lsp.pc.config.IDEConfig
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -16,10 +17,10 @@ import scala.collection.immutable.ArraySeq
  */
 private[pc] object Workspace {
 
-  def initialise(config: Config)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
+  def initialise(config: IDEConfig)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
     SourceCode
-      .initialise(config.contractPath)
-      .map(WorkspaceState.UnCompiled(_))
+      .initialise(config.config.contractPath)
+      .map(WorkspaceState.UnCompiled(config, _))
 
   def parseAndCompile(wsState: WorkspaceState.UnCompiled,
                       compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): WorkspaceState = {
@@ -41,9 +42,9 @@ private[pc] object Workspace {
       }
 
     if (actualParsedStates.size != triedParsedStates.size)
-      WorkspaceState.UnCompiled(triedParsedStates)
+      WorkspaceState.UnCompiled(wsState.config, triedParsedStates)
     else
-      WorkspaceState.Parsed(actualParsedStates)
+      WorkspaceState.Parsed(wsState.config, actualParsedStates)
   }
 
   def compileParsed(wsState: WorkspaceState,

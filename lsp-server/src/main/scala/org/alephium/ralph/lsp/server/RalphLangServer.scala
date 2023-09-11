@@ -12,7 +12,9 @@ import org.eclipse.lsp4j.services._
 import java.net.URI
 import java.util
 import java.util.concurrent.CompletableFuture
+import scala.collection.immutable.ArraySeq
 import scala.concurrent.ExecutionContext
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.util.{Failure, Success}
 
 object RalphLangServer {
@@ -45,19 +47,19 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     state
   }
 
-  private def setAndReportState(ideConfig: IDEConfig, state: ServerState): ServerState = {
+  private def setAndReportState(state: ServerState): ServerState = {
     this.setState(state)
-    state.workspaceState foreach {
-      workspaceState =>
-        state.withClient {
-          implicit client =>
-            RalphLangClient.publish(
-              workspaceURI = ideConfig.workspaceURI,
-              workspace = workspaceState
-            )
-        }
-    }
-    state
+    //    state.workspaceStates foreach {
+    //      workspaceState =>
+    //        state.withClient {
+    //          implicit client =>
+    //            RalphLangClient.publish(
+    //              workspaceURI = ideConfig.workspaceURI,
+    //              workspace = workspaceState
+    //            )
+    //        }
+    //    }
+    ???
   }
 
   /**
@@ -75,20 +77,14 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] =
     CompletableFutures.computeAsync {
       cancelChecker =>
-        val workspaceURIString = params.getWorkspaceFolders.get(0).getUri
+        val workspaceStates =
+          params.getWorkspaceFolders.asScala.to(ArraySeq).map {
+            workspaceFolder =>
+              val workspaceURI = new URI(workspaceFolder.getUri)
+              WorkspaceState.UnConfigured(workspaceURI)
+          }
 
-        val workspaceURI = new URI(workspaceURIString)
-
-        IDEConfig.readIDEConfig(workspaceURI) match {
-          case Failure(exception) =>
-            state.withClient {
-              implicit client =>
-                RalphLangClient.log(exception)
-            }
-
-          case Success(ideConfig) =>
-            setState(state.copy(ideConfig = Some(ideConfig)))
-        }
+        setState(state.copy(workspaceStates = Some(workspaceStates)))
 
         cancelChecker.checkCanceled()
 
@@ -121,94 +117,97 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
 
   def didCodeChange(fileURI: URI,
                     updatedCode: Option[String]): Unit =
-    state.withIDEConfig {
-      ideConfig =>
-        val (codeChangedState, serverStateVersion) =
-          this.synchronized {
-            val initialisedState =
-              getOrInitWorkspaceState(ideConfig)
-
-            val codeChangedState =
-              PresentationCompiler.codeChanged(
-                fileURI = fileURI,
-                updatedCode = updatedCode,
-                currentState = initialisedState
-              )
-
-            val newState = setState(state.copy(workspaceState = Some(codeChangedState)))
-            (codeChangedState, newState.version)
-          }
-
-        val compiledState =
-          PresentationCompiler.parsedAndCompileWorkspace(
-            state = codeChangedState,
-            compilerOptions = ideConfig.config.compilerOptions,
-          )
-
-        //        this.synchronized {
-        //          if (this.state.version == serverStateVersion)
-        setAndReportState(
-          ideConfig = ideConfig,
-          state = this.state.copy(workspaceState = Some(compiledState))
-        )
-      //        }
-    }
+  //    state.withIDEConfig {
+  //      ideConfig =>
+  //        val (codeChangedState, serverStateVersion) =
+  //          this.synchronized {
+  //            val initialisedState =
+  //              getOrInitWorkspaceState(ideConfig)
+  //
+  //            val codeChangedState =
+  //              PresentationCompiler.codeChanged(
+  //                fileURI = fileURI,
+  //                updatedCode = updatedCode,
+  //                currentState = initialisedState
+  //              )
+  //
+  //            val newState = setState(state.copy(workspaceStates = Some(codeChangedState)))
+  //            (codeChangedState, newState.version)
+  //          }
+  //
+  //        val compiledState =
+  //          PresentationCompiler.parsedAndCompileWorkspace(
+  //            state = codeChangedState,
+  //            compilerOptions = ideConfig.config.compilerOptions,
+  //          )
+  //
+  //        //        this.synchronized {
+  //        //          if (this.state.version == serverStateVersion)
+  //        setAndReportState(
+  //          ideConfig = ideConfig,
+  //          state = this.state.copy(workspaceStates = Some(compiledState))
+  //        )
+  //      //        }
+  //    }
+    ???
 
   def getOrInitWorkspaceState(ideConfig: IDEConfig): WorkspaceState =
-    this.synchronized {
-      state.workspaceState match {
-        case Some(oldState) =>
-          oldState
-
-        case None =>
-          val newWorkspaceState =
-            PresentationCompiler.initialiseWorkspace(ideConfig.config) match {
-              case Left(exception) =>
-                throw state.withClient {
-                  implicit client =>
-                    RalphLangClient.log(exception)
-                }
-
-              case Right(workspaceState) =>
-                workspaceState
-            }
-
-          state.withIDEConfig {
-            ideConfig =>
-              setAndReportState(
-                ideConfig = ideConfig,
-                state = state.copy(workspaceState = Some(newWorkspaceState))
-              )
-          }
-
-          newWorkspaceState
-      }
-    }
+  //    this.synchronized {
+  //      state.workspaceStates match {
+  //        case Some(oldState) =>
+  //          oldState
+  //
+  //        case None =>
+  //          val newWorkspaceState =
+  //            PresentationCompiler.initialiseWorkspace(ideConfig.config) match {
+  //              case Left(exception) =>
+  //                throw state.withClient {
+  //                  implicit client =>
+  //                    RalphLangClient.log(exception)
+  //                }
+  //
+  //              case Right(workspaceState) =>
+  //                workspaceState
+  //            }
+  //
+  //          state.withIDEConfig {
+  //            ideConfig =>
+  //              setAndReportState(
+  //                ideConfig = ideConfig,
+  //                state = state.copy(workspaceStates = Some(newWorkspaceState))
+  //              )
+  //          }
+  //
+  //          newWorkspaceState
+  //      }
+  //    }
+    ???
 
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
-    CompletableFutures.computeAsync {
-      cancelChecker =>
-        val line = params.getPosition.getLine
-        val character = params.getPosition.getCharacter
-        val uri = new URI(params.getTextDocument.getUri)
-
-        cancelChecker.checkCanceled()
-
-        val suggestions =
-          PresentationCompiler.complete(
-            line = line,
-            character = character,
-            uri = uri,
-            state = state.withIDEConfig(getOrInitWorkspaceState)
-          )
-
-        val completionList =
-          RalphLangClient.toCompletionList(suggestions)
-
-        cancelChecker.checkCanceled()
-
-        messages.Either.forRight[util.List[CompletionItem], CompletionList](completionList)
-    }
+  //    CompletableFutures.computeAsync {
+  //      cancelChecker =>
+  //        val line = params.getPosition.getLine
+  //        val character = params.getPosition.getCharacter
+  //        val uri = new URI(params.getTextDocument.getUri)
+  //
+  //        cancelChecker.checkCanceled()
+  //
+  //        val suggestions =
+  //          PresentationCompiler.complete(
+  //            line = line,
+  //            character = character,
+  //            uri = uri,
+  //            state = state.withIDEConfig(getOrInitWorkspaceState)
+  //          )
+  //
+  //        val completionList =
+  //          RalphLangClient.toCompletionList(suggestions)
+  //
+  //        cancelChecker.checkCanceled()
+  //
+  //        messages.Either.forRight[util.List[CompletionItem], CompletionList](completionList)
+  //    }
+    ???
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
     ()

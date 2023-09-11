@@ -6,10 +6,10 @@ import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.pc.config.IDEConfig
 import org.alephium.ralphc.Config
 
 import java.net.URI
-import scala.util.Try
 
 /**
  * Implements the public API to be used for interactive programming in Ralph.
@@ -26,7 +26,7 @@ object PresentationCompiler {
    * @param config compiler configuration file.
    * @return
    */
-  def initialiseWorkspace(config: Config)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
+  def initialiseWorkspace(config: IDEConfig)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
     Workspace.initialise(config)
 
   /**
@@ -75,7 +75,7 @@ object PresentationCompiler {
    */
   def codeChanged(fileURI: URI,
                   updatedCode: Option[String],
-                  currentState: WorkspaceState): WorkspaceState.UnCompiled = {
+                  currentState: WorkspaceState.Configured): WorkspaceState.UnCompiled = {
     val newSourceCodeState =
       updatedCode match {
         case Some(newCode) =>
@@ -88,7 +88,10 @@ object PresentationCompiler {
     val updatedFileStates =
       currentState.updateOrAdd(newSourceCodeState)
 
-    WorkspaceState.UnCompiled(updatedFileStates)
+    WorkspaceState.UnCompiled(
+      config = currentState.config,
+      sourceCodeStates = updatedFileStates
+    )
   }
 
   /**

@@ -8,7 +8,6 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.services.LanguageClient
 
-import java.net.URI
 import java.util
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
@@ -33,8 +32,7 @@ object RalphLangClient {
     new Diagnostic(range, error.message, DiagnosticSeverity.Error, "RalphLS")
   }
 
-  def toWorkspaceDiagnostics(workspaceURI: URI,
-                             workspace: WorkspaceState): PublishDiagnosticsParams = {
+  def toWorkspaceDiagnostics(workspace: WorkspaceState.Configured): PublishDiagnosticsParams = {
     val workspaceDiagnostics =
       workspace match {
         case compiled: WorkspaceState.Compiled =>
@@ -50,10 +48,10 @@ object RalphLangClient {
           Seq.empty
       }
 
-    new PublishDiagnosticsParams(workspaceURI.toString, workspaceDiagnostics.asJava)
+    new PublishDiagnosticsParams(workspace.config.workspaceURI.toString, workspaceDiagnostics.asJava)
   }
 
-  def toSourceCodeDiagnostics(state: WorkspaceState): Iterable[PublishDiagnosticsParams] =
+  def toSourceCodeDiagnostics(state: WorkspaceState.Configured): Iterable[PublishDiagnosticsParams] =
     state.sourceCodeStates collect {
       case state: SourceCodeState.Errored =>
         val diagnostics =
@@ -68,10 +66,9 @@ object RalphLangClient {
         new PublishDiagnosticsParams(state.fileURI.toString, diagnostics.asJava)
     }
 
-  def toPublishDiagnostics(workspaceURI: URI,
-                           workspace: WorkspaceState): Iterable[PublishDiagnosticsParams] = {
+  def toPublishDiagnostics(workspace: WorkspaceState.Configured): Iterable[PublishDiagnosticsParams] = {
     val sourceCodeErrors = toSourceCodeDiagnostics(workspace)
-    val workspaceErrors = toWorkspaceDiagnostics(workspaceURI, workspace)
+    val workspaceErrors = toWorkspaceDiagnostics(workspace)
     sourceCodeErrors ++ Seq(workspaceErrors)
   }
 
@@ -103,9 +100,8 @@ object RalphLangClient {
   def log(message: String)(implicit client: RalphLangClient): Unit =
     client.logMessage(new MessageParams(MessageType.Error, message))
 
-  def publish(workspaceURI: URI,
-              workspace: WorkspaceState)(implicit client: RalphLangClient): Unit =
-    toPublishDiagnostics(workspaceURI, workspace) foreach {
+  def publish(workspace: WorkspaceState.Configured)(implicit client: RalphLangClient): Unit =
+    toPublishDiagnostics(workspace) foreach {
       diagnostic =>
         // TODO: Isn't there a way in LSP to send all
         //       diagnotics to the client in a single request?
