@@ -89,16 +89,10 @@ object RalphLangClient {
     new CompletionList(items)
   }
 
-  def log(error: FormattableError)(implicit client: RalphLangClient): Unit =
+  def log(error: FormattableError)(implicit client: RalphLangClient): FormattableError = {
     client.logMessage(new MessageParams(MessageType.Error, error.message))
-
-  def log(exception: Throwable)(implicit client: RalphLangClient): Throwable = {
-    log(exception.getMessage)
-    exception
+    error
   }
-
-  def log(message: String)(implicit client: RalphLangClient): Unit =
-    client.logMessage(new MessageParams(MessageType.Error, message))
 
   def publish(workspace: WorkspaceState.Configured)(implicit client: RalphLangClient): Unit =
     toPublishDiagnostics(workspace) foreach {

@@ -145,10 +145,10 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
           fileURI = fileURI,
           workspaces = state.workspaces
         ) match {
-          case Left(exception) =>
+          case Left(error) =>
             throw state.withClient {
               implicit client =>
-                RalphLangClient.log(exception)
+                RalphLangClient.log(error)
             }
 
           case Right(workspaceState) =>
