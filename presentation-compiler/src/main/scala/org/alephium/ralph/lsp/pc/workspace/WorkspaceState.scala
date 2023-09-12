@@ -21,15 +21,15 @@ object WorkspaceState {
     def config: WorkspaceConfig
 
     /** A workspace contains multiple source files */
-    def sourceCodeStates: ArraySeq[SourceCodeState]
+    def sourceCode: ArraySeq[SourceCodeState]
 
     /** Add or update the source file */
     def updateOrAdd(newState: SourceCodeState): ArraySeq[SourceCodeState] = {
-      val index = sourceCodeStates.indexWhere(_.fileURI == newState.fileURI)
+      val index = sourceCode.indexWhere(_.fileURI == newState.fileURI)
       if (index >= 0)
-        sourceCodeStates.updated(index, newState)
+        sourceCode.updated(index, newState)
       else
-        sourceCodeStates appended newState
+        sourceCode appended newState
     }
   }
 
@@ -38,20 +38,20 @@ object WorkspaceState {
 
   /** State: Source files are un-compiled or partially-compiled */
   case class UnCompiled(config: WorkspaceConfig,
-                        sourceCodeStates: ArraySeq[SourceCodeState]) extends WorkspaceState.Configured
+                        sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.Configured
 
   /** State: All source files parsed, therefore can be compiled */
   case class Parsed(config: WorkspaceConfig,
-                    sourceCodeStates: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.Configured
+                    sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.Configured
 
   /**
    * Result of a compilation run.
    *
-   * @param sourceCodeStates New valid source code states.
-   * @param workspaceErrors  Project/workspace level errors
-   * @param previousState    Previous valid parsed state
+   * @param sourceCode      New valid source code states.
+   * @param workspaceErrors Project/workspace level errors
+   * @param previousState   Previous valid parsed state
    */
-  case class Compiled(sourceCodeStates: ArraySeq[SourceCodeState],
+  case class Compiled(sourceCode: ArraySeq[SourceCodeState],
                       workspaceErrors: ArraySeq[FormattableError],
                       previousState: WorkspaceState.Parsed) extends WorkspaceState.Configured {
     def config: WorkspaceConfig =

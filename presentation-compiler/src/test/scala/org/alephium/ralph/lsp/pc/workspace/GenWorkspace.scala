@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.pc.config.GenCommon._
-import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode
+import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.alephium.ralphc.Config
 import org.scalacheck.{Arbitrary, Gen}
 
@@ -60,34 +60,34 @@ object GenWorkspace {
       workspaceURI <- genFolder()
     } yield WorkspaceState.UnConfigured(workspaceURI.toUri)
 
-  def genUnCompiled(): Gen[WorkspaceState.UnCompiled] =
+  def genUnCompiled(sourceCode: Gen[List[SourceCodeState]] = Gen.listOf(GenSourceCode.genSourceCode())): Gen[WorkspaceState.UnCompiled] =
     for {
       config <- genWorkspaceConfig()
-      sourceCodes <- Gen.listOf(GenSourceCode.genSourceCode())
+      sourceCode <- sourceCode
     } yield
       WorkspaceState.UnCompiled(
         config = config,
-        sourceCodeStates = sourceCodes.to(ArraySeq)
+        sourceCode = sourceCode.to(ArraySeq)
       )
 
-  def genParsed(): Gen[WorkspaceState.Parsed] =
+  def genParsed(sourceCode: Gen[List[SourceCodeState.Parsed]] = Gen.listOf(GenSourceCode.genParsed())): Gen[WorkspaceState.Parsed] =
     for {
       config <- genWorkspaceConfig()
-      sourceCodes <- Gen.listOf(GenSourceCode.genParsed())
+      sourceCode <- sourceCode
     } yield
       WorkspaceState.Parsed(
         config = config,
-        sourceCodeStates = sourceCodes.to(ArraySeq)
+        sourceCode = sourceCode.to(ArraySeq)
       )
 
-  def genCompiled(): Gen[WorkspaceState.Compiled] =
+  def genCompiled(sourceCode: Gen[List[SourceCodeState.Parsed]] = Gen.listOf(GenSourceCode.genParsed())): Gen[WorkspaceState.Compiled] =
     for {
-      sourceCodes <- Gen.listOf(GenSourceCode.genParsed())
-      errors <- Gen.sequence(sourceCodes.map(parsed => genErrors(parsed.code)))
+      sourceCode <- sourceCode
+      errors <- Gen.sequence(sourceCode.map(parsed => genErrors(parsed.code)))
       parsed <- GenWorkspace.genParsed()
     } yield
       WorkspaceState.Compiled(
-        sourceCodeStates = sourceCodes.to(ArraySeq),
+        sourceCode = sourceCode.to(ArraySeq),
         workspaceErrors = errors.asScala.flatten.to(ArraySeq),
         previousState = parsed
       )
@@ -99,5 +99,8 @@ object GenWorkspace {
       genParsed(),
       genCompiled()
     )
+
+  def genAtLeastOneErrored(): Gen[WorkspaceState.UnCompiled] =
+    genUnCompiled(GenSourceCode.genAtLeastOneError())
 
 }

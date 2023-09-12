@@ -15,7 +15,7 @@ import scala.io.Source
 import scala.util.{Failure, Success, Using}
 
 /**
- * Implements ralph parsing and compilation functions accessing the ralph compiler code.
+ * Implements ralph parsing and compilation functions accessing the `ralphc`.
  *
  * @note Access to this object is private.
  *       PresentationCompiler does not directly accesses this code.

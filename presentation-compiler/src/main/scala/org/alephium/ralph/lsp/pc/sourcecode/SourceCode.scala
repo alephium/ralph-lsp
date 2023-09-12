@@ -13,9 +13,9 @@ import scala.collection.immutable.ArraySeq
 private[pc] object SourceCode {
 
   /** Collects paths of all ralph files on disk */
-  def initialise(fileURI: URI)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, ArraySeq[SourceCodeState.OnDisk]] =
+  def initialise(workspaceURI: URI)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, ArraySeq[SourceCodeState.OnDisk]] =
     compiler
-      .getSourceFiles(fileURI)
+      .getSourceFiles(workspaceURI)
       .map(_.map(SourceCodeState.OnDisk).to(ArraySeq))
 
   /**
@@ -49,23 +49,24 @@ private[pc] object SourceCode {
       case parsed @ (_: SourceCodeState.Parsed | _: SourceCodeState.Compiled) =>
         parsed // code is already in parsed state, return the same state
 
-      case state: SourceCodeState.FailedState =>
+      case currentError: SourceCodeState.ErrorState =>
         // access the code from disk and parse it.
-        getSourceCode(state.fileURI) match {
+        getSourceCode(currentError.fileURI) match {
           case state: SourceCodeState.UnCompiled =>
             // successfully accessed the code, now parse it.
             parse(state)
 
-          case failed: SourceCodeState.FailedAccess =>
+          case failed: SourceCodeState.ErrorAccess =>
             // Failed again: Maybe file does not exists. Return the error so the client gets reported.
-            failed
+            // Do not discard existing state because it will be used for code-completion, update it with the new error.
+            currentError.updateError(failed.error)
         }
     }
 
   private def getSourceCode(fileURI: URI)(implicit compiler: CompilerAccess): SourceCodeState.AccessState =
     compiler.getSourceCode(fileURI) match {
       case Left(error) =>
-        SourceCodeState.FailedAccess(fileURI, error)
+        SourceCodeState.ErrorAccess(fileURI, error)
 
       case Right(sourceCode) =>
         SourceCodeState.UnCompiled(fileURI, sourceCode)

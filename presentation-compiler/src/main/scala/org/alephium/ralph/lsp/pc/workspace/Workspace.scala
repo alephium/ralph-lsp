@@ -26,14 +26,9 @@ private[pc] object Workspace {
       .initialise(config.contractURI)
       .map(WorkspaceState.UnCompiled(config, _))
 
-  def parseAndCompile(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
-    val parsed = Workspace.parse(wsState)
-    Workspace.compileParsed(parsed)
-  }
-
   def parse(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
     val triedParsedStates =
-      wsState.sourceCodeStates.map(SourceCode.parse)
+      wsState.sourceCode.map(SourceCode.parse)
 
     val actualParsedStates =
       triedParsedStates.collect {
@@ -60,7 +55,7 @@ private[pc] object Workspace {
 
       case state: WorkspaceState.Parsed =>
         val contractsToCompile =
-          state.sourceCodeStates.flatMap(_.contracts)
+          state.sourceCode.flatMap(_.contracts)
 
         val compilationResult =
           compiler.compileContracts(
@@ -73,6 +68,11 @@ private[pc] object Workspace {
           compilationResult = compilationResult
         )
     }
+
+  def parseAndCompile(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
+    val parsed = Workspace.parse(wsState)
+    Workspace.compileParsed(parsed)
+  }
 
   def compileForDeployment(workspaceURI: URI,
                            config: Config)(implicit compiler: CompilerAccess): WorkspaceState.Compiled = {
@@ -95,7 +95,7 @@ private[pc] object Workspace {
         // File or sourcePosition position information is not available for this error,
         // report it as a workspace error.
         WorkspaceState.Compiled(
-          sourceCodeStates = currentState.sourceCodeStates, // SourceCode remains the same as existing state
+          sourceCode = currentState.sourceCode, // SourceCode remains the same as existing state
           workspaceErrors = ArraySeq(workspaceError), // errors to report
           previousState = currentState,
         )
@@ -112,7 +112,7 @@ private[pc] object Workspace {
                                           compiledContracts: Array[CompiledContract],
                                           compiledScripts: Array[CompiledScript]): WorkspaceState.Compiled = {
     val newSourceCodeStates =
-      currentWorkspaceState.sourceCodeStates map {
+      currentWorkspaceState.sourceCode map {
         sourceCodeState =>
           val matchedCode = // Map contracts and scripts to their fileURIs.
             findMatchingContractOrScript(
@@ -142,7 +142,7 @@ private[pc] object Workspace {
 
     // new WorkspaceState
     WorkspaceState.Compiled(
-      sourceCodeStates = newSourceCodeStates,
+      sourceCode = newSourceCodeStates,
       workspaceErrors = ArraySeq.empty,
       previousState = currentWorkspaceState
     )

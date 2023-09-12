@@ -52,7 +52,7 @@ object RalphLangClient {
   }
 
   def toSourceCodeDiagnostics(state: WorkspaceState.Configured): Iterable[PublishDiagnosticsParams] =
-    state.sourceCodeStates collect {
+    state.sourceCode collect {
       case state: SourceCodeState.Errored =>
         val diagnostics =
           state.errors map {

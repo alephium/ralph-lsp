@@ -83,7 +83,7 @@ object PresentationCompiler {
 
     WorkspaceState.UnCompiled(
       config = currentState.config,
-      sourceCodeStates = updatedFileStates
+      sourceCode = updatedFileStates
     )
   }
 

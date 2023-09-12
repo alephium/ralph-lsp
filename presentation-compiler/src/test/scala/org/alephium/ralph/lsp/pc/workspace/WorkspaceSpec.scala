@@ -1,17 +1,22 @@
 package org.alephium.ralph.lsp.pc.workspace
 
+import org.alephium.protocol.vm.MutBalancesPerLockup.error
 import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.compiler.error.FileError
 import org.alephium.ralph.lsp.pc.config.GenCommon._
-import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
+import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.GenWorkspace._
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
+import org.scalatest.OptionValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.ArraySeq
+import scala.util.Random
 
 class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
@@ -38,7 +43,7 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
             val expectedWorkspace =
               WorkspaceState.UnCompiled(
                 config = config,
-                sourceCodeStates = fileURIs.map(SourceCodeState.OnDisk).to(ArraySeq)
+                sourceCode = fileURIs.map(SourceCodeState.OnDisk).to(ArraySeq)
               )
 
             actualWorkspace.value shouldBe expectedWorkspace
@@ -70,5 +75,67 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
       }
     }
   }
+
+//  "parse" should {
+//    "return un-compiled state" when {
+//      "one source-code compilation fails" in {
+//        forAll(GenWorkspace.genAtLeastOneErrored()) {
+//          initialWorkspace =>
+//            val (erroredStates, cachedState) = // error states with error message
+//              initialWorkspace.sourceCode.partitionMap {
+//                case erroredState: SourceCodeState.ErrorState =>
+//                  Left((erroredState, FileError(Random.alphanumeric.take(10).mkString)))
+//
+//                case cached: SourceCodeState.CachedState =>
+//                  Right(cached)
+//              }
+//
+//            implicit val compiler: CompilerAccess =
+//              mock[CompilerAccess]
+//
+//            // expect the compiler to get a request to fetch files
+//            // from the configured contract path.
+//
+//            erroredStates foreach {
+//              case (erroredCode, errorMessage) =>
+//                (compiler.getSourceCode _)
+//                  .expects(erroredCode.fileURI)
+//                  .returns(Left(errorMessage)) // return an error
+//                  .once() // called only once
+//            }
+//
+//            cachedState foreach {
+//              cachedState =>
+//                (compiler.parseContracts _)
+//                  .expects(cachedState.code)
+//                  .returns(Right(Seq.empty)) // return an error
+//                  .once() // called only once
+//            }
+//
+//            val expectedSourceCode =
+//              initialWorkspace.sourceCode map {
+//                case badCode: SourceCodeState.ErrorState =>
+//                  val fileError = erroredStates.find(_._1 == badCode).value._2
+//                  badCode.updateError(fileError)
+//
+//                case goodCode: SourceCodeState.UnCompiled =>
+//                  SourceCodeState.Parsed
+//                  goodCode
+//              }
+//
+//            val expectedWorkspace =
+//              WorkspaceState.UnCompiled(
+//                config = initialWorkspace.config,
+//                sourceCode = expectedSourceCode
+//              )
+//
+//            val actualWorkspace =
+//              Workspace.parse(initialWorkspace)
+//
+//            actualWorkspace shouldBe expectedWorkspace
+//        }
+//      }
+//    }
+//  }
 
 }

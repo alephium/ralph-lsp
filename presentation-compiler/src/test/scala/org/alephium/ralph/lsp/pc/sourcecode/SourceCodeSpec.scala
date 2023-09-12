@@ -131,7 +131,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
 
             // expect error state with the origin code
             newState.fileURI shouldBe failedAccessState.fileURI
-            newState shouldBe a[SourceCodeState.FailedAccess]
+            newState shouldBe a[SourceCodeState.ErrorAccess]
         }
       }
     }
