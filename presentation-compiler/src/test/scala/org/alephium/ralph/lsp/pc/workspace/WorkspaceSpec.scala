@@ -1,10 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.protocol.vm.MutBalancesPerLockup.error
 import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.compiler.error.FileError
 import org.alephium.ralph.lsp.pc.config.GenCommon._
-import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
 import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.GenWorkspace._
 import org.scalacheck.Gen
@@ -12,11 +9,9 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
-import org.scalatest.OptionValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.ArraySeq
-import scala.util.Random
 
 class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
@@ -76,70 +71,74 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
     }
   }
 
-  //  "parse" should {
-  //    "return un-compiled state" when {
-  //      "one source-code compilation fails" in {
-  //        forAll(GenWorkspace.genUnCompiled()) {
-  //          initialWorkspace =>
-  //
-  //            val errorAccessingCode =
-  //              initialWorkspace.sourceCode.collect {
-  //                case code: SourceCodeState.ErrorAccess =>
-  //                  (code, genError().sample.get)
-  //              }
-  //
-  //            val erroredCode =
-  //              initialWorkspace.sourceCode.collect {
-  //                case code: SourceCodeState.Errored =>
-  //                  (code, genError().sample.get)
-  //              }
-  //
-  //            implicit val compiler: CompilerAccess =
-  //              mock[CompilerAccess]
-  //
-  //            // expect the compiler to get a request to fetch files
-  //            // from the configured contract path.
-  //
-  //            errorAccessingCode foreach {
-  //              case (erroredCode, errorMessage) =>
-  //                (compiler.getSourceCode _)
-  //                  .expects(erroredCode.fileURI)
-  //                  .returns(Left(errorMessage)) // return an error
-  //                  .once() // called only once
-  //            }
-  //
-  //            erroredCode foreach {
-  //              cachedState =>
-  //                (compiler.parseContracts _)
-  //                  .expects(cachedState.code)
-  //                  .returns(Right(Seq.empty)) // return an error
-  //                  .once() // called only once
-  //            }
-  //
-  //            val expectedSourceCode =
-  //              initialWorkspace.sourceCode map {
-  //                case badCode: SourceCodeState.ErrorState =>
-  //                  val fileError = erroredStates.find(_._1 == badCode).value._2
-  //                  badCode.updateError(fileError)
-  //
-  //                case goodCode: SourceCodeState.UnCompiled =>
-  //                  SourceCodeState.Parsed
-  //                  goodCode
-  //              }
-  //
-  //            val expectedWorkspace =
-  //              WorkspaceState.UnCompiled(
-  //                config = initialWorkspace.config,
-  //                sourceCode = expectedSourceCode
-  //              )
-  //
-  //            val actualWorkspace =
-  //              Workspace.parse(initialWorkspace)
-  //
-  //            actualWorkspace shouldBe expectedWorkspace
-  //        }
-  //      }
-  //    }
-  //  }
+  "parse" when {
+    "workspace is empty" should {
+      "return existing state" in {
+        forAll(GenWorkspace.genUnCompiled(Gen.const(List.empty))) {
+          initialWorkspace =>
+            implicit val compiler: CompilerAccess =
+              null // compiler does not get accessed
 
+            val actualWorkspace =
+              Workspace.parse(initialWorkspace)
+
+            // expect exising workspace
+            actualWorkspace shouldBe initialWorkspace
+
+        }
+      }
+    }
+
+    "existing code is in on-disk state" should {
+      "return failed state" when {
+        "access to source-code fails" in {
+          // generate a workspace will all files on-disk.
+          val generator =
+            GenWorkspace.genUnCompiled(Gen.nonEmptyListOf(GenSourceCode.genOnDisk()))
+
+          forAll(generator) {
+            initialWorkspace =>
+              implicit val compiler: CompilerAccess =
+                mock[CompilerAccess]
+
+              // currentState and expectedState
+              val testData =
+                initialWorkspace.sourceCode map {
+                  case currentState: SourceCodeState.OnDisk =>
+                    // for every onDisk state return an errored state by the compiler
+                    val expectedState =
+                      SourceCodeState.ErrorAccess(
+                        fileURI = currentState.fileURI,
+                        error = genError().sample.get
+                      )
+
+                    (currentState, expectedState)
+                }
+
+              // expect the compiler to get a request to read sourceCode for each OnDisk file once
+              // return an error for each call
+              testData foreach {
+                case (currentState, expectedState) =>
+                  (compiler.getSourceCode _)
+                    .expects(currentState.fileURI)
+                    .returns(Left(expectedState.error)) // return an error
+                    .once() // called only once
+              }
+
+              val actualWorkspace =
+                Workspace.parse(initialWorkspace)
+
+              // expect all error files
+              val expectedWorkspace =
+                WorkspaceState.UnCompiled(
+                  config = initialWorkspace.config,
+                  sourceCode = testData.map(_._2)
+                )
+
+              actualWorkspace shouldBe expectedWorkspace
+          }
+        }
+      }
+    }
+  }
 }

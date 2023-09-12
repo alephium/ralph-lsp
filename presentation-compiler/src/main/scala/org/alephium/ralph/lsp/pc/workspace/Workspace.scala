@@ -26,24 +26,27 @@ private[pc] object Workspace {
       .initialise(config.contractURI)
       .map(WorkspaceState.UnCompiled(config, _))
 
-  def parse(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
-    val triedParsedStates =
-      wsState.sourceCode.map(SourceCode.parse)
+  def parse(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
+    if (wsState.sourceCode.isEmpty) {
+      wsState
+    } else {
+      val triedParsedStates =
+        wsState.sourceCode.map(SourceCode.parse)
 
-    val actualParsedStates =
-      triedParsedStates.collect {
-        case state: SourceCodeState.Parsed =>
-          state
+      val actualParsedStates =
+        triedParsedStates.collect {
+          case state: SourceCodeState.Parsed =>
+            state
 
-        case code: SourceCodeState.Compiled =>
-          code.previousState
-      }
+          case code: SourceCodeState.Compiled =>
+            code.previousState
+        }
 
-    if (actualParsedStates.size != triedParsedStates.size)
-      WorkspaceState.UnCompiled(wsState.config, triedParsedStates)
-    else
-      WorkspaceState.Parsed(wsState.config, actualParsedStates)
-  }
+      if (actualParsedStates.size != triedParsedStates.size)
+        WorkspaceState.UnCompiled(wsState.config, triedParsedStates)
+      else
+        WorkspaceState.Parsed(wsState.config, actualParsedStates)
+    }
 
   def compileParsed(wsState: WorkspaceState)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
     wsState match {

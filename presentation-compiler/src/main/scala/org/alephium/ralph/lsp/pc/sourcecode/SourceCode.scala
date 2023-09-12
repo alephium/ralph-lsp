@@ -49,6 +49,15 @@ private[pc] object SourceCode {
       case parsed @ (_: SourceCodeState.Parsed | _: SourceCodeState.Compiled) =>
         parsed // code is already in parsed state, return the same state
 
+      case onDisk: SourceCodeState.OnDisk =>
+        getSourceCode(onDisk.fileURI) match {
+          case errored: SourceCodeState.ErrorState =>
+            errored
+
+          case gotCode =>
+            parse(gotCode)
+        }
+
       case error: SourceCodeState.Errored =>
         // This code is already parsed and it errored.
         // Return the same state.
