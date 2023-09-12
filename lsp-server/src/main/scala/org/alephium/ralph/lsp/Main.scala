@@ -10,15 +10,14 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     scribe.info("Starting language server")
-
-    implicit val compiler: CompilerAccess =
-      CompilerAccess.ralphc
-
     // start lsp using standard IO
     start(System.in, System.out)
   }
 
-  def start(in: InputStream, out: OutputStream)(implicit compiler: CompilerAccess): Unit = {
+  def start(in: InputStream, out: OutputStream): Unit = {
+    implicit val compiler: CompilerAccess =
+      CompilerAccess.ralphc
+
     val server = new RalphLangServer()
 
     // configure LSP server

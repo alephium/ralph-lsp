@@ -17,7 +17,8 @@ object WorkspaceState {
    *
    * Parsing and compilation is implemented only for these types.
    * Until then, the workspace remains in [[UnConfigured]] state where
-   * the user is reported errors in validating the ralphc-configuration file.
+   * the user is reported any validation errors in the ralphc-configuration file
+   * for that workspace.
    * */
   sealed trait Configured extends WorkspaceState {
     def config: WorkspaceConfig
