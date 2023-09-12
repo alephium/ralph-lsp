@@ -6,7 +6,9 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import java.net.URI
 import scala.collection.immutable.ArraySeq
 
-sealed trait WorkspaceState
+sealed trait WorkspaceState {
+  def workspaceURI: URI
+}
 
 object WorkspaceState {
 
@@ -22,6 +24,9 @@ object WorkspaceState {
 
     /** A workspace contains multiple source files */
     def sourceCode: ArraySeq[SourceCodeState]
+
+    def workspaceURI: URI =
+      config.workspaceURI
 
     /** Add or update the source file */
     def updateOrAdd(newState: SourceCodeState): ArraySeq[SourceCodeState] = {
