@@ -155,10 +155,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
             workspaceState
         }
 
-      val newStates =
-        state.workspaces :+ initialisedWorkspace
-
-      setState(state.copy(workspaces = newStates))
+      setState(state.updateWorkspace(initialisedWorkspace))
 
       initialisedWorkspace
     }
