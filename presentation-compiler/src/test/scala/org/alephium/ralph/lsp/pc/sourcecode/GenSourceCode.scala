@@ -3,6 +3,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.{CompiledContract, CompiledScript}
 import org.alephium.ralph.lsp.compiler.error.FileError
 import org.alephium.ralph.lsp.pc.config.GenCommon._
+import org.alephium.ralph.Ast.ContractWithState
 import org.scalacheck.Gen
 
 import java.net.URI
@@ -14,6 +15,9 @@ import scala.util.Random
 object GenSourceCode {
 
   def genCompiledCode(): Gen[Seq[Either[CompiledContract, CompiledScript]]] =
+    Gen.const(Seq.empty) // TODO: generate these
+
+  def genParsedContracts(): Gen[Seq[ContractWithState]] =
     Gen.const(Seq.empty) // TODO: generate these
 
   def genOnDisk(): Gen[SourceCodeState.OnDisk] =

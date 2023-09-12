@@ -26,13 +26,21 @@ private[pc] object Workspace {
       .initialise(config.contractURI)
       .map(WorkspaceState.UnCompiled(config, _))
 
+  /**
+   * Parses source-code in that is not already in parsed state.
+   *
+   * @return A new workspace state with errors if parse fails
+   *         or [[WorkspaceState.Parsed]] is returned on successful parse.
+   */
   def parse(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
     if (wsState.sourceCode.isEmpty) {
       wsState
     } else {
+      // Parse all source code. TODO: Could be concurrent.
       val triedParsedStates =
         wsState.sourceCode.map(SourceCode.parse)
 
+      // collect all parsed code
       val actualParsedStates =
         triedParsedStates.collect {
           case state: SourceCodeState.Parsed =>
@@ -42,12 +50,16 @@ private[pc] object Workspace {
             code.previousState
         }
 
+      // if there is a difference in size then there are error states in the workspace.
       if (actualParsedStates.size != triedParsedStates.size)
         WorkspaceState.UnCompiled(wsState.config, triedParsedStates)
-      else
+      else // Successfully parsed and can be moved onto compilation process.
         WorkspaceState.Parsed(wsState.config, actualParsedStates)
     }
 
+  /**
+   * Compiles source-code which is already parsed. Does not attempt to parse any code.
+   */
   def compileParsed(wsState: WorkspaceState)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
     wsState match {
       case state: WorkspaceState.UnCompiled =>

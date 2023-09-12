@@ -89,13 +89,16 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
       }
     }
 
-    "existing code is in on-disk state" should {
+    /**
+     * Test-cases handling [[org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState.OnDisk]] state.
+     */
+    "existing code is in OnDisk state" should {
+      // generate a workspace will all files on-disk.
+      val generator =
+        GenWorkspace.genUnCompiled(Gen.nonEmptyListOf(GenSourceCode.genOnDisk()))
+
       "return failed state" when {
         "access to source-code fails" in {
-          // generate a workspace will all files on-disk.
-          val generator =
-            GenWorkspace.genUnCompiled(Gen.nonEmptyListOf(GenSourceCode.genOnDisk()))
-
           forAll(generator) {
             initialWorkspace =>
               implicit val compiler: CompilerAccess =
@@ -131,6 +134,63 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
               // expect all error files
               val expectedWorkspace =
                 WorkspaceState.UnCompiled(
+                  config = initialWorkspace.config,
+                  sourceCode = testData.map(_._2)
+                )
+
+              actualWorkspace shouldBe expectedWorkspace
+          }
+        }
+      }
+
+      "return success state" when {
+        "access to source-code passes" in {
+          forAll(generator) {
+            initialWorkspace =>
+              implicit val compiler: CompilerAccess =
+                mock[CompilerAccess]
+
+              // currentState and expectedState
+              val testData =
+                initialWorkspace.sourceCode map {
+                  case currentState: SourceCodeState.OnDisk =>
+                    // for every onDisk state return a successful parsed state
+                    val expectedState =
+                      SourceCodeState.Parsed(
+                        fileURI = currentState.fileURI,
+                        code = genCode.sample.get,
+                        contracts = GenSourceCode.genParsedContracts().sample.get
+                      )
+
+                    (currentState, expectedState)
+                }
+
+              // expect the compiler to get a request to read sourceCode and then parse
+              // for each OnDisk file once.
+              testData foreach {
+                case (currentState, expectedState) =>
+                  // this happens in order
+                  inOrder(
+                    // code gets read from disk
+                    (compiler.getSourceCode _)
+                      .expects(currentState.fileURI)
+                      .returns(Right(expectedState.code)) // code read!
+                      .once(),
+
+                    // the read code gets parsed
+                    (compiler.parseContracts _)
+                      .expects(expectedState.code) // expect the read source code
+                      .returns(Right(expectedState.contracts)) // code successfully parsed!
+                      .once() // called only once
+                  )
+              }
+
+              val actualWorkspace =
+                Workspace.parse(initialWorkspace)
+
+              // expect all error files
+              val expectedWorkspace =
+                WorkspaceState.Parsed(
                   config = initialWorkspace.config,
                   sourceCode = testData.map(_._2)
                 )
