@@ -13,6 +13,38 @@ import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object RalphLangClient {
 
+  /** **********
+   * Client API
+   * *********** */
+
+  /** Report error at project level */
+  def log(error: FormattableError)(implicit client: RalphLangClient): FormattableError = {
+    client.logMessage(new MessageParams(MessageType.Error, error.message))
+    error
+  }
+
+  /** Report error at file level */
+  def publish(workspace: WorkspaceState.Configured)(implicit client: RalphLangClient): Unit =
+    toPublishDiagnostics(workspace) foreach {
+      diagnostic =>
+        // TODO: Isn't there a way in LSP to send all
+        //       diagnotics to the client in a single request?
+        client.publishDiagnostics(diagnostic)
+    }
+
+  def publish(workspaces: Iterable[WorkspaceState])(implicit client: RalphLangClient): Unit =
+    workspaces foreach {
+      case _: WorkspaceState.UnConfigured =>
+        ()
+
+      case workspace: WorkspaceState.Configured =>
+        RalphLangClient.publish(workspace)
+    }
+
+  /** **************
+   * Data converters
+   * *************** */
+
   /** Convert Ralph's FormattableError to lsp4j's Diagnostic */
   def toDiagnostic(code: Option[String],
                    error: CompilerError.FormattableError): Diagnostic = {
@@ -88,19 +120,6 @@ object RalphLangClient {
 
     new CompletionList(items)
   }
-
-  def log(error: FormattableError)(implicit client: RalphLangClient): FormattableError = {
-    client.logMessage(new MessageParams(MessageType.Error, error.message))
-    error
-  }
-
-  def publish(workspace: WorkspaceState.Configured)(implicit client: RalphLangClient): Unit =
-    toPublishDiagnostics(workspace) foreach {
-      diagnostic =>
-        // TODO: Isn't there a way in LSP to send all
-        //       diagnotics to the client in a single request?
-        client.publishDiagnostics(diagnostic)
-    }
 
 }
 

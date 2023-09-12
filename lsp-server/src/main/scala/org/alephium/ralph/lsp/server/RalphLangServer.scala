@@ -50,13 +50,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
 
       state.withClient {
         implicit client =>
-          state.workspaces foreach {
-            case _: WorkspaceState.UnConfigured =>
-              ()
-
-            case workspace: WorkspaceState.Configured =>
-              RalphLangClient.publish(workspace)
-          }
+          RalphLangClient.publish(state.workspaces)
       }
 
       state
