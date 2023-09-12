@@ -76,66 +76,70 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
     }
   }
 
-//  "parse" should {
-//    "return un-compiled state" when {
-//      "one source-code compilation fails" in {
-//        forAll(GenWorkspace.genAtLeastOneErrored()) {
-//          initialWorkspace =>
-//            val (erroredStates, cachedState) = // error states with error message
-//              initialWorkspace.sourceCode.partitionMap {
-//                case erroredState: SourceCodeState.ErrorState =>
-//                  Left((erroredState, FileError(Random.alphanumeric.take(10).mkString)))
-//
-//                case cached: SourceCodeState.CachedState =>
-//                  Right(cached)
-//              }
-//
-//            implicit val compiler: CompilerAccess =
-//              mock[CompilerAccess]
-//
-//            // expect the compiler to get a request to fetch files
-//            // from the configured contract path.
-//
-//            erroredStates foreach {
-//              case (erroredCode, errorMessage) =>
-//                (compiler.getSourceCode _)
-//                  .expects(erroredCode.fileURI)
-//                  .returns(Left(errorMessage)) // return an error
-//                  .once() // called only once
-//            }
-//
-//            cachedState foreach {
-//              cachedState =>
-//                (compiler.parseContracts _)
-//                  .expects(cachedState.code)
-//                  .returns(Right(Seq.empty)) // return an error
-//                  .once() // called only once
-//            }
-//
-//            val expectedSourceCode =
-//              initialWorkspace.sourceCode map {
-//                case badCode: SourceCodeState.ErrorState =>
-//                  val fileError = erroredStates.find(_._1 == badCode).value._2
-//                  badCode.updateError(fileError)
-//
-//                case goodCode: SourceCodeState.UnCompiled =>
-//                  SourceCodeState.Parsed
-//                  goodCode
-//              }
-//
-//            val expectedWorkspace =
-//              WorkspaceState.UnCompiled(
-//                config = initialWorkspace.config,
-//                sourceCode = expectedSourceCode
-//              )
-//
-//            val actualWorkspace =
-//              Workspace.parse(initialWorkspace)
-//
-//            actualWorkspace shouldBe expectedWorkspace
-//        }
-//      }
-//    }
-//  }
+  //  "parse" should {
+  //    "return un-compiled state" when {
+  //      "one source-code compilation fails" in {
+  //        forAll(GenWorkspace.genUnCompiled()) {
+  //          initialWorkspace =>
+  //
+  //            val errorAccessingCode =
+  //              initialWorkspace.sourceCode.collect {
+  //                case code: SourceCodeState.ErrorAccess =>
+  //                  (code, genError().sample.get)
+  //              }
+  //
+  //            val erroredCode =
+  //              initialWorkspace.sourceCode.collect {
+  //                case code: SourceCodeState.Errored =>
+  //                  (code, genError().sample.get)
+  //              }
+  //
+  //            implicit val compiler: CompilerAccess =
+  //              mock[CompilerAccess]
+  //
+  //            // expect the compiler to get a request to fetch files
+  //            // from the configured contract path.
+  //
+  //            errorAccessingCode foreach {
+  //              case (erroredCode, errorMessage) =>
+  //                (compiler.getSourceCode _)
+  //                  .expects(erroredCode.fileURI)
+  //                  .returns(Left(errorMessage)) // return an error
+  //                  .once() // called only once
+  //            }
+  //
+  //            erroredCode foreach {
+  //              cachedState =>
+  //                (compiler.parseContracts _)
+  //                  .expects(cachedState.code)
+  //                  .returns(Right(Seq.empty)) // return an error
+  //                  .once() // called only once
+  //            }
+  //
+  //            val expectedSourceCode =
+  //              initialWorkspace.sourceCode map {
+  //                case badCode: SourceCodeState.ErrorState =>
+  //                  val fileError = erroredStates.find(_._1 == badCode).value._2
+  //                  badCode.updateError(fileError)
+  //
+  //                case goodCode: SourceCodeState.UnCompiled =>
+  //                  SourceCodeState.Parsed
+  //                  goodCode
+  //              }
+  //
+  //            val expectedWorkspace =
+  //              WorkspaceState.UnCompiled(
+  //                config = initialWorkspace.config,
+  //                sourceCode = expectedSourceCode
+  //              )
+  //
+  //            val actualWorkspace =
+  //              Workspace.parse(initialWorkspace)
+  //
+  //            actualWorkspace shouldBe expectedWorkspace
+  //        }
+  //      }
+  //    }
+  //  }
 
 }

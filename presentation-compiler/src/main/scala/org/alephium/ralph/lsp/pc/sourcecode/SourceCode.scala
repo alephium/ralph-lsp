@@ -49,18 +49,23 @@ private[pc] object SourceCode {
       case parsed @ (_: SourceCodeState.Parsed | _: SourceCodeState.Compiled) =>
         parsed // code is already in parsed state, return the same state
 
-      case currentError: SourceCodeState.ErrorState =>
+      case error: SourceCodeState.Errored =>
+        // This code is already parsed and it errored.
+        // Return the same state.
+        error
+
+      case accessError: SourceCodeState.ErrorAccess =>
         // access the code from disk and parse it.
-        getSourceCode(currentError.fileURI) match {
+        getSourceCode(accessError.fileURI) match {
           case state: SourceCodeState.UnCompiled =>
             // successfully accessed the code, now parse it.
             parse(state)
 
           case failed: SourceCodeState.ErrorAccess =>
-            // Failed again: Maybe file does not exists. Return the error so the client gets reported.
-            // Do not discard existing state because it will be used for code-completion, update it with the new error.
-            currentError.updateError(failed.error)
+            // Failed again: Return the error so the client gets reported.
+            failed
         }
+
     }
 
   private def getSourceCode(fileURI: URI)(implicit compiler: CompilerAccess): SourceCodeState.AccessState =

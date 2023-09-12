@@ -136,9 +136,9 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
       }
     }
 
-    "parsed state" when {
-      "failed state returns a success" in {
-        forAll(genFailed()) {
+    "transform to source-code to parsed state" when {
+      "failed access state returns a success" in {
+        forAll(genFailedAccess()) {
           failedState =>
             implicit val compiler: CompilerAccess =
               mock[CompilerAccess]
@@ -167,6 +167,23 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
                 code = code,
                 contracts = Seq.empty
               )
+        }
+      }
+    }
+
+    "return the same state" when {
+      "source code is errored" in {
+        forAll(genErrored()) {
+          failedState =>
+            // compiler does not get accessed
+            implicit val compiler: CompilerAccess =
+              null
+
+            val newState = SourceCode.parse(failedState)
+
+            // expect error state remains unchanged.
+            // The code didn't change so will the error.
+            newState shouldBe failedState
         }
       }
     }
