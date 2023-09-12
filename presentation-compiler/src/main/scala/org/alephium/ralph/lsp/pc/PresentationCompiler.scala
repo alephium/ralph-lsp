@@ -8,6 +8,7 @@ import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceConfig, Workspac
 import org.alephium.ralphc.Config
 
 import java.net.URI
+import scala.collection.immutable.ArraySeq
 
 /**
  * Implements the public API to be used for interactive programming in Ralph.
@@ -18,12 +19,23 @@ import java.net.URI
  */
 object PresentationCompiler {
 
+  def initialiseWorkspaces(uris: ArraySeq[URI]): ArraySeq[WorkspaceState.UnConfigured] =
+    uris map {
+      uri =>
+        WorkspaceState.UnConfigured(uri)
+    }
+
+  def initialiseWorkspace(fileURI: URI,
+                          workspaces: ArraySeq[WorkspaceState])(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
+    ???
+
   /**
    * Initial workspaces collects paths to all OnDisk ralph files.
    *
    * @param config compiler configuration file.
    * @return
    */
+
   def initialiseWorkspace(config: WorkspaceConfig)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
     Workspace.initialise(config)
 
@@ -37,7 +49,7 @@ object PresentationCompiler {
    * @param compiler        Target ralph compiler
    * @return new workspace state
    */
-  def parsedAndCompileWorkspace(state: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState =
+  def parsedAndCompileWorkspace(state: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
     Workspace.parseAndCompile(state)
 
   /**
@@ -93,12 +105,12 @@ object PresentationCompiler {
   def complete(line: Int,
                character: Int,
                uri: URI,
-               state: WorkspaceState): Array[Suggestion] =
+               workspace: WorkspaceState): Array[Suggestion] =
     CodeCompleter.complete(
       line = line,
       character = character,
       uri = uri,
-      workspace = state
+      workspace = workspace
     )
 
 }

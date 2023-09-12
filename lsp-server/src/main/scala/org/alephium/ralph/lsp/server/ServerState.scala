@@ -7,7 +7,19 @@ import org.eclipse.lsp4j.jsonrpc.messages.{ResponseError, ResponseErrorCode}
 import scala.collection.immutable.ArraySeq
 
 protected case class ServerState(client: Option[RalphLangClient] = None,
-                                 workspaceStates: Option[ArraySeq[WorkspaceState]] = None) {
+                                 workspaces: ArraySeq[WorkspaceState] = ArraySeq.empty) {
+
+  def updateWorkspace(newState: WorkspaceState.Configured): ServerState = {
+    val index = workspaces.indexWhere(_.workspaceURI == newState.workspaceURI)
+
+    val newStates =
+      if (index >= 0)
+        workspaces.updated(index, newState)
+      else
+        workspaces appended newState
+
+    this.copy(workspaces = newStates)
+  }
 
   def withClient[T](f: RalphLangClient => T): T =
     client match {

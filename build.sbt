@@ -42,6 +42,7 @@ lazy val `lsp-server` =
           "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % Version.lsp4j,
           "org.scalatest" %% "scalatest" % "3.2.16" % Test,
           "org.scalatestplus" %% "scalacheck-1-17" % "3.2.16.0" % Test,
+          "org.scalamock" %% "scalamock" % Version.scalaMock % Test
         )
     )
 

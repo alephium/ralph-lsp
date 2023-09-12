@@ -5,15 +5,11 @@ import org.alephium.ralph.lsp.server.{RalphLangClient, RalphLangServer}
 import org.eclipse.lsp4j.jsonrpc.Launcher
 
 import java.io.{InputStream, OutputStream}
-import scala.concurrent.ExecutionContext
 
 object Main {
 
   def main(args: Array[String]): Unit = {
     scribe.info("Starting language server")
-
-    implicit val ec: ExecutionContext =
-      ExecutionContext.Implicits.global
 
     implicit val compiler: CompilerAccess =
       CompilerAccess.ralphc
@@ -22,8 +18,7 @@ object Main {
     start(System.in, System.out)
   }
 
-  def start(in: InputStream, out: OutputStream)(implicit ec: ExecutionContext,
-                                                compiler: CompilerAccess): Unit = {
+  def start(in: InputStream, out: OutputStream)(implicit compiler: CompilerAccess): Unit = {
     val server = new RalphLangServer()
 
     // configure LSP server

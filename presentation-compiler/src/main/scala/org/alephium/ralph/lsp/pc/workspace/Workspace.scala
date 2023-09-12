@@ -84,6 +84,12 @@ private[pc] object Workspace {
         )
     }
 
+  def parseAndCompile(wsState: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
+//    val parsed = Workspace.parse(wsState)
+//    Workspace.compileParsed(parsed)
+    ???
+  }
+
   def parseAndCompile(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
     val parsed = Workspace.parse(wsState)
     Workspace.compileParsed(parsed)
