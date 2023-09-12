@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.compiler.error.WorkspaceError
 import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceConfig, WorkspaceState}
@@ -25,9 +26,23 @@ object PresentationCompiler {
         WorkspaceState.UnConfigured(uri)
     }
 
-  def initialiseWorkspace(fileURI: URI,
-                          workspaces: ArraySeq[WorkspaceState])(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
-    ???
+  def getWorkspace(fileURI: URI,
+                   workspaces: ArraySeq[WorkspaceState]): Either[CompilerError.FormattableError, WorkspaceState.Configured] = {
+    val targetWorkspace =
+      workspaces.collectFirst {
+        case workspace: WorkspaceState.Configured if workspace.sourceCode.exists(_.fileURI == fileURI) =>
+          workspace
+      }
+
+    targetWorkspace match {
+      case Some(workspace) =>
+        Right(workspace)
+
+      case None =>
+        // TODO: All error messages should be typed
+        Left(WorkspaceError(new Exception(s"Workspace not initialised for file $fileURI")))
+    }
+  }
 
   /**
    * Initial workspaces collects paths to all OnDisk ralph files.
