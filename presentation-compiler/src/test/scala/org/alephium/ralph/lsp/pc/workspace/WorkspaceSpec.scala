@@ -104,8 +104,7 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
               implicit val compiler: CompilerAccess =
                 mock[CompilerAccess]
 
-              // currentState and expectedState
-              val testData =
+              val expectedSourceCode =
                 initialWorkspace.sourceCode map {
                   case currentState: SourceCodeState.OnDisk =>
                     // for every onDisk state return an errored state by the compiler
@@ -115,18 +114,15 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
                         error = genError().sample.get
                       )
 
-                    (currentState, expectedState)
-                }
+                    // expect the compiler to get a request to read sourceCode for each OnDisk file once
+                    // return an error for each call
+                    (compiler.getSourceCode _)
+                      .expects(currentState.fileURI)
+                      .returns(Left(expectedState.error)) // return an error
+                      .once() // called only once
 
-              // expect the compiler to get a request to read sourceCode for each OnDisk file once
-              // return an error for each call
-              testData foreach {
-                case (currentState, expectedState) =>
-                  (compiler.getSourceCode _)
-                    .expects(currentState.fileURI)
-                    .returns(Left(expectedState.error)) // return an error
-                    .once() // called only once
-              }
+                    expectedState
+                }
 
               val actualWorkspace =
                 Workspace.parse(initialWorkspace)
@@ -135,7 +131,7 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
               val expectedWorkspace =
                 WorkspaceState.UnCompiled(
                   config = initialWorkspace.config,
-                  sourceCode = testData.map(_._2)
+                  sourceCode = expectedSourceCode
                 )
 
               actualWorkspace shouldBe expectedWorkspace
@@ -151,7 +147,7 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
                 mock[CompilerAccess]
 
               // currentState and expectedState
-              val testData =
+              val expectedSourceCode =
                 initialWorkspace.sourceCode map {
                   case currentState: SourceCodeState.OnDisk =>
                     // for every onDisk state return a successful parsed state
@@ -162,28 +158,25 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
                         contracts = GenSourceCode.genParsedContracts().sample.get
                       )
 
-                    (currentState, expectedState)
+                    // expect the compiler to get a request to read sourceCode and then parse
+                    // for each OnDisk file once.
+                    // this happens in order
+                    inOrder(
+                      // initially code gets read from disk
+                      (compiler.getSourceCode _)
+                        .expects(currentState.fileURI)
+                        .returns(Right(expectedState.code)) // code read!
+                        .once(),
+
+                      // then the read code gets parsed
+                      (compiler.parseContracts _)
+                        .expects(expectedState.code) // expect the read source code
+                        .returns(Right(expectedState.contracts)) // code successfully parsed!
+                        .once() // called only once
+                    )
+
+                    expectedState
                 }
-
-              // expect the compiler to get a request to read sourceCode and then parse
-              // for each OnDisk file once.
-              testData foreach {
-                case (currentState, expectedState) =>
-                  // this happens in order
-                  inOrder(
-                    // code gets read from disk
-                    (compiler.getSourceCode _)
-                      .expects(currentState.fileURI)
-                      .returns(Right(expectedState.code)) // code read!
-                      .once(),
-
-                    // the read code gets parsed
-                    (compiler.parseContracts _)
-                      .expects(expectedState.code) // expect the read source code
-                      .returns(Right(expectedState.contracts)) // code successfully parsed!
-                      .once() // called only once
-                  )
-              }
 
               val actualWorkspace =
                 Workspace.parse(initialWorkspace)
@@ -192,7 +185,7 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
               val expectedWorkspace =
                 WorkspaceState.Parsed(
                   config = initialWorkspace.config,
-                  sourceCode = testData.map(_._2)
+                  sourceCode = expectedSourceCode
                 )
 
               actualWorkspace shouldBe expectedWorkspace
