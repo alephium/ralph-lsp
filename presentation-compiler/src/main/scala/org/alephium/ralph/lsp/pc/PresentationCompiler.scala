@@ -86,7 +86,7 @@ object PresentationCompiler {
       currentState.updateOrAdd(newSourceCodeState)
 
     WorkspaceState.UnCompiled(
-      config = currentState.config,
+      build = currentState.build,
       sourceCode = updatedFileStates
     )
   }

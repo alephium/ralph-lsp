@@ -17,14 +17,14 @@ import scala.util.{Failure, Success}
  */
 private[pc] object Workspace {
 
-  def configure(state: WorkspaceState.UnConfigured): Either[FormattableError, WorkspaceConfig] =
-    WorkspaceConfig.readWorkspaceConfig(state.workspaceURI) match {
+  def configure(state: WorkspaceState.UnConfigured): Either[FormattableError, WorkspaceBuild] =
+    WorkspaceBuild.readBuild(state.workspaceURI) match {
       case Failure(exception) =>
         scribe.error(exception)
         Left(WorkspaceError(exception.getMessage))
 
-      case Success(config) =>
-        Right(config)
+      case Success(build) =>
+        Right(build)
     }
 
   def initialise(state: WorkspaceState.UnConfigured)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
@@ -36,10 +36,10 @@ private[pc] object Workspace {
    *
    * @return URIs of all source-code files returned by the compiler.
    * */
-  def initialise(config: WorkspaceConfig)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
+  def initialise(build: WorkspaceBuild)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
     SourceCode
-      .initialise(config.contractURI)
-      .map(WorkspaceState.UnCompiled(config, _))
+      .initialise(build.contractURI)
+      .map(WorkspaceState.UnCompiled(build, _))
 
   /**
    * Parses source-code in that is not already in parsed state.
@@ -67,9 +67,9 @@ private[pc] object Workspace {
 
       // if there is a difference in size then there are error states in the workspace.
       if (actualParsedStates.size != triedParsedStates.size)
-        WorkspaceState.UnCompiled(wsState.config, triedParsedStates)
+        WorkspaceState.UnCompiled(wsState.build, triedParsedStates)
       else // Successfully parsed and can be moved onto compilation process.
-        WorkspaceState.Parsed(wsState.config, actualParsedStates)
+        WorkspaceState.Parsed(wsState.build, actualParsedStates)
     }
 
   /** Triggers parse and compile in sequence for a configured workspace. */
@@ -107,7 +107,7 @@ private[pc] object Workspace {
         val compilationResult =
           compiler.compileContracts(
             contracts = contractsToCompile,
-            options = state.config.ralphcConfig.compilerOptions
+            options = state.build.config.compilerOptions
           )
 
         toWorkspaceState(

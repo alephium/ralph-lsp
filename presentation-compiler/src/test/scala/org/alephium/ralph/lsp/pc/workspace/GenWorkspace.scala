@@ -45,14 +45,14 @@ object GenWorkspace {
       )
   }
 
-  def genWorkspaceConfig(): Gen[WorkspaceConfig] =
+  def genWorkspaceBuild(): Gen[WorkspaceBuild] =
     for {
       workspaceURI <- genFolder()
       ralphcConfig <- genRalphcConfig(workspaceURI.toUri)
     } yield
-      WorkspaceConfig(
+      WorkspaceBuild(
         workspaceURI = workspaceURI.toUri,
-        ralphcConfig = ralphcConfig
+        config = ralphcConfig
       )
 
   def genUnConfigured(): Gen[WorkspaceState.UnConfigured] =
@@ -62,21 +62,21 @@ object GenWorkspace {
 
   def genUnCompiled(sourceCode: Gen[List[SourceCodeState]] = Gen.listOf(GenSourceCode.genSourceCode())): Gen[WorkspaceState.UnCompiled] =
     for {
-      config <- genWorkspaceConfig()
+      build <- genWorkspaceBuild()
       sourceCode <- sourceCode
     } yield
       WorkspaceState.UnCompiled(
-        config = config,
+        build = build,
         sourceCode = sourceCode.to(ArraySeq)
       )
 
   def genParsed(sourceCode: Gen[List[SourceCodeState.Parsed]] = Gen.listOf(GenSourceCode.genParsed())): Gen[WorkspaceState.Parsed] =
     for {
-      config <- genWorkspaceConfig()
+      config <- genWorkspaceBuild()
       sourceCode <- sourceCode
     } yield
       WorkspaceState.Parsed(
-        config = config,
+        build = config,
         sourceCode = sourceCode.to(ArraySeq)
       )
 

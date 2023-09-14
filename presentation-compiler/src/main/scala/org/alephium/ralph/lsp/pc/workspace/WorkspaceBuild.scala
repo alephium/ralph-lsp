@@ -12,10 +12,10 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
 import scala.util.{Failure, Try}
 
-object WorkspaceConfig {
+object WorkspaceBuild {
 
-  /** The workspace config file name */
-  val FILE_NAME = "ralphc-config.json"
+  /** Build file of a workspace */
+  val FILE_NAME = "build.ralph"
 
   /** Default config */
   val defaultRalphcConfig =
@@ -28,14 +28,14 @@ object WorkspaceConfig {
   // TODO: Possibly emit a sample config file in the error message so it can be copied
   //       or add the ability to generate one.
   def fileNotFoundException(): FileNotFoundException =
-    new FileNotFoundException(s"Please create a root '${WorkspaceConfig.FILE_NAME}' file.")
+    new FileNotFoundException(s"Please create a root '${WorkspaceBuild.FILE_NAME}' file.")
 
   /** Reads [[Config]] from the workspace */
-  def readRalphcConfig(workspaceURI: URI): Try[Config] = {
+  def parseConfig(workspaceURI: URI): Try[Config] = {
     def readConfigFile(uri: URI) =
       for {
         json <- FileIO.readAllLines(uri)
-        config <- WorkspaceConfig.readConfig(json)
+        config <- WorkspaceBuild.readConfig(json)
       } yield config
 
     val filePath =
@@ -53,12 +53,12 @@ object WorkspaceConfig {
   def readConfig(json: String): Try[Config] =
     Try(read[Config](json))
 
-  def readWorkspaceConfig(workspaceURI: URI): Try[WorkspaceConfig] =
-    readRalphcConfig(workspaceURI) map {
+  def readBuild(workspaceURI: URI): Try[WorkspaceBuild] =
+    parseConfig(workspaceURI) map {
       ralphcConfig =>
-        WorkspaceConfig(
+        WorkspaceBuild(
           workspaceURI = workspaceURI,
-          ralphcConfig = ralphcConfig
+          config = ralphcConfig
         )
     }
 
@@ -85,11 +85,11 @@ object WorkspaceConfig {
 
 }
 
-final case class WorkspaceConfig(workspaceURI: URI,
-                                 ralphcConfig: Config) {
+final case class WorkspaceBuild(workspaceURI: URI,
+                                config: Config) {
   def contractURI: URI =
-    ralphcConfig.contractPath.toUri
+    config.contractPath.toUri
 
   def artifactURI: URI =
-    ralphcConfig.artifactPath.toUri
+    config.artifactPath.toUri
 }

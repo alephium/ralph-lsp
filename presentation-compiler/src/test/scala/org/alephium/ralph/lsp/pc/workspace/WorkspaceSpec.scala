@@ -18,26 +18,26 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
   "initialise" when {
     "all files are successfully read" should {
       "start workspace in un-compiled state" in {
-        forAll(genWorkspaceConfig(), Gen.listOf(genFileURI())) {
-          case (config, fileURIs) =>
+        forAll(genWorkspaceBuild(), Gen.listOf(genFileURI())) {
+          case (build, fileURIs) =>
             implicit val compiler: CompilerAccess =
               mock[CompilerAccess]
 
             // expect the compiler to get a request to fetch files
             // from the configured contract path.
             (compiler.getSourceFiles _)
-              .expects(config.contractURI)
+              .expects(build.contractURI)
               .returns(Right(fileURIs)) // return files successfully fetched
               .once() // called only once
 
             // Initialise a workspace for the config
             val actualWorkspace =
-              Workspace.initialise(config)
+              Workspace.initialise(build)
 
             // All files are started in OnDisk state.
             val expectedWorkspace =
               WorkspaceState.UnCompiled(
-                config = config,
+                build = build,
                 sourceCode = fileURIs.map(SourceCodeState.OnDisk).to(ArraySeq)
               )
 
@@ -48,21 +48,21 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
 
     "on failure" should {
       "report an error" in {
-        forAll(genWorkspaceConfig(), genError()) {
-          case (config, error) =>
+        forAll(genWorkspaceBuild(), genError()) {
+          case (build, error) =>
             implicit val compiler: CompilerAccess =
               mock[CompilerAccess]
 
             // expect the compiler to get a request to fetch files
             // from the configured contract path.
             (compiler.getSourceFiles _)
-              .expects(config.contractURI)
+              .expects(build.contractURI)
               .returns(Left(error)) // return an error
               .once() // called only once
 
             // Initialise a workspace for the config
             val actualWorkspace =
-              Workspace.initialise(config)
+              Workspace.initialise(build)
 
             // No initialisation occurs and a failure is returned.
             actualWorkspace.left.value shouldBe error
@@ -130,7 +130,7 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
               // expect all error files
               val expectedWorkspace =
                 WorkspaceState.UnCompiled(
-                  config = initialWorkspace.config,
+                  build = initialWorkspace.build,
                   sourceCode = expectedSourceCode
                 )
 
@@ -184,7 +184,7 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
               // expect all error files
               val expectedWorkspace =
                 WorkspaceState.Parsed(
-                  config = initialWorkspace.config,
+                  build = initialWorkspace.build,
                   sourceCode = expectedSourceCode
                 )
 

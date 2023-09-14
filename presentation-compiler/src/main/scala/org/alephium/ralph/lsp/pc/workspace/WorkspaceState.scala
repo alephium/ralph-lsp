@@ -21,13 +21,13 @@ object WorkspaceState {
    * for that workspace.
    * */
   sealed trait Configured extends WorkspaceState {
-    def config: WorkspaceConfig
+    def build: WorkspaceBuild
 
     /** A workspace contains multiple source files */
     def sourceCode: ArraySeq[SourceCodeState]
 
     def workspaceURI: URI =
-      config.workspaceURI
+      build.workspaceURI
 
     /** Add or update the source file */
     def updateOrAdd(newState: SourceCodeState): ArraySeq[SourceCodeState] = {
@@ -43,11 +43,11 @@ object WorkspaceState {
   case class UnConfigured(workspaceURI: URI) extends WorkspaceState
 
   /** State: Source files are un-compiled or partially-compiled */
-  case class UnCompiled(config: WorkspaceConfig,
+  case class UnCompiled(build: WorkspaceBuild,
                         sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.Configured
 
   /** State: All source files parsed, therefore can be compiled */
-  case class Parsed(config: WorkspaceConfig,
+  case class Parsed(build: WorkspaceBuild,
                     sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.Configured
 
   /**
@@ -60,8 +60,8 @@ object WorkspaceState {
   case class Compiled(sourceCode: ArraySeq[SourceCodeState],
                       workspaceErrors: ArraySeq[FormattableError],
                       parsed: WorkspaceState.Parsed) extends WorkspaceState.Configured {
-    def config: WorkspaceConfig =
-      parsed.config
+    def build: WorkspaceBuild =
+      parsed.build
   }
 
 }

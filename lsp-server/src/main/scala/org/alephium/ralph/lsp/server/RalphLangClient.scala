@@ -85,7 +85,7 @@ object RalphLangClient {
           Seq.empty
       }
 
-    new PublishDiagnosticsParams(workspace.config.workspaceURI.toString, workspaceDiagnostics.asJava)
+    new PublishDiagnosticsParams(workspace.build.workspaceURI.toString, workspaceDiagnostics.asJava)
   }
 
   def toSourceCodeDiagnostics(state: WorkspaceState.Configured): Iterable[PublishDiagnosticsParams] =

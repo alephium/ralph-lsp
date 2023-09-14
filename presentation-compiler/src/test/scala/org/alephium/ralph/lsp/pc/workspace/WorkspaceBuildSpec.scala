@@ -6,11 +6,11 @@ import org.scalatest.TryValues._
 
 import java.nio.file.Files
 
-class WorkspaceConfigSpec extends AnyWordSpec with Matchers {
+class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
 
-  "read config" should {
-    "parse workspace config" in {
-      val config =
+  "readConfig" should {
+    "parse workspace build file" in {
+      val build_ralph =
         """
           |{
           |  "compilerOptions": {
@@ -26,38 +26,38 @@ class WorkspaceConfigSpec extends AnyWordSpec with Matchers {
           |}
           |""".stripMargin
 
-      val expected = WorkspaceConfig.defaultRalphcConfig
-      val actual = WorkspaceConfig.readConfig(config).success.value
+      val expected = WorkspaceBuild.defaultRalphcConfig
+      val actual = WorkspaceBuild.readConfig(build_ralph).success.value
 
       actual shouldBe expected
     }
   }
 
-  "readWorkspaceConfig" should {
-    "report missing config file" in {
-      val dir = Files.createTempDirectory("no_config").toUri
+  "readBuild" should {
+    "report missing build file" in {
+      val dir = Files.createTempDirectory("no_build_file").toUri
 
-      val actual = WorkspaceConfig.readWorkspaceConfig(dir).failed.get.getMessage
-      val expected = WorkspaceConfig.fileNotFoundException().getMessage
+      val actual = WorkspaceBuild.readBuild(dir).failed.get.getMessage
+      val expected = WorkspaceBuild.fileNotFoundException().getMessage
 
       actual shouldBe expected
     }
 
-    "persist & read valid config file" in {
+    "persist & read valid build file" in {
       val workspacePath = Files.createTempDirectory("workspace_URI")
-      val config = WorkspaceConfig.defaultRalphcConfig
+      val config = WorkspaceBuild.defaultRalphcConfig
 
       // Persist the default config for a workspace
-      val expectedFilePath = workspacePath.resolve(WorkspaceConfig.FILE_NAME)
-      val actualFilePath = WorkspaceConfig.persistConfig(workspacePath, config).success.value
+      val expectedFilePath = workspacePath.resolve(WorkspaceBuild.FILE_NAME)
+      val actualFilePath = WorkspaceBuild.persistConfig(workspacePath, config).success.value
       actualFilePath shouldBe expectedFilePath
 
       // Read the persisted config file
-      val readConfig = WorkspaceConfig.readWorkspaceConfig(workspacePath.toUri).success.value
+      val readConfig = WorkspaceBuild.readBuild(workspacePath.toUri).success.value
       readConfig shouldBe
-        WorkspaceConfig(
+        WorkspaceBuild(
           workspaceURI = workspacePath.toUri,
-          ralphcConfig = config
+          config = config
         )
     }
   }
