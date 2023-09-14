@@ -41,7 +41,7 @@ object PresentationCompiler {
    * @param compiler        Target ralph compiler
    * @return new workspace state
    */
-  def parsedAndCompileWorkspace(state: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
+  def parseAndCompileWorkspace(state: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
     Workspace.parseAndCompile(state)
 
   /**

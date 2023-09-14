@@ -2,8 +2,8 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.{CompiledContract, CompiledScript}
 import org.alephium.ralph.lsp.compiler.error.FileError
-import org.alephium.ralph.lsp.pc.config.GenCommon._
 import org.alephium.ralph.Ast.ContractWithState
+import org.alephium.ralph.lsp.GenCommon._
 import org.scalacheck.Gen
 
 import java.net.URI

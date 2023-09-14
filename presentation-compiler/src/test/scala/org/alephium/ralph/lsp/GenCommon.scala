@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.config
+package org.alephium.ralph.lsp
 
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.error.CompilerError.FormattableError

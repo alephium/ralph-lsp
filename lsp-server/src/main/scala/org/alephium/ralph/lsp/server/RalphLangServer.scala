@@ -140,7 +140,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
       setState(state.updateWorkspace(codeChangedState))
 
       val compiledState =
-        PresentationCompiler.parsedAndCompileWorkspace(codeChangedState)
+        PresentationCompiler.parseAndCompileWorkspace(codeChangedState)
 
       setState(state.updateWorkspace(compiledState))
     }

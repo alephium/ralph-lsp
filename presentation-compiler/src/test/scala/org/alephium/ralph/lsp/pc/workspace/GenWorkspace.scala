@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.CompilerOptions
-import org.alephium.ralph.lsp.pc.config.GenCommon._
 import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
+import org.alephium.ralph.lsp.GenCommon._
 import org.alephium.ralphc.Config
 import org.scalacheck.{Arbitrary, Gen}
 
