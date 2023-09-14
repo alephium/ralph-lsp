@@ -32,7 +32,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
       // expect server capabilities returned in response
       initializeResult shouldBe new InitializeResult(RalphLangServer.serverCapabilities())
 
-      // the server must store the client and set the workspace in un-configured state.
+      // the server must store the client and set the workspace in initialised state.
       server.getState() shouldBe
         ServerState(
           client = Some(client),

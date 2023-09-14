@@ -20,7 +20,7 @@ private[pc] object Workspace {
     initialise(state.build)
 
   /**
-   * Initialise a workspace for the given workspace config.
+   * Initialise a workspace for the given build file.
    *
    * @return URIs of all source-code files returned by the compiler.
    * */

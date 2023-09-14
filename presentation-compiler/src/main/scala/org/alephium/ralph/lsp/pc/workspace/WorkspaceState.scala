@@ -17,7 +17,7 @@ object WorkspaceState {
    *
    * Parsing and compilation is implemented only for these types.
    * Until then, the workspace remains in [[Initialised]] or [[Built]] state where
-   * the user is reported any validation errors in the ralphc-configuration file
+   * the user is reported any validation errors in the build file
    * for that workspace.
    * */
   sealed trait Configured extends WorkspaceState {

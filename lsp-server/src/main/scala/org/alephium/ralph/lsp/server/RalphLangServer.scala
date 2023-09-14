@@ -241,48 +241,50 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     }
 
   /**
-   *
-   * @param fileURI
-   * @return
+   * @return Existing workspace or initialises a new one from the configured build file.
+   *         Or else reports any workspace issues.
    */
   def getOrInitWorkspace(): WorkspaceState.Configured =
     this.synchronized { // TODO: Remove synchronized. Use async.
-      val initialisedWorkspace =
-        state.workspace match {
-          case Some(workspace: WorkspaceState.Configured) =>
-            workspace
+      state.workspace match {
+        case Some(workspace: WorkspaceState.Configured) =>
+          // Workspace is fully configured. Return it!
+          workspace
 
-          case Some(_: WorkspaceState.Initialised) =>
-            state.withClient {
-              implicit client =>
-                throw RalphLangClient.log(WorkspaceError(WorkspaceBuild.buildNotFound()))
-            }
+        case Some(_: WorkspaceState.Initialised) =>
+          // Build file is not supplied. Report missing build file.
+          state.withClient {
+            implicit client =>
+              throw RalphLangClient.log(WorkspaceError(WorkspaceBuild.buildNotFound()))
+          }
 
-          case Some(workspace: WorkspaceState.Built) =>
-            PresentationCompiler.initialiseWorkspace(workspace) match {
-              case Left(error) =>
-                state.withClient {
-                  implicit client =>
-                    throw RalphLangClient.log(error)
-                }
+        case Some(workspace: WorkspaceState.Built) =>
+          // Build is configured. Initialise the workspace!
+          PresentationCompiler.initialiseWorkspace(workspace) match {
+            case Left(error) =>
+              // Initialisation failed.
+              state.withClient {
+                implicit client =>
+                  throw RalphLangClient.log(error)
+              }
 
-              case Right(workspace) =>
-                workspace
-            }
+            case Right(workspace) =>
+              // Set the new state.
+              setState(state.updateWorkspace(workspace))
+              workspace
+          }
 
-          case None =>
-            state.withClient {
-              implicit client =>
-                throw
-                  RalphLangClient
-                    .log(ResponseError.WorkspaceFolderNotSupplied)
-                    .toException
-            }
-        }
-
-      setState(state.updateWorkspace(initialisedWorkspace))
-
-      initialisedWorkspace
+        case None =>
+          // Workspace folder is not defined.
+          // This is not expected to occur since `initialized` is always invoked first.
+          state.withClient {
+            implicit client =>
+              throw
+                RalphLangClient
+                  .log(ResponseError.WorkspaceFolderNotSupplied)
+                  .toException
+          }
+      }
     }
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
