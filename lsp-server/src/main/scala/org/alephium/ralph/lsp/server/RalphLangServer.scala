@@ -81,9 +81,9 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
 
         val workspaceURI =
           if (workspaceFolders.isEmpty)
-            throw ResponseError.WorkspaceFolderNotSupplied.toException
+            throw ResponseError.WorkspaceFolderNotSupplied.toResponseErrorException
           else if (workspaceFolders.size > 1)
-            throw ResponseError.MultiRootWorkspaceFoldersNotSupported.toException
+            throw ResponseError.MultiRootWorkspaceFoldersNotSupported.toResponseErrorException
           else
             new URI(workspaceFolders.head.getUri)
 
@@ -282,7 +282,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
               throw
                 RalphLangClient
                   .log(ResponseError.WorkspaceFolderNotSupplied)
-                  .toException
+                  .toResponseErrorException
           }
       }
     }

@@ -3,19 +3,29 @@ package org.alephium.ralph.lsp.server
 import org.eclipse.lsp4j.jsonrpc.messages.{ResponseErrorCode, ResponseError => LSP4JResponseError}
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 
-sealed trait ResponseError extends LSP4JResponseError {
-  def toException =
+sealed abstract class ResponseError(errorCode: ResponseErrorCode,
+                                    message: String) extends LSP4JResponseError(errorCode, message, null) {
+  def toResponseErrorException =
     new ResponseErrorException(this)
 }
 
 object ResponseError {
   case object ClientNotConfigured extends
-    LSP4JResponseError(ResponseErrorCode.ServerNotInitialized, "Client not configured", null) with ResponseError
+    ResponseError(
+      errorCode = ResponseErrorCode.ServerNotInitialized,
+      message = "Client not configured"
+    )
 
   case object WorkspaceFolderNotSupplied extends
-    LSP4JResponseError(ResponseErrorCode.InvalidParams, "Root workspace folder not supplied", null) with ResponseError
+    ResponseError(
+      errorCode = ResponseErrorCode.InvalidParams,
+      message = "Root workspace folder not supplied"
+    )
 
   case object MultiRootWorkspaceFoldersNotSupported extends
-    LSP4JResponseError(ResponseErrorCode.InvalidParams, "Multiple root workspace folders are not supported", null) with ResponseError
+    ResponseError(
+      errorCode = ResponseErrorCode.InvalidParams,
+      message = "Multiple root workspace folders are not supported"
+    )
 
 }

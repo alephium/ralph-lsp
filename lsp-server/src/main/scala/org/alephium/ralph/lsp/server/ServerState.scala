@@ -11,7 +11,7 @@ protected case class ServerState(client: Option[RalphLangClient] = None,
         f(client)
 
       case None =>
-        throw ResponseError.ClientNotConfigured.toException
+        throw ResponseError.ClientNotConfigured.toResponseErrorException
     }
 
   def updateWorkspace(workspace: WorkspaceState): ServerState =

@@ -93,7 +93,7 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
      * Test-cases handling [[org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState.OnDisk]] state.
      */
     "existing code is in OnDisk state" should {
-      // generate a workspace will all files on-disk.
+      // generate a workspace with all files on-disk.
       val generator =
         GenWorkspace.genUnCompiled(Gen.nonEmptyListOf(GenSourceCode.genOnDisk()))
 
