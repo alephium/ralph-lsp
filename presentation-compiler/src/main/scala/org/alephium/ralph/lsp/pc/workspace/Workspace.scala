@@ -35,13 +35,13 @@ private[pc] object Workspace {
    * @return A new workspace state with errors if parse fails
    *         or [[WorkspaceState.Parsed]] is returned on successful parse.
    */
-  def parse(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
-    if (wsState.sourceCode.isEmpty) {
-      wsState
+  def parse(workspace: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
+    if (workspace.sourceCode.isEmpty) {
+      workspace
     } else {
       // Parse all source code. TODO: Could be concurrent.
       val triedParsedStates =
-        wsState.sourceCode.map(SourceCode.parse)
+        workspace.sourceCode.map(SourceCode.parse)
 
       // collect all parsed code
       val actualParsedStates =
@@ -55,9 +55,9 @@ private[pc] object Workspace {
 
       // if there is a difference in size then there are error states in the workspace.
       if (actualParsedStates.size != triedParsedStates.size)
-        WorkspaceState.UnCompiled(wsState.build, triedParsedStates)
+        WorkspaceState.UnCompiled(workspace.build, triedParsedStates)
       else // Successfully parsed and can be moved onto compilation process.
-        WorkspaceState.Parsed(wsState.build, actualParsedStates)
+        WorkspaceState.Parsed(workspace.build, actualParsedStates)
     }
 
   /** Triggers parse and compile in sequence for a configured workspace. */
@@ -80,8 +80,8 @@ private[pc] object Workspace {
   /**
    * Compiles source-code which is already parsed. Does not attempt to parse any code.
    */
-  def compileParsed(wsState: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
-    wsState match {
+  def compileParsed(workspace: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
+    workspace match {
       case state: WorkspaceState.UnCompiled =>
         state
 

@@ -24,9 +24,16 @@ import scala.util.{Failure, Success, Using}
 private object RalphCompilerAccess extends CompilerAccess {
 
   def getSourceFiles(workspaceURI: URI): Either[FormattableError, Seq[URI]] =
-    try
-      Right(RalphC.getSourceFiles(Paths.get(workspaceURI), s".${CompilerAccess.RALPH_FILE_EXTENSION}").map(_.toUri))
-    catch catchAllThrows
+    try {
+      val uris =
+        RalphC
+          .getSourceFiles(
+            path = Paths.get(workspaceURI),
+            ext = s".${CompilerAccess.RALPH_FILE_EXTENSION}"
+          ).map(_.toUri)
+
+      Right(uris)
+    } catch catchAllThrows
 
   override def getSourceCode(fileURI: URI): Either[FormattableError, String] =
     Using(Source.fromFile(fileURI))(_.mkString) match {

@@ -33,21 +33,19 @@ object PresentationCompiler {
    * @return
    */
 
-  def initialiseWorkspace(state: WorkspaceState.Built)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
-    Workspace.initialise(state)
+  def initialiseWorkspace(workspace: WorkspaceState.Built)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
+    Workspace.initialise(workspace)
 
   /**
    * Parses and compiles the workspaces.
    *
    * Note: Parsing is executed lazily. If the code is already parsed, it will not be re-parsed and only be re-compiled.
    *
-   * @param state           current workspace state
-   * @param compilerOptions Ralph core compiler configuration
-   * @param compiler        Target ralph compiler
-   * @return new workspace state
+   * @param workspace Current workspace state
+   * @return New workspace state
    */
-  def parseAndCompileWorkspace(state: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
-    Workspace.parseAndCompile(state)
+  def parseAndCompileWorkspace(workspace: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
+    Workspace.parseAndCompile(workspace)
 
   /**
    * Compile the code in preparation for deployment. The final step in compilation.

@@ -32,14 +32,14 @@ object WorkspaceBuild {
   // TODO: Possibly emit a sample config file in the error message so it can be copied
   //       or add the ability to generate one.
   def buildNotFound(): String =
-    s"Please create a root '${WorkspaceBuild.FILE_NAME}' file."
+    s"Please create a root '$FILE_NAME' file."
 
   /** Reads [[Config]] from the workspace */
   def parseConfig(workspaceURI: URI): Try[Config] = {
     def readConfigFile(uri: URI) =
       for {
         json <- FileIO.readAllLines(uri)
-        config <- WorkspaceBuild.parseConfig(json)
+        config <- parseConfig(json)
       } yield config
 
     val filePath =
@@ -91,7 +91,7 @@ object WorkspaceBuild {
                    build: Option[String]): Either[FormattableError, WorkspaceBuild] =
     build match {
       case Some(config) =>
-        WorkspaceBuild.parseConfig(config) match {
+        parseConfig(config) match {
           case Failure(exception) =>
             Left(FileError(exception.getMessage))
 
@@ -100,7 +100,7 @@ object WorkspaceBuild {
         }
 
       case None =>
-        Left(WorkspaceError(WorkspaceBuild.buildNotFound()))
+        Left(WorkspaceError(buildNotFound()))
     }
 
 }
