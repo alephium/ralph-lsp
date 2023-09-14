@@ -17,4 +17,5 @@ object ResponseError {
 
   case object MultiWorkspaceFolderNotSupported extends
     LSP4JResponseError(ResponseErrorCode.InvalidParams, "Multiple root workspace folders are not supported", null) with ResponseError
+
 }

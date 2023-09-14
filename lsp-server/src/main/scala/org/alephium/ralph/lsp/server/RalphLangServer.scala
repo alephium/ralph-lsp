@@ -197,9 +197,13 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
             }
 
           case None =>
-            // TODO: Check that this is reported to the client
-            //        when a request is a not requiring a future
-            throw ResponseError.WorkspaceFolderNotSupplied.toException
+            state.withClient {
+              implicit client =>
+                throw
+                  RalphLangClient
+                    .log(ResponseError.WorkspaceFolderNotSupplied)
+                    .toException
+            }
         }
 
       setState(state.updateWorkspace(initialisedWorkspace))

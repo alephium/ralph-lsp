@@ -23,6 +23,11 @@ object RalphLangClient {
     error
   }
 
+  def log(error: ResponseError)(implicit client: RalphLangClient): ResponseError = {
+    client.logMessage(new MessageParams(MessageType.Error, error.getMessage))
+    error
+  }
+
   /** Report error at file level */
   def publish(workspace: WorkspaceState.Configured)(implicit client: RalphLangClient): Unit =
     toPublishDiagnostics(workspace) foreach {

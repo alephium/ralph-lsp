@@ -59,7 +59,7 @@ private[pc] object SourceCode {
         }
 
       case error: SourceCodeState.Errored =>
-        // This code is already parsed and it errored.
+        // Code was already parsed and it errored.
         // Return the same state.
         error
 
