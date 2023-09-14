@@ -8,13 +8,16 @@ import upickle.default._
 
 import java.io.FileNotFoundException
 import java.net.URI
-import java.nio.file.Paths
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Path, Paths}
 import scala.util.{Failure, Try}
 
 object WorkspaceConfig {
 
+  /** The workspace config file name */
   val FILE_NAME = "ralphc-config.json"
 
+  /** Default config */
   val defaultRalphcConfig =
     Config(
       compilerOptions = CompilerOptions.Default,
@@ -24,9 +27,10 @@ object WorkspaceConfig {
 
   // TODO: Possibly emit a sample config file in the error message so it can be copied
   //       or add the ability to generate one.
-  def errorNoConfigFile(): FileNotFoundException =
+  def fileNotFoundException(): FileNotFoundException =
     new FileNotFoundException(s"Please configure a root '${WorkspaceConfig.FILE_NAME}' file.")
 
+  /** Reads [[Config]] from the workspace */
   def readRalphcConfig(workspaceURI: URI): Try[Config] = {
     def readConfigFile(uri: URI) =
       for {
@@ -42,7 +46,7 @@ object WorkspaceConfig {
         if (exists)
           readConfigFile(filePath.toUri)
         else
-          Failure(errorNoConfigFile())
+          Failure(fileNotFoundException())
     }
   }
 
@@ -50,7 +54,7 @@ object WorkspaceConfig {
     Try(read[Config](json))
 
   def readWorkspaceConfig(workspaceURI: URI): Try[WorkspaceConfig] =
-    WorkspaceConfig.readRalphcConfig(workspaceURI) map {
+    readRalphcConfig(workspaceURI) map {
       ralphcConfig =>
         WorkspaceConfig(
           workspaceURI = workspaceURI,
@@ -60,6 +64,24 @@ object WorkspaceConfig {
 
   def writeConfig(config: Config): String =
     write[Config](config)
+
+  /**
+   * Creates a config file.
+   *
+   * This can be used to generate a default config [[defaultRalphcConfig]]
+   * for the user in their IDE workspace.
+   *
+   * @param workspaceURI Workspace root path
+   * @param config       Config to generate
+   * @return Create file's path
+   */
+  def persistConfig(workspaceURI: Path,
+                    config: Config): Try[Path] =
+    Try {
+      val bytes = writeConfig(config).getBytes(StandardCharsets.UTF_8)
+      val filePath = workspaceURI.resolve(FILE_NAME)
+      Files.write(filePath, bytes)
+    }
 
 }
 
