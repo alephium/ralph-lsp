@@ -3,6 +3,7 @@ package org.alephium.ralph.lsp.pc
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.compiler.error.WorkspaceError
 import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceBuild, WorkspaceState}
@@ -94,6 +95,26 @@ object PresentationCompiler {
       sourceCode = updatedFileStates
     )
   }
+
+  /**
+   * Fetches existing workspace or initialises a new one from the configured build file.
+   *
+   * If the build file is not configured, it returns an error.
+   */
+  def getOrInitWorkspace(workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.Configured] =
+    workspace match {
+      case workspace: WorkspaceState.Configured =>
+        // Workspace is fully configured. Return it!
+        Right(workspace)
+
+      case workspace: WorkspaceState.Built =>
+        // Build is configured. Initialise the workspace!
+        initialiseWorkspace(workspace)
+
+      case _: WorkspaceState.Initialised =>
+        // Build file is not supplied. Report missing build file.
+        Left(WorkspaceError(WorkspaceBuild.buildNotFound()))
+    }
 
   /**
    * Execute code completing given the current workspace state.

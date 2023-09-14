@@ -217,12 +217,12 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     CompletableFutures.computeAsync {
       cancelChecker =>
         val fileURI = new URI(params.getTextDocument.getUri)
-        val workspace = getOrInitWorkspace()
-
         val line = params.getPosition.getLine
         val character = params.getPosition.getCharacter
 
         cancelChecker.checkCanceled()
+
+        val workspace = getOrInitWorkspace()
 
         val suggestions =
           PresentationCompiler.complete(
@@ -247,31 +247,16 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   def getOrInitWorkspace(): WorkspaceState.Configured =
     this.synchronized { // TODO: Remove synchronized. Use async.
       state.workspace match {
-        case Some(workspace: WorkspaceState.Configured) =>
-          // Workspace is fully configured. Return it!
-          workspace
-
-        case Some(_: WorkspaceState.Initialised) =>
-          // Build file is not supplied. Report missing build file.
-          state.withClient {
-            implicit client =>
-              throw RalphLangClient.log(WorkspaceError(WorkspaceBuild.buildNotFound()))
-          }
-
-        case Some(workspace: WorkspaceState.Built) =>
-          // Build is configured. Initialise the workspace!
-          PresentationCompiler.initialiseWorkspace(workspace) match {
+        case Some(workspace) =>
+          PresentationCompiler.getOrInitWorkspace(workspace) match {
             case Left(error) =>
-              // Initialisation failed.
               state.withClient {
                 implicit client =>
                   throw RalphLangClient.log(error)
               }
 
-            case Right(workspace) =>
-              // Set the new state.
-              setState(state.updateWorkspace(workspace))
-              workspace
+            case Right(state) =>
+              state
           }
 
         case None =>
