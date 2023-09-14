@@ -1,10 +1,11 @@
 package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.error.CompilerError
+import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
-import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceBuild, WorkspaceState}
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -12,14 +13,17 @@ import java.net.URI
 /**
  * Implements the public API to be used for interactive programming in Ralph.
  *
- * PresentationCompiler is immutable.
+ * [[PresentationCompiler]] is immutable.
  *
- * Internally [[PresentationCompiler]] depends on Ralph's core compiler.
+ * Depends on `ralphc` for compilation and all source-code IO.
  */
 object PresentationCompiler {
 
-  def createWorkspace(workspaceURI: URI): WorkspaceState.UnConfigured =
-    WorkspaceState.UnConfigured(workspaceURI)
+  def buildChanged(fileURI: URI, build: Option[String]): Either[FormattableError, WorkspaceState.Built] =
+    WorkspaceBuild.buildChanged(fileURI, build) map WorkspaceState.Built
+
+  def createWorkspace(workspaceURI: URI): WorkspaceState.Initialised =
+    WorkspaceState.Initialised(workspaceURI)
 
   /**
    * Initial workspaces collects paths to all OnDisk ralph files.
@@ -28,7 +32,7 @@ object PresentationCompiler {
    * @return
    */
 
-  def initialiseWorkspace(state: WorkspaceState.UnConfigured)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
+  def initialiseWorkspace(state: WorkspaceState.Built)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
     Workspace.initialise(state)
 
   /**

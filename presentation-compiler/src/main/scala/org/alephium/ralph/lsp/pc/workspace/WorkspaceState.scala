@@ -13,10 +13,10 @@ sealed trait WorkspaceState {
 object WorkspaceState {
 
   /**
-   * Workspace state with successfully configured config file.
+   * Workspace state with successfully configured build file.
    *
    * Parsing and compilation is implemented only for these types.
-   * Until then, the workspace remains in [[UnConfigured]] state where
+   * Until then, the workspace remains in [[Initialised]] or [[Built]] state where
    * the user is reported any validation errors in the ralphc-configuration file
    * for that workspace.
    * */
@@ -39,14 +39,20 @@ object WorkspaceState {
     }
   }
 
-  /** State: IDE is initialised but the ralphc/workspace configuration file requires validation */
-  case class UnConfigured(workspaceURI: URI) extends WorkspaceState
+  /** State: IDE is initialised but the build file requires validation */
+  case class Initialised(workspaceURI: URI) extends WorkspaceState
 
-  /** State: Source files are un-compiled or partially-compiled */
+  /** State: Build file is compiled. Next step is to compile the source code */
+  case class Built(build: WorkspaceBuild) extends WorkspaceState {
+    override def workspaceURI: URI =
+      build.workspaceURI
+  }
+
+  /** State: Source files might be un-compiled or partially parsed or compiled */
   case class UnCompiled(build: WorkspaceBuild,
                         sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.Configured
 
-  /** State: All source files parsed, therefore can be compiled */
+  /** State: All source files parsed, therefore this workspace can be compiled */
   case class Parsed(build: WorkspaceBuild,
                     sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.Configured
 
@@ -55,7 +61,7 @@ object WorkspaceState {
    *
    * @param sourceCode      New valid source code states.
    * @param workspaceErrors Project/workspace level errors
-   * @param parsed   Previous valid parsed state
+   * @param parsed          Previous valid parsed state (used for code completion in-case the file has error)
    */
   case class Compiled(sourceCode: ArraySeq[SourceCodeState],
                       workspaceErrors: ArraySeq[FormattableError],

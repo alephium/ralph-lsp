@@ -55,10 +55,10 @@ object GenWorkspace {
         config = ralphcConfig
       )
 
-  def genUnConfigured(): Gen[WorkspaceState.UnConfigured] =
+  def genUnConfigured(): Gen[WorkspaceState.Initialised] =
     for {
       workspaceURI <- genFolder()
-    } yield WorkspaceState.UnConfigured(workspaceURI.toUri)
+    } yield WorkspaceState.Initialised(workspaceURI.toUri)
 
   def genUnCompiled(sourceCode: Gen[List[SourceCodeState]] = Gen.listOf(GenSourceCode.genSourceCode())): Gen[WorkspaceState.UnCompiled] =
     for {

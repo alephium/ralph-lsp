@@ -27,7 +27,7 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
 
       val expected = WorkspaceBuild.defaultRalphcConfig
-      val actual = WorkspaceBuild.readConfig(build_ralph).success.value
+      val actual = WorkspaceBuild.parseConfig(build_ralph).success.value
 
       actual shouldBe expected
     }
@@ -38,7 +38,7 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
       val dir = Files.createTempDirectory("no_build_file").toUri
 
       val actual = WorkspaceBuild.readBuild(dir).failed.get.getMessage
-      val expected = WorkspaceBuild.fileNotFoundException().getMessage
+      val expected = WorkspaceBuild.buildNotFound()
 
       actual shouldBe expected
     }

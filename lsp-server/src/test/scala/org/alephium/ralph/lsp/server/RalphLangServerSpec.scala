@@ -36,7 +36,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
       server.getState() shouldBe
         ServerState(
           client = Some(client),
-          workspace = Some(WorkspaceState.UnConfigured(workspaceURI))
+          workspace = Some(WorkspaceState.Initialised(workspaceURI))
         )
     }
   }

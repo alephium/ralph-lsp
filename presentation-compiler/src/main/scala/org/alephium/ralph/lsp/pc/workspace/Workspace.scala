@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.{Ast, CompiledContract, CompiledScript}
 import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.compiler.error.{FileError, WorkspaceError}
+import org.alephium.ralph.lsp.compiler.error.FileError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.Ast.ContractWithState
@@ -10,26 +10,14 @@ import org.alephium.ralphc.Config
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
-import scala.util.{Failure, Success}
 
 /**
  * Implements functions operating on all source-code files within a workspace.
  */
 private[pc] object Workspace {
 
-  def configure(state: WorkspaceState.UnConfigured): Either[FormattableError, WorkspaceBuild] =
-    WorkspaceBuild.readBuild(state.workspaceURI) match {
-      case Failure(exception) =>
-        scribe.error(exception)
-        Left(WorkspaceError(exception.getMessage))
-
-      case Success(build) =>
-        Right(build)
-    }
-
-  def initialise(state: WorkspaceState.UnConfigured)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
-    configure(state)
-      .flatMap(initialise)
+  def initialise(state: WorkspaceState.Built)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
+    initialise(state.build)
 
   /**
    * Initialise a workspace for the given workspace config.

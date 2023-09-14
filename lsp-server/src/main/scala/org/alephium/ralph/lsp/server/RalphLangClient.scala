@@ -8,6 +8,7 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.services.LanguageClient
 
+import java.net.URI
 import java.util
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
@@ -28,6 +29,13 @@ object RalphLangClient {
     error
   }
 
+  def publish(fileURI: URI,
+              code: Option[String],
+              errors: List[FormattableError])(implicit client: RalphLangClient): Unit = {
+    val publish = toPublishDiagnostics(fileURI, code, errors)
+    client.publishDiagnostics(publish)
+  }
+
   /** Report error at file level */
   def publish(workspace: WorkspaceState.Configured)(implicit client: RalphLangClient): Unit =
     toPublishDiagnostics(workspace) foreach {
@@ -39,7 +47,7 @@ object RalphLangClient {
 
   def publish(workspaces: Iterable[WorkspaceState])(implicit client: RalphLangClient): Unit =
     workspaces foreach {
-      case _: WorkspaceState.UnConfigured =>
+      case _: WorkspaceState.Initialised | _: WorkspaceState.Built =>
         ()
 
       case workspace: WorkspaceState.Configured =>
@@ -107,6 +115,18 @@ object RalphLangClient {
     val sourceCodeErrors = toSourceCodeDiagnostics(workspace)
     val workspaceErrors = toWorkspaceDiagnostics(workspace)
     sourceCodeErrors ++ Seq(workspaceErrors)
+  }
+
+  def toPublishDiagnostics(fileURI: URI,
+                           code: Option[String],
+                           errors: List[FormattableError]): PublishDiagnosticsParams = {
+    val diagnostics =
+      errors map {
+        error =>
+          toDiagnostic(code, error)
+      }
+
+    new PublishDiagnosticsParams(fileURI.toString, diagnostics.asJava)
   }
 
   def toCompletionList(suggestions: Array[Suggestion]): CompletionList = {

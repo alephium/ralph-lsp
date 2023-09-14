@@ -1,8 +1,10 @@
 package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.compiler.error.WorkspaceError
 import org.alephium.ralph.lsp.pc.PresentationCompiler
-import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.util.URIUtil
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceBuild, WorkspaceState}
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
@@ -98,35 +100,101 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   override def didOpen(params: DidOpenTextDocumentParams): Unit =
     didCodeChange(
       fileURI = new URI(params.getTextDocument.getUri),
-      updatedCode = Some(params.getTextDocument.getText)
+      code = Some(params.getTextDocument.getText)
     )
 
   override def didChange(params: DidChangeTextDocumentParams): Unit =
     didCodeChange(
       fileURI = new URI(params.getTextDocument.getUri),
-      updatedCode = Some(params.getContentChanges.get(0).getText)
+      code = Some(params.getContentChanges.get(0).getText)
     )
 
   override def didClose(params: DidCloseTextDocumentParams): Unit =
     didCodeChange(
       fileURI = new URI(params.getTextDocument.getUri),
-      updatedCode = None
+      code = None
     )
 
   override def didSave(params: DidSaveTextDocumentParams): Unit =
     didCodeChange(
       fileURI = new URI(params.getTextDocument.getUri),
-      updatedCode = None
+      code = None
     )
 
   /**
-   * [[PresentationCompiler]] reacts to all code changes tne same.
+   * [[PresentationCompiler]] reacts to all code/build changes tne same.
    *
-   * @param fileURI     The file that changed.
-   * @param updatedCode The code that changed in that file.
+   * @param fileURI File that changed.
+   * @param code    Content of the file.
    */
+
   def didCodeChange(fileURI: URI,
-                    updatedCode: Option[String]): Unit =
+                    code: Option[String]): Unit = {
+    val fileExtension = URIUtil.getFileExtension(fileURI)
+    if (fileExtension == WorkspaceBuild.FILE_EXTENSION)
+      buildChanged(
+        fileURI = fileURI,
+        build = code
+      )
+    else if (fileExtension == CompilerAccess.RALPH_FILE_EXTENSION)
+      codeChanged(
+        fileURI = fileURI,
+        updatedCode = code
+      )
+    else
+      state.withClient {
+        implicit client =>
+          // TODO: Error should be typed.
+          throw RalphLangClient.log(WorkspaceError(s"Unknown file: '${fileURI.getPath}'"))
+      }
+  }
+
+  /**
+   * Handles changes to the build valid.
+   *
+   * If the build file is valid, this drops existing compilations
+   * and starts a fresh workspace.
+   *
+   * @param fileURI Location of the build file.
+   * @param build   Build file's content.
+   */
+  def buildChanged(fileURI: URI,
+                   build: Option[String]): Unit =
+    if (URIUtil.getFileName(fileURI) == WorkspaceBuild.FILE_NAME)
+      PresentationCompiler.buildChanged(fileURI, build) match {
+        case Left(error) =>
+          state.withClient {
+            implicit client =>
+              RalphLangClient.publish(
+                fileURI = fileURI,
+                code = build,
+                errors = List(error)
+              )
+          }
+
+        case Right(newState) =>
+          state.withClient {
+            implicit client =>
+              // drop existing state and start with a new build file.
+              setState(state.updateWorkspace(newState))
+              client.refreshDiagnostics() // request project wide re-build TODO: Handle future
+          }
+      }
+    else
+      state.withClient {
+        implicit client =>
+          // TODO: Error should be typed.
+          throw RalphLangClient.log(WorkspaceError(s"Invalid build file name. Use '${WorkspaceBuild.FILE_NAME}'."))
+      }
+
+  /**
+   * Handles changes to ralph code files.
+   *
+   * @param fileURI     Location of the source file.
+   * @param updatedCode Source changes
+   */
+  def codeChanged(fileURI: URI,
+                  updatedCode: Option[String]): Unit =
     this.synchronized { // TODO: Remove synchronized. Use async.
       val workspace = getOrInitWorkspace()
 
@@ -184,7 +252,13 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
           case Some(workspace: WorkspaceState.Configured) =>
             workspace
 
-          case Some(workspace: WorkspaceState.UnConfigured) =>
+          case Some(_: WorkspaceState.Initialised) =>
+            state.withClient {
+              implicit client =>
+                throw RalphLangClient.log(WorkspaceError(WorkspaceBuild.buildNotFound()))
+            }
+
+          case Some(workspace: WorkspaceState.Built) =>
             PresentationCompiler.initialiseWorkspace(workspace) match {
               case Left(error) =>
                 state.withClient {
