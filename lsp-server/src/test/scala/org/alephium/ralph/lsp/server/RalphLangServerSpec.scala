@@ -8,7 +8,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.net.URI
-import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
 class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
@@ -37,7 +36,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
       server.getState() shouldBe
         ServerState(
           client = Some(client),
-          workspaces = ArraySeq(WorkspaceState.UnConfigured(workspaceURI))
+          workspace = Some(WorkspaceState.UnConfigured(workspaceURI))
         )
     }
   }

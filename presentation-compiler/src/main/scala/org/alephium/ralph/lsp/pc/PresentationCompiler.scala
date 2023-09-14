@@ -2,14 +2,12 @@ package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.compiler.error.WorkspaceError
 import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
-import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceConfig, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 import org.alephium.ralphc.Config
 
 import java.net.URI
-import scala.collection.immutable.ArraySeq
 
 /**
  * Implements the public API to be used for interactive programming in Ralph.
@@ -20,29 +18,8 @@ import scala.collection.immutable.ArraySeq
  */
 object PresentationCompiler {
 
-  def initialiseWorkspaces(uris: ArraySeq[URI]): ArraySeq[WorkspaceState.UnConfigured] =
-    uris map {
-      uri =>
-        WorkspaceState.UnConfigured(uri)
-    }
-
-  def getWorkspace(fileURI: URI,
-                   workspaces: ArraySeq[WorkspaceState]): Either[CompilerError.FormattableError, WorkspaceState.Configured] = {
-    val targetWorkspace =
-      workspaces.collectFirst {
-        case workspace: WorkspaceState.Configured if workspace.sourceCode.exists(_.fileURI == fileURI) =>
-          workspace
-      }
-
-    targetWorkspace match {
-      case Some(workspace) =>
-        Right(workspace)
-
-      case None =>
-        // TODO: All error messages should be typed
-        Left(WorkspaceError(new Exception(s"Workspace not initialised for file $fileURI")))
-    }
-  }
+  def createWorkspace(workspaceURI: URI): WorkspaceState.UnConfigured =
+    WorkspaceState.UnConfigured(workspaceURI)
 
   /**
    * Initial workspaces collects paths to all OnDisk ralph files.
@@ -51,8 +28,8 @@ object PresentationCompiler {
    * @return
    */
 
-  def initialiseWorkspace(config: WorkspaceConfig)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
-    Workspace.initialise(config)
+  def initialiseWorkspace(state: WorkspaceState.UnConfigured)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, WorkspaceState.UnCompiled] =
+    Workspace.initialise(state)
 
   /**
    * Parses and compiles the workspaces.

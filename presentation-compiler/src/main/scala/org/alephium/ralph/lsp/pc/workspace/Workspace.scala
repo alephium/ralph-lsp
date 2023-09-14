@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.{Ast, CompiledContract, CompiledScript}
 import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.compiler.error.FileError
+import org.alephium.ralph.lsp.compiler.error.{FileError, WorkspaceError}
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.Ast.ContractWithState
@@ -10,11 +10,25 @@ import org.alephium.ralphc.Config
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
+import scala.util.{Failure, Success}
 
 /**
  * Implements functions operating on all source-code files within a workspace.
  */
 private[pc] object Workspace {
+
+  def initialise(state: WorkspaceState.UnConfigured)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
+    configure(state)
+      .flatMap(initialise)
+
+  def configure(state: WorkspaceState.UnConfigured): Either[FormattableError, WorkspaceConfig] =
+    WorkspaceConfig.readWorkspaceConfig(state.workspaceURI) match {
+      case Failure(exception) =>
+        Left(WorkspaceError(exception))
+
+      case Success(config) =>
+        Right(config)
+    }
 
   /**
    * Initialise a workspace for the given workspace config.
@@ -85,8 +99,8 @@ private[pc] object Workspace {
     }
 
   def parseAndCompile(wsState: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
-//    val parsed = Workspace.parse(wsState)
-//    Workspace.compileParsed(parsed)
+    //    val parsed = Workspace.parse(wsState)
+    //    Workspace.compileParsed(parsed)
     ???
   }
 

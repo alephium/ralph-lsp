@@ -6,12 +6,12 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
 import java.util
 import java.util.concurrent.CompletableFuture
-import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 object RalphLangServer {
@@ -54,7 +54,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
       // let the client know of workspace changes
       state.withClient {
         implicit client =>
-          RalphLangClient.publish(state.workspaces)
+          RalphLangClient.publish(state.workspace)
       }
 
       state
@@ -75,16 +75,27 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] =
     CompletableFutures.computeAsync {
       cancelChecker =>
-        val workspaceURIs =
-          params.getWorkspaceFolders.asScala.to(ArraySeq) map {
-            workspaceFolder =>
-              new URI(workspaceFolder.getUri)
-          }
+        val workspaceFolders =
+          params.getWorkspaceFolders.asScala
 
-        val states =
-          PresentationCompiler.initialiseWorkspaces(workspaceURIs)
+        val workspaceURI =
+          if (workspaceFolders.isEmpty)
+            throw RalphLangClient.responseError(
+              errorCode = ResponseErrorCode.InvalidParams,
+              message = "Workspace folder not supplied"
+            )
+          else if (workspaceFolders.size > 1)
+            throw RalphLangClient.responseError(
+              errorCode = ResponseErrorCode.InvalidParams,
+              message = "Multiple root workspace folders are not supported"
+            )
+          else
+            new URI(workspaceFolders.head.getUri)
 
-        setState(state.copy(workspaces = states))
+        val workspace =
+          PresentationCompiler.createWorkspace(workspaceURI)
+
+        setState(state.updateWorkspace(workspace))
 
         cancelChecker.checkCanceled()
 
@@ -124,8 +135,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   def didCodeChange(fileURI: URI,
                     updatedCode: Option[String]): Unit =
     this.synchronized { // TODO: Remove synchronized. Use async.
-      val workspace =
-        getOrInitWorkspace(fileURI)
+      val workspace = getOrInitWorkspace()
 
       val codeChangedState =
         PresentationCompiler.codeChanged(
@@ -146,7 +156,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     CompletableFutures.computeAsync {
       cancelChecker =>
         val fileURI = new URI(params.getTextDocument.getUri)
-        val workspace = getOrInitWorkspace(fileURI)
+        val workspace = getOrInitWorkspace()
 
         val line = params.getPosition.getLine
         val character = params.getPosition.getCharacter
@@ -174,21 +184,32 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
    * @param fileURI
    * @return
    */
-  def getOrInitWorkspace(fileURI: URI): WorkspaceState.Configured =
+  def getOrInitWorkspace(): WorkspaceState.Configured =
     this.synchronized { // TODO: Remove synchronized. Use async.
       val initialisedWorkspace =
-        PresentationCompiler.getWorkspace(
-          fileURI = fileURI,
-          workspaces = state.workspaces
-        ) match {
-          case Left(error) =>
-            throw state.withClient {
-              implicit client =>
-                RalphLangClient.log(error)
+        state.workspace match {
+          case Some(workspace: WorkspaceState.Configured) =>
+            workspace
+
+          case Some(workspace: WorkspaceState.UnConfigured) =>
+            PresentationCompiler.initialiseWorkspace(workspace) match {
+              case Left(error) =>
+                state.withClient {
+                  implicit client =>
+                    throw RalphLangClient.log(error)
+                }
+
+              case Right(workspace) =>
+                workspace
             }
 
-          case Right(workspaceState) =>
-            workspaceState
+          case None =>
+            // TODO: Check that this is reported to the client
+            //        when a request is a not requiring a future
+            throw RalphLangClient.responseError(
+              errorCode = ResponseErrorCode.ServerNotInitialized,
+              message = "Workspace folder not supplied"
+            )
         }
 
       setState(state.updateWorkspace(initialisedWorkspace))
