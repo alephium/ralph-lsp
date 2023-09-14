@@ -6,8 +6,6 @@ import org.alephium.ralph.lsp.pc.completion.Suggestion
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.messages.{ResponseError, ResponseErrorCode}
-import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.eclipse.lsp4j.services.LanguageClient
 
 import java.util
@@ -23,11 +21,6 @@ object RalphLangClient {
   def log(error: FormattableError)(implicit client: RalphLangClient): FormattableError = {
     client.logMessage(new MessageParams(MessageType.Error, error.message))
     error
-  }
-
-  def responseError(errorCode: ResponseErrorCode, message: String): ResponseErrorException = {
-    val error = new ResponseError(errorCode, message, null)
-    new ResponseErrorException(error)
   }
 
   /** Report error at file level */

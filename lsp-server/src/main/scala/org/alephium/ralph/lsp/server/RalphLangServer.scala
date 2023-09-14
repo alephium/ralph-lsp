@@ -6,7 +6,6 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
@@ -80,15 +79,9 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
 
         val workspaceURI =
           if (workspaceFolders.isEmpty)
-            throw RalphLangClient.responseError(
-              errorCode = ResponseErrorCode.InvalidParams,
-              message = "Workspace folder not supplied"
-            )
+            throw ResponseError.WorkspaceFolderNotSupplied.toException
           else if (workspaceFolders.size > 1)
-            throw RalphLangClient.responseError(
-              errorCode = ResponseErrorCode.InvalidParams,
-              message = "Multiple root workspace folders are not supported"
-            )
+            throw ResponseError.MultiWorkspaceFolderNotSupported.toException
           else
             new URI(workspaceFolders.head.getUri)
 
@@ -206,10 +199,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
           case None =>
             // TODO: Check that this is reported to the client
             //        when a request is a not requiring a future
-            throw RalphLangClient.responseError(
-              errorCode = ResponseErrorCode.ServerNotInitialized,
-              message = "Workspace folder not supplied"
-            )
+            throw ResponseError.WorkspaceFolderNotSupplied.toException
         }
 
       setState(state.updateWorkspace(initialisedWorkspace))

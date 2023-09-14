@@ -13,6 +13,8 @@ import scala.jdk.CollectionConverters.SeqHasAsJava
 class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
 
   "initialize" should {
+    ""
+
     "set server workspaces and respond with capabilities" in {
       implicit val compiler: CompilerAccess =
         CompilerAccess.ralphc
