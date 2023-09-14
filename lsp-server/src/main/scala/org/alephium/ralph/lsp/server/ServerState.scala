@@ -1,7 +1,6 @@
 package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 
 protected case class ServerState(client: Option[RalphLangClient] = None,
                                  workspace: Option[WorkspaceState] = None) {
