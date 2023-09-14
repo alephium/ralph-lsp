@@ -55,13 +55,13 @@ object WorkspaceState {
    *
    * @param sourceCode      New valid source code states.
    * @param workspaceErrors Project/workspace level errors
-   * @param previousState   Previous valid parsed state
+   * @param parsed   Previous valid parsed state
    */
   case class Compiled(sourceCode: ArraySeq[SourceCodeState],
                       workspaceErrors: ArraySeq[FormattableError],
-                      previousState: WorkspaceState.Parsed) extends WorkspaceState.Configured {
+                      parsed: WorkspaceState.Parsed) extends WorkspaceState.Configured {
     def config: WorkspaceConfig =
-      previousState.config
+      parsed.config
   }
 
 }

@@ -89,7 +89,7 @@ object GenWorkspace {
       WorkspaceState.Compiled(
         sourceCode = sourceCode.to(ArraySeq),
         workspaceErrors = errors.asScala.flatten.to(ArraySeq),
-        previousState = parsed
+        parsed = parsed
       )
 
   def genWorkspace(): Gen[WorkspaceState] =

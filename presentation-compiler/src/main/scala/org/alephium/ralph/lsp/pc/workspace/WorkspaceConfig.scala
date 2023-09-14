@@ -28,7 +28,7 @@ object WorkspaceConfig {
   // TODO: Possibly emit a sample config file in the error message so it can be copied
   //       or add the ability to generate one.
   def fileNotFoundException(): FileNotFoundException =
-    new FileNotFoundException(s"Please configure a root '${WorkspaceConfig.FILE_NAME}' file.")
+    new FileNotFoundException(s"Please create a root '${WorkspaceConfig.FILE_NAME}' file.")
 
   /** Reads [[Config]] from the workspace */
   def readRalphcConfig(workspaceURI: URI): Try[Config] = {

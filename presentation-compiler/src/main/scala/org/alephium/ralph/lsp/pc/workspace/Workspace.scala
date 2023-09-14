@@ -72,10 +72,27 @@ private[pc] object Workspace {
         WorkspaceState.Parsed(wsState.config, actualParsedStates)
     }
 
+  /** Triggers parse and compile in sequence for a configured workspace. */
+  def parseAndCompile(workspace: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
+    val parsedState =
+      workspace match {
+        case unCompiled: WorkspaceState.UnCompiled =>
+          parse(unCompiled)
+
+        case parsed: WorkspaceState.Parsed =>
+          parsed
+
+        case compiled: WorkspaceState.Compiled =>
+          compiled.parsed
+      }
+
+    compileParsed(parsedState)
+  }
+
   /**
    * Compiles source-code which is already parsed. Does not attempt to parse any code.
    */
-  def compileParsed(wsState: WorkspaceState)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
+  def compileParsed(wsState: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
     wsState match {
       case state: WorkspaceState.UnCompiled =>
         state
@@ -98,17 +115,6 @@ private[pc] object Workspace {
           compilationResult = compilationResult
         )
     }
-
-  def parseAndCompile(wsState: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
-    //    val parsed = Workspace.parse(wsState)
-    //    Workspace.compileParsed(parsed)
-    ???
-  }
-
-  def parseAndCompile(wsState: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
-    val parsed = Workspace.parse(wsState)
-    Workspace.compileParsed(parsed)
-  }
 
   def compileForDeployment(workspaceURI: URI,
                            config: Config)(implicit compiler: CompilerAccess): WorkspaceState.Compiled = {
@@ -133,7 +139,7 @@ private[pc] object Workspace {
         WorkspaceState.Compiled(
           sourceCode = currentState.sourceCode, // SourceCode remains the same as existing state
           workspaceErrors = ArraySeq(workspaceError), // errors to report
-          previousState = currentState,
+          parsed = currentState,
         )
 
       case Right((compiledContracts, compiledScripts)) =>
@@ -180,7 +186,7 @@ private[pc] object Workspace {
     WorkspaceState.Compiled(
       sourceCode = newSourceCodeStates,
       workspaceErrors = ArraySeq.empty,
-      previousState = currentWorkspaceState
+      parsed = currentWorkspaceState
     )
   }
 
