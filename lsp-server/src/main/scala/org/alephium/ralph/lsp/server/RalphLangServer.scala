@@ -81,7 +81,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
           if (workspaceFolders.isEmpty)
             throw ResponseError.WorkspaceFolderNotSupplied.toException
           else if (workspaceFolders.size > 1)
-            throw ResponseError.MultiWorkspaceFolderNotSupported.toException
+            throw ResponseError.MultiRootWorkspaceFoldersNotSupported.toException
           else
             new URI(workspaceFolders.head.getUri)
 

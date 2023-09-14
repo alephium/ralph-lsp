@@ -17,10 +17,6 @@ import scala.util.{Failure, Success}
  */
 private[pc] object Workspace {
 
-  def initialise(state: WorkspaceState.UnConfigured)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
-    configure(state)
-      .flatMap(initialise)
-
   def configure(state: WorkspaceState.UnConfigured): Either[FormattableError, WorkspaceConfig] =
     WorkspaceConfig.readWorkspaceConfig(state.workspaceURI) match {
       case Failure(exception) =>
@@ -30,6 +26,10 @@ private[pc] object Workspace {
       case Success(config) =>
         Right(config)
     }
+
+  def initialise(state: WorkspaceState.UnConfigured)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
+    configure(state)
+      .flatMap(initialise)
 
   /**
    * Initialise a workspace for the given workspace config.

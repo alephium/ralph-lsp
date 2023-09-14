@@ -77,7 +77,7 @@ private[pc] object SourceCode {
 
     }
 
-  private def getSourceCode(fileURI: URI)(implicit compiler: CompilerAccess): SourceCodeState.AccessState =
+  private def getSourceCode(fileURI: URI)(implicit compiler: CompilerAccess): SourceCodeState.AccessedState =
     compiler.getSourceCode(fileURI) match {
       case Left(error) =>
         SourceCodeState.ErrorAccess(fileURI, error)

@@ -12,8 +12,12 @@ sealed trait SourceCodeState {
 
 object SourceCodeState {
 
-  /** Represents: Code was access */
-  sealed trait AccessState extends SourceCodeState
+  /** Represents: Code was accessed. It can either be in Error state or Success state.
+   *
+   * [[OnDisk]] state is no longer achievable from this state unless the file gets removed/dropped entirely
+   * from a configured workspace - [[org.alephium.ralph.lsp.pc.workspace.WorkspaceState.Configured]].
+   * */
+  sealed trait AccessedState extends SourceCodeState
 
   /** Represents: Code cached */
   sealed trait CachedState extends SourceCodeState {
@@ -29,15 +33,15 @@ object SourceCodeState {
   }
 
   /** The code is on disk */
-  case class OnDisk(fileURI: URI) extends AccessState
+  case class OnDisk(fileURI: URI) extends SourceCodeState
 
   /** The code is in memory but not parsed or compiled */
   case class UnCompiled(fileURI: URI,
-                        code: String) extends AccessState with CachedState
+                        code: String) extends AccessedState with CachedState
 
   /** Represents: Was unable to access code */
   case class ErrorAccess(fileURI: URI,
-                         error: FormattableError) extends ErrorState with AccessState {
+                         error: FormattableError) extends ErrorState with AccessedState {
     override def updateError(error: FormattableError): ErrorAccess =
       this.copy(error = error)
   }
