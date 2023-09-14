@@ -6,9 +6,10 @@ import org.alephium.ralph.lsp.pc.util.PicklerUtil._
 import org.alephium.ralphc.Config
 import upickle.default._
 
+import java.io.FileNotFoundException
 import java.net.URI
 import java.nio.file.Paths
-import scala.util.Try
+import scala.util.{Failure, Try}
 
 object WorkspaceConfig {
 
@@ -21,11 +22,29 @@ object WorkspaceConfig {
       artifactPath = Paths.get("./artifacts")
     )
 
-  def readRalphcConfig(workspaceURI: URI): Try[Config] =
-    for {
-      json <- FileIO.readAllLines(Paths.get(workspaceURI).resolve(FILE_NAME).toUri)
-      config <- WorkspaceConfig.readConfig(json)
-    } yield config
+  // TODO: Possibly emit a sample config file in the error message so it can be copied
+  //       or add the ability to generate one.
+  def errorNoConfigFile(): FileNotFoundException =
+    new FileNotFoundException(s"Please configure a root '${WorkspaceConfig.FILE_NAME}' file.")
+
+  def readRalphcConfig(workspaceURI: URI): Try[Config] = {
+    def readConfigFile(uri: URI) =
+      for {
+        json <- FileIO.readAllLines(uri)
+        config <- WorkspaceConfig.readConfig(json)
+      } yield config
+
+    val filePath =
+      Paths.get(workspaceURI).resolve(FILE_NAME)
+
+    FileIO.exists(filePath) flatMap {
+      exists =>
+        if (exists)
+          readConfigFile(filePath.toUri)
+        else
+          Failure(errorNoConfigFile())
+    }
+  }
 
   def readConfig(json: String): Try[Config] =
     Try(read[Config](json))

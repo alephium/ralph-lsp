@@ -74,7 +74,7 @@ private object RalphCompilerAccess extends CompilerAccess {
       val ralphc = RalphC(config)
       ralphc.compileProject() match {
         case Left(error) =>
-          Left(WorkspaceError(error))
+          Left(WorkspaceError(error.message))
 
         case Right(result) =>
           Right(buildSuccessfulCompilation(result, ralphc.metaInfos))
@@ -115,10 +115,11 @@ private object RalphCompilerAccess extends CompilerAccess {
       Left(error)
 
     case error: org.alephium.ralph.Compiler.Error =>
-      Left(WorkspaceError(error))
+      Left(WorkspaceError(error.message))
 
     case error: Throwable =>
-      Left(WorkspaceError(error))
+      // TODO: log this to console.
+      Left(WorkspaceError(error.getMessage))
   }
 
 }

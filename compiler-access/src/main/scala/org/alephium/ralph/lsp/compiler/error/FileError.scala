@@ -13,15 +13,10 @@ object FileError {
 
 /**
  * File level error.
- *
- * @param error error message
  */
-case class FileError(error: String) extends FormattableError {
+case class FileError(override val message: String) extends FormattableError {
   override def title: String =
-    s"Workspace error: $error"
-
-  override def message: String =
-    error
+    "File error"
 
   override def index: SourceIndex =
     SourceIndex(0, 1)

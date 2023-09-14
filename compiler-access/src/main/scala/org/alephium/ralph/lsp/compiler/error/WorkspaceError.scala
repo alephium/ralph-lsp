@@ -6,12 +6,9 @@ import org.alephium.ralph.SourceIndex
 /**
  * Workspace level error
  */
-case class WorkspaceError(exception: Throwable) extends FormattableError {
+case class WorkspaceError(override val message: String) extends FormattableError {
   override def title: String =
-    exception.getMessage
-
-  override def message: String =
-    exception.getMessage
+    "Workspace error"
 
   override def index: SourceIndex =
     SourceIndex(0, 0)

@@ -24,7 +24,8 @@ private[pc] object Workspace {
   def configure(state: WorkspaceState.UnConfigured): Either[FormattableError, WorkspaceConfig] =
     WorkspaceConfig.readWorkspaceConfig(state.workspaceURI) match {
       case Failure(exception) =>
-        Left(WorkspaceError(exception))
+        scribe.error(exception)
+        Left(WorkspaceError(exception.getMessage))
 
       case Success(config) =>
         Right(config)
