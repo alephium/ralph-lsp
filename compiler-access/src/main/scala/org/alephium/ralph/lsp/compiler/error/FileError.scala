@@ -6,9 +6,6 @@ import org.alephium.ralph.error.CompilerError.FormattableError
 object FileError {
   def apply(error: Compiler.Error): FileError =
     FileError(error.message)
-
-  def apply(error: Throwable): FileError =
-    FileError(error.getMessage)
 }
 
 /**
