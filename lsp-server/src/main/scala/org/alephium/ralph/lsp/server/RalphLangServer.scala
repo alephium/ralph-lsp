@@ -1,7 +1,6 @@
 package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.compiler.error.WorkspaceError
 import org.alephium.ralph.lsp.pc.PresentationCompiler
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceBuild, WorkspaceState}
@@ -144,8 +143,10 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     else
       state.withClient {
         implicit client =>
-          // TODO: Error should be typed.
-          throw RalphLangClient.log(WorkspaceError(s"Unknown file: '${fileURI.getPath}'"))
+          throw
+            RalphLangClient
+              .log(ResponseError.UnknownFile(fileURI))
+              .toResponseErrorException
       }
   }
 
@@ -159,8 +160,10 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
    * @param build   Build file's content.
    */
   def buildChanged(fileURI: URI,
-                   build: Option[String]): Unit =
-    if (URIUtil.getFileName(fileURI) == WorkspaceBuild.FILE_NAME)
+                   build: Option[String]): Unit = {
+    val fileName = URIUtil.getFileName(fileURI)
+
+    if (fileName == WorkspaceBuild.FILE_NAME)
       PresentationCompiler.buildChanged(fileURI, build) match {
         case Left(error) =>
           state.withClient {
@@ -183,9 +186,12 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     else
       state.withClient {
         implicit client =>
-          // TODO: Error should be typed.
-          throw RalphLangClient.log(WorkspaceError(s"Invalid build file name. Use '${WorkspaceBuild.FILE_NAME}'."))
+          throw
+            RalphLangClient
+              .log(ResponseError.InvalidBuildFileName(fileName))
+              .toResponseErrorException
       }
+  }
 
   /**
    * Handles changes to ralph code files.
