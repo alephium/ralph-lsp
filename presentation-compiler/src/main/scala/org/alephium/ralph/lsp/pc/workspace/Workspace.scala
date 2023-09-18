@@ -88,7 +88,7 @@ private[pc] object Workspace {
   }
 
   /**
-   * Compiles workspace which is successfully parsed.
+   * Compiles a parsed workspace.
    */
   def compile(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.CompileRun = {
     val contractsToCompile =
@@ -120,12 +120,12 @@ private[pc] object Workspace {
     )
   }
 
-  private def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                               compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompileRun =
+  def toWorkspaceState(currentState: WorkspaceState.Parsed,
+                       compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompileRun =
     compilationResult match {
       case Left(workspaceError) =>
         // File or sourcePosition position information is not available for this error,
-        // report it as a workspace error.
+        // report it at project error.
         WorkspaceState.Errored(
           sourceCode = currentState.sourceCode, // SourceCode remains the same as existing state
           workspaceErrors = ArraySeq(workspaceError), // errors to report
@@ -140,6 +140,15 @@ private[pc] object Workspace {
         )
     }
 
+  /**
+   * Maps compiled-code to it's parsed code.
+   *
+   * @param currentWorkspaceState Parsed state of the workspace used to run this compilation.
+   * @param compiledContracts     Resulting compiled contracts.
+   * @param compiledScripts       Resulting compiled scripts.
+   * @return Compiled workspace state that might contain source-code level
+   *         errors if a compiled source-code instance was not found its parsed state.
+   */
   private def buildCompiledWorkspaceState(currentWorkspaceState: WorkspaceState.Parsed,
                                           compiledContracts: Array[CompiledContract],
                                           compiledScripts: Array[CompiledScript]): WorkspaceState.Compiled = {

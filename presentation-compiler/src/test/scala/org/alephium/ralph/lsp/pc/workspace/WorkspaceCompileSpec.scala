@@ -42,7 +42,6 @@ class WorkspaceCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
             )
 
           actualWorkspace shouldBe expectedWorkspace
-
       }
     }
   }
