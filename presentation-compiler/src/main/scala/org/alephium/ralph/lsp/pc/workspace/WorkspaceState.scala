@@ -39,6 +39,10 @@ object WorkspaceState {
     }
   }
 
+  sealed trait CompileRun extends WorkspaceState.Configured {
+    def parsed: WorkspaceState.Parsed
+  }
+
   /** State: IDE is initialised but the build file requires validation */
   case class Initialised(workspaceURI: URI) extends WorkspaceState
 
@@ -57,15 +61,27 @@ object WorkspaceState {
                     sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.Configured
 
   /**
-   * Result of a compilation run.
+   * Result of an errored compiler run.
    *
    * @param sourceCode      New valid source code states.
    * @param workspaceErrors Project/workspace level errors
    * @param parsed          Previous valid parsed state (used for code completion in-case the file has error)
    */
+  case class Errored(sourceCode: ArraySeq[SourceCodeState],
+                     workspaceErrors: ArraySeq[FormattableError],
+                     parsed: WorkspaceState.Parsed) extends CompileRun {
+    def build: WorkspaceBuild =
+      parsed.build
+  }
+
+  /**
+   * Result of a successful compiler run.
+   *
+   * @param sourceCode New valid source code states.
+   * @param parsed     Current parser run for this compiled code.
+   */
   case class Compiled(sourceCode: ArraySeq[SourceCodeState],
-                      workspaceErrors: ArraySeq[FormattableError],
-                      parsed: WorkspaceState.Parsed) extends WorkspaceState.Configured {
+                      parsed: WorkspaceState.Parsed) extends CompileRun {
     def build: WorkspaceBuild =
       parsed.build
   }

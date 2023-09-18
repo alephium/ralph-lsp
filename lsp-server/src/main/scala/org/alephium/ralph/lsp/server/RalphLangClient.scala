@@ -80,7 +80,7 @@ object RalphLangClient {
   def toWorkspaceDiagnostics(workspace: WorkspaceState.Configured): PublishDiagnosticsParams = {
     val workspaceDiagnostics =
       workspace match {
-        case compiled: WorkspaceState.Compiled =>
+        case compiled: WorkspaceState.Errored =>
           compiled.workspaceErrors map {
             error =>
               toDiagnostic(

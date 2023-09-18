@@ -90,7 +90,7 @@ private[pc] object Workspace {
   /**
    * Compiles workspace which is successfully parsed.
    */
-  def compile(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
+  def compile(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.CompileRun = {
     val contractsToCompile =
       workspace.sourceCode.flatMap(_.contracts)
 
@@ -107,7 +107,7 @@ private[pc] object Workspace {
   }
 
   def compileForDeployment(workspaceURI: URI,
-                           config: Config)(implicit compiler: CompilerAccess): WorkspaceState.Compiled = {
+                           config: Config)(implicit compiler: CompilerAccess): WorkspaceState.CompileRun = {
     val result =
       compiler.compileForDeployment(
         workspaceURI = workspaceURI,
@@ -121,12 +121,12 @@ private[pc] object Workspace {
   }
 
   private def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                               compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.Compiled =
+                               compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompileRun =
     compilationResult match {
       case Left(workspaceError) =>
         // File or sourcePosition position information is not available for this error,
         // report it as a workspace error.
-        WorkspaceState.Compiled(
+        WorkspaceState.Errored(
           sourceCode = currentState.sourceCode, // SourceCode remains the same as existing state
           workspaceErrors = ArraySeq(workspaceError), // errors to report
           parsed = currentState,
@@ -175,7 +175,6 @@ private[pc] object Workspace {
     // new WorkspaceState
     WorkspaceState.Compiled(
       sourceCode = newSourceCodeStates,
-      workspaceErrors = ArraySeq.empty,
       parsed = currentWorkspaceState
     )
   }

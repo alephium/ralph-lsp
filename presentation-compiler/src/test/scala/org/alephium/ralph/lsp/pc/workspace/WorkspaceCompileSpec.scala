@@ -35,7 +35,7 @@ class WorkspaceCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
           // expect the state to carry previous valid state's information and the compilation error.
           val expectedWorkspace =
-            WorkspaceState.Compiled(
+            WorkspaceState.Errored(
               sourceCode = initialWorkspace.sourceCode,
               workspaceErrors = ArraySeq(compilationError),
               parsed = initialWorkspace

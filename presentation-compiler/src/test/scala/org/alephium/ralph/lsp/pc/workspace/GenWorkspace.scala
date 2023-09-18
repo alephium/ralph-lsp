@@ -80,15 +80,25 @@ object GenWorkspace {
         sourceCode = sourceCode.to(ArraySeq)
       )
 
-  def genCompiled(sourceCode: Gen[List[SourceCodeState.Parsed]] = Gen.listOf(GenSourceCode.genParsed())): Gen[WorkspaceState.Compiled] =
+  def genErrored(sourceCode: Gen[List[SourceCodeState.Parsed]] = Gen.listOf(GenSourceCode.genParsed())): Gen[WorkspaceState.Errored] =
     for {
       sourceCode <- sourceCode
       errors <- Gen.sequence(sourceCode.map(parsed => genErrors(parsed.code)))
       parsed <- GenWorkspace.genParsed()
     } yield
-      WorkspaceState.Compiled(
+      WorkspaceState.Errored(
         sourceCode = sourceCode.to(ArraySeq),
         workspaceErrors = errors.asScala.flatten.to(ArraySeq),
+        parsed = parsed
+      )
+
+  def genCompiled(sourceCode: Gen[List[SourceCodeState.Parsed]] = Gen.listOf(GenSourceCode.genParsed())): Gen[WorkspaceState.Compiled] =
+    for {
+      sourceCode <- sourceCode
+      parsed <- GenWorkspace.genParsed()
+    } yield
+      WorkspaceState.Compiled(
+        sourceCode = sourceCode.to(ArraySeq),
         parsed = parsed
       )
 
@@ -97,7 +107,8 @@ object GenWorkspace {
       genInitialised(),
       genUnCompiled(),
       genParsed(),
-      genCompiled()
+      genErrored(),
+      genCompiled(),
     )
 
   def genAtLeastOneFailed(): Gen[WorkspaceState.UnCompiled] =
