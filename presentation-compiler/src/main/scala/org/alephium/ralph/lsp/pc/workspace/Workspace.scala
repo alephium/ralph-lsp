@@ -62,7 +62,7 @@ private[pc] object Workspace {
 
   /** Triggers parse and compile in sequence for a configured workspace. */
   def parseAndCompile(workspace: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
-    val parsedState =
+    val parseTried =
       workspace match {
         case unCompiled: WorkspaceState.UnCompiled =>
           parse(unCompiled)
@@ -74,35 +74,37 @@ private[pc] object Workspace {
           compiled.parsed
       }
 
-    compileParsed(parsedState)
+    parseTried match {
+      case unCompiled: WorkspaceState.UnCompiled =>
+        // Still un-compiled. There are errors.
+        unCompiled
+
+      case parsed: WorkspaceState.Parsed =>
+        compile(parsed)
+
+      case compiled: WorkspaceState.Compiled =>
+        compile(compiled.parsed)
+    }
   }
 
   /**
-   * Compiles source-code which is already parsed. Does not attempt to parse any code.
+   * Compiles workspace which is successfully parsed.
    */
-  def compileParsed(workspace: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured =
-    workspace match {
-      case state: WorkspaceState.UnCompiled =>
-        state
+  def compile(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
+    val contractsToCompile =
+      workspace.sourceCode.flatMap(_.contracts)
 
-      case state: WorkspaceState.Compiled =>
-        state
+    val compilationResult =
+      compiler.compileContracts(
+        contracts = contractsToCompile,
+        options = workspace.build.config.compilerOptions
+      )
 
-      case state: WorkspaceState.Parsed =>
-        val contractsToCompile =
-          state.sourceCode.flatMap(_.contracts)
-
-        val compilationResult =
-          compiler.compileContracts(
-            contracts = contractsToCompile,
-            options = state.build.config.compilerOptions
-          )
-
-        toWorkspaceState(
-          currentState = state,
-          compilationResult = compilationResult
-        )
-    }
+    toWorkspaceState(
+      currentState = workspace,
+      compilationResult = compilationResult
+    )
+  }
 
   def compileForDeployment(workspaceURI: URI,
                            config: Config)(implicit compiler: CompilerAccess): WorkspaceState.Compiled = {
