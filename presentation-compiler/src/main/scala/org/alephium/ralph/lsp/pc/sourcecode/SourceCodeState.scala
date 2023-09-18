@@ -28,8 +28,8 @@ object SourceCodeState {
   sealed trait ParsedState extends CachedState
 
   /** Represents: Code errored */
-  sealed trait ErrorState extends SourceCodeState {
-    def updateError(error: FormattableError): ErrorState
+  sealed trait FailedState extends SourceCodeState {
+    def updateError(error: FormattableError): FailedState
   }
 
   /** The code is on disk */
@@ -41,7 +41,7 @@ object SourceCodeState {
 
   /** Represents: Was unable to access code */
   case class ErrorAccess(fileURI: URI,
-                         error: FormattableError) extends ErrorState with AccessedState {
+                         error: FormattableError) extends FailedState with AccessedState {
     override def updateError(error: FormattableError): ErrorAccess =
       this.copy(error = error)
   }
@@ -55,14 +55,14 @@ object SourceCodeState {
   case class Compiled(fileURI: URI,
                       code: String,
                       compiledCode: Seq[Either[CompiledContract, CompiledScript]],
-                      previousState: SourceCodeState.Parsed) extends ParsedState
+                      parsed: SourceCodeState.Parsed) extends ParsedState
 
   /** Represents: Failed but it stores previous successful parse so code-completion can use this state */
-  case class Errored(fileURI: URI,
-                     code: String,
-                     errors: Seq[FormattableError],
-                     previous: Option[SourceCodeState.Parsed]) extends ErrorState with CachedState {
-    override def updateError(error: FormattableError): Errored =
+  case class ErrorSource(fileURI: URI,
+                         code: String,
+                         errors: Seq[FormattableError],
+                         previous: Option[SourceCodeState.Parsed]) extends FailedState with CachedState {
+    override def updateError(error: FormattableError): ErrorSource =
       this.copy(errors = Seq(error))
   }
 

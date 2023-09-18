@@ -31,7 +31,7 @@ private[pc] object SourceCode {
       case SourceCodeState.UnCompiled(fileURI, code) =>
         compiler.parseContracts(code) match {
           case Left(error) =>
-            SourceCodeState.Errored(
+            SourceCodeState.ErrorSource(
               fileURI = fileURI,
               code = code,
               errors = Array(error),
@@ -46,22 +46,14 @@ private[pc] object SourceCode {
             )
         }
 
-      case parsed @ (_: SourceCodeState.Parsed | _: SourceCodeState.Compiled) =>
-        parsed // code is already in parsed state, return the same state
-
       case onDisk: SourceCodeState.OnDisk =>
         getSourceCode(onDisk.fileURI) match {
-          case errored: SourceCodeState.ErrorState =>
+          case errored: SourceCodeState.FailedState =>
             errored
 
           case gotCode =>
             parse(gotCode)
         }
-
-      case error: SourceCodeState.Errored =>
-        // Code was already parsed and it errored.
-        // Return the same state.
-        error
 
       case accessError: SourceCodeState.ErrorAccess =>
         // access the code from disk and parse it.
@@ -75,6 +67,13 @@ private[pc] object SourceCode {
             failed
         }
 
+      case parsed @ (_: SourceCodeState.Parsed | _: SourceCodeState.Compiled) =>
+        parsed // code is already in parsed state, return the same state
+
+      case error: SourceCodeState.ErrorSource =>
+        // Code was already parsed and it errored.
+        // Return the same state.
+        error
     }
 
   private def getSourceCode(fileURI: URI)(implicit compiler: CompilerAccess): SourceCodeState.AccessedState =

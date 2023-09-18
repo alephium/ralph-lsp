@@ -50,7 +50,7 @@ private[pc] object Workspace {
             state
 
           case code: SourceCodeState.Compiled =>
-            code.previousState
+            code.parsed
         }
 
       // if there is a difference in size then there are error states in the workspace.
@@ -155,7 +155,7 @@ private[pc] object Workspace {
             matchedCode.partitionMap(either => either)
 
           if (errors.nonEmpty) // if true, return errors
-            SourceCodeState.Errored(
+            SourceCodeState.ErrorSource(
               fileURI = sourceCodeState.fileURI,
               code = sourceCodeState.code,
               errors = errors,
@@ -166,7 +166,7 @@ private[pc] object Workspace {
               fileURI = sourceCodeState.fileURI,
               code = sourceCodeState.code,
               compiledCode = compiledCode,
-              previousState = sourceCodeState
+              parsed = sourceCodeState
             )
       }
 

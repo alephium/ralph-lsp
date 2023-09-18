@@ -49,7 +49,7 @@ object GenSourceCode {
         fileURI = fileURI,
         code = code,
         compiledCode = compiledCode,
-        previousState = parsedState
+        parsed = parsedState
       )
 
   def genParsed(code: Gen[String] = genCode): Gen[SourceCodeState.Parsed] =
@@ -63,14 +63,20 @@ object GenSourceCode {
         contracts = Seq.empty // TODO: generate these
       )
 
-  def genErrored(code: Gen[String] = genCode): Gen[SourceCodeState.Errored] =
+  def genParsedOrCompiled(code: Gen[String] = genCode): Gen[SourceCodeState.ParsedState] =
+    Gen.oneOf(
+      genParsed(code),
+      genCompiled(code)
+    )
+
+  def genErrorSource(code: Gen[String] = genCode): Gen[SourceCodeState.ErrorSource] =
     for {
       fileURI <- genFileURI()
       code <- code
       errors <- genErrors(code)
       parsed <- Gen.option(genParsed(Gen.const(code)))
     } yield
-      SourceCodeState.Errored(
+      SourceCodeState.ErrorSource(
         fileURI = fileURI,
         code = code,
         errors = errors,
@@ -89,9 +95,9 @@ object GenSourceCode {
       )
 
   /** Either one of the failed source-code states */
-  def genFailed(code: Gen[String] = genCode): Gen[SourceCodeState.ErrorState] =
+  def genFailed(code: Gen[String] = genCode): Gen[SourceCodeState.FailedState] =
     Gen.oneOf(
-      genErrored(code),
+      genErrorSource(code),
       genFailedAccess()
     )
 
@@ -106,9 +112,15 @@ object GenSourceCode {
     )
 
   /** Must contain at least on errored SourceCode in the Workspace */
-  def genAtLeastOneError(): Gen[List[SourceCodeState]] =
+  def genAtLeastOneFailed(): Gen[List[SourceCodeState]] =
     for {
       sourceCodes <- Gen.listOf(genSourceCode())
-      erroredCode <- GenSourceCode.genErrored()
-    } yield Random.shuffle(sourceCodes :+ erroredCode)
+      erroredCode <- Gen.nonEmptyListOf(GenSourceCode.genFailed())
+    } yield Random.shuffle(sourceCodes ++ erroredCode)
+
+  def genParsedOrCompiledWithAtLeastOneFailed(): Gen[List[SourceCodeState]] =
+    for {
+      goodCode <- Gen.listOf(genParsedOrCompiled())
+      erroredCode <- Gen.nonEmptyListOf(GenSourceCode.genFailed())
+    } yield Random.shuffle(goodCode ++ erroredCode)
 }

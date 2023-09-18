@@ -146,7 +146,6 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
               implicit val compiler: CompilerAccess =
                 mock[CompilerAccess]
 
-              // currentState and expectedState
               val expectedSourceCode =
                 initialWorkspace.sourceCode map {
                   case currentState: SourceCodeState.OnDisk =>
@@ -162,7 +161,7 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
                     // for each OnDisk file once.
                     // this happens in order
                     inOrder(
-                      // initially code gets read from disk
+                      // initially, code gets read from disk
                       (compiler.getSourceCode _)
                         .expects(currentState.fileURI)
                         .returns(Right(expectedState.code)) // code read!
@@ -190,6 +189,86 @@ class WorkspaceSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPrope
 
               actualWorkspace shouldBe expectedWorkspace
           }
+        }
+      }
+    }
+
+    /**
+     * Test-cases handling [[org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState.ParsedState]] state.
+     */
+    "good source code is already in Parsed state" should {
+      "return a valid Parsed workspace state without accessing the compiler" in {
+        val genGoodCode =
+          GenWorkspace.genUnCompiled(Gen.nonEmptyListOf(GenSourceCode.genParsedOrCompiled()))
+
+        forAll(genGoodCode) {
+          initialWorkspace =>
+            // compiler does not get accessed
+            implicit val compiler: CompilerAccess =
+              null
+
+            val actualWorkspace =
+              Workspace.parse(initialWorkspace)
+
+            val expectedSourceCode =
+              initialWorkspace.sourceCode collect {
+                case parsed: SourceCodeState.Parsed     => parsed
+                case compiled: SourceCodeState.Compiled => compiled.parsed
+              }
+
+            // return workspace state must be in Parsed state so it can be compiled.
+            val expectedWorkspace =
+              WorkspaceState.Parsed(
+                build = initialWorkspace.build,
+                sourceCode = expectedSourceCode
+              )
+
+            actualWorkspace shouldBe expectedWorkspace
+        }
+      }
+    }
+
+    "partially errored workspace" should {
+      "always return UnCompiled state" in {
+        // generate good workspace source code (i.e. either already parsed or compiled),
+        // with at least one error source code.
+
+        val generator =
+          GenWorkspace.genParsedOrCompiledWithAtLeastOneFailed()
+
+        forAll(generator) {
+          initialWorkspace =>
+            // compiler does not get accessed
+            implicit val compiler: CompilerAccess =
+              mock[CompilerAccess]
+
+            val expectedSourceCode =
+              initialWorkspace.sourceCode map {
+                case error: SourceCodeState.ErrorAccess =>
+                  // only the files that failed access would get a single re-try from the compiler.
+                  (compiler.getSourceCode _)
+                    .expects(error.fileURI)
+                    .returns(Left(error.error))
+                    .once()
+
+                  error
+
+                case other =>
+                  // other code remains the same
+                  other
+              }
+
+            val actualWorkspace =
+              Workspace.parse(initialWorkspace)
+
+            // expect the workspace to remain in UnCompiled state because after the parse, code still has an error code file.
+            val expectedWorkspace =
+              WorkspaceState.UnCompiled(
+                build = initialWorkspace.build,
+                sourceCode = expectedSourceCode
+              )
+
+            actualWorkspace shouldBe expectedWorkspace
         }
       }
     }

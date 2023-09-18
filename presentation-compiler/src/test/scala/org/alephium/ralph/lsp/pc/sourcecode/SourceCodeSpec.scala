@@ -71,7 +71,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
             fileURI = URI.create("./test.ral"),
             code = "blah",
             compiledCode = Seq.empty,
-            previousState = null
+            parsed = null
           )
 
         testNoCompilerAccess(compiledState)
@@ -110,7 +110,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
 
         // expect error state with the origin code
         newState shouldBe
-          SourceCodeState.Errored(
+          SourceCodeState.ErrorSource(
             fileURI = fileURI,
             code = code,
             errors = Seq(expectedError),
@@ -171,7 +171,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
 
     "return the same state" when {
       "source code is errored" in {
-        forAll(genErrored()) {
+        forAll(genErrorSource()) {
           failedState =>
             // compiler does not get accessed
             implicit val compiler: CompilerAccess =

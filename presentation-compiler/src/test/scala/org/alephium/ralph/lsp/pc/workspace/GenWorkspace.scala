@@ -100,7 +100,10 @@ object GenWorkspace {
       genCompiled()
     )
 
-  def genAtLeastOneErrored(): Gen[WorkspaceState.UnCompiled] =
-    genUnCompiled(GenSourceCode.genAtLeastOneError())
+  def genAtLeastOneFailed(): Gen[WorkspaceState.UnCompiled] =
+    genUnCompiled(GenSourceCode.genAtLeastOneFailed())
+
+  def genParsedOrCompiledWithAtLeastOneFailed(): Gen[WorkspaceState.UnCompiled] =
+    genUnCompiled(GenSourceCode.genParsedOrCompiledWithAtLeastOneFailed())
 
 }
