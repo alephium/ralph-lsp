@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.compiler.error.{FileError, WorkspaceError}
+import org.alephium.ralph.lsp.compiler.error.{FileError, ProjectError}
 import org.alephium.ralph.lsp.pc.util.FileIO
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
 import org.alephium.ralphc.Config
@@ -100,7 +100,7 @@ object WorkspaceBuild {
         }
 
       case None =>
-        Left(WorkspaceError(buildNotFound()))
+        Left(ProjectError(buildNotFound()))
     }
 
 }

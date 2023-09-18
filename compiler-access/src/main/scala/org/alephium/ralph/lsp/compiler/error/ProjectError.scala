@@ -4,11 +4,11 @@ import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.SourceIndex
 
 /**
- * Workspace level error
+ * Project level errors produced by `ralphc` that are not associated with a source file.
  */
-case class WorkspaceError(override val message: String) extends FormattableError {
+case class ProjectError(override val message: String) extends FormattableError {
   override def title: String =
-    "Workspace error"
+    "Project error"
 
   override def index: SourceIndex =
     SourceIndex(0, 0)

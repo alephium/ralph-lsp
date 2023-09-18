@@ -3,9 +3,8 @@ package org.alephium.ralph.lsp.compiler
 import fastparse.Parsed
 import org.alephium.api.model.CompileProjectResult
 import org.alephium.ralph._
-import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.error.CompilerError.{FastParseError, FormattableError}
-import org.alephium.ralph.lsp.compiler.error.WorkspaceError
+import org.alephium.ralph.lsp.compiler.error.ProjectError
 import org.alephium.ralphc.{Config, MetaInfo, Compiler => RalphC}
 
 import java.net.URI
@@ -44,7 +43,7 @@ private object RalphCompilerAccess extends CompilerAccess {
         Right(code)
     }
 
-  def parseContracts(code: String): Either[CompilerError.FormattableError, Seq[Ast.ContractWithState]] =
+  def parseContracts(code: String): Either[FormattableError, Seq[Ast.ContractWithState]] =
     try
       fastparse.parse(code, StatefulParser.multiContract(_)) match {
         case Parsed.Success(ast: Ast.MultiContract, _) =>
@@ -81,7 +80,7 @@ private object RalphCompilerAccess extends CompilerAccess {
       val ralphc = RalphC(config)
       ralphc.compileProject() match {
         case Left(error) =>
-          Left(WorkspaceError(error.message))
+          Left(ProjectError(error.message))
 
         case Right(result) =>
           Right(buildSuccessfulCompilation(result, ralphc.metaInfos))
@@ -122,11 +121,11 @@ private object RalphCompilerAccess extends CompilerAccess {
       Left(error)
 
     case error: org.alephium.ralph.Compiler.Error =>
-      Left(WorkspaceError(error.message))
+      Left(ProjectError(error.message))
 
     case error: Throwable =>
       // TODO: log this to console.
-      Left(WorkspaceError(error.getMessage))
+      Left(ProjectError(error.getMessage))
   }
 
 }

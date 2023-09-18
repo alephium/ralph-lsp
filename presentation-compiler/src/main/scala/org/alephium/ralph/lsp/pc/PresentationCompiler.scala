@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.pc
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.compiler.error.WorkspaceError
+import org.alephium.ralph.lsp.compiler.error.ProjectError
 import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceBuild, WorkspaceState}
@@ -114,7 +114,7 @@ object PresentationCompiler {
 
       case _: WorkspaceState.Initialised =>
         // Build file is not supplied. Report missing build file.
-        Left(WorkspaceError(WorkspaceBuild.buildNotFound()))
+        Left(ProjectError(WorkspaceBuild.buildNotFound()))
     }
 
   /**
