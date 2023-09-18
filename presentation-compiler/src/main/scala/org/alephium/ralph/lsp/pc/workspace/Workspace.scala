@@ -200,7 +200,7 @@ private[pc] object Workspace {
       case (Some(contract), Some(_)) =>
         // This is already disallowed by the ralph compiler.
         // This should never occur in reality but this needed so type checks are covered.
-        val error = FileError(s"Found a contract and script with the same type name '${contract.ast.name}'")
+        val error = FileError(s"Found a contract and script with the duplicate type name '${contract.ast.name}'")
         Left(error)
 
       case (Some(contract), None) =>

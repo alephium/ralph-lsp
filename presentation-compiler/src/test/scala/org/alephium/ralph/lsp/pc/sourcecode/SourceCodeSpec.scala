@@ -3,6 +3,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.compiler.error.FileError
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
+import org.alephium.ralph.lsp.GenCommon._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -10,33 +11,30 @@ import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.net.URI
-import java.nio.file.{Files, Paths}
 
 class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with ScalaCheckDrivenPropertyChecks {
 
   "initialise" should {
-    "not throw exception on failure" in {
-      implicit val compiler: CompilerAccess =
-        CompilerAccess.ralphc
+    "fetch all source file names" in {
+      forAll(genFolderAndFileURIs()) {
+        case (folder, fileURIs) =>
+          implicit val compiler: CompilerAccess =
+            mock[CompilerAccess]
 
-      val nonExistingDir = Paths.get("initialise_test")
-      // assert that it does not throw exception
-      SourceCode.initialise(nonExistingDir.toUri).value shouldBe empty
-    }
+          // compiler is access to fetch the source files from disk
+          (compiler.getSourceFiles _)
+            .expects(folder)
+            .returns(Right(fileURIs))
+            .once()
 
-    "parse all ralph file names from disk" in {
-      implicit val compiler: CompilerAccess =
-        CompilerAccess.ralphc
+          val expectedState =
+            fileURIs map SourceCodeState.OnDisk
 
-      val dir = Files.createTempDirectory("initialise_test")
-      val one = Files.createFile(dir.resolve("one.ral"))
-      val two = Files.createFile(dir.resolve("two.ral"))
+          val actualState =
+            SourceCode.initialise(folder).value
 
-      SourceCode.initialise(dir.toUri).value shouldBe
-        Seq(
-          SourceCodeState.OnDisk(one.toUri),
-          SourceCodeState.OnDisk(two.toUri)
-        )
+          actualState should contain allElementsOf expectedState
+      }
     }
   }
 

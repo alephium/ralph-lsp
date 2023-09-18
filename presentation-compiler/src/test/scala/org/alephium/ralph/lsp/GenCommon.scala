@@ -31,27 +31,37 @@ object GenCommon {
 
     folders map {
       folders =>
-        folders.foldLeft(Paths.get("")) {
+        folders.foldLeft(Option.empty[Path]) {
           case (path, folder) =>
-            path.resolve(folder)
-        }
+            path
+              .map(_.resolve(folder))
+              .orElse(Some(Paths.get(folder)))
+        }.get
     }
   }
 
   /** Generates a file name with the extension. Optionally creates a nested folder path. */
   def genFilePath(ext: String = RALPH_FILE_EXTENSION,
-                  nestedFolders: Boolean = true): Gen[Path] =
+                  rootFolder: Gen[Option[Path]] = Gen.option(genFolder()),
+                  fileFolder: Gen[Option[Path]] = Gen.option(genFolder())): Gen[Path] =
     for {
       fileName <- genName.map(fileName => s"$fileName.$ext")
-      folders <- genFolder(nestedFolders)
-    } yield
-      folders.resolve(fileName)
+      rootFolder <- rootFolder
+      fileFolder <- fileFolder
+    } yield {
+      // append fileName to file path
+      val filePath = fileFolder.map(_.resolve(fileName)).getOrElse(Paths.get(fileName))
+      // append file path to folder path
+      rootFolder.map(_.resolve(filePath)).getOrElse(filePath)
+    }
 
   def genFileURI(ext: String = RALPH_FILE_EXTENSION,
-                 nestedFolders: Boolean = true): Gen[URI] =
+                 rootFolder: Gen[Option[Path]] = Gen.option(genFolder()),
+                 fileFolder: Gen[Option[Path]] = Gen.option(genFolder())): Gen[URI] =
     genFilePath(
       ext = ext,
-      nestedFolders = nestedFolders
+      rootFolder = rootFolder,
+      fileFolder = fileFolder
     ).map(_.toUri)
 
   /** Generate an error for this code */
@@ -65,5 +75,12 @@ object GenCommon {
 
   def genErrors(code: String): Gen[List[FormattableError]] =
     Gen.listOf(genError(Gen.const(code)))
+
+  def genFolderAndFileURIs(): Gen[(URI, List[URI])] =
+    for {
+      folder <- genFolder()
+      files <- Gen.listOf(genFileURI(rootFolder = Gen.const(Some(folder))))
+    } yield
+      (folder.toUri, files)
 
 }
