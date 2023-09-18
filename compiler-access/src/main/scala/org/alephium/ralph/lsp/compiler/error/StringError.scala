@@ -4,11 +4,12 @@ import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.error.CompilerError.FormattableError
 
 /**
- * File level error that do not have errored source-location information.
+ * An error message that represents `String` error messages
+ * reported by `ralphc` not containing source-location information.
  */
-case class FileError(override val message: String) extends FormattableError {
+case class StringError(override val message: String) extends FormattableError {
   override def title: String =
-    "File error"
+    "Error"
 
   override def index: SourceIndex =
     SourceIndex(0, 1)

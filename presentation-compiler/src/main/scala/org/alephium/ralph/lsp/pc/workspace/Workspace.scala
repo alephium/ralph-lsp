@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.{Ast, CompiledContract, CompiledScript}
 import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.compiler.error.FileError
+import org.alephium.ralph.lsp.compiler.error.StringError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.Ast.ContractWithState
@@ -181,7 +181,7 @@ private[pc] object Workspace {
 
   private def findMatchingContractOrScript(parsedContracts: Seq[ContractWithState],
                                            compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript]): Seq[Either[FileError, Either[CompiledContract, CompiledScript]]] =
+                                           compiledScripts: Array[CompiledScript]): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
     parsedContracts map {
       contract =>
         findMatchingContractOrScript(
@@ -193,7 +193,7 @@ private[pc] object Workspace {
 
   private def findMatchingContractOrScript(contract: Ast.ContractWithState,
                                            compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript]): Either[FileError, Either[CompiledContract, CompiledScript]] = {
+                                           compiledScripts: Array[CompiledScript]): Either[StringError, Either[CompiledContract, CompiledScript]] = {
     val matchingContract = findMatchingContract(contract, compiledContracts)
     val matchingScript = findMatchingScript(contract, compiledScripts)
 
@@ -201,7 +201,7 @@ private[pc] object Workspace {
       case (Some(contract), Some(_)) =>
         // This is already disallowed by the ralph compiler.
         // This should never occur in reality but this needed so type checks are covered.
-        val error = FileError(s"Found a contract and script with the duplicate type name '${contract.ast.name}'")
+        val error = StringError(s"Found a contract and script with the duplicate type name '${contract.ast.name}'")
         Left(error)
 
       case (Some(contract), None) =>
@@ -213,7 +213,7 @@ private[pc] object Workspace {
       case (None, None) =>
         // Code submitted to compile should always return a result.
         // This should never occur in reality but this needed so type checks are covered.
-        val error = FileError(s"Code '${contract.name}' not compiled.")
+        val error = StringError(s"Code '${contract.name}' not compiled.")
         Left(error)
     }
   }

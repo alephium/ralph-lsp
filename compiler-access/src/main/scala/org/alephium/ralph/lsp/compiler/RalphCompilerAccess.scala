@@ -4,7 +4,7 @@ import fastparse.Parsed
 import org.alephium.api.model.CompileProjectResult
 import org.alephium.ralph._
 import org.alephium.ralph.error.CompilerError.{FastParseError, FormattableError}
-import org.alephium.ralph.lsp.compiler.error.ProjectError
+import org.alephium.ralph.lsp.compiler.error.StringError
 import org.alephium.ralphc.{Config, MetaInfo, Compiler => RalphC}
 
 import java.net.URI
@@ -80,7 +80,7 @@ private object RalphCompilerAccess extends CompilerAccess {
       val ralphc = RalphC(config)
       ralphc.compileProject() match {
         case Left(error) =>
-          Left(ProjectError(error.message))
+          Left(StringError(error.message))
 
         case Right(result) =>
           Right(buildSuccessfulCompilation(result, ralphc.metaInfos))
@@ -121,11 +121,11 @@ private object RalphCompilerAccess extends CompilerAccess {
       Left(error)
 
     case error: org.alephium.ralph.Compiler.Error =>
-      Left(ProjectError(error.message))
+      Left(StringError(error.message))
 
     case error: Throwable =>
       // TODO: log this to console.
-      Left(ProjectError(error.getMessage))
+      Left(StringError(error.getMessage))
   }
 
 }
