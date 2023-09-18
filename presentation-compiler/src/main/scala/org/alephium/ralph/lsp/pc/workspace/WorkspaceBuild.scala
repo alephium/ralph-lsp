@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.compiler.error.StringError
+import org.alephium.ralph.lsp.compiler.error.StringMessage
 import org.alephium.ralph.lsp.pc.util.FileIO
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
 import org.alephium.ralphc.Config
@@ -94,7 +94,7 @@ object WorkspaceBuild {
         parseConfig(config) match {
           case Failure(exception) =>
             // TODO: Error messages in the build file should report source-location.
-            Left(StringError(exception.getMessage))
+            Left(StringMessage(exception.getMessage))
 
           case Success(config) =>
             Right(WorkspaceBuild(fileURI, config))
@@ -102,7 +102,7 @@ object WorkspaceBuild {
 
       case None =>
         // TODO: Error messages in the build file should report source-location.
-        Left(StringError(buildNotFound()))
+        Left(StringMessage(buildNotFound()))
     }
 
 }

@@ -3,6 +3,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.{CompiledContract, CompiledScript}
 import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.Ast.ContractWithState
+import org.alephium.ralph.lsp.compiler.error.StringMessage
 
 import java.net.URI
 
@@ -55,7 +56,16 @@ object SourceCodeState {
   case class Compiled(fileURI: URI,
                       code: String,
                       compiledCode: Seq[Either[CompiledContract, CompiledScript]],
-                      parsed: SourceCodeState.Parsed) extends ParsedState
+                      parsed: SourceCodeState.Parsed) extends ParsedState {
+    def warnings: Seq[StringMessage] =
+      compiledCode.flatMap {
+        case Left(value) =>
+          value.warnings map StringMessage
+
+        case Right(value) =>
+          value.warnings map StringMessage
+      }
+  }
 
   /** Represents: Failed but it stores previous successful parse so code-completion can use this state */
   case class ErrorSource(fileURI: URI,

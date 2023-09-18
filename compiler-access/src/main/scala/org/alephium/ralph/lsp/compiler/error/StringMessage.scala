@@ -4,10 +4,10 @@ import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.error.CompilerError.FormattableError
 
 /**
- * An error message that represents `String` error messages
+ * An error or warning that reports a `String` error messages
  * reported by `ralphc` not containing source-location information.
  */
-case class StringError(override val message: String) extends FormattableError {
+case class StringMessage(override val message: String) extends FormattableError {
   override def title: String =
     "Error"
 

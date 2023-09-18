@@ -168,7 +168,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
         case Left(error) =>
           state.withClient {
             implicit client =>
-              RalphLangClient.publish(
+              RalphLangClient.publishErrors(
                 fileURI = fileURI,
                 code = build,
                 errors = List(error)

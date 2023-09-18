@@ -29,10 +29,17 @@ object RalphLangClient {
     error
   }
 
-  def publish(fileURI: URI,
-              code: Option[String],
-              errors: List[FormattableError])(implicit client: RalphLangClient): Unit = {
-    val publish = toPublishDiagnostics(fileURI, code, errors)
+  def publishErrors(fileURI: URI,
+                    code: Option[String],
+                    errors: List[FormattableError])(implicit client: RalphLangClient): Unit = {
+    val publish =
+      toPublishDiagnostics(
+        fileURI = fileURI,
+        code = code,
+        errors = errors,
+        severity = DiagnosticSeverity.Error
+      )
+
     client.publishDiagnostics(publish)
   }
 
@@ -60,7 +67,8 @@ object RalphLangClient {
 
   /** Convert Ralph's FormattableError to lsp4j's Diagnostic */
   def toDiagnostic(code: Option[String],
-                   error: CompilerError.FormattableError): Diagnostic = {
+                   error: CompilerError.FormattableError,
+                   severity: DiagnosticSeverity): Diagnostic = {
     val range =
       code match {
         case Some(code) =>
@@ -74,7 +82,7 @@ object RalphLangClient {
           new Range(new Position(0, 0), new Position(0, 1))
       }
 
-    new Diagnostic(range, error.message, DiagnosticSeverity.Error, "RalphLS")
+    new Diagnostic(range, error.message, severity, "RalphLS")
   }
 
   def toWorkspaceDiagnostics(workspace: WorkspaceState.Configured): PublishDiagnosticsParams = {
@@ -83,9 +91,11 @@ object RalphLangClient {
         case compiled: WorkspaceState.Errored =>
           compiled.workspaceErrors map {
             error =>
+              // These are workspace level errors such as `Compiler.Error`, their source-code information is unknown.
               toDiagnostic(
                 code = None,
-                error = error
+                error = error,
+                severity = DiagnosticSeverity.Error
               )
           }
 
@@ -99,12 +109,39 @@ object RalphLangClient {
   def toSourceCodeDiagnostics(state: WorkspaceState.Configured): Iterable[PublishDiagnosticsParams] =
     state.sourceCode collect {
       case state: SourceCodeState.ErrorSource =>
+        // transform multiple source code errors to diagnostics.
         val diagnostics =
           state.errors map {
             error =>
               toDiagnostic(
                 code = Some(state.code),
-                error = error
+                error = error,
+                severity = DiagnosticSeverity.Error
+              )
+          }
+
+        new PublishDiagnosticsParams(state.fileURI.toString, diagnostics.asJava)
+
+      case state: SourceCodeState.ErrorAccess =>
+        // transform single source code access error to diagnostics.
+        val diagnostics =
+          toDiagnostic(
+            code = None,
+            error = state.error,
+            severity = DiagnosticSeverity.Error
+          )
+
+        new PublishDiagnosticsParams(state.fileURI.toString, util.Arrays.asList(diagnostics))
+
+      case state: SourceCodeState.Compiled =>
+        // transform source code warning messages to diagnostics.
+        val diagnostics =
+          state.warnings map {
+            warning =>
+              toDiagnostic(
+                code = Some(state.code),
+                error = warning,
+                severity = DiagnosticSeverity.Warning
               )
           }
 
@@ -112,18 +149,23 @@ object RalphLangClient {
     }
 
   def toPublishDiagnostics(workspace: WorkspaceState.Configured): Iterable[PublishDiagnosticsParams] = {
-    val sourceCodeErrors = toSourceCodeDiagnostics(workspace)
-    val workspaceErrors = toWorkspaceDiagnostics(workspace)
-    sourceCodeErrors ++ Seq(workspaceErrors)
+    val sourceCodeDiagnostics = toSourceCodeDiagnostics(workspace)
+    val workspaceDiagnostics = toWorkspaceDiagnostics(workspace)
+    sourceCodeDiagnostics ++ Seq(workspaceDiagnostics)
   }
 
   def toPublishDiagnostics(fileURI: URI,
                            code: Option[String],
-                           errors: List[FormattableError]): PublishDiagnosticsParams = {
+                           errors: List[FormattableError],
+                           severity: DiagnosticSeverity): PublishDiagnosticsParams = {
     val diagnostics =
       errors map {
         error =>
-          toDiagnostic(code, error)
+          toDiagnostic(
+            code = code,
+            error = error,
+            severity = severity
+          )
       }
 
     new PublishDiagnosticsParams(fileURI.toString, diagnostics.asJava)
