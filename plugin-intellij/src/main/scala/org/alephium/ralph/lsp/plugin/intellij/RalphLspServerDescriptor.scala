@@ -13,8 +13,8 @@ class RalphLspServerDescriptor(project: Project) extends ProjectWideLspServerDes
 
   def isSupportedFile(file: VirtualFile) = {
     val extension = file.getExtension
-    extension == RalphConfig.RALPH_FILE_EXTENSION ||
-      extension == RalphConfig.RALPH_BUILD_EXTENSION
+    extension == RalphConfig.RALPH_SOURCE_FILE_EXTENSION ||
+      extension == RalphConfig.RALPH_BUILD_FILE_EXTENSION
   }
 
   def createCommandLine(): GeneralCommandLine =
