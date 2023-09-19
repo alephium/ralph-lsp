@@ -2,6 +2,16 @@
 
 Base template for LSP server.
 
+# Dependency on `ralphc`
+
+Checkout [this lsp-tester](https://github.com/alephium/dev-alephium/tree/lsp_tester) branch and publish is locally.
+
+```shell
+sbt publishLocal
+```
+
+Update the version for `alephium-ralphc` in this repo's `build.sbt` file with the published version.
+
 # Build the jar
 
 ```shell
@@ -15,6 +25,7 @@ Running the jar you should get a `Server started` json message:
 ```
 {"jsonrpc":"2.0","method":"window/logMessage","params":{"type":3,"message":"Server started"}}
 ```
+
 
 # Run LSP in IntelliJ (Ultimate)
 
