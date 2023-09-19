@@ -2,8 +2,11 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
-protected case class ServerState(client: Option[RalphLangClient] = None,
-                                 workspace: Option[WorkspaceState] = None) {
+import java.util.concurrent.{Future => JFuture}
+
+protected case class ServerState(client: Option[RalphLangClient],
+                                 listener: Option[JFuture[Void]],
+                                 workspace: Option[WorkspaceState]) {
 
   def withClient[T](f: RalphLangClient => T): T =
     client match {

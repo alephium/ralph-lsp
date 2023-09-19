@@ -11,7 +11,7 @@ import org.eclipse.lsp4j.services._
 
 import java.net.URI
 import java.util
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.{CompletableFuture, Future => JFuture}
 
 object RalphLangServer {
 
@@ -27,10 +27,16 @@ object RalphLangServer {
   }
 
   /** Start server with pre-configured client */
-  def apply(client: RalphLangClient)(implicit compiler: CompilerAccess): RalphLangServer = {
-    val server = new RalphLangServer()
-    server.setClient(client)
-    server
+  def apply(client: RalphLangClient,
+            listener: JFuture[Void])(implicit compiler: CompilerAccess): RalphLangServer = {
+    val initialState =
+      ServerState(
+        client = Some(client),
+        listener = Some(listener),
+        workspace = None
+      )
+
+    new RalphLangServer(initialState)
   }
 }
 
@@ -40,7 +46,7 @@ object RalphLangServer {
  * This class is the only one with mutable state in this repo.
  * All mutable state management occurs here.
  */
-class RalphLangServer(@volatile private var state: ServerState = ServerState())(implicit compiler: CompilerAccess) extends LanguageServer with TextDocumentService with WorkspaceService {
+class RalphLangServer(@volatile private var state: ServerState = ServerState(None, None, None))(implicit compiler: CompilerAccess) extends LanguageServer with TextDocumentService with WorkspaceService {
 
   def getState(): ServerState =
     this.state
@@ -64,14 +70,21 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     }
 
   /**
-   * Follows the same [[LanguageClientAware.connect]].
+   * An initial call to this function is required before server is initialised.
    *
-   * Only mutable function available to the outside world.
-   *
-   * @param client client-proxy used to communicate with the client.
+   * @param client   Client proxy instance provided by LSP4J.
+   * @param listener LSP connection listener function.
    */
-  def setClient(client: RalphLangClient): Unit =
-    setState(state.copy(client = Some(client)))
+  def setInitialState(client: RalphLangClient,
+                      listener: () => JFuture[Void]): Unit =
+    this.synchronized {
+      require(state.client.isEmpty, "Client is already set")
+      require(state.listener.isEmpty, "Listener is already set")
+
+      // the client must be set before listener is invoked.
+      setState(state.copy(client = Some(client)))
+      setState(state.copy(listener = Some(listener())))
+    }
 
   // TODO: If allowed in this phase (maybe? the doc seem to indicate no), access the PresentationCompiler
   //       and do an initial workspace compilation.
@@ -340,9 +353,18 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     this
 
   override def shutdown(): CompletableFuture[AnyRef] =
-    CompletableFuture.completedFuture("TODO: shutdown")
+    state.listener match {
+      case Some(listener) =>
+        CompletableFuture.supplyAsync {
+          () =>
+            java.lang.Boolean.valueOf(listener.cancel(true))
+        }
+
+      case None =>
+        CompletableFuture.failedFuture(new Exception("Listener not set"))
+    }
 
   override def exit(): Unit =
-    ()
+    System.exit(0)
 
 }

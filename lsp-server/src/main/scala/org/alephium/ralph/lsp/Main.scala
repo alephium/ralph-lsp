@@ -29,7 +29,9 @@ object Main {
         .setLocalService(server)
         .create()
 
-    server.setClient(launcher.getRemoteProxy)
-    launcher.startListening().get()
+    server.setInitialState(
+      client = launcher.getRemoteProxy,
+      listener = launcher.startListening()
+    )
   }
 }

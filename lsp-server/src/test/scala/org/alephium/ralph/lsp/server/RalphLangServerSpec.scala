@@ -2,13 +2,13 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.eclipse.lsp4j.{InitializeParams, InitializeResult, WorkspaceFolder}
+import org.eclipse.lsp4j.{InitializeParams, InitializeResult}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.net.URI
-import scala.jdk.CollectionConverters.SeqHasAsJava
+import java.util.concurrent.CompletableFuture
 
 class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
 
@@ -18,7 +18,8 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
         CompilerAccess.ralphc
 
       val client = mock[RalphLangClient]
-      val server = RalphLangServer(client)
+      val listener = CompletableFuture.runAsync(() => ())
+      val server = RalphLangServer(client, listener)
 
       // this is the initial message received from LSP client.
       val initialise = new InitializeParams()
@@ -35,7 +36,8 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
       server.getState() shouldBe
         ServerState(
           client = Some(client),
-          workspace = Some(WorkspaceState.Initialised(workspaceURI))
+          workspace = Some(WorkspaceState.Initialised(workspaceURI)),
+          listener = Some(listener)
         )
     }
   }
