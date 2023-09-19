@@ -79,7 +79,9 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     CompletableFutures.computeAsync {
       cancelChecker =>
         // Previous commit uses the non-deprecated API but that does not work in vim.
-        val rootURI = params.getRootUri
+        val rootURI =
+          Option(params.getRootUri)
+            .getOrElse(params.getRootPath)
 
         val workspaceURI =
           if (rootURI == null)
