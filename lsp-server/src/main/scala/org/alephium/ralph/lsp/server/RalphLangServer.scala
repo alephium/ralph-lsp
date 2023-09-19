@@ -46,16 +46,21 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   def getState(): ServerState =
     this.state
 
-  private def setState(state: ServerState): ServerState =
+  private def setAndPublishState(state: ServerState): ServerState =
     this.synchronized {
-      this.state = state
-
+      val newState = setState(state)
       // let the client know of workspace changes
       state.withClient {
         implicit client =>
           RalphLangClient.publish(state.workspace)
       }
 
+      newState
+    }
+
+  private def setState(state: ServerState): ServerState =
+    this.synchronized {
+      this.state = state
       state
     }
 
@@ -184,7 +189,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
             // Update the workspace and request the client for a full workspace build.
             state.withClient {
               implicit client =>
-                setState(state.updateWorkspace(newState))
+                setAndPublishState(state.updateWorkspace(newState))
                 client.refreshDiagnostics() // request project wide re-build TODO: Handle future
             }
 
@@ -212,6 +217,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
                   updatedCode: Option[String]): Unit =
     this.synchronized { // TODO: Remove synchronized. Use async.
       val workspace = getOrBuildWorkspace()
+      setState(state.updateWorkspace(workspace))
 
       Workspace.codeChanged(
         fileURI = fileURI,
@@ -236,8 +242,8 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
           val compiledState =
             Workspace.compile(newState)
 
-          // set the compiled state
-          setState(state.updateWorkspace(compiledState))
+          // set and publish the compiled state
+          setAndPublishState(state.updateWorkspace(compiledState))
       }
     }
 
@@ -251,6 +257,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
         cancelChecker.checkCanceled()
 
         val workspace = getOrBuildWorkspace()
+        setAndPublishState(state.updateWorkspace(workspace))
 
         val suggestions =
           CodeCompleter.complete(
@@ -269,8 +276,10 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     }
 
   /**
-   * @return Existing workspace or initialises a new one from the configured build file.
-   *         Or else reports any workspace issues.
+   * Returns existing workspace or initialises a new one from the configured build file.
+   * Or else reports any workspace issues.
+   *
+   * @note Does not update the current state. The caller should set the new state.
    */
   def getOrBuildWorkspace(): WorkspaceState.BuildAware =
     this.synchronized { // TODO: Remove synchronized. Use async.
@@ -285,7 +294,6 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
                 }
 
             case Right(newState) =>
-              setState(state.updateWorkspace(newState))
               newState
           }
 
