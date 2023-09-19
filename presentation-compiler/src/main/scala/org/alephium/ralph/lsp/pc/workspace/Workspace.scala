@@ -9,7 +9,6 @@ import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralphc.Config
 
 import java.net.URI
-import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
 /**
@@ -31,25 +30,65 @@ object Workspace {
    * */
   def build(buildURI: URI,
             build: Option[String],
-            state: WorkspaceState): Either[FormattableError, WorkspaceState.Configured] =
-    WorkspaceBuild.readBuild(
+            state: WorkspaceState): Either[FormattableError, Option[WorkspaceState.BuildAware]] =
+    WorkspaceBuild.validateBuildURI(
       buildURI = buildURI,
-      code = build,
-    ) map {
-      newBuild =>
-        state match {
-          case currentState: WorkspaceState.Configured =>
-            // if the new build-file is the same as current build-file, return the
-            // same state, so a new build does not unnecessarily gets triggered.
-            if (currentState.build == newBuild)
-              currentState
-            else // else the build file has changed, start a new workspace with the new build.
-              WorkspaceState.Built(newBuild)
+      workspaceURI = state.workspaceURI
+    ) flatMap {
+      buildURI =>
+        WorkspaceBuild.readBuild(
+          buildURI = buildURI,
+          code = build,
+        ) map {
+          newBuild =>
+            state match {
+              case currentState: WorkspaceState.BuildAware =>
+                // if the new build-file is the same as current build-file, return the
+                // same state, so a new build does not unnecessarily gets triggered.
+                if (currentState.build == newBuild)
+                  None
+                else // else the build file has changed, start a new workspace with the new build.
+                  Some(WorkspaceState.BuildCompiled(newBuild))
 
-          case WorkspaceState.Initialised(_) =>
-            // upgrade the state to build-file aware.
-            WorkspaceState.Built(newBuild)
+              case WorkspaceState.Initialised(_) =>
+                // upgrade the state to build-file aware.
+                Some(WorkspaceState.BuildCompiled(newBuild))
+            }
         }
+    }
+
+  def build(buildURI: URI,
+            build: Option[String],
+            state: WorkspaceState.Initialised): Either[FormattableError, WorkspaceState.BuildCompiled] =
+    WorkspaceBuild.validateBuildURI(
+      buildURI = buildURI,
+      workspaceURI = state.workspaceURI
+    ) flatMap {
+      buildURI =>
+        WorkspaceBuild.readBuild(
+          buildURI = buildURI,
+          code = build,
+        ) map WorkspaceState.BuildCompiled
+    }
+
+  /**
+   * Fetches existing workspace or initialises a new one from the configured build file.
+   *
+   * If the build file is not configured, it returns an error.
+   */
+  def getOrBuild(workspace: WorkspaceState): Either[FormattableError, WorkspaceState.BuildAware] =
+    workspace match {
+      case built: WorkspaceState.BuildAware =>
+        // Already built. Return the same state.
+        Right(built)
+
+      case state: WorkspaceState.Initialised =>
+        // Build file is not compiled. Build it!
+        build(
+          buildURI = WorkspaceBuild.toBuildURI(state.workspaceURI),
+          build = None,
+          state = state
+        )
     }
 
   /**
@@ -58,7 +97,7 @@ object Workspace {
    * @param state Current state of the workspace.
    * @return New workspace state which aware of all workspace source code files.
    */
-  def initialise(state: WorkspaceState.Built)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
+  def initialise(state: WorkspaceState.BuildCompiled)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
     SourceCode
       .initialise(state.build.contractURI)
       .map(WorkspaceState.UnCompiled(state.build, _))
@@ -148,14 +187,14 @@ object Workspace {
    */
   def codeChanged(fileURI: URI,
                   updatedCode: Option[String],
-                  currentState: WorkspaceState.Configured)(implicit compilerAccess: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] = {
+                  currentState: WorkspaceState.BuildAware)(implicit compilerAccess: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] = {
     val sourceAware =
       currentState match {
         case sourceAware: WorkspaceState.SourceAware =>
           // source code is already know
           Right(sourceAware)
 
-        case built: WorkspaceState.Built =>
+        case built: WorkspaceState.BuildCompiled =>
           // This is a new build, initialise its state so it's compilable.
           initialise(built)
       }
@@ -180,29 +219,6 @@ object Workspace {
         )
     }
   }
-
-  /**
-   * Fetches existing workspace or initialises a new one from the configured build file.
-   *
-   * If the build file is not configured, it returns an error.
-   */
-  def getOrInit(workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.Configured] =
-    workspace match {
-      case workspace: WorkspaceState.Built =>
-        // Build is configured. Initialise the workspace!
-        initialise(workspace)
-
-      case workspace: WorkspaceState.SourceAware =>
-        // Workspace is already configured. Return it!
-        Right(workspace)
-
-      case state: WorkspaceState.Initialised =>
-        build(
-          buildURI = WorkspaceBuild.toBuildURI(state.workspaceURI),
-          build = None,
-          state = state
-        )
-    }
 
   /**
    * Compile the code in preparation for deployment. The final step in compilation.

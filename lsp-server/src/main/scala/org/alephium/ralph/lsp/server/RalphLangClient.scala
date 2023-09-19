@@ -54,7 +54,7 @@ object RalphLangClient {
 
   def publish(workspaces: Iterable[WorkspaceState])(implicit client: RalphLangClient): Unit =
     workspaces foreach {
-      case _: WorkspaceState.Initialised | _: WorkspaceState.Built =>
+      case _: WorkspaceState.Initialised | _: WorkspaceState.BuildCompiled =>
         ()
 
       case workspace: WorkspaceState.SourceAware =>

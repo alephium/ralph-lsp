@@ -21,7 +21,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
   "initialise" when {
     "all files are successfully read" should {
       "start workspace in un-compiled state" in {
-        forAll(genBuilt(), Gen.listOf(genFileURI())) {
+        forAll(genBuildCompiled(), Gen.listOf(genFileURI())) {
           case (state, fileURIs) =>
             implicit val compiler: CompilerAccess =
               mock[CompilerAccess]
@@ -51,7 +51,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
     "failed" should {
       "report the error" in {
-        forAll(genBuilt(), genError()) {
+        forAll(genBuildCompiled(), genError()) {
           case (state, error) =>
             implicit val compiler: CompilerAccess =
               mock[CompilerAccess]

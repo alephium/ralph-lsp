@@ -51,7 +51,7 @@ object GenWorkspace {
       ralphcConfig <- genRalphcConfig(workspacePath.toUri)
     } yield
       WorkspaceBuild(
-        buildURI = workspacePath.resolve(WorkspaceBuild.FILE_NAME).toUri,
+        buildURI = workspacePath.resolve(WorkspaceBuild.BUILD_FILE_NAME).toUri,
         code = WorkspaceBuild.writeConfig(ralphcConfig),
         config = ralphcConfig
       )
@@ -61,11 +61,11 @@ object GenWorkspace {
       workspaceURI <- genFolder()
     } yield WorkspaceState.Initialised(workspaceURI.toUri)
 
-  def genBuilt(): Gen[WorkspaceState.Built] =
+  def genBuildCompiled(): Gen[WorkspaceState.BuildCompiled] =
     for {
       build <- genWorkspaceBuild()
     } yield
-      WorkspaceState.Built(
+      WorkspaceState.BuildCompiled(
         build = build,
       )
 
@@ -114,7 +114,7 @@ object GenWorkspace {
   def genWorkspace(): Gen[WorkspaceState] =
     Gen.oneOf(
       genInitialised(),
-      genBuilt(),
+      genBuildCompiled(),
       genUnCompiled(),
       genParsed(),
       genErrored(),

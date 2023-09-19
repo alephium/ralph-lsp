@@ -120,7 +120,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     )
 
   /**
-   * [[Workspace]] reacts to all code/build changes tne same.
+   * [[Workspace]] reacts to all code/build changes the same.
    *
    * @param fileURI File that changed.
    * @param code    Content of the file.
@@ -129,7 +129,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   def didCodeChange(fileURI: URI,
                     code: Option[String]): Unit = {
     val fileExtension = URIUtil.getFileExtension(fileURI)
-    if (fileExtension == WorkspaceBuild.FILE_EXTENSION)
+    if (fileExtension == WorkspaceBuild.BUILD_FILE_EXTENSION)
       buildChanged(
         fileURI = fileURI,
         code = code
@@ -163,7 +163,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     this.synchronized {
       val fileName = URIUtil.getFileName(fileURI)
 
-      if (fileName == WorkspaceBuild.FILE_NAME)
+      if (fileName == WorkspaceBuild.BUILD_FILE_NAME)
         Workspace.build(
           buildURI = fileURI,
           build = code,
@@ -179,13 +179,18 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
                 )
             }
 
-          case Right(newState) =>
+          case Right(Some(newState)) =>
+            // Build file changed.
+            // Update the workspace and request the client for a full workspace build.
             state.withClient {
               implicit client =>
-                // drop existing state and start with a new build file.
                 setState(state.updateWorkspace(newState))
                 client.refreshDiagnostics() // request project wide re-build TODO: Handle future
             }
+
+          case Right(None) =>
+            // Build file did not change. Nothing to do here.
+            ()
         }
       else
         state.withClient {
@@ -206,7 +211,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   def codeChanged(fileURI: URI,
                   updatedCode: Option[String]): Unit =
     this.synchronized { // TODO: Remove synchronized. Use async.
-      val workspace = getOrInitWorkspace()
+      val workspace = getOrBuildWorkspace()
 
       Workspace.codeChanged(
         fileURI = fileURI,
@@ -245,7 +250,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
 
         cancelChecker.checkCanceled()
 
-        val workspace = getOrInitWorkspace()
+        val workspace = getOrBuildWorkspace()
 
         val suggestions =
           CodeCompleter.complete(
@@ -267,11 +272,11 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
    * @return Existing workspace or initialises a new one from the configured build file.
    *         Or else reports any workspace issues.
    */
-  def getOrInitWorkspace(): WorkspaceState.Configured =
+  def getOrBuildWorkspace(): WorkspaceState.BuildAware =
     this.synchronized { // TODO: Remove synchronized. Use async.
       state.workspace match {
         case Some(workspace) =>
-          Workspace.getOrInit(workspace) match {
+          Workspace.getOrBuild(workspace) match {
             case Left(error) =>
               throw
                 state.withClient {
@@ -279,8 +284,9 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
                     RalphLangClient.log(error)
                 }
 
-            case Right(state) =>
-              state
+            case Right(newState) =>
+              setState(state.updateWorkspace(newState))
+              newState
           }
 
         case None =>

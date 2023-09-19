@@ -37,7 +37,7 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
 
   "readBuild" should {
     "report missing build file" in {
-      val dir = Files.createTempDirectory("no_build_file").resolve(WorkspaceBuild.FILE_NAME).toUri
+      val dir = Files.createTempDirectory("no_build_file").resolve(WorkspaceBuild.BUILD_FILE_NAME).toUri
 
       val actual = WorkspaceBuild.readBuild(dir).left.value
       val expected = StringMessage(WorkspaceBuild.buildNotFound())
@@ -50,7 +50,7 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
       val config = WorkspaceBuild.defaultRalphcConfig
 
       // Persist the default config for a workspace
-      val expectedBuildPath = workspacePath.resolve(WorkspaceBuild.FILE_NAME)
+      val expectedBuildPath = workspacePath.resolve(WorkspaceBuild.BUILD_FILE_NAME)
       val actualFilePath = WorkspaceBuild.persistConfig(workspacePath, config).success.value
       actualFilePath shouldBe expectedBuildPath
 

@@ -14,10 +14,10 @@ import scala.util.{Failure, Success, Try}
 
 object WorkspaceBuild {
 
-  val FILE_EXTENSION = "ralph"
+  val BUILD_FILE_EXTENSION = "ralph"
 
   /** Build file of a workspace */
-  val FILE_NAME = s"build.$FILE_EXTENSION"
+  val BUILD_FILE_NAME = s"build.$BUILD_FILE_EXTENSION"
 
   /** Default config */
   val defaultRalphcConfig =
@@ -28,7 +28,7 @@ object WorkspaceBuild {
     )
 
   def toBuildPath(workspacePath: Path): Path =
-    workspacePath.resolve(FILE_NAME)
+    workspacePath.resolve(BUILD_FILE_NAME)
 
   def toBuildURI(workspaceURI: URI): URI =
     toBuildPath(Paths.get(workspaceURI)).toUri
@@ -39,7 +39,7 @@ object WorkspaceBuild {
   // TODO: Possibly emit a sample config file in the error message so it can be copied
   //       or add the ability to generate one.
   def buildNotFound(): String =
-    s"Please create a root '$FILE_NAME' file."
+    s"Please create a root '$BUILD_FILE_NAME' file."
 
   /** Reads [[Config]] from the workspace */
   def readBuild(buildURI: URI): Either[StringMessage, WorkspaceBuild] = {
@@ -129,6 +129,13 @@ object WorkspaceBuild {
       val buildFilePath = toBuildPath(workspacePath)
       Files.write(buildFilePath, bytes)
     }
+
+  def validateBuildURI(buildURI: URI,
+                       workspaceURI: URI): Either[StringMessage, URI] =
+    if (Paths.get(buildURI).getParent != Paths.get(workspaceURI)) // Build file must be in the root workspace folder.
+      Left(StringMessage(s"Build file '$buildURI' does not belong to workspace '$workspaceURI'. It must be placed in the root folder"))
+    else
+      Right(buildURI)
 
 }
 

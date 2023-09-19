@@ -16,11 +16,11 @@ object WorkspaceState {
    * Workspace state with successfully configured build file.
    *
    * Parsing and compilation is implemented only for these types.
-   * Until then, the workspace remains in [[Initialised]] or [[Built]] state where
+   * Until then, the workspace remains in [[Initialised]] or [[BuildCompiled]] state where
    * the user is reported any validation errors in the build file
    * for that workspace.
    * */
-  sealed trait Configured extends WorkspaceState {
+  sealed trait BuildAware extends WorkspaceState {
     def build: WorkspaceBuild
 
     def workspaceURI: URI =
@@ -28,7 +28,7 @@ object WorkspaceState {
   }
 
   /** Workspace state where the source-code is known and can be parsed and compiled */
-  sealed trait SourceAware extends Configured {
+  sealed trait SourceAware extends BuildAware {
     /** A workspace contains multiple source files */
     def sourceCode: ArraySeq[SourceCodeState]
 
@@ -49,8 +49,8 @@ object WorkspaceState {
   /** State: IDE is initialised but the build file requires validation */
   case class Initialised(workspaceURI: URI) extends WorkspaceState
 
-  /** State: Build file is compiled. Next step is to compile the source code */
-  case class Built(build: WorkspaceBuild) extends Configured {
+  /** State: Build file is compiled. This state can be parsed and compiled. */
+  case class BuildCompiled(build: WorkspaceBuild) extends BuildAware {
     override def workspaceURI: URI =
       build.workspaceURI
   }
