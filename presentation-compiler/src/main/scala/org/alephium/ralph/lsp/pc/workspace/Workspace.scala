@@ -13,8 +13,13 @@ import scala.collection.immutable.ArraySeq
 
 /**
  * Implements functions operating on all source-code files within a workspace.
+ *
+ * All functions are all immutable. They all returns the next workspace state, given the current state.
  */
-private[pc] object Workspace {
+object Workspace {
+
+  def create(workspaceURI: URI): WorkspaceState.Initialised =
+    WorkspaceState.Initialised(workspaceURI)
 
   def buildChanged(buildURI: URI,
                    build: Option[String],
@@ -31,6 +36,12 @@ private[pc] object Workspace {
           WorkspaceState.Built(newBuild)
     }
 
+  /**
+   * Initial workspaces collects paths to all OnDisk ralph files.
+   *
+   * @param config compiler configuration file.
+   * @return
+   */
   def initialise(state: WorkspaceState.Built)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
     initialise(state.build)
 
@@ -75,7 +86,14 @@ private[pc] object Workspace {
         WorkspaceState.Parsed(workspace.build, actualParsedStates)
     }
 
-  /** Triggers parse and compile in sequence for a configured workspace. */
+  /**
+   * Parses and compiles the workspaces.
+   *
+   * Note: Parsing is executed lazily. If the code is already parsed, it will not be re-parsed and only be re-compiled.
+   *
+   * @param workspace Current workspace state
+   * @return New workspace state
+   */
   def parseAndCompile(workspace: WorkspaceState.Configured)(implicit compiler: CompilerAccess): WorkspaceState.Configured = {
     // try parsing the input workspace
     val parseTried =
@@ -129,6 +147,66 @@ private[pc] object Workspace {
     )
   }
 
+  /**
+   * Apply the code changes to the workspace state.
+   *
+   * @param fileURI      File updated
+   * @param updatedCode  Updated code
+   * @param currentState Current workspace state
+   * @return New workspace state.
+   */
+  def codeChanged(fileURI: URI,
+                  updatedCode: Option[String],
+                  currentState: WorkspaceState.Configured): WorkspaceState.UnCompiled = {
+    val newSourceCodeState =
+      updatedCode match {
+        case Some(newCode) =>
+          SourceCodeState.UnCompiled(fileURI, newCode)
+
+        case None =>
+          SourceCodeState.OnDisk(fileURI)
+      }
+
+    val updatedFileStates =
+      currentState.updateOrAdd(newSourceCodeState)
+
+    WorkspaceState.UnCompiled(
+      build = currentState.build,
+      sourceCode = updatedFileStates
+    )
+  }
+
+  /**
+   * Fetches existing workspace or initialises a new one from the configured build file.
+   *
+   * If the build file is not configured, it returns an error.
+   */
+  def getOrInit(workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.Configured] =
+    workspace match {
+      case workspace: WorkspaceState.Configured =>
+        // Workspace is fully configured. Return it!
+        Right(workspace)
+
+      case workspace: WorkspaceState.Built =>
+        // Build is configured. Initialise the workspace!
+        initialise(workspace)
+
+      case _: WorkspaceState.Initialised =>
+        // Build file is not supplied. Report missing build file.
+        Left(StringMessage(WorkspaceBuild.buildNotFound()))
+    }
+
+  /**
+   * Compile the code in preparation for deployment. The final step in compilation.
+   *
+   * The state of presentation compiler is not used here. All ralph code files are accessed from disk.
+   * LSP client should ensure that all files are flushed to disk.
+   *
+   * @param workspaceURI Workspace path
+   * @param config       Compiler configuration
+   * @param compiler     Target ralph compiler
+   * @return New workspace state that PresentationalCompiler can continue with.
+   */
   def compileForDeployment(workspaceURI: URI,
                            config: Config)(implicit compiler: CompilerAccess): WorkspaceState.CompileRun = {
     val result =
@@ -143,8 +221,8 @@ private[pc] object Workspace {
     )
   }
 
-  def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                       compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompileRun =
+  private[workspace] def toWorkspaceState(currentState: WorkspaceState.Parsed,
+                                          compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompileRun =
     compilationResult match {
       case Left(workspaceError) =>
         // File or sourcePosition position information is not available for this error,

@@ -1,9 +1,9 @@
 package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.pc.PresentationCompiler
+import org.alephium.ralph.lsp.pc.completion.CodeCompleter
 import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceBuild, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceBuild, WorkspaceState}
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures, ResponseErrorException}
@@ -86,7 +86,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
             new URI(workspaceFolders.head.getUri)
 
         val workspace =
-          PresentationCompiler.createWorkspace(workspaceURI)
+          Workspace.create(workspaceURI)
 
         setState(state.updateWorkspace(workspace))
 
@@ -120,7 +120,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     )
 
   /**
-   * [[PresentationCompiler]] reacts to all code/build changes tne same.
+   * [[Workspace]] reacts to all code/build changes tne same.
    *
    * @param fileURI File that changed.
    * @param code    Content of the file.
@@ -164,7 +164,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
       val fileName = URIUtil.getFileName(fileURI)
 
       if (fileName == WorkspaceBuild.FILE_NAME)
-        PresentationCompiler.buildChanged(
+        Workspace.buildChanged(
           buildURI = fileURI,
           build = code,
           state = getWorkspace()
@@ -209,7 +209,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
       val workspace = getOrInitWorkspace()
 
       val codeChangedState =
-        PresentationCompiler.codeChanged(
+        Workspace.codeChanged(
           fileURI = fileURI,
           updatedCode = updatedCode,
           currentState = workspace
@@ -218,7 +218,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
       setState(state.updateWorkspace(codeChangedState))
 
       val compiledState =
-        PresentationCompiler.parseAndCompileWorkspace(codeChangedState)
+        Workspace.parseAndCompile(codeChangedState)
 
       setState(state.updateWorkspace(compiledState))
     }
@@ -235,7 +235,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
         val workspace = getOrInitWorkspace()
 
         val suggestions =
-          PresentationCompiler.complete(
+          CodeCompleter.complete(
             line = line,
             character = character,
             uri = fileURI,
@@ -258,7 +258,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     this.synchronized { // TODO: Remove synchronized. Use async.
       state.workspace match {
         case Some(workspace) =>
-          PresentationCompiler.getOrInitWorkspace(workspace) match {
+          Workspace.getOrInit(workspace) match {
             case Left(error) =>
               throw
                 state.withClient {

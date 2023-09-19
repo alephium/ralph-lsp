@@ -5,8 +5,11 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import java.net.URI
 import scala.util.Random
 
-private[pc] object CodeCompleter {
+object CodeCompleter {
 
+  /**
+   * Execute code completing given the current workspace state.
+   */
   def complete(line: Int,
                character: Int,
                uri: URI,
