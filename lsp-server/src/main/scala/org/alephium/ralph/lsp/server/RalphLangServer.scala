@@ -6,7 +6,7 @@ import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceBuild, WorkspaceState}
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
+import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures, ResponseErrorException}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
@@ -33,7 +33,6 @@ object RalphLangServer {
     server.setClient(client)
     server
   }
-
 }
 
 /**
@@ -133,7 +132,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     if (fileExtension == WorkspaceBuild.FILE_EXTENSION)
       buildChanged(
         fileURI = fileURI,
-        build = code
+        code = code
       )
     else if (fileExtension == CompilerAccess.RALPH_FILE_EXTENSION)
       codeChanged(
@@ -157,21 +156,25 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
    * and starts a fresh workspace.
    *
    * @param fileURI Location of the build file.
-   * @param build   Build file's content.
+   * @param code    Build file's content.
    */
   def buildChanged(fileURI: URI,
-                   build: Option[String]): Unit =
+                   code: Option[String]): Unit =
     this.synchronized {
       val fileName = URIUtil.getFileName(fileURI)
 
       if (fileName == WorkspaceBuild.FILE_NAME)
-        PresentationCompiler.buildChanged(fileURI, build) match {
+        PresentationCompiler.buildChanged(
+          buildURI = fileURI,
+          build = code,
+          state = getWorkspace()
+        ) match {
           case Left(error) =>
             state.withClient {
               implicit client =>
                 RalphLangClient.publishErrors(
                   fileURI = fileURI,
-                  code = build,
+                  code = code, // TODO: the code here needs to be from the read build file.
                   errors = List(error)
                 )
             }
@@ -257,26 +260,38 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
         case Some(workspace) =>
           PresentationCompiler.getOrInitWorkspace(workspace) match {
             case Left(error) =>
-              state.withClient {
-                implicit client =>
-                  throw RalphLangClient.log(error)
-              }
+              throw
+                state.withClient {
+                  implicit client =>
+                    RalphLangClient.log(error)
+                }
 
             case Right(state) =>
               state
           }
 
         case None =>
-          // Workspace folder is not defined.
-          // This is not expected to occur since `initialized` is always invoked first.
-          state.withClient {
-            implicit client =>
-              throw
-                RalphLangClient
-                  .log(ResponseError.WorkspaceFolderNotSupplied)
-                  .toResponseErrorException
-          }
+          throw reportMissingWorkspace()
       }
+    }
+
+  def getWorkspace(): WorkspaceState =
+    state.workspace match {
+      case Some(workspace) =>
+        workspace
+
+      case None =>
+        throw reportMissingWorkspace()
+    }
+
+  // Workspace folder is not defined.
+  // This is not expected to occur since `initialized` is always invoked first.
+  def reportMissingWorkspace(): ResponseErrorException =
+    state.withClient {
+      implicit client =>
+        RalphLangClient
+          .log(ResponseError.WorkspaceFolderNotSupplied)
+          .toResponseErrorException
     }
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =

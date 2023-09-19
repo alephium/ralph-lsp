@@ -1,8 +1,10 @@
 package org.alephium.ralph.lsp.pc.workspace
 
+import org.alephium.ralph.lsp.compiler.error.StringMessage
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.TryValues._
+import org.scalatest.EitherValues._
 
 import java.nio.file.Files
 
@@ -35,10 +37,10 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
 
   "readBuild" should {
     "report missing build file" in {
-      val dir = Files.createTempDirectory("no_build_file").toUri
+      val dir = Files.createTempDirectory("no_build_file").resolve(WorkspaceBuild.FILE_NAME).toUri
 
-      val actual = WorkspaceBuild.readBuild(dir).failed.get.getMessage
-      val expected = WorkspaceBuild.buildNotFound()
+      val actual = WorkspaceBuild.readBuild(dir).left.value
+      val expected = StringMessage(WorkspaceBuild.buildNotFound())
 
       actual shouldBe expected
     }
@@ -48,15 +50,18 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
       val config = WorkspaceBuild.defaultRalphcConfig
 
       // Persist the default config for a workspace
-      val expectedFilePath = workspacePath.resolve(WorkspaceBuild.FILE_NAME)
+      val expectedBuildPath = workspacePath.resolve(WorkspaceBuild.FILE_NAME)
       val actualFilePath = WorkspaceBuild.persistConfig(workspacePath, config).success.value
-      actualFilePath shouldBe expectedFilePath
+      actualFilePath shouldBe expectedBuildPath
 
       // Read the persisted config file
-      val readConfig = WorkspaceBuild.readBuild(workspacePath.toUri).success.value
+      val readConfig = WorkspaceBuild.readBuild(expectedBuildPath.toUri).value
+      val expectedCode = WorkspaceBuild.writeConfig(WorkspaceBuild.defaultRalphcConfig)
+
       readConfig shouldBe
         WorkspaceBuild(
-          workspaceURI = workspacePath.toUri,
+          buildURI = expectedBuildPath.toUri,
+          code = expectedCode,
           config = config
         )
     }

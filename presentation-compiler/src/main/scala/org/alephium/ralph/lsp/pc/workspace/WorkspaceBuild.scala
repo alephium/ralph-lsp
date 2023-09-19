@@ -29,41 +29,71 @@ object WorkspaceBuild {
       artifactPath = Paths.get("./artifacts")
     )
 
+  def parseConfig(json: String): Try[Config] =
+    Try(read[Config](json))
+
   // TODO: Possibly emit a sample config file in the error message so it can be copied
   //       or add the ability to generate one.
   def buildNotFound(): String =
     s"Please create a root '$FILE_NAME' file."
 
   /** Reads [[Config]] from the workspace */
-  def parseConfig(workspaceURI: URI): Try[Config] = {
+  def readBuild(buildURI: URI): Either[StringMessage, WorkspaceBuild] = {
     def readConfigFile(uri: URI) =
       for {
         json <- FileIO.readAllLines(uri)
         config <- parseConfig(json)
-      } yield config
+      } yield
+        WorkspaceBuild(
+          buildURI = buildURI,
+          code = json,
+          config = config
+        )
 
-    val filePath =
-      Paths.get(workspaceURI).resolve(FILE_NAME)
+    val buildFilePath =
+      Paths.get(buildURI)
 
-    FileIO.exists(filePath) flatMap {
-      exists =>
+    FileIO.exists(buildFilePath) match {
+      case Failure(exception) =>
+        Left(StringMessage(exception.getMessage))
+
+      case Success(exists) =>
         if (exists)
-          readConfigFile(filePath.toUri)
+          readConfigFile(buildFilePath.toUri) match {
+            case Failure(exception) =>
+              Left(StringMessage(exception.getMessage))
+
+            case Success(build) =>
+              Right(build)
+          }
         else
-          Failure(new FileNotFoundException(buildNotFound()))
+          Left(StringMessage(buildNotFound()))
     }
   }
 
-  def parseConfig(json: String): Try[Config] =
-    Try(read[Config](json))
+  def readBuild(buildURI: URI,
+                code: Option[String]): Either[StringMessage, WorkspaceBuild] =
+    code match {
+      case Some(buildJSON) =>
+        parseConfig(buildJSON) match {
+          case Failure(exception) =>
+            // TODO: Error messages in the build file should report source-location.
+            //       The JSON parser reports the errored index, which can be used here.
+            Left(StringMessage(exception.getMessage))
 
-  def readBuild(workspaceURI: URI): Try[WorkspaceBuild] =
-    parseConfig(workspaceURI) map {
-      ralphcConfig =>
-        WorkspaceBuild(
-          workspaceURI = workspaceURI,
-          config = ralphcConfig
-        )
+          case Success(config) =>
+            val build =
+              WorkspaceBuild(
+                buildURI = buildURI,
+                code = buildJSON,
+                config = config
+              )
+
+            Right(build)
+        }
+
+      case None =>
+        readBuild(buildURI)
     }
 
   def writeConfig(config: Config): String =
@@ -87,28 +117,15 @@ object WorkspaceBuild {
       Files.write(filePath, bytes)
     }
 
-  def buildChanged(fileURI: URI,
-                   build: Option[String]): Either[FormattableError, WorkspaceBuild] =
-    build match {
-      case Some(config) =>
-        parseConfig(config) match {
-          case Failure(exception) =>
-            // TODO: Error messages in the build file should report source-location.
-            Left(StringMessage(exception.getMessage))
-
-          case Success(config) =>
-            Right(WorkspaceBuild(fileURI, config))
-        }
-
-      case None =>
-        // TODO: Error messages in the build file should report source-location.
-        Left(StringMessage(buildNotFound()))
-    }
-
 }
 
-final case class WorkspaceBuild(workspaceURI: URI,
+final case class WorkspaceBuild(buildURI: URI,
+                                code: String,
                                 config: Config) {
+
+  val workspaceURI: URI =
+    Paths.get(buildURI).getParent.toUri
+
   def contractURI: URI =
     config.contractPath.toUri
 

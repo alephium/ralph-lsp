@@ -20,11 +20,14 @@ import java.net.URI
  */
 object PresentationCompiler {
 
-  def buildChanged(fileURI: URI, build: Option[String]): Either[FormattableError, WorkspaceState.Built] =
-    WorkspaceBuild.buildChanged(
-      fileURI = fileURI,
-      build = build
-    ) map WorkspaceState.Built
+  def buildChanged(buildURI: URI,
+                   build: Option[String],
+                   state: WorkspaceState): Either[FormattableError, WorkspaceState] =
+    Workspace.buildChanged(
+      buildURI = buildURI,
+      build = build,
+      state = state
+    )
 
   def createWorkspace(workspaceURI: URI): WorkspaceState.Initialised =
     WorkspaceState.Initialised(workspaceURI)

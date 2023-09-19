@@ -16,6 +16,21 @@ import scala.collection.immutable.ArraySeq
  */
 private[pc] object Workspace {
 
+  def buildChanged(buildURI: URI,
+                   build: Option[String],
+                   state: WorkspaceState): Either[FormattableError, WorkspaceState] =
+    WorkspaceBuild.readBuild(
+      buildURI = buildURI,
+      code = build,
+    ) map {
+      newBuild =>
+        // if the new build-file is the same as current build-file, return the same state.
+        if (state.buildOpt.contains(newBuild))
+          state
+        else // else build file has changed, start a new workspace with the new build.
+          WorkspaceState.Built(newBuild)
+    }
+
   def initialise(state: WorkspaceState.Built)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
     initialise(state.build)
 

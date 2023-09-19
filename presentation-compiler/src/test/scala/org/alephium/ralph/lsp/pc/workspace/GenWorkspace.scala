@@ -47,11 +47,12 @@ object GenWorkspace {
 
   def genWorkspaceBuild(): Gen[WorkspaceBuild] =
     for {
-      workspaceURI <- genFolder()
-      ralphcConfig <- genRalphcConfig(workspaceURI.toUri)
+      workspacePath <- genFolder()
+      ralphcConfig <- genRalphcConfig(workspacePath.toUri)
     } yield
       WorkspaceBuild(
-        workspaceURI = workspaceURI.toUri,
+        buildURI = workspacePath.resolve(WorkspaceBuild.FILE_NAME).toUri,
+        code = WorkspaceBuild.writeConfig(ralphcConfig),
         config = ralphcConfig
       )
 

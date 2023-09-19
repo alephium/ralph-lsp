@@ -8,6 +8,8 @@ import scala.collection.immutable.ArraySeq
 
 sealed trait WorkspaceState {
   def workspaceURI: URI
+
+  def buildOpt: Option[WorkspaceBuild]
 }
 
 object WorkspaceState {
@@ -29,6 +31,9 @@ object WorkspaceState {
     def workspaceURI: URI =
       build.workspaceURI
 
+    override def buildOpt: Option[WorkspaceBuild] =
+      Some(build)
+
     /** Add or update the source file */
     def updateOrAdd(newState: SourceCodeState): ArraySeq[SourceCodeState] = {
       val index = sourceCode.indexWhere(_.fileURI == newState.fileURI)
@@ -44,12 +49,18 @@ object WorkspaceState {
   }
 
   /** State: IDE is initialised but the build file requires validation */
-  case class Initialised(workspaceURI: URI) extends WorkspaceState
+  case class Initialised(workspaceURI: URI) extends WorkspaceState {
+    override def buildOpt: Option[WorkspaceBuild] =
+      None
+  }
 
   /** State: Build file is compiled. Next step is to compile the source code */
   case class Built(build: WorkspaceBuild) extends WorkspaceState {
     override def workspaceURI: URI =
       build.workspaceURI
+
+    override def buildOpt: Option[WorkspaceBuild] =
+      Some(build)
   }
 
   /** State: Source files might be un-compiled or partially parsed or compiled */
