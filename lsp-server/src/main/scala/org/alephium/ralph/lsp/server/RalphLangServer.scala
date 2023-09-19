@@ -160,38 +160,39 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
    * @param build   Build file's content.
    */
   def buildChanged(fileURI: URI,
-                   build: Option[String]): Unit = {
-    val fileName = URIUtil.getFileName(fileURI)
+                   build: Option[String]): Unit =
+    this.synchronized {
+      val fileName = URIUtil.getFileName(fileURI)
 
-    if (fileName == WorkspaceBuild.FILE_NAME)
-      PresentationCompiler.buildChanged(fileURI, build) match {
-        case Left(error) =>
-          state.withClient {
-            implicit client =>
-              RalphLangClient.publishErrors(
-                fileURI = fileURI,
-                code = build,
-                errors = List(error)
-              )
-          }
+      if (fileName == WorkspaceBuild.FILE_NAME)
+        PresentationCompiler.buildChanged(fileURI, build) match {
+          case Left(error) =>
+            state.withClient {
+              implicit client =>
+                RalphLangClient.publishErrors(
+                  fileURI = fileURI,
+                  code = build,
+                  errors = List(error)
+                )
+            }
 
-        case Right(newState) =>
-          state.withClient {
-            implicit client =>
-              // drop existing state and start with a new build file.
-              setState(state.updateWorkspace(newState))
-              client.refreshDiagnostics() // request project wide re-build TODO: Handle future
-          }
-      }
-    else
-      state.withClient {
-        implicit client =>
-          throw
-            RalphLangClient
-              .log(ResponseError.InvalidBuildFileName(fileName))
-              .toResponseErrorException
-      }
-  }
+          case Right(newState) =>
+            state.withClient {
+              implicit client =>
+                // drop existing state and start with a new build file.
+                setState(state.updateWorkspace(newState))
+                client.refreshDiagnostics() // request project wide re-build TODO: Handle future
+            }
+        }
+      else
+        state.withClient {
+          implicit client =>
+            throw
+              RalphLangClient
+                .log(ResponseError.InvalidBuildFileName(fileName))
+                .toResponseErrorException
+        }
+    }
 
   /**
    * Handles changes to ralph code files.
