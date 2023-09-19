@@ -23,8 +23,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
       // this is the initial message received from LSP client.
       val initialise = new InitializeParams()
       val workspaceURI = new URI("file://test")
-      val workspaceFolders = List(new WorkspaceFolder(workspaceURI.toString))
-      initialise.setWorkspaceFolders(workspaceFolders.asJava)
+      initialise.setRootUri(workspaceURI.toString)
 
       // invoke server with the initialise message
       val initializeResult = server.initialize(initialise).get()

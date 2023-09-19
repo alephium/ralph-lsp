@@ -12,7 +12,6 @@ import org.eclipse.lsp4j.services._
 import java.net.URI
 import java.util
 import java.util.concurrent.CompletableFuture
-import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 object RalphLangServer {
 
@@ -79,16 +78,14 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
   override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] =
     CompletableFutures.computeAsync {
       cancelChecker =>
-        val workspaceFolders =
-          params.getWorkspaceFolders.asScala
+        // Previous commit uses the non-deprecated API but that does not work in vim.
+        val rootURI = params.getRootUri
 
         val workspaceURI =
-          if (workspaceFolders.isEmpty)
+          if (rootURI == null)
             throw ResponseError.WorkspaceFolderNotSupplied.toResponseErrorException
-          else if (workspaceFolders.size > 1)
-            throw ResponseError.MultiRootWorkspaceFoldersNotSupported.toResponseErrorException
           else
-            new URI(workspaceFolders.head.getUri)
+            new URI(rootURI)
 
         val workspace =
           Workspace.create(workspaceURI)
