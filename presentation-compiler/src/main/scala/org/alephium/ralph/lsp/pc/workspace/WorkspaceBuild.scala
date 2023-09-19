@@ -39,7 +39,7 @@ object WorkspaceBuild {
   // TODO: Possibly emit a sample config file in the error message so it can be copied
   //       or add the ability to generate one.
   def buildNotFound(): String =
-    s"Please create a root '$BUILD_FILE_NAME' file."
+    s"Project build file not found. Create a '$BUILD_FILE_NAME' file in the project's root folder."
 
   /** Reads [[Config]] from the workspace */
   def readBuild(buildURI: URI): Either[StringMessage, WorkspaceBuild] = {

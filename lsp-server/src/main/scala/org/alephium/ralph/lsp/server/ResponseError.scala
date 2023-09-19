@@ -40,7 +40,7 @@ object ResponseError {
   case class InvalidBuildFileName(name: String) extends
     ResponseError(
       errorCode = ResponseErrorCode.InvalidParams,
-      message = s"Invalid build file name '$name'. Use '${WorkspaceBuild.BUILD_FILE_NAME}'"
+      message = s"Invalid build file name '$name'. Use '${WorkspaceBuild.BUILD_FILE_NAME}'."
     )
 
 }
