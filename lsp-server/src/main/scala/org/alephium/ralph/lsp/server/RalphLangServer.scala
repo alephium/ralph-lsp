@@ -194,8 +194,15 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
             }
 
           case Right(None) =>
-            // Build file did not change. Nothing to do here.
-            ()
+            // Build file did not change.
+            state.withClient {
+              implicit client =>
+                RalphLangClient.publishErrors(
+                  fileURI = fileURI,
+                  code = code,
+                  errors = List.empty
+                )
+            }
         }
       else
         state.withClient {
