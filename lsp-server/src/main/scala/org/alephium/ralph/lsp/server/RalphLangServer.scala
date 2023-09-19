@@ -164,7 +164,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
       val fileName = URIUtil.getFileName(fileURI)
 
       if (fileName == WorkspaceBuild.FILE_NAME)
-        Workspace.buildChanged(
+        Workspace.build(
           buildURI = fileURI,
           build = code,
           state = getWorkspace()
@@ -208,19 +208,32 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState())(
     this.synchronized { // TODO: Remove synchronized. Use async.
       val workspace = getOrInitWorkspace()
 
-      val codeChangedState =
-        Workspace.codeChanged(
-          fileURI = fileURI,
-          updatedCode = updatedCode,
-          currentState = workspace
-        )
+      Workspace.codeChanged(
+        fileURI = fileURI,
+        updatedCode = updatedCode,
+        currentState = workspace
+      ) match {
+        case Left(error) =>
+          state.withClient {
+            implicit client =>
+              RalphLangClient.publishErrors(
+                fileURI = fileURI,
+                code = updatedCode, // TODO: Test if this code is the updated code.
+                errors = List(error)
+              )
+          }
 
-      setState(state.updateWorkspace(codeChangedState))
+        case Right(newState) =>
+          // immediately set the new state with the updated code so it is available for other threads.
+          setState(state.updateWorkspace(newState))
 
-      val compiledState =
-        Workspace.parseAndCompile(codeChangedState)
+          // compile the new state.
+          val compiledState =
+            Workspace.compile(newState)
 
-      setState(state.updateWorkspace(compiledState))
+          // set the compiled state
+          setState(state.updateWorkspace(compiledState))
+      }
     }
 
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =

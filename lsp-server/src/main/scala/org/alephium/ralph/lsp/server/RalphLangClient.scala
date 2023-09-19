@@ -44,7 +44,7 @@ object RalphLangClient {
   }
 
   /** Report error at file level */
-  def publish(workspace: WorkspaceState.Configured)(implicit client: RalphLangClient): Unit =
+  def publish(workspace: WorkspaceState.SourceAware)(implicit client: RalphLangClient): Unit =
     toPublishDiagnostics(workspace) foreach {
       diagnostic =>
         // TODO: Isn't there a way in LSP to send all
@@ -57,7 +57,7 @@ object RalphLangClient {
       case _: WorkspaceState.Initialised | _: WorkspaceState.Built =>
         ()
 
-      case workspace: WorkspaceState.Configured =>
+      case workspace: WorkspaceState.SourceAware =>
         RalphLangClient.publish(workspace)
     }
 
@@ -85,7 +85,7 @@ object RalphLangClient {
     new Diagnostic(range, error.message, severity, "RalphLS")
   }
 
-  def toWorkspaceDiagnostics(workspace: WorkspaceState.Configured): PublishDiagnosticsParams = {
+  def toWorkspaceDiagnostics(workspace: WorkspaceState.SourceAware): PublishDiagnosticsParams = {
     val workspaceDiagnostics =
       workspace match {
         case compiled: WorkspaceState.Errored =>
@@ -106,7 +106,7 @@ object RalphLangClient {
     new PublishDiagnosticsParams(workspace.workspaceURI.toString, workspaceDiagnostics.asJava)
   }
 
-  def toSourceCodeDiagnostics(state: WorkspaceState.Configured): Iterable[PublishDiagnosticsParams] =
+  def toSourceCodeDiagnostics(state: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] =
     state.sourceCode collect {
       case state: SourceCodeState.ErrorSource =>
         // transform multiple source code errors to diagnostics.
@@ -148,7 +148,7 @@ object RalphLangClient {
         new PublishDiagnosticsParams(state.fileURI.toString, diagnostics.asJava)
     }
 
-  def toPublishDiagnostics(workspace: WorkspaceState.Configured): Iterable[PublishDiagnosticsParams] = {
+  def toPublishDiagnostics(workspace: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] = {
     val sourceCodeDiagnostics = toSourceCodeDiagnostics(workspace)
     val workspaceDiagnostics = toWorkspaceDiagnostics(workspace)
     sourceCodeDiagnostics ++ Seq(workspaceDiagnostics)

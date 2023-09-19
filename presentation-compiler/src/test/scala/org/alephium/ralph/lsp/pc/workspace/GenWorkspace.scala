@@ -61,6 +61,14 @@ object GenWorkspace {
       workspaceURI <- genFolder()
     } yield WorkspaceState.Initialised(workspaceURI.toUri)
 
+  def genBuilt(): Gen[WorkspaceState.Built] =
+    for {
+      build <- genWorkspaceBuild()
+    } yield
+      WorkspaceState.Built(
+        build = build,
+      )
+
   def genUnCompiled(sourceCode: Gen[List[SourceCodeState]] = Gen.listOf(GenSourceCode.genSourceCode())): Gen[WorkspaceState.UnCompiled] =
     for {
       build <- genWorkspaceBuild()
@@ -106,6 +114,7 @@ object GenWorkspace {
   def genWorkspace(): Gen[WorkspaceState] =
     Gen.oneOf(
       genInitialised(),
+      genBuilt(),
       genUnCompiled(),
       genParsed(),
       genErrored(),

@@ -1,14 +1,12 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.CompilerOptions
-import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.error.StringMessage
 import org.alephium.ralph.lsp.pc.util.FileIO
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
 import org.alephium.ralphc.Config
 import upickle.default._
 
-import java.io.FileNotFoundException
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
@@ -28,6 +26,12 @@ object WorkspaceBuild {
       contractPath = Paths.get("./contracts"),
       artifactPath = Paths.get("./artifacts")
     )
+
+  def toBuildPath(workspacePath: Path): Path =
+    workspacePath.resolve(FILE_NAME)
+
+  def toBuildURI(workspaceURI: URI): URI =
+    toBuildPath(Paths.get(workspaceURI)).toUri
 
   def parseConfig(json: String): Try[Config] =
     Try(read[Config](json))
@@ -72,27 +76,36 @@ object WorkspaceBuild {
   }
 
   def readBuild(buildURI: URI,
+                code: String): Either[StringMessage, WorkspaceBuild] =
+    parseConfig(code) match {
+      case Failure(exception) =>
+        // TODO: Error messages in the build file should report source-location.
+        //       The JSON parser reports the errored index, which can be used here.
+        Left(StringMessage(exception.getMessage))
+
+      case Success(config) =>
+        val build =
+          WorkspaceBuild(
+            buildURI = buildURI,
+            code = code,
+            config = config
+          )
+
+        Right(build)
+    }
+
+  def readBuild(buildURI: URI,
                 code: Option[String]): Either[StringMessage, WorkspaceBuild] =
     code match {
       case Some(buildJSON) =>
-        parseConfig(buildJSON) match {
-          case Failure(exception) =>
-            // TODO: Error messages in the build file should report source-location.
-            //       The JSON parser reports the errored index, which can be used here.
-            Left(StringMessage(exception.getMessage))
-
-          case Success(config) =>
-            val build =
-              WorkspaceBuild(
-                buildURI = buildURI,
-                code = buildJSON,
-                config = config
-              )
-
-            Right(build)
-        }
+        // Code is already read. Parse and validate it.
+        readBuild(
+          buildURI = buildURI,
+          code = buildJSON
+        )
 
       case None =>
+        // Code is not known. Parse and validate it from disk.
         readBuild(buildURI)
     }
 
@@ -105,16 +118,16 @@ object WorkspaceBuild {
    * This can be used to generate a default config [[defaultRalphcConfig]]
    * for the user in their IDE workspace.
    *
-   * @param workspaceURI Workspace root path
-   * @param config       Config to generate
+   * @param workspacePath Workspace root path
+   * @param config        Config to generate
    * @return Create file's path
    */
-  def persistConfig(workspaceURI: Path,
+  def persistConfig(workspacePath: Path,
                     config: Config): Try[Path] =
     Try {
       val bytes = writeConfig(config).getBytes(StandardCharsets.UTF_8)
-      val filePath = workspaceURI.resolve(FILE_NAME)
-      Files.write(filePath, bytes)
+      val buildFilePath = toBuildPath(workspacePath)
+      Files.write(buildFilePath, bytes)
     }
 
 }

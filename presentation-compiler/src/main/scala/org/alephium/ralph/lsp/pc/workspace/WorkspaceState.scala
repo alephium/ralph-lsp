@@ -8,8 +8,6 @@ import scala.collection.immutable.ArraySeq
 
 sealed trait WorkspaceState {
   def workspaceURI: URI
-
-  def buildOpt: Option[WorkspaceBuild]
 }
 
 object WorkspaceState {
@@ -25,14 +23,14 @@ object WorkspaceState {
   sealed trait Configured extends WorkspaceState {
     def build: WorkspaceBuild
 
-    /** A workspace contains multiple source files */
-    def sourceCode: ArraySeq[SourceCodeState]
-
     def workspaceURI: URI =
       build.workspaceURI
+  }
 
-    override def buildOpt: Option[WorkspaceBuild] =
-      Some(build)
+  /** Workspace state where the source-code is known and can be parsed and compiled */
+  sealed trait SourceAware extends Configured {
+    /** A workspace contains multiple source files */
+    def sourceCode: ArraySeq[SourceCodeState]
 
     /** Add or update the source file */
     def updateOrAdd(newState: SourceCodeState): ArraySeq[SourceCodeState] = {
@@ -44,32 +42,26 @@ object WorkspaceState {
     }
   }
 
-  sealed trait CompileRun extends WorkspaceState.Configured {
+  sealed trait CompileRun extends WorkspaceState.SourceAware {
     def parsed: WorkspaceState.Parsed
   }
 
   /** State: IDE is initialised but the build file requires validation */
-  case class Initialised(workspaceURI: URI) extends WorkspaceState {
-    override def buildOpt: Option[WorkspaceBuild] =
-      None
-  }
+  case class Initialised(workspaceURI: URI) extends WorkspaceState
 
   /** State: Build file is compiled. Next step is to compile the source code */
-  case class Built(build: WorkspaceBuild) extends WorkspaceState {
+  case class Built(build: WorkspaceBuild) extends Configured {
     override def workspaceURI: URI =
       build.workspaceURI
-
-    override def buildOpt: Option[WorkspaceBuild] =
-      Some(build)
   }
 
   /** State: Source files might be un-compiled or partially parsed or compiled */
   case class UnCompiled(build: WorkspaceBuild,
-                        sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.Configured
+                        sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.SourceAware
 
   /** State: All source files parsed, therefore this workspace can be compiled */
   case class Parsed(build: WorkspaceBuild,
-                    sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.Configured
+                    sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.SourceAware
 
   /**
    * Result of an errored compiler run.
