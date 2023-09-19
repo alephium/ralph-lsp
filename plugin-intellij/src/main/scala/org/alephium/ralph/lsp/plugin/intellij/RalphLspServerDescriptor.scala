@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.ProjectWideLspServerDescriptor
 
 /** A single LSP server that serves the whole project */
-class RalphLspServerDescriptor(project: Project) extends ProjectWideLspServerDescriptor(project, "Ralph-LSP") {
+class RalphLspServerDescriptor(project: Project) extends ProjectWideLspServerDescriptor(project, "Ralph") {
 
   // TODO: Use BuildInfo or an sbt setting to configure this automatically
   private val jar = "/Users/simerplaha/IdeaProjects/ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar"
