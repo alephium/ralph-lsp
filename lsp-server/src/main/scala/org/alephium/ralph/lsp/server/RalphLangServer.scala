@@ -289,7 +289,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
           )
 
         val completionList =
-          RalphLangClient.toCompletionList(suggestions)
+          DataConverter.toCompletionList(suggestions)
 
         cancelChecker.checkCanceled()
 

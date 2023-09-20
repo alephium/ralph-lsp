@@ -49,13 +49,13 @@ object WorkspaceState {
   /** State: IDE is initialised but the build file requires validation */
   case class Initialised(workspaceURI: URI) extends WorkspaceState
 
-  /** State: Build file is compiled. This state can be parsed and compiled. */
+  /** State: Build file is compiled. This state can upgraded to [[UnCompiled]]. */
   case class BuildCompiled(build: WorkspaceBuild) extends BuildAware {
     override def workspaceURI: URI =
       build.workspaceURI
   }
 
-  /** State: Source files might be un-compiled or partially parsed or compiled */
+  /** State: Source files might be un-compiled, parsed or compiled. This state can be parsed and compiled. */
   case class UnCompiled(build: WorkspaceBuild,
                         sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.SourceAware
 

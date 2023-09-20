@@ -191,7 +191,7 @@ object Workspace {
     val sourceAware =
       currentState match {
         case sourceAware: WorkspaceState.SourceAware =>
-          // source code is already know
+          // source code is already known
           Right(sourceAware)
 
         case built: WorkspaceState.BuildCompiled =>
