@@ -259,7 +259,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
 
           // compile the new state.
           val compiledState =
-            Workspace.compile(newState)
+            Workspace.parseAndCompile(newState)
 
           // set and publish the compiled state
           setAndPublishState(state.updateWorkspace(compiledState))
@@ -351,6 +351,15 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
 
   override def getWorkspaceService: WorkspaceService =
     this
+
+  override def diagnostic(params: WorkspaceDiagnosticParams): CompletableFuture[WorkspaceDiagnosticReport] =
+    CompletableFuture.completedFuture(new WorkspaceDiagnosticReport(util.Arrays.asList()))
+
+  override def diagnostic(params: DocumentDiagnosticParams): CompletableFuture[DocumentDiagnosticReport] =
+    CompletableFuture.completedFuture(new DocumentDiagnosticReport(new RelatedFullDocumentDiagnosticReport(util.Arrays.asList())))
+
+  override def codeAction(params: CodeActionParams): CompletableFuture[util.List[messages.Either[Command, CodeAction]]] =
+    CompletableFuture.completedFuture(util.Arrays.asList())
 
   override def shutdown(): CompletableFuture[AnyRef] =
     state.listener match {

@@ -97,7 +97,7 @@ object Workspace {
    * @param state Current state of the workspace.
    * @return New workspace state which aware of all workspace source code files.
    */
-  def initialise(state: WorkspaceState.BuildCompiled)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
+  def build(state: WorkspaceState.BuildCompiled)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
     SourceCode
       .initialise(state.build.contractURI)
       .map(WorkspaceState.UnCompiled(state.build, _))
@@ -139,7 +139,7 @@ object Workspace {
    * @param workspace Current workspace state
    * @return New workspace state with compilation results of all source files.
    */
-  def compile(workspace: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.SourceAware =
+  def parseAndCompile(workspace: WorkspaceState.UnCompiled)(implicit compiler: CompilerAccess): WorkspaceState.SourceAware =
     parse(workspace) match {
       case unCompiled: WorkspaceState.UnCompiled =>
         // Still un-compiled. There are errors.
@@ -150,18 +150,18 @@ object Workspace {
 
       case parsed: WorkspaceState.Parsed =>
         // Successfully parsed! Compile it!
-        compile(parsed)
+        compileParsed(parsed)
 
       case compiled: WorkspaceState.Compiled =>
         // State already compiled. Process it's parsed state.
         // FIXME: It might not be necessary to re-compile this state since it's already compiled.
-        compile(compiled.parsed)
+        compileParsed(compiled.parsed)
     }
 
   /**
    * Compiles a parsed workspace.
    */
-  def compile(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.CompileRun = {
+  def compileParsed(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.CompileRun = {
     val contractsToCompile =
       workspace.sourceCode.flatMap(_.contracts)
 
@@ -196,7 +196,7 @@ object Workspace {
 
         case built: WorkspaceState.BuildCompiled =>
           // This is a new build, initialise its state so it's compilable.
-          initialise(built)
+          build(built)
       }
 
     sourceAware map {

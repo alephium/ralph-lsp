@@ -14,7 +14,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.collection.immutable.ArraySeq
 
 /**
- * Test cases for [[Workspace.initialise]] function.
+ * Test cases for [[Workspace.build]] function.
  */
 class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
@@ -35,7 +35,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
             // Initialise a workspace for the config
             val actualWorkspace =
-              Workspace.initialise(state)
+              Workspace.build(state)
 
             // All files are started in OnDisk state.
             val expectedWorkspace =
@@ -65,7 +65,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
             // Initialise a workspace for the config
             val actualWorkspace =
-              Workspace.initialise(state)
+              Workspace.build(state)
 
             // No initialisation occurs and a failure is returned.
             actualWorkspace.left.value shouldBe error
