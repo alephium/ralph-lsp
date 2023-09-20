@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <property name="consolePattern"
-              value="%-63(%yellow(%date{ISO8601}) %green([%.13thread])) %highlight(%-5level) %-50(%cyan(%logger{20})) - %msg%n"/>
-
     <!-- File log pattern without colours -->
     <property name="filePattern"
               value="%-63(%date{ISO8601} [%.13thread]) %-5level %-50(%logger{20}) - %msg%n"/>
@@ -23,14 +20,7 @@
         </triggeringPolicy>
     </appender>
 
-    <!--    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">-->
-    <!--        <encoder>-->
-    <!--            <pattern>${consolePattern}</pattern>-->
-    <!--        </encoder>-->
-    <!--    </appender>-->
-
     <root level="${RALPH_LSP_LOG_LEVEL:-TRACE}">
-        <!--        <appender-ref ref="CONSOLE"/>-->
         <appender-ref ref="LOGFILE"/>
     </root>
 </configuration>

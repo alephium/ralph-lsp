@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.server
 
+import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.completion.CodeCompleter
 import org.alephium.ralph.lsp.pc.util.URIUtil
@@ -46,7 +47,7 @@ object RalphLangServer {
  * This class is the only one with mutable state in this repo.
  * All mutable state management occurs here.
  */
-class RalphLangServer(@volatile private var state: ServerState = ServerState(None, None, None))(implicit compiler: CompilerAccess) extends LanguageServer with TextDocumentService with WorkspaceService {
+class RalphLangServer(@volatile private var state: ServerState = ServerState(None, None, None))(implicit compiler: CompilerAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictLogging {
 
   def getState(): ServerState =
     this.state
@@ -81,7 +82,8 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
       require(state.client.isEmpty, "Client is already set")
       require(state.listener.isEmpty, "Listener is already set")
 
-      // the client must be set before listener is invoked.
+      // Client must be set first, before running the request listener,
+      // so that it is available for responding to requests.
       setState(state.copy(client = Some(client)))
       setState(state.copy(listener = Some(listener())))
     }
@@ -360,6 +362,9 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
 
   override def codeAction(params: CodeActionParams): CompletableFuture[util.List[messages.Either[Command, CodeAction]]] =
     CompletableFuture.completedFuture(util.Arrays.asList())
+
+  override def resolveCompletionItem(unresolved: CompletionItem): CompletableFuture[CompletionItem] =
+    CompletableFuture.completedFuture(unresolved)
 
   override def shutdown(): CompletableFuture[AnyRef] =
     state.listener match {
