@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="consolePattern"
+              value="%-63(%yellow(%date{ISO8601}) %green([%.13thread])) %highlight(%-5level) %-50(%cyan(%logger{20})) - %msg%n"/>
+
+    <!-- File log pattern without colours -->
+    <property name="filePattern"
+              value="%-63(%date{ISO8601} [%.13thread]) %-5level %-50(%logger{20}) - %msg%n"/>
+
+    <appender name="LOGFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${RALPH_LSP_HOME:-${user.home}/.ralph-lsp}/logs/ralph-lsp.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>${filePattern}</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${RALPH_LSP_HOME:-${user.home}/.ralph-lsp}/logs/ralph-lsp.%i.log</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>10</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>100MB</maxFileSize>
+        </triggeringPolicy>
+    </appender>
+
+    <!--    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">-->
+    <!--        <encoder>-->
+    <!--            <pattern>${consolePattern}</pattern>-->
+    <!--        </encoder>-->
+    <!--    </appender>-->
+
+    <root level="${RALPH_LSP_LOG_LEVEL:-TRACE}">
+        <!--        <appender-ref ref="CONSOLE"/>-->
+        <appender-ref ref="LOGFILE"/>
+    </root>
+</configuration>

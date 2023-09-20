@@ -6,7 +6,9 @@ lazy val `compiler-access` =
         Seq(
           Dependencies.ralphc,
           Dependencies.scalaTest,
-          Dependencies.scalaCheck
+          Dependencies.scalaCheck,
+          Dependencies.logback,
+          Dependencies.scalaLogging
         )
     )
 
@@ -18,7 +20,9 @@ lazy val `presentation-compiler` =
         Seq(
           Dependencies.scalaTest,
           Dependencies.scalaCheck,
-          Dependencies.scalaMock
+          Dependencies.scalaMock,
+          Dependencies.logback,
+          Dependencies.scalaLogging
         )
     ).dependsOn(`compiler-access`)
 
@@ -40,7 +44,9 @@ lazy val `lsp-server` =
           Dependencies.lsp4j,
           Dependencies.scalaTest,
           Dependencies.scalaCheck,
-          Dependencies.scalaMock
+          Dependencies.scalaMock,
+          Dependencies.logback,
+          Dependencies.scalaLogging
         )
     )
 

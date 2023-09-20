@@ -1,17 +1,18 @@
 package org.alephium.ralph.lsp
 
+import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.server.{RalphLangClient, RalphLangServer}
 import org.eclipse.lsp4j.jsonrpc.Launcher
 
 import java.io.{InputStream, OutputStream}
 
-object Main {
+object Main extends StrictLogging {
 
   def main(args: Array[String]): Unit = {
-    scribe.info("Starting language server")
-    // start lsp using standard IO
-    start(System.in, System.out)
+    logger.info("Starting Ralph-LSP")
+    start(System.in, System.out) // start lsp using standard IO
+    logger.info("Ralph-LSP started!")
   }
 
   def start(in: InputStream, out: OutputStream): Unit = {
@@ -31,7 +32,7 @@ object Main {
 
     server.setInitialState(
       client = launcher.getRemoteProxy,
-      listener = launcher.startListening()
+      listener = launcher.startListening
     )
   }
 }
