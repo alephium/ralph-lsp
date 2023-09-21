@@ -31,15 +31,6 @@ object WorkspaceState {
   sealed trait SourceAware extends BuildAware {
     /** A workspace contains multiple source files */
     def sourceCode: ArraySeq[SourceCodeState]
-
-    /** Add or update the source file */
-    def updateOrAdd(newState: SourceCodeState): ArraySeq[SourceCodeState] = {
-      val index = sourceCode.indexWhere(_.fileURI == newState.fileURI)
-      if (index >= 0)
-        sourceCode.updated(index, newState)
-      else
-        sourceCode appended newState
-    }
   }
 
   sealed trait CompileRun extends WorkspaceState.SourceAware {

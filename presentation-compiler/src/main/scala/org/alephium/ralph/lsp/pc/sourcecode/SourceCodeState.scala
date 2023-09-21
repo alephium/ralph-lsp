@@ -13,6 +13,9 @@ sealed trait SourceCodeState {
 
 object SourceCodeState {
 
+  implicit val ordering: Ordering[SourceCodeState] =
+    Ordering.by[SourceCodeState, URI](_.fileURI)
+
   /** Represents: Code was accessed. It can either be in Error state or Success state.
    *
    * [[OnDisk]] state is no longer achievable from this state unless the file gets removed/dropped entirely

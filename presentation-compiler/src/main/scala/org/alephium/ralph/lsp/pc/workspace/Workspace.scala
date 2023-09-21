@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.compiler.error.StringMessage
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.Ast.ContractWithState
+import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -211,7 +212,10 @@ object Workspace {
           }
 
         val updatedFileStates =
-          currentState.updateOrAdd(newSourceCodeState)
+          updateOrAdd(
+            collection = currentState.sourceCode,
+            update = newSourceCodeState
+          )
 
         WorkspaceState.UnCompiled(
           build = currentState.build,
