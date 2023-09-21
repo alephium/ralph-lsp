@@ -61,7 +61,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
     this.synchronized {
       val newState = setState(state)
       // let the client know of workspace changes
-      getClient().publish(state.workspace)
+      getClient().publish(newState.workspace)
       newState
     }
 
@@ -187,6 +187,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
           state = getWorkspace()
         ) match {
           case Left(error) =>
+            // publish error sna continue with previously successful build
             getClient().publishErrors(
               fileURI = fileURI,
               code = code, // TODO: the code here needs to be from the read build file.
@@ -194,8 +195,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
             )
 
           case Right(Some(newState)) =>
-            // Build file changed.
-            // Update the workspace and request the client for a full workspace build.
+            // Build file changed. Update the workspace and request a full workspace build.
             setAndPublishState(state.updateWorkspace(newState))
             getClient().refreshDiagnostics() // request project wide re-build TODO: Handle future
 

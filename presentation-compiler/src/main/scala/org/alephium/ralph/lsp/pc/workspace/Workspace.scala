@@ -44,7 +44,7 @@ object Workspace {
             state match {
               case currentState: WorkspaceState.BuildAware =>
                 // if the new build-file is the same as current build-file, return the
-                // same state, so a new build does not unnecessarily gets triggered.
+                // no-state-change, so a new build does not unnecessarily gets triggered.
                 if (currentState.build == newBuild)
                   None
                 else // else the build file has changed, start a new workspace with the new build.
@@ -58,7 +58,7 @@ object Workspace {
     }
 
   def build(buildURI: URI,
-            build: Option[String],
+            code: Option[String],
             state: WorkspaceState.Initialised): Either[FormattableError, WorkspaceState.BuildCompiled] =
     WorkspaceBuild.validateBuildURI(
       buildURI = buildURI,
@@ -67,7 +67,7 @@ object Workspace {
       buildURI =>
         WorkspaceBuild.readBuild(
           buildURI = buildURI,
-          code = build,
+          code = code,
         ) map WorkspaceState.BuildCompiled
     }
 
@@ -86,7 +86,7 @@ object Workspace {
         // Build file is not compiled. Build it!
         build(
           buildURI = WorkspaceBuild.toBuildURI(state.workspaceURI),
-          build = None,
+          code = None,
           state = state
         )
     }
