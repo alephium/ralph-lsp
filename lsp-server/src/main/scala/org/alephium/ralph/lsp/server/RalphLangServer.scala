@@ -52,15 +52,16 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
   def getState(): ServerState =
     this.state
 
+  private def getClient(): RalphLangClient =
+    state.client getOrElse {
+      throw ResponseError.ClientNotConfigured.toResponseErrorException
+    }
+
   private def setAndPublishState(state: ServerState): ServerState =
     this.synchronized {
       val newState = setState(state)
       // let the client know of workspace changes
-      state.withClient {
-        implicit client =>
-          RalphLangClient.publish(state.workspace)
-      }
-
+      getClient().publish(state.workspace)
       newState
     }
 
@@ -159,13 +160,10 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
         updatedCode = code
       )
     else
-      state.withClient {
-        implicit client =>
-          throw
-            RalphLangClient
-              .log(ResponseError.UnknownFile(fileURI))
-              .toResponseErrorException
-      }
+      throw
+        getClient()
+          .log(ResponseError.UnknownFile(fileURI))
+          .toResponseErrorException
   }
 
   /**
@@ -189,43 +187,31 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
           state = getWorkspace()
         ) match {
           case Left(error) =>
-            state.withClient {
-              implicit client =>
-                RalphLangClient.publishErrors(
-                  fileURI = fileURI,
-                  code = code, // TODO: the code here needs to be from the read build file.
-                  errors = List(error)
-                )
-            }
+            getClient().publishErrors(
+              fileURI = fileURI,
+              code = code, // TODO: the code here needs to be from the read build file.
+              errors = List(error)
+            )
 
           case Right(Some(newState)) =>
             // Build file changed.
             // Update the workspace and request the client for a full workspace build.
-            state.withClient {
-              implicit client =>
-                setAndPublishState(state.updateWorkspace(newState))
-                client.refreshDiagnostics() // request project wide re-build TODO: Handle future
-            }
+            setAndPublishState(state.updateWorkspace(newState))
+            getClient().refreshDiagnostics() // request project wide re-build TODO: Handle future
 
           case Right(None) =>
             // Build file did not change.
-            state.withClient {
-              implicit client =>
-                RalphLangClient.publishErrors(
-                  fileURI = fileURI,
-                  code = code,
-                  errors = List.empty
-                )
-            }
+            getClient().publishErrors(
+              fileURI = fileURI,
+              code = code,
+              errors = List.empty
+            )
         }
       else
-        state.withClient {
-          implicit client =>
-            throw
-              RalphLangClient
-                .log(ResponseError.InvalidBuildFileName(fileName))
-                .toResponseErrorException
-        }
+        throw
+          getClient()
+            .log(ResponseError.InvalidBuildFileName(fileName))
+            .toResponseErrorException
     }
 
   /**
@@ -246,14 +232,11 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
         currentState = workspace
       ) match {
         case Left(error) =>
-          state.withClient {
-            implicit client =>
-              RalphLangClient.publishErrors(
-                fileURI = fileURI,
-                code = updatedCode, // TODO: Test if this code is the updated code.
-                errors = List(error)
-              )
-          }
+          getClient().publishErrors(
+            fileURI = fileURI,
+            code = updatedCode, // TODO: Test if this code is the updated code.
+            errors = List(error)
+          )
 
         case Right(newState) =>
           // immediately set the new state with the updated code so it is available for other threads.
@@ -308,11 +291,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
         case Some(workspace) =>
           Workspace.getOrBuild(workspace) match {
             case Left(error) =>
-              throw
-                state.withClient {
-                  implicit client =>
-                    RalphLangClient.log(error)
-                }
+              throw getClient().log(error)
 
             case Right(newState) =>
               newState
@@ -335,12 +314,9 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
   // Workspace folder is not defined.
   // This is not expected to occur since `initialized` is always invoked first.
   def reportMissingWorkspace(): ResponseErrorException =
-    state.withClient {
-      implicit client =>
-        RalphLangClient
-          .log(ResponseError.WorkspaceFolderNotSupplied)
-          .toResponseErrorException
-    }
+    getClient()
+      .log(ResponseError.WorkspaceFolderNotSupplied)
+      .toResponseErrorException
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
     ()
