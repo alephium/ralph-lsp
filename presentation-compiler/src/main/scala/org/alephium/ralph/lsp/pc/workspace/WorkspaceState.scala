@@ -33,7 +33,8 @@ object WorkspaceState {
     def sourceCode: ArraySeq[SourceCodeState]
   }
 
-  sealed trait CompileRun extends WorkspaceState.SourceAware {
+  /** State: Represents a compilation run result */
+  sealed trait CompilerRun extends WorkspaceState.SourceAware {
     def parsed: WorkspaceState.Parsed
   }
 
@@ -63,7 +64,7 @@ object WorkspaceState {
    */
   case class Errored(sourceCode: ArraySeq[SourceCodeState],
                      workspaceErrors: ArraySeq[FormattableError],
-                     parsed: WorkspaceState.Parsed) extends CompileRun {
+                     parsed: WorkspaceState.Parsed) extends CompilerRun {
     def build: WorkspaceBuild =
       parsed.build
   }
@@ -75,7 +76,7 @@ object WorkspaceState {
    * @param parsed     Current parser run for this compiled code.
    */
   case class Compiled(sourceCode: ArraySeq[SourceCodeState],
-                      parsed: WorkspaceState.Parsed) extends CompileRun {
+                      parsed: WorkspaceState.Parsed) extends CompilerRun {
     def build: WorkspaceBuild =
       parsed.build
   }

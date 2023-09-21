@@ -23,13 +23,13 @@ object SourceCodeState {
    * */
   sealed trait AccessedState extends SourceCodeState
 
-  /** Represents: Code cached */
-  sealed trait CachedState extends SourceCodeState {
+  /** Represents: State where the source code is known */
+  sealed trait CodeAware extends SourceCodeState {
     def code: String
   }
 
   /** Represents: Code is parsed */
-  sealed trait ParsedState extends CachedState
+  sealed trait ParsedState extends CodeAware
 
   /** Represents: Code errored */
   sealed trait FailedState extends SourceCodeState
@@ -39,7 +39,7 @@ object SourceCodeState {
 
   /** The code is in memory but not parsed or compiled */
   case class UnCompiled(fileURI: URI,
-                        code: String) extends AccessedState with CachedState
+                        code: String) extends AccessedState with CodeAware
 
   /** Represents: Was unable to access code */
   case class ErrorAccess(fileURI: URI,
@@ -69,6 +69,6 @@ object SourceCodeState {
   case class ErrorSource(fileURI: URI,
                          code: String,
                          errors: Seq[FormattableError],
-                         previous: Option[SourceCodeState.Parsed]) extends FailedState with CachedState
+                         previous: Option[SourceCodeState.Parsed]) extends FailedState with CodeAware
 
 }

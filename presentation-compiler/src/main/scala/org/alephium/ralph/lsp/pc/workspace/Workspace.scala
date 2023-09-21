@@ -162,7 +162,7 @@ object Workspace {
   /**
    * Compiles a parsed workspace.
    */
-  def compileParsed(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.CompileRun = {
+  def compileParsed(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.CompilerRun = {
     val contractsToCompile =
       workspace.sourceCode.flatMap(_.contracts)
 
@@ -236,7 +236,7 @@ object Workspace {
    * @return New workspace state that PresentationalCompiler can continue with.
    */
   def compileForDeployment(workspaceURI: URI,
-                           config: Config)(implicit compiler: CompilerAccess): WorkspaceState.CompileRun = {
+                           config: Config)(implicit compiler: CompilerAccess): WorkspaceState.CompilerRun = {
     val result =
       compiler.compileForDeployment(
         workspaceURI = workspaceURI,
@@ -250,7 +250,7 @@ object Workspace {
   }
 
   private[workspace] def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                                          compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompileRun =
+                                          compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompilerRun =
     compilationResult match {
       case Left(workspaceError) =>
         // File or sourcePosition position information is not available for this error,
