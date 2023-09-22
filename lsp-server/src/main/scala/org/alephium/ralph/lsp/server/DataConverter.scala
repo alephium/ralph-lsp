@@ -31,7 +31,7 @@ object DataConverter {
           new Range(new Position(0, 0), new Position(0, 1))
       }
 
-    new Diagnostic(range, error.message, severity, "RalphLS")
+    new Diagnostic(range, error.message, severity, "Ralph")
   }
 
   def toWorkspaceDiagnostics(workspace: WorkspaceState.SourceAware): PublishDiagnosticsParams = {
@@ -119,6 +119,39 @@ object DataConverter {
 
     new PublishDiagnosticsParams(fileURI.toString, diagnostics.asJava)
   }
+
+  /**
+   * Builds diagnostics to publish, clearing older fixed errors or warnings.
+   *
+   * @param previousState Oldest state
+   * @param newerStates   Newer states.
+   *                      Set to empty if previousState is the only state.
+   * @return Diagnostics to publish.
+   */
+  def toPublishDiagnotics(previousState: WorkspaceState.SourceAware,
+                          newerStates: Seq[WorkspaceState.SourceAware]): Iterable[PublishDiagnosticsParams] =
+    newerStates.foldLeft(toPublishDiagnostics(previousState)) {
+      case (previous, next) =>
+        val nextDiagnostics = toPublishDiagnostics(next)
+
+        val diagnosticsToClear =
+          previous.foldLeft(Seq.empty[PublishDiagnosticsParams]) {
+            case (diagToClear, previous) =>
+              nextDiagnostics.find(_.getUri == previous.getUri) match {
+                case Some(_) =>
+                  // next diagnostics contains messages for this URI.
+                  diagToClear
+
+                case None =>
+                  // next diagnostics does not contain messages for this URI, create an entry to clear it.
+                  val clearDiag = new PublishDiagnosticsParams(previous.getUri, util.Arrays.asList())
+                  diagToClear :+ clearDiag
+              }
+          }
+
+        // all messages to publish.
+        nextDiagnostics ++ diagnosticsToClear
+    }
 
   def toCompletionList(suggestions: Array[Suggestion]): CompletionList = {
     val items = new util.ArrayList[CompletionItem]()

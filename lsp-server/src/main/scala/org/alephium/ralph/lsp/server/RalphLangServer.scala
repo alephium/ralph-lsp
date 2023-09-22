@@ -63,10 +63,21 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
       this.state = this.state.copy(workspace = Some(workspace))
     }
 
-  private def setAndPublishWorkspace(workspace: WorkspaceState.SourceAware): Unit =
+  /**
+   * Publish workspace messages given it's previous states in order.
+   *
+   * Previous states are used to clear error/warnings that are fixed in newer states.
+   *
+   * @param head First workspace state
+   * @param tail Newer states following the first state.
+   *             Set this to empty if head is the only state.
+   */
+  private def setAndPublishWorkspace(head: WorkspaceState.SourceAware,
+                                     tail: WorkspaceState.SourceAware*): Unit =
     this.synchronized {
-      setWorkspace(workspace)
-      getClient().publish(workspace)
+      val last = tail.lastOption.getOrElse(head)
+      setWorkspace(last)
+      getClient().publish(head, tail)
     }
 
   /**
@@ -188,7 +199,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
             initialiseWorkspace(buildState)
 
           case None =>
-            // Build file did not change.
+            // Build file did not change. Clear any older error messages.
             getClient().publishErrors(
               fileURI = fileURI,
               code = code,
@@ -196,11 +207,13 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
             )
         }
       else
-        getClient()
-          .log(ResponseError.InvalidBuildFileName(fileName))
-          .toResponseErrorException
+        throw
+          getClient()
+            .log(ResponseError.InvalidBuildFileName(fileName))
+            .toResponseErrorException
     }
 
+  /** Creates an un-compiled workspace for a successful build file. */
   def initialiseWorkspace(state: BuildState): WorkspaceState.UnCompiled =
     this.synchronized {
       state match {
@@ -208,20 +221,23 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
           // Build file changed. Update the workspace and request a full workspace build.
           Workspace.initialise(compiled) match {
             case Left(error) =>
+              // Project level error: Failed to initialise workspace.
               throw getClient().log(error)
 
-            case Right(state) =>
-              setAndPublishWorkspace(state)
+            case Right(unCompiledWorkspace) =>
+              // set the new workspace and publish diagnostics
+              setAndPublishWorkspace(unCompiledWorkspace)
 
-              // clear errors
+              // clear any build errors
               getClient().publishErrors(
-                fileURI = state.build.buildURI,
-                code = Some(state.build.code),
+                fileURI = unCompiledWorkspace.build.buildURI,
+                code = Some(unCompiledWorkspace.build.code),
                 errors = List.empty
               )
 
-              getClient().refreshDiagnostics() // request project wide re-build TODO: Handle future
-              state
+              // request project wide re-build TODO: Handle future
+              getClient().refreshDiagnostics()
+              unCompiledWorkspace
           }
 
         case errored: BuildState.BuildErrored =>
@@ -268,7 +284,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
         Workspace.parseAndCompile(codeChangedWorkspace)
 
       // set and publish the compiled state
-      setAndPublishWorkspace(compiledWorkspace)
+      setAndPublishWorkspace(codeChangedWorkspace, compiledWorkspace)
     }
 
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =

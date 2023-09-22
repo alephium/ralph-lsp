@@ -38,17 +38,15 @@ object RalphLangClient {
       client.publishDiagnostics(publish)
     }
 
-    /** Report error at file level */
-    def publish(workspace: WorkspaceState.SourceAware): Unit =
-      toPublishDiagnostics(workspace) foreach {
+    /** Publish IDE messages given the workspace previous and newer states */
+    def publish(head: WorkspaceState.SourceAware,
+                tail: Seq[WorkspaceState.SourceAware]): Unit =
+      toPublishDiagnotics(head, tail) foreach {
         diagnostic =>
           // TODO: Isn't there a way in LSP to send all
           //       diagnotics to the client in a single request?
           client.publishDiagnostics(diagnostic)
       }
-
-    def publish(workspaces: Iterable[WorkspaceState.SourceAware]): Unit =
-      workspaces foreach publish
   }
 }
 
