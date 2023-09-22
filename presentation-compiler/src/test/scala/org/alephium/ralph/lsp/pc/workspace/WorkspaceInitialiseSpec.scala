@@ -14,7 +14,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.collection.immutable.ArraySeq
 
 /**
- * Test cases for [[Workspace.build]] function.
+ * Test cases for [[Workspace.initialise]] function.
  */
 class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
@@ -22,25 +22,25 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
     "all files are successfully read" should {
       "start workspace in un-compiled state" in {
         forAll(genBuildCompiled(), Gen.listOf(genFileURI())) {
-          case (state, fileURIs) =>
+          case (build, fileURIs) =>
             implicit val compiler: CompilerAccess =
               mock[CompilerAccess]
 
             // expect the compiler to get a request to fetch files
             // from the configured contract path.
             (compiler.getSourceFiles _)
-              .expects(state.build.contractURI)
+              .expects(build.contractURI)
               .returns(Right(fileURIs)) // return files successfully fetched
               .once() // called only once
 
             // Initialise a workspace for the config
             val actualWorkspace =
-              Workspace.build(state)
+              Workspace.initialise(build)
 
             // All files are started in OnDisk state.
             val expectedWorkspace =
               WorkspaceState.UnCompiled(
-                build = state.build,
+                build = build,
                 sourceCode = fileURIs.map(SourceCodeState.OnDisk).to(ArraySeq)
               )
 
@@ -52,20 +52,20 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
     "failed" should {
       "report the error" in {
         forAll(genBuildCompiled(), genError()) {
-          case (state, error) =>
+          case (build, error) =>
             implicit val compiler: CompilerAccess =
               mock[CompilerAccess]
 
             // expect the compiler to get a request to fetch files
             // from the configured contract path.
             (compiler.getSourceFiles _)
-              .expects(state.build.contractURI)
+              .expects(build.contractURI)
               .returns(Left(error)) // return an error
               .once() // called only once
 
             // Initialise a workspace for the config
             val actualWorkspace =
-              Workspace.build(state)
+              Workspace.initialise(build)
 
             // No initialisation occurs and a failure is returned.
             actualWorkspace.left.value shouldBe error

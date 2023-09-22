@@ -4,7 +4,8 @@ import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.completion.CodeCompleter
 import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceBuild, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, WorkspaceBuild}
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures, ResponseErrorException}
@@ -57,18 +58,15 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
       throw ResponseError.ClientNotConfigured.toResponseErrorException
     }
 
-  private def setAndPublishState(state: ServerState): ServerState =
+  private def setWorkspace(workspace: WorkspaceState): Unit =
     this.synchronized {
-      val newState = setState(state)
-      // let the client know of workspace changes
-      getClient().publish(newState.workspace)
-      newState
+      this.state = this.state.copy(workspace = Some(workspace))
     }
 
-  private def setState(state: ServerState): ServerState =
+  private def setAndPublishWorkspace(workspace: WorkspaceState.SourceAware): Unit =
     this.synchronized {
-      this.state = state
-      state
+      setWorkspace(workspace)
+      getClient().publish(workspace)
     }
 
   /**
@@ -85,8 +83,8 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
 
       // Client must be set first, before running the request listener,
       // so that it is available for responding to requests.
-      setState(state.copy(client = Some(client)))
-      setState(state.copy(listener = Some(listener())))
+      this.state = state.copy(client = Some(client))
+      this.state = state.copy(listener = Some(listener()))
     }
 
   // TODO: If allowed in this phase (maybe? the doc seem to indicate no), access the PresentationCompiler
@@ -108,7 +106,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
         val workspace =
           Workspace.create(workspaceURI)
 
-        setState(state.updateWorkspace(workspace))
+        setWorkspace(workspace)
 
         cancelChecker.checkCanceled()
 
@@ -186,20 +184,10 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
           build = code,
           state = getWorkspace()
         ) match {
-          case Left(error) =>
-            // publish error sna continue with previously successful build
-            getClient().publishErrors(
-              fileURI = fileURI,
-              code = code, // TODO: the code here needs to be from the read build file.
-              errors = List(error)
-            )
+          case Some(buildState: BuildState) =>
+            initialiseWorkspace(buildState)
 
-          case Right(Some(newState)) =>
-            // Build file changed. Update the workspace and request a full workspace build.
-            setAndPublishState(state.updateWorkspace(newState))
-            getClient().refreshDiagnostics() // request project wide re-build TODO: Handle future
-
-          case Right(None) =>
+          case None =>
             // Build file did not change.
             getClient().publishErrors(
               fileURI = fileURI,
@@ -208,10 +196,50 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
             )
         }
       else
-        throw
-          getClient()
-            .log(ResponseError.InvalidBuildFileName(fileName))
-            .toResponseErrorException
+        getClient()
+          .log(ResponseError.InvalidBuildFileName(fileName))
+          .toResponseErrorException
+    }
+
+  def initialiseWorkspace(state: BuildState): WorkspaceState.UnCompiled =
+    this.synchronized {
+      state match {
+        case compiled: BuildState.BuildCompiled =>
+          // Build file changed. Update the workspace and request a full workspace build.
+          Workspace.initialise(compiled) match {
+            case Left(error) =>
+              throw getClient().log(error)
+
+            case Right(state) =>
+              setAndPublishWorkspace(state)
+
+              // clear errors
+              getClient().publishErrors(
+                fileURI = state.build.buildURI,
+                code = Some(state.build.code),
+                errors = List.empty
+              )
+
+              getClient().refreshDiagnostics() // request project wide re-build TODO: Handle future
+              state
+          }
+
+        case errored: BuildState.BuildErrored =>
+          getClient().publishErrors(
+            fileURI = errored.buildURI,
+            code = errored.code,
+            errors = errored.errors.toList
+          )
+
+          // TODO
+          errored.errors.headOption match {
+            case Some(firstError) =>
+              throw firstError
+
+            case None =>
+              ???
+          }
+      }
     }
 
   /**
@@ -223,32 +251,24 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
   def codeChanged(fileURI: URI,
                   updatedCode: Option[String]): Unit =
     this.synchronized { // TODO: Remove synchronized. Use async.
-      val workspace = getOrBuildWorkspace()
-      setState(state.updateWorkspace(workspace))
+      val workspace = getOrInitWorkspace()
 
-      Workspace.codeChanged(
-        fileURI = fileURI,
-        updatedCode = updatedCode,
-        currentState = workspace
-      ) match {
-        case Left(error) =>
-          getClient().publishErrors(
-            fileURI = fileURI,
-            code = updatedCode, // TODO: Test if this code is the updated code.
-            errors = List(error)
-          )
+      val codeChangedWorkspace =
+        Workspace.codeChanged(
+          fileURI = fileURI,
+          updatedCode = updatedCode,
+          currentState = workspace
+        )
 
-        case Right(newState) =>
-          // immediately set the new state with the updated code so it is available for other threads.
-          setState(state.updateWorkspace(newState))
+      // immediately set the new state with the updated code so it is available for other threads.
+      setWorkspace(codeChangedWorkspace)
 
-          // compile the new state.
-          val compiledState =
-            Workspace.parseAndCompile(newState)
+      // compile the new state.
+      val compiledWorkspace =
+        Workspace.parseAndCompile(codeChangedWorkspace)
 
-          // set and publish the compiled state
-          setAndPublishState(state.updateWorkspace(compiledState))
-      }
+      // set and publish the compiled state
+      setAndPublishWorkspace(compiledWorkspace)
     }
 
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
@@ -260,8 +280,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
 
         cancelChecker.checkCanceled()
 
-        val workspace = getOrBuildWorkspace()
-        setAndPublishState(state.updateWorkspace(workspace))
+        val workspace = getOrInitWorkspace()
 
         val suggestions =
           CodeCompleter.complete(
@@ -285,17 +304,20 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
    *
    * @note Does not update the current state. The caller should set the new state.
    */
-  def getOrBuildWorkspace(): WorkspaceState.BuildAware =
+  def getOrInitWorkspace(): WorkspaceState.SourceAware =
     this.synchronized { // TODO: Remove synchronized. Use async.
       state.workspace match {
-        case Some(workspace) =>
-          Workspace.getOrBuild(workspace) match {
-            case Left(error) =>
-              throw getClient().log(error)
+        case Some(aware: WorkspaceState.SourceAware) =>
+          aware
 
-            case Right(newState) =>
-              newState
-          }
+        case Some(initialised: WorkspaceState.Initialised) =>
+          val newBuild =
+            Workspace.build(
+              code = None,
+              state = initialised
+            )
+
+          initialiseWorkspace(newBuild)
 
         case None =>
           throw reportMissingWorkspace()

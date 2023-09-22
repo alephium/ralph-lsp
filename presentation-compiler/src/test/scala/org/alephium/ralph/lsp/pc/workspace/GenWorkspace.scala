@@ -3,6 +3,8 @@ package org.alephium.ralph.lsp.pc.workspace
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.GenCommon._
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
+import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild
 import org.alephium.ralphc.Config
 import org.scalacheck.{Arbitrary, Gen}
 
@@ -45,12 +47,12 @@ object GenWorkspace {
       )
   }
 
-  def genWorkspaceBuild(): Gen[WorkspaceBuild] =
+  def genBuildCompiled(): Gen[BuildCompiled] =
     for {
       workspacePath <- genFolder()
       ralphcConfig <- genRalphcConfig(workspacePath.toUri)
     } yield
-      WorkspaceBuild(
+      BuildCompiled(
         buildURI = workspacePath.resolve(WorkspaceBuild.BUILD_FILE_NAME).toUri,
         code = WorkspaceBuild.writeConfig(ralphcConfig),
         config = ralphcConfig
@@ -61,17 +63,9 @@ object GenWorkspace {
       workspaceURI <- genFolder()
     } yield WorkspaceState.Initialised(workspaceURI.toUri)
 
-  def genBuildCompiled(): Gen[WorkspaceState.BuildCompiled] =
-    for {
-      build <- genWorkspaceBuild()
-    } yield
-      WorkspaceState.BuildCompiled(
-        build = build,
-      )
-
   def genUnCompiled(sourceCode: Gen[List[SourceCodeState]] = Gen.listOf(GenSourceCode.genSourceCode())): Gen[WorkspaceState.UnCompiled] =
     for {
-      build <- genWorkspaceBuild()
+      build <- genBuildCompiled()
       sourceCode <- sourceCode
     } yield
       WorkspaceState.UnCompiled(
@@ -81,7 +75,7 @@ object GenWorkspace {
 
   def genParsed(sourceCode: Gen[List[SourceCodeState.Parsed]] = Gen.listOf(GenSourceCode.genParsed())): Gen[WorkspaceState.Parsed] =
     for {
-      config <- genWorkspaceBuild()
+      config <- genBuildCompiled()
       sourceCode <- sourceCode
     } yield
       WorkspaceState.Parsed(
@@ -114,7 +108,6 @@ object GenWorkspace {
   def genWorkspace(): Gen[WorkspaceState] =
     Gen.oneOf(
       genInitialised(),
-      genBuildCompiled(),
       genUnCompiled(),
       genParsed(),
       genErrored(),

@@ -2,6 +2,8 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
+import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -12,23 +14,13 @@ sealed trait WorkspaceState {
 
 object WorkspaceState {
 
-  /**
-   * Workspace state with successfully configured build file.
-   *
-   * Parsing and compilation is implemented only for these types.
-   * Until then, the workspace remains in [[Initialised]] or [[BuildCompiled]] state where
-   * the user is reported any validation errors in the build file
-   * for that workspace.
-   * */
-  sealed trait BuildAware extends WorkspaceState {
-    def build: WorkspaceBuild
+  /** Workspace state where the source-code is known and can be parsed and compiled */
+  sealed trait SourceAware extends WorkspaceState {
+    def build: BuildCompiled
 
     def workspaceURI: URI =
       build.workspaceURI
-  }
 
-  /** Workspace state where the source-code is known and can be parsed and compiled */
-  sealed trait SourceAware extends BuildAware {
     /** A workspace contains multiple source files */
     def sourceCode: ArraySeq[SourceCodeState]
   }
@@ -39,20 +31,17 @@ object WorkspaceState {
   }
 
   /** State: IDE is initialised but the build file requires validation */
-  case class Initialised(workspaceURI: URI) extends WorkspaceState
-
-  /** State: Build file is compiled. This state can upgraded to [[UnCompiled]]. */
-  case class BuildCompiled(build: WorkspaceBuild) extends BuildAware {
-    override def workspaceURI: URI =
-      build.workspaceURI
+  case class Initialised(workspaceURI: URI) extends WorkspaceState {
+    def buildURI =
+      WorkspaceBuild.toBuildURI(workspaceURI)
   }
 
   /** State: Source files might be un-compiled, parsed or compiled. This state can be parsed and compiled. */
-  case class UnCompiled(build: WorkspaceBuild,
+  case class UnCompiled(build: BuildCompiled,
                         sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.SourceAware
 
   /** State: All source files parsed, therefore this workspace can be compiled */
-  case class Parsed(build: WorkspaceBuild,
+  case class Parsed(build: BuildCompiled,
                     sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.SourceAware
 
   /**
@@ -65,7 +54,7 @@ object WorkspaceState {
   case class Errored(sourceCode: ArraySeq[SourceCodeState],
                      workspaceErrors: ArraySeq[FormattableError],
                      parsed: WorkspaceState.Parsed) extends CompilerRun {
-    def build: WorkspaceBuild =
+    def build: BuildCompiled =
       parsed.build
   }
 
@@ -77,7 +66,7 @@ object WorkspaceState {
    */
   case class Compiled(sourceCode: ArraySeq[SourceCodeState],
                       parsed: WorkspaceState.Parsed) extends CompilerRun {
-    def build: WorkspaceBuild =
+    def build: BuildCompiled =
       parsed.build
   }
 

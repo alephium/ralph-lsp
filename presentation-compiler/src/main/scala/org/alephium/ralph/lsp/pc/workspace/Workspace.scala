@@ -7,6 +7,8 @@ import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, WorkspaceBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -31,66 +33,52 @@ object Workspace {
    * */
   def build(buildURI: URI,
             build: Option[String],
-            state: WorkspaceState): Either[FormattableError, Option[WorkspaceState.BuildAware]] =
+            state: WorkspaceState): Option[BuildState] =
     WorkspaceBuild.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = state.workspaceURI
-    ) flatMap {
-      buildURI =>
+    ) match {
+      case Left(error) =>
+        val buildError =
+          BuildState.BuildErrored(
+            buildURI = buildURI,
+            code = build,
+            errors = ArraySeq(error)
+          )
+
+        Some(buildError)
+
+      case Right(buildURI) =>
         WorkspaceBuild.readBuild(
           buildURI = buildURI,
           code = build,
-        ) map {
-          newBuild =>
+        ) match {
+          case newBuild: BuildState.BuildCompiled =>
             state match {
-              case currentState: WorkspaceState.BuildAware =>
+              case currentState: WorkspaceState.SourceAware =>
                 // if the new build-file is the same as current build-file, return the
                 // no-state-change, so a new build does not unnecessarily gets triggered.
                 if (currentState.build == newBuild)
                   None
                 else // else the build file has changed, start a new workspace with the new build.
-                  Some(WorkspaceState.BuildCompiled(newBuild))
+                  Some(newBuild)
 
               case WorkspaceState.Initialised(_) =>
                 // upgrade the state to build-file aware.
-                Some(WorkspaceState.BuildCompiled(newBuild))
+                Some(newBuild)
             }
+
+          case errored: BuildState.BuildErrored =>
+            Some(errored)
         }
     }
 
-  def build(buildURI: URI,
-            code: Option[String],
-            state: WorkspaceState.Initialised): Either[FormattableError, WorkspaceState.BuildCompiled] =
-    WorkspaceBuild.validateBuildURI(
-      buildURI = buildURI,
-      workspaceURI = state.workspaceURI
-    ) flatMap {
-      buildURI =>
-        WorkspaceBuild.readBuild(
-          buildURI = buildURI,
-          code = code,
-        ) map WorkspaceState.BuildCompiled
-    }
-
-  /**
-   * Fetches existing workspace or initialises a new one from the configured build file.
-   *
-   * If the build file is not configured, it returns an error.
-   */
-  def getOrBuild(workspace: WorkspaceState): Either[FormattableError, WorkspaceState.BuildAware] =
-    workspace match {
-      case built: WorkspaceState.BuildAware =>
-        // Already built. Return the same state.
-        Right(built)
-
-      case state: WorkspaceState.Initialised =>
-        // Build file is not compiled. Build it!
-        build(
-          buildURI = WorkspaceBuild.toBuildURI(state.workspaceURI),
-          code = None,
-          state = state
-        )
-    }
+  def build(code: Option[String],
+            state: WorkspaceState.Initialised): BuildState =
+    WorkspaceBuild.readBuild(
+      buildURI = state.buildURI,
+      code = code,
+    )
 
   /**
    * Initial workspaces collects paths to all OnDisk ralph files.
@@ -98,10 +86,10 @@ object Workspace {
    * @param state Current state of the workspace.
    * @return New workspace state which aware of all workspace source code files.
    */
-  def build(state: WorkspaceState.BuildCompiled)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
+  def initialise(state: BuildCompiled)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
     SourceCode
-      .initialise(state.build.contractURI)
-      .map(WorkspaceState.UnCompiled(state.build, _))
+      .initialise(state.contractURI)
+      .map(WorkspaceState.UnCompiled(state, _))
 
   /**
    * Parses source-code in that is not already in parsed state.
@@ -188,40 +176,26 @@ object Workspace {
    */
   def codeChanged(fileURI: URI,
                   updatedCode: Option[String],
-                  currentState: WorkspaceState.BuildAware)(implicit compilerAccess: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] = {
-    val sourceAware =
-      currentState match {
-        case sourceAware: WorkspaceState.SourceAware =>
-          // source code is already known
-          Right(sourceAware)
+                  currentState: WorkspaceState.SourceAware): WorkspaceState.UnCompiled = {
+    val newSourceCodeState =
+      updatedCode match {
+        case Some(newCode) =>
+          SourceCodeState.UnCompiled(fileURI, newCode)
 
-        case built: WorkspaceState.BuildCompiled =>
-          // This is a new build, initialise its state so it's compilable.
-          build(built)
+        case None =>
+          SourceCodeState.OnDisk(fileURI)
       }
 
-    sourceAware map {
-      currentState =>
-        val newSourceCodeState =
-          updatedCode match {
-            case Some(newCode) =>
-              SourceCodeState.UnCompiled(fileURI, newCode)
+    val updatedFileStates =
+      updateOrAdd(
+        collection = currentState.sourceCode,
+        update = newSourceCodeState
+      )
 
-            case None =>
-              SourceCodeState.OnDisk(fileURI)
-          }
-
-        val updatedFileStates =
-          updateOrAdd(
-            collection = currentState.sourceCode,
-            update = newSourceCodeState
-          )
-
-        WorkspaceState.UnCompiled(
-          build = currentState.build,
-          sourceCode = updatedFileStates
-        )
-    }
+    WorkspaceState.UnCompiled(
+      build = currentState.build,
+      sourceCode = updatedFileStates
+    )
   }
 
   /**

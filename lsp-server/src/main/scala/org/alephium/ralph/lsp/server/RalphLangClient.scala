@@ -47,14 +47,8 @@ object RalphLangClient {
           client.publishDiagnostics(diagnostic)
       }
 
-    def publish(workspaces: Iterable[WorkspaceState]): Unit =
-      workspaces foreach {
-        case _: WorkspaceState.Initialised | _: WorkspaceState.BuildCompiled =>
-          ()
-
-        case workspace: WorkspaceState.SourceAware =>
-          publish(workspace)
-      }
+    def publish(workspaces: Iterable[WorkspaceState.SourceAware]): Unit =
+      workspaces foreach publish
   }
 }
 

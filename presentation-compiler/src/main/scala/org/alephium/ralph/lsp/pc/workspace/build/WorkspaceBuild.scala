@@ -1,15 +1,17 @@
-package org.alephium.ralph.lsp.pc.workspace
+package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.compiler.error.StringMessage
 import org.alephium.ralph.lsp.pc.util.FileIO
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState.{BuildCompiled, BuildErrored}
 import org.alephium.ralphc.Config
 import upickle.default._
 
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
+import scala.collection.immutable.ArraySeq
 import scala.util.{Failure, Success, Try}
 
 object WorkspaceBuild {
@@ -41,61 +43,80 @@ object WorkspaceBuild {
   def buildNotFound(): String =
     s"Project build file not found. Create a '$BUILD_FILE_NAME' file in the project's root folder."
 
-  /** Reads [[Config]] from the workspace */
-  def readBuild(buildURI: URI): Either[StringMessage, WorkspaceBuild] = {
-    def readConfigFile(uri: URI) =
-      for {
-        json <- FileIO.readAllLines(uri)
-        config <- parseConfig(json)
-      } yield
-        WorkspaceBuild(
+  def readConfigFile(buildURI: URI): BuildState =
+    FileIO.readAllLines(buildURI) match {
+      case Failure(exception) =>
+        BuildErrored(
           buildURI = buildURI,
-          code = json,
-          config = config
+          code = None,
+          errors = ArraySeq(StringMessage(exception.getMessage))
         )
 
+      case Success(json) =>
+        parseConfig(json) match {
+          case Failure(exception) =>
+            BuildErrored(
+              buildURI = buildURI,
+              code = Some(json),
+              errors = ArraySeq(StringMessage(exception.getMessage))
+            )
+
+          case Success(config) =>
+            BuildCompiled(
+              buildURI = buildURI,
+              code = json,
+              config = config
+            )
+        }
+    }
+
+  /** Reads [[Config]] from the workspace */
+  def readBuild(buildURI: URI): BuildState = {
     val buildFilePath =
       Paths.get(buildURI)
 
     FileIO.exists(buildFilePath) match {
       case Failure(exception) =>
-        Left(StringMessage(exception.getMessage))
+        BuildErrored(
+          buildURI = buildURI,
+          code = None,
+          errors = ArraySeq(StringMessage(exception.getMessage))
+        )
 
       case Success(exists) =>
         if (exists)
-          readConfigFile(buildFilePath.toUri) match {
-            case Failure(exception) =>
-              Left(StringMessage(exception.getMessage))
-
-            case Success(build) =>
-              Right(build)
-          }
+          readConfigFile(buildFilePath.toUri)
         else
-          Left(StringMessage(buildNotFound()))
+          BuildErrored(
+            buildURI = buildURI,
+            code = None,
+            errors = ArraySeq(StringMessage(buildNotFound()))
+          )
     }
   }
 
   def readBuild(buildURI: URI,
-                code: String): Either[StringMessage, WorkspaceBuild] =
+                code: String): BuildState =
     parseConfig(code) match {
       case Failure(exception) =>
         // TODO: Error messages in the build file should report source-location.
         //       The JSON parser reports the errored index, which can be used here.
-        Left(StringMessage(exception.getMessage))
+        BuildErrored(
+          buildURI = buildURI,
+          code = Some(code),
+          errors = ArraySeq(StringMessage(exception.getMessage))
+        )
 
       case Success(config) =>
-        val build =
-          WorkspaceBuild(
-            buildURI = buildURI,
-            code = code,
-            config = config
-          )
-
-        Right(build)
+        BuildCompiled(
+          buildURI = buildURI,
+          code = code,
+          config = config
+        )
     }
 
   def readBuild(buildURI: URI,
-                code: Option[String]): Either[StringMessage, WorkspaceBuild] =
+                code: Option[String]): BuildState =
     code match {
       case Some(buildJSON) =>
         // Code is already read. Parse and validate it.
@@ -137,18 +158,4 @@ object WorkspaceBuild {
     else
       Right(buildURI)
 
-}
-
-final case class WorkspaceBuild(buildURI: URI,
-                                code: String,
-                                config: Config) {
-
-  val workspaceURI: URI =
-    Paths.get(buildURI).getParent.toUri
-
-  def contractURI: URI =
-    config.contractPath.toUri
-
-  def artifactURI: URI =
-    config.artifactPath.toUri
 }

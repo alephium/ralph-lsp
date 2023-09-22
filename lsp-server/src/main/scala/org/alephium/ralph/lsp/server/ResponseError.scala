@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.server
 
-import org.alephium.ralph.lsp.pc.workspace.WorkspaceBuild
+import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild
 import org.eclipse.lsp4j.jsonrpc.messages.{ResponseErrorCode, ResponseError => LSP4JResponseError}
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 
