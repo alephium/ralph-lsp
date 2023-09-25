@@ -1,7 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.pc.workspace.WorkspaceState.UnCompiled
 import org.alephium.ralphc.Config
 
 import java.net.URI

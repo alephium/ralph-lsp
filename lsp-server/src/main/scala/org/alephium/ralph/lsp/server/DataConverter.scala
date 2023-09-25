@@ -129,7 +129,7 @@ object DataConverter {
    * @return Diagnostics to publish.
    */
   def toPublishDiagnotics(previousState: WorkspaceState.SourceAware,
-                          newerStates: Seq[WorkspaceState.SourceAware]): Iterable[PublishDiagnosticsParams] =
+                          newerStates: Iterable[WorkspaceState.SourceAware]): Iterable[PublishDiagnosticsParams] =
     newerStates.foldLeft(toPublishDiagnostics(previousState)) {
       case (previous, next) =>
         val nextDiagnostics = toPublishDiagnostics(next)

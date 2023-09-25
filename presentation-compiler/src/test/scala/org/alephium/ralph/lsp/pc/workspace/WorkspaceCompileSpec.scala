@@ -10,7 +10,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.collection.immutable.ArraySeq
 
 /**
- * Test cases for [[Workspace.compileParsed]] function.
+ * Test cases for [[Workspace.compile]] function.
  */
 class WorkspaceCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
@@ -31,7 +31,7 @@ class WorkspaceCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
             .returns(Left(compilationError))
 
           val actualWorkspace =
-            Workspace.compileParsed(initialWorkspace)
+            Workspace.compile(initialWorkspace)
 
           // expect the state to carry previous valid state's information and the compilation error.
           val expectedWorkspace =

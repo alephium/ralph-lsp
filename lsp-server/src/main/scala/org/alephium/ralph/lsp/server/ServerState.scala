@@ -6,8 +6,4 @@ import java.util.concurrent.{Future => JFuture}
 
 protected case class ServerState(client: Option[RalphLangClient],
                                  listener: Option[JFuture[Void]],
-                                 workspace: Option[WorkspaceState]) {
-
-  def updateWorkspace(workspace: WorkspaceState): ServerState =
-    this.copy(workspace = Some(workspace))
-}
+                                 workspace: Option[WorkspaceState])

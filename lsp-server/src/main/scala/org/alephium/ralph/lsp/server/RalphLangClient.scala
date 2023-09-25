@@ -39,9 +39,9 @@ object RalphLangClient {
     }
 
     /** Publish IDE messages given the workspace previous and newer states */
-    def publish(head: WorkspaceState.SourceAware,
-                tail: Seq[WorkspaceState.SourceAware]): Unit =
-      toPublishDiagnotics(head, tail) foreach {
+    def publish(currentWorkspace: WorkspaceState.SourceAware,
+                newWorkspace: Iterable[WorkspaceState.SourceAware]): Unit =
+      toPublishDiagnotics(currentWorkspace, newWorkspace) foreach {
         diagnostic =>
           // TODO: Isn't there a way in LSP to send all
           //       diagnotics to the client in a single request?

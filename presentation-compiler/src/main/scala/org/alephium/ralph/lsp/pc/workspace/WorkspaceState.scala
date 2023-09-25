@@ -31,8 +31,8 @@ object WorkspaceState {
   }
 
   /** State: IDE is initialised but the build file requires validation */
-  case class Initialised(workspaceURI: URI) extends WorkspaceState {
-    def buildURI =
+  case class Created(workspaceURI: URI) extends WorkspaceState {
+    def buildURI: URI =
       WorkspaceBuild.toBuildURI(workspaceURI)
   }
 

@@ -1,15 +1,12 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.{Ast, CompiledContract, CompiledScript}
-import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.compiler.error.StringMessage
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
-import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
+import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, WorkspaceBuild}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
-import org.alephium.ralphc.Config
+import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorInvalidBuildFileName, ErrorUnknownFileType}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -22,8 +19,68 @@ import scala.collection.immutable.ArraySeq
 object Workspace {
 
   /** First state of a workspace which just knows about the workspace root folder. */
-  def create(workspaceURI: URI): WorkspaceState.Initialised =
-    WorkspaceState.Initialised(workspaceURI)
+  def create(workspaceURI: URI): WorkspaceState.Created =
+    WorkspaceState.Created(workspaceURI)
+
+  /** Creates an un-compiled workspace for a successful build file. */
+  def initialise(state: BuildState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+    state match {
+      case compiled: BuildState.BuildCompiled =>
+        // Build file changed. Update the workspace and request a full workspace build.
+        initialise(compiled)
+
+      case errored: BuildState.BuildErrored =>
+        Left(errored)
+    }
+
+  /**
+   * Initial workspaces collects paths to all OnDisk ralph files.
+   *
+   * @param state Current state of the workspace.
+   * @return New workspace state which aware of all workspace source code files.
+   */
+  def initialise(state: BuildCompiled)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+    SourceCode.initialise(state.contractURI) match {
+      case Left(error) =>
+        val buildError =
+          BuildState.BuildErrored(
+            buildURI = state.buildURI,
+            code = Some(state.code),
+            errors = ArraySeq(error)
+          )
+
+        Left(buildError)
+
+      case Right(sourceCode) =>
+        val unCompiled =
+          WorkspaceState.UnCompiled(
+            build = state,
+            sourceCode = sourceCode
+          )
+
+        Right(unCompiled)
+    }
+
+  /**
+   * Returns existing workspace or initialises a new one from the configured build file.
+   * Or else reports any workspace issues.
+   *
+   * @note Does not update the current state. The caller should set the new state.
+   */
+  def initialise(workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
+    workspace match {
+      case aware: WorkspaceState.SourceAware =>
+        Right(aware) // already initialised
+
+      case initialised: WorkspaceState.Created =>
+        val newBuild =
+          WorkspaceBuild.readBuild(
+            buildURI = initialised.buildURI,
+            code = None,
+          )
+
+        initialise(newBuild)
+    }
 
   /**
    * Build the workspace.
@@ -32,7 +89,7 @@ object Workspace {
    * this is a new build file else returns the same state.
    * */
   def build(buildURI: URI,
-            build: Option[String],
+            code: Option[String],
             state: WorkspaceState): Option[BuildState] =
     WorkspaceBuild.validateBuildURI(
       buildURI = buildURI,
@@ -42,7 +99,7 @@ object Workspace {
         val buildError =
           BuildState.BuildErrored(
             buildURI = buildURI,
-            code = build,
+            code = code,
             errors = ArraySeq(error)
           )
 
@@ -51,7 +108,7 @@ object Workspace {
       case Right(buildURI) =>
         WorkspaceBuild.readBuild(
           buildURI = buildURI,
-          code = build,
+          code = code,
         ) match {
           case newBuild: BuildState.BuildCompiled =>
             state match {
@@ -60,10 +117,10 @@ object Workspace {
                 // no-state-change, so a new build does not unnecessarily gets triggered.
                 if (currentState.build == newBuild)
                   None
-                else // else the build file has changed, start a new workspace with the new build.
+                else // else the build file has changed, return the new build.
                   Some(newBuild)
 
-              case WorkspaceState.Initialised(_) =>
+              case WorkspaceState.Created(_) =>
                 // upgrade the state to build-file aware.
                 Some(newBuild)
             }
@@ -72,24 +129,6 @@ object Workspace {
             Some(errored)
         }
     }
-
-  def build(code: Option[String],
-            state: WorkspaceState.Initialised): BuildState =
-    WorkspaceBuild.readBuild(
-      buildURI = state.buildURI,
-      code = code,
-    )
-
-  /**
-   * Initial workspaces collects paths to all OnDisk ralph files.
-   *
-   * @param state Current state of the workspace.
-   * @return New workspace state which aware of all workspace source code files.
-   */
-  def initialise(state: BuildCompiled)(implicit compiler: CompilerAccess): Either[FormattableError, WorkspaceState.UnCompiled] =
-    SourceCode
-      .initialise(state.contractURI)
-      .map(WorkspaceState.UnCompiled(state, _))
 
   /**
    * Parses source-code in that is not already in parsed state.
@@ -139,18 +178,18 @@ object Workspace {
 
       case parsed: WorkspaceState.Parsed =>
         // Successfully parsed! Compile it!
-        compileParsed(parsed)
+        compile(parsed)
 
       case compiled: WorkspaceState.Compiled =>
         // State already compiled. Process it's parsed state.
         // FIXME: It might not be necessary to re-compile this state since it's already compiled.
-        compileParsed(compiled.parsed)
+        compile(compiled.parsed)
     }
 
   /**
    * Compiles a parsed workspace.
    */
-  def compileParsed(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.CompilerRun = {
+  def compile(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.CompilerRun = {
     val contractsToCompile =
       workspace.sourceCode.flatMap(_.contracts)
 
@@ -160,182 +199,124 @@ object Workspace {
         options = workspace.build.config.compilerOptions
       )
 
-    toWorkspaceState(
+    WorkspaceStateBuilder.toWorkspaceState(
       currentState = workspace,
       compilationResult = compilationResult
     )
   }
 
   /**
-   * Apply the code changes to the workspace state.
+   * [[Workspace]] reacts to all code/build changes the same.
    *
-   * @param fileURI      File updated
-   * @param updatedCode  Updated code
-   * @param currentState Current configured workspace state
-   * @return New workspace state.
+   * @param fileURI File that changed.
+   * @param code    Content of the file.
    */
-  def codeChanged(fileURI: URI,
-                  updatedCode: Option[String],
-                  currentState: WorkspaceState.SourceAware): WorkspaceState.UnCompiled = {
-    val newSourceCodeState =
-      updatedCode match {
-        case Some(newCode) =>
-          SourceCodeState.UnCompiled(fileURI, newCode)
+
+  def changed(fileURI: URI,
+              code: Option[String],
+              workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState] = {
+    val fileExtension = URIUtil.getFileExtension(fileURI)
+    if (fileExtension == WorkspaceBuild.BUILD_FILE_EXTENSION)
+      buildChanged(
+        fileURI = fileURI,
+        code = code,
+        workspace = workspace
+      )
+    else if (fileExtension == CompilerAccess.RALPH_FILE_EXTENSION)
+      sourceCodeChanged(
+        fileURI = fileURI,
+        updatedCode = code,
+        workspace = workspace
+      )
+    else
+      Left(
+        BuildState.BuildErrored(
+          buildURI = fileURI,
+          code = code,
+          errors = ArraySeq(ErrorUnknownFileType(fileURI))
+        )
+      )
+  }
+
+  /**
+   * Handles changes to the build valid.
+   *
+   * If the build file is valid, this drops existing compilations
+   * and starts a fresh workspace.
+   *
+   * @param fileURI Location of the build file.
+   * @param code    Build file's content.
+   */
+  def buildChanged(fileURI: URI,
+                   code: Option[String],
+                   workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState] = {
+    val fileName = URIUtil.getFileName(fileURI)
+
+    if (fileName == WorkspaceBuild.BUILD_FILE_NAME) {
+      Workspace.build(
+        buildURI = fileURI,
+        code = code,
+        state = workspace
+      ) match {
+        case Some(newBuild) =>
+          // this is a new build. initialise a fresh build.
+          initialise(newBuild)
 
         case None =>
-          SourceCodeState.OnDisk(fileURI)
+          // no build change occurred, using existing workspace.
+          Right(workspace)
       }
+    } else {
+      val invalidBuildFileName =
+        ErrorInvalidBuildFileName(fileName)
 
-    val updatedFileStates =
-      updateOrAdd(
-        collection = currentState.sourceCode,
-        update = newSourceCodeState
-      )
+      val errors =
+        BuildState.BuildErrored(
+          buildURI = fileURI,
+          code = code,
+          errors = ArraySeq(invalidBuildFileName)
+        )
 
-    WorkspaceState.UnCompiled(
-      build = currentState.build,
-      sourceCode = updatedFileStates
-    )
+      Left(errors)
+    }
   }
 
   /**
-   * Compile the code in preparation for deployment. The final step in compilation.
+   * Handles changes to ralph code files.
    *
-   * The state of presentation compiler is not used here. All ralph code files are accessed from disk.
-   * LSP client should ensure that all files are flushed to disk.
-   *
-   * @param workspaceURI Workspace path
-   * @param config       Compiler configuration
-   * @param compiler     Target ralph compiler
-   * @return New workspace state that PresentationalCompiler can continue with.
+   * @param fileURI     Location of the source file.
+   * @param updatedCode Source changes
    */
-  def compileForDeployment(workspaceURI: URI,
-                           config: Config)(implicit compiler: CompilerAccess): WorkspaceState.CompilerRun = {
-    val result =
-      compiler.compileForDeployment(
-        workspaceURI = workspaceURI,
-        config = config
-      )
+  def sourceCodeChanged(fileURI: URI,
+                        updatedCode: Option[String],
+                        workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
+    initialise(workspace) map {
+      initialised =>
+        // downgrade the state of this SourceFile
+        val newSourceCodeState =
+          updatedCode match {
+            case Some(newCode) =>
+              SourceCodeState.UnCompiled(fileURI, newCode)
 
-    toWorkspaceState(
-      currentState = ???,
-      compilationResult = result
-    )
-  }
+            case None =>
+              SourceCodeState.OnDisk(fileURI)
+          }
 
-  private[workspace] def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                                          compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompilerRun =
-    compilationResult match {
-      case Left(workspaceError) =>
-        // File or sourcePosition position information is not available for this error,
-        // report it at project error.
-        WorkspaceState.Errored(
-          sourceCode = currentState.sourceCode, // SourceCode remains the same as existing state
-          workspaceErrors = ArraySeq(workspaceError), // errors to report
-          parsed = currentState,
-        )
+        // update the source-code state within the current workspace.
+        val updatedSourceCode =
+          updateOrAdd(
+            collection = initialised.sourceCode,
+            update = newSourceCodeState
+          )
 
-      case Right((compiledContracts, compiledScripts)) =>
-        buildCompiledWorkspaceState(
-          currentWorkspaceState = currentState,
-          compiledContracts = compiledContracts,
-          compiledScripts = compiledScripts
-        )
+        // create new un-compiled workspace.
+        val codeChangedWorkspace =
+          WorkspaceState.UnCompiled(
+            build = initialised.build,
+            sourceCode = updatedSourceCode
+          )
+
+        // parse and compile the new state.
+        Workspace.parseAndCompile(codeChangedWorkspace)
     }
-
-  /**
-   * Maps compiled-code to it's parsed code.
-   *
-   * @param currentWorkspaceState Parsed state of the workspace used to run this compilation.
-   * @param compiledContracts     Resulting compiled contracts.
-   * @param compiledScripts       Resulting compiled scripts.
-   * @return Compiled workspace state that might contain source-code level
-   *         errors if a compiled source-code instance was not found its parsed state.
-   */
-  private def buildCompiledWorkspaceState(currentWorkspaceState: WorkspaceState.Parsed,
-                                          compiledContracts: Array[CompiledContract],
-                                          compiledScripts: Array[CompiledScript]): WorkspaceState.Compiled = {
-    val newSourceCodeStates =
-      currentWorkspaceState.sourceCode map {
-        sourceCodeState =>
-          val matchedCode = // Map contracts and scripts to their fileURIs.
-            findMatchingContractOrScript(
-              parsedContracts = sourceCodeState.contracts,
-              compiledContracts = compiledContracts,
-              compiledScripts = compiledScripts
-            )
-
-          val (errors, compiledCode) =
-            matchedCode.partitionMap(either => either)
-
-          if (errors.nonEmpty) // if true, return errors
-            SourceCodeState.ErrorSource(
-              fileURI = sourceCodeState.fileURI,
-              code = sourceCodeState.code,
-              errors = errors,
-              previous = Some(sourceCodeState)
-            )
-          else // else, return successfully compiled
-            SourceCodeState.Compiled(
-              fileURI = sourceCodeState.fileURI,
-              code = sourceCodeState.code,
-              compiledCode = compiledCode,
-              parsed = sourceCodeState
-            )
-      }
-
-    // new WorkspaceState
-    WorkspaceState.Compiled(
-      sourceCode = newSourceCodeStates,
-      parsed = currentWorkspaceState
-    )
-  }
-
-  private def findMatchingContractOrScript(parsedContracts: Seq[ContractWithState],
-                                           compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript]): Seq[Either[StringMessage, Either[CompiledContract, CompiledScript]]] =
-    parsedContracts map {
-      contract =>
-        findMatchingContractOrScript(
-          contract = contract,
-          compiledContracts = compiledContracts,
-          compiledScripts = compiledScripts
-        )
-    }
-
-  private def findMatchingContractOrScript(contract: Ast.ContractWithState,
-                                           compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript]): Either[StringMessage, Either[CompiledContract, CompiledScript]] = {
-    val matchingContract = findMatchingContract(contract, compiledContracts)
-    val matchingScript = findMatchingScript(contract, compiledScripts)
-
-    (matchingContract, matchingScript) match {
-      case (Some(contract), Some(_)) =>
-        // This is already disallowed by the ralph compiler.
-        // This should never occur in reality but this needed so type checks are covered.
-        val error = StringMessage(s"Found a contract and script with the duplicate type name '${contract.ast.name}'")
-        Left(error)
-
-      case (Some(contract), None) =>
-        Right(Left(contract))
-
-      case (None, Some(script)) =>
-        Right(Right(script))
-
-      case (None, None) =>
-        // Code submitted to compile should always return a result.
-        // This should never occur in reality but this needed so type checks are covered.
-        val error = StringMessage(s"Code '${contract.name}' not compiled.")
-        Left(error)
-    }
-  }
-
-  private def findMatchingContract(contractsToCompile: Ast.ContractWithState,
-                                   compiledContracts: Array[CompiledContract]): Option[CompiledContract] =
-    compiledContracts.find(_.ast.name == contractsToCompile.name)
-
-  private def findMatchingScript(contractsToCompile: Ast.ContractWithState,
-                                 compiledScripts: Array[CompiledScript]): Option[CompiledScript] =
-    compiledScripts.find(_.ast.name == contractsToCompile.name)
-
 }

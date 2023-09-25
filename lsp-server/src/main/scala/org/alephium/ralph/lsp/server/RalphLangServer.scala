@@ -3,12 +3,11 @@ package org.alephium.ralph.lsp.server
 import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.completion.CodeCompleter
-import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, WorkspaceBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures, ResponseErrorException}
+import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
@@ -64,20 +63,61 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
     }
 
   /**
-   * Publish workspace messages given it's previous states in order.
+   * Publish workspace messages given it's previous state.
    *
-   * Previous states are used to clear error/warnings that are fixed in newer states.
-   *
-   * @param head First workspace state
-   * @param tail Newer states following the first state.
-   *             Set this to empty if head is the only state.
+   * @param currentWorkspace First workspace state
+   * @param newWorkspace     Newer state following the first state.
    */
-  private def setAndPublishWorkspace(head: WorkspaceState.SourceAware,
-                                     tail: WorkspaceState.SourceAware*): Unit =
+  private def setAndPublish(currentWorkspace: WorkspaceState,
+                            newWorkspace: Either[BuildState.BuildErrored, WorkspaceState]): Unit =
     this.synchronized {
-      val last = tail.lastOption.getOrElse(head)
-      setWorkspace(last)
-      getClient().publish(head, tail)
+      val client = getClient()
+
+      newWorkspace match {
+        case Left(buildError) =>
+          // New state has build error.
+          // Leave the current good state unchanged and keep using it to serve future requests.
+          client.publishErrors(
+            fileURI = buildError.buildURI,
+            code = buildError.code,
+            errors = buildError.errors.toList
+          )
+
+        case Right(newWorkspace) =>
+          // New valid workspace created. Set it!
+          setWorkspace(newWorkspace)
+
+          def clearBuild(newWorkspace: WorkspaceState.SourceAware): Unit =
+            client.publishErrors(
+              fileURI = newWorkspace.build.buildURI,
+              code = Some(newWorkspace.build.code),
+              errors = List.empty
+            )
+
+          (currentWorkspace, newWorkspace) match {
+            case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.SourceAware) =>
+              clearBuild(newWorkspace)
+
+              // publish new workspace given that previous workspace had no compilation result.
+              client.publish(
+                currentWorkspace = newWorkspace,
+                newWorkspace = None
+              )
+
+            case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState.SourceAware) =>
+              clearBuild(newWorkspace)
+
+              // publish new workspace given previous workspace.
+              client.publish(
+                currentWorkspace = currentWorkspace,
+                newWorkspace = Some(newWorkspace)
+              )
+
+            case (_, _: WorkspaceState.Created) =>
+              // Nothing to publish
+              ()
+          }
+      }
     }
 
   /**
@@ -125,25 +165,25 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
     }
 
   override def didOpen(params: DidOpenTextDocumentParams): Unit =
-    didCodeChange(
+    didChange(
       fileURI = new URI(params.getTextDocument.getUri),
       code = Some(params.getTextDocument.getText)
     )
 
   override def didChange(params: DidChangeTextDocumentParams): Unit =
-    didCodeChange(
+    didChange(
       fileURI = new URI(params.getTextDocument.getUri),
       code = Some(params.getContentChanges.get(0).getText)
     )
 
   override def didClose(params: DidCloseTextDocumentParams): Unit =
-    didCodeChange(
+    didChange(
       fileURI = new URI(params.getTextDocument.getUri),
       code = None
     )
 
   override def didSave(params: DidSaveTextDocumentParams): Unit =
-    didCodeChange(
+    didChange(
       fileURI = new URI(params.getTextDocument.getUri),
       code = None
     )
@@ -155,137 +195,23 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
    * @param code    Content of the file.
    */
 
-  def didCodeChange(fileURI: URI,
-                    code: Option[String]): Unit = {
-    val fileExtension = URIUtil.getFileExtension(fileURI)
-    if (fileExtension == WorkspaceBuild.BUILD_FILE_EXTENSION)
-      buildChanged(
+  def didChange(fileURI: URI,
+                code: Option[String]): Unit = {
+    val currentWorkspace =
+      getWorkspace()
+
+    val newWorkspace =
+      Workspace.changed(
         fileURI = fileURI,
-        code = code
+        code = code,
+        workspace = currentWorkspace
       )
-    else if (fileExtension == CompilerAccess.RALPH_FILE_EXTENSION)
-      codeChanged(
-        fileURI = fileURI,
-        updatedCode = code
-      )
-    else
-      throw
-        getClient()
-          .log(ResponseError.UnknownFile(fileURI))
-          .toResponseErrorException
+
+    setAndPublish(
+      currentWorkspace = currentWorkspace,
+      newWorkspace = newWorkspace
+    )
   }
-
-  /**
-   * Handles changes to the build valid.
-   *
-   * If the build file is valid, this drops existing compilations
-   * and starts a fresh workspace.
-   *
-   * @param fileURI Location of the build file.
-   * @param code    Build file's content.
-   */
-  def buildChanged(fileURI: URI,
-                   code: Option[String]): Unit =
-    this.synchronized {
-      val fileName = URIUtil.getFileName(fileURI)
-
-      if (fileName == WorkspaceBuild.BUILD_FILE_NAME)
-        Workspace.build(
-          buildURI = fileURI,
-          build = code,
-          state = getWorkspace()
-        ) match {
-          case Some(buildState: BuildState) =>
-            initialiseWorkspace(buildState)
-
-          case None =>
-            // Build file did not change. Clear any older error messages.
-            getClient().publishErrors(
-              fileURI = fileURI,
-              code = code,
-              errors = List.empty
-            )
-        }
-      else
-        throw
-          getClient()
-            .log(ResponseError.InvalidBuildFileName(fileName))
-            .toResponseErrorException
-    }
-
-  /** Creates an un-compiled workspace for a successful build file. */
-  def initialiseWorkspace(state: BuildState): WorkspaceState.UnCompiled =
-    this.synchronized {
-      state match {
-        case compiled: BuildState.BuildCompiled =>
-          // Build file changed. Update the workspace and request a full workspace build.
-          Workspace.initialise(compiled) match {
-            case Left(error) =>
-              // Project level error: Failed to initialise workspace.
-              throw getClient().log(error)
-
-            case Right(unCompiledWorkspace) =>
-              // set the new workspace and publish diagnostics
-              setAndPublishWorkspace(unCompiledWorkspace)
-
-              // clear any build errors
-              getClient().publishErrors(
-                fileURI = unCompiledWorkspace.build.buildURI,
-                code = Some(unCompiledWorkspace.build.code),
-                errors = List.empty
-              )
-
-              // request project wide re-build TODO: Handle future
-              getClient().refreshDiagnostics()
-              unCompiledWorkspace
-          }
-
-        case errored: BuildState.BuildErrored =>
-          getClient().publishErrors(
-            fileURI = errored.buildURI,
-            code = errored.code,
-            errors = errored.errors.toList
-          )
-
-          // TODO
-          errored.errors.headOption match {
-            case Some(firstError) =>
-              throw firstError
-
-            case None =>
-              ???
-          }
-      }
-    }
-
-  /**
-   * Handles changes to ralph code files.
-   *
-   * @param fileURI     Location of the source file.
-   * @param updatedCode Source changes
-   */
-  def codeChanged(fileURI: URI,
-                  updatedCode: Option[String]): Unit =
-    this.synchronized { // TODO: Remove synchronized. Use async.
-      val workspace = getOrInitWorkspace()
-
-      val codeChangedWorkspace =
-        Workspace.codeChanged(
-          fileURI = fileURI,
-          updatedCode = updatedCode,
-          currentState = workspace
-        )
-
-      // immediately set the new state with the updated code so it is available for other threads.
-      setWorkspace(codeChangedWorkspace)
-
-      // compile the new state.
-      val compiledWorkspace =
-        Workspace.parseAndCompile(codeChangedWorkspace)
-
-      // set and publish the compiled state
-      setAndPublishWorkspace(codeChangedWorkspace, compiledWorkspace)
-    }
 
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
     CompletableFutures.computeAsync {
@@ -322,21 +248,27 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
    */
   def getOrInitWorkspace(): WorkspaceState.SourceAware =
     this.synchronized { // TODO: Remove synchronized. Use async.
-      state.workspace match {
-        case Some(aware: WorkspaceState.SourceAware) =>
-          aware
+      getWorkspace() match {
+        case sourceAware: WorkspaceState.SourceAware =>
+          // already built
+          sourceAware
 
-        case Some(initialised: WorkspaceState.Initialised) =>
-          val newBuild =
-            Workspace.build(
-              code = None,
-              state = initialised
-            )
+        case currentWorkspace: WorkspaceState.Created =>
+          // perform build and bring workspace state to unCompiled
+          val initialisedWorkspace =
+            Workspace.initialise(currentWorkspace)
 
-          initialiseWorkspace(newBuild)
+          setAndPublish(
+            currentWorkspace = currentWorkspace,
+            newWorkspace = initialisedWorkspace
+          )
 
-        case None =>
-          throw reportMissingWorkspace()
+          initialisedWorkspace getOrElse {
+            throw
+              ResponseError
+                .UnableToInitialiseWorkspace
+                .toResponseErrorException
+          }
       }
     }
 
@@ -346,27 +278,13 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
         workspace
 
       case None =>
-        throw reportMissingWorkspace()
+        // Workspace folder is not defined.
+        // This is not expected to occur since `initialized` is always invoked first.
+        throw
+          getClient()
+            .log(ResponseError.WorkspaceFolderNotSupplied)
+            .toResponseErrorException
     }
-
-  // Workspace folder is not defined.
-  // This is not expected to occur since `initialized` is always invoked first.
-  def reportMissingWorkspace(): ResponseErrorException =
-    getClient()
-      .log(ResponseError.WorkspaceFolderNotSupplied)
-      .toResponseErrorException
-
-  override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
-    ()
-
-  override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
-    ()
-
-  override def getTextDocumentService: TextDocumentService =
-    this
-
-  override def getWorkspaceService: WorkspaceService =
-    this
 
   override def diagnostic(params: WorkspaceDiagnosticParams): CompletableFuture[WorkspaceDiagnosticReport] =
     CompletableFuture.completedFuture(new WorkspaceDiagnosticReport(util.Arrays.asList()))
@@ -379,6 +297,18 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
 
   override def resolveCompletionItem(unresolved: CompletionItem): CompletableFuture[CompletionItem] =
     CompletableFuture.completedFuture(unresolved)
+
+  override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
+    ()
+
+  override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
+    ()
+
+  override def getTextDocumentService: TextDocumentService =
+    this
+
+  override def getWorkspaceService: WorkspaceService =
+    this
 
   override def shutdown(): CompletableFuture[AnyRef] =
     state.listener match {

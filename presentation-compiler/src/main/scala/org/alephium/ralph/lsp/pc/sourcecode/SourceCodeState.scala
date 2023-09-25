@@ -19,7 +19,7 @@ object SourceCodeState {
   /** Represents: Code was accessed. It can either be in Error state or Success state.
    *
    * [[OnDisk]] state is no longer achievable from this state unless the file gets removed/dropped entirely
-   * from a configured workspace - [[org.alephium.ralph.lsp.pc.workspace.WorkspaceState.BuildAware]].
+   * from a configured workspace - [[WorkspaceState.BuildAware]].
    * */
   sealed trait AccessedState extends SourceCodeState
 

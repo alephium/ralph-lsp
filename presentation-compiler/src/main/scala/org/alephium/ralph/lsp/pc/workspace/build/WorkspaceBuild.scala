@@ -1,9 +1,11 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.CompilerOptions
+import org.alephium.ralph.{CompilerOptions, SourceIndex}
+import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.error.StringMessage
 import org.alephium.ralph.lsp.pc.util.FileIO
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.{BuildCompiled, BuildErrored}
 import org.alephium.ralphc.Config
 import upickle.default._
@@ -35,8 +37,64 @@ object WorkspaceBuild {
   def toBuildURI(workspaceURI: URI): URI =
     toBuildPath(Paths.get(workspaceURI)).toUri
 
-  def parseConfig(json: String): Try[Config] =
-    Try(read[Config](json))
+  def parseConfig(buildURI: URI,
+                  json: String): Either[FormattableError, Config] =
+    try
+      Right(read[Config](json))
+    catch {
+      case abortError: upickle.core.AbortException =>
+        // Exact location of the error is known so build a FormattableError
+        val error =
+          ErrorInvalidBuildSyntax(
+            buildURI = buildURI,
+            error = abortError
+          )
+
+        Left(error)
+
+      case parseError: ujson.ParseException =>
+        // Exact location of the error is known so build a FormattableError
+        val error =
+          ErrorInvalidBuildSyntax(
+            buildURI = buildURI,
+            error = parseError
+          )
+
+        Left(error)
+
+      case throwable: Throwable =>
+        // The location of the error is unknown, report it
+        // at the first character within the build file.
+        val error =
+          ErrorInvalidBuildSyntax(
+            fileURI = buildURI,
+            index = SourceIndex(0, 1),
+            message = throwable.getMessage
+          )
+
+        Left(error)
+    }
+
+  def parseBuild(buildURI: URI,
+                 json: String): BuildState =
+    parseConfig(
+      buildURI = buildURI,
+      json = json
+    ) match {
+      case Left(error) =>
+        BuildErrored(
+          buildURI = buildURI,
+          code = Some(json),
+          errors = ArraySeq(error)
+        )
+
+      case Right(config) =>
+        BuildCompiled(
+          buildURI = buildURI,
+          code = json,
+          config = config
+        )
+    }
 
   // TODO: Possibly emit a sample config file in the error message so it can be copied
   //       or add the ability to generate one.
@@ -53,21 +111,10 @@ object WorkspaceBuild {
         )
 
       case Success(json) =>
-        parseConfig(json) match {
-          case Failure(exception) =>
-            BuildErrored(
-              buildURI = buildURI,
-              code = Some(json),
-              errors = ArraySeq(StringMessage(exception.getMessage))
-            )
-
-          case Success(config) =>
-            BuildCompiled(
-              buildURI = buildURI,
-              code = json,
-              config = config
-            )
-        }
+        parseBuild(
+          buildURI = buildURI,
+          json = json
+        )
     }
 
   /** Reads [[Config]] from the workspace */
@@ -96,33 +143,13 @@ object WorkspaceBuild {
   }
 
   def readBuild(buildURI: URI,
-                code: String): BuildState =
-    parseConfig(code) match {
-      case Failure(exception) =>
-        // TODO: Error messages in the build file should report source-location.
-        //       The JSON parser reports the errored index, which can be used here.
-        BuildErrored(
-          buildURI = buildURI,
-          code = Some(code),
-          errors = ArraySeq(StringMessage(exception.getMessage))
-        )
-
-      case Success(config) =>
-        BuildCompiled(
-          buildURI = buildURI,
-          code = code,
-          config = config
-        )
-    }
-
-  def readBuild(buildURI: URI,
                 code: Option[String]): BuildState =
     code match {
       case Some(buildJSON) =>
         // Code is already read. Parse and validate it.
-        readBuild(
+        parseBuild(
           buildURI = buildURI,
-          code = buildJSON
+          json = buildJSON
         )
 
       case None =>

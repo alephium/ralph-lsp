@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.CompilerOptions
-import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.GenCommon._
+import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild
 import org.alephium.ralphc.Config
@@ -58,10 +58,10 @@ object GenWorkspace {
         config = ralphcConfig
       )
 
-  def genInitialised(): Gen[WorkspaceState.Initialised] =
+  def genInitialised(): Gen[WorkspaceState.Created] =
     for {
       workspaceURI <- genFolder()
-    } yield WorkspaceState.Initialised(workspaceURI.toUri)
+    } yield WorkspaceState.Created(workspaceURI.toUri)
 
   def genUnCompiled(sourceCode: Gen[List[SourceCodeState]] = Gen.listOf(GenSourceCode.genSourceCode())): Gen[WorkspaceState.UnCompiled] =
     for {

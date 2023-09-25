@@ -1,9 +1,10 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.GenWorkspace._
 import org.alephium.ralph.lsp.GenCommon._
+import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
@@ -68,7 +69,12 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
               Workspace.initialise(build)
 
             // No initialisation occurs and a failure is returned.
-            actualWorkspace.left.value shouldBe error
+            actualWorkspace.left.value shouldBe
+              BuildState.BuildErrored(
+                buildURI = build.buildURI,
+                code = Some(build.code),
+                errors = ArraySeq(error)
+              )
         }
       }
     }
