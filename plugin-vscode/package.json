@@ -1,0 +1,33 @@
+{
+  "name": "ralph-lsp-client",
+  "description": "LSP client for Ralph - The smart contract programming language for the Alephium blockchain",
+  "author": "Alephium",
+  "license": "LGPL-3.0",
+  "version": "0.0.1",
+  "publisher": "vscode",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alephium/ralph-lsp"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "activationEvents": [
+    "onLanguage:plaintext"
+  ],
+  "main": "./out/extension",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -b",
+    "watch": "tsc -b -w"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.1",
+    "@types/node": "^16.18.34",
+    "@vscode/test-electron": "^2.2.3",
+    "typescript": "^5.2.2"
+  }
+}

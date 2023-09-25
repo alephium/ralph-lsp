@@ -20,12 +20,20 @@ sbt "project lsp-server; assembly;"
 
 Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar`
 
-Running the jar you should get a `Server started` json message:
+# Run LSP in VSCode
 
-```
-{"jsonrpc":"2.0","method":"window/logMessage","params":{"type":3,"message":"Server started"}}
+Update the jar
+location [here](plugin-vscode/src/extension.ts).
+Yep, this will eventually be automatically configured via sbt.
+
+Run the IDE:
+
+```shell
+cd plugin-vscode
+code .
 ```
 
+![img.png](docs/img_2.png)
 
 # Run LSP in IntelliJ (Ultimate)
 
@@ -38,6 +46,8 @@ Run the IDE:
 ```shell
 sbt "project plugin-intellij; runIDE"
 ```
+
+
 
 ## Error highlighting
 
