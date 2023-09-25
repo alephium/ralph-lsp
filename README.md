@@ -47,8 +47,6 @@ Run the IDE:
 sbt "project plugin-intellij; runIDE"
 ```
 
-
-
 ## Error highlighting
 
 Note: Currently this is implemented for when files are

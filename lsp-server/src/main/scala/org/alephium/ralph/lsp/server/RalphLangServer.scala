@@ -196,22 +196,23 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
    */
 
   def didChange(fileURI: URI,
-                code: Option[String]): Unit = {
-    val currentWorkspace =
-      getWorkspace()
+                code: Option[String]): Unit =
+    this.synchronized {
+      val currentWorkspace =
+        getWorkspace()
 
-    val newWorkspace =
-      Workspace.changed(
-        fileURI = fileURI,
-        code = code,
-        workspace = currentWorkspace
+      val newWorkspace =
+        Workspace.changed(
+          fileURI = fileURI,
+          code = code,
+          workspace = currentWorkspace
+        )
+
+      setAndPublish(
+        currentWorkspace = currentWorkspace,
+        newWorkspace = newWorkspace
       )
-
-    setAndPublish(
-      currentWorkspace = currentWorkspace,
-      newWorkspace = newWorkspace
-    )
-  }
+    }
 
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
     CompletableFutures.computeAsync {
