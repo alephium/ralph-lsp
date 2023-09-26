@@ -22,6 +22,27 @@ sbt "project lsp-server; assembly;"
 
 Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar`
 
+# Configuration
+
+The compiler needs a config file, otherwise `ralph-lsp` won't work. You can create the following file in the root of your project:
+
+`build.ralph`
+
+```
+{
+  "compilerOptions": {
+    "ignoreUnusedConstantsWarnings": false,
+    "ignoreUnusedVariablesWarnings": false,
+    "ignoreUnusedFieldsWarnings": false,
+    "ignoreUnusedPrivateFunctionsWarnings": false,
+    "ignoreUpdateFieldsCheckWarnings": false,
+    "ignoreCheckExternalCallerWarnings": false
+  },
+  "contractPath": "./contracts",
+  "artifactPath": "./artifacts"
+}
+```
+
 # Run LSP in VSCode
 
 Update the jar
