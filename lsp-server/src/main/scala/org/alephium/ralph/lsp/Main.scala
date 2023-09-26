@@ -19,7 +19,7 @@ object Main extends StrictLogging {
     implicit val compiler: CompilerAccess =
       CompilerAccess.ralphc
 
-    val server = new RalphLangServer()
+    val server = RalphLangServer()
 
     // configure LSP server
     val launcher =

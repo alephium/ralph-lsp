@@ -39,6 +39,15 @@ object RalphLangServer {
 
     new RalphLangServer(initialState)
   }
+
+  def apply()(implicit compiler: CompilerAccess): RalphLangServer =
+    new RalphLangServer(
+      ServerState(
+        client = None,
+        listener = None,
+        workspace = None
+      )
+    )
 }
 
 /**
@@ -47,7 +56,7 @@ object RalphLangServer {
  * This class is the only one with mutable state in this repo.
  * All mutable state management occurs here.
  */
-class RalphLangServer(@volatile private var state: ServerState = ServerState(None, None, None))(implicit compiler: CompilerAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictLogging {
+class RalphLangServer private(@volatile private var state: ServerState)(implicit compiler: CompilerAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictLogging {
 
   def getState(): ServerState =
     this.state
