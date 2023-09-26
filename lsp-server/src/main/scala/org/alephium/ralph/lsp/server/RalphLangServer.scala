@@ -51,6 +51,12 @@ object RalphLangServer {
         buildErrors = None
       )
     )
+
+  def getRootUri(params: InitializeParams): Option[URI] =
+    Option(params.getRootUri)
+      .orElse(Option(params.getRootPath))
+      .orElse(Option(System.getProperty("user.dir")).map(dir => s"file://$dir"))
+      .map(new URI(_))
 }
 
 /**
@@ -197,15 +203,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     CompletableFutures.computeAsync {
       cancelChecker =>
         // Previous commit uses the non-deprecated API but that does not work in vim.
-        val rootURI =
-          Option(params.getRootUri)
-            .getOrElse(params.getRootPath)
+        val rootURI = RalphLangServer.getRootUri(params)
 
         val workspaceURI =
-          if (rootURI == null)
-            throw ResponseError.WorkspaceFolderNotSupplied.toResponseErrorException
-          else
-            new URI(rootURI)
+          rootURI.getOrElse(throw ResponseError.WorkspaceFolderNotSupplied.toResponseErrorException)
 
         val workspace =
           Workspace.create(workspaceURI)
