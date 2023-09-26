@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.{CompilerOptions, SourceIndex}
 import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.compiler.error.StringMessage
+import org.alephium.ralph.lsp.compiler.error.StringError
 import org.alephium.ralph.lsp.pc.util.FileIO
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
@@ -107,7 +107,7 @@ object WorkspaceBuild {
         BuildErrored(
           buildURI = buildURI,
           code = None,
-          errors = ArraySeq(StringMessage(exception.getMessage))
+          errors = ArraySeq(StringError(exception.getMessage))
         )
 
       case Success(json) =>
@@ -127,7 +127,7 @@ object WorkspaceBuild {
         BuildErrored(
           buildURI = buildURI,
           code = None,
-          errors = ArraySeq(StringMessage(exception.getMessage))
+          errors = ArraySeq(StringError(exception.getMessage))
         )
 
       case Success(exists) =>
@@ -137,7 +137,7 @@ object WorkspaceBuild {
           BuildErrored(
             buildURI = buildURI,
             code = None,
-            errors = ArraySeq(StringMessage(buildNotFound()))
+            errors = ArraySeq(StringError(buildNotFound()))
           )
     }
   }
@@ -179,9 +179,9 @@ object WorkspaceBuild {
     }
 
   def validateBuildURI(buildURI: URI,
-                       workspaceURI: URI): Either[StringMessage, URI] =
+                       workspaceURI: URI): Either[StringError, URI] =
     if (Paths.get(buildURI).getParent != Paths.get(workspaceURI)) // Build file must be in the root workspace folder.
-      Left(StringMessage(s"Build file '$buildURI' does not belong to workspace '$workspaceURI'. It must be placed in the root folder"))
+      Left(StringError(s"Build file '$buildURI' does not belong to workspace '$workspaceURI'. It must be placed in the root folder"))
     else
       Right(buildURI)
 

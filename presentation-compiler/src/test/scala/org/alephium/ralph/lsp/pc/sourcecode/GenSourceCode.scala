@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.{CompiledContract, CompiledScript}
-import org.alephium.ralph.lsp.compiler.error.StringMessage
+import org.alephium.ralph.lsp.compiler.error.StringError
 import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.GenCommon._
 import org.scalacheck.Gen
@@ -91,7 +91,7 @@ object GenSourceCode {
     } yield
       SourceCodeState.ErrorAccess(
         fileURI = fileURI,
-        error = StringMessage(errorMessage) // TODO: Call a generator
+        error = StringError(errorMessage) // TODO: Call a generator
       )
 
   /** Either one of the failed source-code states */

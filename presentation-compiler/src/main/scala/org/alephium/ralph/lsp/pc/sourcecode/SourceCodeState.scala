@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.{CompiledContract, CompiledScript}
 import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.Ast.ContractWithState
-import org.alephium.ralph.lsp.compiler.error.StringMessage
+import org.alephium.ralph.lsp.compiler.error.{StringError, StringWarning}
 
 import java.net.URI
 
@@ -55,13 +55,13 @@ object SourceCodeState {
                       code: String,
                       compiledCode: Seq[Either[CompiledContract, CompiledScript]],
                       parsed: SourceCodeState.Parsed) extends ParsedState {
-    def warnings: Seq[StringMessage] =
+    def warnings: Seq[StringWarning] =
       compiledCode.flatMap {
         case Left(value) =>
-          value.warnings map StringMessage
+          value.warnings map StringWarning
 
         case Right(value) =>
-          value.warnings map StringMessage
+          value.warnings map StringWarning
       }
   }
 

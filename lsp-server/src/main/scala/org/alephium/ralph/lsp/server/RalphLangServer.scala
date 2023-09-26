@@ -244,8 +244,6 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
   /**
    * Returns existing workspace or initialises a new one from the configured build file.
    * Or else reports any workspace issues.
-   *
-   * @note Does not update the current state. The caller should set the new state.
    */
   def getOrInitWorkspace(): WorkspaceState.SourceAware =
     this.synchronized { // TODO: Remove synchronized. Use async.

@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.compiler.error.StringMessage
+import org.alephium.ralph.lsp.compiler.error.StringError
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
 import org.alephium.ralph.lsp.GenCommon._
 import org.scalamock.scalatest.MockFactory
@@ -88,7 +88,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
 
         // error returned from the compiler
         val expectedError =
-          StringMessage("some error")
+          StringError("some error")
 
         implicit val compiler: CompilerAccess =
           mock[CompilerAccess]
