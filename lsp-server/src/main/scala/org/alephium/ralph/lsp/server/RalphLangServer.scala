@@ -183,10 +183,7 @@ class RalphLangServer(@volatile private var state: ServerState = ServerState(Non
     )
 
   override def didSave(params: DidSaveTextDocumentParams): Unit =
-    didChange(
-      fileURI = new URI(params.getTextDocument.getUri),
-      code = None
-    )
+    ()
 
   /**
    * [[Workspace]] reacts to all code/build changes the same.
