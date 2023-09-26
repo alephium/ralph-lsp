@@ -3,8 +3,9 @@ package org.alephium.ralph.lsp.server
 import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.completion.CodeCompleter
+import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
-import org.alephium.ralph.lsp.pc.workspace.build.BuildState
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, WorkspaceBuild}
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
@@ -34,7 +35,8 @@ object RalphLangServer {
       ServerState(
         client = Some(client),
         listener = Some(listener),
-        workspace = None
+        workspace = None,
+        buildErrors = None
       )
 
     new RalphLangServer(initialState)
@@ -45,7 +47,8 @@ object RalphLangServer {
       ServerState(
         client = None,
         listener = None,
-        workspace = None
+        workspace = None,
+        buildErrors = None
       )
     )
 }
@@ -71,61 +74,102 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       this.state = this.state.copy(workspace = Some(workspace))
     }
 
-  /**
-   * Publish workspace messages given it's previous state.
-   *
-   * @param currentWorkspace First workspace state
-   * @param newWorkspace     Newer state following the first state.
-   */
-  private def setAndPublish(currentWorkspace: WorkspaceState,
-                            newWorkspace: Either[BuildState.BuildErrored, WorkspaceState]): Unit =
-    this.synchronized {
-      val client = getClient()
+  /** Publish build file change result */
+  private def setAndPublishBuildChange(currentWorkspace: WorkspaceState,
+                                       buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState]): Unit =
+    buildChangeResult match {
+      case Left(buildError) =>
+        setAndPublishBuild(
+          currentWorkspace = currentWorkspace,
+          buildError = buildError
+        )
 
-      newWorkspace match {
-        case Left(buildError) =>
-          // New state has build error.
-          // Leave the current good state unchanged and keep using it to serve future requests.
-          client.publishErrors(
-            fileURI = buildError.buildURI,
-            code = buildError.code,
-            errors = buildError.errors.toList
+      case Right(newWorkspace) =>
+        setAndPublishBuild(
+          currentWorkspace = currentWorkspace,
+          newWorkspace = newWorkspace
+        )
+    }
+
+  /** Publish source-code change result */
+  private def setAndPublishSourceCodeChange(currentWorkspace: WorkspaceState,
+                                            sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState]): Unit =
+    sourceChangeResult match {
+      case Left(buildError) =>
+        setAndPublishBuild(
+          currentWorkspace = currentWorkspace,
+          buildError = buildError
+        )
+
+      case Right(newWorkspace) =>
+        setAndPublishWorkspace(
+          currentWorkspace = currentWorkspace,
+          newWorkspace = newWorkspace
+        )
+    }
+
+  /** Publish the build errors */
+  private def setAndPublishBuild(currentWorkspace: WorkspaceState,
+                                 buildError: BuildState.BuildErrored): Unit =
+    this.synchronized {
+      getClient().publishErrors(
+        fileURI = buildError.buildURI,
+        code = buildError.code,
+        errors = buildError.errors.toList
+      )
+
+      this.state = this.state.copy(buildErrors = Some(buildError))
+    }
+
+  /** Build is successfully compiled on a workspace. Publish the workspace, clearly existing build-error messages. */
+  private def setAndPublishBuild(currentWorkspace: WorkspaceState,
+                                 newWorkspace: WorkspaceState): Unit =
+    this.synchronized {
+      this.state.buildErrors foreach {
+        build =>
+          // clear existing build errors
+          getClient().publishErrors(
+            fileURI = build.buildURI,
+            code = build.code,
+            errors = List.empty
+          )
+      }
+
+      // clear the build errors from state
+      this.state = this.state.copy(buildErrors = None)
+
+      // publish the new-workspace that is built with the new-build-file.
+      setAndPublishWorkspace(
+        currentWorkspace = currentWorkspace,
+        newWorkspace = newWorkspace
+      )
+    }
+
+  /** Publish new workspace */
+  private def setAndPublishWorkspace(currentWorkspace: WorkspaceState,
+                                     newWorkspace: WorkspaceState): Unit =
+    this.synchronized {
+      // New valid workspace created. Set it!
+      setWorkspace(newWorkspace)
+
+      (currentWorkspace, newWorkspace) match {
+        case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.SourceAware) =>
+          // publish first compilation result i.e. previous workspace had no compilation run.
+          getClient().publish(
+            currentWorkspace = newWorkspace,
+            newWorkspace = None
           )
 
-        case Right(newWorkspace) =>
-          // New valid workspace created. Set it!
-          setWorkspace(newWorkspace)
+        case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState.SourceAware) =>
+          // publish new workspace given previous workspace.
+          getClient().publish(
+            currentWorkspace = currentWorkspace,
+            newWorkspace = Some(newWorkspace)
+          )
 
-          def clearBuild(newWorkspace: WorkspaceState.SourceAware): Unit =
-            client.publishErrors(
-              fileURI = newWorkspace.build.buildURI,
-              code = Some(newWorkspace.build.code),
-              errors = List.empty
-            )
-
-          (currentWorkspace, newWorkspace) match {
-            case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.SourceAware) =>
-              clearBuild(newWorkspace)
-
-              // publish new workspace given that previous workspace had no compilation result.
-              client.publish(
-                currentWorkspace = newWorkspace,
-                newWorkspace = None
-              )
-
-            case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState.SourceAware) =>
-              clearBuild(newWorkspace)
-
-              // publish new workspace given previous workspace.
-              client.publish(
-                currentWorkspace = currentWorkspace,
-                newWorkspace = Some(newWorkspace)
-              )
-
-            case (_, _: WorkspaceState.Created) =>
-              // Nothing to publish
-              ()
-          }
+        case (_, _: WorkspaceState.Created) =>
+          // Nothing to publish
+          ()
       }
     }
 
@@ -195,29 +239,54 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     ()
 
   /**
-   * [[Workspace]] reacts to all code/build changes the same.
+   * Processes source or build file change.
    *
    * @param fileURI File that changed.
    * @param code    Content of the file.
    */
-
   def didChange(fileURI: URI,
                 code: Option[String]): Unit =
     this.synchronized {
       val currentWorkspace =
         getWorkspace()
 
-      val newWorkspace =
-        Workspace.changed(
-          fileURI = fileURI,
-          code = code,
-          workspace = currentWorkspace
-        )
+      val fileExtension =
+        URIUtil.getFileExtension(fileURI)
 
-      setAndPublish(
-        currentWorkspace = currentWorkspace,
-        newWorkspace = newWorkspace
-      )
+      if (fileExtension == WorkspaceBuild.BUILD_FILE_EXTENSION) {
+        // process build change
+        val buildResult =
+          Workspace.buildChanged(
+            fileURI = fileURI,
+            code = code,
+            workspace = currentWorkspace
+          )
+
+        setAndPublishBuildChange(
+          currentWorkspace = currentWorkspace,
+          buildChangeResult = buildResult
+        )
+      } else if (fileExtension == CompilerAccess.RALPH_FILE_EXTENSION) {
+        // process source code change
+        val sourceResult =
+          Workspace.sourceCodeChanged(
+            fileURI = fileURI,
+            updatedCode = code,
+            workspace = currentWorkspace
+          )
+
+        setAndPublishSourceCodeChange(
+          currentWorkspace = currentWorkspace,
+          sourceChangeResult = sourceResult
+        )
+      } else {
+        // If this occurs, it's a client configuration error.
+        // File types that are not supported by ralph should not be submitted to this server.
+        val error = ResponseError.UnknownFileType(fileURI)
+        logger.error(error.getMessage, error)
+        getClient().log(error) // notify client
+        throw error.toResponseErrorException
+      }
     }
 
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
@@ -260,15 +329,15 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         case currentWorkspace: WorkspaceState.Created =>
           // perform build and bring workspace state to unCompiled
-          val initialisedWorkspace =
+          val newWorkspace =
             Workspace.initialise(currentWorkspace)
 
-          setAndPublish(
+          setAndPublishSourceCodeChange(
             currentWorkspace = currentWorkspace,
-            newWorkspace = initialisedWorkspace
+            sourceChangeResult = newWorkspace
           )
 
-          initialisedWorkspace getOrElse {
+          newWorkspace getOrElse {
             throw
               ResponseError
                 .UnableToInitialiseWorkspace

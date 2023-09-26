@@ -206,39 +206,6 @@ object Workspace {
   }
 
   /**
-   * [[Workspace]] reacts to all code/build changes the same.
-   *
-   * @param fileURI File that changed.
-   * @param code    Content of the file.
-   */
-
-  def changed(fileURI: URI,
-              code: Option[String],
-              workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState] = {
-    val fileExtension = URIUtil.getFileExtension(fileURI)
-    if (fileExtension == WorkspaceBuild.BUILD_FILE_EXTENSION)
-      buildChanged(
-        fileURI = fileURI,
-        code = code,
-        workspace = workspace
-      )
-    else if (fileExtension == CompilerAccess.RALPH_FILE_EXTENSION)
-      sourceCodeChanged(
-        fileURI = fileURI,
-        updatedCode = code,
-        workspace = workspace
-      )
-    else
-      Left(
-        BuildState.BuildErrored(
-          buildURI = fileURI,
-          code = code,
-          errors = ArraySeq(ErrorUnknownFileType(fileURI))
-        )
-      )
-  }
-
-  /**
    * Handles changes to the build valid.
    *
    * If the build file is valid, this drops existing compilations
