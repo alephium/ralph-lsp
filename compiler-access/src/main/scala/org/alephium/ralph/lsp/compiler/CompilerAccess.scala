@@ -19,6 +19,13 @@ object CompilerAccess {
 trait CompilerAccess {
 
   /**
+   * Checks if a source-file exists.
+   *
+   * @param fileURI source-file location
+   */
+  def sourceExists(fileURI: URI): Either[FormattableError, Boolean]
+
+  /**
    * Fetch all workspace source file locations.
    *
    * @param workspaceURI Project/workspace location.

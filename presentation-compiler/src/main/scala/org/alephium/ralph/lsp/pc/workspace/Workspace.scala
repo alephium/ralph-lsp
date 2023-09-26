@@ -289,31 +289,79 @@ object Workspace {
                         workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
     initialise(workspace) map {
       initialised =>
-        // downgrade the state of this SourceFile
-        val newSourceCodeState =
-          updatedCode match {
-            case Some(newCode) =>
-              SourceCodeState.UnCompiled(fileURI, newCode)
-
-            case None =>
-              SourceCodeState.OnDisk(fileURI)
-          }
-
-        // update the source-code state within the current workspace.
-        val updatedSourceCode =
-          updateOrAdd(
-            collection = initialised.sourceCode,
-            update = newSourceCodeState
+        // update the source code
+        val newSourceCode =
+          downgradeSourceState(
+            fileURI = fileURI,
+            updatedCode = updatedCode,
+            sourceCode = initialised.sourceCode
           )
 
         // create new un-compiled workspace.
-        val codeChangedWorkspace =
+        val unCompiledWorkspace =
           WorkspaceState.UnCompiled(
             build = initialised.build,
-            sourceCode = updatedSourceCode
+            sourceCode = newSourceCode
           )
 
         // parse and compile the new state.
-        Workspace.parseAndCompile(codeChangedWorkspace)
+        Workspace.parseAndCompile(unCompiledWorkspace)
+    }
+
+  /**
+   * Downgrades the current state of updated source-code so it gets re-parsed and re-compiled.
+   * Also checks if the file is deleted so it could be removed from compilation.
+   *
+   * @param fileURI     Updated code's file-location
+   * @param updatedCode The updated code
+   * @param sourceCode  Existing source-code
+   * @return New source code with applied change.
+   */
+  def downgradeSourceState(fileURI: URI,
+                           updatedCode: Option[String],
+                           sourceCode: ArraySeq[SourceCodeState])(implicit compiler: CompilerAccess): ArraySeq[SourceCodeState] =
+    updatedCode match {
+      case Some(newCode) =>
+        // new source code, store it as un-compiled.
+        val newState =
+          SourceCodeState.UnCompiled(fileURI, newCode)
+
+        // update or add it to the existing collection
+        updateOrAdd(
+          collection = sourceCode,
+          update = newState
+        )
+
+      case None =>
+        // no source code sent from client, check it still exists.
+        compiler.sourceExists(fileURI) match {
+          case Left(error) =>
+            // failed to check
+            val newState =
+              SourceCodeState.ErrorAccess(
+                fileURI = fileURI,
+                error = error
+              )
+
+            updateOrAdd(
+              collection = sourceCode,
+              update = newState
+            )
+
+          case Right(exists) =>
+            if (exists) {
+              // source-code exists, set it as on-disk so it gets read during the next parse & compilation.
+              val newState =
+                SourceCodeState.OnDisk(fileURI)
+
+              updateOrAdd(
+                collection = sourceCode,
+                update = newState
+              )
+            } else {
+              // file does not exist, remove it.
+              sourceCode.filter(_.fileURI != fileURI)
+            }
+        }
     }
 }

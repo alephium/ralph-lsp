@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.compiler.error.StringError
 import org.alephium.ralphc.{Config, MetaInfo, Compiler => RalphC}
 
 import java.net.URI
-import java.nio.file.Paths
+import java.nio.file.{Files, Paths}
 import scala.collection.mutable
 import scala.io.Source
 import scala.util.{Failure, Success, Using}
@@ -21,6 +21,14 @@ import scala.util.{Failure, Success, Using}
  */
 
 private object RalphCompilerAccess extends CompilerAccess {
+
+  override def sourceExists(fileURI: URI): Either[FormattableError, Boolean] =
+    try
+      Right(Files.exists(Paths.get(fileURI)))
+    catch {
+      case throwable: Throwable =>
+        Left(StringError(throwable.getMessage))
+    }
 
   def getSourceFiles(workspaceURI: URI): Either[FormattableError, Seq[URI]] =
     try {
