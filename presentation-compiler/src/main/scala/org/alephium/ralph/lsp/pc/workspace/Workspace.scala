@@ -6,7 +6,7 @@ import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, WorkspaceBuild}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
-import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorInvalidBuildFileName, ErrorUnknownFileType}
+import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorUnknownFileType}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -267,17 +267,14 @@ object Workspace {
           Right(workspace)
       }
     } else {
-      val invalidBuildFileName =
-        ErrorInvalidBuildFileName(fileName)
-
-      val errors =
+      val buildError =
         BuildState.BuildErrored(
-          buildURI = fileURI,
+          buildURI = workspace.buildURI,
           code = code,
-          errors = ArraySeq(invalidBuildFileName)
+          errors = ArraySeq(ErrorBuildFileNotFound)
         )
 
-      Left(errors)
+      Left(buildError)
     }
   }
 

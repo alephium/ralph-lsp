@@ -10,6 +10,9 @@ import scala.collection.immutable.ArraySeq
 
 sealed trait WorkspaceState {
   def workspaceURI: URI
+
+  def buildURI: URI =
+    WorkspaceBuild.toBuildURI(workspaceURI)
 }
 
 object WorkspaceState {
@@ -31,10 +34,7 @@ object WorkspaceState {
   }
 
   /** State: IDE is initialised but the build file requires validation */
-  case class Created(workspaceURI: URI) extends WorkspaceState {
-    def buildURI: URI =
-      WorkspaceBuild.toBuildURI(workspaceURI)
-  }
+  case class Created(workspaceURI: URI) extends WorkspaceState
 
   /** State: Source files might be un-compiled, parsed or compiled. This state can be parsed and compiled. */
   case class UnCompiled(build: BuildCompiled,
