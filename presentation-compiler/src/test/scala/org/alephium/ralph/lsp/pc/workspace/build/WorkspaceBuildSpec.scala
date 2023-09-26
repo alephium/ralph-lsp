@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.compiler.error.StringError
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
@@ -47,7 +47,7 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
         BuildState.BuildErrored(
           buildURI = dir,
           code = None,
-          errors = ArraySeq(StringError(WorkspaceBuild.buildNotFound()))
+          errors = ArraySeq(ErrorBuildFileNotFound)
         )
 
       actual shouldBe expected

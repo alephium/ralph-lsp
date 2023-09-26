@@ -5,7 +5,7 @@ import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.error.StringError
 import org.alephium.ralph.lsp.pc.util.FileIO
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
-import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
+import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildFileLocation, ErrorInvalidBuildSyntax}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.{BuildCompiled, BuildErrored}
 import org.alephium.ralphc.Config
 import upickle.default._
@@ -96,11 +96,6 @@ object WorkspaceBuild {
         )
     }
 
-  // TODO: Possibly emit a sample config file in the error message so it can be copied
-  //       or add the ability to generate one.
-  def buildNotFound(): String =
-    s"Project build file not found. Create a '$BUILD_FILE_NAME' file in the project's root folder."
-
   def readConfigFile(buildURI: URI): BuildState =
     FileIO.readAllLines(buildURI) match {
       case Failure(exception) =>
@@ -137,7 +132,7 @@ object WorkspaceBuild {
           BuildErrored(
             buildURI = buildURI,
             code = None,
-            errors = ArraySeq(StringError(buildNotFound()))
+            errors = ArraySeq(ErrorBuildFileNotFound)
           )
     }
   }
@@ -179,9 +174,14 @@ object WorkspaceBuild {
     }
 
   def validateBuildURI(buildURI: URI,
-                       workspaceURI: URI): Either[StringError, URI] =
+                       workspaceURI: URI): Either[ErrorInvalidBuildFileLocation, URI] =
     if (Paths.get(buildURI).getParent != Paths.get(workspaceURI)) // Build file must be in the root workspace folder.
-      Left(StringError(s"Build file '$buildURI' does not belong to workspace '$workspaceURI'. It must be placed in the root folder"))
+      Left(
+        ErrorInvalidBuildFileLocation(
+          buildURI = buildURI,
+          workspaceURI = workspaceURI
+        )
+      )
     else
       Right(buildURI)
 
