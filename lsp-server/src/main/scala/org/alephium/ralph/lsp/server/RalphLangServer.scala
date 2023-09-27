@@ -55,6 +55,7 @@ object RalphLangServer {
   def getRootUri(params: InitializeParams): Option[URI] =
     Option(params.getRootUri)
       .orElse(Option(params.getRootPath))
+      //Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
       .orElse(Option(System.getProperty("user.dir")).map(dir => s"file://$dir"))
       .map(new URI(_))
 }
