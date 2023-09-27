@@ -75,11 +75,8 @@ object WorkspaceBuild {
     }
 
   /** Parse and compile from disk */
-  def parseAndCompile(buildURI: URI): BuildState.Compiled = {
-    val buildFilePath =
-      Paths.get(buildURI)
-
-    FileIO.exists(buildFilePath) match {
+  def parseAndCompile(buildURI: URI): BuildState.Compiled =
+    FileIO.exists(Paths.get(buildURI)) match {
       case Failure(exception) =>
         BuildErrored(
           buildURI = buildURI,
@@ -97,7 +94,6 @@ object WorkspaceBuild {
             errors = ArraySeq(ErrorBuildFileNotFound)
           )
     }
-  }
 
   /** Parse and compile from memory */
   def parseAndCompile(buildURI: URI,

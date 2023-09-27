@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.{CompiledContract, CompiledScript}
 import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.Ast.ContractWithState
-import org.alephium.ralph.lsp.compiler.error.{StringError, StringWarning}
+import org.alephium.ralph.lsp.compiler.error.StringWarning
 
 import java.net.URI
 
