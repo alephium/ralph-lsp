@@ -85,11 +85,7 @@ object RalphcConfig {
     }
 
   /**
-   * Only a compiled compiled [[RalphcCompiledConfig]] config
-   * can be persisted.
-   *
-   * Parsed configs [[RalphcParsedConfig]] cannot be persisted.
-   * They need to be compiled. So they do not implement writer pickler, only a reader.
+   * Only a compiled config ([[RalphcCompiledConfig]]) can be persisted.
    * */
   def write(compiledConfig: RalphcCompiledConfig): String =
     upickle.default.write[Config](compiledConfig)
