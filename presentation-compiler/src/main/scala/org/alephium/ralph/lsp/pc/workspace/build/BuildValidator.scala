@@ -8,6 +8,7 @@ import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralphc.Config
 
+import java.net.URI
 import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ListBuffer
@@ -23,6 +24,19 @@ object BuildValidator {
       case errored: BuildErrored =>
         errored
     }
+
+  /** Checks that buildURI is in the project's root directory */
+  def validateBuildURI(buildURI: URI,
+                       workspaceURI: URI): Either[ErrorInvalidBuildFileLocation, URI] =
+    if (Paths.get(buildURI).getParent != Paths.get(workspaceURI)) // Build file must be in the root workspace folder.
+      Left(
+        ErrorInvalidBuildFileLocation(
+          buildURI = buildURI,
+          workspaceURI = workspaceURI
+        )
+      )
+    else
+      Right(buildURI)
 
   /** Validate that the configured paths are within the workspace directory */
   private def validDirectoryInWorkspace(parsed: BuildParsed): BuildState.Parsed = {

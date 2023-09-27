@@ -4,7 +4,7 @@ import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, WorkspaceBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, BuildValidator, WorkspaceBuild}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
 
@@ -91,7 +91,7 @@ object Workspace {
   def build(buildURI: URI,
             code: Option[String],
             state: WorkspaceState): Option[BuildState.Compiled] =
-    WorkspaceBuild.validateBuildURI(
+    BuildValidator.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = state.workspaceURI
     ) match {

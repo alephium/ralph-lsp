@@ -4,7 +4,6 @@ import org.alephium.ralph.lsp.compiler.error.StringError
 import org.alephium.ralph.lsp.pc.util.FileIO
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
-import org.alephium.ralphc.Config
 
 import java.net.URI
 import java.nio.file.{Path, Paths}
@@ -75,7 +74,7 @@ object WorkspaceBuild {
         BuildValidator.validate(parsed)
     }
 
-  /** Reads [[Config]] from the workspace */
+  /** Parse and compile from disk */
   def parseAndCompile(buildURI: URI): BuildState.Compiled = {
     val buildFilePath =
       Paths.get(buildURI)
@@ -100,34 +99,31 @@ object WorkspaceBuild {
     }
   }
 
+  /** Parse and compile from memory */
+  def parseAndCompile(buildURI: URI,
+                      code: String): BuildState.Compiled = {
+    // Code is already read. Parse and validate it.
+    val parsed =
+      parse(
+        buildURI = buildURI,
+        json = code
+      )
+
+    compile(parsed)
+  }
+
   def parseAndCompile(buildURI: URI,
                       code: Option[String]): BuildState.Compiled =
     code match {
-      case Some(buildJSON) =>
-        // Code is already read. Parse and validate it.
-        val parsed =
-          parse(
-            buildURI = buildURI,
-            json = buildJSON
-          )
-
-        compile(parsed)
+      case Some(code) =>
+        parseAndCompile(
+          buildURI = buildURI,
+          code = code
+        )
 
       case None =>
         // Code is not known. Parse and validate it from disk.
         parseAndCompile(buildURI)
     }
-
-  def validateBuildURI(buildURI: URI,
-                       workspaceURI: URI): Either[ErrorInvalidBuildFileLocation, URI] =
-    if (Paths.get(buildURI).getParent != Paths.get(workspaceURI)) // Build file must be in the root workspace folder.
-      Left(
-        ErrorInvalidBuildFileLocation(
-          buildURI = buildURI,
-          workspaceURI = workspaceURI
-        )
-      )
-    else
-      Right(buildURI)
 
 }
