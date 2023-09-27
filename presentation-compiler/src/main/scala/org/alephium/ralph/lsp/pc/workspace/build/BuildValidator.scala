@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 object BuildValidator {
 
   /** Validate that the configured paths are within the workspace directory */
-  def validDirectoryInWorkspace(parsed: BuildParsed): BuildState.Compiled = {
+  def validDirectoryInWorkspace(parsed: BuildParsed): BuildState.Parsed = {
     val workspacePath = Paths.get(parsed.workspaceURI)
     val contractPath = parsed.config.contractPath
     val artifactPath = parsed.config.artifactPath
@@ -56,15 +56,7 @@ object BuildValidator {
 
     // Check if errors exists
     if (errors.isEmpty)
-      BuildCompiled( // No errors! Convert to Compiled typed.
-        buildURI = parsed.buildURI,
-        code = parsed.code,
-        config = Config(
-          compilerOptions = parsed.config.compilerOptions,
-          contractPath = Paths.get(parsed.config.contractPath),
-          artifactPath = Paths.get(parsed.config.artifactPath)
-        )
-      )
+      parsed
     else
       BuildErrored( // report errors
         buildURI = parsed.buildURI,
@@ -74,17 +66,20 @@ object BuildValidator {
   }
 
   /** Validate that the configured paths exist within the workspace directory */
-  def validateDirectoryExists(compiled: BuildCompiled): BuildState.Compiled = {
-    val contractPath = compiled.config.contractPath
-    val contractPathString = contractPath.toString
+  def validateDirectoryExists(parsed: BuildParsed): BuildState.Compiled = {
+    val workspacePath = Paths.get(parsed.workspaceURI)
+    val contractPath = parsed.config.contractPath
+    val artifactPath = parsed.config.artifactPath
 
-    val artifactPath = compiled.config.artifactPath
-    val artifactPathString = artifactPath.toString
+    // absolute source paths
+    val absoluteContractPath = workspacePath.resolve(contractPath)
+    val absoluteArtifactPath = workspacePath.resolve(artifactPath)
+
     // do these paths exists with the workspace directory?
     val compileResult =
       for {
-        contractExists <- FileIO.exists(contractPath)
-        artifactsExists <- FileIO.exists(artifactPath)
+        contractExists <- FileIO.exists(absoluteContractPath)
+        artifactsExists <- FileIO.exists(absoluteArtifactPath)
       } yield (contractExists, artifactsExists)
 
     compileResult match {
@@ -96,12 +91,12 @@ object BuildValidator {
         if (!contractExists)
           errors addOne
             ErrorDirectoryDoesNotExists(
-              dirPath = contractPathString,
+              dirPath = contractPath,
               index =
                 SourceIndex(
                   // TODO: lastIndexOf is not ideal for all cases.
-                  index = compiled.code.lastIndexOf(contractPathString),
-                  width = contractPathString.length
+                  index = parsed.code.lastIndexOf(contractPath),
+                  width = contractPath.length
                 )
             )
 
@@ -109,30 +104,38 @@ object BuildValidator {
         if (!artifactsExists)
           errors addOne
             ErrorDirectoryDoesNotExists(
-              dirPath = artifactPathString,
+              dirPath = artifactPath,
               index =
                 SourceIndex(
                   // TODO: lastIndexOf is not ideal for all cases.
-                  index = compiled.code.lastIndexOf(artifactPathString),
-                  width = artifactPathString.length
+                  index = parsed.code.lastIndexOf(artifactPath),
+                  width = artifactPath.length
                 )
             )
 
         // check if errors exists
         if (errors.isEmpty)
-          compiled
+          BuildCompiled( // No errors! Convert to Compiled typed.
+            buildURI = parsed.buildURI,
+            code = parsed.code,
+            config = Config(
+              compilerOptions = parsed.config.compilerOptions,
+              contractPath = absoluteContractPath,
+              artifactPath = absoluteArtifactPath
+            )
+          )
         else
           BuildErrored( // report errors
-            buildURI = compiled.buildURI,
-            code = Some(compiled.code),
+            buildURI = parsed.buildURI,
+            code = Some(parsed.code),
             errors = ArraySeq.from(errors)
           )
 
       case Failure(exception) =>
         // exception occurred performing IO.
         BuildErrored(
-          buildURI = compiled.buildURI,
-          code = Some(compiled.code),
+          buildURI = parsed.buildURI,
+          code = Some(parsed.code),
           errors = ArraySeq(StringError(exception.getMessage))
         )
     }

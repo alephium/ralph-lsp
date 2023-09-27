@@ -73,8 +73,8 @@ object WorkspaceBuild {
       case parsed: BuildParsed =>
         // parse successful. Perform compilation!
         BuildValidator.validDirectoryInWorkspace(parsed) match {
-          case compiled: BuildCompiled =>
-            BuildValidator.validateDirectoryExists(compiled)
+          case parsed: BuildParsed =>
+            BuildValidator.validateDirectoryExists(parsed)
 
           case errored: BuildErrored =>
             errored
