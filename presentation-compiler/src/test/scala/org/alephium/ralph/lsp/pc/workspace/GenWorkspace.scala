@@ -3,8 +3,9 @@ package org.alephium.ralph.lsp.pc.workspace
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.GenCommon._
 import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
+import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, WorkspaceBuild}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
-import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild
+import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcCompiledConfig
 import org.alephium.ralphc.Config
 import org.scalacheck.{Arbitrary, Gen}
 
@@ -33,7 +34,7 @@ object GenWorkspace {
         ignoreCheckExternalCallerWarnings = ignoreCheckExternalCallerWarnings
       )
 
-  def genRalphcConfig(workspaceURI: URI): Gen[Config] = {
+  def genRalphcCompiledConfig(workspaceURI: URI): Gen[RalphcCompiledConfig] = {
     val workspacePath = Paths.get(workspaceURI)
     for {
       compilerOptions <- genCompilerOptions()
@@ -50,12 +51,12 @@ object GenWorkspace {
   def genBuildCompiled(): Gen[BuildCompiled] =
     for {
       workspacePath <- genFolder()
-      ralphcConfig <- genRalphcConfig(workspacePath.toUri)
+      compiledConfig <- genRalphcCompiledConfig(workspacePath.toUri)
     } yield
       BuildCompiled(
         buildURI = workspacePath.resolve(WorkspaceBuild.BUILD_FILE_NAME).toUri,
-        code = WorkspaceBuild.writeConfig(ralphcConfig),
-        config = ralphcConfig
+        code = RalphcConfig.write(compiledConfig),
+        config = compiledConfig
       )
 
   def genInitialised(): Gen[WorkspaceState.Created] =

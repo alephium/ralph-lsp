@@ -6,7 +6,7 @@ import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, WorkspaceBuild}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
-import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorUnknownFileType}
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -23,7 +23,7 @@ object Workspace {
     WorkspaceState.Created(workspaceURI)
 
   /** Creates an un-compiled workspace for a successful build file. */
-  def initialise(state: BuildState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+  def initialise(state: BuildState.Compiled)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     state match {
       case compiled: BuildState.BuildCompiled =>
         // Build file changed. Update the workspace and request a full workspace build.
@@ -74,7 +74,7 @@ object Workspace {
 
       case initialised: WorkspaceState.Created =>
         val newBuild =
-          WorkspaceBuild.readBuild(
+          WorkspaceBuild.parseAndCompile(
             buildURI = initialised.buildURI,
             code = None,
           )
@@ -90,7 +90,7 @@ object Workspace {
    * */
   def build(buildURI: URI,
             code: Option[String],
-            state: WorkspaceState): Option[BuildState] =
+            state: WorkspaceState): Option[BuildState.Compiled] =
     WorkspaceBuild.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = state.workspaceURI
@@ -106,7 +106,7 @@ object Workspace {
         Some(buildError)
 
       case Right(buildURI) =>
-        WorkspaceBuild.readBuild(
+        WorkspaceBuild.parseAndCompile(
           buildURI = buildURI,
           code = code,
         ) match {

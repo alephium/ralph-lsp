@@ -1,20 +1,18 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.{CompilerOptions, SourceIndex}
-import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.error.StringError
 import org.alephium.ralph.lsp.pc.util.FileIO
-import org.alephium.ralph.lsp.pc.util.PicklerUtil._
-import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildFileLocation, ErrorInvalidBuildSyntax}
-import org.alephium.ralph.lsp.pc.workspace.build.BuildState.{BuildCompiled, BuildErrored}
+import org.alephium.ralph.lsp.pc.workspace.build.error._
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
+import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralphc.Config
-import upickle.default._
 
 import java.net.URI
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Path, Paths}
 import scala.collection.immutable.ArraySeq
-import scala.util.{Failure, Success, Try}
+import scala.collection.mutable.ListBuffer
+import scala.util.{Failure, Success}
 
 object WorkspaceBuild {
 
@@ -23,61 +21,16 @@ object WorkspaceBuild {
   /** Build file of a workspace */
   val BUILD_FILE_NAME = s"build.$BUILD_FILE_EXTENSION"
 
-  /** Default config */
-  val defaultRalphcConfig =
-    Config(
-      compilerOptions = CompilerOptions.Default,
-      contractPath = Paths.get("./contracts"),
-      artifactPath = Paths.get("./artifacts")
-    )
-
   def toBuildPath(workspacePath: Path): Path =
     workspacePath.resolve(BUILD_FILE_NAME)
 
   def toBuildURI(workspaceURI: URI): URI =
     toBuildPath(Paths.get(workspaceURI)).toUri
 
-  def parseConfig(buildURI: URI,
-                  json: String): Either[FormattableError, Config] =
-    try
-      Right(read[Config](json))
-    catch {
-      case abortError: upickle.core.AbortException =>
-        // Exact location of the error is known so build a FormattableError
-        val error =
-          ErrorInvalidBuildSyntax(
-            buildURI = buildURI,
-            error = abortError
-          )
-
-        Left(error)
-
-      case parseError: ujson.ParseException =>
-        // Exact location of the error is known so build a FormattableError
-        val error =
-          ErrorInvalidBuildSyntax(
-            buildURI = buildURI,
-            error = parseError
-          )
-
-        Left(error)
-
-      case throwable: Throwable =>
-        // The location of the error is unknown, report it
-        // at the first character within the build file.
-        val error =
-          ErrorInvalidBuildSyntax(
-            fileURI = buildURI,
-            index = SourceIndex(0, 1),
-            message = throwable.getMessage
-          )
-
-        Left(error)
-    }
-
-  def parseBuild(buildURI: URI,
-                 json: String): BuildState =
-    parseConfig(
+  /** Parse a build that is in-memory */
+  def parse(buildURI: URI,
+            json: String): BuildState.Parsed =
+    RalphcConfig.parse(
       buildURI = buildURI,
       json = json
     ) match {
@@ -89,14 +42,15 @@ object WorkspaceBuild {
         )
 
       case Right(config) =>
-        BuildCompiled(
+        BuildParsed(
           buildURI = buildURI,
           code = json,
           config = config
         )
     }
 
-  def readConfigFile(buildURI: URI): BuildState =
+  /** Parse a build that is on-disk */
+  def parse(buildURI: URI): BuildState.Parsed =
     FileIO.readAllLines(buildURI) match {
       case Failure(exception) =>
         BuildErrored(
@@ -106,14 +60,151 @@ object WorkspaceBuild {
         )
 
       case Success(json) =>
-        parseBuild(
+        parse(
           buildURI = buildURI,
           json = json
         )
     }
 
+  /** Compile a parsed build */
+  def compile(parsed: BuildState.Parsed): BuildState.Compiled =
+    parsed match {
+      case errored: BuildErrored =>
+        // there are parsing errors
+        errored
+
+      case parsed: BuildParsed =>
+        // parse successful. Perform compilation!
+        validDirectoryInWorkspace(parsed) match {
+          case compiled: BuildCompiled =>
+            validateDirectoryExists(compiled)
+
+          case errored: BuildErrored =>
+            errored
+        }
+    }
+
+  /** Validate that the configured paths are within the workspace directory */
+  def validDirectoryInWorkspace(parsed: BuildParsed): BuildState.Compiled = {
+    val workspacePath = Paths.get(parsed.workspaceURI)
+    val contractPath = parsed.config.contractPath
+    val artifactPath = parsed.config.artifactPath
+
+    // absolute source paths
+    val absoluteContractPath = workspacePath.resolve(contractPath)
+    val absoluteArtifactPath = workspacePath.resolve(artifactPath)
+
+    val errors =
+      ListBuffer.empty[FormattableError]
+
+    // Validate: is the contract path with the workspace
+    if (!absoluteContractPath.startsWith(workspacePath))
+      errors addOne
+        ErrorDirectoryOutsideWorkspace(
+          dirPath = contractPath,
+          index =
+            SourceIndex(
+              index = parsed.code.lastIndexOf(contractPath),
+              width = contractPath.length
+            )
+        )
+
+    // Validate: is the artifact path with the workspace
+    if (!absoluteArtifactPath.startsWith(workspacePath))
+      errors addOne
+        ErrorDirectoryDoesNotExists(
+          dirPath = artifactPath,
+          index =
+            SourceIndex(
+              index = parsed.code.lastIndexOf(artifactPath),
+              width = artifactPath.length
+            )
+        )
+
+    // Check if errors exists
+    if (errors.isEmpty)
+      BuildCompiled( // No errors! Convert to Compiled typed.
+        buildURI = parsed.buildURI,
+        code = parsed.code,
+        config = Config(
+          compilerOptions = parsed.config.compilerOptions,
+          contractPath = Paths.get(parsed.config.contractPath),
+          artifactPath = Paths.get(parsed.config.artifactPath)
+        )
+      )
+    else
+      BuildErrored( // report errors
+        buildURI = parsed.buildURI,
+        code = Some(parsed.code),
+        errors = ArraySeq.from(errors)
+      )
+  }
+
+  /** Validate that the configured paths exist within the workspace directory */
+  def validateDirectoryExists(compiled: BuildCompiled): BuildState.Compiled = {
+    val contractPath = compiled.config.contractPath
+    val contractPathString = contractPath.toString
+
+    val artifactPath = compiled.config.artifactPath
+    val artifactPathString = artifactPath.toString
+    // do these paths exists with the workspace directory?
+    val compileResult =
+      for {
+        contractExists <- FileIO.exists(contractPath)
+        artifactsExists <- FileIO.exists(artifactPath)
+      } yield (contractExists, artifactsExists)
+
+    compileResult match {
+      case Success((contractExists, artifactsExists)) =>
+        val errors =
+          ListBuffer.empty[FormattableError]
+
+        // check if contract path exists
+        if (!contractExists)
+          errors addOne
+            ErrorDirectoryDoesNotExists(
+              dirPath = contractPathString,
+              index =
+                SourceIndex(
+                  index = compiled.code.lastIndexOf(contractPathString),
+                  width = contractPathString.length
+                )
+            )
+
+        // check if artifact path exists
+        if (!artifactsExists)
+          errors addOne
+            ErrorDirectoryDoesNotExists(
+              dirPath = artifactPathString,
+              index =
+                SourceIndex(
+                  index = compiled.code.lastIndexOf(artifactPathString),
+                  width = artifactPathString.length
+                )
+            )
+
+        // check if errors exists
+        if (errors.isEmpty)
+          compiled
+        else
+          BuildErrored( // report errors
+            buildURI = compiled.buildURI,
+            code = Some(compiled.code),
+            errors = ArraySeq.from(errors)
+          )
+
+      case Failure(exception) =>
+        // exception occurred performing IO.
+        BuildErrored(
+          buildURI = compiled.buildURI,
+          code = Some(compiled.code),
+          errors = ArraySeq(StringError(exception.getMessage))
+        )
+    }
+  }
+
   /** Reads [[Config]] from the workspace */
-  def readBuild(buildURI: URI): BuildState = {
+  def parseAndCompile(buildURI: URI): BuildState.Compiled = {
     val buildFilePath =
       Paths.get(buildURI)
 
@@ -127,7 +218,7 @@ object WorkspaceBuild {
 
       case Success(exists) =>
         if (exists)
-          readConfigFile(buildFilePath.toUri)
+          compile(parse(buildFilePath.toUri))
         else
           BuildErrored(
             buildURI = buildURI,
@@ -137,40 +228,22 @@ object WorkspaceBuild {
     }
   }
 
-  def readBuild(buildURI: URI,
-                code: Option[String]): BuildState =
+  def parseAndCompile(buildURI: URI,
+                      code: Option[String]): BuildState.Compiled =
     code match {
       case Some(buildJSON) =>
         // Code is already read. Parse and validate it.
-        parseBuild(
-          buildURI = buildURI,
-          json = buildJSON
-        )
+        val parsed =
+          parse(
+            buildURI = buildURI,
+            json = buildJSON
+          )
+
+        compile(parsed)
 
       case None =>
         // Code is not known. Parse and validate it from disk.
-        readBuild(buildURI)
-    }
-
-  def writeConfig(config: Config): String =
-    write[Config](config)
-
-  /**
-   * Creates a config file.
-   *
-   * This can be used to generate a default config [[defaultRalphcConfig]]
-   * for the user in their IDE workspace.
-   *
-   * @param workspacePath Workspace root path
-   * @param config        Config to generate
-   * @return Create file's path
-   */
-  def persistConfig(workspacePath: Path,
-                    config: Config): Try[Path] =
-    Try {
-      val bytes = writeConfig(config).getBytes(StandardCharsets.UTF_8)
-      val buildFilePath = toBuildPath(workspacePath)
-      Files.write(buildFilePath, bytes)
+        parseAndCompile(buildURI)
     }
 
   def validateBuildURI(buildURI: URI,
