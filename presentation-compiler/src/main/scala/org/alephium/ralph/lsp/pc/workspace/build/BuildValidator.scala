@@ -15,8 +15,17 @@ import scala.util.{Failure, Success}
 
 object BuildValidator {
 
+  def validate(parsed: BuildParsed): BuildState.Compiled =
+    BuildValidator.validDirectoryInWorkspace(parsed) match {
+      case parsed: BuildParsed =>
+        BuildValidator.validateDirectoryExists(parsed)
+
+      case errored: BuildErrored =>
+        errored
+    }
+
   /** Validate that the configured paths are within the workspace directory */
-  def validDirectoryInWorkspace(parsed: BuildParsed): BuildState.Parsed = {
+  private def validDirectoryInWorkspace(parsed: BuildParsed): BuildState.Parsed = {
     val workspacePath = Paths.get(parsed.workspaceURI)
     val contractPath = parsed.config.contractPath
     val artifactPath = parsed.config.artifactPath
@@ -66,7 +75,7 @@ object BuildValidator {
   }
 
   /** Validate that the configured paths exist within the workspace directory */
-  def validateDirectoryExists(parsed: BuildParsed): BuildState.Compiled = {
+  private def validateDirectoryExists(parsed: BuildParsed): BuildState.Compiled = {
     val workspacePath = Paths.get(parsed.workspaceURI)
     val contractPath = parsed.config.contractPath
     val artifactPath = parsed.config.artifactPath
