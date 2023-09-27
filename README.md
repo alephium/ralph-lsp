@@ -22,7 +22,7 @@ Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.j
 
 # Configuration
 
-The compiler needs a config file, otherwise `ralph-lsp` won't work. You can create the following file in the root of your project:
+Create a mandatory config file named `build.ralph` in your project's root directory. You can use the following sample as reference:
 
 `build.ralph`
 
