@@ -1,0 +1,73 @@
+package org.alephium.ralph.lsp.pc.workspace
+
+import org.alephium.ralph.error.CompilerError.FormattableError
+import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
+import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild
+
+import java.net.URI
+import scala.collection.immutable.ArraySeq
+
+sealed trait WorkspaceState {
+  def workspaceURI: URI
+
+  def buildURI: URI =
+    WorkspaceBuild.toBuildURI(workspaceURI)
+}
+
+object WorkspaceState {
+
+  /** Workspace state where the source-code is known and can be parsed and compiled */
+  sealed trait SourceAware extends WorkspaceState {
+    def build: BuildCompiled
+
+    def workspaceURI: URI =
+      build.workspaceURI
+
+    /** A workspace contains multiple source files */
+    def sourceCode: ArraySeq[SourceCodeState]
+  }
+
+  /** State: Represents a compilation run result */
+  sealed trait CompilerRun extends WorkspaceState.SourceAware {
+    def parsed: WorkspaceState.Parsed
+  }
+
+  /** State: IDE is initialised but the build file requires validation */
+  case class Created(workspaceURI: URI) extends WorkspaceState
+
+  /** State: Source files might be un-compiled, parsed or compiled. This state can be parsed and compiled. */
+  case class UnCompiled(build: BuildCompiled,
+                        sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.SourceAware
+
+  /** State: All source files parsed, therefore this workspace can be compiled */
+  case class Parsed(build: BuildCompiled,
+                    sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.SourceAware
+
+  /**
+   * Result of an errored compiler run.
+   *
+   * @param sourceCode      New valid source code states.
+   * @param workspaceErrors Project/workspace level errors
+   * @param parsed          Previous valid parsed state (used for code completion in-case the file has error)
+   */
+  case class Errored(sourceCode: ArraySeq[SourceCodeState],
+                     workspaceErrors: ArraySeq[FormattableError],
+                     parsed: WorkspaceState.Parsed) extends CompilerRun {
+    def build: BuildCompiled =
+      parsed.build
+  }
+
+  /**
+   * Result of a successful compiler run.
+   *
+   * @param sourceCode New valid source code states.
+   * @param parsed     Current parser run for this compiled code.
+   */
+  case class Compiled(sourceCode: ArraySeq[SourceCodeState],
+                      parsed: WorkspaceState.Parsed) extends CompilerRun {
+    def build: BuildCompiled =
+      parsed.build
+  }
+
+}

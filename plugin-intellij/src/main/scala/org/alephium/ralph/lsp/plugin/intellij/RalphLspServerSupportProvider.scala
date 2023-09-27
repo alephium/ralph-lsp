@@ -9,6 +9,6 @@ class RalphLspServerSupportProvider extends LspServerSupportProvider {
 
   /** Start an LSP server lazily */
   override def fileOpened(project: Project, file: VirtualFile, serverStarter: LspServerSupportProvider.LspServerStarter): Unit =
-    if (file.getExtension == "ral")
+    if (file.getExtension == RalphConfig.RALPH_SOURCE_FILE_EXTENSION)
       serverStarter.ensureServerStarted(new RalphLspServerDescriptor(project))
 }

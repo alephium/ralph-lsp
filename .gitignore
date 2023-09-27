@@ -21,3 +21,8 @@ project/plugins/project/
 #Intellij
 .idea
 *.iml
+
+# plugin-vscode
+plugin-vscode/node_modules
+plugin-vscode/package-lock.json
+*/out

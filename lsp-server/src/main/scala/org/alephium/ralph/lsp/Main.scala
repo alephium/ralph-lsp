@@ -1,37 +1,38 @@
 package org.alephium.ralph.lsp
 
-import org.alephium.ralph.lsp.server.RalphLangServer
-import org.eclipse.lsp4j.{MessageParams, MessageType}
+import com.typesafe.scalalogging.StrictLogging
+import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.server.{RalphLangClient, RalphLangServer}
 import org.eclipse.lsp4j.jsonrpc.Launcher
-import org.eclipse.lsp4j.services.LanguageClient
 
 import java.io.{InputStream, OutputStream}
-import scala.concurrent.ExecutionContext
 
-object Main {
+object Main extends StrictLogging {
 
   def main(args: Array[String]): Unit = {
-    implicit val ec: ExecutionContext =
-      ExecutionContext.Implicits.global
-
-    // start lsp using standard IO
-    start(System.in, System.out)
+    logger.info("Starting Ralph-LSP")
+    start(System.in, System.out) // start lsp using standard IO
+    logger.info("Ralph-LSP started!")
   }
 
-  def start(in: InputStream, out: OutputStream)(implicit ec: ExecutionContext): Unit = {
-    val server = new RalphLangServer()
+  def start(in: InputStream, out: OutputStream): Unit = {
+    implicit val compiler: CompilerAccess =
+      CompilerAccess.ralphc
+
+    val server = RalphLangServer()
 
     // configure LSP server
     val launcher =
-      new Launcher.Builder[LanguageClient]()
+      new Launcher.Builder[RalphLangClient]()
         .setInput(in)
         .setOutput(out)
-        .setRemoteInterface(classOf[LanguageClient])
+        .setRemoteInterface(classOf[RalphLangClient])
         .setLocalService(server)
         .create()
 
-    server.connect(launcher.getRemoteProxy)
-    launcher.getRemoteProxy.logMessage(new MessageParams(MessageType.Info, "Server started")) // Temporary test log message
-    launcher.startListening().get()
+    server.setInitialState(
+      client = launcher.getRemoteProxy,
+      listener = launcher.startListening
+    )
   }
 }

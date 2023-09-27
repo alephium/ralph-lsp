@@ -1,6 +1,18 @@
-# Base Template
+# ralph-lsp
 
-Base template for LSP server.
+Language server for Ralph.
+
+Currently supports text document level events and diagnostics.
+
+# Dependency on `ralphc`
+
+Checkout [this lsp-tester](https://github.com/alephium/dev-alephium/tree/lsp_tester) branch and publish is locally.
+
+```shell
+sbt publishLocal
+```
+
+Update the version for `alephium-ralphc` in this repo's `build.sbt` file with the published version.
 
 # Build the jar
 
@@ -10,11 +22,19 @@ sbt "project lsp-server; assembly;"
 
 Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar`
 
-Running the jar you should get a `Server started` json message:
+# Run LSP in VSCode
 
+Update the jar
+location [here](plugin-vscode/src/extension.ts).
+
+Run the IDE:
+
+```shell
+cd plugin-vscode
+code .
 ```
-{"jsonrpc":"2.0","method":"window/logMessage","params":{"type":3,"message":"Server started"}}
-```
+
+![img.png](docs/img_2.png)
 
 # Run LSP in IntelliJ (Ultimate)
 
