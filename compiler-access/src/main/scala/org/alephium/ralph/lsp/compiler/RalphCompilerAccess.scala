@@ -51,9 +51,17 @@ private object RalphCompilerAccess extends CompilerAccess {
         Right(code)
     }
 
-  def parseContracts(code: String): Either[FormattableError, Seq[Ast.ContractWithState]] =
+  def handleStdImports(code:String): String =
+    StdInterface.stdInterfaces.foldLeft(code) { case (acc, (interface, code)) =>
+      acc.replace(s"""import "$interface"""", code)
+    }
+
+  def parseContracts(code: String): Either[FormattableError, Seq[Ast.ContractWithState]] = {
+
+    val codeWithStdImports = handleStdImports(code)
+
     try
-      fastparse.parse(code, StatefulParser.multiContract(_)) match {
+      fastparse.parse(codeWithStdImports, StatefulParser.multiContract(_)) match {
         case Parsed.Success(ast: Ast.MultiContract, _) =>
           Right(ast.contracts)
 
@@ -61,6 +69,7 @@ private object RalphCompilerAccess extends CompilerAccess {
           Left(FastParseError(failure))
       }
     catch catchAllThrows
+  }
 
   def compileContracts(contracts: Seq[Ast.ContractWithState],
                        options: CompilerOptions): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])] =

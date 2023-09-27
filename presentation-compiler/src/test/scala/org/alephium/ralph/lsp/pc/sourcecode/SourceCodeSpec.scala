@@ -9,8 +9,10 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import org.scalacheck.Gen
 
 import java.net.URI
+import org.alephium.ralph.lsp.compiler.StdInterface
 
 class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with ScalaCheckDrivenPropertyChecks {
 
@@ -183,6 +185,19 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
             // The code didn't change so will the error.
             newState shouldBe failedState
         }
+      }
+    }
+
+    "handle std imports" in {
+        forAll(Gen.listOf(StdInterface.stdInterfaces)) {
+          interfaces  =>
+          val compiler: CompilerAccess = CompilerAccess.ralphc
+
+            val code = StdInterface.stdInterfaces.map{ case (interface,_) =>
+              s"""import "$interface""""
+            }.mkString("", "\n", "\n") ++ "Contract Test(id:U256){}"
+
+            compiler.parseContracts(code).isRight shouldBe true
       }
     }
   }
