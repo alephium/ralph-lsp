@@ -89,7 +89,7 @@ object WorkspaceBuild {
 
       case Success(exists) =>
         if (exists)
-          compile(parse(buildFilePath.toUri))
+          compile(parse(buildURI))
         else
           BuildErrored(
             buildURI = buildURI,
