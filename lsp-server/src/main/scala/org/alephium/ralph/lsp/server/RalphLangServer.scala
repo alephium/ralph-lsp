@@ -347,17 +347,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   def getWorkspace(): WorkspaceState =
-    state.workspace match {
-      case Some(workspace) =>
-        workspace
-
-      case None =>
-        // Workspace folder is not defined.
-        // This is not expected to occur since `initialized` is always invoked first.
-        throw
-          getClient()
-            .log(ResponseError.WorkspaceFolderNotSupplied)
-            .toResponseErrorException
+    state.workspace getOrElse {
+      // Workspace folder is not defined.
+      // This is not expected to occur since `initialized` is always invoked first.
+      throw
+        getClient()
+          .log(ResponseError.WorkspaceFolderNotSupplied)
+          .toResponseErrorException
     }
 
   override def diagnostic(params: WorkspaceDiagnosticParams): CompletableFuture[WorkspaceDiagnosticReport] =

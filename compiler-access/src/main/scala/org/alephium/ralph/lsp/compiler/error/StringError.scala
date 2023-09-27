@@ -8,7 +8,7 @@ import org.alephium.ralph.error.CompilerError.FormattableError
  */
 case class StringError(override val message: String) extends FormattableError {
   override def title: String =
-    "Warning"
+    "Error"
 
   override def index: SourceIndex =
     SourceIndex(0, 1)
