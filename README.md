@@ -1,6 +1,8 @@
-# Base Template
+# ralph-lsp
 
-Base template for LSP server.
+Language server for Ralph.
+
+Currently supports text document level events and diagnostics.
 
 # Dependency on `ralphc`
 
@@ -24,7 +26,6 @@ Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.j
 
 Update the jar
 location [here](plugin-vscode/src/extension.ts).
-Yep, this will eventually be automatically configured via sbt.
 
 Run the IDE:
 
