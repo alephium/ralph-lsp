@@ -19,9 +19,9 @@ object StdInterface {
 
   val interfaceFiles = Files.list(stdPath).iterator().asScala.toList
 
-  val stdInterfaces = interfaceFiles.map{file =>
+  val stdInterfaces: Map[String, String] = interfaceFiles.map{ file =>
     (s"$stdFolder/${removeExtension(file.getFileName.toString)}", readFile(file))
-  }
+  }.toMap
 
   //https://stackoverflow.com/a/73045690
   private def getPath(url: URL): Path = {

@@ -12,6 +12,7 @@ import java.nio.file.{Files, Paths}
 import scala.collection.mutable
 import scala.io.Source
 import scala.util.{Failure, Success, Using}
+import scala.util.matching.Regex
 
 /**
  * Implements ralph parsing and compilation functions accessing the `ralphc`.
@@ -51,10 +52,29 @@ private object RalphCompilerAccess extends CompilerAccess {
         Right(code)
     }
 
-  def handleStdImports(code:String): String =
-    StdInterface.stdInterfaces.foldLeft(code) { case (acc, (interface, code)) =>
-      acc.replace(s"""import "$interface"""", code)
-    }
+  private val importRegex = """\s*import\s+"([^".\/]+\/[^"]*[a-z][a-z_0-9])"""".r
+
+  //TODO It would be nice if we were returning a List of Formattable Error
+  //for invalid/not found imports
+  def handleStdImports(initialCode: String): String = {
+    importRegex.findAllMatchIn(initialCode)
+      .foldLeft(initialCode) { case (code, pattern) =>
+        val importValue = {
+          val group =   pattern.group(1)
+          if(group.endsWith(".ral")) {
+            group.dropRight(4)
+          } else {
+            group
+          }
+        }
+        StdInterface.stdInterfaces.get(importValue) match {
+          case Some(interfaceCode) =>
+            code.replaceFirst(pattern.matched, s"\n$interfaceCode\n")
+          case None =>
+            code
+        }
+      }
+  }
 
   def parseContracts(code: String): Either[FormattableError, Seq[Ast.ContractWithState]] = {
 
