@@ -59,8 +59,8 @@ object BuildValidator {
           index =
             SourceIndex(
               // TODO: lastIndexOf is not ideal for all cases.
-              index = parsed.code.lastIndexOf(contractPath),
-              width = contractPath.length
+              index = parsed.code.lastIndexOf(contractPath) max 0,
+              width = contractPath.length max 1
             )
         )
 
@@ -72,8 +72,8 @@ object BuildValidator {
           index =
             SourceIndex(
               // TODO: lastIndexOf is not ideal for all cases.
-              index = parsed.code.lastIndexOf(artifactPath),
-              width = artifactPath.length
+              index = parsed.code.lastIndexOf(artifactPath) max 0,
+              width = artifactPath.length max 1
             )
         )
 
@@ -118,8 +118,8 @@ object BuildValidator {
               index =
                 SourceIndex(
                   // TODO: lastIndexOf is not ideal for all cases.
-                  index = parsed.code.lastIndexOf(contractPath),
-                  width = contractPath.length
+                  index = parsed.code.lastIndexOf(contractPath) max 0,
+                  width = contractPath.length max 1
                 )
             )
 
@@ -131,8 +131,8 @@ object BuildValidator {
               index =
                 SourceIndex(
                   // TODO: lastIndexOf is not ideal for all cases.
-                  index = parsed.code.lastIndexOf(artifactPath),
-                  width = artifactPath.length
+                  index = parsed.code.lastIndexOf(artifactPath) max 0,
+                  width = artifactPath.length max 1
                 )
             )
 
