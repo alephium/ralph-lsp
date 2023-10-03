@@ -54,11 +54,10 @@ private object RalphCompilerAccess extends CompilerAccess {
 
   private val importRegex = """\s*import\s+"([^".\/]+\/[^"]*[a-z][a-z_0-9])"""".r
 
-  //TODO It would be nice if we were returning a List of Formattable Error
-  //for invalid/not found imports
-  def handleStdImports(initialCode: String): String = {
+  //Extract imports and replace them with empty string in code to keep line numbers
+  def extractStdImports(initialCode: String): (String, String) = {
     importRegex.findAllMatchIn(initialCode)
-      .foldLeft(initialCode) { case (code, pattern) =>
+      .foldLeft("", initialCode) { case ((imports, code), pattern) =>
         val importValue = {
           val group =   pattern.group(1)
           if(group.endsWith(".ral")) {
@@ -69,21 +68,26 @@ private object RalphCompilerAccess extends CompilerAccess {
         }
         StdInterface.stdInterfaces.get(importValue) match {
           case Some(interfaceCode) =>
-            code.replaceFirst(pattern.matched, s"\n$interfaceCode\n")
+            (s"$imports\n$interfaceCode\n", code.replaceFirst(pattern.matched, "\n"))
           case None =>
-            code
+            (imports, code)
         }
       }
   }
 
-  def parseContracts(code: String): Either[FormattableError, Seq[Ast.ContractWithState]] = {
+  def parseContracts(contract: String): Either[FormattableError, Seq[Ast.ContractWithState]] = {
+    val (imports, code) = extractStdImports(contract)
+    for {
+      importAst <- parseCode(imports)
+      codeAst <- parseCode(code)
+    } yield importAst ++ codeAst
+  }
 
-    val codeWithStdImports = handleStdImports(code)
-
+  private def parseCode(code: String): Either[FormattableError, Seq[Ast.ContractWithState]] = {
     try
-      fastparse.parse(codeWithStdImports, StatefulParser.multiContract(_)) match {
+      fastparse.parse(code, StatefulParser.multiContract(_)) match {
         case Parsed.Success(ast: Ast.MultiContract, _) =>
-          Right(ast.contracts)
+              Right(ast.contracts)
 
         case failure: Parsed.Failure =>
           Left(FastParseError(failure))
