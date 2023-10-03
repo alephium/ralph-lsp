@@ -6,24 +6,42 @@ import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.error.CompilerError.FormattableError
+import org.alephium.ralph.lsp.pc.util.SourceIndexUtil._
 import org.alephium.ralphc.Config
 
 import java.net.URI
-import java.nio.file.Paths
+import java.nio.file.{Path, Paths}
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success}
 
+/** Implements functions for validating `build.ralph` */
 object BuildValidator {
 
-  def validate(parsed: BuildParsed): BuildState.Compiled =
-    BuildValidator.validDirectoryInWorkspace(parsed) match {
-      case parsed: BuildParsed =>
-        BuildValidator.validateDirectoryExists(parsed)
+  /** Validate and promotes a parsed build-file to compiled */
+  def validate(parsed: BuildParsed): BuildState.Compiled = {
 
-      case errored: BuildErrored =>
-        errored
+    /** Returns a successful compiled state */
+    def success() = {
+      val (_, absoluteContractPath, absoluteArtifactPath) =
+        getAbsolutePaths(parsed)
+
+      BuildCompiled(
+        buildURI = parsed.buildURI,
+        code = parsed.code,
+        config = Config(
+          compilerOptions = parsed.config.compilerOptions,
+          contractPath = absoluteContractPath,
+          artifactPath = absoluteArtifactPath
+        )
+      )
     }
+
+    // Run validation checks
+    validatePathsInWorkspace(parsed)
+      .orElse(validatePathsExists(parsed))
+      .getOrElse(success())
+  }
 
   /** Checks that buildURI is in the project's root directory */
   def validateBuildURI(buildURI: URI,
@@ -39,14 +57,13 @@ object BuildValidator {
       Right(buildURI)
 
   /** Validate that the configured paths are within the workspace directory */
-  private def validDirectoryInWorkspace(parsed: BuildParsed): BuildState.Parsed = {
-    val workspacePath = Paths.get(parsed.workspaceURI)
+  private def validatePathsInWorkspace(parsed: BuildParsed): Option[BuildState.BuildErrored] = {
     val contractPath = parsed.config.contractPath
     val artifactPath = parsed.config.artifactPath
 
     // absolute source paths
-    val absoluteContractPath = workspacePath.resolve(contractPath)
-    val absoluteArtifactPath = workspacePath.resolve(artifactPath)
+    val (workspacePath, absoluteContractPath, absoluteArtifactPath) =
+      getAbsolutePaths(parsed)
 
     val errors =
       ListBuffer.empty[FormattableError]
@@ -58,10 +75,9 @@ object BuildValidator {
           dirPath = contractPath,
           index =
             SourceIndex(
-              // TODO: lastIndexOf is not ideal for all cases.
-              index = parsed.code.lastIndexOf(contractPath) max 0,
-              width = contractPath.length max 1
-            )
+              index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+              width = contractPath.length
+            ).ensureNotNegative()
         )
 
     // Validate: is the artifact path with the workspace
@@ -71,32 +87,32 @@ object BuildValidator {
           dirPath = artifactPath,
           index =
             SourceIndex(
-              // TODO: lastIndexOf is not ideal for all cases.
-              index = parsed.code.lastIndexOf(artifactPath) max 0,
-              width = artifactPath.length max 1
-            )
+              index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+              width = artifactPath.length
+            ).ensureNotNegative()
         )
 
     // Check if errors exists
     if (errors.isEmpty)
-      parsed
+      None
     else
-      BuildErrored( // report errors
-        buildURI = parsed.buildURI,
-        code = Some(parsed.code),
-        errors = ArraySeq.from(errors)
+      Some(
+        BuildErrored( // report errors
+          buildURI = parsed.buildURI,
+          code = Some(parsed.code),
+          errors = ArraySeq.from(errors)
+        )
       )
   }
 
   /** Validate that the configured paths exist within the workspace directory */
-  private def validateDirectoryExists(parsed: BuildParsed): BuildState.Compiled = {
-    val workspacePath = Paths.get(parsed.workspaceURI)
+  private def validatePathsExists(parsed: BuildParsed): Option[BuildState.BuildErrored] = {
     val contractPath = parsed.config.contractPath
     val artifactPath = parsed.config.artifactPath
 
     // absolute source paths
-    val absoluteContractPath = workspacePath.resolve(contractPath)
-    val absoluteArtifactPath = workspacePath.resolve(artifactPath)
+    val (workspacePath, absoluteContractPath, absoluteArtifactPath) =
+      getAbsolutePaths(parsed)
 
     // do these paths exists with the workspace directory?
     val compileResult =
@@ -117,10 +133,9 @@ object BuildValidator {
               dirPath = contractPath,
               index =
                 SourceIndex(
-                  // TODO: lastIndexOf is not ideal for all cases.
-                  index = parsed.code.lastIndexOf(contractPath) max 0,
-                  width = contractPath.length max 1
-                )
+                  index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+                  width = contractPath.length
+                ).ensureNotNegative()
             )
 
         // check if artifact path exists
@@ -130,38 +145,48 @@ object BuildValidator {
               dirPath = artifactPath,
               index =
                 SourceIndex(
-                  // TODO: lastIndexOf is not ideal for all cases.
-                  index = parsed.code.lastIndexOf(artifactPath) max 0,
-                  width = artifactPath.length max 1
-                )
+                  index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+                  width = artifactPath.length
+                ).ensureNotNegative()
             )
 
         // check if errors exists
-        if (errors.isEmpty)
-          BuildCompiled( // No errors! Convert to Compiled typed.
-            buildURI = parsed.buildURI,
-            code = parsed.code,
-            config = Config(
-              compilerOptions = parsed.config.compilerOptions,
-              contractPath = absoluteContractPath,
-              artifactPath = absoluteArtifactPath
+        if (errors.isEmpty) {
+          None // No errors!
+        } else {
+          val errors =
+            BuildErrored( // report errors
+              buildURI = parsed.buildURI,
+              code = Some(parsed.code),
+              errors = ArraySeq.from(errors)
             )
-          )
-        else
-          BuildErrored( // report errors
-            buildURI = parsed.buildURI,
-            code = Some(parsed.code),
-            errors = ArraySeq.from(errors)
-          )
+
+          Some(errors)
+        }
 
       case Failure(exception) =>
         // exception occurred performing IO.
-        BuildErrored(
-          buildURI = parsed.buildURI,
-          code = Some(parsed.code),
-          errors = ArraySeq(StringError(exception.getMessage))
-        )
+        val errors =
+          BuildErrored(
+            buildURI = parsed.buildURI,
+            code = Some(parsed.code),
+            errors = ArraySeq(StringError(exception.getMessage))
+          )
+
+        Some(errors)
     }
+  }
+
+  /**
+   * Returns absolute paths of the build/config file.
+   *
+   * @return A 3-tuple `(workspacePath, absoluteContractPath, absoluteArtifactPath)`
+   */
+  private def getAbsolutePaths(parsed: BuildParsed): (Path, Path, Path) = {
+    val workspacePath = Paths.get(parsed.workspaceURI)
+    val absoluteContractPath = workspacePath.resolve(parsed.config.contractPath)
+    val absoluteArtifactPath = workspacePath.resolve(parsed.config.artifactPath)
+    (workspacePath, absoluteContractPath, absoluteArtifactPath)
   }
 
 }

@@ -12,4 +12,5 @@ object URIUtil {
   def getFileExtension(uri: URI): String =
     Paths.get(uri).toFile.getName.dropWhile(_ != '.').drop(1)
 
+
 }
