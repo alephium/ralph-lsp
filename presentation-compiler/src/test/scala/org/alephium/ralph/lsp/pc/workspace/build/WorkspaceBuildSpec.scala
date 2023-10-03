@@ -74,4 +74,16 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
         )
     }
   }
+
+  "BuildCompiled" should {
+    "correctly resolve pathes" in {
+      val workspacePath = Files.createTempDirectory("workspace_URI")
+      val config = WorkspaceBuild.defaultRalphcConfig
+      val buildPath = workspacePath.resolve(WorkspaceBuild.BUILD_FILE_NAME)
+      val buildCompiled = BuildState.BuildCompiled(buildURI = buildPath.toUri, code = "", config = config)
+
+      buildCompiled.contractURI shouldBe workspacePath.resolve("contracts").toUri
+      buildCompiled.artifactURI shouldBe workspacePath.resolve("artifacts").toUri
+    }
+  }
 }

@@ -18,11 +18,12 @@ object BuildState {
     val workspaceURI: URI =
       Paths.get(buildURI).getParent.toUri
 
+
     def contractURI: URI =
-      config.contractPath.toUri
+      workspaceURI.resolve(s"${config.contractPath}")
 
     def artifactURI: URI =
-      config.artifactPath.toUri
+      workspaceURI.resolve(s"${config.artifactPath}")
   }
 
   case class BuildErrored(buildURI: URI,
