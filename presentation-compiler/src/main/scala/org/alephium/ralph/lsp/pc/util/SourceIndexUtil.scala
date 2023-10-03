@@ -8,17 +8,16 @@ object SourceIndexUtil {
 
     /**
      * Sending negative index to the client would be incorrect.
-     * This returns an error reporting the first character as error.
+     * This set the index to be an empty range.
      *
      * This is a temporary solution until an AST is available for `build.ralph`.
-     *
-     * @return [[SourceIndex]] with a non-negative index
+     * See Issue <a href="https://github.com/alephium/ralph-lsp/issues/17">#17</a>.
      */
     def ensureNotNegative(): SourceIndex =
       if (sourceIndex.index < 0)
         SourceIndex(
           index = 0,
-          width = 1
+          width = 0
         )
       else
         sourceIndex

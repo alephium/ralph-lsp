@@ -11,6 +11,6 @@ case class StringWarning(override val message: String) extends FormattableError 
     "Warning"
 
   override def index: SourceIndex =
-    SourceIndex(0, 1)
+    SourceIndex(0, 0)
 
 }
