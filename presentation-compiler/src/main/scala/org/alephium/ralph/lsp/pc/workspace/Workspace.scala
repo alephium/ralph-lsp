@@ -227,7 +227,7 @@ object Workspace {
       ) match {
         case Some(newBuild) =>
           // this is a new build. initialise a fresh build.
-          initialise(newBuild)
+          initialise(newBuild) map parseAndCompile
 
         case None =>
           // no build change occurred, using existing workspace.
