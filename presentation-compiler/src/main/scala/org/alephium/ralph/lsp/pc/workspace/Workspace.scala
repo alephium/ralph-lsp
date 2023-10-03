@@ -254,7 +254,7 @@ object Workspace {
   def sourceCodeChanged(fileURI: URI,
                         updatedCode: Option[String],
                         workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
-    initialise(workspace) flatMap {
+    initialise(workspace) map {
       initialised =>
         if (URIUtil.isChild(initialised.build.contractURI, fileURI)) {
           // source belongs to this workspace, process compilation including this file's changed code.
@@ -273,13 +273,10 @@ object Workspace {
             )
 
           // parse and compile the new state.
-          val result =
-            Workspace.parseAndCompile(unCompiledWorkspace)
-
-          Right(result)
+          Workspace.parseAndCompile(unCompiledWorkspace)
         } else {
           // file does not belong to this workspace, do not compile it and return initialised workspace.
-          Right(initialised)
+          initialised
         }
     }
 
