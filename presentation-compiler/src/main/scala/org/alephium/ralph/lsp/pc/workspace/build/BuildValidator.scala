@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.compiler.error.StringError
-import org.alephium.ralph.lsp.pc.util.FileIO
+import org.alephium.ralph.lsp.pc.util.{FileIO, URIUtil}
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 import org.alephium.ralph.SourceIndex
@@ -46,15 +46,15 @@ object BuildValidator {
   /** Checks that buildURI is in the project's root directory */
   def validateBuildURI(buildURI: URI,
                        workspaceURI: URI): Either[ErrorInvalidBuildFileLocation, URI] =
-    if (Paths.get(buildURI).getParent != Paths.get(workspaceURI)) // Build file must be in the root workspace folder.
+    if (URIUtil.isChild(workspaceURI, buildURI)) // Build file must be in the root workspace folder.
+      Right(buildURI)
+    else
       Left(
         ErrorInvalidBuildFileLocation(
           buildURI = buildURI,
           workspaceURI = workspaceURI
         )
       )
-    else
-      Right(buildURI)
 
   /** Validate that the configured paths are within the workspace directory */
   private def validatePathsInWorkspace(parsed: BuildParsed): Option[BuildState.BuildErrored] = {
@@ -68,8 +68,8 @@ object BuildValidator {
     val errors =
       ListBuffer.empty[FormattableError]
 
-    // Validate: is the contract path with the workspace
-    if (!absoluteContractPath.startsWith(workspacePath))
+    // Validate: is the contract path within the workspace
+    if (!URIUtil.isChild(workspacePath, absoluteContractPath))
       errors addOne
         ErrorDirectoryOutsideWorkspace(
           dirPath = contractPath,
@@ -80,8 +80,8 @@ object BuildValidator {
             ).ensureNotNegative()
         )
 
-    // Validate: is the artifact path with the workspace
-    if (!absoluteArtifactPath.startsWith(workspacePath))
+    // Validate: is the artifact path within the workspace
+    if (!URIUtil.isChild(workspacePath, absoluteArtifactPath))
       errors addOne
         ErrorDirectoryDoesNotExists(
           dirPath = artifactPath,
@@ -111,7 +111,7 @@ object BuildValidator {
     val artifactPath = parsed.config.artifactPath
 
     // absolute source paths
-    val (workspacePath, absoluteContractPath, absoluteArtifactPath) =
+    val (_, absoluteContractPath, absoluteArtifactPath) =
       getAbsolutePaths(parsed)
 
     // do these paths exists with the workspace directory?
@@ -154,14 +154,14 @@ object BuildValidator {
         if (errors.isEmpty) {
           None // No errors!
         } else {
-          val errors =
+          val errorState =
             BuildErrored( // report errors
               buildURI = parsed.buildURI,
               code = Some(parsed.code),
               errors = ArraySeq.from(errors)
             )
 
-          Some(errors)
+          Some(errorState)
         }
 
       case Failure(exception) =>

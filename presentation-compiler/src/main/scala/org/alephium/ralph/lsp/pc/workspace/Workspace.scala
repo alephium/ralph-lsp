@@ -254,25 +254,33 @@ object Workspace {
   def sourceCodeChanged(fileURI: URI,
                         updatedCode: Option[String],
                         workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
-    initialise(workspace) map {
+    initialise(workspace) flatMap {
       initialised =>
-        // update the source code
-        val newSourceCode =
-          downgradeSourceState(
-            fileURI = fileURI,
-            updatedCode = updatedCode,
-            sourceCode = initialised.sourceCode
-          )
+        if (URIUtil.isChild(initialised.build.contractURI, fileURI)) {
+          // source belongs to this workspace, process compilation including this file's changed code.
+          val newSourceCode =
+            downgradeSourceState(
+              fileURI = fileURI,
+              updatedCode = updatedCode,
+              sourceCode = initialised.sourceCode
+            )
 
-        // create new un-compiled workspace.
-        val unCompiledWorkspace =
-          WorkspaceState.UnCompiled(
-            build = initialised.build,
-            sourceCode = newSourceCode
-          )
+          // create new un-compiled workspace.
+          val unCompiledWorkspace =
+            WorkspaceState.UnCompiled(
+              build = initialised.build,
+              sourceCode = newSourceCode
+            )
 
-        // parse and compile the new state.
-        Workspace.parseAndCompile(unCompiledWorkspace)
+          // parse and compile the new state.
+          val result =
+            Workspace.parseAndCompile(unCompiledWorkspace)
+
+          Right(result)
+        } else {
+          // file does not belong to this workspace, do not compile it and return initialised workspace.
+          Right(initialised)
+        }
     }
 
   /**

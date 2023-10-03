@@ -7,11 +7,10 @@ object SourceIndexUtil {
   implicit class SourceIndexExtensions(sourceIndex: SourceIndex) {
 
     /**
-     * Sending negative index to the client is never correct.
+     * Sending negative index to the client would be incorrect.
      * This returns an error reporting the first character as error.
      *
-     * This is a temporary solution for when issue until an AST is
-     * available for build files.
+     * This is a temporary solution until an AST is available for `build.ralph`.
      *
      * @return [[SourceIndex]] with a non-negative index
      */
