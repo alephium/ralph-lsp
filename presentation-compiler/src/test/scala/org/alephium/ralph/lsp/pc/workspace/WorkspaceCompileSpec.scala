@@ -12,7 +12,8 @@ import scala.collection.immutable.ArraySeq
 /**
  * Test cases for [[Workspace.compile]] function.
  */
-class WorkspaceCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
+class WorkspaceCompileSpec
+    extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
   "return error state" when {
     "compilation fails" in {

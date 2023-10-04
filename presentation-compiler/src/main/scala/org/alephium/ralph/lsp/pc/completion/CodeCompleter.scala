@@ -13,17 +13,18 @@ object CodeCompleter {
   def complete(line: Int,
                character: Int,
                uri: URI,
-               workspace: WorkspaceState): Array[Suggestion] = {
+               workspace: WorkspaceState
+  ): Array[Suggestion] = {
     val randomFunctionName = List("deposit", "transfer", "allocate", "upgrade", "assert")
-    val randomParamName = List("id", "name", "address", "addr")
-    val inputTypes = List("U256", "Address", "Bool")
-    val returnTypes = inputTypes ++ List("()")
+    val randomParamName    = List("id", "name", "address", "addr")
+    val inputTypes         = List("U256", "Address", "Bool")
+    val returnTypes        = inputTypes ++ List("()")
 
     def dummySuggestion() = {
       val functionName = Random.shuffle(randomFunctionName).head
-      val paramName = Random.shuffle(randomParamName).head
-      val typeName = Random.shuffle(inputTypes).head
-      val returnType = Random.shuffle(returnTypes).head
+      val paramName    = Random.shuffle(randomParamName).head
+      val typeName     = Random.shuffle(inputTypes).head
+      val returnType   = Random.shuffle(returnTypes).head
 
       Suggestion.Function(
         label = s"$functionName($paramName: $typeName) -> $returnType",

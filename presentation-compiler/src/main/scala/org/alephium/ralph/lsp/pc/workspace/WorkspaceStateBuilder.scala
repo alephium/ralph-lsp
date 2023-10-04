@@ -16,8 +16,10 @@ import scala.collection.immutable.ArraySeq
  */
 private[workspace] object WorkspaceStateBuilder {
 
-  def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                       compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompilerRun =
+  def toWorkspaceState(
+      currentState: WorkspaceState.Parsed,
+      compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]
+  ): WorkspaceState.CompilerRun =
     compilationResult match {
       case Left(workspaceError) =>
         // File or sourcePosition position information is not available for this error,
@@ -25,7 +27,7 @@ private[workspace] object WorkspaceStateBuilder {
         WorkspaceState.Errored(
           sourceCode = currentState.sourceCode, // SourceCode remains the same as existing state
           workspaceErrors = ArraySeq(workspaceError), // errors to report
-          parsed = currentState,
+          parsed = currentState
         )
 
       case Right((compiledContracts, compiledScripts)) =>
@@ -47,7 +49,8 @@ private[workspace] object WorkspaceStateBuilder {
    */
   private def buildCompiledWorkspaceState(currentWorkspaceState: WorkspaceState.Parsed,
                                           compiledContracts: Array[CompiledContract],
-                                          compiledScripts: Array[CompiledScript]): WorkspaceState.Compiled = {
+                                          compiledScripts: Array[CompiledScript]
+  ): WorkspaceState.Compiled = {
     val newSourceCodeStates =
       currentWorkspaceState.sourceCode map {
         sourceCodeState =>
@@ -86,7 +89,8 @@ private[workspace] object WorkspaceStateBuilder {
 
   private def findMatchingContractOrScript(parsedContracts: Seq[ContractWithState],
                                            compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript]): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
+                                           compiledScripts: Array[CompiledScript]
+  ): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
     parsedContracts map {
       contract =>
         findMatchingContractOrScript(
@@ -98,15 +102,18 @@ private[workspace] object WorkspaceStateBuilder {
 
   private def findMatchingContractOrScript(contract: Ast.ContractWithState,
                                            compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript]): Either[StringError, Either[CompiledContract, CompiledScript]] = {
+                                           compiledScripts: Array[CompiledScript]
+  ): Either[StringError, Either[CompiledContract, CompiledScript]] = {
     val matchingContract = findMatchingContract(contract, compiledContracts)
-    val matchingScript = findMatchingScript(contract, compiledScripts)
+    val matchingScript   = findMatchingScript(contract, compiledScripts)
 
     (matchingContract, matchingScript) match {
       case (Some(contract), Some(_)) =>
         // This is already disallowed by the ralph compiler.
         // This should never occur in reality but this needed so type checks are covered.
-        val error = StringError(s"Found a contract and script with the duplicate type name '${contract.ast.name}'")
+        val error = StringError(
+          s"Found a contract and script with the duplicate type name '${contract.ast.name}'"
+        )
         Left(error)
 
       case (Some(contract), None) =>
@@ -124,11 +131,13 @@ private[workspace] object WorkspaceStateBuilder {
   }
 
   private def findMatchingContract(contractsToCompile: Ast.ContractWithState,
-                                   compiledContracts: Array[CompiledContract]): Option[CompiledContract] =
+                                   compiledContracts: Array[CompiledContract]
+  ): Option[CompiledContract] =
     compiledContracts.find(_.ast.name == contractsToCompile.name)
 
   private def findMatchingScript(contractsToCompile: Ast.ContractWithState,
-                                 compiledScripts: Array[CompiledScript]): Option[CompiledScript] =
+                                 compiledScripts: Array[CompiledScript]
+  ): Option[CompiledScript] =
     compiledScripts.find(_.ast.name == contractsToCompile.name)
 
 }

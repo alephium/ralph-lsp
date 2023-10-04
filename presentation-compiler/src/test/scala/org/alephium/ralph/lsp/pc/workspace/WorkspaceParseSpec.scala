@@ -12,7 +12,8 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 /**
  * Test cases for [[Workspace.parse]] function.
  */
-class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
+class WorkspaceParseSpec
+    extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
   "parse" when {
     "workspace is empty" should {
@@ -62,7 +63,7 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
                     (compiler.getSourceCode _)
                       .expects(currentState.fileURI)
                       .returns(Left(expectedState.error)) // return an error
-                      .once() // called only once
+                      .once()                             // called only once
 
                     expectedState
                 }
@@ -112,9 +113,9 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
 
                       // then the read code gets parsed
                       (compiler.parseContracts _)
-                        .expects(expectedState.code) // expect the read source code
+                        .expects(expectedState.code)             // expect the read source code
                         .returns(Right(expectedState.contracts)) // code successfully parsed!
-                        .once() // called only once
+                        .once()                                  // called only once
                     )
 
                     expectedState

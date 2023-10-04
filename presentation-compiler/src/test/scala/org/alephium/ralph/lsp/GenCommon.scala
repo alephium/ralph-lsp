@@ -31,21 +31,24 @@ object GenCommon {
 
     folders map {
       folders =>
-        folders.foldLeft(Option.empty[Path]) {
-          case (path, folder) =>
-            path
-              .map(_.resolve(folder))
-              .orElse(Some(Paths.get(folder)))
-        }.get
+        folders
+          .foldLeft(Option.empty[Path]) {
+            case (path, folder) =>
+              path
+                .map(_.resolve(folder))
+                .orElse(Some(Paths.get(folder)))
+          }
+          .get
     }
   }
 
   /** Generates a file name with the extension. Optionally creates a nested folder path. */
   def genFilePath(ext: String = RALPH_FILE_EXTENSION,
                   rootFolder: Gen[Option[Path]] = Gen.option(genFolder()),
-                  fileFolder: Gen[Option[Path]] = Gen.option(genFolder())): Gen[Path] =
+                  fileFolder: Gen[Option[Path]] = Gen.option(genFolder())
+  ): Gen[Path] =
     for {
-      fileName <- genName.map(fileName => s"$fileName.$ext")
+      fileName   <- genName.map(fileName => s"$fileName.$ext")
       rootFolder <- rootFolder
       fileFolder <- fileFolder
     } yield {
@@ -57,7 +60,8 @@ object GenCommon {
 
   def genFileURI(ext: String = RALPH_FILE_EXTENSION,
                  rootFolder: Gen[Option[Path]] = Gen.option(genFolder()),
-                 fileFolder: Gen[Option[Path]] = Gen.option(genFolder())): Gen[URI] =
+                 fileFolder: Gen[Option[Path]] = Gen.option(genFolder())
+  ): Gen[URI] =
     genFilePath(
       ext = ext,
       rootFolder = rootFolder,
@@ -67,11 +71,10 @@ object GenCommon {
   /** Generate an error for this code */
   def genError(code: Gen[String] = genCode): Gen[FormattableError] =
     for {
-      code <- code
+      code         <- code
       errorMessage <- Gen.alphaStr
-      errorIndex <- Gen.choose(0, code.length - 1)
-    } yield
-      CompilerError.`Invalid number`(errorMessage, errorIndex)
+      errorIndex   <- Gen.choose(0, code.length - 1)
+    } yield CompilerError.`Invalid number`(errorMessage, errorIndex)
 
   def genErrors(code: String): Gen[List[FormattableError]] =
     Gen.listOf(genError(Gen.const(code)))
@@ -79,8 +82,7 @@ object GenCommon {
   def genFolderAndFileURIs(): Gen[(URI, List[URI])] =
     for {
       folder <- genFolder()
-      files <- Gen.listOf(genFileURI(rootFolder = Gen.const(Some(folder))))
-    } yield
-      (folder.toUri, files)
+      files  <- Gen.listOf(genFileURI(rootFolder = Gen.const(Some(folder))))
+    } yield (folder.toUri, files)
 
 }

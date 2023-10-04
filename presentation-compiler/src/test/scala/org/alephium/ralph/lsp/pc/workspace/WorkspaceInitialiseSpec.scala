@@ -17,7 +17,8 @@ import scala.collection.immutable.ArraySeq
 /**
  * Test cases for [[Workspace.initialise]] function.
  */
-class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
+class WorkspaceInitialiseSpec
+    extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
   "initialise" when {
     "all files are successfully read" should {
@@ -32,7 +33,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
             (compiler.getSourceFiles _)
               .expects(build.contractURI)
               .returns(Right(fileURIs)) // return files successfully fetched
-              .once() // called only once
+              .once()                   // called only once
 
             // Initialise a workspace for the config
             val actualWorkspace =
@@ -62,7 +63,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
             (compiler.getSourceFiles _)
               .expects(build.contractURI)
               .returns(Left(error)) // return an error
-              .once() // called only once
+              .once()               // called only once
 
             // Initialise a workspace for the config
             val actualWorkspace =

@@ -16,11 +16,12 @@ object SourceCodeState {
   implicit val ordering: Ordering[SourceCodeState] =
     Ordering.by[SourceCodeState, URI](_.fileURI)
 
-  /** Represents: Code was accessed. It can either be in Error state or Success state.
+  /**
+   * Represents: Code was accessed. It can either be in Error state or Success state.
    *
    * [[OnDisk]] state is no longer achievable from this state unless the file gets removed/dropped entirely
    * from a configured workspace - [[WorkspaceState.BuildAware]].
-   * */
+   */
   sealed trait AccessedState extends SourceCodeState
 
   /** Represents: State where the source code is known */
@@ -38,23 +39,22 @@ object SourceCodeState {
   case class OnDisk(fileURI: URI) extends SourceCodeState
 
   /** The code is in memory but not parsed or compiled */
-  case class UnCompiled(fileURI: URI,
-                        code: String) extends AccessedState with CodeAware
+  case class UnCompiled(fileURI: URI, code: String) extends AccessedState with CodeAware
 
   /** Represents: Was unable to access code */
-  case class ErrorAccess(fileURI: URI,
-                         error: FormattableError) extends FailedState with AccessedState
+  case class ErrorAccess(fileURI: URI, error: FormattableError)
+      extends FailedState with AccessedState
 
   /** Represents: Code is successfully parsed */
-  case class Parsed(fileURI: URI,
-                    code: String,
-                    contracts: Seq[ContractWithState]) extends ParsedState
+  case class Parsed(fileURI: URI, code: String, contracts: Seq[ContractWithState])
+      extends ParsedState
 
   /** Represents: Successful code compilation */
   case class Compiled(fileURI: URI,
                       code: String,
                       compiledCode: Seq[Either[CompiledContract, CompiledScript]],
-                      parsed: SourceCodeState.Parsed) extends ParsedState {
+                      parsed: SourceCodeState.Parsed
+  ) extends ParsedState {
     def warnings: Seq[StringWarning] =
       compiledCode.flatMap {
         case Left(value) =>
@@ -69,6 +69,7 @@ object SourceCodeState {
   case class ErrorSource(fileURI: URI,
                          code: String,
                          errors: Seq[FormattableError],
-                         previous: Option[SourceCodeState.Parsed]) extends FailedState with CodeAware
+                         previous: Option[SourceCodeState.Parsed]
+  ) extends FailedState with CodeAware
 
 }

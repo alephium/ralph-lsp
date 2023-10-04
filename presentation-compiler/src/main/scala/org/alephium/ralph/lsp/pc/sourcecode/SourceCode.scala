@@ -13,7 +13,9 @@ import scala.collection.immutable.ArraySeq
 private[pc] object SourceCode {
 
   /** Collects paths of all ralph files on disk */
-  def initialise(workspaceURI: URI)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, ArraySeq[SourceCodeState.OnDisk]] =
+  def initialise(workspaceURI: URI)(
+      implicit compiler: CompilerAccess
+  ): Either[CompilerError.FormattableError, ArraySeq[SourceCodeState.OnDisk]] =
     compiler
       .getSourceFiles(workspaceURI)
       .map(_.map(SourceCodeState.OnDisk).to(ArraySeq))
@@ -42,7 +44,7 @@ private[pc] object SourceCode {
             SourceCodeState.Parsed(
               fileURI = fileURI,
               code = code,
-              contracts = parsedCode,
+              contracts = parsedCode
             )
         }
 
@@ -76,7 +78,9 @@ private[pc] object SourceCode {
         error
     }
 
-  private def getSourceCode(fileURI: URI)(implicit compiler: CompilerAccess): SourceCodeState.AccessedState =
+  private def getSourceCode(
+      fileURI: URI
+  )(implicit compiler: CompilerAccess): SourceCodeState.AccessedState =
     compiler.getSourceCode(fileURI) match {
       case Left(error) =>
         SourceCodeState.ErrorAccess(fileURI, error)

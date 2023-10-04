@@ -31,7 +31,7 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
 
       val expected = WorkspaceBuild.defaultRalphcConfig
-      val actual = WorkspaceBuild.parseConfig(URI.create(""), build_ralph).value
+      val actual   = WorkspaceBuild.parseConfig(URI.create(""), build_ralph).value
 
       actual shouldBe expected
     }
@@ -39,7 +39,8 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
 
   "readBuild" should {
     "report missing build file" in {
-      val dir = Files.createTempDirectory("no_build_file").resolve(WorkspaceBuild.BUILD_FILE_NAME).toUri
+      val dir =
+        Files.createTempDirectory("no_build_file").resolve(WorkspaceBuild.BUILD_FILE_NAME).toUri
 
       val actual = WorkspaceBuild.readBuild(dir)
 
@@ -55,15 +56,15 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
 
     "persist & read valid build file" in {
       val workspacePath = Files.createTempDirectory("workspace_URI")
-      val config = WorkspaceBuild.defaultRalphcConfig
+      val config        = WorkspaceBuild.defaultRalphcConfig
 
       // Persist the default config for a workspace
       val expectedBuildPath = workspacePath.resolve(WorkspaceBuild.BUILD_FILE_NAME)
-      val actualFilePath = WorkspaceBuild.persistConfig(workspacePath, config).success.value
+      val actualFilePath    = WorkspaceBuild.persistConfig(workspacePath, config).success.value
       actualFilePath shouldBe expectedBuildPath
 
       // Read the persisted config file
-      val readConfig = WorkspaceBuild.readBuild(expectedBuildPath.toUri)
+      val readConfig   = WorkspaceBuild.readBuild(expectedBuildPath.toUri)
       val expectedCode = WorkspaceBuild.writeConfig(WorkspaceBuild.defaultRalphcConfig)
 
       readConfig shouldBe

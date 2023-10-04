@@ -24,9 +24,7 @@ object RalphLangClient {
       error
     }
 
-    def publishErrors(fileURI: URI,
-                      code: Option[String],
-                      errors: List[FormattableError]): Unit = {
+    def publishErrors(fileURI: URI, code: Option[String], errors: List[FormattableError]): Unit = {
       val publish =
         toPublishDiagnostics(
           fileURI = fileURI,
@@ -40,7 +38,8 @@ object RalphLangClient {
 
     /** Publish IDE messages given the workspace previous and newer states */
     def publish(currentWorkspace: WorkspaceState.SourceAware,
-                newWorkspace: Iterable[WorkspaceState.SourceAware]): Unit =
+                newWorkspace: Iterable[WorkspaceState.SourceAware]
+    ): Unit =
       toPublishDiagnotics(currentWorkspace, newWorkspace) foreach {
         diagnostic =>
           // TODO: Isn't there a way in LSP to send all

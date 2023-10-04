@@ -5,8 +5,8 @@ import org.alephium.ralph.SourceIndex
 
 import java.net.URI
 
-case class ErrorInvalidBuildFileLocation(buildURI: URI,
-                                         workspaceURI: URI) extends FormattableError {
+case class ErrorInvalidBuildFileLocation(buildURI: URI, workspaceURI: URI)
+    extends FormattableError {
   override def title: String =
     "Error"
 

@@ -12,9 +12,7 @@ sealed trait BuildState
 object BuildState {
 
   /** State: Build file is compiled. This state can upgraded to [[UnCompiled]]. */
-  case class BuildCompiled(buildURI: URI,
-                           code: String,
-                           config: Config) extends BuildState {
+  case class BuildCompiled(buildURI: URI, code: String, config: Config) extends BuildState {
     val workspaceURI: URI =
       Paths.get(buildURI).getParent.toUri
 
@@ -25,8 +23,7 @@ object BuildState {
       config.artifactPath.toUri
   }
 
-  case class BuildErrored(buildURI: URI,
-                          code: Option[String],
-                          errors: ArraySeq[FormattableError]) extends BuildState
+  case class BuildErrored(buildURI: URI, code: Option[String], errors: ArraySeq[FormattableError])
+      extends BuildState
 
 }

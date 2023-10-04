@@ -17,12 +17,12 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
       implicit val compiler: CompilerAccess =
         CompilerAccess.ralphc
 
-      val client = mock[RalphLangClient]
+      val client   = mock[RalphLangClient]
       val listener = CompletableFuture.runAsync(() => ())
-      val server = RalphLangServer(client, listener)
+      val server   = RalphLangServer(client, listener)
 
       // this is the initial message received from LSP client.
-      val initialise = new InitializeParams()
+      val initialise   = new InitializeParams()
       val workspaceURI = new URI("file://test")
       initialise.setRootUri(workspaceURI.toString)
 
@@ -38,7 +38,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
           client = Some(client),
           listener = Some(listener),
           workspace = Some(WorkspaceState.Created(workspaceURI)),
-          buildErrors = None,
+          buildErrors = None
         )
     }
   }
@@ -46,7 +46,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
   "getRootUri" should {
     "Create valide URI with scheme when no RootUri or RootPath exists" in {
       val initialise = new InitializeParams()
-      val uri = RalphLangServer.getRootUri(initialise)
+      val uri        = RalphLangServer.getRootUri(initialise)
 
       uri.get.getScheme() shouldBe "file"
     }

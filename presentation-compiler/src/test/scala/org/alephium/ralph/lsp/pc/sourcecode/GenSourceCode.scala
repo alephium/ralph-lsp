@@ -23,45 +23,41 @@ object GenSourceCode {
   def genOnDisk(): Gen[SourceCodeState.OnDisk] =
     for {
       fileURI <- genFileURI()
-    } yield
-      SourceCodeState.OnDisk(
-        fileURI = fileURI
-      )
+    } yield SourceCodeState.OnDisk(
+      fileURI = fileURI
+    )
 
   def genUnCompiled(code: Gen[String] = genCode): Gen[SourceCodeState.UnCompiled] =
     for {
       fileURI <- genFileURI()
-      code <- code
-    } yield
-      SourceCodeState.UnCompiled(
-        fileURI = fileURI,
-        code = code
-      )
+      code    <- code
+    } yield SourceCodeState.UnCompiled(
+      fileURI = fileURI,
+      code = code
+    )
 
   def genCompiled(code: Gen[String] = genCode): Gen[SourceCodeState.Compiled] =
     for {
-      fileURI <- genFileURI()
-      code <- code
+      fileURI      <- genFileURI()
+      code         <- code
       compiledCode <- genCompiledCode()
-      parsedState <- genParsed()
-    } yield
-      SourceCodeState.Compiled(
-        fileURI = fileURI,
-        code = code,
-        compiledCode = compiledCode,
-        parsed = parsedState
-      )
+      parsedState  <- genParsed()
+    } yield SourceCodeState.Compiled(
+      fileURI = fileURI,
+      code = code,
+      compiledCode = compiledCode,
+      parsed = parsedState
+    )
 
   def genParsed(code: Gen[String] = genCode): Gen[SourceCodeState.Parsed] =
     for {
       fileURI <- genFileURI()
-      code <- code
-    } yield
-      SourceCodeState.Parsed(
-        fileURI = fileURI,
-        code = code,
-        contracts = Seq.empty // TODO: generate these
-      )
+      code    <- code
+    } yield SourceCodeState.Parsed(
+      fileURI = fileURI,
+      code = code,
+      contracts = Seq.empty // TODO: generate these
+    )
 
   def genParsedOrCompiled(code: Gen[String] = genCode): Gen[SourceCodeState.ParsedState] =
     Gen.oneOf(
@@ -72,27 +68,25 @@ object GenSourceCode {
   def genErrorSource(code: Gen[String] = genCode): Gen[SourceCodeState.ErrorSource] =
     for {
       fileURI <- genFileURI()
-      code <- code
-      errors <- genErrors(code)
-      parsed <- Gen.option(genParsed(Gen.const(code)))
-    } yield
-      SourceCodeState.ErrorSource(
-        fileURI = fileURI,
-        code = code,
-        errors = errors,
-        previous = parsed
-      )
+      code    <- code
+      errors  <- genErrors(code)
+      parsed  <- Gen.option(genParsed(Gen.const(code)))
+    } yield SourceCodeState.ErrorSource(
+      fileURI = fileURI,
+      code = code,
+      errors = errors,
+      previous = parsed
+    )
 
   /** Failed access state only */
   def genFailedAccess(fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.ErrorAccess] =
     for {
-      fileURI <- fileURI
+      fileURI      <- fileURI
       errorMessage <- Gen.alphaStr
-    } yield
-      SourceCodeState.ErrorAccess(
-        fileURI = fileURI,
-        error = StringError(errorMessage) // TODO: Call a generator
-      )
+    } yield SourceCodeState.ErrorAccess(
+      fileURI = fileURI,
+      error = StringError(errorMessage) // TODO: Call a generator
+    )
 
   /** Either one of the failed source-code states */
   def genFailed(code: Gen[String] = genCode): Gen[SourceCodeState.FailedState] =
@@ -108,7 +102,7 @@ object GenSourceCode {
       genUnCompiled(),
       genFailed(),
       genParsed(),
-      genCompiled(),
+      genCompiled()
     )
 
   /** Must contain at least on errored SourceCode in the Workspace */
@@ -120,7 +114,7 @@ object GenSourceCode {
 
   def genParsedOrCompiledWithAtLeastOneFailed(): Gen[List[SourceCodeState]] =
     for {
-      goodCode <- Gen.listOf(genParsedOrCompiled())
+      goodCode    <- Gen.listOf(genParsedOrCompiled())
       erroredCode <- Gen.nonEmptyListOf(GenSourceCode.genFailed())
     } yield Random.shuffle(goodCode ++ erroredCode)
 }

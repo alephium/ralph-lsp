@@ -24,15 +24,16 @@ lazy val `presentation-compiler` =
           Dependencies.logback,
           Dependencies.scalaLogging
         )
-    ).dependsOn(`compiler-access`)
+    )
+    .dependsOn(`compiler-access`)
 
 lazy val `lsp-server` =
   project
     .dependsOn(`presentation-compiler`)
     .settings(
       scalaVersion := Version.scala213,
-      scalacOptions += "-Xmixin-force-forwarders:false", //Duplicate RPC method initialized.
-      assembly / mainClass := Some("org.alephium.ralph.lsp.Main"),
+      scalacOptions += "-Xmixin-force-forwarders:false", // Duplicate RPC method initialized.
+      assembly / mainClass       := Some("org.alephium.ralph.lsp.Main"),
       assembly / assemblyJarName := "ralph-lsp.jar",
       assemblyMergeStrategy := {
         case PathList("module-info.class")        => MergeStrategy.discard
@@ -54,16 +55,16 @@ lazy val `plugin-intellij` =
   project
     .enablePlugins(SbtIdeaPlugin)
     .settings(
-      version := "0.0.1-SNAPSHOT",
-      scalaVersion := Version.scala213,
+      version                        := "0.0.1-SNAPSHOT",
+      scalaVersion                   := Version.scala213,
       ThisBuild / intellijPluginName := "Ralph LSP",
-      ThisBuild / intellijBuild := "232.9559-EAP-CANDIDATE-SNAPSHOT",
-      ThisBuild / intellijPlatform := IntelliJPlatform.IdeaUltimate,
-      packageMethod := PackagingMethod.Standalone(),
+      ThisBuild / intellijBuild      := "232.9559-EAP-CANDIDATE-SNAPSHOT",
+      ThisBuild / intellijPlatform   := IntelliJPlatform.IdeaUltimate,
+      packageMethod                  := PackagingMethod.Standalone(),
       Global / intellijAttachSources := true,
       Compile / javacOptions ++= "--release" :: "17" :: Nil,
       intellijPlugins += "com.intellij.properties".toPlugin,
-      libraryDependencies += "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5" withSources(),
+      libraryDependencies += "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5" withSources (),
       Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
       Test / unmanagedResourceDirectories += baseDirectory.value / "testResources"
     )

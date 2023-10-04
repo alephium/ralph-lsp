@@ -12,7 +12,8 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.net.URI
 
-class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with ScalaCheckDrivenPropertyChecks {
+class SourceCodeSpec
+    extends AnyWordSpec with Matchers with MockFactory with ScalaCheckDrivenPropertyChecks {
 
   "initialise" should {
     "fetch all source file names" in {

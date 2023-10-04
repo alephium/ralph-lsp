@@ -6,9 +6,9 @@ import org.alephium.ralph.SourceIndex
 import java.net.URI
 
 object ErrorInvalidBuildSyntax {
+
   /** Build from [[upickle.core.AbortException]] */
-  def apply(buildURI: URI,
-            error: upickle.core.AbortException): ErrorInvalidBuildSyntax = {
+  def apply(buildURI: URI, error: upickle.core.AbortException): ErrorInvalidBuildSyntax = {
     val errorMessage =
       if (error.clue.isBlank)
         error.getMessage
@@ -23,8 +23,7 @@ object ErrorInvalidBuildSyntax {
   }
 
   /** Build from [[ujson.ParseException]] */
-  def apply(buildURI: URI,
-            error: ujson.ParseException): ErrorInvalidBuildSyntax = {
+  def apply(buildURI: URI, error: ujson.ParseException): ErrorInvalidBuildSyntax = {
     val errorMessage =
       if (error.clue.isBlank)
         error.getMessage
@@ -40,9 +39,8 @@ object ErrorInvalidBuildSyntax {
 
 }
 
-case class ErrorInvalidBuildSyntax(fileURI: URI,
-                                   index: SourceIndex,
-                                   override val message: String) extends FormattableError {
+case class ErrorInvalidBuildSyntax(fileURI: URI, index: SourceIndex, override val message: String)
+    extends FormattableError {
   override def title: String =
     "Syntax"
 }

@@ -29,8 +29,9 @@ object RalphLangServer {
   }
 
   /** Start server with pre-configured client */
-  def apply(client: RalphLangClient,
-            listener: JFuture[Void])(implicit compiler: CompilerAccess): RalphLangServer = {
+  def apply(client: RalphLangClient, listener: JFuture[Void])(
+      implicit compiler: CompilerAccess
+  ): RalphLangServer = {
     val initialState =
       ServerState(
         client = Some(client),
@@ -55,7 +56,7 @@ object RalphLangServer {
   def getRootUri(params: InitializeParams): Option[URI] =
     Option(params.getRootUri)
       .orElse(Option(params.getRootPath))
-      //Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
+      // Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
       .orElse(Option(System.getProperty("user.dir")).map(dir => s"file://$dir"))
       .map(new URI(_))
 }
@@ -66,7 +67,9 @@ object RalphLangServer {
  * This class is the only one with mutable state in this repo.
  * All mutable state management occurs here.
  */
-class RalphLangServer private(@volatile private var state: ServerState)(implicit compiler: CompilerAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictLogging {
+class RalphLangServer private (@volatile private var state: ServerState)(
+    implicit compiler: CompilerAccess
+) extends LanguageServer with TextDocumentService with WorkspaceService with StrictLogging {
 
   def getState(): ServerState =
     this.state
@@ -82,8 +85,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   /** Publish build file change result */
-  private def setAndPublishBuildChange(currentWorkspace: WorkspaceState,
-                                       buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState]): Unit =
+  private def setAndPublishBuildChange(
+      currentWorkspace: WorkspaceState,
+      buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState]
+  ): Unit =
     buildChangeResult match {
       case Left(buildError) =>
         setAndPublishBuild(
@@ -99,8 +104,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   /** Publish source-code change result */
-  private def setAndPublishSourceCodeChange(currentWorkspace: WorkspaceState,
-                                            sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState]): Unit =
+  private def setAndPublishSourceCodeChange(
+      currentWorkspace: WorkspaceState,
+      sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState]
+  ): Unit =
     sourceChangeResult match {
       case Left(buildError) =>
         setAndPublishBuild(
@@ -117,7 +124,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   /** Publish the build errors */
   private def setAndPublishBuild(currentWorkspace: WorkspaceState,
-                                 buildError: BuildState.BuildErrored): Unit =
+                                 buildError: BuildState.BuildErrored
+  ): Unit =
     this.synchronized {
       getClient().publishErrors(
         fileURI = buildError.buildURI,
@@ -130,7 +138,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   /** Build is successfully compiled on a workspace. Publish the workspace, clearly existing build-error messages. */
   private def setAndPublishBuild(currentWorkspace: WorkspaceState,
-                                 newWorkspace: WorkspaceState): Unit =
+                                 newWorkspace: WorkspaceState
+  ): Unit =
     this.synchronized {
       this.state.buildErrors foreach {
         build =>
@@ -154,7 +163,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   /** Publish new workspace */
   private def setAndPublishWorkspace(currentWorkspace: WorkspaceState,
-                                     newWorkspace: WorkspaceState): Unit =
+                                     newWorkspace: WorkspaceState
+  ): Unit =
     this.synchronized {
       // New valid workspace created. Set it!
       setWorkspace(newWorkspace)
@@ -167,7 +177,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
             newWorkspace = None
           )
 
-        case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState.SourceAware) =>
+        case (currentWorkspace: WorkspaceState.SourceAware,
+              newWorkspace: WorkspaceState.SourceAware
+            ) =>
           // publish new workspace given previous workspace.
           getClient().publish(
             currentWorkspace = currentWorkspace,
@@ -186,8 +198,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @param client   Client proxy instance provided by LSP4J.
    * @param listener LSP connection listener function.
    */
-  def setInitialState(client: RalphLangClient,
-                      listener: () => JFuture[Void]): Unit =
+  def setInitialState(client: RalphLangClient, listener: () => JFuture[Void]): Unit =
     this.synchronized {
       require(state.client.isEmpty, "Client is already set")
       require(state.listener.isEmpty, "Listener is already set")
@@ -246,8 +257,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @param fileURI File that changed.
    * @param code    Content of the file.
    */
-  def didChange(fileURI: URI,
-                code: Option[String]): Unit =
+  def didChange(fileURI: URI, code: Option[String]): Unit =
     this.synchronized {
       val currentWorkspace =
         getWorkspace()
@@ -291,11 +301,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       }
     }
 
-  override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
+  override def completion(
+      params: CompletionParams
+  ): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
     CompletableFutures.computeAsync {
       cancelChecker =>
-        val fileURI = new URI(params.getTextDocument.getUri)
-        val line = params.getPosition.getLine
+        val fileURI   = new URI(params.getTextDocument.getUri)
+        val line      = params.getPosition.getLine
         val character = params.getPosition.getCharacter
 
         cancelChecker.checkCanceled()
@@ -340,10 +352,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           )
 
           newWorkspace getOrElse {
-            throw
-              ResponseError
-                .UnableToInitialiseWorkspace
-                .toResponseErrorException
+            throw ResponseError.UnableToInitialiseWorkspace.toResponseErrorException
           }
       }
     }
@@ -352,22 +361,31 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     state.workspace getOrElse {
       // Workspace folder is not defined.
       // This is not expected to occur since `initialized` is always invoked first.
-      throw
-        getClient()
-          .log(ResponseError.WorkspaceFolderNotSupplied)
-          .toResponseErrorException
+      throw getClient()
+        .log(ResponseError.WorkspaceFolderNotSupplied)
+        .toResponseErrorException
     }
 
-  override def diagnostic(params: WorkspaceDiagnosticParams): CompletableFuture[WorkspaceDiagnosticReport] =
+  override def diagnostic(
+      params: WorkspaceDiagnosticParams
+  ): CompletableFuture[WorkspaceDiagnosticReport] =
     CompletableFuture.completedFuture(new WorkspaceDiagnosticReport(util.Arrays.asList()))
 
-  override def diagnostic(params: DocumentDiagnosticParams): CompletableFuture[DocumentDiagnosticReport] =
-    CompletableFuture.completedFuture(new DocumentDiagnosticReport(new RelatedFullDocumentDiagnosticReport(util.Arrays.asList())))
+  override def diagnostic(
+      params: DocumentDiagnosticParams
+  ): CompletableFuture[DocumentDiagnosticReport] =
+    CompletableFuture.completedFuture(
+      new DocumentDiagnosticReport(new RelatedFullDocumentDiagnosticReport(util.Arrays.asList()))
+    )
 
-  override def codeAction(params: CodeActionParams): CompletableFuture[util.List[messages.Either[Command, CodeAction]]] =
+  override def codeAction(
+      params: CodeActionParams
+  ): CompletableFuture[util.List[messages.Either[Command, CodeAction]]] =
     CompletableFuture.completedFuture(util.Arrays.asList())
 
-  override def resolveCompletionItem(unresolved: CompletionItem): CompletableFuture[CompletionItem] =
+  override def resolveCompletionItem(
+      unresolved: CompletionItem
+  ): CompletableFuture[CompletionItem] =
     CompletableFuture.completedFuture(unresolved)
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =

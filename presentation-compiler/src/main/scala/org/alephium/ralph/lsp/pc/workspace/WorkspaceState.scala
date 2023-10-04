@@ -37,12 +37,12 @@ object WorkspaceState {
   case class Created(workspaceURI: URI) extends WorkspaceState
 
   /** State: Source files might be un-compiled, parsed or compiled. This state can be parsed and compiled. */
-  case class UnCompiled(build: BuildCompiled,
-                        sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.SourceAware
+  case class UnCompiled(build: BuildCompiled, sourceCode: ArraySeq[SourceCodeState])
+      extends WorkspaceState.SourceAware
 
   /** State: All source files parsed, therefore this workspace can be compiled */
-  case class Parsed(build: BuildCompiled,
-                    sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.SourceAware
+  case class Parsed(build: BuildCompiled, sourceCode: ArraySeq[SourceCodeState.Parsed])
+      extends WorkspaceState.SourceAware
 
   /**
    * Result of an errored compiler run.
@@ -53,7 +53,8 @@ object WorkspaceState {
    */
   case class Errored(sourceCode: ArraySeq[SourceCodeState],
                      workspaceErrors: ArraySeq[FormattableError],
-                     parsed: WorkspaceState.Parsed) extends CompilerRun {
+                     parsed: WorkspaceState.Parsed
+  ) extends CompilerRun {
     def build: BuildCompiled =
       parsed.build
   }
@@ -64,8 +65,8 @@ object WorkspaceState {
    * @param sourceCode New valid source code states.
    * @param parsed     Current parser run for this compiled code.
    */
-  case class Compiled(sourceCode: ArraySeq[SourceCodeState],
-                      parsed: WorkspaceState.Parsed) extends CompilerRun {
+  case class Compiled(sourceCode: ArraySeq[SourceCodeState], parsed: WorkspaceState.Parsed)
+      extends CompilerRun {
     def build: BuildCompiled =
       parsed.build
   }

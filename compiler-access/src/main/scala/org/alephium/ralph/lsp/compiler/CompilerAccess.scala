@@ -51,7 +51,8 @@ trait CompilerAccess {
    * Given the parsed ast and compiler options, compile the contracts.
    */
   def compileContracts(contracts: Seq[Ast.ContractWithState],
-                       options: CompilerOptions): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]
+                       options: CompilerOptions
+  ): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]
 
   /**
    * Compile the entire workspace from disk and prepare for deployment.
@@ -59,6 +60,7 @@ trait CompilerAccess {
    * Prerequisite: All files are flushed to disk
    */
   def compileForDeployment(workspaceURI: URI,
-                           config: Config): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]
+                           config: Config
+  ): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]
 
 }

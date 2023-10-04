@@ -1,5 +1,3 @@
 package org.alephium.ralph.lsp.compiler
 
-class CompilerAccessSpec {
-
-}
+class CompilerAccessSpec {}

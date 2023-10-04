@@ -37,7 +37,8 @@ private object RalphCompilerAccess extends CompilerAccess {
           .getSourceFiles(
             path = Paths.get(workspaceURI),
             ext = s".${CompilerAccess.RALPH_FILE_EXTENSION}"
-          ).map(_.toUri)
+          )
+          .map(_.toUri)
 
       Right(uris)
     } catch catchAllThrows
@@ -63,7 +64,8 @@ private object RalphCompilerAccess extends CompilerAccess {
     catch catchAllThrows
 
   def compileContracts(contracts: Seq[Ast.ContractWithState],
-                       options: CompilerOptions): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])] =
+                       options: CompilerOptions
+  ): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
       val multiContract =
         Ast.MultiContract(contracts, None)
@@ -83,7 +85,8 @@ private object RalphCompilerAccess extends CompilerAccess {
     } catch catchAllThrows
 
   override def compileForDeployment(workspaceURI: URI,
-                                    config: Config): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])] =
+                                    config: Config
+  ): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
       val ralphc = RalphC(config)
       ralphc.compileProject() match {
@@ -96,7 +99,8 @@ private object RalphCompilerAccess extends CompilerAccess {
     } catch catchAllThrows
 
   private def buildSuccessfulCompilation(result: CompileProjectResult,
-                                         metaInfos: mutable.Map[String, MetaInfo]): (Array[CompiledContract], Array[CompiledScript]) = {
+                                         metaInfos: mutable.Map[String, MetaInfo]
+  ): (Array[CompiledContract], Array[CompiledScript]) = {
     val scripts: Array[CompiledScript] = ???
     //      result.scripts map {
     //        script =>
@@ -118,9 +122,7 @@ private object RalphCompilerAccess extends CompilerAccess {
 
   /** Given the MetaInfo, fetch the file URI */
   private def getFileURI(metaInfo: MetaInfo): URI =
-    metaInfo
-      .artifactPath
-      .getParent
+    metaInfo.artifactPath.getParent
       .resolve(s"${metaInfo.name}.ral")
       .toUri
 

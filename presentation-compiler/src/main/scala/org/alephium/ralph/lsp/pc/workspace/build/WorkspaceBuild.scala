@@ -5,7 +5,11 @@ import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.error.StringError
 import org.alephium.ralph.lsp.pc.util.FileIO
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
-import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildFileLocation, ErrorInvalidBuildSyntax}
+import org.alephium.ralph.lsp.pc.workspace.build.error.{
+  ErrorBuildFileNotFound,
+  ErrorInvalidBuildFileLocation,
+  ErrorInvalidBuildSyntax
+}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.{BuildCompiled, BuildErrored}
 import org.alephium.ralphc.Config
 import upickle.default._
@@ -37,8 +41,7 @@ object WorkspaceBuild {
   def toBuildURI(workspaceURI: URI): URI =
     toBuildPath(Paths.get(workspaceURI)).toUri
 
-  def parseConfig(buildURI: URI,
-                  json: String): Either[FormattableError, Config] =
+  def parseConfig(buildURI: URI, json: String): Either[FormattableError, Config] =
     try
       Right(read[Config](json))
     catch {
@@ -75,8 +78,7 @@ object WorkspaceBuild {
         Left(error)
     }
 
-  def parseBuild(buildURI: URI,
-                 json: String): BuildState =
+  def parseBuild(buildURI: URI, json: String): BuildState =
     parseConfig(
       buildURI = buildURI,
       json = json
@@ -137,8 +139,7 @@ object WorkspaceBuild {
     }
   }
 
-  def readBuild(buildURI: URI,
-                code: Option[String]): BuildState =
+  def readBuild(buildURI: URI, code: Option[String]): BuildState =
     code match {
       case Some(buildJSON) =>
         // Code is already read. Parse and validate it.
@@ -165,17 +166,19 @@ object WorkspaceBuild {
    * @param config        Config to generate
    * @return Create file's path
    */
-  def persistConfig(workspacePath: Path,
-                    config: Config): Try[Path] =
+  def persistConfig(workspacePath: Path, config: Config): Try[Path] =
     Try {
-      val bytes = writeConfig(config).getBytes(StandardCharsets.UTF_8)
+      val bytes         = writeConfig(config).getBytes(StandardCharsets.UTF_8)
       val buildFilePath = toBuildPath(workspacePath)
       Files.write(buildFilePath, bytes)
     }
 
   def validateBuildURI(buildURI: URI,
-                       workspaceURI: URI): Either[ErrorInvalidBuildFileLocation, URI] =
-    if (Paths.get(buildURI).getParent != Paths.get(workspaceURI)) // Build file must be in the root workspace folder.
+                       workspaceURI: URI
+  ): Either[ErrorInvalidBuildFileLocation, URI] =
+    if (
+      Paths.get(buildURI).getParent != Paths.get(workspaceURI)
+    ) // Build file must be in the root workspace folder.
       Left(
         ErrorInvalidBuildFileLocation(
           buildURI = buildURI,

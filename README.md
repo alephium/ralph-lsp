@@ -24,7 +24,8 @@ Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.j
 
 # Configuration
 
-Create a mandatory config file named `build.ralph` in your project's root directory. You can use the following sample as reference:
+Create a mandatory config file named `build.ralph` in your project's root directory. You can use the following sample as
+reference:
 
 `build.ralph`
 

@@ -17,14 +17,18 @@ object DataConverter {
   /** Convert Ralph's FormattableError to lsp4j's Diagnostic */
   def toDiagnostic(code: Option[String],
                    error: CompilerError.FormattableError,
-                   severity: DiagnosticSeverity): Diagnostic = {
+                   severity: DiagnosticSeverity
+  ): Diagnostic = {
     val range =
       code match {
         case Some(code) =>
           val formatter = error.toFormatter(code)
 
-          val start = new Position(formatter.sourcePosition.rowIndex, formatter.sourcePosition.colIndex)
-          val end = new Position(formatter.sourcePosition.rowIndex, formatter.sourcePosition.colIndex + formatter.sourcePosition.width)
+          val start =
+            new Position(formatter.sourcePosition.rowIndex, formatter.sourcePosition.colIndex)
+          val end = new Position(formatter.sourcePosition.rowIndex,
+                                 formatter.sourcePosition.colIndex + formatter.sourcePosition.width
+          )
           new Range(start, end)
 
         case None =>
@@ -55,7 +59,9 @@ object DataConverter {
     new PublishDiagnosticsParams(workspace.workspaceURI.toString, workspaceDiagnostics.asJava)
   }
 
-  def toSourceCodeDiagnostics(state: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] =
+  def toSourceCodeDiagnostics(
+      state: WorkspaceState.SourceAware
+  ): Iterable[PublishDiagnosticsParams] =
     state.sourceCode collect {
       case state: SourceCodeState.ErrorSource =>
         // transform multiple source code errors to diagnostics.
@@ -97,16 +103,19 @@ object DataConverter {
         new PublishDiagnosticsParams(state.fileURI.toString, diagnostics.asJava)
     }
 
-  def toPublishDiagnostics(workspace: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] = {
+  def toPublishDiagnostics(
+      workspace: WorkspaceState.SourceAware
+  ): Iterable[PublishDiagnosticsParams] = {
     val sourceCodeDiagnostics = toSourceCodeDiagnostics(workspace)
-    val workspaceDiagnostics = toWorkspaceDiagnostics(workspace)
+    val workspaceDiagnostics  = toWorkspaceDiagnostics(workspace)
     sourceCodeDiagnostics ++ Seq(workspaceDiagnostics)
   }
 
   def toPublishDiagnostics(fileURI: URI,
                            code: Option[String],
                            errors: List[FormattableError],
-                           severity: DiagnosticSeverity): PublishDiagnosticsParams = {
+                           severity: DiagnosticSeverity
+  ): PublishDiagnosticsParams = {
     val diagnostics =
       errors map {
         error =>
@@ -129,7 +138,8 @@ object DataConverter {
    * @return Diagnostics to publish.
    */
   def toPublishDiagnotics(previousState: WorkspaceState.SourceAware,
-                          newerStates: Iterable[WorkspaceState.SourceAware]): Iterable[PublishDiagnosticsParams] =
+                          newerStates: Iterable[WorkspaceState.SourceAware]
+  ): Iterable[PublishDiagnosticsParams] =
     newerStates.foldLeft(toPublishDiagnostics(previousState)) {
       case (previous, next) =>
         val nextDiagnostics = toPublishDiagnostics(next)
@@ -144,7 +154,8 @@ object DataConverter {
 
                 case None =>
                   // next diagnostics does not contain messages for this URI, create an entry to clear it.
-                  val clearDiag = new PublishDiagnosticsParams(previous.getUri, util.Arrays.asList())
+                  val clearDiag =
+                    new PublishDiagnosticsParams(previous.getUri, util.Arrays.asList())
                   diagToClear :+ clearDiag
               }
           }
