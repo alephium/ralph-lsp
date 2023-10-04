@@ -43,4 +43,12 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
     }
   }
 
+  "getRootUri" should {
+    "Create valide URI with scheme when no RootUri or RootPath exists" in {
+      val initialise = new InitializeParams()
+      val uri = RalphLangServer.getRootUri(initialise)
+
+      uri.get.getScheme() shouldBe "file"
+    }
+  }
 }

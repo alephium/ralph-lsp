@@ -22,6 +22,27 @@ sbt "project lsp-server; assembly;"
 
 Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar`
 
+# Configuration
+
+Create a mandatory config file named `build.ralph` in your project's root directory. You can use the following sample as reference:
+
+`build.ralph`
+
+```
+{
+  "compilerOptions": {
+    "ignoreUnusedConstantsWarnings": false,
+    "ignoreUnusedVariablesWarnings": false,
+    "ignoreUnusedFieldsWarnings": false,
+    "ignoreUnusedPrivateFunctionsWarnings": false,
+    "ignoreUpdateFieldsCheckWarnings": false,
+    "ignoreCheckExternalCallerWarnings": false
+  },
+  "contractPath": "./contracts",
+  "artifactPath": "./artifacts"
+}
+```
+
 # Run LSP in VSCode
 
 Update the jar
