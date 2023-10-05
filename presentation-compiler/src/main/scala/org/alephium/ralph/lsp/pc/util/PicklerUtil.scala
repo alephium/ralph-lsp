@@ -14,11 +14,9 @@ object PicklerUtil {
   implicit val compilerOptionsReaderWriter: ReadWriter[CompilerOptions] =
     macroRW
 
-  /** A parsed config implements only a reader. This type cannot be persisted. */
-  implicit val ralphcConfigReaderWriter: Reader[RalphcParsedConfig] =
-    macroR
+  implicit val ralphcConfigReaderWriter: ReadWriter[RalphcParsedConfig] =
+    macroRW
 
-  /** A compiled config implements both reader and writer. This type can be persisted. */
   implicit val ralphcCompiledReaderWriter: ReadWriter[RalphcCompiledConfig] =
     macroRW
 

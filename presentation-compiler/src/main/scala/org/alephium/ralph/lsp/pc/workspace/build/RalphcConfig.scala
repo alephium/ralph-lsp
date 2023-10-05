@@ -5,11 +5,10 @@ import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
 import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild.toBuildPath
-import org.alephium.ralphc.Config
 
 import java.net.URI
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, Path}
 import scala.util.Try
 
 object RalphcConfig {
@@ -36,14 +35,6 @@ object RalphcConfig {
       compilerOptions = CompilerOptions.Default,
       contractPath = "contracts",
       artifactPath = "artifacts"
-    )
-
-  /** Default compiled config */
-  val defaultCompiledConfig: RalphcCompiledConfig =
-    Config(
-      compilerOptions = defaultParsedConfig.compilerOptions,
-      contractPath = Paths.get(defaultParsedConfig.contractPath),
-      artifactPath = Paths.get(defaultParsedConfig.artifactPath)
     )
 
   def parse(buildURI: URI,
@@ -84,11 +75,13 @@ object RalphcConfig {
         Left(error)
     }
 
-  /**
-   * Only a compiled config ([[RalphcCompiledConfig]]) can be persisted.
-   * */
-  def write(compiledConfig: RalphcCompiledConfig): String =
-    upickle.default.write[Config](compiledConfig)
+  /** Write a parsed config */
+  def write(config: RalphcParsedConfig): String =
+    upickle.default.write[RalphcParsedConfig](config)
+
+  /** Write a compiled config */
+  def write(config: RalphcCompiledConfig): String =
+    upickle.default.write[RalphcCompiledConfig](config)
 
   /**
    * Creates a config file.
@@ -96,14 +89,14 @@ object RalphcConfig {
    * This can be used to generate a default config [[defaultParsedConfig]]
    * for the user in their IDE workspace.
    *
-   * @param workspacePath  Workspace root path
-   * @param compiledConfig RalphcConfig to generate
-   * @return Create file's path
+   * @param workspacePath Workspace root path
+   * @param config        Config to persist
+   * @return Created file-path
    */
   def persist(workspacePath: Path,
-              compiledConfig: RalphcCompiledConfig): Try[Path] =
+              config: RalphcParsedConfig): Try[Path] =
     Try {
-      val bytes = RalphcConfig.write(compiledConfig).getBytes(StandardCharsets.UTF_8)
+      val bytes = RalphcConfig.write(config).getBytes(StandardCharsets.UTF_8)
       val buildFilePath = toBuildPath(workspacePath)
       Files.write(buildFilePath, bytes)
     }
