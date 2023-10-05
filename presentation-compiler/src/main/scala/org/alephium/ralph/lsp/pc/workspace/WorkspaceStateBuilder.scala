@@ -105,7 +105,7 @@ private[workspace] object WorkspaceStateBuilder {
     (matchingContract, matchingScript) match {
       case (Some(contract), Some(_)) =>
         // This is already disallowed by the ralph compiler.
-        // This should never occur in reality but this needed so type checks are covered.
+        // This should never occur in reality but this is needed so type checks are covered.
         val error = StringError(s"Found a contract and script with the duplicate type name '${contract.ast.name}'")
         Left(error)
 
@@ -117,7 +117,7 @@ private[workspace] object WorkspaceStateBuilder {
 
       case (None, None) =>
         // Code submitted to compile should always return a result.
-        // This should never occur in reality but this needed so type checks are covered.
+        // This should never occur in reality but this is needed so type checks are covered.
         val error = StringError(s"Code '${contract.name}' not compiled.")
         Left(error)
     }

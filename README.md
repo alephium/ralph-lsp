@@ -6,7 +6,7 @@ Currently supports text document level events and diagnostics.
 
 # Dependency on `ralphc`
 
-Checkout [this lsp-tester](https://github.com/alephium/dev-alephium/tree/lsp_tester) branch and publish is locally.
+Checkout [this lsp-tester](https://github.com/alephium/dev-alephium/tree/lsp_tester) branch and publish it locally.
 
 ```shell
 sbt publishLocal

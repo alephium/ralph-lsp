@@ -4,9 +4,9 @@ import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, WorkspaceBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, BuildValidator, WorkspaceBuild}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
-import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorUnknownFileType}
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -23,7 +23,7 @@ object Workspace {
     WorkspaceState.Created(workspaceURI)
 
   /** Creates an un-compiled workspace for a successful build file. */
-  def initialise(state: BuildState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+  def initialise(state: BuildState.Compiled)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     state match {
       case compiled: BuildState.BuildCompiled =>
         // Build file changed. Update the workspace and request a full workspace build.
@@ -74,7 +74,7 @@ object Workspace {
 
       case initialised: WorkspaceState.Created =>
         val newBuild =
-          WorkspaceBuild.readBuild(
+          WorkspaceBuild.parseAndCompile(
             buildURI = initialised.buildURI,
             code = None,
           )
@@ -90,8 +90,8 @@ object Workspace {
    * */
   def build(buildURI: URI,
             code: Option[String],
-            state: WorkspaceState): Option[BuildState] =
-    WorkspaceBuild.validateBuildURI(
+            state: WorkspaceState): Option[BuildState.Compiled] =
+    BuildValidator.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = state.workspaceURI
     ) match {
@@ -106,7 +106,7 @@ object Workspace {
         Some(buildError)
 
       case Right(buildURI) =>
-        WorkspaceBuild.readBuild(
+        WorkspaceBuild.parseAndCompile(
           buildURI = buildURI,
           code = code,
         ) match {
@@ -227,7 +227,7 @@ object Workspace {
       ) match {
         case Some(newBuild) =>
           // this is a new build. initialise a fresh build.
-          initialise(newBuild)
+          initialise(newBuild) map parseAndCompile
 
         case None =>
           // no build change occurred, using existing workspace.
@@ -256,23 +256,28 @@ object Workspace {
                         workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
     initialise(workspace) map {
       initialised =>
-        // update the source code
-        val newSourceCode =
-          downgradeSourceState(
-            fileURI = fileURI,
-            updatedCode = updatedCode,
-            sourceCode = initialised.sourceCode
-          )
+        if (URIUtil.isChild(initialised.build.contractURI, fileURI)) {
+          // source belongs to this workspace, process compilation including this file's changed code.
+          val newSourceCode =
+            downgradeSourceState(
+              fileURI = fileURI,
+              updatedCode = updatedCode,
+              sourceCode = initialised.sourceCode
+            )
 
-        // create new un-compiled workspace.
-        val unCompiledWorkspace =
-          WorkspaceState.UnCompiled(
-            build = initialised.build,
-            sourceCode = newSourceCode
-          )
+          // create new un-compiled workspace.
+          val unCompiledWorkspace =
+            WorkspaceState.UnCompiled(
+              build = initialised.build,
+              sourceCode = newSourceCode
+            )
 
-        // parse and compile the new state.
-        Workspace.parseAndCompile(unCompiledWorkspace)
+          // parse and compile the new state.
+          Workspace.parseAndCompile(unCompiledWorkspace)
+        } else {
+          // file does not belong to this workspace, do not compile it and return initialised workspace.
+          initialised
+        }
     }
 
   /**

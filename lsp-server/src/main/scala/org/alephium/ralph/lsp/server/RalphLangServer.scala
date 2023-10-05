@@ -323,7 +323,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * Or else reports any workspace issues.
    */
   def getOrInitWorkspace(): WorkspaceState.SourceAware =
-    this.synchronized { // TODO: Remove synchronized. Use async.
+    this.synchronized {
       getWorkspace() match {
         case sourceAware: WorkspaceState.SourceAware =>
           // already built

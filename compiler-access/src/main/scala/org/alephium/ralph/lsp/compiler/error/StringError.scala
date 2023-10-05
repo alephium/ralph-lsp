@@ -11,6 +11,6 @@ case class StringError(override val message: String) extends FormattableError {
     "Error"
 
   override def index: SourceIndex =
-    SourceIndex(0, 1)
+    SourceIndex(0, 0)
 
 }

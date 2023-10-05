@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralphc.Config
+import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcCompiledConfig
 
 import java.net.URI
 
@@ -19,7 +19,7 @@ object WorkspaceDeploy {
    * @return New workspace state that PresentationalCompiler can continue with.
    */
   def compileForDeployment(workspaceURI: URI,
-                           config: Config)(implicit compiler: CompilerAccess): WorkspaceState.CompilerRun = {
+                           config: RalphcCompiledConfig)(implicit compiler: CompilerAccess): WorkspaceState.CompilerRun = {
     val result =
       compiler.compileForDeployment(
         workspaceURI = workspaceURI,

@@ -28,7 +28,9 @@ object DataConverter {
           new Range(start, end)
 
         case None =>
-          new Range(new Position(0, 0), new Position(0, 1))
+          // If source-code text is not known, then the line-number can't be fetched.
+          // So return this error at file-level with an empty range.
+          new Range(new Position(0, 0), new Position(0, 0))
       }
 
     new Diagnostic(range, error.message, severity, "Ralph")
