@@ -184,8 +184,8 @@ object BuildValidator {
    */
   private def getAbsolutePaths(parsed: BuildParsed): (Path, Path, Path) = {
     val workspacePath = Paths.get(parsed.workspaceURI)
-    val absoluteContractPath = workspacePath.resolve(parsed.config.contractPath)
-    val absoluteArtifactPath = workspacePath.resolve(parsed.config.artifactPath)
+    val absoluteContractPath = workspacePath.resolve(Paths.get(parsed.config.contractPath).normalize)
+    val absoluteArtifactPath = workspacePath.resolve(Paths.get(parsed.config.artifactPath).normalize)
     (workspacePath, absoluteContractPath, absoluteArtifactPath)
   }
 
