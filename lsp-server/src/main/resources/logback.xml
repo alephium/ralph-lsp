@@ -2,7 +2,7 @@
 <configuration>
     <!-- File log pattern without colours -->
     <property name="filePattern"
-              value="%-63(%date{ISO8601} [%.13thread]) %-5level %-50(%logger{20}) - %msg%n"/>
+              value="%-63(%date{ISO8601}) %-5level %-50(%logger{20}) - %msg%n"/>
 
     <appender name="LOGFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${RALPH_LSP_HOME:-${user.home}/.ralph-lsp}/logs/ralph-lsp.log</file>
