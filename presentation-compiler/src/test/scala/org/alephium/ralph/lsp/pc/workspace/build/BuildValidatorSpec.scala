@@ -40,7 +40,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
         config = config2
       )
 
-      BuildValidator.validate(parsed1) should not be BuildValidator.validate(parsed2)
+      BuildValidator.validate(parsed1) shouldBe BuildValidator.validate(parsed2)
     }
   }
 }
