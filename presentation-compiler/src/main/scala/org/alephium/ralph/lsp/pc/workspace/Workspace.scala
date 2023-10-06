@@ -10,13 +10,14 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
+import com.typesafe.scalalogging.StrictLogging
 
 /**
  * Implements functions operating on all source-code files within a workspace.
  *
  * All functions are all immutable. They all returns the next workspace state, given the current state.
  */
-object Workspace {
+object Workspace extends StrictLogging {
 
   /** First state of a workspace which just knows about the workspace root folder. */
   def create(workspaceURI: URI): WorkspaceState.Created =
@@ -27,9 +28,11 @@ object Workspace {
     state match {
       case compiled: BuildState.BuildCompiled =>
         // Build file changed. Update the workspace and request a full workspace build.
+        logger.debug(s"Initialise build:\n $state")
         initialise(compiled)
 
       case errored: BuildState.BuildErrored =>
+        logger.debug(s"Build state error:\n $state")
         Left(errored)
     }
 
@@ -67,9 +70,10 @@ object Workspace {
    *
    * @note Does not update the current state. The caller should set the new state.
    */
-  def initialise(workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
+  def initialise(workspace: WorkspaceState)(implicit compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] ={
     workspace match {
       case aware: WorkspaceState.SourceAware =>
+        logger.debug(s"Build already initialised:\n $aware")
         Right(aware) // already initialised
 
       case initialised: WorkspaceState.Created =>
@@ -78,9 +82,9 @@ object Workspace {
             buildURI = initialised.buildURI,
             code = None,
           )
-
         initialise(newBuild)
     }
+  }
 
   /**
    * Build the workspace.
