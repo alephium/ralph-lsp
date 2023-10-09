@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.error.CompilerError.FormattableError
+import org.alephium.ralph.lsp.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild
@@ -52,7 +52,7 @@ object WorkspaceState {
    * @param parsed          Previous valid parsed state (used for code completion in-case the file has error)
    */
   case class Errored(sourceCode: ArraySeq[SourceCodeState],
-                     workspaceErrors: ArraySeq[FormattableError],
+                     workspaceErrors: ArraySeq[CompilerMessage.AnyError],
                      parsed: WorkspaceState.Parsed) extends CompilerRun {
     def build: BuildCompiled =
       parsed.build

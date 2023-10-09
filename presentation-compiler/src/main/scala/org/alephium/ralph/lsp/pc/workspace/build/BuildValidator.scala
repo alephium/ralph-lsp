@@ -1,12 +1,12 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.compiler.error.StringError
+import org.alephium.ralph.error.CompilerError.FormattableError
+import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.compiler.message.error.StringError
 import org.alephium.ralph.lsp.pc.util.{FileIO, URIUtil}
+import org.alephium.ralph.lsp.pc.util.SourceIndexUtil.SourceIndexExtensions
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
-import org.alephium.ralph.SourceIndex
-import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.pc.util.SourceIndexUtil._
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -66,7 +66,7 @@ object BuildValidator {
       getAbsolutePaths(parsed)
 
     val errors =
-      ListBuffer.empty[FormattableError]
+      ListBuffer.empty[CompilerMessage.AnyError]
 
     // Validate: is the contract path within the workspace
     if (!URIUtil.isChild(workspacePath, absoluteContractPath))
@@ -124,7 +124,7 @@ object BuildValidator {
     compileResult match {
       case Success((contractExists, artifactsExists)) =>
         val errors =
-          ListBuffer.empty[FormattableError]
+          ListBuffer.empty[CompilerMessage.AnyError]
 
         // check if contract path exists
         if (!contractExists)

@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.util
 
-import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.compiler.message.SourceIndex
 
 object SourceIndexUtil {
 
@@ -15,10 +15,7 @@ object SourceIndexUtil {
      */
     def ensureNotNegative(): SourceIndex =
       if (sourceIndex.index < 0)
-        SourceIndex(
-          index = 0,
-          width = 0
-        )
+        SourceIndex.empty
       else
         sourceIndex
   }

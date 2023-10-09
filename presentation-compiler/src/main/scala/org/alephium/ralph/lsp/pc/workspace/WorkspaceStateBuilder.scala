@@ -1,9 +1,9 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.{Ast, CompiledContract, CompiledScript}
-import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.compiler.error.StringError
+import org.alephium.ralph.lsp.compiler.message.CompilerMessage
 import org.alephium.ralph.Ast.ContractWithState
+import org.alephium.ralph.lsp.compiler.message.error.StringError
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 
 import scala.collection.immutable.ArraySeq
@@ -17,7 +17,7 @@ import scala.collection.immutable.ArraySeq
 private[workspace] object WorkspaceStateBuilder {
 
   def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                       compilationResult: Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompilerRun =
+                       compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompilerRun =
     compilationResult match {
       case Left(workspaceError) =>
         // File or sourcePosition position information is not available for this error,

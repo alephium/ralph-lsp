@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.error.CompilerError.FormattableError
+import org.alephium.ralph.lsp.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.DataConverter._
 import org.eclipse.lsp4j._
@@ -26,7 +27,7 @@ object RalphLangClient {
 
     def publishErrors(fileURI: URI,
                       code: Option[String],
-                      errors: List[FormattableError]): Unit = {
+                      errors: List[CompilerMessage.AnyError]): Unit = {
       val publish =
         toPublishDiagnostics(
           fileURI = fileURI,

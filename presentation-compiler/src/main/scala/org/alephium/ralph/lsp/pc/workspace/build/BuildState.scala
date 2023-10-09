@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.error.CompilerError.FormattableError
+import org.alephium.ralph.lsp.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.{RalphcCompiledConfig, RalphcParsedConfig}
 
 import java.net.URI
@@ -41,6 +41,6 @@ object BuildState {
   /** Build errored */
   case class BuildErrored(buildURI: URI,
                           code: Option[String],
-                          errors: ArraySeq[FormattableError]) extends BuildState.Parsed with BuildState.Compiled
+                          errors: ArraySeq[CompilerMessage.AnyError]) extends BuildState.Parsed with BuildState.Compiled
 
 }

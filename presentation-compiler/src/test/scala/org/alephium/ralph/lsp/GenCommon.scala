@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp
 
-import org.alephium.ralph.error.CompilerError
-import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.CompilerAccess.RALPH_FILE_EXTENSION
+import org.alephium.ralph.lsp.compiler.message.{error, CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.compiler.message.error.StringError
 import org.scalacheck.Gen
 
 import java.net.URI
@@ -65,15 +65,18 @@ object GenCommon {
     ).map(_.toUri)
 
   /** Generate an error for this code */
-  def genError(code: Gen[String] = genCode): Gen[FormattableError] =
+  def genError(code: Gen[String] = genCode): Gen[CompilerMessage.AnyError] =
     for {
       code <- code
       errorMessage <- Gen.alphaStr
       errorIndex <- Gen.choose(0, code.length - 1)
     } yield
-      CompilerError.`Invalid number`(errorMessage, errorIndex)
+      error.StringError(
+        message = errorMessage,
+        index = SourceIndex(0, errorIndex) // TODO: gen random index location
+      )
 
-  def genErrors(code: String): Gen[List[FormattableError]] =
+  def genErrors(code: String): Gen[List[CompilerMessage.AnyError]] =
     Gen.listOf(genError(Gen.const(code)))
 
   def genFolderAndFileURIs(): Gen[(URI, List[URI])] =

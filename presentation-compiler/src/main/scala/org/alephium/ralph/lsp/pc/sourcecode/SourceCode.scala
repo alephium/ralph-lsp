@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.compiler.message.CompilerMessage
 
 import java.net.URI
 import scala.annotation.tailrec
@@ -13,7 +13,7 @@ import scala.collection.immutable.ArraySeq
 private[pc] object SourceCode {
 
   /** Collects paths of all ralph files on disk */
-  def initialise(workspaceURI: URI)(implicit compiler: CompilerAccess): Either[CompilerError.FormattableError, ArraySeq[SourceCodeState.OnDisk]] =
+  def initialise(workspaceURI: URI)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.OnDisk]] =
     compiler
       .getSourceFiles(workspaceURI)
       .map(_.map(SourceCodeState.OnDisk).to(ArraySeq))

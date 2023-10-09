@@ -1,10 +1,11 @@
 package org.alephium.ralph.lsp.server
 
-import org.alephium.ralph.error.CompilerError
-import org.alephium.ralph.error.CompilerError.FormattableError
+import fastparse.IndexedParserInput
+import org.alephium.ralph.lsp.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.completion.Suggestion
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.SourcePosition
 import org.eclipse.lsp4j._
 
 import java.net.URI
@@ -16,15 +17,16 @@ object DataConverter {
 
   /** Convert Ralph's FormattableError to lsp4j's Diagnostic */
   def toDiagnostic(code: Option[String],
-                   error: CompilerError.FormattableError,
+                   message: CompilerMessage,
                    severity: DiagnosticSeverity): Diagnostic = {
     val range =
       code match {
         case Some(code) =>
-          val formatter = error.toFormatter(code)
+          val fastParseLineNumber = IndexedParserInput(code).prettyIndex(message.index.index)
+          val sourcePosition = SourcePosition.parse(fastParseLineNumber)
 
-          val start = new Position(formatter.sourcePosition.rowIndex, formatter.sourcePosition.colIndex)
-          val end = new Position(formatter.sourcePosition.rowIndex, formatter.sourcePosition.colIndex + formatter.sourcePosition.width)
+          val start = new Position(sourcePosition.rowIndex, sourcePosition.colIndex)
+          val end = new Position(sourcePosition.rowIndex, sourcePosition.colIndex + message.index.width)
           new Range(start, end)
 
         case None =>
@@ -33,7 +35,7 @@ object DataConverter {
           new Range(new Position(0, 0), new Position(0, 0))
       }
 
-    new Diagnostic(range, error.message, severity, "Ralph")
+    new Diagnostic(range, message.message, severity, "Ralph")
   }
 
   def toWorkspaceDiagnostics(workspace: WorkspaceState.SourceAware): PublishDiagnosticsParams = {
@@ -45,7 +47,7 @@ object DataConverter {
               // These are workspace level errors such as `Compiler.Error`, their source-code information is unknown.
               toDiagnostic(
                 code = None,
-                error = error,
+                message = error,
                 severity = DiagnosticSeverity.Error
               )
           }
@@ -66,7 +68,7 @@ object DataConverter {
             error =>
               toDiagnostic(
                 code = Some(state.code),
-                error = error,
+                message = error,
                 severity = DiagnosticSeverity.Error
               )
           }
@@ -78,7 +80,7 @@ object DataConverter {
         val diagnostics =
           toDiagnostic(
             code = None,
-            error = state.error,
+            message = state.error,
             severity = DiagnosticSeverity.Error
           )
 
@@ -91,7 +93,7 @@ object DataConverter {
             warning =>
               toDiagnostic(
                 code = Some(state.code),
-                error = warning,
+                message = warning,
                 severity = DiagnosticSeverity.Warning
               )
           }
@@ -107,14 +109,14 @@ object DataConverter {
 
   def toPublishDiagnostics(fileURI: URI,
                            code: Option[String],
-                           errors: List[FormattableError],
+                           errors: List[CompilerMessage.AnyError],
                            severity: DiagnosticSeverity): PublishDiagnosticsParams = {
     val diagnostics =
       errors map {
         error =>
           toDiagnostic(
             code = code,
-            error = error,
+            message = error,
             severity = severity
           )
       }

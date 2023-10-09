@@ -1,7 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build.error
 
-import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
 
 import java.net.URI
 
@@ -42,7 +41,4 @@ object ErrorInvalidBuildSyntax {
 
 case class ErrorInvalidBuildSyntax(fileURI: URI,
                                    index: SourceIndex,
-                                   override val message: String) extends FormattableError {
-  override def title: String =
-    "Syntax"
-}
+                                   override val message: String) extends CompilerMessage.Error
