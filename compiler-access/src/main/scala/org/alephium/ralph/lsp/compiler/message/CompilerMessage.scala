@@ -17,10 +17,10 @@ object CompilerMessage {
   trait FormattedError extends AnyError {
     def error: FormattableError
 
-    def message: String =
+    final def message: String =
       error.message
 
-    def index: SourceIndex =
+    final def index: SourceIndex =
       SourceIndex(
         index = error.position,
         width = error.foundLength

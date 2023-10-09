@@ -1,10 +1,8 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
 import org.alephium.ralph.lsp.compiler.message.error.StringError
 import org.alephium.ralph.lsp.pc.util.{FileIO, URIUtil}
-import org.alephium.ralph.lsp.pc.util.SourceIndexUtil.SourceIndexExtensions
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 import org.alephium.ralphc.Config
