@@ -97,7 +97,8 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
                       SourceCodeState.Parsed(
                         fileURI = currentState.fileURI,
                         code = genCode.sample.get,
-                        contracts = GenSourceCode.genParsedContracts().sample.get
+                        contracts = GenSourceCode.genParsedContracts().sample.get,
+                        imports = Map.empty
                       )
 
                     // expect the compiler to get a request to read sourceCode and then parse

@@ -58,7 +58,8 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
           SourceCodeState.Parsed(
             fileURI = URI.create("./test.ral"),
             code = "blah",
-            contracts = Seq.empty
+            contracts = Seq.empty,
+            Map.empty
           )
 
         testNoCompilerAccess(parsedState)
@@ -163,7 +164,8 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
               SourceCodeState.Parsed(
                 fileURI = failedState.fileURI,
                 code = code,
-                contracts = Seq.empty
+                contracts = Seq.empty,
+                imports = Map.empty
               )
         }
       }

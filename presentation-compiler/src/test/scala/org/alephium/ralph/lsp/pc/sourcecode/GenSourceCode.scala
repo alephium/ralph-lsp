@@ -60,7 +60,8 @@ object GenSourceCode {
       SourceCodeState.Parsed(
         fileURI = fileURI,
         code = code,
-        contracts = Seq.empty // TODO: generate these
+        contracts = Seq.empty, // TODO: generate these
+        imports = Map.empty
       )
 
   def genParsedOrCompiled(code: Gen[String] = genCode): Gen[SourceCodeState.ParsedState] =
