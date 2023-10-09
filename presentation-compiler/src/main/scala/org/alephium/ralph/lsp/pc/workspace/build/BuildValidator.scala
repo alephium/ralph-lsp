@@ -72,10 +72,10 @@ object BuildValidator {
         ErrorDirectoryOutsideWorkspace(
           dirPath = contractPath,
           index =
-            SourceIndex(
+            SourceIndex.ensurePositive(
               index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
               width = contractPath.length
-            ).ensureNotNegative()
+            )
         )
 
     // Validate: is the artifact path within the workspace
@@ -84,10 +84,10 @@ object BuildValidator {
         ErrorDirectoryDoesNotExists(
           dirPath = artifactPath,
           index =
-            SourceIndex(
+            SourceIndex.ensurePositive(
               index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
               width = artifactPath.length
-            ).ensureNotNegative()
+            )
         )
 
     // Check if errors exists
@@ -130,10 +130,10 @@ object BuildValidator {
             ErrorDirectoryDoesNotExists(
               dirPath = contractPath,
               index =
-                SourceIndex(
+                SourceIndex.ensurePositive(
                   index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
                   width = contractPath.length
-                ).ensureNotNegative()
+                )
             )
 
         // check if artifact path exists
@@ -142,10 +142,10 @@ object BuildValidator {
             ErrorDirectoryDoesNotExists(
               dirPath = artifactPath,
               index =
-                SourceIndex(
+                SourceIndex.ensurePositive(
                   index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
                   width = artifactPath.length
-                ).ensureNotNegative()
+                )
             )
 
         // check if errors exists
