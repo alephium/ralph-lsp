@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess.RALPH_FILE_EXTENSION
-import org.alephium.ralph.lsp.compiler.message.{error, CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
 import org.alephium.ralph.lsp.compiler.message.error.StringError
 import org.scalacheck.Gen
 
@@ -71,7 +71,7 @@ object GenCommon {
       errorMessage <- Gen.alphaStr
       errorIndex <- Gen.choose(0, code.length - 1)
     } yield
-      error.StringError(
+      StringError(
         message = errorMessage,
         index = SourceIndex(0, errorIndex) // TODO: gen random index location
       )

@@ -8,7 +8,12 @@ object FastParseError {
 
   @inline def apply(failure: Parsed.Failure): FastParseError =
     FastParseError(CompilerError.FastParseError(failure))
-
 }
 
+/**
+ * Stores error produced by `FastParse`.
+ *
+ * [[CompilerError.FastParseError]] also contains other error data, such as [[CompilerError.FastParseError.tracedMsg]]
+ * which can be used for better error reports to the user's IDE.
+ * */
 case class FastParseError(error: CompilerError.FastParseError) extends CompilerMessage.FormattedError

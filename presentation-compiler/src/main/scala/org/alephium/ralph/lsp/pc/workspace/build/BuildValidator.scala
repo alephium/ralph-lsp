@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
-import org.alephium.ralph.lsp.compiler.message.error.StringError
+import org.alephium.ralph.lsp.compiler.message.error.ThrowableError
 import org.alephium.ralph.lsp.pc.util.{FileIO, URIUtil}
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
@@ -168,7 +168,7 @@ object BuildValidator {
           BuildErrored(
             buildURI = parsed.buildURI,
             code = Some(parsed.code),
-            errors = ArraySeq(StringError(exception.getMessage))
+            errors = ArraySeq(ThrowableError(exception))
           )
 
         Some(errors)

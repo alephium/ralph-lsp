@@ -5,7 +5,7 @@ import org.alephium.api.model.CompileProjectResult
 import org.alephium.ralph._
 import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.lsp.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.compiler.message.error.{FastParseError, FormattedError, StringError}
+import org.alephium.ralph.lsp.compiler.message.error._
 import org.alephium.ralphc.{Config, MetaInfo, Compiler => RalphC}
 
 import java.net.URI
@@ -28,7 +28,7 @@ private object RalphCompilerAccess extends CompilerAccess {
       Right(Files.exists(Paths.get(fileURI)))
     catch {
       case throwable: Throwable =>
-        Left(StringError(throwable))
+        Left(ThrowableError(throwable))
     }
 
   def getSourceFiles(workspaceURI: URI): Either[CompilerMessage.AnyError, Seq[URI]] =
@@ -130,11 +130,10 @@ private object RalphCompilerAccess extends CompilerAccess {
       Left(FormattedError(error))
 
     case error: org.alephium.ralph.Compiler.Error =>
-      Left(StringError(error.message))
+      Left(NativeError(error))
 
     case error: Throwable =>
-      // TODO: log this to console.
-      Left(StringError(error.getMessage))
+      Left(ThrowableError(error))
   }
 
 }
