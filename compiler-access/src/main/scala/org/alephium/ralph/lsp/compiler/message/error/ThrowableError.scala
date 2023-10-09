@@ -5,7 +5,7 @@ import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
 /**
  * Errors due to thrown exceptions.
  *
- * Stores the stacktrace for better error reporting in the IDE.
+ * Stores the stacktrace for future error report improvements.
  */
 case class ThrowableError(throwable: Throwable) extends CompilerMessage.Error {
   override def message: String =

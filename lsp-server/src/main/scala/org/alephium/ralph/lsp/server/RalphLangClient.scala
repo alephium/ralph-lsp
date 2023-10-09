@@ -12,6 +12,7 @@ import java.net.URI
 object RalphLangClient {
 
   implicit class RalphLangClientExtension(val client: RalphLangClient) extends AnyVal {
+
     def log(error: ResponseError): ResponseError = {
       client.logMessage(new MessageParams(MessageType.Error, error.getMessage))
       error

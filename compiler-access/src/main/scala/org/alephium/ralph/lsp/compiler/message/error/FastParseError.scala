@@ -14,6 +14,6 @@ object FastParseError {
  * Stores error produced by `FastParse`.
  *
  * [[CompilerError.FastParseError]] also contains other error data, such as [[CompilerError.FastParseError.tracedMsg]]
- * which can be used for better error reports to the user's IDE.
+ * which can be used for better error reports to the client.
  * */
 case class FastParseError(error: CompilerError.FastParseError) extends CompilerMessage.FormattedError
