@@ -1,7 +1,8 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.{CompilerOptions, SourceIndex}
+import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.error.CompilerError.FormattableError
+import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
 import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild.toBuildPath
@@ -38,7 +39,7 @@ object RalphcConfig {
     )
 
   def parse(buildURI: URI,
-            json: String): Either[FormattableError, RalphcParsedConfig] =
+            json: String): Either[CompilerMessage.AnyError, RalphcParsedConfig] =
     try
       Right(upickle.default.read[RalphcParsedConfig](json))
     catch {

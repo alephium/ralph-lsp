@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.compiler.error.StringError
+import org.alephium.ralph.lsp.compiler.message.error.ThrowableError
 import org.alephium.ralph.lsp.pc.util.FileIO
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
@@ -52,7 +52,7 @@ object WorkspaceBuild {
         BuildErrored(
           buildURI = buildURI,
           code = None,
-          errors = ArraySeq(StringError(exception.getMessage))
+          errors = ArraySeq(ThrowableError(exception))
         )
 
       case Success(json) =>
@@ -81,7 +81,7 @@ object WorkspaceBuild {
         BuildErrored(
           buildURI = buildURI,
           code = None,
-          errors = ArraySeq(StringError(exception.getMessage))
+          errors = ArraySeq(ThrowableError(exception))
         )
 
       case Success(exists) =>

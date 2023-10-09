@@ -1,9 +1,9 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.{CompiledContract, CompiledScript}
-import org.alephium.ralph.lsp.compiler.error.StringError
 import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.GenCommon._
+import org.alephium.ralph.lsp.compiler.message.error.StringError
 import org.scalacheck.Gen
 
 import java.net.URI

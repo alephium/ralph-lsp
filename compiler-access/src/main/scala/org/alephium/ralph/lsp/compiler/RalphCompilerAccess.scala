@@ -3,8 +3,9 @@ package org.alephium.ralph.lsp.compiler
 import fastparse.Parsed
 import org.alephium.api.model.CompileProjectResult
 import org.alephium.ralph._
-import org.alephium.ralph.error.CompilerError.{FastParseError, FormattableError}
-import org.alephium.ralph.lsp.compiler.error.StringError
+import org.alephium.ralph.error.CompilerError.FormattableError
+import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.compiler.message.error._
 import org.alephium.ralphc.{Config, MetaInfo, Compiler => RalphC}
 
 import java.net.URI
@@ -22,15 +23,15 @@ import scala.util.{Failure, Success, Using}
 
 private object RalphCompilerAccess extends CompilerAccess {
 
-  override def sourceExists(fileURI: URI): Either[FormattableError, Boolean] =
+  override def sourceExists(fileURI: URI): Either[CompilerMessage.AnyError, Boolean] =
     try
       Right(Files.exists(Paths.get(fileURI)))
     catch {
       case throwable: Throwable =>
-        Left(StringError(throwable.getMessage))
+        Left(ThrowableError(throwable))
     }
 
-  def getSourceFiles(workspaceURI: URI): Either[FormattableError, Seq[URI]] =
+  def getSourceFiles(workspaceURI: URI): Either[CompilerMessage.AnyError, Seq[URI]] =
     try {
       val uris =
         RalphC
@@ -42,7 +43,7 @@ private object RalphCompilerAccess extends CompilerAccess {
       Right(uris)
     } catch catchAllThrows
 
-  override def getSourceCode(fileURI: URI): Either[FormattableError, String] =
+  override def getSourceCode(fileURI: URI): Either[CompilerMessage.AnyError, String] =
     Using(Source.fromFile(fileURI))(_.mkString) match {
       case Failure(exception) =>
         catchAllThrows(exception)
@@ -51,7 +52,7 @@ private object RalphCompilerAccess extends CompilerAccess {
         Right(code)
     }
 
-  def parseContracts(code: String): Either[FormattableError, Seq[Ast.ContractWithState]] =
+  def parseContracts(code: String): Either[CompilerMessage.AnyError, Seq[Ast.ContractWithState]] =
     try
       fastparse.parse(code, StatefulParser.multiContract(_)) match {
         case Parsed.Success(ast: Ast.MultiContract, _) =>
@@ -63,7 +64,7 @@ private object RalphCompilerAccess extends CompilerAccess {
     catch catchAllThrows
 
   def compileContracts(contracts: Seq[Ast.ContractWithState],
-                       options: CompilerOptions): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])] =
+                       options: CompilerOptions): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
       val multiContract =
         Ast.MultiContract(contracts, None)
@@ -83,12 +84,12 @@ private object RalphCompilerAccess extends CompilerAccess {
     } catch catchAllThrows
 
   override def compileForDeployment(workspaceURI: URI,
-                                    config: Config): Either[FormattableError, (Array[CompiledContract], Array[CompiledScript])] =
+                                    config: Config): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
       val ralphc = RalphC(config)
       ralphc.compileProject() match {
         case Left(error) =>
-          Left(StringError(error.message))
+          Left(StringError(error))
 
         case Right(result) =>
           Right(buildSuccessfulCompilation(result, ralphc.metaInfos))
@@ -124,16 +125,15 @@ private object RalphCompilerAccess extends CompilerAccess {
       .resolve(s"${metaInfo.name}.ral")
       .toUri
 
-  private def catchAllThrows[T]: PartialFunction[Throwable, Either[FormattableError, T]] = {
+  private def catchAllThrows[T]: PartialFunction[Throwable, Either[CompilerMessage.AnyError, T]] = {
     case error: FormattableError =>
-      Left(error)
+      Left(FormattedError(error))
 
     case error: org.alephium.ralph.Compiler.Error =>
-      Left(StringError(error.message))
+      Left(NativeError(error))
 
     case error: Throwable =>
-      // TODO: log this to console.
-      Left(StringError(error.getMessage))
+      Left(ThrowableError(error))
   }
 
 }

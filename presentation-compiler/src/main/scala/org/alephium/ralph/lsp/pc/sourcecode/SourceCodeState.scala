@@ -1,9 +1,9 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.{CompiledContract, CompiledScript}
-import org.alephium.ralph.error.CompilerError.FormattableError
 import org.alephium.ralph.Ast.ContractWithState
-import org.alephium.ralph.lsp.compiler.error.StringWarning
+import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.compiler.message.warning.StringWarning
 
 import java.net.URI
 
@@ -43,7 +43,7 @@ object SourceCodeState {
 
   /** Represents: Was unable to access code */
   case class ErrorAccess(fileURI: URI,
-                         error: FormattableError) extends FailedState with AccessedState
+                         error: CompilerMessage.AnyError) extends FailedState with AccessedState
 
   /** Represents: Code is successfully parsed */
   case class Parsed(fileURI: URI,
@@ -58,17 +58,17 @@ object SourceCodeState {
     def warnings: Seq[StringWarning] =
       compiledCode.flatMap {
         case Left(value) =>
-          value.warnings map StringWarning
+          value.warnings map (StringWarning(_))
 
         case Right(value) =>
-          value.warnings map StringWarning
+          value.warnings map (StringWarning(_))
       }
   }
 
   /** Represents: Failed but it stores previous successful parse so code-completion can use this state */
   case class ErrorSource(fileURI: URI,
                          code: String,
-                         errors: Seq[FormattableError],
+                         errors: Seq[CompilerMessage.AnyError],
                          previous: Option[SourceCodeState.Parsed]) extends FailedState with CodeAware
 
 }

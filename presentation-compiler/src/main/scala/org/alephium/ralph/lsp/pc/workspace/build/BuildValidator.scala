@@ -1,12 +1,10 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.compiler.error.StringError
+import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.compiler.message.error.ThrowableError
 import org.alephium.ralph.lsp.pc.util.{FileIO, URIUtil}
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
-import org.alephium.ralph.SourceIndex
-import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.pc.util.SourceIndexUtil._
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -66,7 +64,7 @@ object BuildValidator {
       getAbsolutePaths(parsed)
 
     val errors =
-      ListBuffer.empty[FormattableError]
+      ListBuffer.empty[CompilerMessage.AnyError]
 
     // Validate: is the contract path within the workspace
     if (!URIUtil.isChild(workspacePath, absoluteContractPath))
@@ -74,10 +72,10 @@ object BuildValidator {
         ErrorDirectoryOutsideWorkspace(
           dirPath = contractPath,
           index =
-            SourceIndex(
+            SourceIndex.ensurePositive(
               index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
               width = contractPath.length
-            ).ensureNotNegative()
+            )
         )
 
     // Validate: is the artifact path within the workspace
@@ -86,10 +84,10 @@ object BuildValidator {
         ErrorDirectoryDoesNotExists(
           dirPath = artifactPath,
           index =
-            SourceIndex(
+            SourceIndex.ensurePositive(
               index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
               width = artifactPath.length
-            ).ensureNotNegative()
+            )
         )
 
     // Check if errors exists
@@ -124,7 +122,7 @@ object BuildValidator {
     compileResult match {
       case Success((contractExists, artifactsExists)) =>
         val errors =
-          ListBuffer.empty[FormattableError]
+          ListBuffer.empty[CompilerMessage.AnyError]
 
         // check if contract path exists
         if (!contractExists)
@@ -132,10 +130,10 @@ object BuildValidator {
             ErrorDirectoryDoesNotExists(
               dirPath = contractPath,
               index =
-                SourceIndex(
+                SourceIndex.ensurePositive(
                   index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
                   width = contractPath.length
-                ).ensureNotNegative()
+                )
             )
 
         // check if artifact path exists
@@ -144,10 +142,10 @@ object BuildValidator {
             ErrorDirectoryDoesNotExists(
               dirPath = artifactPath,
               index =
-                SourceIndex(
+                SourceIndex.ensurePositive(
                   index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
                   width = artifactPath.length
-                ).ensureNotNegative()
+                )
             )
 
         // check if errors exists
@@ -170,7 +168,7 @@ object BuildValidator {
           BuildErrored(
             buildURI = parsed.buildURI,
             code = Some(parsed.code),
-            errors = ArraySeq(StringError(exception.getMessage))
+            errors = ArraySeq(ThrowableError(exception))
           )
 
         Some(errors)

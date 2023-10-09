@@ -6,13 +6,13 @@ Currently supports text document level events and diagnostics.
 
 # Dependency on `ralphc`
 
-Checkout [this lsp-tester](https://github.com/alephium/dev-alephium/tree/lsp_tester) branch and publish it locally.
+Checkout branch [lsp_publish_ralphc](https://github.com/alephium/dev-alephium/tree/lsp_publish_ralphc) and publish it locally.
 
 ```shell
 sbt publishLocal
 ```
 
-Update the version for `alephium-ralphc` in this repo's `build.sbt` file with the published version.
+Update `alephium-ralphc` version in [Dependencies.scala](/project/Dependencies.scala) with the published version.
 
 # Build the jar
 
