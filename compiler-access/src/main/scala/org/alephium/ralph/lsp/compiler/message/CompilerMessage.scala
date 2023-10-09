@@ -38,6 +38,6 @@ object CompilerMessage {
   /** A formatted or unformatted warning */
   sealed trait AnyWarning extends CompilerMessage
 
-  /** Unformatted error type */
+  /** Unformatted warning type */
   trait Warning extends AnyWarning
 }
