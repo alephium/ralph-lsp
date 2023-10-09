@@ -87,7 +87,9 @@ private[workspace] object WorkspaceStateBuilder {
   private def findMatchingContractOrScript(parsedContracts: Seq[ContractWithState],
                                            compiledContracts: Array[CompiledContract],
                                            compiledScripts: Array[CompiledScript]): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
-    parsedContracts map {
+    parsedContracts
+     .collect { case c: Ast.Contract if !c.isAbstract => c } //Only contracts can be compiled
+     .map {
       contract =>
         findMatchingContractOrScript(
           contract = contract,
