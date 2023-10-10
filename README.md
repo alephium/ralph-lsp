@@ -4,16 +4,6 @@ Language server for Ralph.
 
 Currently supports text document level events and diagnostics.
 
-# Dependency on `ralphc`
-
-Checkout branch [lsp_publish_ralphc](https://github.com/alephium/dev-alephium/tree/lsp_publish_ralphc) and publish it locally.
-
-```shell
-sbt publishLocal
-```
-
-Update `alephium-ralphc` version in [Dependencies.scala](/project/Dependencies.scala) with the published version.
-
 # Build the jar
 
 ```shell
