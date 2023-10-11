@@ -1,44 +1,53 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import java.util.stream.Collectors
-import java.io.{ File}
-import java.net.{URL, URI}
-import java.nio.file.{ Files,FileSystem, FileSystems, Path, Paths}
+import java.net.URI
+import java.nio.file.{ Files, FileSystems, Paths}
 import scala.collection.JavaConverters._
-import scala.jdk.CollectionConverters.CollectionHasAsScala
-import scala.collection.mutable
 import scala.io.Source
-import scala.util.{Failure, Success, Try, Using}
+import scala.util.{Failure, Success, Using}
 import com.typesafe.scalalogging.StrictLogging
 
-object StdInterface {
+object StdInterface extends StrictLogging {
 
-  val stdFolder = "std"
+  private val stdFolder = "std"
 
-  val stdPath = getPath(getClass.getResource(s"/$stdFolder"))
+  /*
+   * Get std interfaces, when using sbt it reads it from disk, when using with the jar
+   * it reads them directly from the jar.
+   * Currently if files can't be read, we stop the app otherwise we can't do much, but
+   * as files are included in jar file on build, there's no reason it should happen.
+   *
+   * Later on we could improve and recover if we notice issue
+   *
+   * Interfaces are kept in memory as there aren't much, if in the future it start to have
+   * to much data, we could think of reading them on the fly.
+   *
+   * We rely here on `Using` https://www.scala-lang.org/api/2.13.6/scala/util/Using$.html
+   * to handle resources.
+   */
+  val stdInterfaces: Map[String, String] =
+    Using.Manager { use =>
+      val stdURL = getClass.getResource(s"/$stdFolder")
 
-  val interfaceFiles = Files.list(stdPath).iterator().asScala.toList
+      val stdPath = if (stdURL.getProtocol == "file"){
+        Paths.get(stdURL.toURI)
+      } else {
+        // When using file from jar, the file as a special path
+        val Array(jar, folder) = stdURL.toString.split("!")
+        use(FileSystems.newFileSystem(URI.create(jar), Map[String, String]().asJava)).getPath(folder)
+      }
 
-  //TODO Replace key with URI or Path
-  val stdInterfaces: Map[String, String] = interfaceFiles.map{ file =>
-    (s"$stdFolder/${removeExtension(file.getFileName.toString)}", readFile(file))
-  }.toMap
+      val interfaceFiles = use(Files.list(stdPath)).iterator().asScala.toList
 
-  //https://stackoverflow.com/a/73045690
-  private def getPath(url: URL): Path = {
-    //When working with sbt and for test, std/interface are simple file
-    if (url.getProtocol == "file"){
-      Paths.get(url.toURI)
-    } else {
-      // When using file from jar, the file as a special path
-      val Array(jar, folder) = url.toString.split("!")
-      val jarFS = FileSystems.newFileSystem(URI.create(jar), Map[String, String]().asJava)
-      jarFS.getPath(folder)
-    }
-  }
-
-  private def readFile(path: Path): String ={
-    Source.fromInputStream(Files.newInputStream(path), "UTF-8").getLines.mkString("\n")
+      interfaceFiles.map { file =>
+        val code = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines.mkString("\n")
+        (s"$stdFolder/${removeExtension(file.getFileName.toString)}", code)
+      }.toMap
+  } match {
+    case Success(value) => value
+    case Failure(error) =>
+      logger.error(s"Cannot get std interfaces: $error")
+      sys.exit(1)
   }
 
 
