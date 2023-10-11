@@ -1,44 +1,89 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
+import fastparse._
 import fastparse.Parsed
-import org.alephium.api.model.CompileProjectResult
-import org.alephium.ralph._
-import org.alephium.ralphc.{Config, MetaInfo, Compiler => RalphC}
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
-
-import java.net.URI
-import java.nio.file.{Files, Paths}
-import scala.collection.mutable
-import scala.io.Source
-import scala.util.{Failure, Success, Using}
-import scala.util.matching.Regex
+import fastparse.MultiLineWhitespace._
+import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.compiler.message.error.{ImportError, FastParseError}
 
 object ImportHandler {
 
   case class Result(code: String, imports: Map[String, String])
 
-  private val importRegex = """\s*import\s+"([^".\/]+\/[^"]*[a-z][a-z_0-9])"\s*\n""".r
+  object Lexer {
+    def importKey[Unknown:P]: P[Unit] = P("import")
 
-  //Extract imports and replace them with empty string in code to keep line numbers
-  def extractStdImports(initialCode: String): Either[CompilerMessage.AnyError, Result] = {
-    val (code, imports) = importRegex.findAllMatchIn(initialCode)
-      .foldLeft(initialCode, Map.empty[String,String]) { case ((code, imports), pattern) =>
-        val importValue = {
-          val group =   pattern.group(1)
-          if(group.endsWith(".ral")) {
-            group.dropRight(4)
-          } else {
-            group
-          }
-        }
-        StdInterface.stdInterfaces.get(importValue) match {
-          case Some(interfaceCode) =>
-            (code.replaceFirst(pattern.matched, pattern.matched.replace("import","//")), imports ++ Map(importValue-> interfaceCode))
-          case None =>
-            (code, imports)
-        }
-      }
+    def interfaceName[Unknown: P]: P[String] = {
+      implicit val whitespace: P[_] => P[Unit] = fastparse.NoWhitespace.noWhitespaceImplicit
+      P((CharIn("a-z") | "/" | "_" | "-" | ".").rep).!
+    }
 
-      Right(Result(code, imports))
+    def importValue[Unknown: P]: P[String] = {
+      implicit val whitespace: P[_] => P[Unit] = fastparse.NoWhitespace.noWhitespaceImplicit
+      P("\"" ~ interfaceName ~ "\"")
+    }
+
+    def stdInterface[Unknown:P]: P[String] = P(importKey ~ importValue )
+
+    def imports[Unknown:P]: P[Seq[String]] = P(Start ~ stdInterface.rep)
+  }
+
+
+  /*
+   * Parse source code and find all imports.
+   * Imports are resolved with their corresponding file, if not found we return an error.
+   * We pass through all imports so we can have the full list of non-existing import
+   */
+  def extractStdImports(code: String): Either[Seq[CompilerMessage.AnyError], Result] = {
+    fastparse.parse(code, Lexer.imports(_)) match {
+      case Parsed.Success((parsedImports), index) =>
+        val (finalCode, finalImports, errors) = findAndReplaceImports(code, parsedImports )
+
+        if(errors.nonEmpty) {
+          Left(errors)
+        } else {
+          Right(Result(finalCode, finalImports))
+        }
+      case failure:Parsed.Failure =>
+        Left(Seq(FastParseError(failure)))
+    }
+  }
+
+  private def findAndReplaceImports(initialCode: String, parsedImports:Seq[String] ) = {
+    parsedImports.foldLeft((initialCode, Map.empty[String,String], Seq.empty): (String, Map[String,String], Seq[CompilerMessage.AnyError])) {
+      case ((code, imports, errors), rawImport) =>
+
+        val importValue = cleanImportValue(rawImport)
+
+        validateAndReplaceImport(code, importValue) match {
+          case Right((nextCode, newImport)) =>
+            (nextCode, imports ++ newImport, errors)
+          case Left((nextCode, error)) =>
+            (nextCode, imports, errors :+ error)
+        }
+    }
+  }
+
+  private def cleanImportValue(value: String): String = {
+    if(value.endsWith(".ral")) {
+      value.dropRight(4)
+    } else {
+      value
+    }
+  }
+
+  private def replaceImport(code:String, importValue:String): String = {
+    code.replaceFirst("import", "//    ").replaceFirst(s""""$importValue"""",s"//$importValue")
+  }
+
+  private def validateAndReplaceImport(code:String, importValue:String):Either[(String, CompilerMessage.AnyError), (String, Map[String,String])] ={
+    StdInterface.stdInterfaces.get(importValue) match {
+      case Some(interfaceCode) =>
+        Right((replaceImport(code, importValue), Map(importValue-> interfaceCode)))
+      case None =>
+        val index = code.indexOf(s""""$importValue""") + 1
+        //Wrong imports are still replaced to avoid matching their index on a future import error
+        Left((replaceImport(code, importValue), ImportError.Unknown(importValue, SourceIndex(index, importValue.size))))
+    }
   }
 }

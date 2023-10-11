@@ -31,11 +31,11 @@ private[pc] object SourceCode {
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
         parseContractsWithImports(code) match {
-          case Left(error) =>
+          case Left(errors) =>
             SourceCodeState.ErrorSource(
               fileURI = fileURI,
               code = code,
-              errors = Array(error),
+              errors = errors,
               previous = None
             )
 
@@ -78,11 +78,11 @@ private[pc] object SourceCode {
         error
     }
 
-  private def parseContractsWithImports(code: String)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, (Seq[ContractWithState], Map[String, Seq[ContractWithState]])] =
+  private def parseContractsWithImports(code: String)(implicit compiler: CompilerAccess): Either[Seq[CompilerMessage.AnyError], (Seq[ContractWithState], Map[String, Seq[ContractWithState]])] =
     for {
       codeWithImports <- ImportHandler.extractStdImports(code)
-      codeAst <- compiler.parseContracts(codeWithImports.code)
-      importsAst <- parseImports(codeWithImports.imports)
+      codeAst <- compiler.parseContracts(codeWithImports.code).left.map(Seq(_))
+      importsAst <- parseImports(codeWithImports.imports).left.map(Seq(_))
     } yield {
       (codeAst, importsAst)
     }
