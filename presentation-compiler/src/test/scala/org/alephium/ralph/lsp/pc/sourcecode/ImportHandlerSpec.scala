@@ -9,153 +9,175 @@ import org.alephium.ralph.lsp.compiler.message.SourceIndex
 
 class ImportHandlerSpec extends AnyWordSpec with Matchers {
 
-  "parse imports " in {
-    def p(code: String, success: Boolean) = {
-      val res = fastparse.parse(code ++ "\n" ++ "Contract Test(id:U256){}", ImportHandler.Lexer.imports(_))
+  "ImportHandler.extractStdImports" should {
+    "extract valid imports" when {
+      "there are new lines" in {
+        succes(
+          """|
+          |import "std/nft_interface"
+          |
+          |import
+          |
+          |"std/fungible_token_interface"
+          |
+          |
+          |""".stripMargin)
+      }
 
-      if(success)  {
-        res.get.value.toList.size shouldBe 2
-      }else {
-        //Here we only try to parse import, we don't try to parse the comtract, as it's done by the CompileAccess,
-        //so an empty list of contract is returned.
-        res.get.value shouldBe List.empty
+      "they are written classicly" in {
+        succes(
+          """|
+          |import "std/nft_interface"
+          |import "std/fungible_token_interface"
+          |""".stripMargin)
+      }
+
+      "there are spaces" in {
+        succes("""
+          import     "std/nft_interface"
+          import   "std/fungible_token_interface"
+          """)
+      }
+
+      ".ral extension is used" in {
+        succes("""
+          import "std/nft_interface.ral"
+          import "std/fungible_token_interface.ral"
+          """)
       }
     }
 
-    def s(code: String) =
-      p(code, true)
-
-    def f(code: String) =
-      p(code, false)
-
-    s("""
-      import "std/nft_interface"
-      import "std/fungible_token_interface"
-      """)
-
-    s("""
-      import "std/fungible_token_interface"
-
-
-      import "std/nft_interface"
-
-
-
-      """)
-
-    f("""
-      mport "std/fungible_token_interface"
-      """)
-
-    f("""
-      import std/fungible_token_interface"
-      """)
-
-    f("""
-      import std/fungible_token_interface"
-      """)
-  }
-
-  "extractStdImports" should {
-    def p(code: String) = {
-      val res = ImportHandler.extractStdImports(code ++ "\n" ++ "Contract Test(id:U256){}")
-      res.map(_.imports.keys) shouldBe Right(Set("std/nft_interface", "std/fungible_token_interface"))
-    }
-
-    "extract valid imports" in {
-      p("""
-        import "std/nft_interface"
-        import "std/fungible_token_interface"
-        """)
-
-      p("""
-        import
-
-        "std/nft_interface"
-        import      "std/fungible_token_interface"
-
-
-        """)
-
-      p("""
-        import "std/nft_interface.ral"
-        import "std/fungible_token_interface.ral"
-        """)
-    }
-
-    "ignore comments" in {
-      p("""
-        //comment
-        import "std/nft_interface"
-        import      "std/fungible_token_interface"
-        """")
-
-      p("""
-        //import "std/nft_interface"
-        import "std/nft_interface"
-        import      "std/fungible_token_interface"
-        """")
-
-      p("""
-        // comment before
-        import
-        // comment between
-        "std/nft_interface"
-        import "std/fungible_token_interface"
-        // comment after
-        """")
-    }
-
-    "find all import errors" in {
-
-      def p(code: String, indexes: Seq[SourceIndex]) = {
-        val res = ImportHandler.extractStdImports(code ++ "\n" ++ "Contract Test(id:U256){}")
-
-        res.isLeft shouldBe true
-
-        res.left.map(_.zip(indexes).map { case (error, index) =>
-          error.index shouldBe index
-        })
+    "ignore comments" when {
+      "they are classic" in {
+        succes("""
+          //comment
+          import "std/nft_interface"
+          import      "std/fungible_token_interface"
+          """")
       }
 
-      p("""|import "std/nt_interface"
-        |
-        |import "std/"
-        """.stripMargin, Seq(SourceIndex(8, 16), SourceIndex(35,4)))
+      "some imports are commented" in {
+        succes("""
+          //import "std/nft_interface"
+          import "std/nft_interface"
+          //import "std/nft_interface"
+          import      "std/fungible_token_interface"
+          //import      "std/fungible_token_interface"
+          //import "std/nft_interface"
+          """")
+      }
 
-      p("""import "td/nft"""", Seq(SourceIndex(8, 6)))
-      p("""import "td /nft"""", Seq(SourceIndex(8, 7)))
-      p("""import "   td/nft  """", Seq(SourceIndex(8, 11)))
-      p("""import "td / nft"""", Seq(SourceIndex(8, 8)))
+      "they are after at then end of the line " in {
+        succes("""
+          import "std/nft_interface" //comment
+          import      "std/fungible_token_interface" //import "std/fungible"
+          """")
+      }
+
+      "there are everywhere" in {
+        succes("""
+          // comment before
+          import//import "std/fungible_token_interface"
+          //
+          //import "std/fungible_token_interface"
+          //import "std/nft_interface"
+          // comment between
+          "std/nft_interface"//import "std/fungible_token_interface"
+          import "std/fungible_token_interface"
+          // comment after
+          //
+          """")
+      }
     }
 
-    "extract import even with some contract or any thing between imports" in {
-      //We only care about imports herer, contracts are parse latter by the `CompilerAccess`
-      p("""
+    "find error" when {
+      "import name is missplled" in {
+        fail("""import "std/nftint"""", Seq(SourceIndex(8, 10)))
+      }
+
+      "import name is missing" in {
+        fail("""import "std/"""", Seq(SourceIndex(8, 4)))
+      }
+
+      "import folder is misspelled" in {
+        fail("""import "td/nft"""", Seq(SourceIndex(8, 6)))
+      }
+
+      "there is a space in import" in {
+        fail("""import "std /nft_interface"""", Seq(SourceIndex(8, 18)))
+      }
+
+      "there are space before/after" in {
+        fail("""import " std/nft_interface"""", Seq(SourceIndex(8, 18)))
+        fail("""import "std/nft_interface """", Seq(SourceIndex(8, 18)))
+        fail("""import " std/nft_interface """", Seq(SourceIndex(8, 19)))
+      }
+    }
+
+    "find multiple errors" when {
+      "all imports are wrong" in {
+        fail(
+          """|import "std/nt_interface"
+          |
+          |import "std/"
+          |""".stripMargin, Seq(SourceIndex(8, 16), SourceIndex(35,4)))
+      }
+
+      "not all imports are wrong" in {
+        fail(
+          """|import "std/nt_interface"
+          |import "std/nft_interface"
+          |import "std/"
+          |""".stripMargin, Seq(SourceIndex(8, 16), SourceIndex(61,4)))
+      }
+    }
+
+
+    "extract import even with some contracts or any thing between imports" in {
+      //We only care about imports here, contracts are parse latter by the `CompilerAccess`
+      succes("""
         import "std/nft_interface"
         Contract Foo(id:U256){}
         import "std/fungible_token_interface"
         """)
 
-      p("""
+      succes("""
         Contract Foo(id:U256){}
         Contract Boo(id:U256){}
         import "std/nft_interface"
         import "std/fungible_token_interface"
+        Contract Boo(id:U256){}
         """)
 
-      p("""
+      succes("""
         import "std/nft_interface"
         Some random stuff
         import "std/fungible_token_interface"
         """)
 
-      p("""
+      succes("""
         Some random stuff
         import "std/nft_interface"
         Some random stuff
         import "std/fungible_token_interface"
+        Some random stuff
+        Contract Boo(id:U256){}
         """)
     }
+  }
+
+  def succes(code: String) = {
+    val res = ImportHandler.extractStdImports(code)
+    res.map(_.imports.keys) shouldBe Right(Set("std/nft_interface", "std/fungible_token_interface"))
+  }
+
+  def fail(code: String, indexes: Seq[SourceIndex]) = {
+    val res = ImportHandler.extractStdImports(code ++ "\n" ++ "Contract Test(id:U256){}")
+
+    res.isLeft shouldBe true
+
+    res.left.map(_.zip(indexes).map { case (error, index) =>
+      error.index shouldBe index
+    })
   }
 }
