@@ -42,7 +42,7 @@ object ImportHandler {
       P("\"" ~ interfaceName ~ "\"")
     }
 
-    def fullStdInterface[Unknown:P]: P[ParsedImport] = {
+    def fullImport[Unknown:P]: P[ParsedImport] = {
       implicit val whitespace: P[_] => P[Unit] = fastparse.NoWhitespace.noWhitespaceImplicit
       val parsedResult = P(importKey.! ~ ralph.Lexer.emptyChars.! ~ importValue.!)
 
@@ -52,13 +52,13 @@ object ImportHandler {
         val fullParse = s"""$key$spaces$value"""
         val endIndex = parsedResult.index
         val fullParseIndex = endIndex - fullParse.size
-        val importValue = ImportName.cleaned(value)//drop " "
+        val importValue = ImportName.cleaned(value)
         val index = globalIndex - value.size + 1 //+ 1 for the front "
         ParsedImport(importValue, index, fullParse, fullParseIndex)
       }
     }
 
-    def imports[Unknown:P]: P[Seq[ParsedImport]] = P(Start ~ (fullStdInterface | AnyChar).rep).map(_.collect{ case p:ParsedImport => p})
+    def imports[Unknown:P]: P[Seq[ParsedImport]] = P(Start ~ (fullImport | AnyChar).rep).map(_.collect{ case p:ParsedImport => p})
   }
 
 
