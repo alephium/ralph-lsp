@@ -47,7 +47,7 @@ object StdInterface extends StrictLogging {
     case Success(value) => value
     case Failure(error) =>
       logger.error(s"Cannot get std interfaces: $error")
-      sys.exit(1)
+      Map.empty
   }
 
 
