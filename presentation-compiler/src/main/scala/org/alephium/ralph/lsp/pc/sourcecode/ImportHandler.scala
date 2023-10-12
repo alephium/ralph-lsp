@@ -42,10 +42,6 @@ object ImportHandler {
       P("\"" ~ interfaceName ~ "\"")
     }
 
-    def stdInterface[Unknown:P]: P[Unit] = {
-      P(importKey ~ importValue )
-    }
-
     def fullStdInterface[Unknown:P]: P[ParsedImport] = {
       implicit val whitespace: P[_] => P[Unit] = fastparse.NoWhitespace.noWhitespaceImplicit
       val parsedResult = P(importKey.! ~ ralph.Lexer.emptyChars.! ~ importValue.!)
