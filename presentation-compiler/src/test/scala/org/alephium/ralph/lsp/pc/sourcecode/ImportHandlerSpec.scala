@@ -128,5 +128,34 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
       p("""import "   td/nft  """", Seq(SourceIndex(8, 11)))
       p("""import "td / nft"""", Seq(SourceIndex(8, 8)))
     }
+
+    "extract import even with some contract or any thing between imports" in {
+      //We only care about imports herer, contracts are parse latter by the `CompilerAccess`
+      p("""
+        import "std/nft_interface"
+        Contract Foo(id:U256){}
+        import "std/fungible_token_interface"
+        """)
+
+      p("""
+        Contract Foo(id:U256){}
+        Contract Boo(id:U256){}
+        import "std/nft_interface"
+        import "std/fungible_token_interface"
+        """)
+
+      p("""
+        import "std/nft_interface"
+        Some random stuff
+        import "std/fungible_token_interface"
+        """)
+
+      p("""
+        Some random stuff
+        import "std/nft_interface"
+        Some random stuff
+        import "std/fungible_token_interface"
+        """)
+    }
   }
 }

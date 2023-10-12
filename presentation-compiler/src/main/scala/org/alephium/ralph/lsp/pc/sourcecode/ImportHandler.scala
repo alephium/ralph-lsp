@@ -62,7 +62,7 @@ object ImportHandler {
       }
     }
 
-    def imports[Unknown:P]: P[Seq[ParsedImport]] = P(Start ~ fullStdInterface.rep)
+    def imports[Unknown:P]: P[Seq[ParsedImport]] = P(Start ~ (fullStdInterface | AnyChar).rep).map(_.collect{ case p:ParsedImport => p})
   }
 
 
