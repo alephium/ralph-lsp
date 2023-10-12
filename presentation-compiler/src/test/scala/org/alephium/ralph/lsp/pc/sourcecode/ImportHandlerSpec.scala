@@ -98,6 +98,9 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
         """.stripMargin, Seq(SourceIndex(8, 16), SourceIndex(35,4)))
 
       p("""import "td/nft"""", Seq(SourceIndex(8, 6)))
+      p("""import "td /nft"""", Seq(SourceIndex(8, 7)))
+      p("""import "   td/nft  """", Seq(SourceIndex(8, 11)))
+      p("""import "td / nft"""", Seq(SourceIndex(8, 8)))
     }
   }
 }

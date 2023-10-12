@@ -15,7 +15,7 @@ object ImportHandler {
 
     def interfaceName[Unknown: P]: P[String] = {
       implicit val whitespace: P[_] => P[Unit] = fastparse.NoWhitespace.noWhitespaceImplicit
-      P((CharIn("a-z") | "/" | "_" | "-" | ".").rep).!
+      P((CharIn("a-z") | "/" | "_" | "-" | "." | " ").rep).!
     }
 
     def importValue[Unknown: P]: P[String] = {
