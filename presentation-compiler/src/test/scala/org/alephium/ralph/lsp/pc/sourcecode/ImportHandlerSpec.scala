@@ -172,7 +172,7 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
   }
 
   def fail(code: String, indexes: Seq[SourceIndex]) = {
-    val res = ImportHandler.extractStdImports(code ++ "\n" ++ "Contract Test(id:U256){}")
+    val res = ImportHandler.extractStdImports(code)
 
     res.isLeft shouldBe true
 
