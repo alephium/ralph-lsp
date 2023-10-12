@@ -16,9 +16,9 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
       if(success)  {
         res.get.value.toList.size shouldBe 2
       }else {
-        //import fail so it tries to read the import as part of the multicontract and fail,
-        //but as we read an optional contract here, everything is empty
-        res.get.value shouldBe (List.empty)
+        //Here we only try to parse import, we don't try to parse the comtract, as it's done by the CompileAccess,
+        //so an empty list of contract is returned.
+        res.get.value shouldBe List.empty
       }
     }
 
@@ -33,7 +33,8 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
       import "std/fungible_token_interface"
       """)
 
-    s("""    import "std/fungible_token_interface"
+    s("""
+      import "std/fungible_token_interface"
 
 
       import "std/nft_interface"
@@ -42,24 +43,26 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
 
       """)
 
-    f("""mport "std/fungible_token_interface"
+    f("""
+      mport "std/fungible_token_interface"
       """)
 
-    f("""import std/fungible_token_interface"
+    f("""
+      import std/fungible_token_interface"
       """)
 
-    f("""import std/fungible_token_interface"
+    f("""
+      import std/fungible_token_interface"
       """)
   }
 
   "extractStdImports" should {
-    "extract correct imports" in {
-      def p(code: String) = {
-        val res = ImportHandler.extractStdImports(code ++ "\n" ++ "Contract Test(id:U256){}")
-        res.map(_.imports.keys) shouldBe Right(Set( "std/nft_interface", "std/fungible_token_interface"))
+    def p(code: String) = {
+      val res = ImportHandler.extractStdImports(code ++ "\n" ++ "Contract Test(id:U256){}")
+      res.map(_.imports.keys) shouldBe Right(Set("std/nft_interface", "std/fungible_token_interface"))
+    }
 
-      }
-
+    "extract valid imports" in {
       p("""
         import "std/nft_interface"
         import "std/fungible_token_interface"
@@ -78,6 +81,29 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
         import "std/nft_interface.ral"
         import "std/fungible_token_interface.ral"
         """)
+    }
+
+    "ignore comments" in {
+      p("""
+        //comment
+        import "std/nft_interface"
+        import      "std/fungible_token_interface"
+        """")
+
+      p("""
+        //import "std/nft_interface"
+        import "std/nft_interface"
+        import      "std/fungible_token_interface"
+        """")
+
+      p("""
+        // comment before
+        import
+        // comment between
+        "std/nft_interface"
+        import "std/fungible_token_interface"
+        // comment after
+        """")
     }
 
     "find all import errors" in {
