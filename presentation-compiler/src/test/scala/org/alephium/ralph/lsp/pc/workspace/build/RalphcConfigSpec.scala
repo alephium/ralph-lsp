@@ -17,7 +17,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
     Files.createDirectory(workspacePath.resolve(config.contractPath))
     Files.createDirectory(workspacePath.resolve(config.artifactPath))
     // Persist the default config to the workspace
-    val expectedBuildPath = workspacePath.resolve(WorkspaceBuild.BUILD_FILE_NAME)
+    val expectedBuildPath = workspacePath.resolve(Build.BUILD_FILE_NAME)
     val actualBuildPath = RalphcConfig.persist(workspacePath, config).success.value
     actualBuildPath shouldBe expectedBuildPath
 
@@ -25,7 +25,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
       FileAccess.disk
 
     // Parse and compile the config file on disk
-    val readConfig = WorkspaceBuild.parseAndCompile(expectedBuildPath.toUri)
+    val readConfig = Build.parseAndCompile(expectedBuildPath.toUri)
 
     // The parsed code is the expected code, not the compiled.
     val expectedCode =

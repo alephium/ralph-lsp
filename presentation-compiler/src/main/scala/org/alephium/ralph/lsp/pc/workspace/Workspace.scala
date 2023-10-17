@@ -5,7 +5,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, BuildValidator, WorkspaceBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, BuildValidator, Build}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
 
@@ -75,7 +75,7 @@ object Workspace {
 
       case initialised: WorkspaceState.Created =>
         val newBuild =
-          WorkspaceBuild.parseAndCompile(
+          Build.parseAndCompile(
             buildURI = initialised.buildURI,
             code = None,
           )
@@ -107,7 +107,7 @@ object Workspace {
         Some(buildError)
 
       case Right(buildURI) =>
-        WorkspaceBuild.parseAndCompile(
+        Build.parseAndCompile(
           buildURI = buildURI,
           code = code,
         ) match {
@@ -223,7 +223,7 @@ object Workspace {
                                               compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState] = {
     val fileName = URIUtil.getFileName(fileURI)
 
-    if (fileName == WorkspaceBuild.BUILD_FILE_NAME) {
+    if (fileName == Build.BUILD_FILE_NAME) {
       Workspace.build(
         buildURI = fileURI,
         code = code,

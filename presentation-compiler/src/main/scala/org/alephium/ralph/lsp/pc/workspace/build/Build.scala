@@ -8,7 +8,7 @@ import java.net.URI
 import java.nio.file.{Path, Paths}
 import scala.collection.immutable.ArraySeq
 
-object WorkspaceBuild {
+object Build {
 
   val BUILD_FILE_EXTENSION = "ralph"
 

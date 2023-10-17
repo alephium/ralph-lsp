@@ -26,7 +26,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
       Files.createDirectory(workspacePath.resolve(config1.contractPath))
       Files.createDirectory(workspacePath.resolve(config1.artifactPath))
 
-      val buildPath = workspacePath.resolve(WorkspaceBuild.BUILD_FILE_NAME)
+      val buildPath = workspacePath.resolve(Build.BUILD_FILE_NAME)
       val actualBuildPath = RalphcConfig.persist(workspacePath, config1).success.value
 
       actualBuildPath shouldBe buildPath

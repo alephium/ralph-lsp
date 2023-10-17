@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.pc.workspace
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.GenCommon._
 import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, WorkspaceBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, Build}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcCompiledConfig
 import org.alephium.ralphc.Config
@@ -54,7 +54,7 @@ object GenWorkspace {
       compiledConfig <- genRalphcCompiledConfig(workspacePath.toUri)
     } yield
       BuildCompiled(
-        buildURI = workspacePath.resolve(WorkspaceBuild.BUILD_FILE_NAME).toUri,
+        buildURI = workspacePath.resolve(Build.BUILD_FILE_NAME).toUri,
         code = RalphcConfig.write(compiledConfig),
         config = compiledConfig
       )

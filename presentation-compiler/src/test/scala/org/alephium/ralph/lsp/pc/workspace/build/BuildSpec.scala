@@ -10,7 +10,7 @@ import java.net.URI
 import java.nio.file.Files
 import scala.collection.immutable.ArraySeq
 
-class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
+class BuildSpec extends AnyWordSpec with Matchers {
 
   "parse" should {
     "parse workspace build file" in {
@@ -39,12 +39,12 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
 
   "parseAndCompile" should {
     "report missing build file" in {
-      val dir = Files.createTempDirectory("no_build_file").resolve(WorkspaceBuild.BUILD_FILE_NAME).toUri
+      val dir = Files.createTempDirectory("no_build_file").resolve(Build.BUILD_FILE_NAME).toUri
 
       implicit val file: FileAccess =
         FileAccess.disk
 
-      val actual = WorkspaceBuild.parseAndCompile(dir)
+      val actual = Build.parseAndCompile(dir)
 
       val expected =
         BuildState.BuildErrored(

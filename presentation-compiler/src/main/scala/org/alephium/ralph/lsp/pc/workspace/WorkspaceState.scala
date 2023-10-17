@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.pc.workspace
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
-import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild
+import org.alephium.ralph.lsp.pc.workspace.build.Build
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -12,7 +12,7 @@ sealed trait WorkspaceState {
   def workspaceURI: URI
 
   def buildURI: URI =
-    WorkspaceBuild.toBuildURI(workspaceURI)
+    Build.toBuildURI(workspaceURI)
 }
 
 object WorkspaceState {

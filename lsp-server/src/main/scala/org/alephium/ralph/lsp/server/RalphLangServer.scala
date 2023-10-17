@@ -6,7 +6,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.completion.CodeCompleter
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, WorkspaceBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, Build}
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
@@ -208,7 +208,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     CompletableFutures.computeAsync {
       cancelChecker =>
         // Previous commit uses the non-deprecated API but that does not work in vim.
-        val rootURI = RalphLangServer.getRootUri(params)
+        val rootURI =
+          RalphLangServer.getRootUri(params)
 
         val workspaceURI =
           rootURI.getOrElse(throw ResponseError.WorkspaceFolderNotSupplied.toResponseErrorException)
@@ -259,7 +260,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       val fileExtension =
         URIUtil.getFileExtension(fileURI)
 
-      if (fileExtension == WorkspaceBuild.BUILD_FILE_EXTENSION) {
+      if (fileExtension == Build.BUILD_FILE_EXTENSION) {
         // process build change
         val buildResult =
           Workspace.buildChanged(
