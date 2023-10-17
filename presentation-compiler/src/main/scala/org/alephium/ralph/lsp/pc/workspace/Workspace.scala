@@ -91,7 +91,7 @@ object Workspace {
    * */
   def build(buildURI: URI,
             code: Option[String],
-            state: WorkspaceState): Option[BuildState.Compiled] =
+            state: WorkspaceState)(implicit file: FileAccess): Option[BuildState.Compiled] =
     BuildValidator.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = state.workspaceURI

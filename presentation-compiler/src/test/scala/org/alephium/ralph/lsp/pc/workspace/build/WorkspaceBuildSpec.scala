@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -39,6 +40,9 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers {
   "parseAndCompile" should {
     "report missing build file" in {
       val dir = Files.createTempDirectory("no_build_file").resolve(WorkspaceBuild.BUILD_FILE_NAME).toUri
+
+      implicit val file: FileAccess =
+        FileAccess.disk
 
       val actual = WorkspaceBuild.parseAndCompile(dir)
 

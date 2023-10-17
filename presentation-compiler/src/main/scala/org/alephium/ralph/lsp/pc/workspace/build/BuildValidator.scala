@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
-import org.alephium.ralph.lsp.access.compiler.message.error.ThrowableError
-import org.alephium.ralph.lsp.pc.util.{FileIO, URIUtil}
+import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 import org.alephium.ralphc.Config
@@ -11,13 +11,12 @@ import java.net.URI
 import java.nio.file.{Path, Paths}
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ListBuffer
-import scala.util.{Failure, Success}
 
 /** Implements functions for validating `build.ralph` */
 object BuildValidator {
 
   /** Validate and promotes a parsed build-file to compiled */
-  def validate(parsed: BuildParsed): BuildState.Compiled = {
+  def validate(parsed: BuildParsed)(implicit file: FileAccess): BuildState.Compiled = {
 
     /** Returns a successful compiled state */
     def success() = {
@@ -104,7 +103,7 @@ object BuildValidator {
   }
 
   /** Validate that the configured paths exist within the workspace directory */
-  private def validatePathsExists(parsed: BuildParsed): Option[BuildState.BuildErrored] = {
+  private def validatePathsExists(parsed: BuildParsed)(implicit file: FileAccess): Option[BuildState.BuildErrored] = {
     val contractPath = parsed.config.contractPath
     val artifactPath = parsed.config.artifactPath
 
@@ -115,12 +114,12 @@ object BuildValidator {
     // do these paths exists with the workspace directory?
     val compileResult =
       for {
-        contractExists <- FileIO.exists(absoluteContractPath)
-        artifactsExists <- FileIO.exists(absoluteArtifactPath)
+        contractExists <- file.sourceExists(absoluteContractPath.toUri)
+        artifactsExists <- file.sourceExists(absoluteArtifactPath.toUri)
       } yield (contractExists, artifactsExists)
 
     compileResult match {
-      case Success((contractExists, artifactsExists)) =>
+      case Right((contractExists, artifactsExists)) =>
         val errors =
           ListBuffer.empty[CompilerMessage.AnyError]
 
@@ -162,13 +161,13 @@ object BuildValidator {
           Some(errorState)
         }
 
-      case Failure(exception) =>
+      case Left(error) =>
         // exception occurred performing IO.
         val errors =
           BuildErrored(
             buildURI = parsed.buildURI,
             code = Some(parsed.code),
-            errors = ArraySeq(ThrowableError(exception))
+            errors = ArraySeq(error)
           )
 
         Some(errors)

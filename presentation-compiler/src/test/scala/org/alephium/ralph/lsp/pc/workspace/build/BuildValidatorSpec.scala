@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.TryValues.convertTryToSuccessOrFailure
@@ -39,6 +40,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
       val parsed2 = parsed1.copy(
         config = config2
       )
+
+      implicit val file: FileAccess =
+        FileAccess.disk
 
       BuildValidator.validate(parsed1) shouldBe BuildValidator.validate(parsed2)
     }

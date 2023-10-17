@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralphc.Config
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -19,6 +20,9 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
     val expectedBuildPath = workspacePath.resolve(WorkspaceBuild.BUILD_FILE_NAME)
     val actualBuildPath = RalphcConfig.persist(workspacePath, config).success.value
     actualBuildPath shouldBe expectedBuildPath
+
+    implicit val file: FileAccess =
+      FileAccess.disk
 
     // Parse and compile the config file on disk
     val readConfig = WorkspaceBuild.parseAndCompile(expectedBuildPath.toUri)

@@ -1,14 +1,12 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.access.compiler.message.error.ThrowableError
-import org.alephium.ralph.lsp.pc.util.FileIO
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 
 import java.net.URI
 import java.nio.file.{Path, Paths}
 import scala.collection.immutable.ArraySeq
-import scala.util.{Failure, Success}
 
 object WorkspaceBuild {
 
@@ -46,16 +44,16 @@ object WorkspaceBuild {
     }
 
   /** Parse a build that is on-disk */
-  def parse(buildURI: URI): BuildState.Parsed =
-    FileIO.readAllLines(buildURI) match {
-      case Failure(exception) =>
+  def parse(buildURI: URI)(implicit file: FileAccess): BuildState.Parsed =
+    file.getSourceCode(buildURI) match {
+      case Left(error) =>
         BuildErrored(
           buildURI = buildURI,
           code = None,
-          errors = ArraySeq(ThrowableError(exception))
+          errors = ArraySeq(error)
         )
 
-      case Success(json) =>
+      case Right(json) =>
         parse(
           buildURI = buildURI,
           json = json
@@ -63,7 +61,7 @@ object WorkspaceBuild {
     }
 
   /** Compile a parsed build */
-  def compile(parsed: BuildState.Parsed): BuildState.Compiled =
+  def compile(parsed: BuildState.Parsed)(implicit file: FileAccess): BuildState.Compiled =
     parsed match {
       case errored: BuildErrored =>
         // there are parsing errors
@@ -75,16 +73,16 @@ object WorkspaceBuild {
     }
 
   /** Parse and compile from disk */
-  def parseAndCompile(buildURI: URI): BuildState.Compiled =
-    FileIO.exists(Paths.get(buildURI)) match {
-      case Failure(exception) =>
+  def parseAndCompile(buildURI: URI)(implicit file: FileAccess): BuildState.Compiled =
+    file.sourceExists(buildURI) match {
+      case Left(error) =>
         BuildErrored(
           buildURI = buildURI,
           code = None,
-          errors = ArraySeq(ThrowableError(exception))
+          errors = ArraySeq(error)
         )
 
-      case Success(exists) =>
+      case Right(exists) =>
         if (exists)
           compile(parse(buildURI))
         else
@@ -97,7 +95,7 @@ object WorkspaceBuild {
 
   /** Parse and compile from memory */
   def parseAndCompile(buildURI: URI,
-                      code: String): BuildState.Compiled = {
+                      code: String)(implicit file: FileAccess): BuildState.Compiled = {
     // Code is already read. Parse and validate it.
     val parsed =
       parse(
@@ -109,7 +107,7 @@ object WorkspaceBuild {
   }
 
   def parseAndCompile(buildURI: URI,
-                      code: Option[String]): BuildState.Compiled =
+                      code: Option[String])(implicit file: FileAccess): BuildState.Compiled =
     code match {
       case Some(code) =>
         parseAndCompile(
