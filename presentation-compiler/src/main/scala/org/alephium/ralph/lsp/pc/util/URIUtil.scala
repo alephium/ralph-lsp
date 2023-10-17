@@ -27,4 +27,14 @@ object URIUtil {
       .resolve(child)
       .startsWith(parent)
 
+  def isFirstChild(parent: URI,
+                   child: URI): Boolean =
+    isFirstChild(
+      parent = Paths.get(parent),
+      child = Paths.get(child)
+    )
+
+  def isFirstChild(parent: Path,
+                   child: Path): Boolean =
+    parent.resolve(child).getParent == parent
 }

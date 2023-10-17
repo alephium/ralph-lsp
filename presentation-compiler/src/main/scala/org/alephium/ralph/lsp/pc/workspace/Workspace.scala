@@ -114,8 +114,8 @@ object Workspace {
           case newBuild: BuildState.BuildCompiled =>
             state match {
               case currentState: WorkspaceState.SourceAware =>
-                // if the new build-file is the same as current build-file, return the
-                // no-state-change, so a new build does not unnecessarily gets triggered.
+                // if the new build-file is the same as current build-file, return it as
+                // no-state-changed, so that a new build does not unnecessarily gets triggered.
                 if (currentState.build == newBuild)
                   None
                 else // else the build file has changed, return the new build.
