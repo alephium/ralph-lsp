@@ -66,7 +66,7 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
 
                     // expect the compiler to get a request to read sourceCode for each OnDisk file once
                     // return an error for each call
-                    (file.getSourceCode _)
+                    (file.read _)
                       .expects(currentState.fileURI)
                       .returns(Left(expectedState.error)) // return an error
                       .once() // called only once
@@ -115,7 +115,7 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
                     // this happens in order
                     inOrder(
                       // initially, code gets read from disk
-                      (file.getSourceCode _)
+                      (file.read _)
                         .expects(currentState.fileURI)
                         .returns(Right(expectedState.code)) // code read!
                         .once(),
@@ -205,7 +205,7 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
               initialWorkspace.sourceCode map {
                 case error: SourceCodeState.ErrorAccess =>
                   // only the files that failed access would get a single re-try from the compiler.
-                  (file.getSourceCode _)
+                  (file.read _)
                     .expects(error.fileURI)
                     .returns(Left(error.error))
                     .once()

@@ -23,7 +23,7 @@ object Build {
 
   /** Parse a build that is in-memory */
   def parse(buildURI: URI,
-            json: String): BuildState.Parsed =
+            json: String): BuildState.ParseResult =
     RalphcConfig.parse(
       buildURI = buildURI,
       json = json
@@ -44,8 +44,8 @@ object Build {
     }
 
   /** Parse a build that is on-disk */
-  def parse(buildURI: URI)(implicit file: FileAccess): BuildState.Parsed =
-    file.getSourceCode(buildURI) match {
+  def parse(buildURI: URI)(implicit file: FileAccess): BuildState.ParseResult =
+    file.read(buildURI) match {
       case Left(error) =>
         BuildErrored(
           buildURI = buildURI,
@@ -61,7 +61,7 @@ object Build {
     }
 
   /** Compile a parsed build */
-  def compile(parsed: BuildState.Parsed)(implicit file: FileAccess): BuildState.Compiled =
+  def compile(parsed: BuildState.ParseResult)(implicit file: FileAccess): BuildState.CompileResult =
     parsed match {
       case errored: BuildErrored =>
         // there are parsing errors
@@ -73,8 +73,8 @@ object Build {
     }
 
   /** Parse and compile from disk */
-  def parseAndCompile(buildURI: URI)(implicit file: FileAccess): BuildState.Compiled =
-    file.sourceExists(buildURI) match {
+  def parseAndCompile(buildURI: URI)(implicit file: FileAccess): BuildState.CompileResult =
+    file.exists(buildURI) match {
       case Left(error) =>
         BuildErrored(
           buildURI = buildURI,
@@ -95,7 +95,7 @@ object Build {
 
   /** Parse and compile from memory */
   def parseAndCompile(buildURI: URI,
-                      code: String)(implicit file: FileAccess): BuildState.Compiled = {
+                      code: String)(implicit file: FileAccess): BuildState.CompileResult = {
     // Code is already read. Parse and validate it.
     val parsed =
       parse(
@@ -107,7 +107,7 @@ object Build {
   }
 
   def parseAndCompile(buildURI: URI,
-                      code: Option[String])(implicit file: FileAccess): BuildState.Compiled =
+                      code: Option[String])(implicit file: FileAccess): BuildState.CompileResult =
     code match {
       case Some(code) =>
         parseAndCompile(

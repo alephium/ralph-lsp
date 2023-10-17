@@ -30,7 +30,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
             // expect the compiler to get a request to fetch files
             // from the configured contract path.
-            (file.getSourceFiles _)
+            (file.list _)
               .expects(build.contractURI)
               .returns(Right(fileURIs)) // return files successfully fetched
               .once() // called only once
@@ -60,7 +60,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
             // expect the compiler to get a request to fetch files
             // from the configured contract path.
-            (file.getSourceFiles _)
+            (file.list _)
               .expects(build.contractURI)
               .returns(Left(error)) // return an error
               .once() // called only once

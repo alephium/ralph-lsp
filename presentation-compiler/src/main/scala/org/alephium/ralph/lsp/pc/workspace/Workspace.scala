@@ -24,7 +24,7 @@ object Workspace {
     WorkspaceState.Created(workspaceURI)
 
   /** Creates an un-compiled workspace for a successful build file. */
-  def initialise(state: BuildState.Compiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+  def initialise(state: BuildState.CompileResult)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     state match {
       case compiled: BuildState.BuildCompiled =>
         // Build file changed. Update the workspace and request a full workspace build.
@@ -91,7 +91,7 @@ object Workspace {
    * */
   def build(buildURI: URI,
             code: Option[String],
-            state: WorkspaceState)(implicit file: FileAccess): Option[BuildState.Compiled] =
+            state: WorkspaceState)(implicit file: FileAccess): Option[BuildState.CompileResult] =
     BuildValidator.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = state.workspaceURI
@@ -308,7 +308,7 @@ object Workspace {
 
       case None =>
         // no source code sent from client, check it still exists.
-        file.sourceExists(fileURI) match {
+        file.exists(fileURI) match {
           case Left(error) =>
             // failed to check
             val newState =

@@ -23,7 +23,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
             mock[FileAccess]
 
           // compiler is access to fetch the source files from disk
-          (file.getSourceFiles _)
+          (file.list _)
             .expects(folder)
             .returns(Right(fileURIs))
             .once()
@@ -159,7 +159,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
             val code = "some code"
 
             // Code is read from disk (once)
-            (file.getSourceCode _)
+            (file.read _)
               .expects(failedState.fileURI)
               .returns(Right(code))
               .once()

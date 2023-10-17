@@ -16,7 +16,7 @@ import scala.collection.mutable.ListBuffer
 object BuildValidator {
 
   /** Validate and promotes a parsed build-file to compiled */
-  def validate(parsed: BuildParsed)(implicit file: FileAccess): BuildState.Compiled = {
+  def validate(parsed: BuildParsed)(implicit file: FileAccess): BuildState.CompileResult = {
 
     /** Returns a successful compiled state */
     def success() = {
@@ -114,8 +114,8 @@ object BuildValidator {
     // do these paths exists with the workspace directory?
     val compileResult =
       for {
-        contractExists <- file.sourceExists(absoluteContractPath.toUri)
-        artifactsExists <- file.sourceExists(absoluteArtifactPath.toUri)
+        contractExists <- file.exists(absoluteContractPath.toUri)
+        artifactsExists <- file.exists(absoluteArtifactPath.toUri)
       } yield (contractExists, artifactsExists)
 
     compileResult match {

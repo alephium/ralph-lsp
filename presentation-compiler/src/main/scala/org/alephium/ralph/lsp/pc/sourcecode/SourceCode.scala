@@ -17,7 +17,7 @@ private[pc] object SourceCode {
   /** Collects paths of all ralph files on disk */
   def initialise(workspaceURI: URI)(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.OnDisk]] =
     file
-      .getSourceFiles(workspaceURI)
+      .list(workspaceURI)
       .map(_.map(SourceCodeState.OnDisk).to(ArraySeq))
 
   /**
@@ -105,7 +105,7 @@ private[pc] object SourceCode {
   }
 
   private def getSourceCode(fileURI: URI)(implicit file: FileAccess): SourceCodeState.AccessedState =
-    file.getSourceCode(fileURI) match {
+    file.read(fileURI) match {
       case Left(error) =>
         SourceCodeState.ErrorAccess(fileURI, error)
 
