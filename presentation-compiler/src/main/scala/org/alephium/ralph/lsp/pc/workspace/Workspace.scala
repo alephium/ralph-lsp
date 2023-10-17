@@ -218,7 +218,7 @@ object Workspace {
                    code: Option[String],
                    workspace: WorkspaceState)(implicit file: FileAccess,
                                               compiler: CompilerAccess): Option[Either[BuildState.BuildErrored, WorkspaceState]] =
-    if (workspace.buildURI.resolve(fileURI) == workspace.buildURI)
+    if (workspace.buildURI.resolve(fileURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
       Workspace.build(
         buildURI = fileURI,
         code = code,
