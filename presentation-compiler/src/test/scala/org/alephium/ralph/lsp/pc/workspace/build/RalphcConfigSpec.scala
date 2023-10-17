@@ -4,8 +4,10 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralphc.Config
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.EitherValues._
 import org.scalatest.TryValues.convertTryToSuccessOrFailure
 
+import java.net.URI
 import java.nio.file.{Files, Paths}
 
 class RalphcConfigSpec extends AnyWordSpec with Matchers {
@@ -45,5 +47,30 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         code = expectedCode,
         config = expectedCompiledConfig
       )
+  }
+
+  "parse" should {
+    "parse workspace build file" in {
+      val build_ralph =
+        """
+          |{
+          |  "compilerOptions": {
+          |    "ignoreUnusedConstantsWarnings": false,
+          |    "ignoreUnusedVariablesWarnings": false,
+          |    "ignoreUnusedFieldsWarnings": false,
+          |    "ignoreUnusedPrivateFunctionsWarnings": false,
+          |    "ignoreUpdateFieldsCheckWarnings": false,
+          |    "ignoreCheckExternalCallerWarnings": false
+          |  },
+          |  "contractPath": "contracts",
+          |  "artifactPath": "artifacts"
+          |}
+          |""".stripMargin
+
+      val expected = RalphcConfig.defaultParsedConfig
+      val actual = RalphcConfig.parse(URI.create(""), build_ralph).value
+
+      actual shouldBe expected
+    }
   }
 }

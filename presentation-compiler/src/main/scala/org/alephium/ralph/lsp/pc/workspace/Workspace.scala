@@ -5,9 +5,8 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, BuildValidator, Build}
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, BuildValidator}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
-import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
