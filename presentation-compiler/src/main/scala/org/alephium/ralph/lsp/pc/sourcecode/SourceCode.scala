@@ -3,6 +3,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.CompilerOptions
 
 import java.net.URI
 import scala.annotation.tailrec
@@ -77,6 +78,31 @@ private[pc] object SourceCode {
         // Return the same state.
         error
     }
+
+  /**
+   * Compile a group of source-code files that are dependant on each other.
+   *
+   * @param sourceCode      Source-code to compile
+   * @param compilerOptions Options to run for this compilation
+   * @param compiler        Target compiler
+   * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
+   */
+  def compile(sourceCode: ArraySeq[SourceCodeState.Parsed],
+              compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.CodeAware]] = {
+    val contractsToCompile =
+      sourceCode.flatMap(_.contracts)
+
+    val compilationResult =
+      compiler.compileContracts(
+        contracts = contractsToCompile,
+        options = compilerOptions
+      )
+
+    SourceCodeStateBuilder.toSourceCodeState(
+      parsedCode = sourceCode,
+      compilationResult = compilationResult
+    )
+  }
 
   private def getSourceCode(fileURI: URI)(implicit file: FileAccess): SourceCodeState.AccessedState =
     file.getSourceCode(fileURI) match {

@@ -193,13 +193,10 @@ object Workspace {
    * Compiles a parsed workspace.
    */
   def compile(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.CompilerRun = {
-    val contractsToCompile =
-      workspace.sourceCode.flatMap(_.contracts)
-
     val compilationResult =
-      compiler.compileContracts(
-        contracts = contractsToCompile,
-        options = workspace.build.config.compilerOptions
+      SourceCode.compile(
+        sourceCode = workspace.sourceCode,
+        compilerOptions = workspace.build.config.compilerOptions
       )
 
     WorkspaceStateBuilder.toWorkspaceState(

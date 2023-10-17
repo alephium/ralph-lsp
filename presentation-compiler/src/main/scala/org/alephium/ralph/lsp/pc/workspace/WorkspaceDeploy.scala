@@ -28,7 +28,7 @@ object WorkspaceDeploy {
 
     WorkspaceStateBuilder.toWorkspaceState(
       currentState = ???,
-      compilationResult = result
+      compilationResult = ???
     )
   }
 
