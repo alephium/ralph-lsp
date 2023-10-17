@@ -262,17 +262,17 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
       if (fileExtension == Build.BUILD_FILE_EXTENSION) {
         // process build change
-        val buildResult =
-          Workspace.buildChanged(
-            fileURI = fileURI,
-            code = code,
-            workspace = currentWorkspace
-          )
-
-        setAndPublishBuildChange(
-          currentWorkspace = currentWorkspace,
-          buildChangeResult = buildResult
-        )
+        Workspace.buildChanged(
+          fileURI = fileURI,
+          code = code,
+          workspace = currentWorkspace
+        ) foreach {
+          buildResult =>
+            setAndPublishBuildChange(
+              currentWorkspace = currentWorkspace,
+              buildChangeResult = buildResult
+            )
+        }
       } else if (fileExtension == CompilerAccess.RALPH_FILE_EXTENSION) {
         // process source code change
         val sourceResult =

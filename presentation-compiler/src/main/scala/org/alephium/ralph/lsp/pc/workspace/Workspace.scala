@@ -217,10 +217,8 @@ object Workspace {
   def buildChanged(fileURI: URI,
                    code: Option[String],
                    workspace: WorkspaceState)(implicit file: FileAccess,
-                                              compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState] = {
-    val fileName = URIUtil.getFileName(fileURI)
-
-    if (fileName == Build.BUILD_FILE_NAME) {
+                                              compiler: CompilerAccess): Option[Either[BuildState.BuildErrored, WorkspaceState]] =
+    if (workspace.buildURI.resolve(fileURI) == workspace.buildURI)
       Workspace.build(
         buildURI = fileURI,
         code = code,
@@ -228,23 +226,17 @@ object Workspace {
       ) match {
         case Some(newBuild) =>
           // this is a new build. initialise a fresh build.
-          initialise(newBuild) map parseAndCompile
+          val result =
+            initialise(newBuild) map parseAndCompile
+
+          Some(result)
 
         case None =>
           // no build change occurred, using existing workspace.
-          Right(workspace)
+          Some(Right(workspace))
       }
-    } else {
-      val buildError =
-        BuildState.BuildErrored(
-          buildURI = workspace.buildURI,
-          code = code,
-          errors = ArraySeq(ErrorBuildFileNotFound)
-        )
-
-      Left(buildError)
-    }
-  }
+    else
+      None // ignore file that is not in the root workspace directory
 
   /**
    * Handles changes to ralph code files.
