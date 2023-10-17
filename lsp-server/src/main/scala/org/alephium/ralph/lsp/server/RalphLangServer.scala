@@ -224,23 +224,40 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         new InitializeResult(serverCapabilities())
     }
 
-  override def didOpen(params: DidOpenTextDocumentParams): Unit =
-    didChange(
-      fileURI = new URI(params.getTextDocument.getUri),
-      code = Some(params.getTextDocument.getText)
-    )
+  override def didOpen(params: DidOpenTextDocumentParams): Unit = {
+    val fileURI = new URI(params.getTextDocument.getUri)
+    val code = Some(params.getTextDocument.getText)
 
-  override def didChange(params: DidChangeTextDocumentParams): Unit =
-    didChange(
-      fileURI = new URI(params.getTextDocument.getUri),
-      code = Some(params.getContentChanges.get(0).getText)
-    )
+    logger.debug(s"didOpen. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
-  override def didClose(params: DidCloseTextDocumentParams): Unit =
     didChange(
-      fileURI = new URI(params.getTextDocument.getUri),
+      fileURI = fileURI,
+      code = code
+    )
+  }
+
+  override def didChange(params: DidChangeTextDocumentParams): Unit = {
+    val fileURI = new URI(params.getTextDocument.getUri)
+    val code = Some(params.getContentChanges.get(0).getText)
+
+    logger.debug(s"didChange. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
+
+    didChange(
+      fileURI = fileURI,
+      code = code
+    )
+  }
+
+  override def didClose(params: DidCloseTextDocumentParams): Unit = {
+    val fileURI = new URI(params.getTextDocument.getUri)
+
+    logger.debug(s"didClose. fileURI: $fileURI")
+
+    didChange(
+      fileURI = fileURI,
       code = None
     )
+  }
 
   override def didSave(params: DidSaveTextDocumentParams): Unit =
     ()
