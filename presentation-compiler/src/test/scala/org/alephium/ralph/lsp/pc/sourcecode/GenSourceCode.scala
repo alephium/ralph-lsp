@@ -1,126 +1,80 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.{CompiledContract, CompiledScript}
-import org.alephium.ralph.Ast.ContractWithState
+import org.alephium.ralph.lsp.FileIO
 import org.alephium.ralph.lsp.GenCommon._
-import org.alephium.ralph.lsp.access.compiler.message.error.StringError
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, GenBuild}
 import org.scalacheck.Gen
 
 import java.net.URI
-import scala.util.Random
+import java.nio.file.Paths
 
 /**
  * Implements generators for [[SourceCode]] & [[SourceCodeState]] related data-types.
  */
 object GenSourceCode {
 
-  def genCompiledCode(): Gen[Seq[Either[CompiledContract, CompiledScript]]] =
-    Gen.const(Seq.empty) // TODO: generate these
+  def genOnDisk(fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.OnDisk] =
+    fileURI map SourceCodeState.OnDisk
 
-  def genParsedContracts(): Gen[Seq[ContractWithState]] =
-    Gen.const(Seq.empty) // TODO: generate these
-
-  def genOnDisk(): Gen[SourceCodeState.OnDisk] =
+  /** */
+  def genOnDiskForRoot(rootURI: Gen[URI] = genFolderURI()): Gen[SourceCodeState.OnDisk] =
     for {
-      fileURI <- genFileURI()
+      rootURI <- rootURI
+      workspacePath = Gen.const(Paths.get(rootURI))
+      fileURI = genFileURI(rootFolder = workspacePath)
+      sourceCode <- GenSourceCode.genOnDisk(fileURI)
     } yield
-      SourceCodeState.OnDisk(
-        fileURI = fileURI
-      )
+      sourceCode
 
-  def genUnCompiled(code: Gen[String] = genCode): Gen[SourceCodeState.UnCompiled] =
+  /** Generate random source files within the build's [[BuildState.BuildParsed.config.contractPath]] */
+  def genOnDiskForBuild(build: Gen[BuildState.BuildParsed] = GenBuild.genBuildParsed()): Gen[SourceCodeState.OnDisk] =
     for {
-      fileURI <- genFileURI()
+      build <- build
+      workspacePath = Gen.const(Paths.get(build.workspaceURI.resolve(build.config.contractPath)))
+      fileURI = genFileURI(rootFolder = workspacePath)
+      sourceCode <- GenSourceCode.genOnDisk(fileURI)
+    } yield
+      sourceCode
+
+  def genUnCompiled(code: Gen[String] = genGoodCode(),
+                    fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.UnCompiled] =
+    for {
       code <- code
+      fileURI <- fileURI
     } yield
       SourceCodeState.UnCompiled(
         fileURI = fileURI,
         code = code
       )
 
-  def genCompiled(code: Gen[String] = genCode): Gen[SourceCodeState.Compiled] =
-    for {
-      fileURI <- genFileURI()
-      code <- code
-      compiledCode <- genCompiledCode()
-      parsedState <- genParsed()
-    } yield
-      SourceCodeState.Compiled(
-        fileURI = fileURI,
-        code = code,
-        compiledCode = compiledCode,
-        parsed = parsedState
-      )
-
-  def genParsed(code: Gen[String] = genCode): Gen[SourceCodeState.Parsed] =
-    for {
-      fileURI <- genFileURI()
-      code <- code
-    } yield
-      SourceCodeState.Parsed(
-        fileURI = fileURI,
-        code = code,
-        contracts = Seq.empty // TODO: generate these
-      )
-
-  def genParsedOrCompiled(code: Gen[String] = genCode): Gen[SourceCodeState.ParsedState] =
+  def genInitialised(code: Gen[String] = genGoodCode(),
+                     fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.Initialised] =
     Gen.oneOf(
-      genParsed(code),
-      genCompiled(code)
+      genOnDisk(fileURI),
+      genUnCompiled(code, fileURI)
     )
 
-  def genErrorSource(code: Gen[String] = genCode): Gen[SourceCodeState.ErrorSource] =
-    for {
-      fileURI <- genFileURI()
-      code <- code
-      errors <- genErrors(code)
-      parsed <- Gen.option(genParsed(Gen.const(code)))
-    } yield
-      SourceCodeState.ErrorSource(
-        fileURI = fileURI,
-        code = code,
-        errors = errors,
-        previous = parsed
-      )
+  def persist[S <: SourceCodeState](sourceCode: S,
+                                    code: Gen[String] = genGoodCode()): S =
+    sourceCode match {
+      case aware: SourceCodeState.CodeAware =>
+        FileIO.write(aware.code, aware.fileURI)
+        sourceCode
 
-  /** Failed access state only */
-  def genFailedAccess(fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.ErrorAccess] =
-    for {
-      fileURI <- fileURI
-      errorMessage <- Gen.alphaStr
-    } yield
-      SourceCodeState.ErrorAccess(
-        fileURI = fileURI,
-        error = StringError(errorMessage) // TODO: Call a generator
-      )
+      case aware: SourceCodeState =>
+        FileIO.write(code.sample.get, aware.fileURI)
+        sourceCode
+    }
 
-  /** Either one of the failed source-code states */
-  def genFailed(code: Gen[String] = genCode): Gen[SourceCodeState.FailedState] =
-    Gen.oneOf(
-      genErrorSource(code),
-      genFailedAccess()
-    )
+  def persistAll[I <: Iterable[SourceCodeState]](sourceCode: I,
+                                                 code: Gen[String] = genGoodCode()): I = {
+    sourceCode foreach (persist(_, code))
+    sourceCode
+  }
 
-  /** Generate any one of all source-code states */
-  def genSourceCode(): Gen[SourceCodeState] =
-    Gen.oneOf(
-      genOnDisk(),
-      genUnCompiled(),
-      genFailed(),
-      genParsed(),
-      genCompiled(),
-    )
+  def delete(sourceCode: SourceCodeState): Unit =
+    FileIO.delete(sourceCode.fileURI)
 
-  /** Must contain at least on errored SourceCode in the Workspace */
-  def genAtLeastOneFailed(): Gen[List[SourceCodeState]] =
-    for {
-      sourceCodes <- Gen.listOf(genSourceCode())
-      erroredCode <- Gen.nonEmptyListOf(GenSourceCode.genFailed())
-    } yield Random.shuffle(sourceCodes ++ erroredCode)
-
-  def genParsedOrCompiledWithAtLeastOneFailed(): Gen[List[SourceCodeState]] =
-    for {
-      goodCode <- Gen.listOf(genParsedOrCompiled())
-      erroredCode <- Gen.nonEmptyListOf(GenSourceCode.genFailed())
-    } yield Random.shuffle(goodCode ++ erroredCode)
+  def deleteAll(sourceCode: Iterable[SourceCodeState]): Unit =
+    sourceCode foreach delete
 }

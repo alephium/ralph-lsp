@@ -1,9 +1,10 @@
 package org.alephium.ralph.lsp
 
+import org.scalatest.matchers.should.Matchers._
+
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
-import org.scalatest.matchers.should.Matchers._
 
 /**
  * Convenient File IO functions for test-cases.

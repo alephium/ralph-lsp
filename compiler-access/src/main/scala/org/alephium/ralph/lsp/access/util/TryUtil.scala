@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.access.compiler.message.error._
 
 object TryUtil {
 
+  /** Catch all exceptions thrown by `ralphc` and file-io */
   def catchAllThrows[T]: PartialFunction[Throwable, Either[CompilerMessage.AnyError, T]] = {
     case error: FormattableError =>
       Left(FormattedError(error))
