@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild

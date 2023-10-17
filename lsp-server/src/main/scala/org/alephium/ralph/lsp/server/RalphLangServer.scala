@@ -1,7 +1,8 @@
 package org.alephium.ralph.lsp.server
 
 import com.typesafe.scalalogging.StrictLogging
-import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.completion.CodeCompleter
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
@@ -30,7 +31,8 @@ object RalphLangServer {
 
   /** Start server with pre-configured client */
   def apply(client: RalphLangClient,
-            listener: JFuture[Void])(implicit compiler: CompilerAccess): RalphLangServer = {
+            listener: JFuture[Void])(implicit compiler: CompilerAccess,
+                                     file: FileAccess): RalphLangServer = {
     val initialState =
       ServerState(
         client = Some(client),
@@ -42,7 +44,8 @@ object RalphLangServer {
     new RalphLangServer(initialState)
   }
 
-  def apply()(implicit compiler: CompilerAccess): RalphLangServer =
+  def apply()(implicit compiler: CompilerAccess,
+              file: FileAccess): RalphLangServer =
     new RalphLangServer(
       ServerState(
         client = None,
@@ -66,7 +69,8 @@ object RalphLangServer {
  * This class is the only one with mutable state in this repo.
  * All mutable state management occurs here.
  */
-class RalphLangServer private(@volatile private var state: ServerState)(implicit compiler: CompilerAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictLogging {
+class RalphLangServer private(@volatile private var state: ServerState)(implicit compiler: CompilerAccess,
+                                                                        file: FileAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictLogging {
 
   def getState(): ServerState =
     this.state

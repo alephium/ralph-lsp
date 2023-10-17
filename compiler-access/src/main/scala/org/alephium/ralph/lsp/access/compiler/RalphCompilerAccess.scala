@@ -1,18 +1,15 @@
-package org.alephium.ralph.lsp.compiler
+package org.alephium.ralph.lsp.access.compiler
 
 import fastparse.Parsed
 import org.alephium.api.model.CompileProjectResult
 import org.alephium.ralph._
-import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.compiler.message.error._
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.error._
+import org.alephium.ralph.lsp.access.util.TryUtil
 import org.alephium.ralphc.{Config, MetaInfo, Compiler => RalphC}
 
 import java.net.URI
-import java.nio.file.{Files, Paths}
 import scala.collection.mutable
-import scala.io.Source
-import scala.util.{Failure, Success, Using}
 
 /**
  * Implements ralph parsing and compilation functions accessing the `ralphc`.
@@ -23,35 +20,6 @@ import scala.util.{Failure, Success, Using}
 
 private object RalphCompilerAccess extends CompilerAccess {
 
-  override def sourceExists(fileURI: URI): Either[CompilerMessage.AnyError, Boolean] =
-    try
-      Right(Files.exists(Paths.get(fileURI)))
-    catch {
-      case throwable: Throwable =>
-        Left(ThrowableError(throwable))
-    }
-
-  def getSourceFiles(workspaceURI: URI): Either[CompilerMessage.AnyError, Seq[URI]] =
-    try {
-      val uris =
-        RalphC
-          .getSourceFiles(
-            path = Paths.get(workspaceURI),
-            ext = s".${CompilerAccess.RALPH_FILE_EXTENSION}"
-          ).map(_.toUri)
-
-      Right(uris)
-    } catch catchAllThrows
-
-  override def getSourceCode(fileURI: URI): Either[CompilerMessage.AnyError, String] =
-    Using(Source.fromFile(fileURI))(_.mkString) match {
-      case Failure(exception) =>
-        catchAllThrows(exception)
-
-      case Success(code) =>
-        Right(code)
-    }
-
   def parseContracts(code: String): Either[CompilerMessage.AnyError, Seq[Ast.ContractWithState]] =
     try
       fastparse.parse(code, StatefulParser.multiContract(_)) match {
@@ -61,7 +29,7 @@ private object RalphCompilerAccess extends CompilerAccess {
         case failure: Parsed.Failure =>
           Left(FastParseError(failure))
       }
-    catch catchAllThrows
+    catch TryUtil.catchAllThrows
 
   def compileContracts(contracts: Seq[Ast.ContractWithState],
                        options: CompilerOptions): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
@@ -81,7 +49,7 @@ private object RalphCompilerAccess extends CompilerAccess {
         extendedContracts.genStatefulScripts()(options)
 
       Right((statefulContracts.toArray, statefulScripts.toArray))
-    } catch catchAllThrows
+    } catch TryUtil.catchAllThrows
 
   override def compileForDeployment(workspaceURI: URI,
                                     config: Config): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
@@ -94,7 +62,7 @@ private object RalphCompilerAccess extends CompilerAccess {
         case Right(result) =>
           Right(buildSuccessfulCompilation(result, ralphc.metaInfos))
       }
-    } catch catchAllThrows
+    } catch TryUtil.catchAllThrows
 
   private def buildSuccessfulCompilation(result: CompileProjectResult,
                                          metaInfos: mutable.Map[String, MetaInfo]): (Array[CompiledContract], Array[CompiledScript]) = {
@@ -124,16 +92,5 @@ private object RalphCompilerAccess extends CompilerAccess {
       .getParent
       .resolve(s"${metaInfo.name}.ral")
       .toUri
-
-  private def catchAllThrows[T]: PartialFunction[Throwable, Either[CompilerMessage.AnyError, T]] = {
-    case error: FormattableError =>
-      Left(FormattedError(error))
-
-    case error: org.alephium.ralph.Compiler.Error =>
-      Left(NativeError(error))
-
-    case error: Throwable =>
-      Left(ThrowableError(error))
-  }
 
 }

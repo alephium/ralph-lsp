@@ -1,7 +1,8 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.file.FileAccess
 
 import java.net.URI
 import scala.annotation.tailrec
@@ -13,8 +14,8 @@ import scala.collection.immutable.ArraySeq
 private[pc] object SourceCode {
 
   /** Collects paths of all ralph files on disk */
-  def initialise(workspaceURI: URI)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.OnDisk]] =
-    compiler
+  def initialise(workspaceURI: URI)(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.OnDisk]] =
+    file
       .getSourceFiles(workspaceURI)
       .map(_.map(SourceCodeState.OnDisk).to(ArraySeq))
 
@@ -26,7 +27,8 @@ private[pc] object SourceCode {
    * @return New source code state
    */
   @tailrec
-  def parse(sourceState: SourceCodeState)(implicit compiler: CompilerAccess): SourceCodeState =
+  def parse(sourceState: SourceCodeState)(implicit file: FileAccess,
+                                          compiler: CompilerAccess): SourceCodeState =
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
         compiler.parseContracts(code) match {
@@ -76,8 +78,8 @@ private[pc] object SourceCode {
         error
     }
 
-  private def getSourceCode(fileURI: URI)(implicit compiler: CompilerAccess): SourceCodeState.AccessedState =
-    compiler.getSourceCode(fileURI) match {
+  private def getSourceCode(fileURI: URI)(implicit file: FileAccess): SourceCodeState.AccessedState =
+    file.getSourceCode(fileURI) match {
       case Left(error) =>
         SourceCodeState.ErrorAccess(fileURI, error)
 

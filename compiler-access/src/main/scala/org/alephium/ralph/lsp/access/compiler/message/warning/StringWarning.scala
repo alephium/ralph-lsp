@@ -1,6 +1,7 @@
-package org.alephium.ralph.lsp.compiler.message.warning
+package org.alephium.ralph.lsp.access.compiler.message.warning
 
-import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 
 /**
  * String warning reported by `ralphc` not containing source-location information.

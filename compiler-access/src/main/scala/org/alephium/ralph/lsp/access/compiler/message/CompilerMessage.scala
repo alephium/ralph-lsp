@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.compiler.message
+package org.alephium.ralph.lsp.access.compiler.message
 
 import org.alephium.ralph.error.CompilerError.FormattableError
 

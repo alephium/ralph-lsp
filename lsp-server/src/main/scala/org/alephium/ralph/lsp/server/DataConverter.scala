@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.server
 
 import fastparse.IndexedParserInput
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.completion.Suggestion
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState

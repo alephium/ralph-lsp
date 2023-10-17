@@ -1,6 +1,6 @@
-package org.alephium.ralph.lsp.compiler.message.error
+package org.alephium.ralph.lsp.access.compiler.message.error
 
-import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 
 /**
  * Errors due to thrown exceptions.

@@ -1,7 +1,8 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.GenCommon._
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
@@ -21,6 +22,9 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
           initialWorkspace =>
             implicit val compiler: CompilerAccess =
               null // compiler does not get accessed
+
+            implicit val file: FileAccess =
+              null // files do not get accessed
 
             val actualWorkspace =
               Workspace.parse(initialWorkspace)
@@ -44,8 +48,11 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
         "access to source-code fails" in {
           forAll(generator) {
             initialWorkspace =>
+              implicit val file: FileAccess =
+                mock[FileAccess]
+
               implicit val compiler: CompilerAccess =
-                mock[CompilerAccess]
+                null
 
               val expectedSourceCode =
                 initialWorkspace.sourceCode map {
@@ -59,7 +66,7 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
 
                     // expect the compiler to get a request to read sourceCode for each OnDisk file once
                     // return an error for each call
-                    (compiler.getSourceCode _)
+                    (file.getSourceCode _)
                       .expects(currentState.fileURI)
                       .returns(Left(expectedState.error)) // return an error
                       .once() // called only once
@@ -89,6 +96,9 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
               implicit val compiler: CompilerAccess =
                 mock[CompilerAccess]
 
+              implicit val file: FileAccess =
+                mock[FileAccess]
+
               val expectedSourceCode =
                 initialWorkspace.sourceCode map {
                   case currentState: SourceCodeState.OnDisk =>
@@ -105,7 +115,7 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
                     // this happens in order
                     inOrder(
                       // initially, code gets read from disk
-                      (compiler.getSourceCode _)
+                      (file.getSourceCode _)
                         .expects(currentState.fileURI)
                         .returns(Right(expectedState.code)) // code read!
                         .once(),
@@ -150,6 +160,10 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
             implicit val compiler: CompilerAccess =
               null
 
+            // files do not get accessed
+            implicit val file: FileAccess =
+              null
+
             val actualWorkspace =
               Workspace.parse(initialWorkspace)
 
@@ -181,15 +195,17 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
 
         forAll(generator) {
           initialWorkspace =>
-            // compiler does not get accessed
             implicit val compiler: CompilerAccess =
-              mock[CompilerAccess]
+              null
+
+            implicit val file: FileAccess =
+              mock[FileAccess]
 
             val expectedSourceCode =
               initialWorkspace.sourceCode map {
                 case error: SourceCodeState.ErrorAccess =>
                   // only the files that failed access would get a single re-try from the compiler.
-                  (compiler.getSourceCode _)
+                  (file.getSourceCode _)
                     .expects(error.fileURI)
                     .returns(Left(error.error))
                     .once()

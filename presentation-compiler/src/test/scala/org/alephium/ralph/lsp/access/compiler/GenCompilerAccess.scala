@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.compiler
+package org.alephium.ralph.lsp.access.compiler
 
 import java.nio.file.Path
 

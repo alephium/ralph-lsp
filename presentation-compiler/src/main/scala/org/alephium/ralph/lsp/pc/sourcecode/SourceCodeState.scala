@@ -2,8 +2,8 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.{CompiledContract, CompiledScript}
 import org.alephium.ralph.Ast.ContractWithState
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.compiler.message.warning.StringWarning
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.warning.StringWarning
 
 import java.net.URI
 

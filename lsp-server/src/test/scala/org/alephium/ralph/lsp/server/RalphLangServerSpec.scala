@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.server
 
-import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.eclipse.lsp4j.{InitializeParams, InitializeResult}
 import org.scalamock.scalatest.MockFactory
@@ -16,6 +17,9 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
     "set server workspaces and respond with capabilities" in {
       implicit val compiler: CompilerAccess =
         CompilerAccess.ralphc
+
+      implicit val file: FileAccess =
+        FileAccess.disk
 
       val client = mock[RalphLangClient]
       val listener = CompletableFuture.runAsync(() => ())

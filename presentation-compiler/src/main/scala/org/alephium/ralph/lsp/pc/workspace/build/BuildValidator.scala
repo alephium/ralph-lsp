@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
-import org.alephium.ralph.lsp.compiler.message.error.ThrowableError
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.error.ThrowableError
 import org.alephium.ralph.lsp.pc.util.{FileIO, URIUtil}
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._

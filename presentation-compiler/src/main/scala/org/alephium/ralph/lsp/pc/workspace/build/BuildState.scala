@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.{RalphcCompiledConfig, RalphcParsedConfig}
 
 import java.net.URI

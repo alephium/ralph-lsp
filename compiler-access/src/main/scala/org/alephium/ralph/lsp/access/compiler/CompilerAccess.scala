@@ -1,7 +1,7 @@
-package org.alephium.ralph.lsp.compiler
+package org.alephium.ralph.lsp.access.compiler
 
 import org.alephium.ralph.{Ast, CompiledContract, CompiledScript, CompilerOptions}
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralphc.Config
 
 import java.net.URI
@@ -15,29 +15,12 @@ object CompilerAccess {
 
 /**
  * Defines functions that perform compiler specific IO operation.
+ *
+ * @note These functions are mostly in-memory operation and do not
+ *       perform file-io.
+ * @see [[org.alephium.ralph.lsp.access.file.FileAccess]] for file-io.
  */
 trait CompilerAccess {
-
-  /**
-   * Checks if a source-file exists.
-   *
-   * @param fileURI source-file location
-   */
-  def sourceExists(fileURI: URI): Either[CompilerMessage.AnyError, Boolean]
-
-  /**
-   * Fetch all workspace source file locations.
-   *
-   * @param workspaceURI Project/workspace location.
-   */
-  def getSourceFiles(workspaceURI: URI): Either[CompilerMessage.AnyError, Seq[URI]]
-
-  /**
-   * Fetch the source-code of a file.
-   *
-   * @param fileURI source-code location.
-   */
-  def getSourceCode(fileURI: URI): Either[CompilerMessage.AnyError, String]
 
   /**
    * Runs the parser phase.

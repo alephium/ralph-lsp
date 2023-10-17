@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.GenCommon._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers

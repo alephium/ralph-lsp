@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp
 
-import org.alephium.ralph.lsp.compiler.CompilerAccess.RALPH_FILE_EXTENSION
-import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
-import org.alephium.ralph.lsp.compiler.message.error.StringError
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess.RALPH_FILE_EXTENSION
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.error.StringError
 import org.scalacheck.Gen
 
 import java.net.URI

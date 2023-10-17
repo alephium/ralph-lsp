@@ -1,9 +1,10 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
 import org.alephium.ralph.lsp.GenCommon._
-import org.alephium.ralph.lsp.compiler.message.error.StringError
+import org.alephium.ralph.lsp.access.compiler.message.error.StringError
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -18,11 +19,11 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
     "fetch all source file names" in {
       forAll(genFolderAndFileURIs()) {
         case (folder, fileURIs) =>
-          implicit val compiler: CompilerAccess =
-            mock[CompilerAccess]
+          implicit val file: FileAccess =
+            mock[FileAccess]
 
           // compiler is access to fetch the source files from disk
-          (compiler.getSourceFiles _)
+          (file.getSourceFiles _)
             .expects(folder)
             .returns(Right(fileURIs))
             .once()
@@ -42,6 +43,9 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
     "not access compiler" when {
       // compiler should not get accessed
       def testNoCompilerAccess(currentState: SourceCodeState) = {
+        implicit val file: FileAccess =
+          null
+
         implicit val compiler: CompilerAccess =
           null
 
@@ -90,6 +94,9 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
         val expectedError =
           StringError("some error")
 
+        implicit val file: FileAccess =
+          null
+
         implicit val compiler: CompilerAccess =
           mock[CompilerAccess]
 
@@ -121,8 +128,13 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
       "existing failed state, returns another failed state for unable to access file on disk" in {
         forAll(genFailedAccess()) {
           failedAccessState =>
+            // access file fails because it does not exists
+            implicit val file: FileAccess =
+              FileAccess.disk
+
+            // compiler does not get accessed
             implicit val compiler: CompilerAccess =
-              CompilerAccess.ralphc
+              null
 
             // the fileURI does not exists, so expect a failed state.
             val newState = SourceCode.parse(failedAccessState)
@@ -138,13 +150,16 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
       "failed access state returns a success" in {
         forAll(genFailedAccess()) {
           failedState =>
+            implicit val file: FileAccess =
+              mock[FileAccess]
+
             implicit val compiler: CompilerAccess =
               mock[CompilerAccess]
 
             val code = "some code"
 
             // Code is read from disk (once)
-            (compiler.getSourceCode _)
+            (file.getSourceCode _)
               .expects(failedState.fileURI)
               .returns(Right(code))
               .once()
@@ -175,6 +190,10 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
           failedState =>
             // compiler does not get accessed
             implicit val compiler: CompilerAccess =
+              null
+
+            // files do not get accessed
+            implicit val file: FileAccess =
               null
 
             val newState = SourceCode.parse(failedState)

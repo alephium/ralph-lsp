@@ -1,8 +1,9 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.workspace.GenWorkspace._
 import org.alephium.ralph.lsp.GenCommon._
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.scalacheck.Gen
@@ -24,12 +25,12 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
       "start workspace in un-compiled state" in {
         forAll(genBuildCompiled(), Gen.listOf(genFileURI())) {
           case (build, fileURIs) =>
-            implicit val compiler: CompilerAccess =
-              mock[CompilerAccess]
+            implicit val file: FileAccess =
+              mock[FileAccess]
 
             // expect the compiler to get a request to fetch files
             // from the configured contract path.
-            (compiler.getSourceFiles _)
+            (file.getSourceFiles _)
               .expects(build.contractURI)
               .returns(Right(fileURIs)) // return files successfully fetched
               .once() // called only once
@@ -54,12 +55,12 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
       "report the error" in {
         forAll(genBuildCompiled(), genError()) {
           case (build, error) =>
-            implicit val compiler: CompilerAccess =
-              mock[CompilerAccess]
+            implicit val file: FileAccess =
+              mock[FileAccess]
 
             // expect the compiler to get a request to fetch files
             // from the configured contract path.
-            (compiler.getSourceFiles _)
+            (file.getSourceFiles _)
               .expects(build.contractURI)
               .returns(Left(error)) // return an error
               .once() // called only once

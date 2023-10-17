@@ -1,8 +1,8 @@
-package org.alephium.ralph.lsp.compiler.message.error
+package org.alephium.ralph.lsp.access.compiler.message.error
 
 import fastparse.Parsed
 import org.alephium.ralph.error.CompilerError
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 
 object FastParseError {
 
