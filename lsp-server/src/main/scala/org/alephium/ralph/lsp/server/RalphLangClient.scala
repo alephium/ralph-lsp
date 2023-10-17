@@ -8,9 +8,9 @@ import org.eclipse.lsp4j.services.LanguageClient
 
 import java.net.URI
 
-/** Implements functions that are an extension to LSP4J's [[LanguageClient]]. */
 object RalphLangClient {
 
+  /** Implements functions that are an extension to LSP4J's [[LanguageClient]]. */
   implicit class RalphLangClientExtension(val client: RalphLangClient) extends AnyVal {
 
     def log(error: ResponseError): ResponseError = {
@@ -34,11 +34,12 @@ object RalphLangClient {
 
     /** Publish IDE messages given the workspace previous and newer states */
     def publish(currentWorkspace: WorkspaceState.SourceAware,
-                newWorkspace: Iterable[WorkspaceState.SourceAware]): Unit =
-      toPublishDiagnotics(currentWorkspace, newWorkspace) foreach {
+                newWorkspace: Option[WorkspaceState.SourceAware]): Unit =
+      toPublishDiagnotics(
+        previousState = currentWorkspace,
+        nextState = newWorkspace
+      ) foreach {
         diagnostic =>
-          // TODO: Isn't there a way in LSP to send all
-          //       diagnotics to the client in a single request?
           client.publishDiagnostics(diagnostic)
       }
   }

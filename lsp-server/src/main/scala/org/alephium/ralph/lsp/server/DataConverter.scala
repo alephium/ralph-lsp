@@ -125,37 +125,44 @@ object DataConverter {
   }
 
   /**
-   * Builds diagnostics to publish, clearing older fixed errors or warnings.
+   * Builds diagnostics to publish, clearing older resolved errors or warnings.
    *
    * @param previousState Oldest state
-   * @param newerStates   Newer states.
-   *                      Set to empty if previousState is the only state.
+   * @param nextState     Newer state.
+   *                      Set to [[None]] if previousState is the only state.
    * @return Diagnostics to publish.
    */
   def toPublishDiagnotics(previousState: WorkspaceState.SourceAware,
-                          newerStates: Iterable[WorkspaceState.SourceAware]): Iterable[PublishDiagnosticsParams] =
-    newerStates.foldLeft(toPublishDiagnostics(previousState)) {
-      case (previous, next) =>
-        val nextDiagnostics = toPublishDiagnostics(next)
+                          nextState: Option[WorkspaceState.SourceAware]): Iterable[PublishDiagnosticsParams] = {
+    val previousDiagnostics =
+      toPublishDiagnostics(previousState)
 
-        val diagnosticsToClear =
-          previous.foldLeft(Seq.empty[PublishDiagnosticsParams]) {
-            case (diagToClear, previous) =>
+    nextState match {
+      case Some(nextState) =>
+        val nextDiagnostics =
+          toPublishDiagnostics(nextState)
+
+        val resolvedDiagnostics =
+          previousDiagnostics.foldLeft(Seq.empty[PublishDiagnosticsParams]) {
+            case (resolved, previous) =>
               nextDiagnostics.find(_.getUri == previous.getUri) match {
                 case Some(_) =>
                   // next diagnostics contains messages for this URI.
-                  diagToClear
+                  resolved
 
                 case None =>
                   // next diagnostics does not contain messages for this URI, create an entry to clear it.
-                  val clearDiag = new PublishDiagnosticsParams(previous.getUri, util.Arrays.asList())
-                  diagToClear :+ clearDiag
+                  val resolvedDiagnostics = new PublishDiagnosticsParams(previous.getUri, util.Arrays.asList())
+                  resolved :+ resolvedDiagnostics
               }
           }
 
-        // all messages to publish.
-        nextDiagnostics ++ diagnosticsToClear
+        resolvedDiagnostics ++ nextDiagnostics
+
+      case None =>
+        previousDiagnostics
     }
+  }
 
   def toCompletionList(suggestions: Array[Suggestion]): CompletionList = {
     val items = new util.ArrayList[CompletionItem]()
