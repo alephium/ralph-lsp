@@ -36,7 +36,7 @@ object RalphLangClient {
     def publish(currentWorkspace: WorkspaceState.SourceAware,
                 newWorkspace: Option[WorkspaceState.SourceAware]): Unit =
       toPublishDiagnotics(
-        previousState = currentWorkspace,
+        previousOrCurrentState = currentWorkspace,
         nextState = newWorkspace
       ) foreach {
         diagnostic =>

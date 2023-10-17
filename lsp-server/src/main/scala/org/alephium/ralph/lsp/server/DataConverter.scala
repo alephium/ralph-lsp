@@ -10,6 +10,7 @@ import org.eclipse.lsp4j._
 
 import java.net.URI
 import java.util
+import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
 /** Implements functions that transform internal types to LSP4J types */
@@ -125,42 +126,45 @@ object DataConverter {
   }
 
   /**
-   * Builds diagnostics to publish, clearing older resolved errors or warnings.
+   * Build diagnostics to publish and clear older resolved errors or warnings.
    *
-   * @param previousState Oldest state
-   * @param nextState     Newer state.
-   *                      Set to [[None]] if previousState is the only state.
-   * @return Diagnostics to publish.
+   * @param previousOrCurrentState Previous state or the current state if this is the first run.
+   * @param nextState              Newest state.
+   *                               Set to [[None]] if previousState is the only state.
+   * @return Diagnostics to publish for the current state.
    */
-  def toPublishDiagnotics(previousState: WorkspaceState.SourceAware,
+  def toPublishDiagnotics(previousOrCurrentState: WorkspaceState.SourceAware,
                           nextState: Option[WorkspaceState.SourceAware]): Iterable[PublishDiagnosticsParams] = {
-    val previousDiagnostics =
-      toPublishDiagnostics(previousState)
+    // build diagnostics sent for previous state, or the current state if this is the first run.
+    val previousOrCurrentDiagnotics =
+      toPublishDiagnostics(previousOrCurrentState)
 
     nextState match {
       case Some(nextState) =>
-        val nextDiagnostics =
+        // diagnostics to send for the current run
+        val newDiagnostics =
           toPublishDiagnostics(nextState)
 
+        // Collects diagnostics published in previous run that are now resolved.
         val resolvedDiagnostics =
-          previousDiagnostics.foldLeft(Seq.empty[PublishDiagnosticsParams]) {
-            case (resolved, previous) =>
-              nextDiagnostics.find(_.getUri == previous.getUri) match {
-                case Some(_) =>
-                  // next diagnostics contains messages for this URI.
-                  resolved
+          ListBuffer.empty[PublishDiagnosticsParams]
 
-                case None =>
-                  // next diagnostics does not contain messages for this URI, create an entry to clear it.
-                  val resolvedDiagnostics = new PublishDiagnosticsParams(previous.getUri, util.Arrays.asList())
-                  resolved :+ resolvedDiagnostics
-              }
-          }
+        // build diagnostics that are resolved
+        previousOrCurrentDiagnotics foreach {
+          previous =>
+            if (!newDiagnostics.exists(_.getUri == previous.getUri)) {
+              // build a diagnostic to clear old published diagnostics
+              val resolved = new PublishDiagnosticsParams(previous.getUri, util.Arrays.asList())
+              resolvedDiagnostics addOne resolved
+            }
+        }
 
-        resolvedDiagnostics ++ nextDiagnostics
+        // all diagnostics to publish for this run
+        resolvedDiagnostics ++ newDiagnostics
 
       case None =>
-        previousDiagnostics
+        // there is no next state, therefore this is the first run
+        previousOrCurrentDiagnotics
     }
   }
 
