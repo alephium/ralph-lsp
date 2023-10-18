@@ -289,9 +289,9 @@ object DiagnosticsConverter {
     new PublishDiagnosticsParams(fileURI.toString, diagnostics.asJava)
   }
 
-  /** Convert publish-diagnostics to document-diagnostics. */
+  /** Converts publish-diagnostics to document-diagnostics. */
   def toRelatedFullDocumentDiagnosticReport(diagnostics: Iterable[PublishDiagnosticsParams]): RelatedFullDocumentDiagnosticReport = {
-    val javaMap =
+    val relatedDocuments =
       new util.HashMap[String, messages.Either[FullDocumentDiagnosticReport, UnchangedDocumentDiagnosticReport]]()
 
     // convert individual diagnostics to full-document-diagnostics.
@@ -299,11 +299,11 @@ object DiagnosticsConverter {
       diagnostic =>
         val report = new FullDocumentDiagnosticReport(diagnostic.getDiagnostics)
         val eitherReport = messages.Either.forLeft[FullDocumentDiagnosticReport, UnchangedDocumentDiagnosticReport](report)
-        javaMap.put(diagnostic.getUri, eitherReport)
+        relatedDocuments.put(diagnostic.getUri, eitherReport)
     }
 
     val fullReport = new RelatedFullDocumentDiagnosticReport()
-    fullReport.setRelatedDocuments(javaMap)
+    fullReport.setRelatedDocuments(relatedDocuments)
     fullReport
   }
 
