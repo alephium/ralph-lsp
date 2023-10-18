@@ -18,115 +18,6 @@ import scala.jdk.CollectionConverters.SeqHasAsJava
 /** Implements functions that transform internal types to LSP4J types */
 object ServerDiagnostics {
 
-  /** Convert Ralph's FormattableError to lsp4j's Diagnostic */
-  def toDiagnostic(code: Option[String],
-                   message: CompilerMessage,
-                   severity: DiagnosticSeverity): Diagnostic = {
-    val range =
-      code match {
-        case Some(code) =>
-          val fastParseLineNumber = IndexedParserInput(code).prettyIndex(message.index.index)
-          val sourcePosition = SourcePosition.parse(fastParseLineNumber)
-
-          val start = new Position(sourcePosition.rowIndex, sourcePosition.colIndex)
-          val end = new Position(sourcePosition.rowIndex, sourcePosition.colIndex + message.index.width)
-          new Range(start, end)
-
-        case None =>
-          // If source-code text is not known, then the line-number can't be fetched.
-          // So return this error at file-level with an empty range.
-          new Range(new Position(0, 0), new Position(0, 0))
-      }
-
-    new Diagnostic(range, message.message, severity, "Ralph")
-  }
-
-  def toWorkspaceDiagnostics(workspace: WorkspaceState.SourceAware): PublishDiagnosticsParams = {
-    val workspaceDiagnostics =
-      workspace match {
-        case compiled: WorkspaceState.Errored =>
-          compiled.workspaceErrors map {
-            error =>
-              // These are workspace level errors such as `Compiler.Error`, their source-code information is unknown.
-              toDiagnostic(
-                code = None,
-                message = error,
-                severity = DiagnosticSeverity.Error
-              )
-          }
-
-        case _ =>
-          Seq.empty
-      }
-
-    new PublishDiagnosticsParams(workspace.workspaceURI.toString, workspaceDiagnostics.asJava)
-  }
-
-  def toSourceCodeDiagnostics(state: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] =
-    state.sourceCode collect {
-      case state: SourceCodeState.ErrorSource =>
-        // transform multiple source code errors to diagnostics.
-        val diagnostics =
-          state.errors map {
-            error =>
-              toDiagnostic(
-                code = Some(state.code),
-                message = error,
-                severity = DiagnosticSeverity.Error
-              )
-          }
-
-        new PublishDiagnosticsParams(state.fileURI.toString, diagnostics.asJava)
-
-      case state: SourceCodeState.ErrorAccess =>
-        // transform single source code access error to diagnostics.
-        val diagnostics =
-          toDiagnostic(
-            code = None,
-            message = state.error,
-            severity = DiagnosticSeverity.Error
-          )
-
-        new PublishDiagnosticsParams(state.fileURI.toString, util.Arrays.asList(diagnostics))
-
-      case state: SourceCodeState.Compiled =>
-        // transform source code warning messages to diagnostics.
-        val diagnostics =
-          state.warnings map {
-            warning =>
-              toDiagnostic(
-                code = Some(state.code),
-                message = warning,
-                severity = DiagnosticSeverity.Warning
-              )
-          }
-
-        new PublishDiagnosticsParams(state.fileURI.toString, diagnostics.asJava)
-    }
-
-  def toPublishDiagnostics(workspace: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] = {
-    val sourceCodeDiagnostics = toSourceCodeDiagnostics(workspace)
-    val workspaceDiagnostics = toWorkspaceDiagnostics(workspace)
-    sourceCodeDiagnostics ++ Seq(workspaceDiagnostics)
-  }
-
-  def toPublishDiagnostics(fileURI: URI,
-                           code: Option[String],
-                           errors: List[CompilerMessage.AnyError],
-                           severity: DiagnosticSeverity): PublishDiagnosticsParams = {
-    val diagnostics =
-      errors map {
-        error =>
-          toDiagnostic(
-            code = code,
-            message = error,
-            severity = severity
-          )
-      }
-
-    new PublishDiagnosticsParams(fileURI.toString, diagnostics.asJava)
-  }
-
   def toPublishDiagnostics(currentState: ServerState,
                            newState: ServerState): Iterable[PublishDiagnosticsParams] = {
     val buildDiagnostics =
@@ -286,6 +177,115 @@ object ServerDiagnostics {
         // there is no next state, therefore this is the first run
         previousOrCurrentDiagnotics
     }
+  }
+
+  /** Convert Ralph's FormattableError to lsp4j's Diagnostic */
+  def toDiagnostic(code: Option[String],
+                   message: CompilerMessage,
+                   severity: DiagnosticSeverity): Diagnostic = {
+    val range =
+      code match {
+        case Some(code) =>
+          val fastParseLineNumber = IndexedParserInput(code).prettyIndex(message.index.index)
+          val sourcePosition = SourcePosition.parse(fastParseLineNumber)
+
+          val start = new Position(sourcePosition.rowIndex, sourcePosition.colIndex)
+          val end = new Position(sourcePosition.rowIndex, sourcePosition.colIndex + message.index.width)
+          new Range(start, end)
+
+        case None =>
+          // If source-code text is not known, then the line-number can't be fetched.
+          // So return this error at file-level with an empty range.
+          new Range(new Position(0, 0), new Position(0, 0))
+      }
+
+    new Diagnostic(range, message.message, severity, "Ralph")
+  }
+
+  def toWorkspaceDiagnostics(workspace: WorkspaceState.SourceAware): PublishDiagnosticsParams = {
+    val workspaceDiagnostics =
+      workspace match {
+        case compiled: WorkspaceState.Errored =>
+          compiled.workspaceErrors map {
+            error =>
+              // These are workspace level errors such as `Compiler.Error`, their source-code information is unknown.
+              toDiagnostic(
+                code = None,
+                message = error,
+                severity = DiagnosticSeverity.Error
+              )
+          }
+
+        case _ =>
+          Seq.empty
+      }
+
+    new PublishDiagnosticsParams(workspace.workspaceURI.toString, workspaceDiagnostics.asJava)
+  }
+
+  def toSourceCodeDiagnostics(state: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] =
+    state.sourceCode collect {
+      case state: SourceCodeState.ErrorSource =>
+        // transform multiple source code errors to diagnostics.
+        val diagnostics =
+          state.errors map {
+            error =>
+              toDiagnostic(
+                code = Some(state.code),
+                message = error,
+                severity = DiagnosticSeverity.Error
+              )
+          }
+
+        new PublishDiagnosticsParams(state.fileURI.toString, diagnostics.asJava)
+
+      case state: SourceCodeState.ErrorAccess =>
+        // transform single source code access error to diagnostics.
+        val diagnostics =
+          toDiagnostic(
+            code = None,
+            message = state.error,
+            severity = DiagnosticSeverity.Error
+          )
+
+        new PublishDiagnosticsParams(state.fileURI.toString, util.Arrays.asList(diagnostics))
+
+      case state: SourceCodeState.Compiled =>
+        // transform source code warning messages to diagnostics.
+        val diagnostics =
+          state.warnings map {
+            warning =>
+              toDiagnostic(
+                code = Some(state.code),
+                message = warning,
+                severity = DiagnosticSeverity.Warning
+              )
+          }
+
+        new PublishDiagnosticsParams(state.fileURI.toString, diagnostics.asJava)
+    }
+
+  def toPublishDiagnostics(workspace: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] = {
+    val sourceCodeDiagnostics = toSourceCodeDiagnostics(workspace)
+    val workspaceDiagnostics = toWorkspaceDiagnostics(workspace)
+    sourceCodeDiagnostics ++ Seq(workspaceDiagnostics)
+  }
+
+  def toPublishDiagnostics(fileURI: URI,
+                           code: Option[String],
+                           errors: List[CompilerMessage.AnyError],
+                           severity: DiagnosticSeverity): PublishDiagnosticsParams = {
+    val diagnostics =
+      errors map {
+        error =>
+          toDiagnostic(
+            code = code,
+            message = error,
+            severity = severity
+          )
+      }
+
+    new PublishDiagnosticsParams(fileURI.toString, diagnostics.asJava)
   }
 
   /** Convert publish-diagnostics to document-diagnostics. */
