@@ -71,10 +71,10 @@ object RalphLangServer {
  * All mutable state management occurs here.
  */
 class RalphLangServer private(@volatile private var state: ServerState)(implicit compiler: CompilerAccess,
-                                                                        file: FileAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictLogging {
+                                                                        file: FileAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictLogging { thisServer =>
 
   def getState(): ServerState =
-    this.state
+    thisServer.state
 
   private def getClient(): RalphLangClient =
     state.client getOrElse {
@@ -82,13 +82,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   private def setWorkspace(workspace: WorkspaceState): Unit =
-    this.synchronized {
-      this.state = this.state.copy(workspace = Some(workspace))
+    thisServer.synchronized {
+      thisServer.state = thisServer.state.copy(workspace = Some(workspace))
     }
 
   private def setWorkspaceChange(fileURI: URI,
                                  changeResult: Option[WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
-    this.synchronized {
+    thisServer.synchronized {
       changeResult match {
         case Some(result) =>
           setWorkspaceChange(result)
@@ -105,9 +105,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   private def setWorkspaceChange(changeResult: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
-    this.synchronized {
+    thisServer.synchronized {
       val currentServerState =
-        this.state
+        thisServer.state
 
       val newServerState =
         ServerStateUpdater.workspaceChanged(
@@ -117,7 +117,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
       newServerState match {
         case Some(newState) =>
-          this.state = newState
+          thisServer.state = newState
 
           DiagnosticsConverter.toPublishDiagnostics(
             currentState = currentServerState,
@@ -138,14 +138,14 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    */
   def setInitialState(client: RalphLangClient,
                       listener: () => JFuture[Void]): Unit =
-    this.synchronized {
+    thisServer.synchronized {
       require(state.client.isEmpty, "Client is already set")
       require(state.listener.isEmpty, "Listener is already set")
 
       // Client must be set first, before running the request listener,
       // so that it is available for responding to requests.
-      this.state = state.copy(client = Some(client))
-      this.state = state.copy(listener = Some(listener()))
+      thisServer.state = state.copy(client = Some(client))
+      thisServer.state = state.copy(listener = Some(listener()))
     }
 
   // TODO: If allowed in this phase (maybe? the doc seem to indicate no), access the PresentationCompiler
@@ -272,7 +272,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   private def didChangeAndPublish(fileURI: URI,
                                   code: Option[String]): Unit =
-    this.synchronized {
+    thisServer.synchronized {
       val client = getClient()
 
       didChangeAndSet(
@@ -289,7 +289,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    */
   private def didChangeAndSet(fileURI: URI,
                               code: Option[String]): Iterable[PublishDiagnosticsParams] =
-    this.synchronized {
+    thisServer.synchronized {
       val result =
         Workspace.changed(
           fileURI = fileURI,
@@ -341,7 +341,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * Or else reports any workspace issues.
    */
   def getOrInitWorkspace(): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
-    this.synchronized {
+    thisServer.synchronized {
       getWorkspace() match {
         case sourceAware: WorkspaceState.SourceAware =>
           // already built
