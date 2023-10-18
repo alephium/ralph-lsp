@@ -85,132 +85,43 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   def setWorkspaceChange(fileURI: URI,
-                         currentWorkspace: WorkspaceState,
                          changeResult: Option[WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
-    changeResult match {
-      case Some(result) =>
-        setWorkspaceChange(
-          currentWorkspace = currentWorkspace,
-          change = result
-        )
-
-      case None =>
-        // Means: This fileURI does not belong to this workspace or is of different type.
-        // If this occurs, it's a client configuration error.
-        // File types that are not supported by ralph should not be submitted to this server.
-        val error = ResponseError.UnknownFileType(fileURI)
-        logger.error(error.getMessage, error)
-        getClient().log(error) // notify client
-        throw error.toResponseErrorException
-    }
-
-  def setWorkspaceChange(currentWorkspace: WorkspaceState,
-                         change: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
-    change match {
-      case WorkspaceChangeResult.BuildChanged(buildChangeResult) =>
-        buildChangeResult match {
-          case Some(buildResult) =>
-            setBuildChange(
-              currentWorkspace = currentWorkspace,
-              buildChangeResult = buildResult
-            )
-
-          case None =>
-            Iterable.empty
-        }
-
-      case WorkspaceChangeResult.SourceChanged(sourceChangeResult) =>
-        setSourceCodeChange(
-          currentWorkspace = currentWorkspace,
-          sourceChangeResult = sourceChangeResult
-        )
-    }
-
-  /** Publish build file change result */
-  private def setBuildChange(currentWorkspace: WorkspaceState,
-                             buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState]): Iterable[PublishDiagnosticsParams] =
-    buildChangeResult match {
-      case Left(buildError) =>
-        val diagnostics =
-          setBuild(
-            currentWorkspace = currentWorkspace,
-            buildError = buildError
-          )
-
-        Some(diagnostics)
-
-      case Right(newWorkspace) =>
-        setBuild(
-          currentWorkspace = currentWorkspace,
-          newWorkspace = newWorkspace
-        )
-    }
-
-  /** Publish source-code change result */
-  private def setSourceCodeChange(currentWorkspace: WorkspaceState,
-                                  sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState]): Iterable[PublishDiagnosticsParams] =
-    sourceChangeResult match {
-      case Left(buildError) =>
-        val diagnostics =
-          setBuild(
-            currentWorkspace = currentWorkspace,
-            buildError = buildError
-          )
-
-        Iterable(diagnostics)
-
-      case Right(newWorkspace) =>
-        setWorkspace(newWorkspace)
-
-        DataConverter.toPublishDiagnostics(
-          currentWorkspace = currentWorkspace,
-          newWorkspace = newWorkspace
-        )
-    }
-
-  /** Publish the build errors */
-  private def setBuild(currentWorkspace: WorkspaceState,
-                       buildError: BuildState.BuildErrored): PublishDiagnosticsParams =
     this.synchronized {
-      this.state = this.state.copy(buildErrors = Some(buildError))
+      changeResult match {
+        case Some(result) =>
+          setWorkspaceChange(result)
 
-      DataConverter.toPublishDiagnostics(
-        fileURI = buildError.buildURI,
-        code = buildError.code,
-        errors = buildError.errors.toList,
-        severity = DiagnosticSeverity.Error
-      )
+        case None =>
+          // Means: This fileURI does not belong to this workspace or is of different type.
+          // If this occurs, it's a client configuration error.
+          // File types that are not supported by ralph should not be submitted to this server.
+          val error = ResponseError.UnknownFileType(fileURI)
+          logger.error(error.getMessage, error)
+          getClient().log(error) // notify client
+          throw error.toResponseErrorException
+      }
     }
 
-  /** Build is successfully compiled on a workspace. Publish the workspace, clearly existing build-error messages. */
-  private def setBuild(currentWorkspace: WorkspaceState,
-                       newWorkspace: WorkspaceState): Iterable[PublishDiagnosticsParams] =
+  def setWorkspaceChange(changeResult: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
     this.synchronized {
-      val buildDiagnostics =
-        this.state.buildErrors map {
-          build =>
-            // clear existing build errors
-            DataConverter.toPublishDiagnostics(
-              fileURI = build.buildURI,
-              code = build.code,
-              errors = List.empty,
-              severity = DiagnosticSeverity.Error
-            )
-        }
+      val currentServerState =
+        this.state
 
-      // clear the build errors from state
-      this.state = this.state.copy(buildErrors = None)
-
-      // publish the new-workspace that is built with the new-build-file.
-      val workspaceDiagnostics =
-        DataConverter.toPublishDiagnostics(
-          currentWorkspace = currentWorkspace,
-          newWorkspace = newWorkspace
+      val newServerState =
+        ServerStateUpdater.workspaceChanged(
+          change = changeResult,
+          serverState = currentServerState
         )
 
-      setWorkspace(newWorkspace)
+      newServerState match {
+        case Some(newState) =>
+          this.state = newState
 
-      buildDiagnostics ++ workspaceDiagnostics
+        case None =>
+          logger.debug("No server change occurred")
+      }
+
+      ???
     }
 
   /**
@@ -334,19 +245,16 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   def didChange(fileURI: URI,
                 code: Option[String]): Iterable[PublishDiagnosticsParams] =
     this.synchronized {
-      val currentWorkspace =
-        getWorkspace()
 
       val result =
         Workspace.changed(
           fileURI = fileURI,
           code = code,
-          currentWorkspace = currentWorkspace
+          currentWorkspace = getWorkspace()
         )
 
       setWorkspaceChange(
         fileURI = fileURI,
-        currentWorkspace = currentWorkspace,
         changeResult = result
       )
     }
@@ -397,9 +305,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           val client =
             getClient()
 
-          setSourceCodeChange(
-            currentWorkspace = currentWorkspace,
-            sourceChangeResult = newWorkspace
+          setWorkspaceChange(
+            changeResult = WorkspaceChangeResult.SourceChanged(newWorkspace)
           ) foreach client.publishDiagnostics
 
           newWorkspace getOrElse {
