@@ -7,6 +7,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.SourcePosition
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
+import org.alephium.ralph.lsp.server.state.ServerState
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.messages
 
@@ -65,7 +66,8 @@ object ServerDiagnostics {
         Some(diagnostics)
 
       case (None, None) =>
-        // FIXME: Enabling document-level diagnostics requires this.
+        // FIXME: Enabling document-level diagnostics requires this,
+        //        otherwise build-file diagnostics are not cleared.
         //        It does not make sense to clear build-errors when
         //        previous state does not contain errors. But maybe
         //        the order of document-level diagnostics vs file-events

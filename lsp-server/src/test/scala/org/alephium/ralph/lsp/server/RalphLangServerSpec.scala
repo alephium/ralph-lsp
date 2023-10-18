@@ -3,6 +3,7 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.server.state.ServerState
 import org.eclipse.lsp4j.{InitializeParams, InitializeResult}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers

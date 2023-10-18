@@ -5,8 +5,8 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.completion.CodeCompleter
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceChangeResult, WorkspaceState}
-import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.server.RalphLangServer._
+import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater}
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
 import org.eclipse.lsp4j.services._
