@@ -131,6 +131,7 @@ object ServerDiagnostics {
                            newState: ServerState): Iterable[PublishDiagnosticsParams] = {
     val buildDiagnostics =
       toPublishDiagnostics(
+        buildURI = currentState.workspace.map(_.buildURI),
         currentBuildErrors = currentState.buildErrors,
         newBuildErrors = newState.buildErrors
       )
@@ -144,7 +145,8 @@ object ServerDiagnostics {
     buildDiagnostics ++ workspaceDiagnostics
   }
 
-  def toPublishDiagnostics(currentBuildErrors: Option[BuildState.BuildErrored],
+  def toPublishDiagnostics(buildURI: Option[URI],
+                           currentBuildErrors: Option[BuildState.BuildErrored],
                            newBuildErrors: Option[BuildState.BuildErrored]): Option[PublishDiagnosticsParams] =
     (currentBuildErrors, newBuildErrors) match {
       case (Some(build), None) =>
@@ -172,7 +174,20 @@ object ServerDiagnostics {
         Some(diagnostics)
 
       case (None, None) =>
-        None
+        // FIXME: Enabling document-level diagnostics requires this.
+        //        It does not make sense to clear build-errors when
+        //        previous state does not contain errors. But maybe
+        //        the order of document-level diagnostics vs file-events
+        //        is requiring this. This needs to be debugged.
+        buildURI map {
+          buildURI =>
+            toPublishDiagnostics(
+              fileURI = buildURI,
+              code = None,
+              errors = List.empty,
+              severity = DiagnosticSeverity.Error
+            )
+        }
     }
 
   def toPublishDiagnostics(currentWorkspace: Option[WorkspaceState],
