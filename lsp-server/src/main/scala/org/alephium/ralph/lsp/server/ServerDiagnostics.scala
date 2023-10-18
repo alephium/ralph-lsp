@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.pc.completion.Suggestion
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.SourcePosition
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.messages
 
@@ -125,6 +126,86 @@ object ServerDiagnostics {
 
     new PublishDiagnosticsParams(fileURI.toString, diagnostics.asJava)
   }
+
+  def toPublishDiagnostics(currentState: ServerState,
+                           newState: ServerState): Iterable[PublishDiagnosticsParams] = {
+    val buildDiagnostics =
+      toPublishDiagnostics(
+        currentBuildErrors = currentState.buildErrors,
+        newBuildErrors = newState.buildErrors
+      )
+
+    val workspaceDiagnostics =
+      toPublishDiagnostics(
+        currentWorkspace = currentState.workspace,
+        newWorkspace = newState.workspace
+      )
+
+    buildDiagnostics ++ workspaceDiagnostics
+  }
+
+  def toPublishDiagnostics(currentBuildErrors: Option[BuildState.BuildErrored],
+                           newBuildErrors: Option[BuildState.BuildErrored]): Option[PublishDiagnosticsParams] =
+    (currentBuildErrors, newBuildErrors) match {
+      case (Some(build), None) =>
+        // build errors were fixed. Clear old errors
+        val diagnostics =
+          toPublishDiagnostics(
+            fileURI = build.buildURI,
+            code = build.code,
+            errors = List.empty,
+            severity = DiagnosticSeverity.Error
+          )
+
+        Some(diagnostics)
+
+      case (_, Some(build)) =>
+        // New state has errors, create diagnostics.
+        val diagnostics =
+          toPublishDiagnostics(
+            fileURI = build.buildURI,
+            code = build.code,
+            errors = build.errors.to(List),
+            severity = DiagnosticSeverity.Error
+          )
+
+        Some(diagnostics)
+
+      case (None, None) =>
+        None
+    }
+
+  def toPublishDiagnostics(currentWorkspace: Option[WorkspaceState],
+                           newWorkspace: Option[WorkspaceState]): Iterable[PublishDiagnosticsParams] =
+    (currentWorkspace, newWorkspace) match {
+      case (Some(current), None) =>
+        toPublishDiagnostics(current)
+
+      case (None, Some(next)) =>
+        toPublishDiagnostics(next)
+
+      case (Some(current), Some(next)) =>
+        toPublishDiagnostics(
+          currentWorkspace = current,
+          newWorkspace = next
+        )
+
+      case (None, None) =>
+        None
+    }
+
+  def toPublishDiagnostics(currentWorkspace: WorkspaceState): Iterable[PublishDiagnosticsParams] =
+    currentWorkspace match {
+      case _: WorkspaceState.Created =>
+        Iterable.empty
+
+      case currentWorkspace: WorkspaceState.SourceAware =>
+        // publish new workspace given previous workspace.
+        ServerDiagnostics.toPublishDiagnostics(
+          previousOrCurrentState = currentWorkspace,
+          nextState = None
+        )
+    }
 
   /** Publish new workspace */
   def toPublishDiagnostics(currentWorkspace: WorkspaceState,

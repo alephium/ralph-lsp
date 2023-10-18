@@ -84,8 +84,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       this.state = this.state.copy(workspace = Some(workspace))
     }
 
-  def setWorkspaceChange(fileURI: URI,
-                         changeResult: Option[WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
+  private def setWorkspaceChange(fileURI: URI,
+                                 changeResult: Option[WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
     this.synchronized {
       changeResult match {
         case Some(result) =>
@@ -102,7 +102,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       }
     }
 
-  def setWorkspaceChange(changeResult: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
+  private def setWorkspaceChange(changeResult: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
     this.synchronized {
       val currentServerState =
         this.state
@@ -117,11 +117,15 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         case Some(newState) =>
           this.state = newState
 
+          ServerDiagnostics.toPublishDiagnostics(
+            currentState = currentServerState,
+            newState = newState
+          )
+
         case None =>
           logger.debug("No server change occurred")
+          None
       }
-
-      ???
     }
 
   /**
@@ -212,12 +216,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         cancelChecker.checkCanceled()
 
         val diagnostics =
-          didChange(
+          didChangeAndSet(
             fileURI = fileURI,
             code = None
           )
-
-        cancelChecker.checkCanceled()
 
         val fullReport =
           ServerDiagnostics.toRelatedFullDocumentDiagnosticReport(diagnostics)
@@ -225,12 +227,12 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         new DocumentDiagnosticReport(fullReport)
     }
 
-  def didChangeAndPublish(fileURI: URI,
-                          code: Option[String]): Unit =
+  private def didChangeAndPublish(fileURI: URI,
+                                  code: Option[String]): Unit =
     this.synchronized {
       val client = getClient()
 
-      didChange(
+      didChangeAndSet(
         fileURI = fileURI,
         code = code
       ) foreach client.publishDiagnostics
@@ -242,10 +244,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @param fileURI File that changed.
    * @param code    Content of the file.
    */
-  def didChange(fileURI: URI,
-                code: Option[String]): Iterable[PublishDiagnosticsParams] =
+  private def didChangeAndSet(fileURI: URI,
+                              code: Option[String]): Iterable[PublishDiagnosticsParams] =
     this.synchronized {
-
       val result =
         Workspace.changed(
           fileURI = fileURI,
@@ -306,7 +307,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
             getClient()
 
           setWorkspaceChange(
-            changeResult = WorkspaceChangeResult.SourceChanged(newWorkspace)
+            changeResult = WorkspaceChangeResult.BuildChanged(Some(newWorkspace))
           ) foreach client.publishDiagnostics
 
           newWorkspace getOrElse {
