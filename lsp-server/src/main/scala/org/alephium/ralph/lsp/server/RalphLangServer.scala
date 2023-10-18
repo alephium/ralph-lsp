@@ -84,80 +84,133 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       this.state = this.state.copy(workspace = Some(workspace))
     }
 
-  /** Publish build file change result */
-  private def setAndPublishBuildChange(currentWorkspace: WorkspaceState,
-                                       buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState]): Unit =
-    buildChangeResult match {
-      case Left(buildError) =>
-        setAndPublishBuild(
+  def setWorkspaceChange(fileURI: URI,
+                         currentWorkspace: WorkspaceState,
+                         changeResult: Option[WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
+    changeResult match {
+      case Some(result) =>
+        setWorkspaceChange(
           currentWorkspace = currentWorkspace,
-          buildError = buildError
+          change = result
         )
 
+      case None =>
+        // If this occurs, it's a client configuration error.
+        // File types that are not supported by ralph should not be submitted to this server.
+        val error = ResponseError.UnknownFileType(fileURI)
+        logger.error(error.getMessage, error)
+        getClient().log(error) // notify client
+        throw error.toResponseErrorException
+    }
+
+  def setWorkspaceChange(currentWorkspace: WorkspaceState,
+                         change: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
+    change match {
+      case WorkspaceChangeResult.BuildChanged(buildChangeResult) =>
+        buildChangeResult match {
+          case Some(buildResult) =>
+            setBuildChange(
+              currentWorkspace = currentWorkspace,
+              buildChangeResult = buildResult
+            )
+
+          case None =>
+            Iterable.empty
+        }
+
+      case WorkspaceChangeResult.SourceChanged(sourceChangeResult) =>
+        setSourceCodeChange(
+          currentWorkspace = currentWorkspace,
+          sourceChangeResult = sourceChangeResult
+        )
+    }
+
+  /** Publish build file change result */
+  private def setBuildChange(currentWorkspace: WorkspaceState,
+                             buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState]): Iterable[PublishDiagnosticsParams] =
+    buildChangeResult match {
+      case Left(buildError) =>
+        val diagnostics =
+          setBuild(
+            currentWorkspace = currentWorkspace,
+            buildError = buildError
+          )
+
+        Some(diagnostics)
+
       case Right(newWorkspace) =>
-        setAndPublishBuild(
+        setBuild(
           currentWorkspace = currentWorkspace,
           newWorkspace = newWorkspace
         )
     }
 
   /** Publish source-code change result */
-  private def setAndPublishSourceCodeChange(currentWorkspace: WorkspaceState,
-                                            sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState]): Unit =
+  private def setSourceCodeChange(currentWorkspace: WorkspaceState,
+                                  sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState]): Iterable[PublishDiagnosticsParams] =
     sourceChangeResult match {
       case Left(buildError) =>
-        setAndPublishBuild(
-          currentWorkspace = currentWorkspace,
-          buildError = buildError
-        )
+        val diagnostics =
+          setBuild(
+            currentWorkspace = currentWorkspace,
+            buildError = buildError
+          )
+
+        Iterable(diagnostics)
 
       case Right(newWorkspace) =>
-        setAndPublishWorkspace(
+        setWorkspace(
           currentWorkspace = currentWorkspace,
           newWorkspace = newWorkspace
         )
     }
 
   /** Publish the build errors */
-  private def setAndPublishBuild(currentWorkspace: WorkspaceState,
-                                 buildError: BuildState.BuildErrored): Unit =
+  private def setBuild(currentWorkspace: WorkspaceState,
+                       buildError: BuildState.BuildErrored): PublishDiagnosticsParams =
     this.synchronized {
-      getClient().publishErrors(
+      this.state = this.state.copy(buildErrors = Some(buildError))
+
+      DataConverter.toPublishDiagnostics(
         fileURI = buildError.buildURI,
         code = buildError.code,
-        errors = buildError.errors.toList
+        errors = buildError.errors.toList,
+        severity = DiagnosticSeverity.Error
       )
-
-      this.state = this.state.copy(buildErrors = Some(buildError))
     }
 
   /** Build is successfully compiled on a workspace. Publish the workspace, clearly existing build-error messages. */
-  private def setAndPublishBuild(currentWorkspace: WorkspaceState,
-                                 newWorkspace: WorkspaceState): Unit =
+  private def setBuild(currentWorkspace: WorkspaceState,
+                       newWorkspace: WorkspaceState): Iterable[PublishDiagnosticsParams] =
     this.synchronized {
-      this.state.buildErrors foreach {
-        build =>
-          // clear existing build errors
-          getClient().publishErrors(
-            fileURI = build.buildURI,
-            code = build.code,
-            errors = List.empty
-          )
-      }
+      val buildDiagnostics =
+        this.state.buildErrors map {
+          build =>
+            // clear existing build errors
+            DataConverter.toPublishDiagnostics(
+              fileURI = build.buildURI,
+              code = build.code,
+              errors = List.empty,
+              severity = DiagnosticSeverity.Error
+            )
+        }
 
       // clear the build errors from state
       this.state = this.state.copy(buildErrors = None)
 
       // publish the new-workspace that is built with the new-build-file.
-      setAndPublishWorkspace(
-        currentWorkspace = currentWorkspace,
-        newWorkspace = newWorkspace
-      )
+      val workspaceDiagnostics =
+        setWorkspace(
+          currentWorkspace = currentWorkspace,
+          newWorkspace = newWorkspace
+        )
+
+      buildDiagnostics ++ workspaceDiagnostics
     }
 
   /** Publish new workspace */
-  private def setAndPublishWorkspace(currentWorkspace: WorkspaceState,
-                                     newWorkspace: WorkspaceState): Unit =
+  private def setWorkspace(currentWorkspace: WorkspaceState,
+                           newWorkspace: WorkspaceState): Iterable[PublishDiagnosticsParams] =
     this.synchronized {
       // New valid workspace created. Set it!
       setWorkspace(newWorkspace)
@@ -165,21 +218,21 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       (currentWorkspace, newWorkspace) match {
         case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.SourceAware) =>
           // publish first compilation result i.e. previous workspace had no compilation run.
-          getClient().publish(
-            currentWorkspace = newWorkspace,
-            newWorkspace = None
+          DataConverter.toPublishDiagnostics(
+            previousOrCurrentState = newWorkspace,
+            nextState = None
           )
 
         case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState.SourceAware) =>
           // publish new workspace given previous workspace.
-          getClient().publish(
-            currentWorkspace = currentWorkspace,
-            newWorkspace = Some(newWorkspace)
+          DataConverter.toPublishDiagnostics(
+            previousOrCurrentState = currentWorkspace,
+            nextState = Some(newWorkspace)
           )
 
         case (_, _: WorkspaceState.Created) =>
           // Nothing to publish
-          ()
+          Iterable.empty
       }
     }
 
@@ -229,7 +282,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
     logger.debug(s"didOpen. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
-    didChange(
+    didChangeAndPublish(
       fileURI = fileURI,
       code = code
     )
@@ -241,7 +294,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
     logger.debug(s"didChange. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
-    didChange(
+    didChangeAndPublish(
       fileURI = fileURI,
       code = code
     )
@@ -252,7 +305,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
     logger.debug(s"didClose. fileURI: $fileURI")
 
-    didChange(
+    didChangeAndPublish(
       fileURI = fileURI,
       code = None
     )
@@ -261,6 +314,16 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def didSave(params: DidSaveTextDocumentParams): Unit =
     ()
 
+  def didChangeAndPublish(fileURI: URI,
+                          code: Option[String]): Unit = {
+    val client = getClient()
+
+    didChange(
+      fileURI = fileURI,
+      code = code
+    ) foreach client.publishDiagnostics
+  }
+
   /**
    * Processes source or build file change.
    *
@@ -268,42 +331,23 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @param code    Content of the file.
    */
   def didChange(fileURI: URI,
-                code: Option[String]): Unit =
+                code: Option[String]): Iterable[PublishDiagnosticsParams] =
     this.synchronized {
       val currentWorkspace =
         getWorkspace()
 
-      Workspace.changed(
+      val result =
+        Workspace.changed(
+          fileURI = fileURI,
+          code = code,
+          currentWorkspace = currentWorkspace
+        )
+
+      setWorkspaceChange(
         fileURI = fileURI,
-        code = code,
-        currentWorkspace = currentWorkspace
-      ) match {
-        case Some(result) =>
-          result match {
-            case WorkspaceChangeResult.BuildChanged(buildChangeResult) =>
-              buildChangeResult foreach {
-                buildResult =>
-                  setAndPublishBuildChange(
-                    currentWorkspace = currentWorkspace,
-                    buildChangeResult = buildResult
-                  )
-              }
-
-            case WorkspaceChangeResult.SourceChanged(sourceChangeResult) =>
-              setAndPublishSourceCodeChange(
-                currentWorkspace = currentWorkspace,
-                sourceChangeResult = sourceChangeResult
-              )
-          }
-
-        case None =>
-          // If this occurs, it's a client configuration error.
-          // File types that are not supported by ralph should not be submitted to this server.
-          val error = ResponseError.UnknownFileType(fileURI)
-          logger.error(error.getMessage, error)
-          getClient().log(error) // notify client
-          throw error.toResponseErrorException
-      }
+        currentWorkspace = currentWorkspace,
+        changeResult = result
+      )
     }
 
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
@@ -349,7 +393,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           val newWorkspace =
             Workspace.initialise(currentWorkspace)
 
-          setAndPublishSourceCodeChange(
+          setSourceCodeChange(
             currentWorkspace = currentWorkspace,
             sourceChangeResult = newWorkspace
           )

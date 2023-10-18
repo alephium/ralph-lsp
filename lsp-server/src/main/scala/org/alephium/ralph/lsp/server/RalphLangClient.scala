@@ -1,12 +1,7 @@
 package org.alephium.ralph.lsp.server
 
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.server.DataConverter._
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.services.LanguageClient
-
-import java.net.URI
 
 object RalphLangClient {
 
@@ -18,30 +13,6 @@ object RalphLangClient {
       error
     }
 
-    def publishErrors(fileURI: URI,
-                      code: Option[String],
-                      errors: List[CompilerMessage.AnyError]): Unit = {
-      val publish =
-        toPublishDiagnostics(
-          fileURI = fileURI,
-          code = code,
-          errors = errors,
-          severity = DiagnosticSeverity.Error
-        )
-
-      client.publishDiagnostics(publish)
-    }
-
-    /** Publish IDE messages given the workspace previous and newer states */
-    def publish(currentWorkspace: WorkspaceState.SourceAware,
-                newWorkspace: Option[WorkspaceState.SourceAware]): Unit =
-      toPublishDiagnotics(
-        previousOrCurrentState = currentWorkspace,
-        nextState = newWorkspace
-      ) foreach {
-        diagnostic =>
-          client.publishDiagnostics(diagnostic)
-      }
   }
 }
 

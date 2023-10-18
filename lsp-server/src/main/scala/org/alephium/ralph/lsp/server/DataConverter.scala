@@ -133,8 +133,8 @@ object DataConverter {
    *                               Set to [[None]] if previousState is the only state.
    * @return Diagnostics to publish for the current state.
    */
-  def toPublishDiagnotics(previousOrCurrentState: WorkspaceState.SourceAware,
-                          nextState: Option[WorkspaceState.SourceAware]): Iterable[PublishDiagnosticsParams] = {
+  def toPublishDiagnostics(previousOrCurrentState: WorkspaceState.SourceAware,
+                           nextState: Option[WorkspaceState.SourceAware]): Iterable[PublishDiagnosticsParams] = {
     // build diagnostics sent for previous state, or the current state if this is the first run.
     val previousOrCurrentDiagnotics =
       toPublishDiagnostics(previousOrCurrentState)
