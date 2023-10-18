@@ -4,9 +4,8 @@ import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.completion.CodeCompleter
-import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, Build}
+import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceChangeResult, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
@@ -274,42 +273,36 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       val currentWorkspace =
         getWorkspace()
 
-      val fileExtension =
-        URIUtil.getFileExtension(fileURI)
+      Workspace.changed(
+        fileURI = fileURI,
+        code = code,
+        currentWorkspace = currentWorkspace
+      ) match {
+        case Some(result) =>
+          result match {
+            case WorkspaceChangeResult.BuildChanged(buildChangeResult) =>
+              buildChangeResult foreach {
+                buildResult =>
+                  setAndPublishBuildChange(
+                    currentWorkspace = currentWorkspace,
+                    buildChangeResult = buildResult
+                  )
+              }
 
-      if (fileExtension == Build.BUILD_FILE_EXTENSION) {
-        // process build change
-        Workspace.buildChanged(
-          fileURI = fileURI,
-          code = code,
-          workspace = currentWorkspace
-        ) foreach {
-          buildResult =>
-            setAndPublishBuildChange(
-              currentWorkspace = currentWorkspace,
-              buildChangeResult = buildResult
-            )
-        }
-      } else if (fileExtension == CompilerAccess.RALPH_FILE_EXTENSION) {
-        // process source code change
-        val sourceResult =
-          Workspace.sourceCodeChanged(
-            fileURI = fileURI,
-            updatedCode = code,
-            workspace = currentWorkspace
-          )
+            case WorkspaceChangeResult.SourceChanged(sourceChangeResult) =>
+              setAndPublishSourceCodeChange(
+                currentWorkspace = currentWorkspace,
+                sourceChangeResult = sourceChangeResult
+              )
+          }
 
-        setAndPublishSourceCodeChange(
-          currentWorkspace = currentWorkspace,
-          sourceChangeResult = sourceResult
-        )
-      } else {
-        // If this occurs, it's a client configuration error.
-        // File types that are not supported by ralph should not be submitted to this server.
-        val error = ResponseError.UnknownFileType(fileURI)
-        logger.error(error.getMessage, error)
-        getClient().log(error) // notify client
-        throw error.toResponseErrorException
+        case None =>
+          // If this occurs, it's a client configuration error.
+          // File types that are not supported by ralph should not be submitted to this server.
+          val error = ResponseError.UnknownFileType(fileURI)
+          logger.error(error.getMessage, error)
+          getClient().log(error) // notify client
+          throw error.toResponseErrorException
       }
     }
 
