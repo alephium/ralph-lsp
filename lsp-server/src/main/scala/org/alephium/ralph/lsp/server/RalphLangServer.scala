@@ -160,7 +160,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         Iterable(diagnostics)
 
       case Right(newWorkspace) =>
-        setWorkspace(
+        setWorkspace(newWorkspace)
+
+        DataConverter.toPublishDiagnostics(
           currentWorkspace = currentWorkspace,
           newWorkspace = newWorkspace
         )
@@ -201,40 +203,14 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
       // publish the new-workspace that is built with the new-build-file.
       val workspaceDiagnostics =
-        setWorkspace(
+        DataConverter.toPublishDiagnostics(
           currentWorkspace = currentWorkspace,
           newWorkspace = newWorkspace
         )
 
-      buildDiagnostics ++ workspaceDiagnostics
-    }
-
-  /** Publish new workspace */
-  private def setWorkspace(currentWorkspace: WorkspaceState,
-                           newWorkspace: WorkspaceState): Iterable[PublishDiagnosticsParams] =
-    this.synchronized {
-      // New valid workspace created. Set it!
       setWorkspace(newWorkspace)
 
-      (currentWorkspace, newWorkspace) match {
-        case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.SourceAware) =>
-          // publish first compilation result i.e. previous workspace had no compilation run.
-          DataConverter.toPublishDiagnostics(
-            previousOrCurrentState = newWorkspace,
-            nextState = None
-          )
-
-        case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState.SourceAware) =>
-          // publish new workspace given previous workspace.
-          DataConverter.toPublishDiagnostics(
-            previousOrCurrentState = currentWorkspace,
-            nextState = Some(newWorkspace)
-          )
-
-        case (_, _: WorkspaceState.Created) =>
-          // Nothing to publish
-          Iterable.empty
-      }
+      buildDiagnostics ++ workspaceDiagnostics
     }
 
   /**
@@ -418,10 +394,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           val newWorkspace =
             Workspace.initialise(currentWorkspace)
 
+          val client =
+            getClient()
+
           setSourceCodeChange(
             currentWorkspace = currentWorkspace,
             sourceChangeResult = newWorkspace
-          )
+          ) foreach client.publishDiagnostics
 
           newWorkspace getOrElse {
             throw

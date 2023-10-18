@@ -126,6 +126,29 @@ object DataConverter {
     new PublishDiagnosticsParams(fileURI.toString, diagnostics.asJava)
   }
 
+  /** Publish new workspace */
+  def toPublishDiagnostics(currentWorkspace: WorkspaceState,
+                           newWorkspace: WorkspaceState): Iterable[PublishDiagnosticsParams] =
+    (currentWorkspace, newWorkspace) match {
+      case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.SourceAware) =>
+        // publish first compilation result i.e. previous workspace had no compilation run.
+        DataConverter.toPublishDiagnostics(
+          previousOrCurrentState = newWorkspace,
+          nextState = None
+        )
+
+      case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState.SourceAware) =>
+        // publish new workspace given previous workspace.
+        DataConverter.toPublishDiagnostics(
+          previousOrCurrentState = currentWorkspace,
+          nextState = Some(newWorkspace)
+        )
+
+      case (_, _: WorkspaceState.Created) =>
+        // Nothing to publish
+        Iterable.empty
+    }
+
   /**
    * Build diagnostics to publish and clear older resolved errors or warnings.
    *
