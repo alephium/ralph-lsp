@@ -5,6 +5,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.completion.CodeCompleter
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceChangeResult, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater}
 import org.eclipse.lsp4j._
@@ -269,7 +270,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         cancelChecker.checkCanceled()
 
-        val workspace = getOrInitWorkspace()
+        val workspace =
+          getOrInitWorkspace() getOrElse {
+            throw
+              ResponseError
+                .UnableToInitialiseWorkspace
+                .toResponseErrorException
+          }
 
         val suggestions =
           CodeCompleter.complete(
@@ -291,12 +298,12 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * Returns existing workspace or initialises a new one from the configured build file.
    * Or else reports any workspace issues.
    */
-  def getOrInitWorkspace(): WorkspaceState.SourceAware =
+  def getOrInitWorkspace(): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
     this.synchronized {
       getWorkspace() match {
         case sourceAware: WorkspaceState.SourceAware =>
           // already built
-          sourceAware
+          Right(sourceAware)
 
         case currentWorkspace: WorkspaceState.Created =>
           // perform build and bring workspace state to unCompiled
@@ -310,12 +317,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
             changeResult = WorkspaceChangeResult.BuildChanged(Some(newWorkspace))
           ) foreach client.publishDiagnostics
 
-          newWorkspace getOrElse {
-            throw
-              ResponseError
-                .UnableToInitialiseWorkspace
-                .toResponseErrorException
-          }
+          newWorkspace
       }
     }
 
