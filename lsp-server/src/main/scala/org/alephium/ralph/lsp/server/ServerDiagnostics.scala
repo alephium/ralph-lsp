@@ -15,7 +15,7 @@ import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
 /** Implements functions that transform internal types to LSP4J types */
-object DataConverter {
+object ServerDiagnostics {
 
   /** Convert Ralph's FormattableError to lsp4j's Diagnostic */
   def toDiagnostic(code: Option[String],
@@ -132,14 +132,14 @@ object DataConverter {
     (currentWorkspace, newWorkspace) match {
       case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.SourceAware) =>
         // publish first compilation result i.e. previous workspace had no compilation run.
-        DataConverter.toPublishDiagnostics(
+        ServerDiagnostics.toPublishDiagnostics(
           previousOrCurrentState = newWorkspace,
           nextState = None
         )
 
       case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState.SourceAware) =>
         // publish new workspace given previous workspace.
-        DataConverter.toPublishDiagnostics(
+        ServerDiagnostics.toPublishDiagnostics(
           previousOrCurrentState = currentWorkspace,
           nextState = Some(newWorkspace)
         )

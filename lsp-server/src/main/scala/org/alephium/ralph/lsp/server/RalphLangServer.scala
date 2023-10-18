@@ -220,7 +220,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         cancelChecker.checkCanceled()
 
         val fullReport =
-          DataConverter.toRelatedFullDocumentDiagnosticReport(diagnostics)
+          ServerDiagnostics.toRelatedFullDocumentDiagnosticReport(diagnostics)
 
         new DocumentDiagnosticReport(fullReport)
     }
@@ -279,7 +279,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           )
 
         val completionList =
-          DataConverter.toCompletionList(suggestions)
+          ServerDiagnostics.toCompletionList(suggestions)
 
         cancelChecker.checkCanceled()
 
