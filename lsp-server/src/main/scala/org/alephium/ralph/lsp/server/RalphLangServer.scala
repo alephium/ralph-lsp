@@ -7,6 +7,7 @@ import org.alephium.ralph.lsp.pc.completion.CodeCompleter
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceChangeResult, WorkspaceState}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.server.RalphLangServer._
+import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter}
 import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater}
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
@@ -118,7 +119,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         case Some(newState) =>
           this.state = newState
 
-          ServerDiagnostics.toPublishDiagnostics(
+          DiagnosticsConverter.toPublishDiagnostics(
             currentState = currentServerState,
             newState = newState
           )
@@ -223,7 +224,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           )
 
         val fullReport =
-          ServerDiagnostics.toRelatedFullDocumentDiagnosticReport(diagnostics)
+          DiagnosticsConverter.toRelatedFullDocumentDiagnosticReport(diagnostics)
 
         new DocumentDiagnosticReport(fullReport)
     }
@@ -287,7 +288,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           )
 
         val completionList =
-          ServerDiagnostics.toCompletionList(suggestions)
+          CompletionConverter.toCompletionList(suggestions)
 
         cancelChecker.checkCanceled()
 

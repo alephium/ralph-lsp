@@ -1,8 +1,7 @@
-package org.alephium.ralph.lsp.server
+package org.alephium.ralph.lsp.server.converter
 
 import fastparse.IndexedParserInput
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.pc.completion.Suggestion
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.SourcePosition
@@ -16,8 +15,8 @@ import java.util
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
-/** Implements functions that transform internal types to LSP4J types */
-object ServerDiagnostics {
+/** Implements functions that transform internal diagnostics types to LSP4J */
+object DiagnosticsConverter {
 
   def toPublishDiagnostics(currentState: ServerState,
                            newState: ServerState): Iterable[PublishDiagnosticsParams] = {
@@ -109,7 +108,7 @@ object ServerDiagnostics {
 
       case currentWorkspace: WorkspaceState.SourceAware =>
         // publish new workspace given previous workspace.
-        ServerDiagnostics.toPublishDiagnostics(
+        toPublishDiagnostics(
           previousOrCurrentState = currentWorkspace,
           nextState = None
         )
@@ -121,14 +120,14 @@ object ServerDiagnostics {
     (currentWorkspace, newWorkspace) match {
       case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.SourceAware) =>
         // publish first compilation result i.e. previous workspace had no compilation run.
-        ServerDiagnostics.toPublishDiagnostics(
+        toPublishDiagnostics(
           previousOrCurrentState = newWorkspace,
           nextState = None
         )
 
       case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState.SourceAware) =>
         // publish new workspace given previous workspace.
-        ServerDiagnostics.toPublishDiagnostics(
+        toPublishDiagnostics(
           previousOrCurrentState = currentWorkspace,
           nextState = Some(newWorkspace)
         )
@@ -306,23 +305,6 @@ object ServerDiagnostics {
     val fullReport = new RelatedFullDocumentDiagnosticReport()
     fullReport.setRelatedDocuments(javaMap)
     fullReport
-  }
-
-  def toCompletionList(suggestions: Array[Suggestion]): CompletionList = {
-    val items = new util.ArrayList[CompletionItem]()
-
-    suggestions foreach {
-      suggestion =>
-        val item = new CompletionItem()
-        item.setLabel(suggestion.label)
-        item.setDetail(suggestion.detail)
-        item.setDocumentation(suggestion.documentation)
-        item.setInsertText(suggestion.insert)
-        item.setKind(CompletionItemKind.valueOf(suggestion.productPrefix))
-        items.add(item)
-    }
-
-    new CompletionList(items)
   }
 
 }
