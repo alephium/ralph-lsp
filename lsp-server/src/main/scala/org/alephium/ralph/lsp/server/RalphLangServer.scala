@@ -339,14 +339,15 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   def didChangeAndPublish(fileURI: URI,
-                          code: Option[String]): Unit = {
-    val client = getClient()
+                          code: Option[String]): Unit =
+    this.synchronized {
+      val client = getClient()
 
-    didChange(
-      fileURI = fileURI,
-      code = code
-    ) foreach client.publishDiagnostics
-  }
+      didChange(
+        fileURI = fileURI,
+        code = code
+      ) foreach client.publishDiagnostics
+    }
 
   /**
    * Processes source or build file change.
