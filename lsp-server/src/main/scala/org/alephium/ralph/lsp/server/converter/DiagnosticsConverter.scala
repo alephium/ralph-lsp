@@ -307,4 +307,28 @@ object DiagnosticsConverter {
     fullReport
   }
 
+  /** Converts publish-diagnostics to workspace-diagnostics */
+  def toWorkspaceDiagnosticReport(diagnostics: Iterable[PublishDiagnosticsParams]): WorkspaceDiagnosticReport = {
+    val reports =
+      new util.ArrayList[WorkspaceDocumentDiagnosticReport]()
+
+    // convert individual diagnostics to full-document-diagnostics.
+    diagnostics foreach {
+      diagnostic =>
+        val fullDocumentReport =
+          new WorkspaceFullDocumentDiagnosticReport(
+            diagnostic.getDiagnostics,
+            diagnostic.getUri,
+            diagnostic.getVersion
+          )
+
+        val documentReport =
+          new WorkspaceDocumentDiagnosticReport(fullDocumentReport)
+
+        reports.add(documentReport)
+    }
+
+    new WorkspaceDiagnosticReport(reports)
+  }
+
 }
