@@ -7,6 +7,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.SourcePosition
 import org.eclipse.lsp4j._
+import org.eclipse.lsp4j.jsonrpc.messages
 
 import java.net.URI
 import java.util
@@ -166,6 +167,24 @@ object DataConverter {
         // there is no next state, therefore this is the first run
         previousOrCurrentDiagnotics
     }
+  }
+
+  /** Convert publish-diagnostics to document-diagnostics. */
+  def toRelatedFullDocumentDiagnosticReport(diagnostics: Iterable[PublishDiagnosticsParams]): RelatedFullDocumentDiagnosticReport = {
+    val javaMap =
+      new util.HashMap[String, messages.Either[FullDocumentDiagnosticReport, UnchangedDocumentDiagnosticReport]]()
+
+    // convert individual diagnostics to full-document-diagnostics.
+    diagnostics foreach {
+      diagnostic =>
+        val report = new FullDocumentDiagnosticReport(diagnostic.getDiagnostics)
+        val eitherReport = messages.Either.forLeft[FullDocumentDiagnosticReport, UnchangedDocumentDiagnosticReport](report)
+        javaMap.put(diagnostic.getUri, eitherReport)
+    }
+
+    val fullReport = new RelatedFullDocumentDiagnosticReport()
+    fullReport.setRelatedDocuments(javaMap)
+    fullReport
   }
 
   def toCompletionList(suggestions: Array[Suggestion]): CompletionList = {

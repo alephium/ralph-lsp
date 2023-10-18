@@ -95,6 +95,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         )
 
       case None =>
+        // Means: This fileURI does not belong to this workspace or is of different type.
         // If this occurs, it's a client configuration error.
         // File types that are not supported by ralph should not be submitted to this server.
         val error = ResponseError.UnknownFileType(fileURI)
@@ -314,6 +315,29 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def didSave(params: DidSaveTextDocumentParams): Unit =
     ()
 
+  override def diagnostic(params: DocumentDiagnosticParams): CompletableFuture[DocumentDiagnosticReport] =
+    CompletableFutures.computeAsync {
+      cancelChecker =>
+        val fileURI = new URI(params.getTextDocument.getUri)
+
+        logger.debug(s"Document diagnostic requested: $fileURI")
+
+        cancelChecker.checkCanceled()
+
+        val diagnostics =
+          didChange(
+            fileURI = fileURI,
+            code = None
+          )
+
+        cancelChecker.checkCanceled()
+
+        val fullReport =
+          DataConverter.toRelatedFullDocumentDiagnosticReport(diagnostics)
+
+        new DocumentDiagnosticReport(fullReport)
+    }
+
   def didChangeAndPublish(fileURI: URI,
                           code: Option[String]): Unit = {
     val client = getClient()
@@ -419,9 +443,6 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   override def diagnostic(params: WorkspaceDiagnosticParams): CompletableFuture[WorkspaceDiagnosticReport] =
     CompletableFuture.completedFuture(new WorkspaceDiagnosticReport(util.Arrays.asList()))
-
-  override def diagnostic(params: DocumentDiagnosticParams): CompletableFuture[DocumentDiagnosticReport] =
-    CompletableFuture.completedFuture(new DocumentDiagnosticReport(new RelatedFullDocumentDiagnosticReport(util.Arrays.asList())))
 
   override def codeAction(params: CodeActionParams): CompletableFuture[util.List[messages.Either[Command, CodeAction]]] =
     CompletableFuture.completedFuture(util.Arrays.asList())
