@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.sourcecode
+package org.alephium.ralph.lsp.pc.sourcecode.imports
 
 import java.net.URI
 import java.nio.file.{ Files, FileSystems, Paths}

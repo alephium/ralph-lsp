@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.sourcecode
+package org.alephium.ralph.lsp.pc.sourcecode.imports
 
 case class ImportName private(value: String) extends AnyVal {
   override def toString:String = value

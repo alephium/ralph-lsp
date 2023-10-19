@@ -80,7 +80,7 @@ private[pc] object SourceCode {
 
   private def parseContractsWithImports(code: String)(implicit compiler: CompilerAccess): Either[Seq[CompilerMessage.AnyError], (Seq[ContractWithState], Map[String, Seq[ContractWithState]])] =
     for {
-      codeWithImports <- ImportHandler.extractStdImports(code)
+      codeWithImports <- imports.ImportHandler.extractStdImports(code)
       codeAst <- compiler.parseContracts(codeWithImports.code).left.map(Seq(_))
       importsAst <- parseImports(codeWithImports.imports).left.map(Seq(_))
     } yield {

@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.sourcecode
+package org.alephium.ralph.lsp.pc.sourcecode.imports
 
 import fastparse._
 import fastparse.Parsed

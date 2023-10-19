@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
+import org.alephium.ralph.lsp.pc.sourcecode.imports._
 import org.alephium.ralph.lsp.GenCommon._
 import org.alephium.ralph.lsp.compiler.message.error.StringError
 import org.scalamock.scalatest.MockFactory

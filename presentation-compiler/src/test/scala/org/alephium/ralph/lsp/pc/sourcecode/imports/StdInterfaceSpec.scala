@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.sourcecode
+package org.alephium.ralph.lsp.pc.sourcecode.imports
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
