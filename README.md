@@ -47,6 +47,29 @@ code .
 
 ![img.png](docs/img_2.png)
 
+# Run LSP in neovim
+
+Install the [ralph.vim](https://github.com/tdroxler/ralph.vim) plugin with your favorite plugin manager, for file type detection, highlighting, etc.
+
+## [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
+
+Add the following to your lua configuration
+
+```
+local function ralph_init()
+   vim.lsp.start({
+     name = 'ralph-lsp',
+     cmd = {'java', '-jar', '<path-to-your-jar>/ralph-lsp.jar'},
+     root_dir = vim.fs.dirname(vim.fs.find({'build.ralph'}, { upward = true })[1])
+   })
+end
+
+vim.api.nvim_create_autocmd('FileType', {
+    pattern = { 'ralph' },
+    callback = function() ralph_init() end
+})
+```
+
 # Run LSP in IntelliJ (Ultimate)
 
 Update the jar

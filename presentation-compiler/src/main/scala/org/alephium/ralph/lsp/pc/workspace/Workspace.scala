@@ -193,9 +193,13 @@ object Workspace {
     val contractsToCompile =
       workspace.sourceCode.flatMap(_.contracts)
 
+    //FIXME: This works as we avoid having multiple time the same Interface twice, but it means we don't
+    //show an error on a file missing the import, as having the import define in another file is fine.
+    val imports = workspace.sourceCode.flatMap(_.imports).toMap
+
     val compilationResult =
       compiler.compileContracts(
-        contracts = contractsToCompile,
+        contracts = contractsToCompile ++ imports.values.flatten,
         options = workspace.build.config.compilerOptions
       )
 

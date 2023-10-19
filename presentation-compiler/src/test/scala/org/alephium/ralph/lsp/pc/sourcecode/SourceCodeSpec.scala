@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
+import org.alephium.ralph.lsp.pc.sourcecode.imports._
 import org.alephium.ralph.lsp.GenCommon._
 import org.alephium.ralph.lsp.compiler.message.error.StringError
 import org.scalamock.scalatest.MockFactory
@@ -9,6 +10,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import org.scalacheck.Gen
 
 import java.net.URI
 
@@ -58,7 +60,8 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
           SourceCodeState.Parsed(
             fileURI = URI.create("./test.ral"),
             code = "blah",
-            contracts = Seq.empty
+            contracts = Seq.empty,
+            Map.empty
           )
 
         testNoCompilerAccess(parsedState)
@@ -163,7 +166,8 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
               SourceCodeState.Parsed(
                 fileURI = failedState.fileURI,
                 code = code,
-                contracts = Seq.empty
+                contracts = Seq.empty,
+                imports = Map.empty
               )
         }
       }
@@ -183,6 +187,24 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
             // The code didn't change so will the error.
             newState shouldBe failedState
         }
+      }
+    }
+
+    "handle std imports" in {
+        forAll(genFileURI(), Gen.someOf(StdInterface.stdInterfaces)) {
+          case (fileUri, interfaces)  =>
+          implicit val compiler: CompilerAccess = CompilerAccess.ralphc
+
+            val code = interfaces.map{ case (interface,_) =>
+              s"""import "$interface""""
+            }.mkString("", "\n", "\n") ++ "Contract Test(id:U256){}"
+
+            val sourceState = SourceCodeState.UnCompiled(fileUri,code)
+            val parsed = SourceCode.parse(sourceState)
+
+            parsed shouldBe a[SourceCodeState.Parsed]
+
+            parsed.asInstanceOf[SourceCodeState.Parsed].imports.keys shouldBe interfaces.map(_._1).toSet
       }
     }
   }
