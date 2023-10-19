@@ -57,18 +57,6 @@ code .
 
 ![img.png](docs/img_2.png)
 
-# Run LSP in IntelliJ (Ultimate)
-
-Update the jar
-location [here](plugin-intellij/src/main/scala/org/alephium/ralph/lsp/plugin/intellij/RalphLspServerDescriptor.scala).
-Yep, this will eventually be automatically configured via sbt.
-
-Run the IDE:
-
-```shell
-sbt "project plugin-intellij; runIDE"
-```
-
 # Run LSP in neovim
 
 Install the [ralph.vim](https://github.com/tdroxler/ralph.vim) plugin with your favorite plugin manager, for file type detection, highlighting, etc.
@@ -90,6 +78,18 @@ vim.api.nvim_create_autocmd('FileType', {
     pattern = { 'ralph' },
     callback = function() ralph_init() end
 })
+```
+
+# Run LSP in IntelliJ (Ultimate)
+
+Update the jar
+location [here](plugin-intellij/src/main/scala/org/alephium/ralph/lsp/plugin/intellij/RalphLspServerDescriptor.scala).
+Yep, this will eventually be automatically configured via sbt.
+
+Run the IDE:
+
+```shell
+sbt "project plugin-intellij; runIDE"
 ```
 
 ## Error highlighting
