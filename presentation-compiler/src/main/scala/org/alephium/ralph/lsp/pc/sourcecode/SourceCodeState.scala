@@ -48,7 +48,8 @@ object SourceCodeState {
   /** Represents: Code is successfully parsed */
   case class Parsed(fileURI: URI,
                     code: String,
-                    contracts: Seq[ContractWithState]) extends ParsedState
+                    contracts: Seq[ContractWithState],
+                    imports: Map[String, Seq[ContractWithState]]) extends ParsedState
 
   /** Represents: Successful code compilation */
   case class Compiled(fileURI: URI,
