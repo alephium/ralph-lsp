@@ -96,7 +96,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         case None =>
           // Means: This fileURI does not belong to this workspace or is of different type.
-          // If this occurs, it's a client configuration error.
+          // If this occurs, it's a client configuration result.
           // File types that are not supported by ralph should not be submitted to this server.
           val error = ResponseError.UnknownFileType(fileURI)
           logger.error(error.getMessage, error)
@@ -216,7 +216,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
       logger.debug(s"didChangeWatchedFiles: ${changes.asScala.mkString("\n", "\n", "")}")
 
-      val events =
+      // collect Delete events
+      val deleteEvents =
         changes.asScala collect {
           event =>
             event.getType match {
@@ -225,20 +226,35 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
             }
         }
 
-      if (events.nonEmpty) {
+      if (deleteEvents.nonEmpty) {
+        // initialise workspace and process delete
         val workspace =
-          getOrInitWorkspaceOrThrow()
-
-        val workspaceChangeResult =
-          Workspace.deleted(
-            events = events.to(ArraySeq),
-            workspace = workspace
-          )
+          getOrInitWorkspace() map {
+            source =>
+              Workspace.deleted(
+                events = deleteEvents.to(ArraySeq),
+                workspace = source
+              )
+          }
 
         val client =
           getClient()
 
-        setWorkspaceChange(workspaceChangeResult) foreach client.publishDiagnostics
+        workspace match {
+          case Left(buildError) =>
+            // In-case of error initialising clear workspace because this fileChange event will be lost on next request (mot transactional).
+            // FIXME: Fetching from disk also means all the source-files from disk will be read, so un-saved editor files will not be accurate.
+            val changeResult =
+              WorkspaceChangeResult.BuildChanged(
+                buildChangeResult = Some(Left(buildError)),
+                cleanWorkspaceOnError = true
+              )
+
+            setWorkspaceChange(changeResult) foreach client.publishDiagnostics
+
+          case Right(changeResult) =>
+            setWorkspaceChange(changeResult) foreach client.publishDiagnostics
+        }
       }
     }
 
@@ -375,7 +391,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       case Some(listener) =>
         CompletableFuture.supplyAsync {
           () =>
-            java.lang.Boolean.valueOf(listener.cancel(true))
+            java.lang.Boolean.valueOf(true)
         }
 
       case None =>
