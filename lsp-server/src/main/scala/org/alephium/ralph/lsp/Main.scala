@@ -34,5 +34,9 @@ object Main extends StrictLogging {
       client = launcher.getRemoteProxy,
       listener = launcher.startListening
     )
+
+    Runtime.getRuntime.addShutdownHook(new Thread(() => {
+      logger.info("Stopping Ralph-LSP")
+    }))
   }
 }

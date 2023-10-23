@@ -24,6 +24,14 @@ object RalphLangServer {
     capabilities.setCompletionProvider(new CompletionOptions(true, util.Arrays.asList(".")))
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
     capabilities.setDiagnosticProvider(new DiagnosticRegistrationOptions(true, true))
+    val opt = new WorkspaceFoldersOptions()
+    println(s"${Console.RED}${Console.BOLD}*** opt ***${Console.RESET}${opt}")
+    opt.setChangeNotifications("**/*.ral")
+    opt.setSupported(java.lang.Boolean.valueOf(true))
+    println(s"${Console.RED}${Console.BOLD}*** opt ***${Console.RESET}${opt}")
+    val cap = new WorkspaceServerCapabilities(opt)
+    println(s"${Console.RED}${Console.BOLD}*** cap ***${Console.RESET}${cap}")
+    capabilities.setWorkspace(cap)
 
     capabilities
   }
@@ -196,11 +204,14 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       // so that it is available for responding to requests.
       this.state = state.copy(client = Some(client))
       this.state = state.copy(listener = Some(listener()))
+
+      client.setWatchers()
     }
 
   // TODO: If allowed in this phase (maybe? the doc seem to indicate no), access the PresentationCompiler
   //       and do an initial workspace compilation.
-  override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] =
+  override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** initializeparams ***${Console.RESET}${params}")
     CompletableFutures.computeAsync {
       cancelChecker =>
         // Previous commit uses the non-deprecated API but that does not work in vim.
@@ -218,27 +229,36 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         new InitializeResult(serverCapabilities())
     }
+  }
 
-  override def didOpen(params: DidOpenTextDocumentParams): Unit =
+  override def didOpen(params: DidOpenTextDocumentParams): Unit ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** didOpen***${Console.RESET}${params}")
     didChange(
       fileURI = new URI(params.getTextDocument.getUri),
       code = Some(params.getTextDocument.getText)
     )
+  }
 
-  override def didChange(params: DidChangeTextDocumentParams): Unit =
+  override def didChange(params: DidChangeTextDocumentParams): Unit ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** didChange***${Console.RESET}${params}")
     didChange(
       fileURI = new URI(params.getTextDocument.getUri),
       code = Some(params.getContentChanges.get(0).getText)
     )
+  }
 
-  override def didClose(params: DidCloseTextDocumentParams): Unit =
+  override def didClose(params: DidCloseTextDocumentParams): Unit ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** didClose***${Console.RESET}${params}")
     didChange(
       fileURI = new URI(params.getTextDocument.getUri),
       code = None
     )
+  }
 
-  override def didSave(params: DidSaveTextDocumentParams): Unit =
+  override def didSave(params: DidSaveTextDocumentParams): Unit ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** didSave ***${Console.RESET}${params}")
     ()
+  }
 
   /**
    * Processes source or build file change.
@@ -291,7 +311,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       }
     }
 
-  override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
+  override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** completion ***${Console.RESET}${params}")
     CompletableFutures.computeAsync {
       cancelChecker =>
         val fileURI = new URI(params.getTextDocument.getUri)
@@ -317,6 +338,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         messages.Either.forRight[util.List[CompletionItem], CompletionList](completionList)
     }
+  }
 
   /**
    * Returns existing workspace or initialises a new one from the configured build file.
@@ -358,43 +380,57 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           .toResponseErrorException
     }
 
-  override def diagnostic(params: WorkspaceDiagnosticParams): CompletableFuture[WorkspaceDiagnosticReport] =
+  override def diagnostic(params: WorkspaceDiagnosticParams): CompletableFuture[WorkspaceDiagnosticReport] ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** workspace diagnotic ***${Console.RESET}${params}")
     CompletableFuture.completedFuture(new WorkspaceDiagnosticReport(util.Arrays.asList()))
+  }
 
-  override def diagnostic(params: DocumentDiagnosticParams): CompletableFuture[DocumentDiagnosticReport] =
+  override def diagnostic(params: DocumentDiagnosticParams): CompletableFuture[DocumentDiagnosticReport] ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** document diagnotic ***${Console.RESET}${params}")
     CompletableFuture.completedFuture(new DocumentDiagnosticReport(new RelatedFullDocumentDiagnosticReport(util.Arrays.asList())))
+  }
 
-  override def codeAction(params: CodeActionParams): CompletableFuture[util.List[messages.Either[Command, CodeAction]]] =
+  override def codeAction(params: CodeActionParams): CompletableFuture[util.List[messages.Either[Command, CodeAction]]] ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** codeAction ***${Console.RESET}${params}")
     CompletableFuture.completedFuture(util.Arrays.asList())
+  }
 
-  override def resolveCompletionItem(unresolved: CompletionItem): CompletableFuture[CompletionItem] =
+  override def resolveCompletionItem(unresolved: CompletionItem): CompletableFuture[CompletionItem] ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** resolveCompletionItem***${Console.RESET}${unresolved}")
     CompletableFuture.completedFuture(unresolved)
+  }
 
-  override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
+  override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** didChangeConfiguration***${Console.RESET}${params}")
     ()
+  }
 
-  override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
+  override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit ={
+    logger.debug(s"${Console.RED}${Console.BOLD}***  didChangeWatchedFiles***${Console.RESET}${params}")
     ()
+  }
 
-  override def getTextDocumentService: TextDocumentService =
+  override def getTextDocumentService: TextDocumentService ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** getTextDocumentService ***${Console.RESET}")
     this
+  }
 
-  override def getWorkspaceService: WorkspaceService =
+  override def getWorkspaceService: WorkspaceService ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** getWorkspaceService ***${Console.RESET}")
     this
+  }
 
-  override def shutdown(): CompletableFuture[AnyRef] =
-    state.listener match {
-      case Some(listener) =>
+  override def shutdown(): CompletableFuture[AnyRef] ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** shutdown ***${Console.RESET}")
         CompletableFuture.supplyAsync {
           () =>
-            java.lang.Boolean.valueOf(listener.cancel(true))
+            java.lang.Boolean.valueOf(true)
         }
+  }
 
-      case None =>
-        CompletableFuture.failedFuture(new Exception("Listener not set"))
-    }
-
-  override def exit(): Unit =
+  override def exit(): Unit ={
+    logger.debug(s"${Console.RED}${Console.BOLD}*** exit ***${Console.RESET}")
     System.exit(0)
+  }
 
 }

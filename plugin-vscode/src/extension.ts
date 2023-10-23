@@ -7,7 +7,7 @@ let client: LanguageClient;
 export function activate(context: ExtensionContext) {
     console.log("Activating Ralph LSP client");
 
-    const args: string[] = ["-jar", "{project-path}/ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar"];
+    const args: string[] = ["-jar", "/home/thomas/dev/ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar"];
 
     const serverOptions: ServerOptions = {
         command: "java",
