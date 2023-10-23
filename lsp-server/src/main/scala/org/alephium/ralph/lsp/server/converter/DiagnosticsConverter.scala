@@ -110,14 +110,14 @@ object DiagnosticsConverter {
           nextState = None
         )
 
-      case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState.SourceAware) =>
+      case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState) =>
         // publish new workspace given previous workspace.
         toPublishDiagnostics(
           previousOrCurrentState = currentWorkspace,
           nextState = Some(newWorkspace)
         )
 
-      case (_, _: WorkspaceState.Created) =>
+      case (_: WorkspaceState.Created, _: WorkspaceState.Created) =>
         // Nothing to publish
         Iterable.empty
     }
@@ -131,7 +131,7 @@ object DiagnosticsConverter {
    * @return Diagnostics to publish for the current state.
    */
   def toPublishDiagnostics(previousOrCurrentState: WorkspaceState.SourceAware,
-                           nextState: Option[WorkspaceState.SourceAware]): Iterable[PublishDiagnosticsParams] = {
+                           nextState: Option[WorkspaceState]): Iterable[PublishDiagnosticsParams] = {
     // build diagnostics sent for previous state, or the current state if this is the first run.
     val previousOrCurrentDiagnotics =
       toPublishDiagnostics(previousOrCurrentState)

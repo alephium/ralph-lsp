@@ -32,9 +32,10 @@ object GenBuild {
       }
     }
 
-  def persist(parsed: BuildState.BuildParsed): Unit = {
+  def persist(parsed: BuildState.BuildParsed): BuildState.BuildParsed = {
     FileIO.write(parsed.code, parsed.buildURI)
     FileIO.createDirectories(parsed.workspaceURI.resolve(parsed.config.contractPath))
     FileIO.createDirectories(parsed.workspaceURI.resolve(parsed.config.artifactPath))
+    parsed
   }
 }

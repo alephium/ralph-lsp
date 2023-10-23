@@ -8,12 +8,13 @@ object ServerStateUpdater {
   def workspaceChanged(change: WorkspaceChangeResult,
                        serverState: ServerState): Option[ServerState] =
     change match {
-      case WorkspaceChangeResult.BuildChanged(buildChangeResult) =>
+      case WorkspaceChangeResult.BuildChanged(buildChangeResult, cleanWorkspaceOnError) =>
         buildChangeResult match {
           case Some(buildResult) =>
             val newState =
               buildChanged(
                 buildChangeResult = buildResult,
+                cleanWorkspaceOnError = cleanWorkspaceOnError,
                 serverState = serverState
               )
 
@@ -35,11 +36,22 @@ object ServerStateUpdater {
 
   /** Publish build file change result */
   private def buildChanged(buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
+                           cleanWorkspaceOnError: Boolean,
                            serverState: ServerState): ServerState =
     buildChangeResult match {
       case Left(buildError) =>
+        val newWorkspace =
+          if (cleanWorkspaceOnError)
+            serverState.workspace map {
+              workspace =>
+                WorkspaceState.Created(workspace.workspaceURI)
+            }
+          else
+            serverState.workspace
+
         serverState.copy(
-          buildErrors = Some(buildError)
+          buildErrors = Some(buildError),
+          workspace = newWorkspace
         )
 
       case Right(newWorkspace) =>

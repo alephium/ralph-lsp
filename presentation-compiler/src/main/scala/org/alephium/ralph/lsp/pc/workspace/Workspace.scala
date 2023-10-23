@@ -67,15 +67,15 @@ object Workspace {
    *
    * @note Does not update the current state. The caller should set the new state.
    */
-  def initialise(workspace: WorkspaceState)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
+  def build(workspace: WorkspaceState)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
     workspace match {
-      case aware: WorkspaceState.SourceAware =>
-        Right(aware) // already initialised
+      case workspace: WorkspaceState.SourceAware =>
+        Right(workspace) // already initialised
 
-      case initialised: WorkspaceState.Created =>
+      case workspace: WorkspaceState.Created =>
         val newBuild =
           Build.parseAndCompile(
-            buildURI = initialised.buildURI,
+            buildURI = workspace.buildURI,
             code = None,
           )
 
@@ -83,17 +83,14 @@ object Workspace {
     }
 
   /**
-   * Build the workspace.
-   *
-   * Downgrade the state (to trigger full workspace recompilation) only if
-   * this is a new build file else returns the same state.
+   * Re-build: Parse and re-compile the build file.
    * */
-  def build(buildURI: URI,
-            code: Option[String],
-            state: WorkspaceState)(implicit file: FileAccess): Option[BuildState.CompileResult] =
+  def reBuild(buildURI: URI,
+              code: Option[String],
+              currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess): Option[BuildState.CompileResult] =
     BuildValidator.validateBuildURI(
       buildURI = buildURI,
-      workspaceURI = state.workspaceURI
+      workspaceURI = currentBuild.workspaceURI
     ) match {
       case Left(error) =>
         val buildError =
@@ -111,19 +108,12 @@ object Workspace {
           code = code,
         ) match {
           case newBuild: BuildState.BuildCompiled =>
-            state match {
-              case currentState: WorkspaceState.SourceAware =>
-                // if the new build-file is the same as current build-file, return it as
-                // no-state-changed, so that a new build does not unnecessarily gets triggered.
-                if (currentState.build == newBuild)
-                  None
-                else // else the build file has changed, return the new build.
-                  Some(newBuild)
-
-              case WorkspaceState.Created(_) =>
-                // upgrade the state to build-file aware.
-                Some(newBuild)
-            }
+            // if the new build-file is the same as current build-file, return it as
+            // no-state-changed, so that a new build does not unnecessarily gets triggered.
+            if (currentBuild == newBuild)
+              None
+            else // else the build file has changed, return the new build.
+              Some(newBuild)
 
           case errored: BuildState.BuildErrored =>
             Some(errored)
@@ -226,7 +216,13 @@ object Workspace {
           workspace = currentWorkspace
         )
 
-      Some(WorkspaceChangeResult.BuildChanged(result))
+      val buildChanged =
+        WorkspaceChangeResult.BuildChanged(
+          buildChangeResult = result,
+          cleanWorkspaceOnError = false
+        )
+
+      Some(buildChanged)
     } else if (fileExtension == CompilerAccess.RALPH_FILE_EXTENSION) {
       // process source code change
       val sourceResult =
@@ -256,10 +252,10 @@ object Workspace {
                    workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
                                                           compiler: CompilerAccess): Option[Either[BuildState.BuildErrored, WorkspaceState.SourceAware]] =
     if (workspace.buildURI.resolve(fileURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
-      Workspace.build(
+      Workspace.reBuild(
         buildURI = fileURI,
         code = code,
-        state = workspace
+        currentBuild = workspace.build
       ) match {
         case Some(newBuild) =>
           // this is a new build. initialise a fresh build.
@@ -285,21 +281,21 @@ object Workspace {
                         updatedCode: Option[String],
                         workspace: WorkspaceState)(implicit file: FileAccess,
                                                    compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
-    initialise(workspace) map {
-      initialised =>
-        if (URIUtil.isChild(initialised.build.contractURI, fileURI)) {
+    build(workspace) map {
+      workspace =>
+        if (URIUtil.isChild(workspace.build.contractURI, fileURI)) {
           // source belongs to this workspace, process compilation including this file's changed code.
           val newSourceCode =
             downgradeSourceState(
               fileURI = fileURI,
               updatedCode = updatedCode,
-              sourceCode = initialised.sourceCode
+              sourceCode = workspace.sourceCode
             )
 
           // create new un-compiled workspace.
           val unCompiledWorkspace =
             WorkspaceState.UnCompiled(
-              build = initialised.build,
+              build = workspace.build,
               sourceCode = newSourceCode
             )
 
@@ -307,7 +303,7 @@ object Workspace {
           Workspace.parseAndCompile(unCompiledWorkspace)
         } else {
           // file does not belong to this workspace, do not compile it and return initialised workspace.
-          initialised
+          workspace
         }
     }
 
@@ -369,9 +365,9 @@ object Workspace {
     }
 
   /**
-   * Process file-change events to the workspace.
+   * Process deleted file or folder.
    *
-   * @param events    Events to process
+   * @param events    Delete event to process
    * @param workspace Current workspace state
    * @return Workspace change result
    */
@@ -385,18 +381,18 @@ object Workspace {
           URIUtil.isChild(workspace.workspaceURI, event.uri)
       }
 
-    // did build change?
+    // is the build deleted?
     val buildDeleted =
       workspaceEvents exists {
         event =>
           event.uri == workspace.buildURI
       }
 
-    // update source-code state reacting to the FileEvent
+    // remove deleted files & folders from workspace
     val newSourceCode =
       workspaceEvents.foldLeft(workspace.sourceCode) {
         case (sourceCodeToUpdate, deleted) =>
-          // process only the source-files that belong to the configured contractPath
+          // Check only source-files that belong to the configured contractPath
           if (URIUtil.isChild(workspace.build.contractURI, deleted.uri))
             sourceCodeToUpdate.filter {
               state =>
@@ -406,39 +402,59 @@ object Workspace {
             sourceCodeToUpdate
       }
 
-    // new workspace with new source-files
-    val newWorkspace =
-      WorkspaceState.UnCompiled(
-        build = workspace.build,
-        sourceCode = newSourceCode
-      )
-
-    // if the build changed, fetch it from disk, else use cached code
+    // if build changed, fetch it from disk, else use cached code
     val buildCode =
       if (buildDeleted)
         None
       else
         Some(workspace.build.code)
 
-    // Yes, the build changed
+    // re-build the build file
     val buildResult =
-      Workspace.buildChanged(
-        fileURI = workspace.buildURI,
+      Workspace.reBuild(
+        buildURI = workspace.buildURI,
         code = buildCode,
-        workspace = newWorkspace
+        currentBuild = workspace.build
       )
 
+    // process build result
     buildResult match {
-      case Some(compileResult) =>
-        // Create a workspace-result to let the client know that the build was changed
-        WorkspaceChangeResult.BuildChanged(Some(compileResult))
+      case Some(buildResult) =>
+        buildResult match {
+          case newBuild: BuildCompiled =>
+            // Build compiled OK! Compile new source-files with this new build file
+            val newWorkspace =
+              WorkspaceState.UnCompiled(
+                build = newBuild,
+                sourceCode = newSourceCode
+              )
+
+            val compiledWorkspace =
+              Workspace.parseAndCompile(newWorkspace)
+
+            WorkspaceChangeResult.SourceChanged(Right(compiledWorkspace))
+
+          case errored: BuildState.BuildErrored =>
+            // Build not OK! Report the error, also clear all previous diagnostics
+            WorkspaceChangeResult.BuildChanged(
+              buildChangeResult = Some(Left(errored)),
+              cleanWorkspaceOnError = true
+            )
+        }
 
       case None =>
-        // the build has the same setting are previous build-file,
-        // so just compile the workspace source-code.
+        // No build change occurred. Process the new source-code with exiting build.
+        val newWorkspace =
+          WorkspaceState.UnCompiled(
+            build = workspace.build,
+            sourceCode = newSourceCode
+          )
+
+        // compile new source-code
         val compiledWorkspace =
           Workspace.parseAndCompile(newWorkspace)
 
+        // let the caller know that this is a source-change and no build-change occurred
         WorkspaceChangeResult.SourceChanged(Right(compiledWorkspace))
     }
   }

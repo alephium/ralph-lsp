@@ -17,7 +17,7 @@ import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
 /**
- * Test cases for [[Workspace.initialise]] function.
+ * Test cases for [[Workspace.reBuild]] function.
  */
 class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
@@ -36,7 +36,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
           forAll(GenWorkspace.genCreated()) {
             workspace =>
-              val result = Workspace.initialise(workspace).left.value
+              val result = Workspace.build(workspace).left.value
 
               result shouldBe
                 BuildState.BuildErrored(
@@ -57,7 +57,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
               GenWorkspace.persist(workspace)
               FileIO.exists(workspace.workspaceURI) shouldBe true
 
-              val result = Workspace.initialise(workspace).left.value
+              val result = Workspace.build(workspace).left.value
 
               result shouldBe
                 BuildState.BuildErrored(
@@ -92,7 +92,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
               // invoke initialise workspace
               val result =
-                Workspace.initialise(workspace).left.value
+                Workspace.build(workspace).left.value
 
               // the workspace should contain error targeting the build-file
               result shouldBe
@@ -143,7 +143,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
               // invoke initialise on the created workspace
               val result =
-                Workspace.initialise(workspace).value
+                Workspace.build(workspace).value
 
               // sort the resulting workspace state's source code
               val actualWorkspace =
@@ -195,7 +195,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
           )
 
         val actualWorkspace =
-          Workspace.initialise(expectedWorkspace).value
+          Workspace.build(expectedWorkspace).value
 
         actualWorkspace shouldBe expectedWorkspace
       }

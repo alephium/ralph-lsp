@@ -214,7 +214,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       val changes =
         params.getChanges
 
-      logger.debug(s"didChangeWatchedFiles. ${changes.asScala.mkString("\n")}")
+      logger.debug(s"didChangeWatchedFiles: ${changes.asScala.mkString("\n", "\n", "")}")
 
       val events =
         changes.asScala collect {
@@ -225,19 +225,21 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
             }
         }
 
-      val workspace =
-        getOrInitWorkspaceOrThrow()
+      if (events.nonEmpty) {
+        val workspace =
+          getOrInitWorkspaceOrThrow()
 
-      val workspaceChangeResult =
-        Workspace.deleted(
-          events = events.to(ArraySeq),
-          workspace = workspace
-        )
+        val workspaceChangeResult =
+          Workspace.deleted(
+            events = events.to(ArraySeq),
+            workspace = workspace
+          )
 
-      val client =
-        getClient()
+        val client =
+          getClient()
 
-      setWorkspaceChange(workspaceChangeResult) foreach client.publishDiagnostics
+        setWorkspaceChange(workspaceChangeResult) foreach client.publishDiagnostics
+      }
     }
 
   private def didChangeAndPublish(fileURI: URI,
@@ -326,14 +328,18 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         case currentWorkspace: WorkspaceState.Created =>
           // perform build and bring workspace state to unCompiled
           val newWorkspace =
-            Workspace.initialise(currentWorkspace)
+            Workspace.build(currentWorkspace)
 
           val client =
             getClient()
 
-          setWorkspaceChange(
-            changeResult = WorkspaceChangeResult.BuildChanged(Some(newWorkspace))
-          ) foreach client.publishDiagnostics
+          val changeResult =
+            WorkspaceChangeResult.BuildChanged(
+              buildChangeResult = Some(newWorkspace),
+              cleanWorkspaceOnError = false
+            )
+
+          setWorkspaceChange(changeResult) foreach client.publishDiagnostics
 
           newWorkspace
       }

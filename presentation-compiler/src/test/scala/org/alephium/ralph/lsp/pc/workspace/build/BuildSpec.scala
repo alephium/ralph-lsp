@@ -1,10 +1,11 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.workspace.{GenWorkspace, Workspace}
+import org.alephium.ralph.lsp.pc.workspace.Workspace
 import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildFileLocation}
 import org.alephium.ralph.lsp.FileIO
 import org.alephium.ralph.lsp.GenCommon.genFolderURI
+import org.alephium.ralph.lsp.pc.workspace.build.GenBuild._
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -19,30 +20,41 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
   "build" should {
     "fail" when {
       "build in not within the workspace" in {
-        // no file-io should occur
-        implicit val file: FileAccess =
-          null
+        // build that is outside the workspace
+        val outSideBuildGen =
+          GenBuild.genBuildParsed()
 
-        // generate a build and a workspace that in different folders
-        forAll(GenBuild.genBuildParsed(), GenWorkspace.genCreated()) {
-          case (outsideBuild, workspace) =>
+        // build that is inside the workspace
+        val insideBuildGen =
+          GenBuild
+            .genBuildParsed()
+            .map(persist)
+            .map(Build.compile(_)(FileAccess.disk))
+            .map(_.asInstanceOf[BuildState.BuildCompiled])
+
+        forAll(outSideBuildGen, insideBuildGen) {
+          case (outsideBuild, insideBuild) =>
+            // no file-io should occur
+            implicit val file: FileAccess =
+              null
+
             // build code is optional
             val buildCode =
               Gen.option(outsideBuild.code).sample.get
 
             // invoke build
             val actualWorkspace =
-              Workspace.build(
+              Workspace.reBuild(
                 buildURI = outsideBuild.buildURI,
                 code = buildCode,
-                state = workspace
+                currentBuild = insideBuild
               ).value
 
             // expected error should target the created file
             val expectedError =
               ErrorInvalidBuildFileLocation(
                 buildURI = outsideBuild.buildURI,
-                workspaceURI = workspace.workspaceURI
+                workspaceURI = insideBuild.workspaceURI
               )
 
             // build error should report the error
@@ -59,25 +71,32 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
 
       "build is within the workspace, but in a nested folder" in {
         // generate a build and a workspace that are in different folders
+        val existingBuild =
+          GenBuild
+            .genBuildParsed()
+            .map(persist)
+            .map(Build.compile(_)(FileAccess.disk))
+            .map(_.asInstanceOf[BuildState.BuildCompiled])
+
         val generator =
-          GenWorkspace.genCreated() flatMap {
-            workspace =>
+          existingBuild flatMap {
+            currentBuildParsed =>
               // build file is within a nested folder
               val buildFolder =
-                workspace.workspaceURI.resolve("nested_folder/")
+                currentBuildParsed.workspaceURI.resolve("nested_folder/")
 
               // generate a build
               GenBuild.genBuildParsed(workspaceURI = buildFolder) map {
                 build =>
-                  (build, workspace)
+                  (build, currentBuildParsed)
               }
           }
 
         forAll(generator) {
-          case (build, workspace) =>
+          case (build, currentBuild) =>
             // build is within a nested folder
             val buildParentFolder = Paths.get(build.buildURI).getParent
-            val workspaceNestedFolder = Paths.get(workspace.workspaceURI.resolve("nested_folder"))
+            val workspaceNestedFolder = Paths.get(currentBuild.workspaceURI.resolve("nested_folder"))
             buildParentFolder shouldBe workspaceNestedFolder
 
             // Optional build file: Regardless, build should not get accessed from disk.
@@ -90,17 +109,17 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
 
             // invoke build
             val actualWorkspace =
-              Workspace.build(
+              Workspace.reBuild(
                 buildURI = build.buildURI,
                 code = buildCode,
-                state = workspace
+                currentBuild = currentBuild
               ).value
 
             // expected error should target the created file
             val expectedError =
               ErrorInvalidBuildFileLocation(
                 buildURI = build.buildURI,
-                workspaceURI = workspace.workspaceURI
+                workspaceURI = currentBuild.workspaceURI
               )
 
             // build error should report the expectedError
