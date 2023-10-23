@@ -212,8 +212,8 @@ object Workspace {
    */
   def changed(fileURI: URI,
               code: Option[String],
-              currentWorkspace: WorkspaceState)(implicit file: FileAccess,
-                                                compiler: CompilerAccess): Option[WorkspaceChangeResult] = {
+              currentWorkspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
+                                                            compiler: CompilerAccess): Option[WorkspaceChangeResult] = {
     val fileExtension =
       URIUtil.getFileExtension(fileURI)
 
@@ -253,8 +253,8 @@ object Workspace {
    */
   def buildChanged(fileURI: URI,
                    code: Option[String],
-                   workspace: WorkspaceState)(implicit file: FileAccess,
-                                              compiler: CompilerAccess): Option[Either[BuildState.BuildErrored, WorkspaceState]] =
+                   workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
+                                                          compiler: CompilerAccess): Option[Either[BuildState.BuildErrored, WorkspaceState.SourceAware]] =
     if (workspace.buildURI.resolve(fileURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
       Workspace.build(
         buildURI = fileURI,
@@ -367,4 +367,92 @@ object Workspace {
             }
         }
     }
+
+  /**
+   * Process file-change events to the workspace.
+   *
+   * @param events    Events to process
+   * @param workspace Current workspace state
+   * @return Workspace change result
+   */
+  def filesChanged(events: ArraySeq[WorkspaceFileEvent],
+                   workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
+                                                          compiler: CompilerAccess): WorkspaceChangeResult = {
+    // collect events that belong to this workspace
+    val workspaceEvents =
+      events.filter {
+        event =>
+          URIUtil.isChild(workspace.workspaceURI, event.fileURI)
+      }
+
+    // did build change?
+    val buildChanged =
+      workspaceEvents exists {
+        event =>
+          event.fileURI == workspace.buildURI
+      }
+
+    // update source-code state reacting to the FileEvent
+    val newSourceCode =
+      workspaceEvents.foldLeft(workspace.sourceCode) {
+        case (sourceCodeToUpdate, event) =>
+          // process only the source-files that belong to the configured contractPath
+          if (URIUtil.isChild(workspace.build.contractURI, event.fileURI))
+            event match {
+              case event @ (_: WorkspaceFileEvent.Created | _: WorkspaceFileEvent.Changed) =>
+                // downgrade the state to OnDisk
+                val newSourceCodeState =
+                  SourceCodeState.OnDisk(event.fileURI)
+
+                // update or add it to the existing collection
+                updateOrAdd(
+                  collection = sourceCodeToUpdate,
+                  update = newSourceCodeState
+                )
+
+              case WorkspaceFileEvent.Deleted(fileURI) =>
+                // clear it from workspace
+                sourceCodeToUpdate.filter(_.fileURI != fileURI)
+            }
+          else
+            sourceCodeToUpdate
+      }
+
+    // new workspace with new source-files
+    val newWorkspace =
+      WorkspaceState.UnCompiled(
+        build = workspace.build,
+        sourceCode = newSourceCode
+      )
+
+    if (buildChanged) {
+      // Yes, the build changed
+      val buildResult =
+        Workspace.buildChanged(
+          fileURI = workspace.buildURI,
+          code = None,
+          workspace = newWorkspace
+        )
+
+      buildResult match {
+        case Some(compileResult) =>
+          // Create a workspace-result to let the client know that the build was changed
+          WorkspaceChangeResult.BuildChanged(Some(compileResult))
+
+        case None =>
+          // the build has the same setting are previous build-file,
+          // so just compile the workspace source-code.
+          val compiledWorkspace =
+            Workspace.parseAndCompile(newWorkspace)
+
+          WorkspaceChangeResult.SourceChanged(Right(compiledWorkspace))
+      }
+    } else {
+      // the build did not change, process it as a regular workspace change
+      val compiledWorkspace =
+        Workspace.parseAndCompile(newWorkspace)
+
+      WorkspaceChangeResult.SourceChanged(Right(compiledWorkspace))
+    }
+  }
 }

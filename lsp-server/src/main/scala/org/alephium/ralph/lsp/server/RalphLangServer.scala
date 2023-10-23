@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.completion.CodeCompleter
-import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceChangeResult, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceChangeResult, WorkspaceFileEvent, WorkspaceState}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter}
@@ -16,6 +16,8 @@ import org.eclipse.lsp4j.services._
 import java.net.URI
 import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
+import scala.collection.immutable.ArraySeq
+import scala.jdk.CollectionConverters.IterableHasAsScala
 
 object RalphLangServer {
 
@@ -207,6 +209,40 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def didSave(params: DidSaveTextDocumentParams): Unit =
     ()
 
+  override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
+    thisServer.synchronized {
+      val events =
+        params.getChanges.asScala map {
+          event =>
+            event.getType match {
+              case FileChangeType.Created =>
+                WorkspaceFileEvent.Created(new URI(event.getUri))
+
+              case FileChangeType.Changed =>
+                WorkspaceFileEvent.Changed(new URI(event.getUri))
+
+              case FileChangeType.Deleted =>
+                WorkspaceFileEvent.Deleted(new URI(event.getUri))
+            }
+        }
+
+      logger.debug(s"didChangeWatchedFiles. ${events.mkString("\n")}")
+
+      val workspace =
+        getOrInitWorkspaceOrThrow()
+
+      val workspaceChangeResult =
+        Workspace.filesChanged(
+          events = events.to(ArraySeq),
+          workspace = workspace
+        )
+
+      val client =
+        getClient()
+
+      setWorkspaceChange(workspaceChangeResult) foreach client.publishDiagnostics
+    }
+
   private def didChangeAndPublish(fileURI: URI,
                                   code: Option[String]): Unit =
     thisServer.synchronized {
@@ -227,11 +263,14 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   private def didChangeAndSet(fileURI: URI,
                               code: Option[String]): Iterable[PublishDiagnosticsParams] =
     thisServer.synchronized {
+      val workspace =
+        getOrInitWorkspaceOrThrow()
+
       val result =
         Workspace.changed(
           fileURI = fileURI,
           code = code,
-          currentWorkspace = getWorkspace()
+          currentWorkspace = workspace
         )
 
       setWorkspaceChange(
@@ -250,12 +289,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         cancelChecker.checkCanceled()
 
         val workspace =
-          getOrInitWorkspace() getOrElse {
-            throw
-              ResponseError
-                .UnableToInitialiseWorkspace
-                .toResponseErrorException
-          }
+          getOrInitWorkspaceOrThrow()
 
         val suggestions =
           CodeCompleter.complete(
@@ -271,6 +305,14 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         cancelChecker.checkCanceled()
 
         messages.Either.forRight[util.List[CompletionItem], CompletionList](completionList)
+    }
+
+  def getOrInitWorkspaceOrThrow(): WorkspaceState.SourceAware =
+    getOrInitWorkspace() getOrElse {
+      throw
+        ResponseError
+          .UnableToInitialiseWorkspace
+          .toResponseErrorException
     }
 
   /**
@@ -317,9 +359,6 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     CompletableFuture.completedFuture(unresolved)
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
-    ()
-
-  override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
     ()
 
   override def getTextDocumentService: TextDocumentService =
