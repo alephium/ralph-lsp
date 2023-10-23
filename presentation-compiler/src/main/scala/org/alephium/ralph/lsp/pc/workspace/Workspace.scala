@@ -130,26 +130,6 @@ object Workspace {
         }
     }
 
-  def cleanBuild(code: Option[String],
-                 state: WorkspaceState.Created)(implicit file: FileAccess): BuildState.CompileResult =
-    BuildValidator.validateBuildURI(
-      buildURI = state.buildURI,
-      workspaceURI = state.workspaceURI
-    ) match {
-      case Left(error) =>
-        BuildState.BuildErrored(
-          buildURI = state.buildURI,
-          code = code,
-          errors = ArraySeq(error)
-        )
-
-      case Right(buildURI) =>
-        Build.parseAndCompile(
-          buildURI = buildURI,
-          code = code,
-        )
-    }
-
   /**
    * Parses source-code in that is not already in parsed state.
    *

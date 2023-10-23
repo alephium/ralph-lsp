@@ -25,7 +25,6 @@ object RalphLangServer {
 
     capabilities.setCompletionProvider(new CompletionOptions(true, util.Arrays.asList(".")))
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
-    capabilities.setDiagnosticProvider(new DiagnosticRegistrationOptions(true, true))
 
     capabilities
   }
@@ -207,68 +206,6 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   override def didSave(params: DidSaveTextDocumentParams): Unit =
     ()
-
-  override def diagnostic(params: DocumentDiagnosticParams): CompletableFuture[DocumentDiagnosticReport] =
-    CompletableFutures.computeAsync {
-      cancelChecker =>
-        val fileURI = new URI(params.getTextDocument.getUri)
-
-        logger.debug(s"Document diagnostic requested: $fileURI")
-
-        cancelChecker.checkCanceled()
-
-        val diagnostics =
-          didChangeAndSet(
-            fileURI = fileURI,
-            code = None
-          )
-
-        val fullReport =
-          DiagnosticsConverter.toRelatedFullDocumentDiagnosticReport(diagnostics)
-
-        new DocumentDiagnosticReport(fullReport)
-    }
-
-  override def diagnostic(params: WorkspaceDiagnosticParams): CompletableFuture[WorkspaceDiagnosticReport] =
-    CompletableFutures.computeAsync {
-      cancelChecker =>
-        logger.debug("Workspace diagnostic requested")
-
-        // fetch the current set workspace
-        val workspace =
-          getWorkspace()
-
-        cancelChecker.checkCanceled()
-
-        // create a new workspace
-        val freshWorkspace =
-          Workspace.create(workspace.workspaceURI)
-
-        // clean build the fresh workspace
-        val cleanBuild =
-          Workspace.cleanBuild(
-            code = None,
-            state = freshWorkspace
-          )
-
-        cancelChecker.checkCanceled()
-
-        // parse and compile the workspace using the new build
-        val result =
-          Workspace
-            .initialise(cleanBuild)
-            .map(Workspace.parseAndCompile)
-
-        val changeResult =
-          WorkspaceChangeResult.BuildChanged(Some(result))
-
-        // set the new workspace
-        val diagnostics =
-          setWorkspaceChange(changeResult)
-
-        // transform publish-diagnostics to workspace-diagnostics
-        DiagnosticsConverter.toWorkspaceDiagnosticReport(diagnostics)
-    }
 
   private def didChangeAndPublish(fileURI: URI,
                                   code: Option[String]): Unit =

@@ -8,7 +8,6 @@ import org.alephium.ralph.SourcePosition
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.server.state.ServerState
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.messages
 
 import java.net.URI
 import java.util
@@ -288,47 +287,4 @@ object DiagnosticsConverter {
 
     new PublishDiagnosticsParams(fileURI.toString, diagnostics.asJava)
   }
-
-  /** Converts publish-diagnostics to document-diagnostics. */
-  def toRelatedFullDocumentDiagnosticReport(diagnostics: Iterable[PublishDiagnosticsParams]): RelatedFullDocumentDiagnosticReport = {
-    val relatedDocuments =
-      new util.HashMap[String, messages.Either[FullDocumentDiagnosticReport, UnchangedDocumentDiagnosticReport]]()
-
-    // convert individual diagnostics to full-document-diagnostics.
-    diagnostics foreach {
-      diagnostic =>
-        val report = new FullDocumentDiagnosticReport(diagnostic.getDiagnostics)
-        val eitherReport = messages.Either.forLeft[FullDocumentDiagnosticReport, UnchangedDocumentDiagnosticReport](report)
-        relatedDocuments.put(diagnostic.getUri, eitherReport)
-    }
-
-    val fullReport = new RelatedFullDocumentDiagnosticReport()
-    fullReport.setRelatedDocuments(relatedDocuments)
-    fullReport
-  }
-
-  /** Converts publish-diagnostics to workspace-diagnostics */
-  def toWorkspaceDiagnosticReport(diagnostics: Iterable[PublishDiagnosticsParams]): WorkspaceDiagnosticReport = {
-    val reports =
-      new util.ArrayList[WorkspaceDocumentDiagnosticReport]()
-
-    // convert individual diagnostics to full-document-diagnostics.
-    diagnostics foreach {
-      diagnostic =>
-        val fullDocumentReport =
-          new WorkspaceFullDocumentDiagnosticReport(
-            diagnostic.getDiagnostics,
-            diagnostic.getUri,
-            diagnostic.getVersion
-          )
-
-        val documentReport =
-          new WorkspaceDocumentDiagnosticReport(fullDocumentReport)
-
-        reports.add(documentReport)
-    }
-
-    new WorkspaceDiagnosticReport(reports)
-  }
-
 }
