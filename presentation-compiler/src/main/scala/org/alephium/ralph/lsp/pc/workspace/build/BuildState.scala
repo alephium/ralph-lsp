@@ -30,7 +30,8 @@ object BuildState {
   /** Build is successfully compiled */
   case class BuildCompiled(buildURI: URI,
                            code: String,
-                           config: RalphcCompiledConfig) extends BuildState.Compiled {
+                           config: RalphcCompiledConfig,
+                           dependencies: BuildDependencies) extends BuildState.Compiled {
     def contractURI: URI =
       config.contractPath.toUri
 

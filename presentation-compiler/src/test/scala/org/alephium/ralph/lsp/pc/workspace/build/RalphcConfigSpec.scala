@@ -39,7 +39,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
       BuildState.BuildCompiled(
         buildURI = expectedBuildPath.toUri,
         code = expectedCode,
-        config = expectedCompiledConfig
+        config = expectedCompiledConfig,
+        dependencies = BuildDependencies.empty
       )
   }
 }

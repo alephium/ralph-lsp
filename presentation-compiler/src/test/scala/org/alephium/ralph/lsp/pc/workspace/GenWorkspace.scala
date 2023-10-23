@@ -4,6 +4,7 @@ import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.GenCommon._
 import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, WorkspaceBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.BuildDependencies
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcCompiledConfig
 import org.alephium.ralphc.Config
@@ -56,7 +57,8 @@ object GenWorkspace {
       BuildCompiled(
         buildURI = workspacePath.resolve(WorkspaceBuild.BUILD_FILE_NAME).toUri,
         code = RalphcConfig.write(compiledConfig),
-        config = compiledConfig
+        config = compiledConfig,
+        dependencies = BuildDependencies.empty
       )
 
   def genInitialised(): Gen[WorkspaceState.Created] =

@@ -31,7 +31,8 @@ object BuildValidator {
           compilerOptions = parsed.config.compilerOptions,
           contractPath = absoluteContractPath,
           artifactPath = absoluteArtifactPath
-        )
+        ),
+        dependencies = BuildDependencies.empty
       )
     }
 
