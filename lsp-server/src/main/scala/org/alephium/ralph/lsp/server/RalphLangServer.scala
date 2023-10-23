@@ -211,28 +211,25 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
     thisServer.synchronized {
+      val changes =
+        params.getChanges
+
+      logger.debug(s"didChangeWatchedFiles. ${changes.asScala.mkString("\n")}")
+
       val events =
-        params.getChanges.asScala map {
+        changes.asScala collect {
           event =>
             event.getType match {
-              case FileChangeType.Created =>
-                WorkspaceFileEvent.Created(new URI(event.getUri))
-
-              case FileChangeType.Changed =>
-                WorkspaceFileEvent.Changed(new URI(event.getUri))
-
               case FileChangeType.Deleted =>
                 WorkspaceFileEvent.Deleted(new URI(event.getUri))
             }
         }
 
-      logger.debug(s"didChangeWatchedFiles. ${events.mkString("\n")}")
-
       val workspace =
         getOrInitWorkspaceOrThrow()
 
       val workspaceChangeResult =
-        Workspace.filesChanged(
+        Workspace.deleted(
           events = events.to(ArraySeq),
           workspace = workspace
         )

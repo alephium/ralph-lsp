@@ -6,16 +6,16 @@ import java.net.URI
  * Events dispatched by LSP-client for files & folders that are being watched.
  */
 sealed trait WorkspaceFileEvent {
-  def fileURI: URI
+  def uri: URI
 }
 
 object WorkspaceFileEvent {
-  /** A file is created */
-  case class Created(fileURI: URI) extends WorkspaceFileEvent
+  /** A file or folder is created */
+  case class Created(uri: URI) extends WorkspaceFileEvent
 
-  /** A file got changed */
-  case class Changed(fileURI: URI) extends WorkspaceFileEvent
+  /** A file or folder is changed */
+  case class Changed(uri: URI) extends WorkspaceFileEvent
 
-  /** A file got deleted */
-  case class Deleted(fileURI: URI) extends WorkspaceFileEvent
+  /** A file or folder is deleted */
+  case class Deleted(uri: URI) extends WorkspaceFileEvent
 }
