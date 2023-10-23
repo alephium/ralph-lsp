@@ -64,21 +64,7 @@ object DiagnosticsConverter {
         Some(diagnostics)
 
       case (None, None) =>
-        // FIXME: Enabling document-level diagnostics requires this,
-        //        otherwise build-file diagnostics are not cleared.
-        //        It does not make sense to clear build-errors when
-        //        previous state does not contain errors. But maybe
-        //        the order of document-level diagnostics vs file-events
-        //        is requiring this. This needs to be debugged.
-        buildURI map {
-          buildURI =>
-            toPublishDiagnostics(
-              fileURI = buildURI,
-              code = None,
-              errors = List.empty,
-              severity = DiagnosticSeverity.Error
-            )
-        }
+        None
     }
 
   def toPublishDiagnostics(currentWorkspace: Option[WorkspaceState],
