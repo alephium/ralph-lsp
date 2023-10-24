@@ -204,8 +204,17 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     )
   }
 
-  override def didSave(params: DidSaveTextDocumentParams): Unit =
-    ()
+  override def didSave(params: DidSaveTextDocumentParams): Unit = {
+    val fileURI = new URI(params.getTextDocument.getUri)
+    val code = Some(params.getText)
+
+    logger.debug(s"didSave. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
+
+    didChangeAndPublish(
+      fileURI = fileURI,
+      code = code
+    )
+  }
 
   override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
     thisServer.synchronized {
