@@ -10,11 +10,10 @@ import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.DiagnosticsConverter
 import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater}
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
+import org.eclipse.lsp4j.jsonrpc.CompletableFutures
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
-import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.IterableHasAsScala
@@ -76,87 +75,11 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   def getState(): ServerState =
     thisServer.state
 
-  private def getClient(): RalphLangClient =
-    state.client getOrElse {
-      val error = ResponseError.ClientNotConfigured
-      val exception = error.toResponseErrorException
-      logger.error(error.getMessage, exception)
-      throw exception
-    }
-
-  /** Write to log file, notify the client and throw to exit this request */
-  private def logAndThrowError(error: server.ResponseError): Nothing = {
-    val client = getClient()
-    val exception = client.log(error).toResponseErrorException
-    logger.error(error.getMessage, exception)
-    throw exception
-  }
-
-  /** Set the workspace */
-  private def setWorkspace(workspace: WorkspaceState): Unit =
-    thisServer.synchronized {
-      thisServer.state = thisServer.state.copy(workspace = Some(workspace))
-    }
-
   /**
-   * Set the workspace and returns diagnostics to publish for current state.
-   *
-   * @param fileURI      File that trigger this compilation
-   * @param changeResult Compilation result returned by presentation-compiler.
-   *                     [[None]] indicates that the file-type does not belong to us.
-   * @return Diagnostics for current workspace.
-   */
-  private def setWorkspaceChange(changeResult: Either[ErrorUnknownFileType, WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
-    thisServer.synchronized {
-      changeResult match {
-        case Right(result) =>
-          setWorkspaceChange(result)
-
-        case Left(ErrorUnknownFileType(fileURI)) =>
-          // Means: This fileURI does not belong to this workspace or is of different type.
-          // If this occurs, it's a client configuration error.
-          // File types that are not supported by Ralph should not be submitted to this server.
-          logAndThrowError(ResponseError.UnknownFileType(fileURI))
-      }
-    }
-
-  /**
-   * Set the workspace and returns diagnostics to publish for current state.
-   *
-   * @param changeResult Compilation result returned by presentation-compiler.
-   *                     [[None]] indicates that the file-type does not belong to us.
-   * @return Diagnostics for current workspace.
-   */
-  private def setWorkspaceChange(changeResult: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
-    thisServer.synchronized {
-      val currentServerState =
-        thisServer.state
-
-      val newServerState =
-        ServerStateUpdater.workspaceChanged(
-          change = changeResult,
-          serverState = currentServerState
-        )
-
-      newServerState match {
-        case Some(newState) =>
-          thisServer.state = newState
-
-          DiagnosticsConverter.toPublishDiagnostics(
-            currentState = currentServerState,
-            newState = newState
-          )
-
-        case None =>
-          logger.debug("No server change occurred")
-          None
-      }
-    }
-
-  /**
-   * An initial call to this function is required before server is initialised.
+   * An initial call to this function is required before this server can start processing request.
    *
    * @param client   Client proxy instance provided by LSP4J.
+   *                 Client must be known before a connection is initialised.
    * @param listener LSP connection listener function.
    */
   def setInitialState(client: RalphLangClient,
@@ -180,7 +103,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           RalphLangServer.getRootUri(params)
 
         val workspaceURI =
-          rootURI getOrElse logAndThrowError(ResponseError.WorkspaceFolderNotSupplied)
+          rootURI getOrElse notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
 
         val workspace =
           Workspace.create(workspaceURI)
@@ -287,12 +210,20 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       }
     }
 
+  override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
+    ()
+
+  override def getTextDocumentService: TextDocumentService =
+    this
+
+  override def getWorkspaceService: WorkspaceService =
+    this
+
   /**
    * Apply code change and publish diagnostics.
    *
-   * @param fileURI The file that changed
-   * @param code    Source-code of that file.
-   *                Set to [[None]] to fetch from disk.
+   * @param fileURI File that changed
+   * @param code    Source-code of the changed file.
    */
   private def didChangeAndPublish(fileURI: URI,
                                   code: Option[String]): Unit =
@@ -309,10 +240,11 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   /**
-   * Process source or build file change.
+   * Process code change and set the new workspace.
    *
    * @param fileURI File that changed.
-   * @param code    Content of the file.
+   * @param code    Source-code of the changed file.
+   * @return Diagnostics of the new workspace.
    */
   private def didChangeAndSet(fileURI: URI,
                               code: Option[String]): Iterable[PublishDiagnosticsParams] =
@@ -337,7 +269,11 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   /**
-   * Returns the existing workspace if it's already build & initialised or-else invokes workspace build.
+   * Fetch the existing workspace if it's already build and initialised or-else invoke new workspace build.
+   *
+   * @param fileURI File that changed.
+   * @param code    Source-code of the changed file.
+   * @return Diagnostics if there were build errors, or-else the next workspace.
    */
   def getOrBuildWorkspace(fileURI: Option[URI],
                           code: Option[String]): Either[Iterable[PublishDiagnosticsParams], WorkspaceState.SourceAware] =
@@ -387,27 +323,89 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       }
     }
 
-  def getWorkspace(): WorkspaceState =
+  private def getWorkspace(): WorkspaceState =
     state.workspace getOrElse {
       // Workspace folder is not defined.
       // This is not expected to occur since `initialized` is always invoked first.
-      logAndThrowError(ResponseError.WorkspaceFolderNotSupplied)
+      notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
     }
 
-  override def codeAction(params: CodeActionParams): CompletableFuture[util.List[messages.Either[Command, CodeAction]]] =
-    CompletableFuture.completedFuture(util.Arrays.asList())
+  private def getClient(): RalphLangClient =
+    state.client getOrElse {
+      val error = ResponseError.ClientNotConfigured
+      val exception = error.toResponseErrorException
+      logger.error(error.getMessage, exception)
+      throw exception
+    }
 
-  override def resolveCompletionItem(unresolved: CompletionItem): CompletableFuture[CompletionItem] =
-    CompletableFuture.completedFuture(unresolved)
+  /** Write to log file, notify the client and throw to exit this request */
+  private def notifyAndThrow(error: server.ResponseError): Nothing = {
+    val client = getClient()
+    val exception = client.log(error).toResponseErrorException
+    logger.error(error.getMessage, exception)
+    throw exception
+  }
 
-  override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
-    ()
+  /** Set the workspace */
+  private def setWorkspace(workspace: WorkspaceState): Unit =
+    thisServer.synchronized {
+      thisServer.state = thisServer.state.copy(workspace = Some(workspace))
+    }
 
-  override def getTextDocumentService: TextDocumentService =
-    this
+  /**
+   * Set the workspace and returns diagnostics to publish for current state.
+   *
+   * @param fileURI      File that trigger this compilation
+   * @param changeResult Compilation result returned by presentation-compiler.
+   *                     [[None]] indicates that the file-type does not belong to us.
+   * @return Diagnostics for current workspace.
+   */
+  private def setWorkspaceChange(changeResult: Either[ErrorUnknownFileType, WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
+    thisServer.synchronized {
+      changeResult match {
+        case Right(result) =>
+          setWorkspaceChange(result)
 
-  override def getWorkspaceService: WorkspaceService =
-    this
+        case Left(ErrorUnknownFileType(fileURI)) =>
+          // Means: This fileURI does not belong to this workspace or is of different type.
+          // If this occurs, it's a client configuration error.
+          // File types that are not supported by Ralph should not be submitted to this server.
+          notifyAndThrow(ResponseError.UnknownFileType(fileURI))
+      }
+    }
+
+  /**
+   * Set the workspace and returns diagnostics to publish for current state.
+   *
+   * @param changeResult Compilation result returned by presentation-compiler.
+   *                     [[None]] indicates that the file-type does not belong to us.
+   * @return Diagnostics for current workspace.
+   */
+  private def setWorkspaceChange(changeResult: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
+    thisServer.synchronized {
+      val currentServerState =
+        thisServer.state
+
+      val newServerState =
+        ServerStateUpdater.workspaceChanged(
+          change = changeResult,
+          serverState = currentServerState
+        )
+
+      newServerState match {
+        case Some(newState) =>
+          thisServer.state = newState
+
+          DiagnosticsConverter.toPublishDiagnostics(
+            currentState = currentServerState,
+            newState = newState
+          )
+
+        case None =>
+          logger.debug("No server change occurred")
+          None
+      }
+    }
 
   override def shutdown(): CompletableFuture[AnyRef] =
     state.listener match {
