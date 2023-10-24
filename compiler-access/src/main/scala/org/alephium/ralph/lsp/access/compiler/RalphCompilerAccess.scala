@@ -20,6 +20,7 @@ import scala.collection.mutable
 
 private object RalphCompilerAccess extends CompilerAccess {
 
+  /** @inheritdoc */
   def parseContracts(code: String): Either[CompilerMessage.AnyError, Seq[Ast.ContractWithState]] =
     try
       fastparse.parse(code, StatefulParser.multiContract(_)) match {
@@ -31,6 +32,7 @@ private object RalphCompilerAccess extends CompilerAccess {
       }
     catch TryUtil.catchAllThrows
 
+  /** @inheritdoc */
   def compileContracts(contracts: Seq[Ast.ContractWithState],
                        options: CompilerOptions): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
@@ -51,6 +53,7 @@ private object RalphCompilerAccess extends CompilerAccess {
       Right((statefulContracts.toArray, statefulScripts.toArray))
     } catch TryUtil.catchAllThrows
 
+  /** @inheritdoc */
   override def compileForDeployment(workspaceURI: URI,
                                     config: Config): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {

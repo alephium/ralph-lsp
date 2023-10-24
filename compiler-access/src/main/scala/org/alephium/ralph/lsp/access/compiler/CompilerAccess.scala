@@ -31,7 +31,7 @@ trait CompilerAccess {
   def parseContracts(code: String): Either[CompilerMessage.AnyError, Seq[Ast.ContractWithState]]
 
   /**
-   * Given the parsed ast and compiler options, compile the contracts.
+   * Given the parsed AST and compiler options, compile the contracts.
    */
   def compileContracts(contracts: Seq[Ast.ContractWithState],
                        options: CompilerOptions): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]

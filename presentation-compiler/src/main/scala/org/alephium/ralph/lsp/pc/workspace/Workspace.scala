@@ -18,7 +18,7 @@ import scala.collection.immutable.ArraySeq
  */
 object Workspace {
 
-  /** First state of a workspace which just knows about the workspace root folder. */
+  /** First stage of a workspace where just the root workspace folder is known */
   def create(workspaceURI: URI): WorkspaceState.Created =
     WorkspaceState.Created(workspaceURI)
 
@@ -113,7 +113,7 @@ object Workspace {
     }
 
   /**
-   * Parses source-code in that is not already in parsed state.
+   * Parse source-code in that is not already in parsed state.
    *
    * @return A new workspace state with errors if parse fails
    *         or [[WorkspaceState.Parsed]] is returned on successful parse.
@@ -145,7 +145,7 @@ object Workspace {
     }
 
   /**
-   * Parses and compiles the workspace.
+   * Parse and compile the workspace.
    *
    * @param workspace Current workspace state
    * @return New workspace state with compilation results of all source files.
@@ -171,7 +171,7 @@ object Workspace {
     }
 
   /**
-   * Compiles a parsed workspace.
+   * Compile a parsed workspace.
    */
   def compile(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.CompilerRun = {
     val compilationResult =
@@ -297,16 +297,17 @@ object Workspace {
           event.uri == workspace.buildURI
       }
 
-    // if build changed, fetch it from disk, else use cached code
     val buildCode =
-      if (isBuildDeleted)
+      if (isBuildDeleted) // if build changed, fetch it from disk
         None
-      else
+      else // no build file event occurred
         buildErrors match {
           case Some(errored) =>
+            // use the code from the previous build's compilation run
             errored.code
 
           case None =>
+            // previous build was good, use the compiled build code
             Some(workspace.build.code)
         }
 
@@ -318,7 +319,7 @@ object Workspace {
   }
 
   /**
-   * Processes source or build file change.
+   * Process source or build file change.
    *
    * @param fileURI File that changed.
    * @param code    Content of the file.
@@ -359,7 +360,7 @@ object Workspace {
   }
 
   /**
-   * Handles changes to the build valid.
+   * Process changes to a valid build file.
    *
    * If the build file is valid, this drops existing compilations
    * and starts a fresh workspace.
@@ -392,7 +393,7 @@ object Workspace {
       None // ignore file that is not in the root workspace directory
 
   /**
-   * Handles changes to ralph code files.
+   * Process changes to ralph code files.
    *
    * @param fileURI     Location of the source file.
    * @param updatedCode Source changes
@@ -428,7 +429,7 @@ object Workspace {
     }
 
   /**
-   * Downgrades the current state of updated source-code so it gets re-parsed and re-compiled.
+   * Downgrade the current state of updated source-code so it gets re-parsed and re-compiled.
    * Also checks if the file is deleted so it could be removed from compilation.
    *
    * @param fileURI     Updated code's file-location

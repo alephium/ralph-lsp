@@ -20,6 +20,7 @@ import scala.util.{Failure, Success, Using}
 
 private object DiskFileAccess extends FileAccess {
 
+  /** @inheritdoc */
   override def exists(fileURI: URI): Either[CompilerMessage.AnyError, Boolean] =
     try
       Right(Files.exists(Paths.get(fileURI)))
@@ -28,6 +29,7 @@ private object DiskFileAccess extends FileAccess {
         Left(ThrowableError(throwable))
     }
 
+  /** @inheritdoc */
   def list(workspaceURI: URI): Either[CompilerMessage.AnyError, Seq[URI]] =
     try {
       val uris =
@@ -40,6 +42,7 @@ private object DiskFileAccess extends FileAccess {
       Right(uris)
     } catch TryUtil.catchAllThrows
 
+  /** @inheritdoc */
   override def read(fileURI: URI): Either[CompilerMessage.AnyError, String] =
     Using(Source.fromFile(fileURI))(_.mkString) match {
       case Failure(exception) =>
