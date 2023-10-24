@@ -13,16 +13,16 @@ object URIUtil {
     Paths.get(uri).toFile.getName.dropWhile(_ != '.').drop(1)
 
   /** Is the child [[URI]] within the parent [[URI]] */
-  def isChild(parent: URI,
-              child: URI): Boolean =
-    isChild(
+  def contains(parent: URI,
+               child: URI): Boolean =
+    contains(
       parent = Paths.get(parent),
       child = Paths.get(child)
     )
 
   /** Is the child [[Path]] within the parent [[Path]] */
-  def isChild(parent: Path,
-              child: Path): Boolean =
+  def contains(parent: Path,
+               child: Path): Boolean =
     parent
       .resolve(child)
       .startsWith(parent)

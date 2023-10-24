@@ -67,7 +67,7 @@ object BuildValidator {
       ListBuffer.empty[CompilerMessage.AnyError]
 
     // Validate: is the contract path within the workspace
-    if (!URIUtil.isChild(workspacePath, absoluteContractPath))
+    if (!URIUtil.contains(workspacePath, absoluteContractPath))
       errors addOne
         ErrorDirectoryOutsideWorkspace(
           dirPath = contractPath,
@@ -79,7 +79,7 @@ object BuildValidator {
         )
 
     // Validate: is the artifact path within the workspace
-    if (!URIUtil.isChild(workspacePath, absoluteArtifactPath))
+    if (!URIUtil.contains(workspacePath, absoluteArtifactPath))
       errors addOne
         ErrorDirectoryDoesNotExists(
           dirPath = artifactPath,

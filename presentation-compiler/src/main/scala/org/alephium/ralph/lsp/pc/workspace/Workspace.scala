@@ -65,7 +65,7 @@ object Workspace {
 
   /**
    * Returns existing workspace or initialises a new one from the configured build file.
-   * Or else reports any workspace issues.
+   * Or else reports all workspace issues.
    *
    * @note Does not update the current state. The caller should set the new state.
    */
@@ -307,7 +307,7 @@ object Workspace {
     val workspaceEvents =
       events filter {
         event =>
-          URIUtil.isChild(workspace.workspaceURI, event.uri)
+          URIUtil.contains(workspace.workspaceURI, event.uri)
       }
 
     // remove deleted files & folders from workspace
@@ -360,13 +360,13 @@ object Workspace {
     events.foldLeft(workspace.sourceCode) {
       case (newSourceCode, event) =>
         // process files & folders that belong to the configured contractPath
-        if (URIUtil.isChild(workspace.build.contractURI, event.uri))
+        if (URIUtil.contains(workspace.build.contractURI, event.uri))
           event match {
             case WorkspaceFileEvent.Deleted(uri) =>
               newSourceCode filter {
                 state =>
                   // Delete files that are within the deleted uri
-                  !URIUtil.isChild(uri, state.fileURI)
+                  !URIUtil.contains(uri, state.fileURI)
               }
 
             case WorkspaceFileEvent.Created(uri) =>
@@ -466,7 +466,7 @@ object Workspace {
                                                    compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
     build(workspace) map {
       workspace =>
-        if (URIUtil.isChild(workspace.build.contractURI, fileURI)) {
+        if (URIUtil.contains(workspace.build.contractURI, fileURI)) {
           // source belongs to this workspace, process compilation including this file's changed code.
           val newSourceCode =
             downgradeSourceState(
