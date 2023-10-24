@@ -224,33 +224,39 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
             }
         }
 
-      // TODO: handle cases when the events are lost in-case of error
+      if (deleteEvents.nonEmpty) {
+        val diagnostics =
+          getOrBuildWorkspace() map { // initialise workspace and process delete
+            source =>
+              val deleteResult =
+                Workspace.delete(
+                  events = deleteEvents.to(ArraySeq),
+                  buildErrors = thisServer.state.buildErrors,
+                  workspace = source
+                )
 
-      if (deleteEvents.nonEmpty)
-        getOrInitWorkspace() foreach { // initialise workspace and process delete
-          source =>
-            val deleteResult =
-              Workspace.delete(
-                events = deleteEvents.to(ArraySeq),
-                workspace = source
-              )
+              setWorkspaceChange(deleteResult)
+          }
 
-            val client =
-              getClient()
+        val client =
+          getClient()
 
-            setWorkspaceChange(deleteResult) foreach client.publishDiagnostics
-        }
+        diagnostics.merge foreach client.publishDiagnostics
+      }
     }
 
   private def didChangeAndPublish(fileURI: URI,
                                   code: Option[String]): Unit =
     thisServer.synchronized {
+      val diagnostics =
+        didChangeAndSet(
+          fileURI = fileURI,
+          code = code
+        )
+
       val client = getClient()
 
-      didChangeAndSet(
-        fileURI = fileURI,
-        code = code
-      ) foreach client.publishDiagnostics
+      diagnostics foreach client.publishDiagnostics
     }
 
   /**
@@ -262,35 +268,30 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   private def didChangeAndSet(fileURI: URI,
                               code: Option[String]): Iterable[PublishDiagnosticsParams] =
     thisServer.synchronized {
-      val workspace =
-        getOrInitWorkspaceOrThrow()
+      val diagnostics =
+        getOrBuildWorkspace() map {
+          workspace =>
+            val result =
+              Workspace.changed(
+                fileURI = fileURI,
+                code = code,
+                currentWorkspace = workspace
+              )
 
-      val result =
-        Workspace.changed(
-          fileURI = fileURI,
-          code = code,
-          currentWorkspace = workspace
-        )
+            setWorkspaceChange(
+              fileURI = fileURI,
+              changeResult = result
+            )
+        }
 
-      setWorkspaceChange(
-        fileURI = fileURI,
-        changeResult = result
-      )
-    }
-
-  def getOrInitWorkspaceOrThrow(): WorkspaceState.SourceAware =
-    getOrInitWorkspace() getOrElse {
-      throw
-        ResponseError
-          .UnableToInitialiseWorkspace
-          .toResponseErrorException
+      diagnostics.merge
     }
 
   /**
    * Returns existing workspace or initialises a new one from the configured build file.
    * Or else reports any workspace issues.
    */
-  def getOrInitWorkspace(): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
+  def getOrBuildWorkspace(): Either[Iterable[PublishDiagnosticsParams], WorkspaceState.SourceAware] =
     thisServer.synchronized {
       getWorkspace() match {
         case sourceAware: WorkspaceState.SourceAware =>
@@ -298,19 +299,29 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           Right(sourceAware)
 
         case currentWorkspace: WorkspaceState.Created =>
-          // perform build and bring workspace state to unCompiled
-          val newWorkspace =
+          // workspace is created but it's not built yet. Build it!
+          val buildResult =
             Workspace.build(currentWorkspace)
 
-          val client =
-            getClient()
+          buildResult match {
+            case Left(error) =>
+              // build errored
+              val buildErrored =
+                WorkspaceChangeResult.BuildChanged(Some(Left(error)))
 
-          val changeResult =
-            WorkspaceChangeResult.BuildChanged(buildChangeResult = Some(newWorkspace))
+              // set the build error and return diagnostics
+              val diagnostics =
+                setWorkspaceChange(changeResult = buildErrored)
 
-          setWorkspaceChange(changeResult) foreach client.publishDiagnostics
+              Left(diagnostics)
 
-          newWorkspace
+            case Right(workspace) =>
+              // Build passed. Set the workspace.
+              // No need to build diagnostics here, the caller should, since it's requested
+              // for this workspace for further compilation. The next compilation should publish diagnostics.
+              setWorkspace(workspace)
+              Right(workspace)
+          }
       }
     }
 
@@ -318,10 +329,18 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     state.workspace getOrElse {
       // Workspace folder is not defined.
       // This is not expected to occur since `initialized` is always invoked first.
-      throw
+
+      val error =
+        ResponseError.WorkspaceFolderNotSupplied
+
+      val exception =
         getClient()
-          .log(ResponseError.WorkspaceFolderNotSupplied)
+          .log(error)
           .toResponseErrorException
+
+      logger.error(error.getMessage, exception)
+
+      throw exception
     }
 
   override def codeAction(params: CodeActionParams): CompletableFuture[util.List[messages.Either[Command, CodeAction]]] =

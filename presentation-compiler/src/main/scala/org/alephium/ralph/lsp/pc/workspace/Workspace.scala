@@ -270,11 +270,13 @@ object Workspace {
   /**
    * Process deleted file or folder.
    *
-   * @param events    Delete event to process
-   * @param workspace Current workspace state
+   * @param events      Delete event to process
+   * @param buildErrors Current build errors
+   * @param workspace   Current workspace state
    * @return Workspace change result
    */
   def delete(events: ArraySeq[WorkspaceFileEvent.Deleted],
+             buildErrors: Option[BuildState.BuildErrored],
              workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
                                                     compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
     // collect events that belong to this workspace
@@ -310,7 +312,13 @@ object Workspace {
       if (isBuildDeleted)
         None
       else
-        Some(workspace.build.code)
+        buildErrors match {
+          case Some(errored) =>
+            errored.code
+
+          case None =>
+            Some(workspace.build.code)
+        }
 
     Workspace.reCompile(
       buildCode = buildCode,
