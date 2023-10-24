@@ -26,11 +26,12 @@ object BuildValidator {
       BuildCompiled(
         buildURI = parsed.buildURI,
         code = parsed.code,
-        config = Config(
-          compilerOptions = parsed.config.compilerOptions,
-          contractPath = absoluteContractPath,
-          artifactPath = absoluteArtifactPath
-        )
+        config =
+          Config(
+            compilerOptions = parsed.config.compilerOptions,
+            contractPath = absoluteContractPath,
+            artifactPath = absoluteArtifactPath
+          )
       )
     }
 
@@ -97,7 +98,8 @@ object BuildValidator {
         BuildErrored( // report errors
           buildURI = parsed.buildURI,
           code = Some(parsed.code),
-          errors = ArraySeq.from(errors)
+          errors = ArraySeq.from(errors),
+          activateWorkspace = None
         )
       )
   }
@@ -155,7 +157,8 @@ object BuildValidator {
             BuildErrored( // report errors
               buildURI = parsed.buildURI,
               code = Some(parsed.code),
-              errors = ArraySeq.from(errors)
+              errors = ArraySeq.from(errors),
+              activateWorkspace = None
             )
 
           Some(errorState)
@@ -167,7 +170,8 @@ object BuildValidator {
           BuildErrored(
             buildURI = parsed.buildURI,
             code = Some(parsed.code),
-            errors = ArraySeq(error)
+            errors = ArraySeq(error),
+            activateWorkspace = None
           )
 
         Some(errors)

@@ -39,14 +39,15 @@ object Workspace {
    * @param state Current state of the workspace.
    * @return New workspace state which aware of all workspace source code files.
    */
-  def initialise(state: BuildCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+  def initialise(state: BuildState.BuildCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     SourceCode.initialise(state.contractURI) match {
       case Left(error) =>
         val buildError =
           BuildState.BuildErrored(
             buildURI = state.buildURI,
             code = Some(state.code),
-            errors = ArraySeq(error)
+            errors = ArraySeq(error),
+            activateWorkspace = None
           )
 
         Left(buildError)
@@ -97,7 +98,8 @@ object Workspace {
           BuildState.BuildErrored(
             buildURI = buildURI,
             code = code,
-            errors = ArraySeq(error)
+            errors = ArraySeq(error),
+            activateWorkspace = None
           )
 
         Some(buildError)
@@ -195,6 +197,129 @@ object Workspace {
   }
 
   /**
+   * Re-compile the entire workspace with new build-code and source-code.
+   *
+   * @param buildCode  New build-code
+   * @param sourceCode New source-code
+   * @param workspace  Current workspace
+   * @return This function will always re-compile the build,
+   *         so the output is always [[WorkspaceChangeResult.BuildChanged]].
+   */
+  def reCompile(buildCode: Option[String],
+                sourceCode: ArraySeq[SourceCodeState],
+                workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
+                                                       compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
+    // re-build the build file
+    val buildResult =
+      Workspace.reBuild(
+        buildURI = workspace.buildURI,
+        code = buildCode,
+        currentBuild = workspace.build
+      )
+
+    // process build result
+    buildResult match {
+      case Some(buildResult) =>
+        buildResult match {
+          case newBuild: BuildCompiled =>
+            // Build compiled OK! Compile new source-files with this new build file
+            val newWorkspace =
+              WorkspaceState.UnCompiled(
+                build = newBuild,
+                sourceCode = sourceCode
+              )
+
+            val compiledWorkspace =
+              Workspace.parseAndCompile(newWorkspace)
+
+            WorkspaceChangeResult.BuildChanged(Some(Right(compiledWorkspace)))
+
+          case errored: BuildState.BuildErrored =>
+            // Build not OK!
+            val newWorkspace =
+              WorkspaceState.UnCompiled(
+                build = workspace.build,
+                sourceCode = sourceCode
+              )
+
+            // update the error state with the new workspace to activate.
+            val newError =
+              errored.copy(activateWorkspace = Some(newWorkspace))
+
+            // Build not OK! Report the error, also clear all previous diagnostics
+            WorkspaceChangeResult.BuildChanged(buildChangeResult = Some(Left(newError)))
+        }
+
+      case None =>
+        // No build change occurred. Process the new source-code with exiting build.
+        val newWorkspace =
+          WorkspaceState.UnCompiled(
+            build = workspace.build,
+            sourceCode = sourceCode
+          )
+
+        // compile new source-code
+        val compiledWorkspace =
+          Workspace.parseAndCompile(newWorkspace)
+
+        // let the caller know that the build was also processed.
+        WorkspaceChangeResult.BuildChanged(Some(Right(compiledWorkspace)))
+    }
+  }
+
+  /**
+   * Process deleted file or folder.
+   *
+   * @param events    Delete event to process
+   * @param workspace Current workspace state
+   * @return Workspace change result
+   */
+  def delete(events: ArraySeq[WorkspaceFileEvent.Deleted],
+             workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
+                                                    compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
+    // collect events that belong to this workspace
+    val workspaceEvents =
+      events filter {
+        event =>
+          URIUtil.isChild(workspace.workspaceURI, event.uri)
+      }
+
+    // remove deleted files & folders from workspace
+    val newSourceCode =
+      workspaceEvents.foldLeft(workspace.sourceCode) {
+        case (sourceCodeToUpdate, deleted) =>
+          // Check only source-files that belong to the configured contractPath
+          if (URIUtil.isChild(workspace.build.contractURI, deleted.uri))
+            sourceCodeToUpdate filter {
+              state =>
+                !URIUtil.isChild(deleted.uri, state.fileURI)
+            }
+          else
+            sourceCodeToUpdate
+      }
+
+    // is the build deleted?
+    val isBuildDeleted =
+      workspaceEvents exists {
+        event =>
+          event.uri == workspace.buildURI
+      }
+
+    // if build changed, fetch it from disk, else use cached code
+    val buildCode =
+      if (isBuildDeleted)
+        None
+      else
+        Some(workspace.build.code)
+
+    Workspace.reCompile(
+      buildCode = buildCode,
+      sourceCode = newSourceCode,
+      workspace = workspace
+    )
+  }
+
+  /**
    * Processes source or build file change.
    *
    * @param fileURI File that changed.
@@ -217,10 +342,7 @@ object Workspace {
         )
 
       val buildChanged =
-        WorkspaceChangeResult.BuildChanged(
-          buildChangeResult = result,
-          cleanWorkspaceOnError = false
-        )
+        WorkspaceChangeResult.BuildChanged(result)
 
       Some(buildChanged)
     } else if (fileExtension == CompilerAccess.RALPH_FILE_EXTENSION) {
@@ -364,116 +486,4 @@ object Workspace {
         }
     }
 
-  /**
-   * Process deleted file or folder.
-   *
-   * @param events    Delete event to process
-   * @param workspace Current workspace state
-   * @return Workspace change result
-   */
-  def deleted(events: ArraySeq[WorkspaceFileEvent.Deleted],
-              workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
-                                                     compiler: CompilerAccess): WorkspaceChangeResult = {
-    val (newBuildCode, newSourceCode) =
-      applyEvent(
-        events = events,
-        workspace = workspace
-      )
-
-    // re-build the build file
-    val buildResult =
-      Workspace.reBuild(
-        buildURI = workspace.buildURI,
-        code = newBuildCode,
-        currentBuild = workspace.build
-      )
-
-    // process build result
-    buildResult match {
-      case Some(buildResult) =>
-        buildResult match {
-          case newBuild: BuildCompiled =>
-            // Build compiled OK! Compile new source-files with this new build file
-            val newWorkspace =
-              WorkspaceState.UnCompiled(
-                build = newBuild,
-                sourceCode = newSourceCode
-              )
-
-            val compiledWorkspace =
-              Workspace.parseAndCompile(newWorkspace)
-
-            WorkspaceChangeResult.SourceChanged(Right(compiledWorkspace))
-
-          case errored: BuildState.BuildErrored =>
-            // Build not OK! Report the error, also clear all previous diagnostics
-            WorkspaceChangeResult.BuildChanged(
-              buildChangeResult = Some(Left(errored)),
-              cleanWorkspaceOnError = true
-            )
-        }
-
-      case None =>
-        // No build change occurred. Process the new source-code with exiting build.
-        val newWorkspace =
-          WorkspaceState.UnCompiled(
-            build = workspace.build,
-            sourceCode = newSourceCode
-          )
-
-        // compile new source-code
-        val compiledWorkspace =
-          Workspace.parseAndCompile(newWorkspace)
-
-        // let the caller know that this is a source-change and no build-change occurred
-        WorkspaceChangeResult.SourceChanged(Right(compiledWorkspace))
-    }
-  }
-
-  /**
-   * Apply deleted events to current workspace
-   *
-   * @param events    Delete event to process
-   * @param workspace Current workspace state
-   * @return New build-code and source-code.
-   */
-  def applyEvent(events: ArraySeq[WorkspaceFileEvent.Deleted],
-                 workspace: WorkspaceState.SourceAware): (Option[String], ArraySeq[SourceCodeState]) = {
-    // collect events that belong to this workspace
-    val workspaceEvents =
-      events.filter {
-        event =>
-          URIUtil.isChild(workspace.workspaceURI, event.uri)
-      }
-
-    // is the build deleted?
-    val buildDeleted =
-      workspaceEvents exists {
-        event =>
-          event.uri == workspace.buildURI
-      }
-
-    // remove deleted files & folders from workspace
-    val newSourceCode =
-      workspaceEvents.foldLeft(workspace.sourceCode) {
-        case (sourceCodeToUpdate, deleted) =>
-          // Check only source-files that belong to the configured contractPath
-          if (URIUtil.isChild(workspace.build.contractURI, deleted.uri))
-            sourceCodeToUpdate.filter {
-              state =>
-                !URIUtil.isChild(deleted.uri, state.fileURI)
-            }
-          else
-            sourceCodeToUpdate
-      }
-
-    // if build changed, fetch it from disk, else use cached code
-    val buildCode =
-      if (buildDeleted)
-        None
-      else
-        Some(workspace.build.code)
-
-    (buildCode, newSourceCode)
-  }
 }

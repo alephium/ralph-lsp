@@ -42,7 +42,8 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                 BuildState.BuildErrored(
                   buildURI = workspace.buildURI,
                   code = None,
-                  errors = ArraySeq(ErrorBuildFileNotFound)
+                  errors = ArraySeq(ErrorBuildFileNotFound),
+                  activateWorkspace = None
                 )
           }
         }
@@ -63,7 +64,8 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                 BuildState.BuildErrored(
                   buildURI = workspace.buildURI,
                   code = None,
-                  errors = ArraySeq(ErrorBuildFileNotFound)
+                  errors = ArraySeq(ErrorBuildFileNotFound),
+                  activateWorkspace = None
                 )
           }
         }
@@ -106,7 +108,8 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                         index = SourceIndex(0, 1),
                         message = """expected json value got "b""""
                       )
-                    )
+                    ),
+                  activateWorkspace = None
                 )
           }
         }

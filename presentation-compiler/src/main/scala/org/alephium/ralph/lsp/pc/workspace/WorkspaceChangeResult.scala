@@ -8,11 +8,9 @@ object WorkspaceChangeResult {
   /**
    * Build change result
    *
-   * @param buildChangeResult     Compilation outcome
-   * @param cleanWorkspaceOnError If true, starts a fresh workspace, else continues with existing workspace.
+   * @param buildChangeResult Compilation outcome
    */
-  case class BuildChanged(buildChangeResult: Option[Either[BuildState.BuildErrored, WorkspaceState.SourceAware]],
-                          cleanWorkspaceOnError: Boolean) extends WorkspaceChangeResult
+  case class BuildChanged(buildChangeResult: Option[Either[BuildState.BuildErrored, WorkspaceState.SourceAware]]) extends WorkspaceChangeResult
 
   /**
    * Source-code change result

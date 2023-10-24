@@ -5,16 +5,19 @@ import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 
 object ServerStateUpdater {
 
+  /**
+   * Given the workspace change [[WorkspaceChangeResult]]
+   * and current [[ServerState]] return a new [[ServerState]]
+   * */
   def workspaceChanged(change: WorkspaceChangeResult,
                        serverState: ServerState): Option[ServerState] =
     change match {
-      case WorkspaceChangeResult.BuildChanged(buildChangeResult, cleanWorkspaceOnError) =>
+      case WorkspaceChangeResult.BuildChanged(buildChangeResult) =>
         buildChangeResult match {
           case Some(buildResult) =>
             val newState =
               buildChanged(
                 buildChangeResult = buildResult,
-                cleanWorkspaceOnError = cleanWorkspaceOnError,
                 serverState = serverState
               )
 
@@ -34,20 +37,15 @@ object ServerStateUpdater {
         Some(newState)
     }
 
-  /** Publish build file change result */
+  /** Apply build change to the server */
   private def buildChanged(buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
-                           cleanWorkspaceOnError: Boolean,
                            serverState: ServerState): ServerState =
     buildChangeResult match {
       case Left(buildError) =>
+        // fetch the activateWorkspace to replace existing workspace or-else
+        // use continue with existing workspace
         val newWorkspace =
-          if (cleanWorkspaceOnError)
-            serverState.workspace map {
-              workspace =>
-                WorkspaceState.Created(workspace.workspaceURI)
-            }
-          else
-            serverState.workspace
+          buildError.activateWorkspace orElse serverState.workspace
 
         serverState.copy(
           buildErrors = Some(buildError),
@@ -55,13 +53,14 @@ object ServerStateUpdater {
         )
 
       case Right(newWorkspace) =>
+        // build errors got resolved, clear buildErrors.
         serverState.copy(
           buildErrors = None,
           workspace = Some(newWorkspace)
         )
     }
 
-  /** Publish source-code change result */
+  /** Apply source change to the server */
   private def sourceCodeChanged(sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
                                 serverState: ServerState): ServerState =
     sourceChangeResult match {

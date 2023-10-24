@@ -226,36 +226,22 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
             }
         }
 
-      if (deleteEvents.nonEmpty) {
-        // initialise workspace and process delete
-        val workspace =
-          getOrInitWorkspace() map {
-            source =>
-              Workspace.deleted(
+      // TODO: handle cases when the events are lost in-case of error
+
+      if (deleteEvents.nonEmpty)
+        getOrInitWorkspace() foreach { // initialise workspace and process delete
+          source =>
+            val deleteResult =
+              Workspace.delete(
                 events = deleteEvents.to(ArraySeq),
                 workspace = source
               )
-          }
 
-        val client =
-          getClient()
+            val client =
+              getClient()
 
-        workspace match {
-          case Left(buildError) =>
-            // In-case of error initialising clear workspace because this fileChange event will be lost on next request (mot transactional).
-            // FIXME: Fetching from disk also means all the source-files from disk will be read, so un-saved editor files will not be accurate.
-            val changeResult =
-              WorkspaceChangeResult.BuildChanged(
-                buildChangeResult = Some(Left(buildError)),
-                cleanWorkspaceOnError = true
-              )
-
-            setWorkspaceChange(changeResult) foreach client.publishDiagnostics
-
-          case Right(changeResult) =>
-            setWorkspaceChange(changeResult) foreach client.publishDiagnostics
+            setWorkspaceChange(deleteResult) foreach client.publishDiagnostics
         }
-      }
     }
 
   private def didChangeAndPublish(fileURI: URI,
@@ -350,10 +336,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
             getClient()
 
           val changeResult =
-            WorkspaceChangeResult.BuildChanged(
-              buildChangeResult = Some(newWorkspace),
-              cleanWorkspaceOnError = false
-            )
+            WorkspaceChangeResult.BuildChanged(buildChangeResult = Some(newWorkspace))
 
           setWorkspaceChange(changeResult) foreach client.publishDiagnostics
 

@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.{RalphcCompiledConfig, RalphcParsedConfig}
+import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 import java.net.URI
 import java.nio.file.Paths
@@ -38,9 +39,23 @@ object BuildState {
       config.artifactPath.toUri
   }
 
-  /** Build errored */
+  /**
+   * Represents: A build error occurred.
+   *
+   * @param buildURI          Build's location
+   * @param code              Build's text content
+   * @param errors            Errors to report for the build
+   * @param activateWorkspace Workspace to activate as a result of this error.
+   *                          This parameter is crucial because even for an invalid build file, the client
+   *                          will continue sending source change requests to the server.
+   *                          These changes must still be applied to the workspace and carried on to the next compilation.
+   *                          Set this to:
+   *                          - [[None]] to continue with existing workspace
+   *                          - [[WorkspaceState.SourceAware]] to replace existing workspace.
+   */
   case class BuildErrored(buildURI: URI,
                           code: Option[String],
-                          errors: ArraySeq[CompilerMessage.AnyError]) extends BuildState.ParseResult with BuildState.CompileResult
+                          errors: ArraySeq[CompilerMessage.AnyError],
+                          activateWorkspace: Option[WorkspaceState.SourceAware]) extends BuildState.ParseResult with BuildState.CompileResult
 
 }

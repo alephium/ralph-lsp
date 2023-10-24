@@ -32,7 +32,8 @@ object Build {
         BuildErrored(
           buildURI = buildURI,
           code = Some(json),
-          errors = ArraySeq(error)
+          errors = ArraySeq(error),
+          activateWorkspace = None
         )
 
       case Right(config) =>
@@ -50,7 +51,8 @@ object Build {
         BuildErrored(
           buildURI = buildURI,
           code = None,
-          errors = ArraySeq(error)
+          errors = ArraySeq(error),
+          activateWorkspace = None
         )
 
       case Right(json) =>
@@ -79,7 +81,8 @@ object Build {
         BuildErrored(
           buildURI = buildURI,
           code = None,
-          errors = ArraySeq(error)
+          errors = ArraySeq(error),
+          activateWorkspace = None
         )
 
       case Right(exists) =>
@@ -89,7 +92,8 @@ object Build {
           BuildErrored(
             buildURI = buildURI,
             code = None,
-            errors = ArraySeq(ErrorBuildFileNotFound)
+            errors = ArraySeq(ErrorBuildFileNotFound),
+            activateWorkspace = None
           )
     }
 

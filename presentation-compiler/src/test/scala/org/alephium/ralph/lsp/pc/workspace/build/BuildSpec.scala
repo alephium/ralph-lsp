@@ -62,7 +62,8 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
               BuildState.BuildErrored(
                 buildURI = outsideBuild.buildURI, // must not be expected build-file location.
                 code = buildCode,
-                errors = ArraySeq(expectedError)
+                errors = ArraySeq(expectedError),
+                activateWorkspace = None
               )
 
             actualWorkspace shouldBe expectedWorkspace
@@ -127,7 +128,8 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
               BuildState.BuildErrored(
                 buildURI = build.buildURI,
                 code = buildCode,
-                errors = ArraySeq(expectedError)
+                errors = ArraySeq(expectedError),
+                activateWorkspace = None
               )
 
             actualWorkspace shouldBe expectedWorkspace
@@ -156,7 +158,8 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
             BuildState.BuildErrored(
               buildURI = buildURI,
               code = None,
-              errors = ArraySeq(ErrorBuildFileNotFound)
+              errors = ArraySeq(ErrorBuildFileNotFound),
+              activateWorkspace = None
             )
 
           actual shouldBe expected
