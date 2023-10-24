@@ -83,15 +83,13 @@ object Workspace {
         initialise(newBuild)
     }
 
-  /**
-   * Re-build: Parse and re-compile the build file.
-   * */
-  def reBuild(buildURI: URI,
-              code: Option[String],
-              currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess): Option[BuildState.CompileResult] =
+  /** Build for a fresh workspace */
+  def build(buildURI: URI,
+            code: Option[String],
+            workspace: WorkspaceState.Created)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     BuildValidator.validateBuildURI(
       buildURI = buildURI,
-      workspaceURI = currentBuild.workspaceURI
+      workspaceURI = workspace.workspaceURI
     ) match {
       case Left(error) =>
         val buildError =
@@ -102,24 +100,16 @@ object Workspace {
             activateWorkspace = None
           )
 
-        Some(buildError)
+        Left(buildError)
 
       case Right(buildURI) =>
-        Build.parseAndCompile(
-          buildURI = buildURI,
-          code = code,
-        ) match {
-          case newBuild: BuildState.BuildCompiled =>
-            // if the new build-file is the same as current build-file, return it as
-            // no-state-changed, so that a new build does not unnecessarily gets triggered.
-            if (currentBuild == newBuild)
-              None
-            else // else the build file has changed, return the new build.
-              Some(newBuild)
+        val build =
+          Build.parseAndCompile(
+            buildURI = buildURI,
+            code = code,
+          )
 
-          case errored: BuildState.BuildErrored =>
-            Some(errored)
-        }
+        initialise(build)
     }
 
   /**
@@ -211,7 +201,7 @@ object Workspace {
                                                        compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
     // re-build the build file
     val buildResult =
-      Workspace.reBuild(
+      Build.parseAndCompile(
         buildURI = workspace.buildURI,
         code = buildCode,
         currentBuild = workspace.build
@@ -344,7 +334,7 @@ object Workspace {
       // process build change
       val result =
         Workspace.buildChanged(
-          fileURI = fileURI,
+          buildURI = fileURI,
           code = code,
           workspace = currentWorkspace
         )
@@ -374,16 +364,16 @@ object Workspace {
    * If the build file is valid, this drops existing compilations
    * and starts a fresh workspace.
    *
-   * @param fileURI Location of the build file.
-   * @param code    Build file's content.
+   * @param buildURI Location of the build file.
+   * @param code     Build file's content.
    */
-  def buildChanged(fileURI: URI,
+  def buildChanged(buildURI: URI,
                    code: Option[String],
                    workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
                                                           compiler: CompilerAccess): Option[Either[BuildState.BuildErrored, WorkspaceState.SourceAware]] =
-    if (workspace.buildURI.resolve(fileURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
-      Workspace.reBuild(
-        buildURI = fileURI,
+    if (workspace.buildURI.resolve(buildURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
+      Build.parseAndCompile(
+        buildURI = buildURI,
         code = code,
         currentBuild = workspace.build
       ) match {

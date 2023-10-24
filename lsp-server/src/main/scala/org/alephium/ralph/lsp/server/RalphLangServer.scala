@@ -4,7 +4,6 @@ import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceChangeResult, WorkspaceFileEvent, WorkspaceState}
-import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.DiagnosticsConverter
 import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater}
@@ -94,8 +93,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         case None =>
           // Means: This fileURI does not belong to this workspace or is of different type.
-          // If this occurs, it's a client configuration result.
-          // File types that are not supported by ralph should not be submitted to this server.
+          // If this occurs, it's a client configuration error.
+          // File types that are not supported by Ralph should not be submitted to this server.
           val error = ResponseError.UnknownFileType(fileURI)
           logger.error(error.getMessage, error)
           getClient().log(error) // notify client
@@ -171,7 +170,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
     val fileURI = new URI(params.getTextDocument.getUri)
-    val code = Some(params.getTextDocument.getText)
+    val code = Option(params.getTextDocument.getText)
 
     logger.debug(s"didOpen. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
@@ -183,7 +182,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   override def didChange(params: DidChangeTextDocumentParams): Unit = {
     val fileURI = new URI(params.getTextDocument.getUri)
-    val code = Some(params.getContentChanges.get(0).getText)
+    val code = Option(params.getContentChanges.get(0).getText)
 
     logger.debug(s"didChange. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
@@ -206,7 +205,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   override def didSave(params: DidSaveTextDocumentParams): Unit = {
     val fileURI = new URI(params.getTextDocument.getUri)
-    val code = Some(params.getText)
+    val code = Option(params.getText)
 
     logger.debug(s"didSave. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
@@ -235,7 +234,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
       if (deleteEvents.nonEmpty) {
         val diagnostics =
-          getOrBuildWorkspace() map { // initialise workspace and process delete
+          getOrBuildWorkspace(
+            fileURI = None,
+            code = None
+          ) map { // initialise workspace and process delete
             source =>
               val deleteResult =
                 Workspace.delete(
@@ -278,7 +280,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
                               code: Option[String]): Iterable[PublishDiagnosticsParams] =
     thisServer.synchronized {
       val diagnostics =
-        getOrBuildWorkspace() map {
+        getOrBuildWorkspace(
+          fileURI = Some(fileURI),
+          code = code
+        ) map {
           workspace =>
             val result =
               Workspace.changed(
@@ -300,7 +305,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * Returns existing workspace or initialises a new one from the configured build file.
    * Or else reports any workspace issues.
    */
-  def getOrBuildWorkspace(): Either[Iterable[PublishDiagnosticsParams], WorkspaceState.SourceAware] =
+  def getOrBuildWorkspace(fileURI: Option[URI],
+                          code: Option[String]): Either[Iterable[PublishDiagnosticsParams], WorkspaceState.SourceAware] =
     thisServer.synchronized {
       getWorkspace() match {
         case sourceAware: WorkspaceState.SourceAware =>
@@ -310,7 +316,19 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         case currentWorkspace: WorkspaceState.Created =>
           // workspace is created but it's not built yet. Build it!
           val buildResult =
-            Workspace.build(currentWorkspace)
+            fileURI match {
+              case Some(fileURI) if fileURI == currentWorkspace.buildURI =>
+                // if the request if for the build file, build it with the changed code
+                Workspace.build(
+                  buildURI = fileURI,
+                  code = code,
+                  workspace = currentWorkspace
+                )
+
+              case _ =>
+                // else build from disk
+                Workspace.build(currentWorkspace)
+            }
 
           buildResult match {
             case Left(error) =>
@@ -372,7 +390,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       case Some(listener) =>
         CompletableFuture.supplyAsync {
           () =>
-            java.lang.Boolean.valueOf(true)
+            java.lang.Boolean.valueOf(listener.cancel(true))
         }
 
       case None =>

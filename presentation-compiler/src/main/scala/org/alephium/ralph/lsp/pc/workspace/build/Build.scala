@@ -124,4 +124,43 @@ object Build {
         parseAndCompile(buildURI)
     }
 
+  /**
+   * Parse and re-compile the build file.
+   * */
+  def parseAndCompile(buildURI: URI,
+                      code: Option[String],
+                      currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess): Option[BuildState.CompileResult] =
+    BuildValidator.validateBuildURI(
+      buildURI = buildURI,
+      workspaceURI = currentBuild.workspaceURI
+    ) match {
+      case Left(error) =>
+        val buildError =
+          BuildState.BuildErrored(
+            buildURI = buildURI,
+            code = code,
+            errors = ArraySeq(error),
+            activateWorkspace = None
+          )
+
+        Some(buildError)
+
+      case Right(buildURI) =>
+        Build.parseAndCompile(
+          buildURI = buildURI,
+          code = code,
+        ) match {
+          case newBuild: BuildState.BuildCompiled =>
+            // if the new build-file is the same as current build-file, return it as
+            // no-state-changed, so that a new build does not unnecessarily gets triggered.
+            if (currentBuild == newBuild)
+              None
+            else // else the build file has changed, return the new build.
+              Some(newBuild)
+
+          case errored: BuildState.BuildErrored =>
+            Some(errored)
+        }
+    }
+
 }

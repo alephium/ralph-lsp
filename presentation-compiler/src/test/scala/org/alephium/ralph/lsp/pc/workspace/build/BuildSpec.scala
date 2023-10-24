@@ -44,7 +44,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
 
             // invoke build
             val actualWorkspace =
-              Workspace.reBuild(
+              Build.parseAndCompile(
                 buildURI = outsideBuild.buildURI,
                 code = buildCode,
                 currentBuild = insideBuild
@@ -110,7 +110,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
 
             // invoke build
             val actualWorkspace =
-              Workspace.reBuild(
+              Build.parseAndCompile(
                 buildURI = build.buildURI,
                 code = buildCode,
                 currentBuild = currentBuild

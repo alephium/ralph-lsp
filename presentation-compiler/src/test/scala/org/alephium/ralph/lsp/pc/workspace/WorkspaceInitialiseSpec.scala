@@ -17,7 +17,7 @@ import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
 /**
- * Test cases for [[Workspace.reBuild]] function.
+ * Test cases for [[Workspace.build]] function.
  */
 class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
