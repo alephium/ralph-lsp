@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.server
 import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceChangeResult, WorkspaceFileEvent, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.RalphLangServer._
@@ -186,10 +186,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
       if (deleteEvents.nonEmpty) {
         val diagnostics =
-          getOrBuildWorkspace( // build workspace
-            fileURI = None,
-            code = None
-          ) map {
+          getOrBuildWorkspace(None) map { // build workspace
             source =>
               // Build OK! process delete
               val deleteResult =
@@ -249,11 +246,11 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   private def didChangeAndSet(fileURI: URI,
                               code: Option[String]): Iterable[PublishDiagnosticsParams] =
     thisServer.synchronized {
+      val source =
+        Some(WorkspaceFile(fileURI, code))
+
       val diagnostics =
-        getOrBuildWorkspace(
-          fileURI = Some(fileURI),
-          code = code
-        ) map {
+        getOrBuildWorkspace(source) map {
           workspace =>
             val changeResult =
               Workspace.changed(
@@ -271,55 +268,39 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   /**
    * Fetch the existing workspace if it's already build and initialised or-else invoke new workspace build.
    *
-   * @param fileURI File that changed.
-   * @param code    Source-code of the changed file.
+   * @param code File that changed and it's source-code.
    * @return Diagnostics if there were build errors, or-else the next workspace.
    */
-  def getOrBuildWorkspace(fileURI: Option[URI],
-                          code: Option[String]): Either[Iterable[PublishDiagnosticsParams], WorkspaceState.SourceAware] =
+  def getOrBuildWorkspace(code: Option[WorkspaceFile]): Either[Iterable[PublishDiagnosticsParams], WorkspaceState.SourceAware] =
     thisServer.synchronized {
-      getWorkspace() match {
-        case sourceAware: WorkspaceState.SourceAware =>
-          // already built
-          Right(sourceAware)
+      val workspace =
+        getWorkspace()
 
-        case currentWorkspace: WorkspaceState.Created =>
-          // workspace is created but it's not built yet. Let's build it!
-          val buildResult =
-            fileURI match {
-              case Some(fileURI) if fileURI == currentWorkspace.buildURI =>
-                // this request is for the build file, build it using the code sent by the client
-                Workspace.build(
-                  buildURI = fileURI,
-                  code = code,
-                  workspace = currentWorkspace
-                )
+      val buildResult =
+        Workspace.build(
+          code = code,
+          workspace = workspace
+        )
 
-              case _ =>
-                // else build from disk
-                Workspace.build(currentWorkspace)
-            }
+      // process build result
+      buildResult match {
+        case Left(error) =>
+          // build errored
+          val buildErrored =
+            WorkspaceChangeResult.BuildChanged(Some(Left(error)))
 
-          // process build result
-          buildResult match {
-            case Left(error) =>
-              // build errored
-              val buildErrored =
-                WorkspaceChangeResult.BuildChanged(Some(Left(error)))
+          // set the build error and return diagnostics
+          val diagnostics =
+            setWorkspaceChange(changeResult = buildErrored)
 
-              // set the build error and return diagnostics
-              val diagnostics =
-                setWorkspaceChange(changeResult = buildErrored)
+          Left(diagnostics)
 
-              Left(diagnostics)
-
-            case Right(workspace) =>
-              // Build passed. Set the workspace.
-              // No need to build diagnostics here, the caller should, since it's requested
-              // for this workspace for further compilation. The next compilation should publish diagnostics.
-              setWorkspace(workspace)
-              Right(workspace)
-          }
+        case Right(workspace) =>
+          // Build passed. Set the workspace.
+          // No need to build diagnostics here, the caller should, since it's requested
+          // for this workspace for further compilation. The next compilation should publish diagnostics.
+          setWorkspace(workspace)
+          Right(workspace)
       }
     }
 
@@ -338,14 +319,6 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       throw exception
     }
 
-  /** Write to log file, notify the client and throw to exit this request */
-  private def notifyAndThrow(error: server.ResponseError): Nothing = {
-    val client = getClient()
-    val exception = client.log(error).toResponseErrorException
-    logger.error(error.getMessage, exception)
-    throw exception
-  }
-
   /** Set the workspace */
   private def setWorkspace(workspace: WorkspaceState): Unit =
     thisServer.synchronized {
@@ -355,9 +328,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   /**
    * Set the workspace and returns diagnostics to publish for current state.
    *
-   * @param fileURI      File that trigger this compilation
    * @param changeResult Compilation result returned by presentation-compiler.
-   *                     [[None]] indicates that the file-type does not belong to us.
    * @return Diagnostics for current workspace.
    */
   private def setWorkspaceChange(changeResult: Either[ErrorUnknownFileType, WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
@@ -406,6 +377,14 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           None
       }
     }
+
+  /** Write to log file, notify the client and throw to exit this request */
+  private def notifyAndThrow(error: server.ResponseError): Nothing = {
+    val client = getClient()
+    val exception = client.log(error).toResponseErrorException
+    logger.error(error.getMessage, exception)
+    throw exception
+  }
 
   override def shutdown(): CompletableFuture[AnyRef] =
     state.listener match {

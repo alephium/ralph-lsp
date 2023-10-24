@@ -114,6 +114,37 @@ object Workspace {
     }
 
   /**
+   * If already built, return existing workspace or else invoke build.
+   *
+   * @param code File that changed.
+   * @return Returns diagnostics in-case were build errors, or-else returns an initialised workspace.
+   */
+  def build(code: Option[WorkspaceFile],
+            workspace: WorkspaceState)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
+    workspace match {
+      case sourceAware: WorkspaceState.SourceAware =>
+        // already built
+        Right(sourceAware)
+
+      case currentWorkspace: WorkspaceState.Created =>
+        // workspace is created but it's not built yet. Let's build it!
+        code match {
+          case Some(code) if code.fileURI == currentWorkspace.buildURI =>
+            // this request is for the build file, build it using the code sent by the client
+            Workspace.build(
+              buildURI = code.fileURI,
+              code = code.text,
+              workspace = currentWorkspace
+            )
+
+          case _ =>
+            // else build from disk
+            Workspace.build(currentWorkspace)
+        }
+
+    }
+
+  /**
    * Parse source-code in that is not already in parsed state.
    *
    * @return A new workspace state with errors if parse fails
