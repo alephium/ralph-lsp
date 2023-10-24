@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceChangeResult, WorkspaceFileEvent, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.DiagnosticsConverter
@@ -105,14 +106,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    *                     [[None]] indicates that the file-type does not belong to us.
    * @return Diagnostics for current workspace.
    */
-  private def setWorkspaceChange(fileURI: URI,
-                                 changeResult: Option[WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
+  private def setWorkspaceChange(changeResult: Either[ErrorUnknownFileType, WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
     thisServer.synchronized {
       changeResult match {
-        case Some(result) =>
+        case Right(result) =>
           setWorkspaceChange(result)
 
-        case None =>
+        case Left(ErrorUnknownFileType(fileURI)) =>
           // Means: This fileURI does not belong to this workspace or is of different type.
           // If this occurs, it's a client configuration error.
           // File types that are not supported by Ralph should not be submitted to this server.
@@ -323,17 +323,14 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           code = code
         ) map {
           workspace =>
-            val result =
+            val changeResult =
               Workspace.changed(
                 fileURI = fileURI,
                 code = code,
                 currentWorkspace = workspace
               )
 
-            setWorkspaceChange(
-              fileURI = fileURI,
-              changeResult = result
-            )
+            setWorkspaceChange(changeResult)
         }
 
       diagnostics.merge

@@ -7,6 +7,7 @@ import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, BuildValidator}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -77,13 +78,13 @@ object Workspace {
         val newBuild =
           Build.parseAndCompile(
             buildURI = workspace.buildURI,
-            code = None,
+            code = None
           )
 
         initialise(newBuild)
     }
 
-  /** Build for a fresh workspace */
+  /** Build a created workspace */
   def build(buildURI: URI,
             code: Option[String],
             workspace: WorkspaceState.Created)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
@@ -327,7 +328,7 @@ object Workspace {
   def changed(fileURI: URI,
               code: Option[String],
               currentWorkspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
-                                                            compiler: CompilerAccess): Option[WorkspaceChangeResult] = {
+                                                            compiler: CompilerAccess): Either[ErrorUnknownFileType, WorkspaceChangeResult] = {
     val fileExtension =
       URIUtil.getFileExtension(fileURI)
 
@@ -343,7 +344,7 @@ object Workspace {
       val buildChanged =
         WorkspaceChangeResult.BuildChanged(result)
 
-      Some(buildChanged)
+      Right(buildChanged)
     } else if (fileExtension == CompilerAccess.RALPH_FILE_EXTENSION) {
       // process source code change
       val sourceResult =
@@ -353,9 +354,9 @@ object Workspace {
           workspace = currentWorkspace
         )
 
-      Some(WorkspaceChangeResult.SourceChanged(sourceResult))
+      Right(WorkspaceChangeResult.SourceChanged(sourceResult))
     } else {
-      None
+      Left(ErrorUnknownFileType(fileURI))
     }
   }
 
