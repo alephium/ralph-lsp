@@ -79,11 +79,20 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       throw ResponseError.ClientNotConfigured.toResponseErrorException
     }
 
+  /** Set the workspace */
   private def setWorkspace(workspace: WorkspaceState): Unit =
     thisServer.synchronized {
       thisServer.state = thisServer.state.copy(workspace = Some(workspace))
     }
 
+  /**
+   * Set the workspace and returns diagnostics to publish for current state.
+   *
+   * @param fileURI      File that trigger this compilation
+   * @param changeResult Compilation result returned by presentation-compiler.
+   *                     [[None]] indicates that the file-type does not belong to us.
+   * @return Diagnostics for current workspace.
+   */
   private def setWorkspaceChange(fileURI: URI,
                                  changeResult: Option[WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
     thisServer.synchronized {
@@ -102,6 +111,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       }
     }
 
+  /**
+   * Set the workspace and returns diagnostics to publish for current state.
+   *
+   * @param changeResult Compilation result returned by presentation-compiler.
+   *                     [[None]] indicates that the file-type does not belong to us.
+   * @return Diagnostics for current workspace.
+   */
   private def setWorkspaceChange(changeResult: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
     thisServer.synchronized {
       val currentServerState =
@@ -146,8 +162,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       thisServer.state = state.copy(listener = Some(listener()))
     }
 
-  // TODO: If allowed in this phase (maybe? the doc seem to indicate no), access the PresentationCompiler
-  //       and do an initial workspace compilation.
+  /** @inheritdoc */
   override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] =
     CompletableFutures.computeAsync {
       cancelChecker =>
@@ -168,6 +183,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         new InitializeResult(serverCapabilities())
     }
 
+  /** @inheritdoc */
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
     val fileURI = new URI(params.getTextDocument.getUri)
     val code = Option(params.getTextDocument.getText)
@@ -180,6 +196,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     )
   }
 
+  /** @inheritdoc */
   override def didChange(params: DidChangeTextDocumentParams): Unit = {
     val fileURI = new URI(params.getTextDocument.getUri)
     val code = Option(params.getContentChanges.get(0).getText)
@@ -192,6 +209,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     )
   }
 
+  /** @inheritdoc */
   override def didClose(params: DidCloseTextDocumentParams): Unit = {
     val fileURI = new URI(params.getTextDocument.getUri)
 
@@ -203,6 +221,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     )
   }
 
+  /** @inheritdoc */
   override def didSave(params: DidSaveTextDocumentParams): Unit = {
     val fileURI = new URI(params.getTextDocument.getUri)
     val code = Option(params.getText)
@@ -215,6 +234,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     )
   }
 
+  /** @inheritdoc */
   override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
     thisServer.synchronized {
       val changes =
@@ -258,6 +278,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       }
     }
 
+  /**
+   * Apply code change and publish diagnostics.
+   *
+   * @param fileURI The file that changed
+   * @param code    Source-code of that file.
+   *                Set to [[None]] to fetch from disk.
+   */
   private def didChangeAndPublish(fileURI: URI,
                                   code: Option[String]): Unit =
     thisServer.synchronized {
@@ -273,7 +300,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   /**
-   * Processes source or build file change.
+   * Process source or build file change.
    *
    * @param fileURI File that changed.
    * @param code    Content of the file.
@@ -304,8 +331,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   /**
-   * Returns existing workspace or initialises a new one from the configured build file.
-   * Or else reports any workspace issues.
+   * Returns the existing workspace if it's already build & initialised or-else invokes workspace build.
    */
   def getOrBuildWorkspace(fileURI: Option[URI],
                           code: Option[String]): Either[Iterable[PublishDiagnosticsParams], WorkspaceState.SourceAware] =
@@ -316,7 +342,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           Right(sourceAware)
 
         case currentWorkspace: WorkspaceState.Created =>
-          // workspace is created but it's not built yet. Build it!
+          // workspace is created but it's not built yet. Let's build it!
           val buildResult =
             fileURI match {
               case Some(fileURI) if fileURI == currentWorkspace.buildURI =>

@@ -36,8 +36,8 @@ object ServerStateUpdater {
                            serverState: ServerState): ServerState =
     buildChangeResult match {
       case Left(buildError) =>
-        // fetch the activateWorkspace to replace existing workspace or-else
-        // use continue with existing workspace
+        // fetch the activateWorkspace to replace existing workspace
+        // or-else continue with existing workspace
         val newWorkspace =
           buildError.activateWorkspace orElse serverState.workspace
 
@@ -47,7 +47,7 @@ object ServerStateUpdater {
         )
 
       case Right(newWorkspace) =>
-        // build errors got resolved, clear buildErrors.
+        // build errors got resolved, clear it from state.
         serverState.copy(
           buildErrors = None,
           workspace = Some(newWorkspace)

@@ -446,10 +446,7 @@ object Workspace {
           SourceCodeState.UnCompiled(fileURI, newCode)
 
         // update or add it to the existing collection
-        updateOrAdd(
-          collection = sourceCode,
-          update = newState
-        )
+        sourceCode put newState
 
       case None =>
         // no source code sent from client, check it still exists.
@@ -462,10 +459,7 @@ object Workspace {
                 error = error
               )
 
-            updateOrAdd(
-              collection = sourceCode,
-              update = newState
-            )
+            sourceCode put newState
 
           case Right(exists) =>
             if (exists) {
@@ -473,10 +467,7 @@ object Workspace {
               val newState =
                 SourceCodeState.OnDisk(fileURI)
 
-              updateOrAdd(
-                collection = sourceCode,
-                update = newState
-              )
+              sourceCode put newState
             } else {
               // file does not exist, remove it.
               sourceCode.filter(_.fileURI != fileURI)
