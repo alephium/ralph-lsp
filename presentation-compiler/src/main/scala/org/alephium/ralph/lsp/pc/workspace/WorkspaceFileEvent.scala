@@ -13,9 +13,6 @@ object WorkspaceFileEvent {
   /** A file or folder is created */
   case class Created(uri: URI) extends WorkspaceFileEvent
 
-  /** A file or folder is changed */
-  case class Changed(uri: URI) extends WorkspaceFileEvent
-
   /** A file or folder is deleted */
   case class Deleted(uri: URI) extends WorkspaceFileEvent
 }

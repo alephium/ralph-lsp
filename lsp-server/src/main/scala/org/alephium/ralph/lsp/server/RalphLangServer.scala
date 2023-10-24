@@ -174,24 +174,27 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
       logger.debug(s"didChangeWatchedFiles: ${changes.asScala.mkString("\n", "\n", "")}")
 
-      // collect Delete events
-      val deleteEvents =
+      // collect events
+      val events =
         changes.asScala collect {
           event =>
             event.getType match {
               case FileChangeType.Deleted =>
                 WorkspaceFileEvent.Deleted(new URI(event.getUri))
+
+              case FileChangeType.Created =>
+                WorkspaceFileEvent.Created(new URI(event.getUri))
             }
         }
 
-      if (deleteEvents.nonEmpty) {
+      if (events.nonEmpty) {
         val diagnostics =
           getOrBuildWorkspace(None) map { // build workspace
             source =>
-              // Build OK! process delete
+              // Build OK! process delete or create
               val deleteResult =
-                Workspace.delete(
-                  events = deleteEvents.to(ArraySeq),
+                Workspace.deleteOrCreate(
+                  events = events.to(ArraySeq),
                   buildErrors = thisServer.state.buildErrors,
                   workspace = source
                 )

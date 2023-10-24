@@ -290,17 +290,19 @@ object Workspace {
   }
 
   /**
-   * Process deleted file or folder.
+   * Process the following:
+   * - Deleted source files and folders
+   * - Created source files
    *
-   * @param events      Delete event to process
+   * @param events      Events to process
    * @param buildErrors Current build errors
    * @param workspace   Current workspace state
    * @return Workspace change result
    */
-  def delete(events: ArraySeq[WorkspaceFileEvent.Deleted],
-             buildErrors: Option[BuildState.BuildErrored],
-             workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
-                                                    compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
+  def deleteOrCreate(events: ArraySeq[WorkspaceFileEvent],
+                     buildErrors: Option[BuildState.BuildErrored],
+                     workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
+                                                            compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
     // collect events that belong to this workspace
     val workspaceEvents =
       events filter {
@@ -310,29 +312,25 @@ object Workspace {
 
     // remove deleted files & folders from workspace
     val newSourceCode =
-      workspaceEvents.foldLeft(workspace.sourceCode) {
-        case (sourceCodeToUpdate, deleted) =>
-          // Check only source-files that belong to the configured contractPath
-          if (URIUtil.isChild(workspace.build.contractURI, deleted.uri))
-            sourceCodeToUpdate filter {
-              state =>
-                !URIUtil.isChild(deleted.uri, state.fileURI)
-            }
-          else
-            sourceCodeToUpdate
-      }
+      Workspace.applyEvents(
+        events = workspaceEvents,
+        workspace = workspace
+      )
 
     // is the build deleted?
     val isBuildDeleted =
       workspaceEvents exists {
-        event =>
-          event.uri == workspace.buildURI
+        case WorkspaceFileEvent.Deleted(uri) =>
+          uri == workspace.buildURI
+
+        case WorkspaceFileEvent.Created(_) =>
+          false
       }
 
     val buildCode =
       if (isBuildDeleted) // if build changed, fetch it from disk
         None
-      else // no build file event occurred
+      else // build file exists
         buildErrors match {
           case Some(errored) =>
             // use the code from the previous build's compilation run
@@ -349,6 +347,38 @@ object Workspace {
       workspace = workspace
     )
   }
+
+  /**
+   * Apply events to workspace source-code.
+   *
+   * @param events    Events to process
+   * @param workspace Current workspace state
+   * @return Source-code with events applied
+   */
+  def applyEvents(events: ArraySeq[WorkspaceFileEvent],
+                  workspace: WorkspaceState.SourceAware): ArraySeq[SourceCodeState] =
+    events.foldLeft(workspace.sourceCode) {
+      case (newSourceCode, event) =>
+        // process files & folders that belong to the configured contractPath
+        if (URIUtil.isChild(workspace.build.contractURI, event.uri))
+          event match {
+            case WorkspaceFileEvent.Deleted(uri) =>
+              newSourceCode filter {
+                state =>
+                  // Delete files that are within the deleted uri
+                  !URIUtil.isChild(uri, state.fileURI)
+              }
+
+            case WorkspaceFileEvent.Created(uri) =>
+              // Add or replace created source files to workspace
+              if (URIUtil.getFileExtension(uri) == CompilerAccess.RALPH_FILE_EXTENSION)
+                newSourceCode put SourceCodeState.OnDisk(uri)
+              else
+                newSourceCode // ignore - not a Ralph source file
+          }
+        else
+          newSourceCode // ignore - not a Ralph source event
+    }
 
   /**
    * Process source or build file change.
