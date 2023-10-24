@@ -6,7 +6,9 @@ import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.compiler.message.error.StringError
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 
+import java.net.URI
 import scala.collection.immutable.ArraySeq
+import scala.collection.immutable.ListMap
 
 /**
  * Compilation results from `ralphc` do not retain the source file URIs or Path information.
@@ -17,14 +19,14 @@ import scala.collection.immutable.ArraySeq
 private[workspace] object WorkspaceStateBuilder {
 
   def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                       compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompilerRun =
+                       compilationResult: Either[(ArraySeq[CompilerMessage.AnyError], Seq[SourceCodeState.ErrorSource]), (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompilerRun =
     compilationResult match {
-      case Left(workspaceError) =>
-        // File or sourcePosition position information is not available for this error,
-        // report it at project error.
+      case Left((workspaceErrors, sourceCodeErrors)) =>
+        // File or sourcePosition position information is not available for workspace errors,
+        // report them at project error.
         WorkspaceState.Errored(
-          sourceCode = currentState.sourceCode, // SourceCode remains the same as existing state
-          workspaceErrors = ArraySeq(workspaceError), // errors to report
+          sourceCode = mergeSourceCodeAndErrors(currentState.sourceCode, sourceCodeErrors),
+          workspaceErrors = workspaceErrors, // errors to report
           parsed = currentState,
         )
 
@@ -35,6 +37,15 @@ private[workspace] object WorkspaceStateBuilder {
           compiledScripts = compiledScripts
         )
     }
+
+  //Errors needs to replace initial parsed sourceCodes
+  private def mergeSourceCodeAndErrors(sourceCode: Seq[SourceCodeState.Parsed], errors: Seq[SourceCodeState.ErrorSource]): ArraySeq[SourceCodeState] =  {
+    //Using List map to preserve order
+    val sourceCodeMap: ListMap[URI, SourceCodeState] = ListMap.from(sourceCode.map{sc => (sc.fileURI, sc)})
+    ArraySeq.from(errors.foldLeft(sourceCodeMap){ case (acc, error) =>
+      acc.updated(error.fileURI, error)
+    }.values)
+  }
 
   /**
    * Maps compiled-code to it's parsed code.

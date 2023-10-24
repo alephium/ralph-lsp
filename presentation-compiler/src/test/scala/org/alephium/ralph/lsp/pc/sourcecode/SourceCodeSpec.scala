@@ -61,7 +61,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
             fileURI = URI.create("./test.ral"),
             code = "blah",
             contracts = Seq.empty,
-            Map.empty
+            Seq.empty
           )
 
         testNoCompilerAccess(parsedState)
@@ -167,7 +167,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
                 fileURI = failedState.fileURI,
                 code = code,
                 contracts = Seq.empty,
-                imports = Map.empty
+                imports = Seq.empty
               )
         }
       }
@@ -191,7 +191,8 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
     }
 
     "handle std imports" in {
-        forAll(genFileURI(), Gen.someOf(StdInterface.stdInterfaces)) {
+      val stdInterfaces = StdInterface.buildStdInterfaces.right.get
+        forAll(genFileURI(), Gen.someOf(stdInterfaces)) {
           case (fileUri, interfaces)  =>
           implicit val compiler: CompilerAccess = CompilerAccess.ralphc
 
@@ -204,7 +205,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
 
             parsed shouldBe a[SourceCodeState.Parsed]
 
-            parsed.asInstanceOf[SourceCodeState.Parsed].imports.keys shouldBe interfaces.map(_._1).toSet
+            parsed.asInstanceOf[SourceCodeState.Parsed].imports.map(_.name.value).toSet shouldBe interfaces.map(_._1).toSet
       }
     }
   }

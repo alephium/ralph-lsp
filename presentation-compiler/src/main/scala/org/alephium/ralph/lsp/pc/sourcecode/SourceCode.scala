@@ -3,6 +3,8 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.pc.workspace.build.BuildDependencies
+import org.alephium.ralph.lsp.pc.sourcecode.imports.ParsedImport
 
 import java.net.URI
 import scala.annotation.tailrec
@@ -30,7 +32,7 @@ private[pc] object SourceCode {
   def parse(sourceState: SourceCodeState)(implicit compiler: CompilerAccess): SourceCodeState =
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
-        parseContractsWithImports(code) match {
+        parseContractsAndImports(code) match {
           case Left(errors) =>
             SourceCodeState.ErrorSource(
               fileURI = fileURI,
@@ -78,20 +80,12 @@ private[pc] object SourceCode {
         error
     }
 
-  private def parseContractsWithImports(code: String)(implicit compiler: CompilerAccess): Either[Seq[CompilerMessage.AnyError], (Seq[ContractWithState], Map[String, Seq[ContractWithState]])] =
+  private def parseContractsAndImports(code: String)(implicit compiler: CompilerAccess): Either[Seq[CompilerMessage.AnyError], (Seq[ContractWithState], Seq[ParsedImport])] =
     for {
-      codeWithImports <- imports.ImportHandler.extractStdImports(code)
+      codeWithImports <- imports.ImportHandler.parseImports(code)
       codeAst <- compiler.parseContracts(codeWithImports.code).left.map(Seq(_))
-      importsAst <- parseImports(codeWithImports.imports).left.map(Seq(_))
     } yield {
-      (codeAst, importsAst)
-    }
-
-  private def parseImports(imports: Map[String, String]) (implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, Map[String, Seq[ContractWithState]]] =
-    imports.map{ case (file, code)=>
-      compiler.parseContracts(code).map(res => (file, res))
-    }.partitionMap(identity) match { case (lefts, right) =>
-      lefts.headOption.toLeft(right).map(_.toMap)
+      (codeAst, codeWithImports.parsedImports)
     }
 
   private def getSourceCode(fileURI: URI)(implicit compiler: CompilerAccess): SourceCodeState.AccessedState =

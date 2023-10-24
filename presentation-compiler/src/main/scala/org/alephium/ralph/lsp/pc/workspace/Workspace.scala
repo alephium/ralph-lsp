@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace
 
+import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
@@ -7,6 +8,7 @@ import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, BuildValidator, WorkspaceBuild}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
+import org.alephium.ralph.lsp.pc.sourcecode.imports.ImportHandler
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -193,20 +195,50 @@ object Workspace {
     val contractsToCompile =
       workspace.sourceCode.flatMap(_.contracts)
 
-    //FIXME: This works as we avoid having multiple time the same Interface twice, but it means we don't
-    //show an error on a file missing the import, as having the import define in another file is fine.
-    val imports = workspace.sourceCode.flatMap(_.imports).toMap
+    val importsErrorAndAst = compileImports(workspace)
 
+    val importErrors = importsErrorAndAst.map{ case (error,_) => error }.flatten
+    //`distinct` as compiler will fail if we import the same interface in different files
+    val importsAst = importsErrorAndAst.map{ case (_, ast) => ast }.distinct.flatten
+
+    //Import errors are passed as a SourceCodeState error, so we could preserve file URI
     val compilationResult =
       compiler.compileContracts(
-        contracts = contractsToCompile ++ imports.values.flatten,
+        contracts = contractsToCompile ++ importsAst,
         options = workspace.build.config.compilerOptions
-      )
+      ) match {
+        case Right(success) =>
+          if(importErrors.isEmpty) {
+            Right(success)
+          } else {
+            Left((ArraySeq.empty, importErrors))
+          }
+        case Left(error) =>
+            Left((ArraySeq(error), importErrors))
+      }
 
     WorkspaceStateBuilder.toWorkspaceState(
       currentState = workspace,
       compilationResult = compilationResult
     )
+  }
+
+  //Imports are a bit different than full source code compiling, we want to find all invalid import as well as returning the AST for the valid ones.
+  def compileImports(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): ArraySeq[(Option[SourceCodeState.ErrorSource], Seq[ContractWithState])] = {
+    workspace.sourceCode.map { sourceCode =>
+      val (errors, validImports) = ImportHandler.compileImports(sourceCode.imports)(compiler,workspace.build.dependencies).partitionMap(identity)
+
+      val errorSource = Option.when(errors.nonEmpty){
+        SourceCodeState.ErrorSource(
+          sourceCode.fileURI,
+          sourceCode.code,
+          errors,
+          Some(sourceCode)
+        )
+      }
+
+      (errorSource, validImports.distinct.flatten)
+    }
   }
 
   /**

@@ -9,6 +9,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+import scala.collection.immutable.ArraySeq
 /**
  * Test cases for [[Workspace.parse]] function.
  */
@@ -48,7 +49,7 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
                 mock[CompilerAccess]
 
               val expectedSourceCode =
-                initialWorkspace.sourceCode map {
+                initialWorkspace.sourceCode flatMap {
                   case currentState: SourceCodeState.OnDisk =>
                     // for every onDisk state return an errored state by the compiler
                     val expectedState =
@@ -64,7 +65,8 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
                       .returns(Left(expectedState.error)) // return an error
                       .once() // called only once
 
-                    expectedState
+                    Some(expectedState)
+                  case _ => None
                 }
 
               val actualWorkspace =
@@ -90,7 +92,7 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
                 mock[CompilerAccess]
 
               val expectedSourceCode =
-                initialWorkspace.sourceCode map {
+                initialWorkspace.sourceCode flatMap {
                   case currentState: SourceCodeState.OnDisk =>
                     // for every onDisk state return a successful parsed state
                     val expectedState =
@@ -98,7 +100,7 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
                         fileURI = currentState.fileURI,
                         code = genCode.sample.get,
                         contracts = GenSourceCode.genParsedContracts().sample.get,
-                        imports = Map.empty
+                        imports = Seq.empty
                       )
 
                     // expect the compiler to get a request to read sourceCode and then parse
@@ -118,7 +120,8 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
                         .once() // called only once
                     )
 
-                    expectedState
+                    Some(expectedState)
+                  case _ => None
                 }
 
               val actualWorkspace =

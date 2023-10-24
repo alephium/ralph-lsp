@@ -4,6 +4,7 @@ import org.alephium.ralph.lsp.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcCompiledConfig
 
 import java.net.URI
+import scala.collection.immutable.ArraySeq
 
 object WorkspaceDeploy {
 
@@ -24,7 +25,7 @@ object WorkspaceDeploy {
       compiler.compileForDeployment(
         workspaceURI = workspaceURI,
         config = config
-      )
+      ).left.map(err => (ArraySeq(err), ArraySeq.empty))
 
     WorkspaceStateBuilder.toWorkspaceState(
       currentState = ???,

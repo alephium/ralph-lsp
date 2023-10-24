@@ -9,7 +9,7 @@ import org.alephium.ralph.lsp.compiler.message.SourceIndex
 
 class ImportHandlerSpec extends AnyWordSpec with Matchers {
 
-  "ImportHandler.extractStdImports" should {
+  "ImportHandler.parseImports" should {
     "extract valid imports" when {
       "there are new lines" in {
         succes(
@@ -90,45 +90,45 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
       }
     }
 
-    "find error" when {
+    "parse invalid import - failing happen at compilation" when {
       "import name is missplled" in {
-        fail("""import "std/nftint"""", Seq(SourceIndex(8, 10)))
+        invalid("""import "std/nftint"""")
       }
 
       "import name is missing" in {
-        fail("""import "std/"""", Seq(SourceIndex(8, 4)))
+        invalid("""import "std/"""")
       }
 
       "import folder is misspelled" in {
-        fail("""import "td/nft"""", Seq(SourceIndex(8, 6)))
+        invalid("""import "td/nft"""")
       }
 
       "there is a space in import" in {
-        fail("""import "std /nft_interface"""", Seq(SourceIndex(8, 18)))
+        invalid("""import "std /nft_interface"""")
       }
 
       "there are space before/after" in {
-        fail("""import " std/nft_interface"""", Seq(SourceIndex(8, 18)))
-        fail("""import "std/nft_interface """", Seq(SourceIndex(8, 18)))
-        fail("""import " std/nft_interface """", Seq(SourceIndex(8, 19)))
+        invalid("""import " std/nft_interface"""")
+        invalid("""import "std/nft_interface """")
+        invalid("""import " std/nft_interface """")
       }
     }
 
     "find multiple errors" when {
       "all imports are wrong" in {
-        fail(
+        invalid(
           """|import "std/nt_interface"
           |
           |import "std/"
-          |""".stripMargin, Seq(SourceIndex(8, 16), SourceIndex(35,4)))
+          |""".stripMargin)
       }
 
       "not all imports are wrong" in {
-        fail(
+        invalid(
           """|import "std/nt_interface"
           |import "std/nft_interface"
           |import "std/"
-          |""".stripMargin, Seq(SourceIndex(8, 16), SourceIndex(61,4)))
+          |""".stripMargin)
       }
     }
 
@@ -167,17 +167,12 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
   }
 
   def succes(code: String) = {
-    val res = ImportHandler.extractStdImports(code)
-    res.map(_.imports.keys) shouldBe Right(Set("std/nft_interface", "std/fungible_token_interface"))
+    val res = ImportHandler.parseImports(code).right.get
+    res.parsedImports.map(_.name.value).toSet shouldBe Set("std/nft_interface", "std/fungible_token_interface")
   }
 
-  def fail(code: String, indexes: Seq[SourceIndex]) = {
-    val res = ImportHandler.extractStdImports(code)
-
-    res.isLeft shouldBe true
-
-    res.left.map(_.zip(indexes).map { case (error, index) =>
-      error.index shouldBe index
-    })
+  def invalid(code: String) = {
+    val res = ImportHandler.parseImports(code)
+    res.right.get.parsedImports.size > 0 shouldBe true
   }
 }
