@@ -14,11 +14,18 @@ import java.util
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
-/** Implements functions that transform internal diagnostics types to LSP4J */
+/** Functions that transform internal diagnostics types to LSP4J types */
 object DiagnosticsConverter {
 
+  /**
+   * Given the current [[ServerState]] and the next [[ServerState]],
+   * return new diagnostics to publish.
+   *
+   * @return Diagnostics clearing resolved diagnostics dispatched in previous state.
+   */
   def toPublishDiagnostics(currentState: ServerState,
                            newState: ServerState): Iterable[PublishDiagnosticsParams] = {
+    // fetch diagnostics to publish for the build file
     val buildDiagnostics =
       toPublishDiagnostics(
         buildURI = currentState.workspace.map(_.buildURI),
@@ -26,6 +33,7 @@ object DiagnosticsConverter {
         newBuildErrors = newState.buildErrors
       )
 
+    // fetch diagnostics to publish for the source-code
     val workspaceDiagnostics =
       toPublishDiagnostics(
         currentWorkspace = currentState.workspace,
@@ -35,6 +43,10 @@ object DiagnosticsConverter {
     buildDiagnostics ++ workspaceDiagnostics
   }
 
+  /**
+   * Given the current build-errors and the next,
+   * return diagnostics to publish to the client.
+   * */
   def toPublishDiagnostics(buildURI: Option[URI],
                            currentBuildErrors: Option[BuildState.BuildErrored],
                            newBuildErrors: Option[BuildState.BuildErrored]): Option[PublishDiagnosticsParams] =
@@ -67,6 +79,10 @@ object DiagnosticsConverter {
         None
     }
 
+  /**
+   * Given the current workspace and the next,
+   * return diagnostics to publish to the client.
+   * */
   def toPublishDiagnostics(currentWorkspace: Option[WorkspaceState],
                            newWorkspace: Option[WorkspaceState]): Iterable[PublishDiagnosticsParams] =
     (currentWorkspace, newWorkspace) match {
@@ -86,6 +102,7 @@ object DiagnosticsConverter {
         None
     }
 
+  /** Fetch all diagnostics for this workspace */
   def toPublishDiagnostics(currentWorkspace: WorkspaceState): Iterable[PublishDiagnosticsParams] =
     currentWorkspace match {
       case _: WorkspaceState.Created =>
@@ -99,7 +116,9 @@ object DiagnosticsConverter {
         )
     }
 
-  /** Publish new workspace */
+  /**
+   * Given the current workspace and the next, fetch diagnostics to dispatch, clearing resolved diagnostics.
+   * */
   def toPublishDiagnostics(currentWorkspace: WorkspaceState,
                            newWorkspace: WorkspaceState): Iterable[PublishDiagnosticsParams] =
     (currentWorkspace, newWorkspace) match {
@@ -188,6 +207,7 @@ object DiagnosticsConverter {
     new Diagnostic(range, message.message, severity, "Ralph")
   }
 
+  /** Fetch workspace/project level diagnostics i.e. diagnostics that do have source information. */
   def toWorkspaceDiagnostics(workspace: WorkspaceState.SourceAware): PublishDiagnosticsParams = {
     val workspaceDiagnostics =
       workspace match {
@@ -209,6 +229,7 @@ object DiagnosticsConverter {
     new PublishDiagnosticsParams(workspace.workspaceURI.toString, workspaceDiagnostics.asJava)
   }
 
+  /** Fetch source-code level diagnostics */
   def toSourceCodeDiagnostics(state: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] =
     state.sourceCode collect {
       case state: SourceCodeState.ErrorSource =>
@@ -251,12 +272,14 @@ object DiagnosticsConverter {
         new PublishDiagnosticsParams(state.fileURI.toString, diagnostics.asJava)
     }
 
+  /** Fetch all diagnostics for this workspace */
   def toPublishDiagnostics(workspace: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] = {
     val sourceCodeDiagnostics = toSourceCodeDiagnostics(workspace)
     val workspaceDiagnostics = toWorkspaceDiagnostics(workspace)
     sourceCodeDiagnostics ++ Seq(workspaceDiagnostics)
   }
 
+  /** Build a diagnostic instance give the error and file information */
   def toPublishDiagnostics(fileURI: URI,
                            code: Option[String],
                            errors: List[CompilerMessage.AnyError],

@@ -234,11 +234,12 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
       if (deleteEvents.nonEmpty) {
         val diagnostics =
-          getOrBuildWorkspace(
+          getOrBuildWorkspace( // build workspace
             fileURI = None,
             code = None
-          ) map { // initialise workspace and process delete
+          ) map {
             source =>
+              // Build OK! process delete
               val deleteResult =
                 Workspace.delete(
                   events = deleteEvents.to(ArraySeq),
@@ -246,6 +247,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
                   workspace = source
                 )
 
+              // Set the updated workspace
               setWorkspaceChange(deleteResult)
           }
 
@@ -318,7 +320,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           val buildResult =
             fileURI match {
               case Some(fileURI) if fileURI == currentWorkspace.buildURI =>
-                // if the request if for the build file, build it with the changed code
+                // this request is for the build file, build it using the code sent by the client
                 Workspace.build(
                   buildURI = fileURI,
                   code = code,
@@ -330,6 +332,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
                 Workspace.build(currentWorkspace)
             }
 
+          // process build result
           buildResult match {
             case Left(error) =>
               // build errored

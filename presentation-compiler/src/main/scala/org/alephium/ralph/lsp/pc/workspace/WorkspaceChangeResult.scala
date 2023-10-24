@@ -8,14 +8,14 @@ object WorkspaceChangeResult {
   /**
    * Build change result
    *
-   * @param buildChangeResult Compilation outcome
+   * @param buildChangeResult Build compilation outcome
    */
   case class BuildChanged(buildChangeResult: Option[Either[BuildState.BuildErrored, WorkspaceState.SourceAware]]) extends WorkspaceChangeResult
 
   /**
    * Source-code change result
    *
-   * @param sourceChangeResult Compilation outcome
+   * @param sourceChangeResult Source compilation outcome
    */
   case class SourceChanged(sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState.SourceAware]) extends WorkspaceChangeResult
 }

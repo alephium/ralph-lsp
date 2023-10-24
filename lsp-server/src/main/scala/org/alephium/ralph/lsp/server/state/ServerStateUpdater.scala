@@ -13,18 +13,12 @@ object ServerStateUpdater {
                        serverState: ServerState): Option[ServerState] =
     change match {
       case WorkspaceChangeResult.BuildChanged(buildChangeResult) =>
-        buildChangeResult match {
-          case Some(buildResult) =>
-            val newState =
-              buildChanged(
-                buildChangeResult = buildResult,
-                serverState = serverState
-              )
-
-            Some(newState)
-
-          case None =>
-            None
+        buildChangeResult map {
+          buildResult =>
+            buildChanged(
+              buildChangeResult = buildResult,
+              serverState = serverState
+            )
         }
 
       case WorkspaceChangeResult.SourceChanged(sourceChangeResult) =>
@@ -37,7 +31,7 @@ object ServerStateUpdater {
         Some(newState)
     }
 
-  /** Apply build change to the server */
+  /** Apply build change to the [[ServerState]] */
   private def buildChanged(buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
                            serverState: ServerState): ServerState =
     buildChangeResult match {
@@ -60,7 +54,7 @@ object ServerStateUpdater {
         )
     }
 
-  /** Apply source change to the server */
+  /** Apply source-code change to the [[ServerState]] */
   private def sourceCodeChanged(sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
                                 serverState: ServerState): ServerState =
     sourceChangeResult match {
