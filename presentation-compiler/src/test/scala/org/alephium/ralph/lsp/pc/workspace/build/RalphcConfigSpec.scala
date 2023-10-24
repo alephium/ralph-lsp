@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralphc.Config
+import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.TryValues.convertTryToSuccessOrFailure
@@ -40,7 +41,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         buildURI = expectedBuildPath.toUri,
         code = expectedCode,
         config = expectedCompiledConfig,
-        dependencies = BuildDependencies.empty
+        dependencies = BuildDependencies(StdInterface.buildStdInterfaces.right.get)
       )
   }
 }

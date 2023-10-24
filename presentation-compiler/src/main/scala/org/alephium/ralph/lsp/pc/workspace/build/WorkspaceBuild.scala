@@ -4,6 +4,7 @@ import org.alephium.ralph.lsp.compiler.message.error.ThrowableError
 import org.alephium.ralph.lsp.pc.util.FileIO
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
+import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
 
 import java.net.URI
 import java.nio.file.{Path, Paths}
@@ -71,7 +72,7 @@ object WorkspaceBuild {
 
       case parsed: BuildParsed =>
         // parse successful. Perform compilation!
-        BuildValidator.validate(parsed)
+       buildDependencies(BuildValidator.validate(parsed))
     }
 
   /** Parse and compile from disk */
@@ -122,4 +123,20 @@ object WorkspaceBuild {
         parseAndCompile(buildURI)
     }
 
+  def buildDependencies(compiled: BuildState.Compiled): BuildState.Compiled =
+    compiled match {
+      case compiled: BuildCompiled =>
+        StdInterface.buildStdInterfaces match {
+          case Right(stdInterfaces) =>
+            compiled.copy(dependencies = compiled.dependencies.copy(stdInterfaces = stdInterfaces))
+          case Left(error) =>
+              BuildErrored(
+                buildURI = compiled.buildURI,
+                code = None,
+                errors = ArraySeq(error)
+              )
+        }
+      case errored: BuildErrored =>
+        errored
+    }
 }

@@ -1,5 +1,8 @@
 package org.alephium.ralph.lsp.pc.sourcecode.imports
 
+import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorStdInterfacesNotFound
+
 import java.net.URI
 import java.nio.file.{ Files, FileSystems, Paths}
 import scala.collection.JavaConverters._
@@ -14,10 +17,6 @@ object StdInterface extends StrictLogging {
   /*
    * Get std interfaces, when using sbt it reads it from disk, when using with the jar
    * it reads them directly from the jar.
-   * Currently if files can't be read, we stop the app otherwise we can't do much, but
-   * as files are included in jar file on build, there's no reason it should happen.
-   *
-   * Later on we could improve and recover if we notice issue
    *
    * Interfaces are kept in memory as there aren't much, if in the future it start to have
    * to much data, we could think of reading them on the fly.
@@ -25,7 +24,7 @@ object StdInterface extends StrictLogging {
    * We rely here on `Using` https://www.scala-lang.org/api/2.13.6/scala/util/Using$.html
    * to handle resources.
    */
-  val stdInterfaces: Map[String, String] =
+  def buildStdInterfaces: Either[CompilerMessage.AnyError, Map[String,String]] =
     Using.Manager { use =>
       val stdURL = getClass.getResource(s"/$stdFolder")
 
@@ -43,13 +42,10 @@ object StdInterface extends StrictLogging {
         val code = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines.mkString("\n")
         (s"$stdFolder/${removeExtension(file.getFileName.toString)}", code)
       }.toMap
-  } match {
-    case Success(value) => value
-    case Failure(error) =>
-      logger.error(s"Cannot get std interfaces: $error")
-      Map.empty
+  }.toEither.left.map { error =>
+    logger.error(s"Cannot get std interfaces: $error")
+    ErrorStdInterfacesNotFound
   }
-
 
   private def removeExtension(fname: String): String = {
     val pos = fname.lastIndexOf('.');
