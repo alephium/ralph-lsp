@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceChangeResult, WorkspaceFileEvent, WorkspaceState}
+import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.DiagnosticsConverter
 import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater}
@@ -76,8 +77,19 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   private def getClient(): RalphLangClient =
     state.client getOrElse {
-      throw ResponseError.ClientNotConfigured.toResponseErrorException
+      val error = ResponseError.ClientNotConfigured
+      val exception = error.toResponseErrorException
+      logger.error(error.getMessage, exception)
+      throw exception
     }
+
+  /** Write to log file, notify the client and throw to exit this request */
+  private def logAndThrowError(error: server.ResponseError): Nothing = {
+    val client = getClient()
+    val exception = client.log(error).toResponseErrorException
+    logger.error(error.getMessage, exception)
+    throw exception
+  }
 
   /** Set the workspace */
   private def setWorkspace(workspace: WorkspaceState): Unit =
@@ -104,10 +116,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           // Means: This fileURI does not belong to this workspace or is of different type.
           // If this occurs, it's a client configuration error.
           // File types that are not supported by Ralph should not be submitted to this server.
-          val error = ResponseError.UnknownFileType(fileURI)
-          logger.error(error.getMessage, error)
-          getClient().log(error) // notify client
-          throw error.toResponseErrorException
+          logAndThrowError(ResponseError.UnknownFileType(fileURI))
       }
     }
 
@@ -171,7 +180,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           RalphLangServer.getRootUri(params)
 
         val workspaceURI =
-          rootURI.getOrElse(throw ResponseError.WorkspaceFolderNotSupplied.toResponseErrorException)
+          rootURI getOrElse logAndThrowError(ResponseError.WorkspaceFolderNotSupplied)
 
         val workspace =
           Workspace.create(workspaceURI)
@@ -385,18 +394,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     state.workspace getOrElse {
       // Workspace folder is not defined.
       // This is not expected to occur since `initialized` is always invoked first.
-
-      val error =
-        ResponseError.WorkspaceFolderNotSupplied
-
-      val exception =
-        getClient()
-          .log(error)
-          .toResponseErrorException
-
-      logger.error(error.getMessage, exception)
-
-      throw exception
+      logAndThrowError(ResponseError.WorkspaceFolderNotSupplied)
     }
 
   override def codeAction(params: CodeActionParams): CompletableFuture[util.List[messages.Either[Command, CodeAction]]] =
