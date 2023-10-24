@@ -310,7 +310,7 @@ object Workspace {
           URIUtil.contains(workspace.workspaceURI, event.uri)
       }
 
-    // remove deleted files & folders from workspace
+    // apply events to the workspace
     val newSourceCode =
       Workspace.applyEvents(
         events = workspaceEvents,
@@ -319,18 +319,12 @@ object Workspace {
 
     // is the build deleted?
     val isBuildDeleted =
-      workspaceEvents exists {
-        case WorkspaceFileEvent.Deleted(uri) =>
-          uri == workspace.buildURI
-
-        case WorkspaceFileEvent.Created(_) =>
-          false
-      }
+      workspaceEvents contains WorkspaceFileEvent.Deleted(workspace.buildURI)
 
     val buildCode =
-      if (isBuildDeleted) // if build changed, fetch it from disk
+      if (isBuildDeleted) // if build is deleted, compile from disk
         None
-      else // build file exists
+      else // build exists, process from memory
         buildErrors match {
           case Some(errored) =>
             // use the code from the previous build's compilation run
@@ -441,11 +435,22 @@ object Workspace {
         currentBuild = workspace.build
       ) match {
         case Some(newBuild) =>
-          // this is a new build. initialise a fresh build.
-          val result =
-            initialise(newBuild) map parseAndCompile
+          newBuild match {
+            case build: BuildState.BuildCompiled =>
+              val newWorkspace =
+                WorkspaceState.UnCompiled(
+                  build = build,
+                  sourceCode = workspace.sourceCode
+                )
 
-          Some(result)
+              val result =
+                parseAndCompile(newWorkspace)
+
+              Some(Right(result))
+
+            case errored: BuildState.BuildErrored =>
+              Some(Left(errored))
+          }
 
         case None =>
           // no build change occurred, using existing workspace.
