@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
-import org.alephium.ralph.lsp.compiler.message.error.ThrowableError
-import org.alephium.ralph.lsp.pc.util.{FileIO, URIUtil}
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 import org.alephium.ralphc.Config
@@ -11,13 +11,12 @@ import java.net.URI
 import java.nio.file.{Path, Paths}
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ListBuffer
-import scala.util.{Failure, Success}
 
 /** Implements functions for validating `build.ralph` */
 object BuildValidator {
 
   /** Validate and promotes a parsed build-file to compiled */
-  def validate(parsed: BuildParsed): BuildState.Compiled = {
+  def validate(parsed: BuildParsed)(implicit file: FileAccess): BuildState.CompileResult = {
 
     /** Returns a successful compiled state */
     def success() = {
@@ -27,11 +26,12 @@ object BuildValidator {
       BuildCompiled(
         buildURI = parsed.buildURI,
         code = parsed.code,
-        config = Config(
-          compilerOptions = parsed.config.compilerOptions,
-          contractPath = absoluteContractPath,
-          artifactPath = absoluteArtifactPath
-        )
+        config =
+          Config(
+            compilerOptions = parsed.config.compilerOptions,
+            contractPath = absoluteContractPath,
+            artifactPath = absoluteArtifactPath
+          )
       )
     }
 
@@ -44,7 +44,7 @@ object BuildValidator {
   /** Checks that buildURI is in the project's root directory */
   def validateBuildURI(buildURI: URI,
                        workspaceURI: URI): Either[ErrorInvalidBuildFileLocation, URI] =
-    if (URIUtil.isChild(workspaceURI, buildURI)) // Build file must be in the root workspace folder.
+    if (URIUtil.isFirstChild(workspaceURI, buildURI)) // Build file must be in the root workspace directory.
       Right(buildURI)
     else
       Left(
@@ -67,7 +67,7 @@ object BuildValidator {
       ListBuffer.empty[CompilerMessage.AnyError]
 
     // Validate: is the contract path within the workspace
-    if (!URIUtil.isChild(workspacePath, absoluteContractPath))
+    if (!URIUtil.contains(workspacePath, absoluteContractPath))
       errors addOne
         ErrorDirectoryOutsideWorkspace(
           dirPath = contractPath,
@@ -79,7 +79,7 @@ object BuildValidator {
         )
 
     // Validate: is the artifact path within the workspace
-    if (!URIUtil.isChild(workspacePath, absoluteArtifactPath))
+    if (!URIUtil.contains(workspacePath, absoluteArtifactPath))
       errors addOne
         ErrorDirectoryDoesNotExists(
           dirPath = artifactPath,
@@ -98,13 +98,14 @@ object BuildValidator {
         BuildErrored( // report errors
           buildURI = parsed.buildURI,
           code = Some(parsed.code),
-          errors = ArraySeq.from(errors)
+          errors = ArraySeq.from(errors),
+          activateWorkspace = None
         )
       )
   }
 
   /** Validate that the configured paths exist within the workspace directory */
-  private def validatePathsExists(parsed: BuildParsed): Option[BuildState.BuildErrored] = {
+  private def validatePathsExists(parsed: BuildParsed)(implicit file: FileAccess): Option[BuildState.BuildErrored] = {
     val contractPath = parsed.config.contractPath
     val artifactPath = parsed.config.artifactPath
 
@@ -115,12 +116,12 @@ object BuildValidator {
     // do these paths exists with the workspace directory?
     val compileResult =
       for {
-        contractExists <- FileIO.exists(absoluteContractPath)
-        artifactsExists <- FileIO.exists(absoluteArtifactPath)
+        contractExists <- file.exists(absoluteContractPath.toUri)
+        artifactsExists <- file.exists(absoluteArtifactPath.toUri)
       } yield (contractExists, artifactsExists)
 
     compileResult match {
-      case Success((contractExists, artifactsExists)) =>
+      case Right((contractExists, artifactsExists)) =>
         val errors =
           ListBuffer.empty[CompilerMessage.AnyError]
 
@@ -156,19 +157,21 @@ object BuildValidator {
             BuildErrored( // report errors
               buildURI = parsed.buildURI,
               code = Some(parsed.code),
-              errors = ArraySeq.from(errors)
+              errors = ArraySeq.from(errors),
+              activateWorkspace = None
             )
 
           Some(errorState)
         }
 
-      case Failure(exception) =>
+      case Left(error) =>
         // exception occurred performing IO.
         val errors =
           BuildErrored(
             buildURI = parsed.buildURI,
             code = Some(parsed.code),
-            errors = ArraySeq(ThrowableError(exception))
+            errors = ArraySeq(error),
+            activateWorkspace = None
           )
 
         Some(errors)

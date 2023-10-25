@@ -1,9 +1,9 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
-import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild
+import org.alephium.ralph.lsp.pc.workspace.build.Build
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -12,7 +12,7 @@ sealed trait WorkspaceState {
   def workspaceURI: URI
 
   def buildURI: URI =
-    WorkspaceBuild.toBuildURI(workspaceURI)
+    Build.toBuildURI(workspaceURI)
 }
 
 object WorkspaceState {
@@ -33,14 +33,14 @@ object WorkspaceState {
     def parsed: WorkspaceState.Parsed
   }
 
-  /** State: IDE is initialised but the build file requires validation */
+  /** State: IDE is initialised but no source compilation has occurred yet */
   case class Created(workspaceURI: URI) extends WorkspaceState
 
   /** State: Source files might be un-compiled, parsed or compiled. This state can be parsed and compiled. */
   case class UnCompiled(build: BuildCompiled,
                         sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.SourceAware
 
-  /** State: All source files parsed, therefore this workspace can be compiled */
+  /** State: All source files are parsed, therefore this workspace can be compiled */
   case class Parsed(build: BuildCompiled,
                     sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.SourceAware
 

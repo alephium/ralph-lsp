@@ -2,8 +2,8 @@ package org.alephium.ralph.lsp.pc.sourcecode.imports
 
 import fastparse._
 import fastparse.Parsed
-import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
-import org.alephium.ralph.lsp.compiler.message.error.{ImportError, FastParseError}
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.error.{ImportError, FastParseError}
 import org.alephium.ralph
 
 object ImportHandler {

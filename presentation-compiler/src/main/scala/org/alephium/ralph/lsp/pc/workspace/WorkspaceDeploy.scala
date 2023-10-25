@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcCompiledConfig
 
 import java.net.URI
@@ -28,7 +28,7 @@ object WorkspaceDeploy {
 
     WorkspaceStateBuilder.toWorkspaceState(
       currentState = ???,
-      compilationResult = result
+      compilationResult = ???
     )
   }
 
