@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState, WorkspaceStateBuilder}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, BuildValidator}

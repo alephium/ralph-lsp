@@ -1,10 +1,10 @@
-package org.alephium.ralph.lsp.pc.workspace
+package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.{Ast, CompiledContract, CompiledScript}
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
-import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 import scala.collection.immutable.ArraySeq
 

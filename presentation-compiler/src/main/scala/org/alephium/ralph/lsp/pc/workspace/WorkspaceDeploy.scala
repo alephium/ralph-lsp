@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.pc.sourcecode.WorkspaceStateBuilder
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcCompiledConfig
 
 import java.net.URI
