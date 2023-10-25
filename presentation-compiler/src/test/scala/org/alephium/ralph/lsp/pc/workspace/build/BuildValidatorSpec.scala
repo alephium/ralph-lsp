@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.TryValues.convertTryToSuccessOrFailure
@@ -25,7 +26,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
       Files.createDirectory(workspacePath.resolve(config1.contractPath))
       Files.createDirectory(workspacePath.resolve(config1.artifactPath))
 
-      val buildPath = workspacePath.resolve(WorkspaceBuild.BUILD_FILE_NAME)
+      val buildPath = workspacePath.resolve(Build.BUILD_FILE_NAME)
       val actualBuildPath = RalphcConfig.persist(workspacePath, config1).success.value
 
       actualBuildPath shouldBe buildPath
@@ -39,6 +40,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
       val parsed2 = parsed1.copy(
         config = config2
       )
+
+      implicit val file: FileAccess =
+        FileAccess.disk
 
       BuildValidator.validate(parsed1) shouldBe BuildValidator.validate(parsed2)
     }

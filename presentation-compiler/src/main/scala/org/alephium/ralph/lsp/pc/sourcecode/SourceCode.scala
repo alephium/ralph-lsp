@@ -1,10 +1,14 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.Ast.ContractWithState
-import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.pc.sourcecode.imports.{ImportHandler, ParsedImport}
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.BuildDependencies
-import org.alephium.ralph.lsp.pc.sourcecode.imports.ParsedImport
+import org.alephium.ralph.CompilerOptions
+import org.alephium.ralph.lsp.pc.util.CollectionUtil._
+import org.alephium.ralph.lsp.pc.util.URIUtil
 
 import java.net.URI
 import scala.annotation.tailrec
@@ -15,11 +19,39 @@ import scala.collection.immutable.ArraySeq
  */
 private[pc] object SourceCode {
 
-  /** Collects paths of all ralph files on disk */
-  def initialise(workspaceURI: URI)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.OnDisk]] =
-    compiler
-      .getSourceFiles(workspaceURI)
+  /** Fetch all source files on disk */
+  def initialise(sourceDirectory: URI)(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.OnDisk]] =
+    file
+      .list(sourceDirectory)
       .map(_.map(SourceCodeState.OnDisk).to(ArraySeq))
+
+  /**
+   * Synchronise source files with files on disk.
+   *
+   * When a workspace file structure is moved or renamed,
+   * then in certain situations, the known source-files in memory are lost.
+   * This ensures that all files on-disk are still known to the workspace.
+   *
+   * @param sourceDirectory Directory to synchronise with
+   * @param sourceCode      Collection to add missing source files
+   * @return Source files that are in-sync with files on disk.
+   */
+  def synchronise(sourceDirectory: URI,
+                  sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState]] =
+    initialise(sourceDirectory) map {
+      onDiskFiles =>
+        // clear code that is no within the source directory
+        val directorySource =
+          sourceCode filter {
+            state =>
+              URIUtil.contains(sourceDirectory, state.fileURI)
+          }
+
+        onDiskFiles.foldLeft(directorySource) {
+          case (currentCode, onDisk) =>
+            currentCode putIfEmpty onDisk
+        }
+    }
 
   /**
    * Parse a source file, given its current sate.
@@ -29,7 +61,8 @@ private[pc] object SourceCode {
    * @return New source code state
    */
   @tailrec
-  def parse(sourceState: SourceCodeState)(implicit compiler: CompilerAccess): SourceCodeState =
+  def parse(sourceState: SourceCodeState)(implicit file: FileAccess,
+                                          compiler: CompilerAccess): SourceCodeState =
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
         parseContractsAndImports(code) match {
@@ -80,6 +113,66 @@ private[pc] object SourceCode {
         error
     }
 
+  /**
+   * Compile a group of source-code files that are dependant on each other.
+   *
+   * @param sourceCode      Source-code to compile
+   * @param compilerOptions Options to run for this compilation
+   * @param compiler        Target compiler
+   * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
+   */
+  def compile(sourceCode: ArraySeq[SourceCodeState.Parsed],
+              compilerOptions: CompilerOptions,
+              buildDependencies: BuildDependencies)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.CodeAware]] = {
+    val contractsToCompile =
+      sourceCode.flatMap(_.contracts)
+
+    val importsErrorAndAst = compileImports(sourceCode, buildDependencies)
+
+    val importErrors = importsErrorAndAst.map{ case (error,_) => error }.flatten
+    //`distinct` as compiler will fail if we import the same interface in different files
+    val importsAst = importsErrorAndAst.map{ case (_, ast) => ast }.distinct.flatten
+
+    //Import errors are passed as a SourceCodeState error, so we could preserve file URI
+    val compilationResult =
+      compiler.compileContracts(
+        contracts = contractsToCompile ++ importsAst,
+        options = compilerOptions
+      ) match {
+        case Right(success) =>
+          if(importErrors.isEmpty) {
+            Right(success)
+          } else {
+            Left((ArraySeq.empty, importErrors))
+          }
+        case Left(error) =>
+            Left((ArraySeq(error), importErrors))
+      }
+
+    SourceCodeStateBuilder.toSourceCodeState(
+      parsedCode = sourceCode,
+      compilationResult = compilationResult
+    )
+  }
+
+  //Imports are a bit different than full source code compiling, we want to find all invalid import as well as returning the AST for the valid ones.
+  def compileImports(sourceCode:ArraySeq[SourceCodeState.Parsed],buildDependencies: BuildDependencies)(implicit compiler: CompilerAccess): ArraySeq[(Option[SourceCodeState.ErrorSource], Seq[ContractWithState])] = {
+    sourceCode.map { sourceCode =>
+      val (errors, validImports) = ImportHandler.compileImports(sourceCode.imports)(compiler,buildDependencies).partitionMap(identity)
+
+      val errorSource = Option.when(errors.nonEmpty){
+        SourceCodeState.ErrorSource(
+          sourceCode.fileURI,
+          sourceCode.code,
+          errors,
+          Some(sourceCode)
+        )
+      }
+
+      (errorSource, validImports.distinct.flatten)
+    }
+  }
+
   private def parseContractsAndImports(code: String)(implicit compiler: CompilerAccess): Either[Seq[CompilerMessage.AnyError], (Seq[ContractWithState], Seq[ParsedImport])] =
     for {
       codeWithImports <- imports.ImportHandler.parseImports(code)
@@ -88,8 +181,8 @@ private[pc] object SourceCode {
       (codeAst, codeWithImports.parsedImports)
     }
 
-  private def getSourceCode(fileURI: URI)(implicit compiler: CompilerAccess): SourceCodeState.AccessedState =
-    compiler.getSourceCode(fileURI) match {
+  private def getSourceCode(fileURI: URI)(implicit file: FileAccess): SourceCodeState.AccessedState =
+    file.read(fileURI) match {
       case Left(error) =>
         SourceCodeState.ErrorAccess(fileURI, error)
 

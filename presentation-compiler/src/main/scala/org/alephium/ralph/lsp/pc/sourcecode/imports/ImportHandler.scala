@@ -2,13 +2,12 @@ package org.alephium.ralph.lsp.pc.sourcecode.imports
 
 import fastparse._
 import fastparse.Parsed
-import scala.collection.immutable.ArraySeq
 
 import org.alephium.ralph.Ast.ContractWithState
-import org.alephium.ralph.lsp.compiler.CompilerAccess
-import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
-import org.alephium.ralph.lsp.compiler.message.error.{ImportError, FastParseError}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildDependencies
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.error.{ImportError, FastParseError}
 import org.alephium.ralph
 
 object ImportHandler {

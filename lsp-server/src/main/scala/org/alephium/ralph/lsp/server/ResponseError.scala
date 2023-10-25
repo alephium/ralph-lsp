@@ -24,12 +24,6 @@ object ResponseError {
       message = "Root workspace folder not supplied"
     )
 
-  case object UnableToInitialiseWorkspace extends
-    ResponseError(
-      errorCode = ResponseErrorCode.InternalError,
-      message = "Unable to initialise workspace"
-    )
-
   case object MultiRootWorkspaceFoldersNotSupported extends
     ResponseError(
       errorCode = ResponseErrorCode.InvalidParams,

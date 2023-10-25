@@ -2,9 +2,9 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.{CompiledContract, CompiledScript}
 import org.alephium.ralph.Ast.ContractWithState
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.compiler.message.warning.StringWarning
 import org.alephium.ralph.lsp.pc.sourcecode.imports.ParsedImport
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.warning.StringWarning
 
 import java.net.URI
 
@@ -17,10 +17,13 @@ object SourceCodeState {
   implicit val ordering: Ordering[SourceCodeState] =
     Ordering.by[SourceCodeState, URI](_.fileURI)
 
+  /** Represents: Source code exists, but is neither Compiled or Accessed */
+  sealed trait Initialised extends SourceCodeState
+
   /** Represents: Code was accessed. It can either be in Error state or Success state.
    *
    * [[OnDisk]] state is no longer achievable from this state unless the file gets removed/dropped entirely
-   * from a configured workspace - [[WorkspaceState.BuildAware]].
+   * from a configured workspace - [[WorkspaceState.CodeAware]].
    * */
   sealed trait AccessedState extends SourceCodeState
 
@@ -36,11 +39,11 @@ object SourceCodeState {
   sealed trait FailedState extends SourceCodeState
 
   /** The code is on disk */
-  case class OnDisk(fileURI: URI) extends SourceCodeState
+  case class OnDisk(fileURI: URI) extends Initialised
 
   /** The code is in memory but not parsed or compiled */
   case class UnCompiled(fileURI: URI,
-                        code: String) extends AccessedState with CodeAware
+                        code: String) extends Initialised with AccessedState with CodeAware
 
   /** Represents: Was unable to access code */
   case class ErrorAccess(fileURI: URI,

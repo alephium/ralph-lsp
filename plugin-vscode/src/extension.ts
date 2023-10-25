@@ -17,7 +17,7 @@ export function activate(context: ExtensionContext) {
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{pattern: '**/*.{ral,ralph}'}],
         synchronize: {
-            fileEvents: workspace.createFileSystemWatcher('**/*.{ral,ralph}')
+            fileEvents: workspace.createFileSystemWatcher('**/')
         }
     };
 

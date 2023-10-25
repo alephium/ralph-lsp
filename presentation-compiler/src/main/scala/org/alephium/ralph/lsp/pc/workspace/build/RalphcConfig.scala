@@ -1,11 +1,10 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.CompilerOptions
-import org.alephium.ralph.error.CompilerError.FormattableError
-import org.alephium.ralph.lsp.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
-import org.alephium.ralph.lsp.pc.workspace.build.WorkspaceBuild.toBuildPath
+import org.alephium.ralph.lsp.pc.workspace.build.Build.toBuildPath
 
 import java.net.URI
 import java.nio.charset.StandardCharsets
