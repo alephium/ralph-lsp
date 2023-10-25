@@ -310,13 +310,6 @@ object Workspace {
           URIUtil.contains(workspace.workspaceURI, event.uri)
       }
 
-    // apply events to the workspace
-    val newSourceCode =
-      Workspace.applyEvents(
-        events = workspaceEvents,
-        workspace = workspace
-      )
-
     // is the build deleted?
     val isBuildDeleted =
       workspaceEvents contains WorkspaceFileEvent.Deleted(workspace.buildURI)
@@ -335,11 +328,38 @@ object Workspace {
             Some(workspace.build.code)
         }
 
-    Workspace.reCompile(
-      buildCode = buildCode,
-      sourceCode = newSourceCode,
-      workspace = workspace
-    )
+    // apply events to the workspace
+    val newSourceCode =
+      Workspace.applyEvents(
+        events = workspaceEvents,
+        workspace = workspace
+      )
+
+    val syncedCode =
+      SourceCode.synchronise(
+        sourceDirectory = workspace.build.contractURI,
+        sourceCode = newSourceCode
+      )
+
+    syncedCode match {
+      case Left(error) =>
+        val buildErrored =
+          BuildState.BuildErrored(
+            buildURI = workspace.buildURI,
+            code = buildCode,
+            errors = ArraySeq(error),
+            activateWorkspace = None
+          )
+
+        WorkspaceChangeResult.BuildChanged(Some(Left(buildErrored)))
+
+      case Right(syncedCode) =>
+        Workspace.reCompile(
+          buildCode = buildCode,
+          sourceCode = syncedCode,
+          workspace = workspace
+        )
+    }
   }
 
   /**

@@ -14,11 +14,35 @@ import scala.collection.immutable.ArraySeq
  */
 private[pc] object SourceCode {
 
-  /** Collects paths of all ralph files on disk */
-  def initialise(workspaceURI: URI)(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.OnDisk]] =
+  /** Fetch all source files on disk */
+  def initialise(sourceDirectory: URI)(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.OnDisk]] =
     file
-      .list(workspaceURI)
+      .list(sourceDirectory)
       .map(_.map(SourceCodeState.OnDisk).to(ArraySeq))
+
+  /**
+   * Synchronise source files with files on disk.
+   *
+   * When a workspace file structure is moved or renamed,
+   * then in certain situations, the known source-files in memory are lost.
+   * This ensures that all files on-disk are still known to the workspace.
+   *
+   * @param sourceDirectory Directory to synchronise with
+   * @param sourceCode      Collection to add missing source files
+   * @return Source files that are in-sync with files on disk.
+   */
+  def synchronise(sourceDirectory: URI,
+                  sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState]] =
+    initialise(sourceDirectory) map {
+      onDiskFiles =>
+        onDiskFiles.foldLeft(sourceCode) {
+          case (currentCode, onDisk) =>
+            if (currentCode.exists(_.fileURI == onDisk.fileURI))
+              currentCode // already in-memory. Ignore on-disk.
+            else
+              currentCode appended onDisk
+        }
+    }
 
   /**
    * Parse a source file, given its current sate.
