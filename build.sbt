@@ -67,3 +67,20 @@ lazy val `plugin-intellij` =
       Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
       Test / unmanagedResourceDirectories += baseDirectory.value / "testResources"
     )
+
+lazy val downloadWeb3AndInstallStd = taskKey[Unit]("Download alephium-web3 source code and copy std interface to the correct resource folder")
+
+downloadWeb3AndInstallStd := {
+  val web3Dir = new File(s"target/web3/alephium-web3-${Version.web3}")
+  val stdDir = new File("compiler-access/src/main/resources/std")
+  val web3StdDir = new File(s"target/web3/alephium-web3-${Version.web3}/packages/web3/std")
+
+  if(java.nio.file.Files.notExists(web3Dir.toPath())) {
+      IO.unzipURL(new URL(s"https://github.com/alephium/alephium-web3/archive/refs/tags/v${Version.web3}.zip"), new File("target/web3"))
+  }
+
+  IO.copyDirectory(web3StdDir, stdDir)
+}
+
+//Download and install of web3 will always be performed before compilation
+Compile / compile := ((Compile / compile) dependsOn downloadWeb3AndInstallStd).value

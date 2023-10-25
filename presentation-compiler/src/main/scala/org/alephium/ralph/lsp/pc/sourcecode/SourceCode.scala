@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
+import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
@@ -56,20 +57,21 @@ private[pc] object SourceCode {
                                           compiler: CompilerAccess): SourceCodeState =
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
-        compiler.parseContracts(code) match {
-          case Left(error) =>
+        parseContractsWithImports(code) match {
+          case Left(errors) =>
             SourceCodeState.ErrorSource(
               fileURI = fileURI,
               code = code,
-              errors = Array(error),
+              errors = errors,
               previous = None
             )
 
-          case Right(parsedCode) =>
+          case Right((parsedCode, parsedImports)) =>
             SourceCodeState.Parsed(
               fileURI = fileURI,
               code = code,
               contracts = parsedCode,
+              imports = parsedImports
             )
         }
 
@@ -127,6 +129,22 @@ private[pc] object SourceCode {
       compilationResult = compilationResult
     )
   }
+
+  private def parseContractsWithImports(code: String)(implicit compiler: CompilerAccess): Either[Seq[CompilerMessage.AnyError], (Seq[ContractWithState], Map[String, Seq[ContractWithState]])] =
+    for {
+      codeWithImports <- imports.ImportHandler.extractStdImports(code)
+      codeAst <- compiler.parseContracts(codeWithImports.code).left.map(Seq(_))
+      importsAst <- parseImports(codeWithImports.imports).left.map(Seq(_))
+    } yield {
+      (codeAst, importsAst)
+    }
+
+  private def parseImports(imports: Map[String, String]) (implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, Map[String, Seq[ContractWithState]]] =
+    imports.map{ case (file, code)=>
+      compiler.parseContracts(code).map(res => (file, res))
+    }.partitionMap(identity) match { case (lefts, right) =>
+      lefts.headOption.toLeft(right).map(_.toMap)
+    }
 
   private def getSourceCode(fileURI: URI)(implicit file: FileAccess): SourceCodeState.AccessedState =
     file.read(fileURI) match {

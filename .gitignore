@@ -1,3 +1,4 @@
+std/
 *.class
 *.log
 .DS_Store
