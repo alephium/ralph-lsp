@@ -118,9 +118,14 @@ private[pc] object SourceCode {
     val contractsToCompile =
       sourceCode.flatMap(_.contracts)
 
+    // Author: @tdroxler - Copied to resolve merge conflict
+    //FIXME: This works as we avoid having multiple time the same Interface twice, but it means we don't
+    //show an error on a file missing the import, as having the import define in another file is fine.
+    val imports = sourceCode.flatMap(_.imports).toMap
+
     val compilationResult =
       compiler.compileContracts(
-        contracts = contractsToCompile,
+        contracts = contractsToCompile ++ imports.values.flatten,
         options = compilerOptions
       )
 

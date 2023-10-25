@@ -15,5 +15,12 @@ object CollectionUtil {
         collection appended update
     }
 
+    def putIfEmpty(update: T)(implicit ordering: Ordering[T]): ArraySeq[T] = {
+      val index = collection.indexWhere(ordering.equiv(_, update))
+      if (index == -1)
+        collection appended update
+      else
+        collection
+    }
   }
 }

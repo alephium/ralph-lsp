@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState, WorkspaceStateBuilder}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, BuildValidator}
@@ -205,17 +205,10 @@ object Workspace {
    * Compile a parsed workspace.
    */
   def compile(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.CompilerRun = {
-    val contractsToCompile =
-      workspace.sourceCode.flatMap(_.contracts)
-
-    //FIXME: This works as we avoid having multiple time the same Interface twice, but it means we don't
-    //show an error on a file missing the import, as having the import define in another file is fine.
-    val imports = workspace.sourceCode.flatMap(_.imports).toMap
-
     val compilationResult =
-      compiler.compileContracts(
-        contracts = contractsToCompile ++ imports.values.flatten,
-        options = workspace.build.config.compilerOptions
+      SourceCode.compile(
+        sourceCode = workspace.sourceCode,
+        compilerOptions = workspace.build.config.compilerOptions
       )
 
     WorkspaceStateBuilder.toWorkspaceState(
@@ -392,7 +385,7 @@ object Workspace {
             case WorkspaceFileEvent.Created(uri) =>
               // Add or replace created source files to workspace
               if (URIUtil.getFileExtension(uri) == CompilerAccess.RALPH_FILE_EXTENSION)
-                newSourceCode put SourceCodeState.OnDisk(uri)
+                newSourceCode putIfEmpty SourceCodeState.OnDisk(uri)
               else
                 newSourceCode // ignore - not a Ralph source file
           }

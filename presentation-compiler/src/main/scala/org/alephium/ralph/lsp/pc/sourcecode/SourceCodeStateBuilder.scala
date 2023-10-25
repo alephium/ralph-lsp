@@ -1,36 +1,30 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.{Ast, CompiledContract, CompiledScript}
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
-import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.Ast.ContractWithState
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 
 import scala.collection.immutable.ArraySeq
 
-/**
- * Compilation results from `ralphc` do not retain the source file URIs or Path information.
- *
- * These functions map the compilation results back to their respect file URIs,
- * relying on the assumption that all type-definitions have unique identifiers.
- */
-private[workspace] object SourceCodeStateBuilder {
+private[sourcecode] object SourceCodeStateBuilder {
 
-  def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                       compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompilerRun =
-    compilationResult match {
-      case Left(workspaceError) =>
-        // File or sourcePosition position information is not available for this error,
-        // report it at project error.
-        WorkspaceState.Errored(
-          sourceCode = currentState.sourceCode, // SourceCode remains the same as existing state
-          workspaceErrors = ArraySeq(workspaceError), // errors to report
-          parsed = currentState,
-        )
-
-      case Right((compiledContracts, compiledScripts)) =>
-        buildCompiledWorkspaceState(
-          currentWorkspaceState = currentState,
+  /**
+   * Compilation results from `ralphc` do not retain the source file URIs or Path information.
+   *
+   * This function map the compilation results back to their respect file URIs,
+   * relying on the assumption that all type-definitions have unique identifiers.
+   *
+   * @param parsedCode        The parsed code on which this compilation was executed.
+   * @param compilationResult The compilation result to process.
+   * @return Workspace-level error if no source-code association was found, or else the next source-code state for each source URI.
+   */
+  def toSourceCodeState(parsedCode: ArraySeq[SourceCodeState.Parsed],
+                        compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.CodeAware]] =
+    compilationResult map {
+      case (compiledContracts, compiledScripts) =>
+        buildCompiledSourceCodeState(
+          parsedCode = parsedCode,
           compiledContracts = compiledContracts,
           compiledScripts = compiledScripts
         )
@@ -39,50 +33,42 @@ private[workspace] object SourceCodeStateBuilder {
   /**
    * Maps compiled-code to it's parsed code.
    *
-   * @param currentWorkspaceState Parsed state of the workspace used to run this compilation.
-   * @param compiledContracts     Resulting compiled contracts.
-   * @param compiledScripts       Resulting compiled scripts.
-   * @return Compiled workspace state that might contain source-code level
+   * @param parsedCode        Parsed source-code state used to run this compilation.
+   * @param compiledContracts Resulting compiled contracts.
+   * @param compiledScripts   Resulting compiled scripts.
+   * @return Compiled source-code state that might contain source-code level
    *         errors if a compiled source-code instance was not found its parsed state.
    */
-  private def buildCompiledWorkspaceState(currentWorkspaceState: WorkspaceState.Parsed,
-                                          compiledContracts: Array[CompiledContract],
-                                          compiledScripts: Array[CompiledScript]): WorkspaceState.Compiled = {
-    val newSourceCodeStates =
-      currentWorkspaceState.sourceCode map {
-        sourceCodeState =>
-          val matchedCode = // Map contracts and scripts to their fileURIs.
-            findMatchingContractOrScript(
-              parsedContracts = sourceCodeState.contracts,
-              compiledContracts = compiledContracts,
-              compiledScripts = compiledScripts
-            )
+  private def buildCompiledSourceCodeState(parsedCode: ArraySeq[SourceCodeState.Parsed],
+                                           compiledContracts: Array[CompiledContract],
+                                           compiledScripts: Array[CompiledScript]): ArraySeq[SourceCodeState.CodeAware] =
+    parsedCode map {
+      sourceCodeState =>
+        val matchedCode = // Map contracts and scripts to their fileURIs.
+          findMatchingContractOrScript(
+            parsedContracts = sourceCodeState.contracts,
+            compiledContracts = compiledContracts,
+            compiledScripts = compiledScripts
+          )
 
-          val (errors, compiledCode) =
-            matchedCode.partitionMap(either => either)
+        val (errors, compiledCode) =
+          matchedCode.partitionMap(either => either)
 
-          if (errors.nonEmpty) // if true, return errors
-            SourceCodeState.ErrorSource(
-              fileURI = sourceCodeState.fileURI,
-              code = sourceCodeState.code,
-              errors = errors,
-              previous = Some(sourceCodeState)
-            )
-          else // else, return successfully compiled
-            SourceCodeState.Compiled(
-              fileURI = sourceCodeState.fileURI,
-              code = sourceCodeState.code,
-              compiledCode = compiledCode,
-              parsed = sourceCodeState
-            )
-      }
-
-    // new WorkspaceState
-    WorkspaceState.Compiled(
-      sourceCode = newSourceCodeStates,
-      parsed = currentWorkspaceState
-    )
-  }
+        if (errors.nonEmpty) // if true, return errors
+          SourceCodeState.ErrorSource(
+            fileURI = sourceCodeState.fileURI,
+            code = sourceCodeState.code,
+            errors = errors,
+            previous = Some(sourceCodeState)
+          )
+        else // else, return successfully compiled
+          SourceCodeState.Compiled(
+            fileURI = sourceCodeState.fileURI,
+            code = sourceCodeState.code,
+            compiledCode = compiledCode,
+            parsed = sourceCodeState
+          )
+    }
 
   private def findMatchingContractOrScript(parsedContracts: Seq[ContractWithState],
                                            compiledContracts: Array[CompiledContract],
