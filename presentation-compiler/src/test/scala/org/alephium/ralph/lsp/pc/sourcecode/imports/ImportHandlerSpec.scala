@@ -5,7 +5,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import fastparse._
 import fastparse.MultiLineWhitespace._
 
-import org.alephium.ralph.lsp.compiler.message.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 
 class ImportHandlerSpec extends AnyWordSpec with Matchers {
 
