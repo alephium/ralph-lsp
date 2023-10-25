@@ -1,4 +1,5 @@
 package org.alephium.ralph.lsp.pc.sourcecode
+import scala.collection.immutable.ListMap
 
 import org.alephium.ralph.{Ast, CompiledContract, CompiledScript}
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
@@ -20,7 +21,7 @@ private[sourcecode] object SourceCodeStateBuilder {
    * @return Workspace-level error if no source-code association was found, or else the next source-code state for each source URI.
    */
   def toSourceCodeState(parsedCode: ArraySeq[SourceCodeState.Parsed],
-                        compilationResult: Either[(ArraySeq[CompilerMessage.AnyError], Seq[SourceCodeState.ErrorSource]), (Array[CompiledContract], Array[CompiledScript])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.CodeAware]] =
+                        compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.CodeAware]] =
     compilationResult map {
       case (compiledContracts, compiledScripts) =>
         buildCompiledSourceCodeState(

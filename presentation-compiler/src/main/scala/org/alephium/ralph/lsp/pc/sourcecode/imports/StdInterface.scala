@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.sourcecode.imports
 
-import org.alephium.ralph.lsp.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorStdInterfacesNotFound
 
 import java.net.URI

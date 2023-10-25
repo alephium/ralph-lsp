@@ -14,7 +14,7 @@ class SourceCodeSpec extends AnyWordSpec with Matchers with MockFactory with Sca
 
   "parse" should {
     "handle std imports" in {
-      forAll(genFileURI(), Gen.someOf(StdInterface.stdInterfaces)) {
+      forAll(genFileURI(), Gen.someOf(StdInterface.buildStdInterfaces.right.get)) {
         case (fileUri, interfaces) =>
           implicit val compiler: CompilerAccess = CompilerAccess.ralphc
           implicit val file: FileAccess = FileAccess.disk

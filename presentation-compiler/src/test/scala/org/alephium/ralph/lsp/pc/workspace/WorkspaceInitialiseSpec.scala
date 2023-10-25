@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, GenBuild}
+import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
 import org.alephium.ralph.lsp.FileIO
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
@@ -15,6 +16,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
+import org.alephium.ralph.lsp.pc.workspace.build.BuildDependencies
 
 /**
  * Test cases for [[Workspace.build]] function.
@@ -164,7 +166,8 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                       compilerOptions = build.config.compilerOptions,
                       contractPath = Paths.get(build.buildURI.resolve(build.config.contractPath)),
                       artifactPath = Paths.get(build.buildURI.resolve(build.config.artifactPath))
-                    )
+                    ),
+                  dependencies = BuildDependencies(StdInterface.buildStdInterfaces.right.get)
                 )
 
               // expect the workspace to be in un-compiled state, containing all source-code

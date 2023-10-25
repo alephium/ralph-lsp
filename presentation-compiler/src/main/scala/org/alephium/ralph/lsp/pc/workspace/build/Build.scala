@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 
@@ -71,7 +72,7 @@ object Build {
 
       case parsed: BuildParsed =>
         // parse successful. Perform compilation!
-        BuildValidator.validate(parsed)
+       buildDependencies(BuildValidator.validate(parsed))
     }
 
   /** Parse and compile from disk */
@@ -163,4 +164,21 @@ object Build {
         }
     }
 
+  def buildDependencies(compiled: BuildState.CompileResult): BuildState.CompileResult =
+    compiled match {
+      case compiled: BuildCompiled =>
+        StdInterface.buildStdInterfaces match {
+          case Right(stdInterfaces) =>
+            compiled.copy(dependencies = compiled.dependencies.copy(stdInterfaces = stdInterfaces))
+          case Left(error) =>
+              BuildErrored(
+                buildURI = compiled.buildURI,
+                code = None,
+                errors = ArraySeq(error),
+                activateWorkspace = None
+              )
+        }
+      case errored: BuildErrored =>
+        errored
+    }
 }

@@ -12,7 +12,7 @@ import org.alephium.ralph.lsp.pc.util.URIUtil
 
 import java.net.URI
 import scala.annotation.tailrec
-import scala.collection.immutable.ArraySeq
+import scala.collection.immutable.{ArraySeq, ListMap}
 
 /**
  * Implements functions operating on source-code within a single file.
@@ -138,21 +138,24 @@ private[pc] object SourceCode {
       compiler.compileContracts(
         contracts = contractsToCompile ++ importsAst,
         options = compilerOptions
-      ) match {
-        case Right(success) =>
-          if(importErrors.isEmpty) {
-            Right(success)
-          } else {
-            Left((ArraySeq.empty, importErrors))
-          }
-        case Left(error) =>
-            Left((ArraySeq(error), importErrors))
-      }
+      )
 
     SourceCodeStateBuilder.toSourceCodeState(
       parsedCode = sourceCode,
       compilationResult = compilationResult
-    )
+    ).map { codeAwares =>
+      //Import errors are put back after compilation happen, as their are not handled by ralphc
+      mergeSourceCodeAndErrors(codeAwares, importErrors)
+    }
+  }
+
+  //Errors needs to replace initial parsed sourceCodes
+  private def mergeSourceCodeAndErrors(sourceCode: ArraySeq[SourceCodeState.CodeAware], errors: Seq[SourceCodeState.ErrorSource]): ArraySeq[SourceCodeState.CodeAware] =  {
+    //Using List map to preserve order
+    val sourceCodeMap: ListMap[URI, SourceCodeState.CodeAware] = ListMap.from(sourceCode.map{sc => (sc.fileURI, sc)})
+    ArraySeq.from(errors.foldLeft(sourceCodeMap){ case (acc, error) =>
+      acc.updated(error.fileURI, error)
+    }.values)
   }
 
   //Imports are a bit different than full source code compiling, we want to find all invalid import as well as returning the AST for the valid ones.

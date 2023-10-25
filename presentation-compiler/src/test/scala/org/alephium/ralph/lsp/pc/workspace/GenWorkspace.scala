@@ -3,7 +3,6 @@ package org.alephium.ralph.lsp.pc.workspace
 import org.alephium.ralph.lsp.{FileIO, GenCommon}
 import org.alephium.ralph.lsp.GenCommon._
 import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, WorkspaceBuild}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildDependencies
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcCompiledConfig
