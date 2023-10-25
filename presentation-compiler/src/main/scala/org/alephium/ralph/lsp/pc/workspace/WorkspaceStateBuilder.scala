@@ -9,18 +9,18 @@ import scala.collection.immutable.ArraySeq
 private[workspace] object WorkspaceStateBuilder {
 
   def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                       compilationResult: Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.CodeAware]]): WorkspaceState.CompilerRun =
+                       compilationResult: (Option[CompilerMessage.AnyError], ArraySeq[SourceCodeState.CodeAware])): WorkspaceState.CompilerRun =
     compilationResult match {
-      case Left(workspaceError) =>
+      case (Some(workspaceError), sourceCode) =>
         // File or sourcePosition position information is not available for workspace errors,
         // report them at project error.
         WorkspaceState.Errored(
-          sourceCode = currentState.sourceCode,
+          sourceCode = sourceCode,
           workspaceErrors = ArraySeq(workspaceError), // errors to report
           parsed = currentState,
         )
 
-      case Right(compiledSource) =>
+      case (None,compiledSource) =>
         WorkspaceState.Compiled(
           sourceCode = compiledSource,
           parsed = currentState

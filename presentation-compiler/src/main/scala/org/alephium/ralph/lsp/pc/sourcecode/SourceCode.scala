@@ -119,11 +119,11 @@ private[pc] object SourceCode {
    * @param sourceCode      Source-code to compile
    * @param compilerOptions Options to run for this compilation
    * @param compiler        Target compiler
-   * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
+   * @return Optional workspace-level error if an error occurred without a target source-file and the next state for each source-code, which could also contains errors.
    */
   def compile(sourceCode: ArraySeq[SourceCodeState.Parsed],
               compilerOptions: CompilerOptions,
-              buildDependencies: BuildDependencies)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.CodeAware]] = {
+              buildDependencies: BuildDependencies)(implicit compiler: CompilerAccess): (Option[CompilerMessage.AnyError], ArraySeq[SourceCodeState.CodeAware]) = {
     val contractsToCompile =
       sourceCode.flatMap(_.contracts)
 
@@ -133,7 +133,6 @@ private[pc] object SourceCode {
     //`distinct` as compiler will fail if we import the same interface in different files
     val importsAst = importsErrorAndAst.map{ case (_, ast) => ast }.distinct.flatten
 
-    //Import errors are passed as a SourceCodeState error, so we could preserve file URI
     val compilationResult =
       compiler.compileContracts(
         contracts = contractsToCompile ++ importsAst,
@@ -143,9 +142,10 @@ private[pc] object SourceCode {
     SourceCodeStateBuilder.toSourceCodeState(
       parsedCode = sourceCode,
       compilationResult = compilationResult
-    ).map { codeAwares =>
+    ) match {
       //Import errors are put back after compilation happen, as their are not handled by ralphc
-      mergeSourceCodeAndErrors(codeAwares, importErrors)
+      case Left(error) => (Some(error), mergeSourceCodeAndErrors(sourceCode, importErrors))
+      case Right(codeAwares) => (None, mergeSourceCodeAndErrors(codeAwares, importErrors))
     }
   }
 
