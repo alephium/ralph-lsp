@@ -14,7 +14,7 @@ import scala.collection.immutable.ArraySeq
  * These functions map the compilation results back to their respect file URIs,
  * relying on the assumption that all type-definitions have unique identifiers.
  */
-private[workspace] object WorkspaceStateBuilder {
+private[workspace] object SourceCodeStateBuilder {
 
   def toWorkspaceState(currentState: WorkspaceState.Parsed,
                        compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): WorkspaceState.CompilerRun =
