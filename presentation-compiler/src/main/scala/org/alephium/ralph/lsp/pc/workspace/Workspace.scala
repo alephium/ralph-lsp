@@ -143,6 +143,56 @@ object Workspace {
         }
     }
 
+  def cleanBuild(newBuild: BuildState.CompileResult,
+                 currentBuild: BuildState.BuildCompiled,
+                 sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+    newBuild match {
+      case newBuild: BuildCompiled =>
+        // Build compiled OK! Compile new source-files with this new build file
+        val syncedCode =
+          SourceCode.synchronise(
+            sourceDirectory = newBuild.contractURI,
+            sourceCode = sourceCode
+          )
+
+        syncedCode match {
+          case Left(error) =>
+            val buildErrored =
+              BuildState.BuildErrored(
+                buildURI = newBuild.buildURI,
+                code = Some(newBuild.code),
+                errors = ArraySeq(error),
+                activateWorkspace = None
+              )
+
+            Left(buildErrored)
+
+          case Right(syncedCode) =>
+            val newWorkspace =
+              WorkspaceState.UnCompiled(
+                build = newBuild,
+                sourceCode = syncedCode
+              )
+
+            Right(newWorkspace)
+        }
+
+      case errored: BuildState.BuildErrored =>
+        // Build not OK!
+        val newWorkspace =
+          WorkspaceState.UnCompiled(
+            build = currentBuild,
+            sourceCode = sourceCode
+          )
+
+        // update the error state with the new workspace to activate.
+        val newError =
+          errored.copy(activateWorkspace = Some(newWorkspace))
+
+        // Build not OK! Report the error, also clear all previous diagnostics
+        Left(newError)
+    }
+
   /**
    * Parse source-code in that is not already in parsed state.
    *
@@ -226,10 +276,10 @@ object Workspace {
    * @return This function will always re-compile the build,
    *         so the output is always [[WorkspaceChangeResult.BuildChanged]].
    */
-  def reCompile(buildCode: Option[String],
-                sourceCode: ArraySeq[SourceCodeState],
-                workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
-                                                       compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
+  def cleanCompile(buildCode: Option[String],
+                   sourceCode: ArraySeq[SourceCodeState],
+                   workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
+                                                          compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
     // re-build the build file
     val buildResult =
       Build.parseAndCompile(
@@ -238,47 +288,31 @@ object Workspace {
         currentBuild = workspace.build
       )
 
-    // process build result
-    buildResult match {
-      case Some(buildResult) =>
-        buildResult match {
-          case newBuild: BuildCompiled =>
-            // Build compiled OK! Compile new source-files with this new build file
-            val newWorkspace =
-              WorkspaceState.UnCompiled(
-                build = newBuild,
-                sourceCode = sourceCode
-              )
-
-            val compiledWorkspace =
-              Workspace.parseAndCompile(newWorkspace)
-
-            WorkspaceChangeResult.BuildChanged(Some(Right(compiledWorkspace)))
-
-          case errored: BuildState.BuildErrored =>
-            // Build not OK!
-            val newWorkspace =
-              WorkspaceState.UnCompiled(
-                build = workspace.build,
-                sourceCode = sourceCode
-              )
-
-            // update the error state with the new workspace to activate.
-            val newError =
-              errored.copy(activateWorkspace = Some(newWorkspace))
-
-            // Build not OK! Report the error, also clear all previous diagnostics
-            WorkspaceChangeResult.BuildChanged(buildChangeResult = Some(Left(newError)))
-        }
-
-      case None =>
-        // No build change occurred. Process the new source-code with exiting build.
-        val newWorkspace =
-          WorkspaceState.UnCompiled(
-            build = workspace.build,
+    val cleanBuildResult =
+      buildResult match {
+        case Some(buildResult) =>
+          cleanBuild(
+            newBuild = buildResult,
+            currentBuild = workspace.build,
             sourceCode = sourceCode
           )
 
+        case None =>
+          // No build change occurred. Process the new source-code with exiting build.
+          val newWorkspace =
+            WorkspaceState.UnCompiled(
+              build = workspace.build,
+              sourceCode = sourceCode
+            )
+
+          Right(newWorkspace)
+      }
+
+    cleanBuildResult match {
+      case Left(error) =>
+        WorkspaceChangeResult.BuildChanged(Some(Left(error)))
+
+      case Right(newWorkspace) =>
         // compile new source-code
         val compiledWorkspace =
           Workspace.parseAndCompile(newWorkspace)
@@ -334,31 +368,11 @@ object Workspace {
         workspace = workspace
       )
 
-    val syncedCode =
-      SourceCode.synchronise(
-        sourceDirectory = workspace.build.contractURI,
-        sourceCode = newSourceCode
-      )
-
-    syncedCode match {
-      case Left(error) =>
-        val buildErrored =
-          BuildState.BuildErrored(
-            buildURI = workspace.buildURI,
-            code = buildCode,
-            errors = ArraySeq(error),
-            activateWorkspace = None
-          )
-
-        WorkspaceChangeResult.BuildChanged(Some(Left(buildErrored)))
-
-      case Right(syncedCode) =>
-        Workspace.reCompile(
-          buildCode = buildCode,
-          sourceCode = syncedCode,
-          workspace = workspace
-        )
-    }
+    Workspace.cleanCompile(
+      buildCode = buildCode,
+      sourceCode = newSourceCode,
+      workspace = workspace
+    )
   }
 
   /**
@@ -456,16 +470,25 @@ object Workspace {
         case Some(newBuild) =>
           newBuild match {
             case build: BuildState.BuildCompiled =>
-              val newWorkspace =
-                WorkspaceState.UnCompiled(
-                  build = build,
-                  sourceCode = workspace.sourceCode
-                )
+              if (workspace.build.contractURI == build.contractURI) {
+                // source directory is the same, compile using existing source-code
+                val newWorkspace =
+                  WorkspaceState.UnCompiled(
+                    build = build,
+                    sourceCode = workspace.sourceCode
+                  )
 
-              val result =
-                parseAndCompile(newWorkspace)
+                val result =
+                  parseAndCompile(newWorkspace)
 
-              Some(Right(result))
+                Some(Right(result))
+              } else {
+                // directory changed, re-initialise the workspace and compile.
+                val result =
+                  initialise(build) map parseAndCompile
+
+                Some(result)
+              }
 
             case errored: BuildState.BuildErrored =>
               Some(Left(errored))

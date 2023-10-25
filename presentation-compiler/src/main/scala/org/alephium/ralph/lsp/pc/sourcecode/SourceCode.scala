@@ -5,6 +5,8 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.CompilerOptions
+import org.alephium.ralph.lsp.pc.util.CollectionUtil._
+import org.alephium.ralph.lsp.pc.util.URIUtil
 
 import java.net.URI
 import scala.annotation.tailrec
@@ -36,12 +38,16 @@ private[pc] object SourceCode {
                   sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState]] =
     initialise(sourceDirectory) map {
       onDiskFiles =>
-        onDiskFiles.foldLeft(sourceCode) {
+        // clear code that is no within the source directory
+        val directorySource =
+          sourceCode filter {
+            state =>
+              URIUtil.contains(sourceDirectory, state.fileURI)
+          }
+
+        onDiskFiles.foldLeft(directorySource) {
           case (currentCode, onDisk) =>
-            if (currentCode.exists(_.fileURI == onDisk.fileURI))
-              currentCode // already in-memory. Ignore on-disk.
-            else
-              currentCode appended onDisk
+            currentCode putIfEmpty onDisk
         }
     }
 
