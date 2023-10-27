@@ -17,14 +17,12 @@ import scala.jdk.CollectionConverters.SeqHasAsJava
 /** Functions that transform internal diagnostics types to LSP4J types */
 object DiagnosticsConverter {
 
-  /**
-   * Given the current [[ServerState]] and the next [[ServerState]],
-   * return new diagnostics to publish.
-   *
-   * @return Diagnostics clearing resolved diagnostics dispatched in previous state.
-   */
-  def toPublishDiagnostics(currentState: ServerState,
-                           newState: ServerState): Iterable[PublishDiagnosticsParams] = {
+  /** Given the current [[ServerState]] and the next [[ServerState]], return new diagnostics to publish.
+    *
+    * @return
+    *   Diagnostics clearing resolved diagnostics dispatched in previous state.
+    */
+  def toPublishDiagnostics(currentState: ServerState, newState: ServerState): Iterable[PublishDiagnosticsParams] = {
     // fetch diagnostics to publish for the build file
     val buildDiagnostics =
       toPublishDiagnostics(
@@ -43,13 +41,12 @@ object DiagnosticsConverter {
     buildDiagnostics ++ workspaceDiagnostics
   }
 
-  /**
-   * Given the current build-errors and the next,
-   * return diagnostics to publish to the client.
-   * */
+  /** Given the current build-errors and the next, return diagnostics to publish to the client.
+    */
   def toPublishDiagnostics(buildURI: Option[URI],
                            currentBuildErrors: Option[BuildState.BuildErrored],
-                           newBuildErrors: Option[BuildState.BuildErrored]): Option[PublishDiagnosticsParams] =
+                           newBuildErrors: Option[BuildState.BuildErrored]
+  ): Option[PublishDiagnosticsParams] =
     (currentBuildErrors, newBuildErrors) match {
       case (Some(build), None) =>
         // build errors were fixed. Clear old errors
@@ -79,12 +76,9 @@ object DiagnosticsConverter {
         None
     }
 
-  /**
-   * Given the current workspace and the next,
-   * return diagnostics to publish to the client.
-   * */
-  def toPublishDiagnostics(currentWorkspace: Option[WorkspaceState],
-                           newWorkspace: Option[WorkspaceState]): Iterable[PublishDiagnosticsParams] =
+  /** Given the current workspace and the next, return diagnostics to publish to the client.
+    */
+  def toPublishDiagnostics(currentWorkspace: Option[WorkspaceState], newWorkspace: Option[WorkspaceState]): Iterable[PublishDiagnosticsParams] =
     (currentWorkspace, newWorkspace) match {
       case (Some(current), None) =>
         toPublishDiagnostics(current)
@@ -116,11 +110,9 @@ object DiagnosticsConverter {
         )
     }
 
-  /**
-   * Given the current workspace and the next, fetch diagnostics to dispatch, clearing resolved diagnostics.
-   * */
-  def toPublishDiagnostics(currentWorkspace: WorkspaceState,
-                           newWorkspace: WorkspaceState): Iterable[PublishDiagnosticsParams] =
+  /** Given the current workspace and the next, fetch diagnostics to dispatch, clearing resolved diagnostics.
+    */
+  def toPublishDiagnostics(currentWorkspace: WorkspaceState, newWorkspace: WorkspaceState): Iterable[PublishDiagnosticsParams] =
     (currentWorkspace, newWorkspace) match {
       case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.SourceAware) =>
         // publish first compilation result i.e. previous workspace had no compilation run.
@@ -141,16 +133,18 @@ object DiagnosticsConverter {
         Iterable.empty
     }
 
-  /**
-   * Build diagnostics to publish and clear older resolved errors or warnings.
-   *
-   * @param previousOrCurrentState Previous state or the current state if this is the first run.
-   * @param nextState              Newest state.
-   *                               Set to [[None]] if previousState is the only state.
-   * @return Diagnostics to publish for the current state.
-   */
+  /** Build diagnostics to publish and clear older resolved errors or warnings.
+    *
+    * @param previousOrCurrentState
+    *   Previous state or the current state if this is the first run.
+    * @param nextState
+    *   Newest state. Set to [[None]] if previousState is the only state.
+    * @return
+    *   Diagnostics to publish for the current state.
+    */
   def toPublishDiagnostics(previousOrCurrentState: WorkspaceState.SourceAware,
-                           nextState: Option[WorkspaceState]): Iterable[PublishDiagnosticsParams] = {
+                           nextState: Option[WorkspaceState]
+  ): Iterable[PublishDiagnosticsParams] = {
     // build diagnostics sent for previous state, or the current state if this is the first run.
     val previousOrCurrentDiagnotics =
       toPublishDiagnostics(previousOrCurrentState)
@@ -166,13 +160,12 @@ object DiagnosticsConverter {
           ListBuffer.empty[PublishDiagnosticsParams]
 
         // build diagnostics that are resolved
-        previousOrCurrentDiagnotics foreach {
-          previous =>
-            if (!newDiagnostics.exists(_.getUri == previous.getUri)) {
-              // build a diagnostic to clear old published diagnostics
-              val resolved = new PublishDiagnosticsParams(previous.getUri, util.Arrays.asList())
-              resolvedDiagnostics addOne resolved
-            }
+        previousOrCurrentDiagnotics foreach { previous =>
+          if (!newDiagnostics.exists(_.getUri == previous.getUri)) {
+            // build a diagnostic to clear old published diagnostics
+            val resolved = new PublishDiagnosticsParams(previous.getUri, util.Arrays.asList())
+            resolvedDiagnostics addOne resolved
+          }
         }
 
         // all diagnostics to publish for this run
@@ -185,9 +178,7 @@ object DiagnosticsConverter {
   }
 
   /** Convert Ralph's FormattableError to lsp4j's Diagnostic */
-  def toDiagnostic(code: Option[String],
-                   message: CompilerMessage,
-                   severity: DiagnosticSeverity): Diagnostic = {
+  def toDiagnostic(code: Option[String], message: CompilerMessage, severity: DiagnosticSeverity): Diagnostic = {
     val range =
       code match {
         case Some(code) =>
@@ -212,14 +203,13 @@ object DiagnosticsConverter {
     val workspaceDiagnostics =
       workspace match {
         case compiled: WorkspaceState.Errored =>
-          compiled.workspaceErrors map {
-            error =>
-              // These are workspace level errors such as `Compiler.Error`, their source-code information is unknown.
-              toDiagnostic(
-                code = None,
-                message = error,
-                severity = DiagnosticSeverity.Error
-              )
+          compiled.workspaceErrors map { error =>
+            // These are workspace level errors such as `Compiler.Error`, their source-code information is unknown.
+            toDiagnostic(
+              code = None,
+              message = error,
+              severity = DiagnosticSeverity.Error
+            )
           }
 
         case _ =>
@@ -235,13 +225,12 @@ object DiagnosticsConverter {
       case state: SourceCodeState.ErrorSource =>
         // transform multiple source code errors to diagnostics.
         val diagnostics =
-          state.errors map {
-            error =>
-              toDiagnostic(
-                code = Some(state.code),
-                message = error,
-                severity = DiagnosticSeverity.Error
-              )
+          state.errors map { error =>
+            toDiagnostic(
+              code = Some(state.code),
+              message = error,
+              severity = DiagnosticSeverity.Error
+            )
           }
 
         new PublishDiagnosticsParams(state.fileURI.toString, diagnostics.asJava)
@@ -260,13 +249,12 @@ object DiagnosticsConverter {
       case state: SourceCodeState.Compiled =>
         // transform source code warning messages to diagnostics.
         val diagnostics =
-          state.warnings map {
-            warning =>
-              toDiagnostic(
-                code = Some(state.code),
-                message = warning,
-                severity = DiagnosticSeverity.Warning
-              )
+          state.warnings map { warning =>
+            toDiagnostic(
+              code = Some(state.code),
+              message = warning,
+              severity = DiagnosticSeverity.Warning
+            )
           }
 
         new PublishDiagnosticsParams(state.fileURI.toString, diagnostics.asJava)
@@ -283,15 +271,15 @@ object DiagnosticsConverter {
   def toPublishDiagnostics(fileURI: URI,
                            code: Option[String],
                            errors: List[CompilerMessage.AnyError],
-                           severity: DiagnosticSeverity): PublishDiagnosticsParams = {
+                           severity: DiagnosticSeverity
+  ): PublishDiagnosticsParams = {
     val diagnostics =
-      errors map {
-        error =>
-          toDiagnostic(
-            code = code,
-            message = error,
-            severity = severity
-          )
+      errors map { error =>
+        toDiagnostic(
+          code = code,
+          message = error,
+          severity = severity
+        )
       }
 
     new PublishDiagnosticsParams(fileURI.toString, diagnostics.asJava)

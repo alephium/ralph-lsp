@@ -13,7 +13,8 @@ import java.net.URI
 object GenBuild {
 
   def genBuildParsed(workspaceURI: Gen[URI] = genFolderURI(),
-                     config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()): Gen[BuildState.BuildParsed] =
+                     config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()
+  ): Gen[BuildState.BuildParsed] =
     for {
       workspaceURI <- workspaceURI
       parsedConfig <- config

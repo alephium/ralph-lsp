@@ -9,8 +9,7 @@ object StringError {
       index = SourceIndex.empty
     )
 }
-/**
- * String error reported by `ralphc` not containing source-location information.
- */
-case class StringError(message: String,
-                       index: SourceIndex) extends CompilerMessage.Error
+
+/** String error reported by `ralphc` not containing source-location information.
+  */
+case class StringError(message: String, index: SourceIndex) extends CompilerMessage.Error

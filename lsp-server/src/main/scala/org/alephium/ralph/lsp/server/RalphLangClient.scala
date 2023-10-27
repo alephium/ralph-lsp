@@ -16,7 +16,6 @@ object RalphLangClient {
   }
 }
 
-/**
- * The Ralph-LSP client.
- */
+/** The Ralph-LSP client.
+  */
 trait RalphLangClient extends LanguageClient

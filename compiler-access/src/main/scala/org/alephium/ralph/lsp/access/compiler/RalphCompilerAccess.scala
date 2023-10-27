@@ -11,12 +11,11 @@ import org.alephium.ralphc.{Config, MetaInfo, Compiler => RalphC}
 import java.net.URI
 import scala.collection.mutable
 
-/**
- * Implements ralph parsing and compilation functions accessing the `ralphc`.
- *
- * @note Access to this object is private.
- *       PresentationCompiler does not directly accesses this code.
- */
+/** Implements ralph parsing and compilation functions accessing the `ralphc`.
+  *
+  * @note
+  *   Access to this object is private. PresentationCompiler does not directly accesses this code.
+  */
 
 private object RalphCompilerAccess extends CompilerAccess {
 
@@ -34,7 +33,8 @@ private object RalphCompilerAccess extends CompilerAccess {
 
   /** @inheritdoc */
   def compileContracts(contracts: Seq[Ast.ContractWithState],
-                       options: CompilerOptions): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
+                       options: CompilerOptions
+  ): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
       val multiContract =
         Ast.MultiContract(contracts, None)
@@ -55,7 +55,8 @@ private object RalphCompilerAccess extends CompilerAccess {
 
   /** @inheritdoc */
   override def compileForDeployment(workspaceURI: URI,
-                                    config: Config): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
+                                    config: Config
+  ): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
       val ralphc = RalphC(config)
       ralphc.compileProject() match {
@@ -68,7 +69,8 @@ private object RalphCompilerAccess extends CompilerAccess {
     } catch TryUtil.catchAllThrows
 
   private def buildSuccessfulCompilation(result: CompileProjectResult,
-                                         metaInfos: mutable.Map[String, MetaInfo]): (Array[CompiledContract], Array[CompiledScript]) = {
+                                         metaInfos: mutable.Map[String, MetaInfo]
+  ): (Array[CompiledContract], Array[CompiledScript]) = {
     val scripts: Array[CompiledScript] = ???
     //      result.scripts map {
     //        script =>
@@ -90,9 +92,7 @@ private object RalphCompilerAccess extends CompilerAccess {
 
   /** Given the MetaInfo, fetch the file URI */
   private def getFileURI(metaInfo: MetaInfo): URI =
-    metaInfo
-      .artifactPath
-      .getParent
+    metaInfo.artifactPath.getParent
       .resolve(s"${metaInfo.name}.ral")
       .toUri
 

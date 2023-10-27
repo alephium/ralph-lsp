@@ -11,12 +11,11 @@ import java.nio.file.{Files, Paths}
 import scala.io.Source
 import scala.util.{Failure, Success, Using}
 
-/**
- * Implements functions accessing on-disk file IO.
- *
- * @note Access to this object is private.
- *       PresentationCompiler does not directly accesses this code.
- */
+/** Implements functions accessing on-disk file IO.
+  *
+  * @note
+  *   Access to this object is private. PresentationCompiler does not directly accesses this code.
+  */
 
 private object DiskFileAccess extends FileAccess {
 
@@ -37,7 +36,8 @@ private object DiskFileAccess extends FileAccess {
           .getSourceFiles(
             path = Paths.get(workspaceURI),
             ext = s".${CompilerAccess.RALPH_FILE_EXTENSION}"
-          ).map(_.toUri)
+          )
+          .map(_.toUri)
 
       Right(uris)
     } catch TryUtil.catchAllThrows

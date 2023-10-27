@@ -12,11 +12,10 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import java.net.URI
 import scala.collection.immutable.ArraySeq
 
-/**
- * Implements functions operating on all source-code files within a workspace.
- *
- * All functions are all immutable. They all returns the next workspace state, given the current state.
- */
+/** Implements functions operating on all source-code files within a workspace.
+  *
+  * All functions are all immutable. They all returns the next workspace state, given the current state.
+  */
 object Workspace {
 
   /** First stage of a workspace where just the root workspace folder is known */
@@ -34,12 +33,13 @@ object Workspace {
         Left(errored)
     }
 
-  /**
-   * Initial workspaces collects paths to all OnDisk ralph files.
-   *
-   * @param state Current state of the workspace.
-   * @return New workspace state which aware of all workspace source code files.
-   */
+  /** Initial workspaces collects paths to all OnDisk ralph files.
+    *
+    * @param state
+    *   Current state of the workspace.
+    * @return
+    *   New workspace state which aware of all workspace source code files.
+    */
   def initialise(state: BuildState.BuildCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     SourceCode.initialise(state.contractURI) match {
       case Left(error) =>
@@ -63,12 +63,11 @@ object Workspace {
         Right(unCompiled)
     }
 
-  /**
-   * Returns existing workspace or initialises a new one from the configured build file.
-   * Or else reports all workspace issues.
-   *
-   * @note Does not update the current state. The caller should set the new state.
-   */
+  /** Returns existing workspace or initialises a new one from the configured build file. Or else reports all workspace issues.
+    *
+    * @note
+    *   Does not update the current state. The caller should set the new state.
+    */
   def build(workspace: WorkspaceState)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
     workspace match {
       case workspace: WorkspaceState.SourceAware =>
@@ -85,9 +84,9 @@ object Workspace {
     }
 
   /** Build a created workspace */
-  def build(buildURI: URI,
-            code: Option[String],
-            workspace: WorkspaceState.Created)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+  def build(buildURI: URI, code: Option[String], workspace: WorkspaceState.Created)(implicit
+      file: FileAccess
+  ): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     BuildValidator.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = workspace.workspaceURI
@@ -107,20 +106,22 @@ object Workspace {
         val build =
           Build.parseAndCompile(
             buildURI = buildURI,
-            code = code,
+            code = code
           )
 
         initialise(build)
     }
 
-  /**
-   * If already built, return existing workspace or else invoke build.
-   *
-   * @param code File that changed.
-   * @return Returns diagnostics in-case were build errors, or-else returns an initialised workspace.
-   */
-  def build(code: Option[WorkspaceFile],
-            workspace: WorkspaceState)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
+  /** If already built, return existing workspace or else invoke build.
+    *
+    * @param code
+    *   File that changed.
+    * @return
+    *   Returns diagnostics in-case were build errors, or-else returns an initialised workspace.
+    */
+  def build(code: Option[WorkspaceFile], workspace: WorkspaceState)(implicit
+      file: FileAccess
+  ): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
     workspace match {
       case sourceAware: WorkspaceState.SourceAware =>
         // already built
@@ -143,9 +144,9 @@ object Workspace {
         }
     }
 
-  def cleanBuild(newBuild: BuildState.CompileResult,
-                 currentBuild: BuildState.BuildCompiled,
-                 sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+  def cleanBuild(newBuild: BuildState.CompileResult, currentBuild: BuildState.BuildCompiled, sourceCode: ArraySeq[SourceCodeState])(implicit
+      file: FileAccess
+  ): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     newBuild match {
       case newBuild: BuildCompiled =>
         // Build compiled OK! Compile new source-files with this new build file
@@ -193,14 +194,12 @@ object Workspace {
         Left(newError)
     }
 
-  /**
-   * Parse source-code in that is not already in parsed state.
-   *
-   * @return A new workspace state with errors if parse fails
-   *         or [[WorkspaceState.Parsed]] is returned on successful parse.
-   */
-  def parse(workspace: WorkspaceState.UnCompiled)(implicit file: FileAccess,
-                                                  compiler: CompilerAccess): WorkspaceState.SourceAware =
+  /** Parse source-code in that is not already in parsed state.
+    *
+    * @return
+    *   A new workspace state with errors if parse fails or [[WorkspaceState.Parsed]] is returned on successful parse.
+    */
+  def parse(workspace: WorkspaceState.UnCompiled)(implicit file: FileAccess, compiler: CompilerAccess): WorkspaceState.SourceAware =
     if (workspace.sourceCode.isEmpty) {
       workspace
     } else {
@@ -225,14 +224,14 @@ object Workspace {
         WorkspaceState.Parsed(workspace.build, actualParsedStates)
     }
 
-  /**
-   * Parse and compile the workspace.
-   *
-   * @param workspace Current workspace state
-   * @return New workspace state with compilation results of all source files.
-   */
-  def parseAndCompile(workspace: WorkspaceState.UnCompiled)(implicit file: FileAccess,
-                                                            compiler: CompilerAccess): WorkspaceState.SourceAware =
+  /** Parse and compile the workspace.
+    *
+    * @param workspace
+    *   Current workspace state
+    * @return
+    *   New workspace state with compilation results of all source files.
+    */
+  def parseAndCompile(workspace: WorkspaceState.UnCompiled)(implicit file: FileAccess, compiler: CompilerAccess): WorkspaceState.SourceAware =
     parse(workspace) match {
       case unCompiled: WorkspaceState.UnCompiled =>
         // Still un-compiled. There are errors.
@@ -251,9 +250,8 @@ object Workspace {
         compile(compiled.parsed)
     }
 
-  /**
-   * Compile a parsed workspace.
-   */
+  /** Compile a parsed workspace.
+    */
   def compile(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.CompilerRun = {
     val compilationResult =
       SourceCode.compile(
@@ -267,19 +265,21 @@ object Workspace {
     )
   }
 
-  /**
-   * Re-compile the entire workspace with new build-code and source-code.
-   *
-   * @param buildCode  New build-code
-   * @param sourceCode New source-code
-   * @param workspace  Current workspace
-   * @return This function will always re-compile the build,
-   *         so the output is always [[WorkspaceChangeResult.BuildChanged]].
-   */
-  def cleanCompile(buildCode: Option[String],
-                   sourceCode: ArraySeq[SourceCodeState],
-                   workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
-                                                          compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
+  /** Re-compile the entire workspace with new build-code and source-code.
+    *
+    * @param buildCode
+    *   New build-code
+    * @param sourceCode
+    *   New source-code
+    * @param workspace
+    *   Current workspace
+    * @return
+    *   This function will always re-compile the build, so the output is always [[WorkspaceChangeResult.BuildChanged]].
+    */
+  def cleanCompile(buildCode: Option[String], sourceCode: ArraySeq[SourceCodeState], workspace: WorkspaceState.SourceAware)(implicit
+      file: FileAccess,
+      compiler: CompilerAccess
+  ): WorkspaceChangeResult.BuildChanged = {
     // re-build the build file
     val buildResult =
       Build.parseAndCompile(
@@ -322,25 +322,27 @@ object Workspace {
     }
   }
 
-  /**
-   * Process the following:
-   * - Deleted source files and folders
-   * - Created source files
-   *
-   * @param events      Events to process
-   * @param buildErrors Current build errors
-   * @param workspace   Current workspace state
-   * @return Workspace change result
-   */
+  /** Process the following:
+    *   - Deleted source files and folders
+    *   - Created source files
+    *
+    * @param events
+    *   Events to process
+    * @param buildErrors
+    *   Current build errors
+    * @param workspace
+    *   Current workspace state
+    * @return
+    *   Workspace change result
+    */
   def deleteOrCreate(events: ArraySeq[WorkspaceFileEvent],
                      buildErrors: Option[BuildState.BuildErrored],
-                     workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
-                                                            compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
+                     workspace: WorkspaceState.SourceAware
+  )(implicit file: FileAccess, compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
     // collect events that belong to this workspace
     val workspaceEvents =
-      events filter {
-        event =>
-          URIUtil.contains(workspace.workspaceURI, event.uri)
+      events filter { event =>
+        URIUtil.contains(workspace.workspaceURI, event.uri)
       }
 
     // is the build deleted?
@@ -375,48 +377,48 @@ object Workspace {
     )
   }
 
-  /**
-   * Apply events to workspace source-code.
-   *
-   * @param events    Events to process
-   * @param workspace Current workspace state
-   * @return Source-code with events applied
-   */
-  def applyEvents(events: ArraySeq[WorkspaceFileEvent],
-                  workspace: WorkspaceState.SourceAware): ArraySeq[SourceCodeState] =
-    events.foldLeft(workspace.sourceCode) {
-      case (newSourceCode, event) =>
-        // process files & folders that belong to the configured contractPath
-        if (URIUtil.contains(workspace.build.contractURI, event.uri))
-          event match {
-            case WorkspaceFileEvent.Deleted(uri) =>
-              newSourceCode filter {
-                state =>
-                  // Delete files that are within the deleted uri
-                  !URIUtil.contains(uri, state.fileURI)
-              }
+  /** Apply events to workspace source-code.
+    *
+    * @param events
+    *   Events to process
+    * @param workspace
+    *   Current workspace state
+    * @return
+    *   Source-code with events applied
+    */
+  def applyEvents(events: ArraySeq[WorkspaceFileEvent], workspace: WorkspaceState.SourceAware): ArraySeq[SourceCodeState] =
+    events.foldLeft(workspace.sourceCode) { case (newSourceCode, event) =>
+      // process files & folders that belong to the configured contractPath
+      if (URIUtil.contains(workspace.build.contractURI, event.uri))
+        event match {
+          case WorkspaceFileEvent.Deleted(uri) =>
+            newSourceCode filter { state =>
+              // Delete files that are within the deleted uri
+              !URIUtil.contains(uri, state.fileURI)
+            }
 
-            case WorkspaceFileEvent.Created(uri) =>
-              // Add or replace created source files to workspace
-              if (URIUtil.getFileExtension(uri) == CompilerAccess.RALPH_FILE_EXTENSION)
-                newSourceCode putIfEmpty SourceCodeState.OnDisk(uri)
-              else
-                newSourceCode // ignore - not a Ralph source file
-          }
-        else
-          newSourceCode // ignore - not a Ralph source event
+          case WorkspaceFileEvent.Created(uri) =>
+            // Add or replace created source files to workspace
+            if (URIUtil.getFileExtension(uri) == CompilerAccess.RALPH_FILE_EXTENSION)
+              newSourceCode putIfEmpty SourceCodeState.OnDisk(uri)
+            else
+              newSourceCode // ignore - not a Ralph source file
+        }
+      else
+        newSourceCode // ignore - not a Ralph source event
     }
 
-  /**
-   * Process source or build file change.
-   *
-   * @param fileURI File that changed.
-   * @param code    Content of the file.
-   */
-  def changed(fileURI: URI,
-              code: Option[String],
-              currentWorkspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
-                                                            compiler: CompilerAccess): Either[ErrorUnknownFileType, WorkspaceChangeResult] = {
+  /** Process source or build file change.
+    *
+    * @param fileURI
+    *   File that changed.
+    * @param code
+    *   Content of the file.
+    */
+  def changed(fileURI: URI, code: Option[String], currentWorkspace: WorkspaceState.SourceAware)(implicit
+      file: FileAccess,
+      compiler: CompilerAccess
+  ): Either[ErrorUnknownFileType, WorkspaceChangeResult] = {
     val fileExtension =
       URIUtil.getFileExtension(fileURI)
 
@@ -448,19 +450,19 @@ object Workspace {
     }
   }
 
-  /**
-   * Process changes to a valid build file.
-   *
-   * If the build file is valid, this drops existing compilations
-   * and starts a fresh workspace.
-   *
-   * @param buildURI Location of the build file.
-   * @param code     Build file's content.
-   */
-  def buildChanged(buildURI: URI,
-                   code: Option[String],
-                   workspace: WorkspaceState.SourceAware)(implicit file: FileAccess,
-                                                          compiler: CompilerAccess): Option[Either[BuildState.BuildErrored, WorkspaceState.SourceAware]] =
+  /** Process changes to a valid build file.
+    *
+    * If the build file is valid, this drops existing compilations and starts a fresh workspace.
+    *
+    * @param buildURI
+    *   Location of the build file.
+    * @param code
+    *   Build file's content.
+    */
+  def buildChanged(buildURI: URI, code: Option[String], workspace: WorkspaceState.SourceAware)(implicit
+      file: FileAccess,
+      compiler: CompilerAccess
+  ): Option[Either[BuildState.BuildErrored, WorkspaceState.SourceAware]] =
     if (workspace.buildURI.resolve(buildURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
       Build.parseAndCompile(
         buildURI = buildURI,
@@ -501,54 +503,57 @@ object Workspace {
     else
       None // ignore file that is not in the root workspace directory
 
-  /**
-   * Process changes to ralph code files.
-   *
-   * @param fileURI     Location of the source file.
-   * @param updatedCode Source changes
-   */
-  def sourceCodeChanged(fileURI: URI,
-                        updatedCode: Option[String],
-                        workspace: WorkspaceState)(implicit file: FileAccess,
-                                                   compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
-    build(workspace) map {
-      workspace =>
-        if (URIUtil.contains(workspace.build.contractURI, fileURI)) {
-          // source belongs to this workspace, process compilation including this file's changed code.
-          val newSourceCode =
-            downgradeSourceState(
-              fileURI = fileURI,
-              updatedCode = updatedCode,
-              sourceCode = workspace.sourceCode
-            )
+  /** Process changes to ralph code files.
+    *
+    * @param fileURI
+    *   Location of the source file.
+    * @param updatedCode
+    *   Source changes
+    */
+  def sourceCodeChanged(fileURI: URI, updatedCode: Option[String], workspace: WorkspaceState)(implicit
+      file: FileAccess,
+      compiler: CompilerAccess
+  ): Either[BuildState.BuildErrored, WorkspaceState.SourceAware] =
+    build(workspace) map { workspace =>
+      if (URIUtil.contains(workspace.build.contractURI, fileURI)) {
+        // source belongs to this workspace, process compilation including this file's changed code.
+        val newSourceCode =
+          downgradeSourceState(
+            fileURI = fileURI,
+            updatedCode = updatedCode,
+            sourceCode = workspace.sourceCode
+          )
 
-          // create new un-compiled workspace.
-          val unCompiledWorkspace =
-            WorkspaceState.UnCompiled(
-              build = workspace.build,
-              sourceCode = newSourceCode
-            )
+        // create new un-compiled workspace.
+        val unCompiledWorkspace =
+          WorkspaceState.UnCompiled(
+            build = workspace.build,
+            sourceCode = newSourceCode
+          )
 
-          // parse and compile the new state.
-          Workspace.parseAndCompile(unCompiledWorkspace)
-        } else {
-          // file does not belong to this workspace, do not compile it and return initialised workspace.
-          workspace
-        }
+        // parse and compile the new state.
+        Workspace.parseAndCompile(unCompiledWorkspace)
+      } else {
+        // file does not belong to this workspace, do not compile it and return initialised workspace.
+        workspace
+      }
     }
 
-  /**
-   * Downgrade the current state of updated source-code so it gets re-parsed and re-compiled.
-   * Also checks if the file is deleted so it could be removed from compilation.
-   *
-   * @param fileURI     Updated code's file-location
-   * @param updatedCode The updated code
-   * @param sourceCode  Existing source-code
-   * @return New source code with applied change.
-   */
-  def downgradeSourceState(fileURI: URI,
-                           updatedCode: Option[String],
-                           sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): ArraySeq[SourceCodeState] =
+  /** Downgrade the current state of updated source-code so it gets re-parsed and re-compiled. Also checks if the file is deleted so it could be
+    * removed from compilation.
+    *
+    * @param fileURI
+    *   Updated code's file-location
+    * @param updatedCode
+    *   The updated code
+    * @param sourceCode
+    *   Existing source-code
+    * @return
+    *   New source code with applied change.
+    */
+  def downgradeSourceState(fileURI: URI, updatedCode: Option[String], sourceCode: ArraySeq[SourceCodeState])(implicit
+      file: FileAccess
+  ): ArraySeq[SourceCodeState] =
     updatedCode match {
       case Some(newCode) =>
         // new source code, store it as un-compiled.

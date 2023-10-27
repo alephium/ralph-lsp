@@ -43,7 +43,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory {
           client = Some(client),
           listener = Some(listener),
           workspace = Some(WorkspaceState.Created(workspaceURI)),
-          buildErrors = None,
+          buildErrors = None
         )
     }
   }

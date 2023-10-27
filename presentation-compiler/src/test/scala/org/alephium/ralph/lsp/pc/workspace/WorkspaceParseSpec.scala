@@ -5,12 +5,9 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-/**
- * Test cases for [[Workspace.parse]] function.
- */
+/** Test cases for [[Workspace.parse]] function.
+  */
 class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
-  "parse" when {
-
-  }
+  "parse" when {}
 }

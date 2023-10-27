@@ -37,35 +37,34 @@ object WorkspaceState {
   case class Created(workspaceURI: URI) extends WorkspaceState
 
   /** State: Source files might be un-compiled, parsed or compiled. This state can be parsed and compiled. */
-  case class UnCompiled(build: BuildCompiled,
-                        sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.SourceAware
+  case class UnCompiled(build: BuildCompiled, sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.SourceAware
 
   /** State: All source files are parsed, therefore this workspace can be compiled */
-  case class Parsed(build: BuildCompiled,
-                    sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.SourceAware
+  case class Parsed(build: BuildCompiled, sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.SourceAware
 
-  /**
-   * Result of an errored compiler run.
-   *
-   * @param sourceCode      New valid source code states.
-   * @param workspaceErrors Project/workspace level errors
-   * @param parsed          Previous valid parsed state (used for code completion in-case the file has error)
-   */
-  case class Errored(sourceCode: ArraySeq[SourceCodeState],
-                     workspaceErrors: ArraySeq[CompilerMessage.AnyError],
-                     parsed: WorkspaceState.Parsed) extends CompilerRun {
+  /** Result of an errored compiler run.
+    *
+    * @param sourceCode
+    *   New valid source code states.
+    * @param workspaceErrors
+    *   Project/workspace level errors
+    * @param parsed
+    *   Previous valid parsed state (used for code completion in-case the file has error)
+    */
+  case class Errored(sourceCode: ArraySeq[SourceCodeState], workspaceErrors: ArraySeq[CompilerMessage.AnyError], parsed: WorkspaceState.Parsed)
+      extends CompilerRun {
     def build: BuildCompiled =
       parsed.build
   }
 
-  /**
-   * Result of a successful compiler run.
-   *
-   * @param sourceCode New valid source code states.
-   * @param parsed     Current parser run for this compiled code.
-   */
-  case class Compiled(sourceCode: ArraySeq[SourceCodeState],
-                      parsed: WorkspaceState.Parsed) extends CompilerRun {
+  /** Result of a successful compiler run.
+    *
+    * @param sourceCode
+    *   New valid source code states.
+    * @param parsed
+    *   Current parser run for this compiled code.
+    */
+  case class Compiled(sourceCode: ArraySeq[SourceCodeState], parsed: WorkspaceState.Parsed) extends CompilerRun {
     def build: BuildCompiled =
       parsed.build
   }

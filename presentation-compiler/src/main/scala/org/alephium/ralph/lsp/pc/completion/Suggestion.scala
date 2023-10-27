@@ -11,13 +11,7 @@ sealed trait Suggestion extends Product {
 }
 
 object Suggestion {
-  case class Function(label: String,
-                      insert: String,
-                      detail: String,
-                      documentation: String) extends Suggestion
+  case class Function(label: String, insert: String, detail: String, documentation: String) extends Suggestion
 
-  case class Field(label: String,
-                   insert: String,
-                   detail: String,
-                   documentation: String) extends Suggestion
+  case class Field(label: String, insert: String, detail: String, documentation: String) extends Suggestion
 }

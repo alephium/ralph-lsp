@@ -6,26 +6,22 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
 
-/**
- * Convenient File IO functions for test-cases.
- *
- * No effect handling required for test-cases.
- * Exceptions are OK for test-cases.
- * */
+/** Convenient File IO functions for test-cases.
+  *
+  * No effect handling required for test-cases. Exceptions are OK for test-cases.
+  */
 object FileIO {
 
-  def writeBytes(bytes: Array[Byte],
-                 uri: URI): Path = {
-    //convert URI to Path
+  def writeBytes(bytes: Array[Byte], uri: URI): Path = {
+    // convert URI to Path
     val filePath = Paths.get(uri)
     // ensure directories exists
     createDirectories(filePath.getParent)
-    //write to file
+    // write to file
     Files.write(filePath, bytes)
   }
 
-  def write(string: String,
-            uri: URI): Path =
+  def write(string: String, uri: URI): Path =
     writeBytes(
       uri = uri,
       bytes = string.getBytes(StandardCharsets.UTF_8)

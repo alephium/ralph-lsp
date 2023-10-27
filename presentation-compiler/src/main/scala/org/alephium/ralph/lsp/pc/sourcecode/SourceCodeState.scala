@@ -20,10 +20,10 @@ object SourceCodeState {
   sealed trait Initialised extends SourceCodeState
 
   /** Represents: Code was accessed. It can either be in Error state or Success state.
-   *
-   * [[OnDisk]] state is no longer achievable from this state unless the file gets removed/dropped entirely
-   * from a configured workspace - [[WorkspaceState.CodeAware]].
-   * */
+    *
+    * [[OnDisk]] state is no longer achievable from this state unless the file gets removed/dropped entirely from a configured workspace -
+    * [[WorkspaceState.CodeAware]].
+    */
   sealed trait AccessedState extends SourceCodeState
 
   /** Represents: State where the source code is known */
@@ -41,24 +41,17 @@ object SourceCodeState {
   case class OnDisk(fileURI: URI) extends Initialised
 
   /** The code is in memory but not parsed or compiled */
-  case class UnCompiled(fileURI: URI,
-                        code: String) extends Initialised with AccessedState with CodeAware
+  case class UnCompiled(fileURI: URI, code: String) extends Initialised with AccessedState with CodeAware
 
   /** Represents: Was unable to access code */
-  case class ErrorAccess(fileURI: URI,
-                         error: CompilerMessage.AnyError) extends FailedState with AccessedState
+  case class ErrorAccess(fileURI: URI, error: CompilerMessage.AnyError) extends FailedState with AccessedState
 
   /** Represents: Code is successfully parsed */
-  case class Parsed(fileURI: URI,
-                    code: String,
-                    contracts: Seq[ContractWithState],
-                    imports: Map[String, Seq[ContractWithState]]) extends ParsedState
+  case class Parsed(fileURI: URI, code: String, contracts: Seq[ContractWithState], imports: Map[String, Seq[ContractWithState]]) extends ParsedState
 
   /** Represents: Successful code compilation */
-  case class Compiled(fileURI: URI,
-                      code: String,
-                      compiledCode: Seq[Either[CompiledContract, CompiledScript]],
-                      parsed: SourceCodeState.Parsed) extends ParsedState {
+  case class Compiled(fileURI: URI, code: String, compiledCode: Seq[Either[CompiledContract, CompiledScript]], parsed: SourceCodeState.Parsed)
+      extends ParsedState {
     def warnings: Seq[StringWarning] =
       compiledCode.flatMap {
         case Left(value) =>
@@ -70,9 +63,8 @@ object SourceCodeState {
   }
 
   /** Represents: Failed but it stores previous successful parse so code-completion can use this state */
-  case class ErrorSource(fileURI: URI,
-                         code: String,
-                         errors: Seq[CompilerMessage.AnyError],
-                         previous: Option[SourceCodeState.Parsed]) extends FailedState with CodeAware
+  case class ErrorSource(fileURI: URI, code: String, errors: Seq[CompilerMessage.AnyError], previous: Option[SourceCodeState.Parsed])
+      extends FailedState
+      with CodeAware
 
 }

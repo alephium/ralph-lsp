@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.sourcecode.imports
 
 import java.net.URI
-import java.nio.file.{ Files, FileSystems, Paths}
+import java.nio.file.{Files, FileSystems, Paths}
 import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.util.{Failure, Success, Using}
@@ -29,7 +29,7 @@ object StdInterface extends StrictLogging {
     Using.Manager { use =>
       val stdURL = getClass.getResource(s"/$stdFolder")
 
-      val stdPath = if (stdURL.getProtocol == "file"){
+      val stdPath = if (stdURL.getProtocol == "file") {
         Paths.get(stdURL.toURI)
       } else {
         // When using file from jar, the file as a special path
@@ -43,17 +43,16 @@ object StdInterface extends StrictLogging {
         val code = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines.mkString("\n")
         (s"$stdFolder/${removeExtension(file.getFileName.toString)}", code)
       }.toMap
-  } match {
-    case Success(value) => value
-    case Failure(error) =>
-      logger.error(s"Cannot get std interfaces: $error")
-      Map.empty
-  }
-
+    } match {
+      case Success(value) => value
+      case Failure(error) =>
+        logger.error(s"Cannot get std interfaces: $error")
+        Map.empty
+    }
 
   private def removeExtension(fname: String): String = {
     val pos = fname.lastIndexOf('.');
-    if(pos > -1)
+    if (pos > -1)
       return fname.substring(0, pos);
     else
       return fname;

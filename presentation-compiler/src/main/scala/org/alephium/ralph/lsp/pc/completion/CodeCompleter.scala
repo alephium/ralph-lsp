@@ -7,13 +7,9 @@ import scala.util.Random
 
 object CodeCompleter {
 
-  /**
-   * Execute code completing given the current workspace state.
-   */
-  def complete(line: Int,
-               character: Int,
-               uri: URI,
-               workspace: WorkspaceState): Array[Suggestion] = {
+  /** Execute code completing given the current workspace state.
+    */
+  def complete(line: Int, character: Int, uri: URI, workspace: WorkspaceState): Array[Suggestion] = {
     val randomFunctionName = List("deposit", "transfer", "allocate", "upgrade", "assert")
     val randomParamName = List("id", "name", "address", "addr")
     val inputTypes = List("U256", "Address", "Bool")

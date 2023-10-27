@@ -11,15 +11,14 @@ object CompletionConverter {
   def toCompletionList(suggestions: Array[Suggestion]): CompletionList = {
     val items = new util.ArrayList[CompletionItem]()
 
-    suggestions foreach {
-      suggestion =>
-        val item = new CompletionItem()
-        item.setLabel(suggestion.label)
-        item.setDetail(suggestion.detail)
-        item.setDocumentation(suggestion.documentation)
-        item.setInsertText(suggestion.insert)
-        item.setKind(CompletionItemKind.valueOf(suggestion.productPrefix))
-        items.add(item)
+    suggestions foreach { suggestion =>
+      val item = new CompletionItem()
+      item.setLabel(suggestion.label)
+      item.setDetail(suggestion.detail)
+      item.setDocumentation(suggestion.documentation)
+      item.setInsertText(suggestion.insert)
+      item.setKind(CompletionItemKind.valueOf(suggestion.productPrefix))
+      items.add(item)
     }
 
     new CompletionList(items)

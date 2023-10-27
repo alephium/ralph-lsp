@@ -12,8 +12,7 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
   "ImportHandler.extractStdImports" should {
     "extract valid imports" when {
       "there are new lines" in {
-        succes(
-          """|
+        succes("""|
           |import "std/nft_interface"
           |
           |import
@@ -25,8 +24,7 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
       }
 
       "they are written classicly" in {
-        succes(
-          """|
+        succes("""|
           |import "std/nft_interface"
           |import "std/fungible_token_interface"
           |""".stripMargin)
@@ -120,7 +118,9 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
           """|import "std/nt_interface"
           |
           |import "std/"
-          |""".stripMargin, Seq(SourceIndex(8, 16), SourceIndex(35,4)))
+          |""".stripMargin,
+          Seq(SourceIndex(8, 16), SourceIndex(35, 4))
+        )
       }
 
       "not all imports are wrong" in {
@@ -128,13 +128,14 @@ class ImportHandlerSpec extends AnyWordSpec with Matchers {
           """|import "std/nt_interface"
           |import "std/nft_interface"
           |import "std/"
-          |""".stripMargin, Seq(SourceIndex(8, 16), SourceIndex(61,4)))
+          |""".stripMargin,
+          Seq(SourceIndex(8, 16), SourceIndex(61, 4))
+        )
       }
     }
 
-
     "extract import even with some contracts or any thing between imports" in {
-      //We only care about imports here, contracts are parse latter by the `CompilerAccess`
+      // We only care about imports here, contracts are parse latter by the `CompilerAccess`
       succes("""
         import "std/nft_interface"
         Contract Foo(id:U256){}

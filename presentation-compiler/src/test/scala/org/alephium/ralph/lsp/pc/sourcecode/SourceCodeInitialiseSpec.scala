@@ -13,22 +13,21 @@ class SourceCodeInitialiseSpec extends AnyWordSpec with Matchers with MockFactor
 
   "initialise" should {
     "report failure to fetch source files" in {
-      forAll(genFolderURI()) {
-        workspaceURI =>
-          implicit val file: FileAccess =
-            mock[FileAccess]
+      forAll(genFolderURI()) { workspaceURI =>
+        implicit val file: FileAccess =
+          mock[FileAccess]
 
-          val error =
-            StringError("Something went wrong")
+        val error =
+          StringError("Something went wrong")
 
-          (file.list _)
-            .expects(workspaceURI)
-            .returns(Left(error))
+        (file.list _)
+          .expects(workspaceURI)
+          .returns(Left(error))
 
-          val actualState =
-            SourceCode.initialise(workspaceURI).left.value
+        val actualState =
+          SourceCode.initialise(workspaceURI).left.value
 
-          actualState shouldBe error
+        actualState shouldBe error
 
       }
     }

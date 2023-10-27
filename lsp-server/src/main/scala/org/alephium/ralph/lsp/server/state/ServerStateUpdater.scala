@@ -5,20 +5,16 @@ import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 
 object ServerStateUpdater {
 
-  /**
-   * Given the workspace change [[WorkspaceChangeResult]]
-   * and current [[ServerState]] return a new [[ServerState]]
-   * */
-  def workspaceChanged(change: WorkspaceChangeResult,
-                       serverState: ServerState): Option[ServerState] =
+  /** Given the workspace change [[WorkspaceChangeResult]] and current [[ServerState]] return a new [[ServerState]]
+    */
+  def workspaceChanged(change: WorkspaceChangeResult, serverState: ServerState): Option[ServerState] =
     change match {
       case WorkspaceChangeResult.BuildChanged(buildChangeResult) =>
-        buildChangeResult map {
-          buildResult =>
-            buildChanged(
-              buildChangeResult = buildResult,
-              serverState = serverState
-            )
+        buildChangeResult map { buildResult =>
+          buildChanged(
+            buildChangeResult = buildResult,
+            serverState = serverState
+          )
         }
 
       case WorkspaceChangeResult.SourceChanged(sourceChangeResult) =>
@@ -32,8 +28,7 @@ object ServerStateUpdater {
     }
 
   /** Apply build change to the [[ServerState]] */
-  private def buildChanged(buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
-                           serverState: ServerState): ServerState =
+  private def buildChanged(buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState], serverState: ServerState): ServerState =
     buildChangeResult match {
       case Left(buildError) =>
         // fetch the activateWorkspace to replace existing workspace
@@ -55,8 +50,7 @@ object ServerStateUpdater {
     }
 
   /** Apply source-code change to the [[ServerState]] */
-  private def sourceCodeChanged(sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
-                                serverState: ServerState): ServerState =
+  private def sourceCodeChanged(sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState], serverState: ServerState): ServerState =
     sourceChangeResult match {
       case Left(buildError) =>
         serverState.copy(buildErrors = Some(buildError))

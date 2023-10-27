@@ -30,9 +30,7 @@ object RalphLangServer {
   }
 
   /** Start server with pre-configured client */
-  def apply(client: RalphLangClient,
-            listener: JFuture[Void])(implicit compiler: CompilerAccess,
-                                     file: FileAccess): RalphLangServer = {
+  def apply(client: RalphLangClient, listener: JFuture[Void])(implicit compiler: CompilerAccess, file: FileAccess): RalphLangServer = {
     val initialState =
       ServerState(
         client = Some(client),
@@ -44,8 +42,7 @@ object RalphLangServer {
     new RalphLangServer(initialState)
   }
 
-  def apply()(implicit compiler: CompilerAccess,
-              file: FileAccess): RalphLangServer =
+  def apply()(implicit compiler: CompilerAccess, file: FileAccess): RalphLangServer =
     new RalphLangServer(
       ServerState(
         client = None,
@@ -58,32 +55,32 @@ object RalphLangServer {
   def getRootUri(params: InitializeParams): Option[URI] =
     Option(params.getRootUri)
       .orElse(Option(params.getRootPath))
-      //Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
+      // Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
       .orElse(Option(System.getProperty("user.dir")).map(dir => s"file://$dir"))
       .map(new URI(_))
 }
 
-/**
- * The Ralph-LSP server.
- *
- * This class is the only one with mutable state in this repo.
- * All mutable state management occurs here.
- */
-class RalphLangServer private(@volatile private var state: ServerState)(implicit compiler: CompilerAccess,
-                                                                        file: FileAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictLogging { thisServer =>
+/** The Ralph-LSP server.
+  *
+  * This class is the only one with mutable state in this repo. All mutable state management occurs here.
+  */
+class RalphLangServer private (@volatile private var state: ServerState)(implicit compiler: CompilerAccess, file: FileAccess)
+    extends LanguageServer
+    with TextDocumentService
+    with WorkspaceService
+    with StrictLogging { thisServer =>
 
   def getState(): ServerState =
     thisServer.state
 
-  /**
-   * An initial call to this function is required before this server can start processing request.
-   *
-   * @param client   Client proxy instance provided by LSP4J.
-   *                 Client must be known before a connection is initialised.
-   * @param listener LSP connection listener function.
-   */
-  def setInitialState(client: RalphLangClient,
-                      listener: () => JFuture[Void]): Unit =
+  /** An initial call to this function is required before this server can start processing request.
+    *
+    * @param client
+    *   Client proxy instance provided by LSP4J. Client must be known before a connection is initialised.
+    * @param listener
+    *   LSP connection listener function.
+    */
+  def setInitialState(client: RalphLangClient, listener: () => JFuture[Void]): Unit =
     thisServer.synchronized {
       require(state.client.isEmpty, "Client is already set")
       require(state.listener.isEmpty, "Listener is already set")
@@ -96,23 +93,22 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   /** @inheritdoc */
   override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] =
-    CompletableFutures.computeAsync {
-      cancelChecker =>
-        // Previous commit uses the non-deprecated API but that does not work in vim.
-        val rootURI =
-          RalphLangServer.getRootUri(params)
+    CompletableFutures.computeAsync { cancelChecker =>
+      // Previous commit uses the non-deprecated API but that does not work in vim.
+      val rootURI =
+        RalphLangServer.getRootUri(params)
 
-        val workspaceURI =
-          rootURI getOrElse notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
+      val workspaceURI =
+        rootURI getOrElse notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
 
-        val workspace =
-          Workspace.create(workspaceURI)
+      val workspace =
+        Workspace.create(workspaceURI)
 
-        setWorkspace(workspace)
+      setWorkspace(workspace)
 
-        cancelChecker.checkCanceled()
+      cancelChecker.checkCanceled()
 
-        new InitializeResult(serverCapabilities())
+      new InitializeResult(serverCapabilities())
     }
 
   /** @inheritdoc */
@@ -176,15 +172,14 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
       // collect events
       val events =
-        changes.asScala collect {
-          event =>
-            event.getType match {
-              case FileChangeType.Deleted =>
-                WorkspaceFileEvent.Deleted(new URI(event.getUri))
+        changes.asScala collect { event =>
+          event.getType match {
+            case FileChangeType.Deleted =>
+              WorkspaceFileEvent.Deleted(new URI(event.getUri))
 
-              case FileChangeType.Created =>
-                WorkspaceFileEvent.Created(new URI(event.getUri))
-            }
+            case FileChangeType.Created =>
+              WorkspaceFileEvent.Created(new URI(event.getUri))
+          }
         }
 
       if (events.nonEmpty) {
@@ -219,14 +214,14 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def getWorkspaceService: WorkspaceService =
     this
 
-  /**
-   * Apply code change and publish diagnostics.
-   *
-   * @param fileURI File that changed
-   * @param code    Source-code of the changed file.
-   */
-  private def didChangeAndPublish(fileURI: URI,
-                                  code: Option[String]): Unit =
+  /** Apply code change and publish diagnostics.
+    *
+    * @param fileURI
+    *   File that changed
+    * @param code
+    *   Source-code of the changed file.
+    */
+  private def didChangeAndPublish(fileURI: URI, code: Option[String]): Unit =
     thisServer.synchronized {
       val diagnostics =
         didChangeAndSet(
@@ -239,41 +234,42 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       diagnostics foreach client.publishDiagnostics
     }
 
-  /**
-   * Process code change and set the new workspace.
-   *
-   * @param fileURI File that changed.
-   * @param code    Source-code of the changed file.
-   * @return Diagnostics of the new workspace.
-   */
-  private def didChangeAndSet(fileURI: URI,
-                              code: Option[String]): Iterable[PublishDiagnosticsParams] =
+  /** Process code change and set the new workspace.
+    *
+    * @param fileURI
+    *   File that changed.
+    * @param code
+    *   Source-code of the changed file.
+    * @return
+    *   Diagnostics of the new workspace.
+    */
+  private def didChangeAndSet(fileURI: URI, code: Option[String]): Iterable[PublishDiagnosticsParams] =
     thisServer.synchronized {
       val source =
         Some(WorkspaceFile(fileURI, code))
 
       val diagnostics =
-        getOrBuildWorkspace(source) map {
-          workspace =>
-            val changeResult =
-              Workspace.changed(
-                fileURI = fileURI,
-                code = code,
-                currentWorkspace = workspace
-              )
+        getOrBuildWorkspace(source) map { workspace =>
+          val changeResult =
+            Workspace.changed(
+              fileURI = fileURI,
+              code = code,
+              currentWorkspace = workspace
+            )
 
-            setWorkspaceChange(changeResult)
+          setWorkspaceChange(changeResult)
         }
 
       diagnostics.merge
     }
 
-  /**
-   * Fetch the existing workspace if it's already build and initialised or-else invoke new workspace build.
-   *
-   * @param code File that changed and it's source-code.
-   * @return Diagnostics if there were build errors, or-else the next workspace.
-   */
+  /** Fetch the existing workspace if it's already build and initialised or-else invoke new workspace build.
+    *
+    * @param code
+    *   File that changed and it's source-code.
+    * @return
+    *   Diagnostics if there were build errors, or-else the next workspace.
+    */
   def getOrBuildWorkspace(code: Option[WorkspaceFile]): Either[Iterable[PublishDiagnosticsParams], WorkspaceState.SourceAware] =
     thisServer.synchronized {
       val workspace =
@@ -328,12 +324,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       thisServer.state = thisServer.state.copy(workspace = Some(workspace))
     }
 
-  /**
-   * Set the workspace and returns diagnostics to publish for current state.
-   *
-   * @param changeResult Compilation result returned by presentation-compiler.
-   * @return Diagnostics for current workspace.
-   */
+  /** Set the workspace and returns diagnostics to publish for current state.
+    *
+    * @param changeResult
+    *   Compilation result returned by presentation-compiler.
+    * @return
+    *   Diagnostics for current workspace.
+    */
   private def setWorkspaceChange(changeResult: Either[ErrorUnknownFileType, WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
     thisServer.synchronized {
       changeResult match {
@@ -348,13 +345,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       }
     }
 
-  /**
-   * Set the workspace and returns diagnostics to publish for current state.
-   *
-   * @param changeResult Compilation result returned by presentation-compiler.
-   *                     [[None]] indicates that the file-type does not belong to us.
-   * @return Diagnostics for current workspace.
-   */
+  /** Set the workspace and returns diagnostics to publish for current state.
+    *
+    * @param changeResult
+    *   Compilation result returned by presentation-compiler. [[None]] indicates that the file-type does not belong to us.
+    * @return
+    *   Diagnostics for current workspace.
+    */
   private def setWorkspaceChange(changeResult: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
     thisServer.synchronized {
       val currentServerState =
@@ -392,9 +389,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def shutdown(): CompletableFuture[AnyRef] =
     state.listener match {
       case Some(listener) =>
-        CompletableFuture.supplyAsync {
-          () =>
-            java.lang.Boolean.valueOf(listener.cancel(true))
+        CompletableFuture.supplyAsync { () =>
+          java.lang.Boolean.valueOf(listener.cancel(true))
         }
 
       case None =>

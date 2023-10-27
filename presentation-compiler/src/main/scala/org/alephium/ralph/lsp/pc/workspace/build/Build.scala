@@ -22,8 +22,7 @@ object Build {
     toBuildPath(Paths.get(workspaceURI)).toUri
 
   /** Parse a build that is in-memory */
-  def parse(buildURI: URI,
-            json: String): BuildState.ParseResult =
+  def parse(buildURI: URI, json: String): BuildState.ParseResult =
     RalphcConfig.parse(
       buildURI = buildURI,
       json = json
@@ -98,8 +97,7 @@ object Build {
     }
 
   /** Parse and compile from memory */
-  def parseAndCompile(buildURI: URI,
-                      code: String)(implicit file: FileAccess): BuildState.CompileResult = {
+  def parseAndCompile(buildURI: URI, code: String)(implicit file: FileAccess): BuildState.CompileResult = {
     // Code is already read. Parse and validate it.
     val parsed =
       parse(
@@ -110,8 +108,7 @@ object Build {
     compile(parsed)
   }
 
-  def parseAndCompile(buildURI: URI,
-                      code: Option[String])(implicit file: FileAccess): BuildState.CompileResult =
+  def parseAndCompile(buildURI: URI, code: Option[String])(implicit file: FileAccess): BuildState.CompileResult =
     code match {
       case Some(code) =>
         parseAndCompile(
@@ -124,12 +121,11 @@ object Build {
         parseAndCompile(buildURI)
     }
 
-  /**
-   * Parse and re-compile the build file.
-   * */
-  def parseAndCompile(buildURI: URI,
-                      code: Option[String],
-                      currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess): Option[BuildState.CompileResult] =
+  /** Parse and re-compile the build file.
+    */
+  def parseAndCompile(buildURI: URI, code: Option[String], currentBuild: BuildState.BuildCompiled)(implicit
+      file: FileAccess
+  ): Option[BuildState.CompileResult] =
     BuildValidator.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = currentBuild.workspaceURI
@@ -148,7 +144,7 @@ object Build {
       case Right(buildURI) =>
         Build.parseAndCompile(
           buildURI = buildURI,
-          code = code,
+          code = code
         ) match {
           case newBuild: BuildState.BuildCompiled =>
             // if the new build-file is the same as current build-file, return it as

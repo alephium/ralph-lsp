@@ -62,28 +62,25 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
             .map(SourceCode.parse)
             .map(_.asInstanceOf[SourceCodeState.Parsed])
 
-        forAll(parsed, GenRalphc.genCompilerOptions()) {
-          case (parsed, compilerOptions) =>
+        forAll(parsed, GenRalphc.genCompilerOptions()) { case (parsed, compilerOptions) =>
+          // compile the source-code
+          val compiledResult =
+            SourceCode
+              .compile(
+                sourceCode = ArraySeq(parsed),
+                compilerOptions = compilerOptions
+              )
 
-            // compile the source-code
-            val compiledResult =
-              SourceCode
-                .compile(
-                  sourceCode = ArraySeq(parsed),
-                  compilerOptions = compilerOptions
-                )
+          // compilation successful
+          val compiled =
+            compiledResult.value
+              .asInstanceOf[ArraySeq[SourceCodeState.Compiled]]
 
-            // compilation successful
-            val compiled =
-              compiledResult
-                .value
-                .asInstanceOf[ArraySeq[SourceCodeState.Compiled]]
+          // it should contain only one result
+          compiled should have size 1
 
-            // it should contain only one result
-            compiled should have size 1
-
-            // Compile again: Already compiled, so it should not access the compiler.
-            testNoCompilerAccess(compiled.head)
+          // Compile again: Already compiled, so it should not access the compiler.
+          testNoCompilerAccess(compiled.head)
         }
       }
     }

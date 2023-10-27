@@ -8,10 +8,10 @@ import org.scalacheck.Gen
 import java.net.URI
 import java.nio.file.{Path, Paths}
 
-/**
- * Common test data generator used by all other data types.
- */
+/** Common test data generator used by all other data types.
+  */
 object GenCommon {
+
   /** A random name. Restricted to 10 characters. */
   val genName: Gen[String] =
     Gen.listOfN(10, Gen.alphaChar).map(_.mkString)
@@ -20,9 +20,8 @@ object GenCommon {
     genName.map(_.capitalize)
 
   def genContract(name: Gen[String] = genCamelCase): Gen[String] =
-    name map {
-      name =>
-        s"""
+    name map { name =>
+      s"""
            |Contract $name(id:U256){
            |  pub fn getId() -> U256 {
            |    return id
@@ -32,9 +31,8 @@ object GenCommon {
     }
 
   def genScript(name: Gen[String] = genCamelCase): Gen[String] =
-    name map {
-      name =>
-        s"""
+    name map { name =>
+      s"""
            |TxScript $name(x: U256, y: U256) {
            |  assert!(x != y, 0)
            |}
@@ -45,41 +43,39 @@ object GenCommon {
   def genGoodCode(): Gen[String] =
     Gen.oneOf(
       genContract(genCamelCase),
-      genScript(genCamelCase),
+      genScript(genCamelCase)
     )
 
   /** Generate ralph code */
   def genFolderPath(underTempDir: Boolean): Gen[Path] = {
-    Gen.choose(2, 6) flatMap {
-      maxNested =>
-        val folders =
-          Gen.listOfN(maxNested, genName)
+    Gen.choose(2, 6) flatMap { maxNested =>
+      val folders =
+        Gen.listOfN(maxNested, genName)
 
-        val tempDirectory: String =
-          System.getProperty("java.io.tmpdir")
+      val tempDirectory: String =
+        System.getProperty("java.io.tmpdir")
 
-        val folderUnderTempDirectory =
-          if (underTempDir)
-            folders map {
-              folders =>
-                tempDirectory +: folders
-            }
-          else
-            folders
+      val folderUnderTempDirectory =
+        if (underTempDir)
+          folders map { folders =>
+            tempDirectory +: folders
+          }
+        else
+          folders
 
-        // generate folders ensuring they are children
-        // of the same parent i.e. a root workspace directory.
-        folderUnderTempDirectory map {
-          folders =>
-            Paths.get(folders.head, folders.tail: _*)
-        }
+      // generate folders ensuring they are children
+      // of the same parent i.e. a root workspace directory.
+      folderUnderTempDirectory map { folders =>
+        Paths.get(folders.head, folders.tail: _*)
+      }
     }
   }
 
   /** Generates a file name with the extension. Optionally creates a nested folder path. */
   def genFilePath(ext: String = RALPH_FILE_EXTENSION,
                   rootFolder: Gen[Path] = genFolderPath(underTempDir = true),
-                  fileFolder: Gen[Option[Path]] = Gen.option(genFolderPath(underTempDir = false))): Gen[Path] =
+                  fileFolder: Gen[Option[Path]] = Gen.option(genFolderPath(underTempDir = false))
+  ): Gen[Path] =
     for {
       fileName <- genName.map(fileName => s"$fileName.$ext")
       rootFolder <- rootFolder
@@ -93,7 +89,8 @@ object GenCommon {
 
   def genFileURI(ext: String = RALPH_FILE_EXTENSION,
                  rootFolder: Gen[Path] = genFolderPath(underTempDir = true),
-                 fileFolder: Gen[Option[Path]] = Gen.option(genFolderPath(underTempDir = false))): Gen[URI] =
+                 fileFolder: Gen[Option[Path]] = Gen.option(genFolderPath(underTempDir = false))
+  ): Gen[URI] =
     genFilePath(
       ext = ext,
       rootFolder = rootFolder,
@@ -109,11 +106,10 @@ object GenCommon {
       code <- code
       errorMessage <- Gen.alphaStr
       errorIndex <- Gen.choose(0, code.length - 1)
-    } yield
-      StringError(
-        message = errorMessage,
-        index = SourceIndex(0, errorIndex) // TODO: gen random index location
-      )
+    } yield StringError(
+      message = errorMessage,
+      index = SourceIndex(0, errorIndex) // TODO: gen random index location
+    )
 
   def genErrors(code: String): Gen[List[CompilerMessage.AnyError]] =
     Gen.listOf(genError(Gen.const(code)))

@@ -26,12 +26,11 @@ object BuildValidator {
       BuildCompiled(
         buildURI = parsed.buildURI,
         code = parsed.code,
-        config =
-          Config(
-            compilerOptions = parsed.config.compilerOptions,
-            contractPath = absoluteContractPath,
-            artifactPath = absoluteArtifactPath
-          )
+        config = Config(
+          compilerOptions = parsed.config.compilerOptions,
+          contractPath = absoluteContractPath,
+          artifactPath = absoluteArtifactPath
+        )
       )
     }
 
@@ -42,8 +41,7 @@ object BuildValidator {
   }
 
   /** Checks that buildURI is in the project's root directory */
-  def validateBuildURI(buildURI: URI,
-                       workspaceURI: URI): Either[ErrorInvalidBuildFileLocation, URI] =
+  def validateBuildURI(buildURI: URI, workspaceURI: URI): Either[ErrorInvalidBuildFileLocation, URI] =
     if (URIUtil.isFirstChild(workspaceURI, buildURI)) // Build file must be in the root workspace directory.
       Right(buildURI)
     else
@@ -71,11 +69,10 @@ object BuildValidator {
       errors addOne
         ErrorDirectoryOutsideWorkspace(
           dirPath = contractPath,
-          index =
-            SourceIndex.ensurePositive(
-              index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-              width = contractPath.length
-            )
+          index = SourceIndex.ensurePositive(
+            index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+            width = contractPath.length
+          )
         )
 
     // Validate: is the artifact path within the workspace
@@ -83,11 +80,10 @@ object BuildValidator {
       errors addOne
         ErrorDirectoryDoesNotExists(
           dirPath = artifactPath,
-          index =
-            SourceIndex.ensurePositive(
-              index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-              width = artifactPath.length
-            )
+          index = SourceIndex.ensurePositive(
+            index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+            width = artifactPath.length
+          )
         )
 
     // Check if errors exists
@@ -130,11 +126,10 @@ object BuildValidator {
           errors addOne
             ErrorDirectoryDoesNotExists(
               dirPath = contractPath,
-              index =
-                SourceIndex.ensurePositive(
-                  index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-                  width = contractPath.length
-                )
+              index = SourceIndex.ensurePositive(
+                index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+                width = contractPath.length
+              )
             )
 
         // check if artifact path exists
@@ -142,11 +137,10 @@ object BuildValidator {
           errors addOne
             ErrorDirectoryDoesNotExists(
               dirPath = artifactPath,
-              index =
-                SourceIndex.ensurePositive(
-                  index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-                  width = artifactPath.length
-                )
+              index = SourceIndex.ensurePositive(
+                index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+                width = artifactPath.length
+              )
             )
 
         // check if errors exists
@@ -178,11 +172,11 @@ object BuildValidator {
     }
   }
 
-  /**
-   * Returns absolute paths of the build/config file.
-   *
-   * @return A 3-tuple `(workspacePath, absoluteContractPath, absoluteArtifactPath)`
-   */
+  /** Returns absolute paths of the build/config file.
+    *
+    * @return
+    *   A 3-tuple `(workspacePath, absoluteContractPath, absoluteArtifactPath)`
+    */
   private def getAbsolutePaths(parsed: BuildParsed): (Path, Path, Path) = {
     val workspacePath = Paths.get(parsed.workspaceURI)
     val absoluteContractPath = workspacePath.resolve(Paths.get(parsed.config.contractPath).normalize)

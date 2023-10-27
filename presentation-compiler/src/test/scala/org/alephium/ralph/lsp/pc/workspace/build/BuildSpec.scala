@@ -32,41 +32,42 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
             .map(Build.compile(_)(FileAccess.disk))
             .map(_.asInstanceOf[BuildState.BuildCompiled])
 
-        forAll(outSideBuildGen, insideBuildGen) {
-          case (outsideBuild, insideBuild) =>
-            // no file-io should occur
-            implicit val file: FileAccess =
-              null
+        forAll(outSideBuildGen, insideBuildGen) { case (outsideBuild, insideBuild) =>
+          // no file-io should occur
+          implicit val file: FileAccess =
+            null
 
-            // build code is optional
-            val buildCode =
-              Gen.option(outsideBuild.code).sample.get
+          // build code is optional
+          val buildCode =
+            Gen.option(outsideBuild.code).sample.get
 
-            // invoke build
-            val actualWorkspace =
-              Build.parseAndCompile(
+          // invoke build
+          val actualWorkspace =
+            Build
+              .parseAndCompile(
                 buildURI = outsideBuild.buildURI,
                 code = buildCode,
                 currentBuild = insideBuild
-              ).value
-
-            // expected error should target the created file
-            val expectedError =
-              ErrorInvalidBuildFileLocation(
-                buildURI = outsideBuild.buildURI,
-                workspaceURI = insideBuild.workspaceURI
               )
+              .value
 
-            // build error should report the error
-            val expectedWorkspace =
-              BuildState.BuildErrored(
-                buildURI = outsideBuild.buildURI, // must not be expected build-file location.
-                code = buildCode,
-                errors = ArraySeq(expectedError),
-                activateWorkspace = None
-              )
+          // expected error should target the created file
+          val expectedError =
+            ErrorInvalidBuildFileLocation(
+              buildURI = outsideBuild.buildURI,
+              workspaceURI = insideBuild.workspaceURI
+            )
 
-            actualWorkspace shouldBe expectedWorkspace
+          // build error should report the error
+          val expectedWorkspace =
+            BuildState.BuildErrored(
+              buildURI = outsideBuild.buildURI, // must not be expected build-file location.
+              code = buildCode,
+              errors = ArraySeq(expectedError),
+              activateWorkspace = None
+            )
+
+          actualWorkspace shouldBe expectedWorkspace
         }
       }
 
@@ -80,59 +81,58 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
             .map(_.asInstanceOf[BuildState.BuildCompiled])
 
         val generator =
-          existingBuild flatMap {
-            currentBuildParsed =>
-              // build file is within a nested folder
-              val buildFolder =
-                currentBuildParsed.workspaceURI.resolve("nested_folder/")
+          existingBuild flatMap { currentBuildParsed =>
+            // build file is within a nested folder
+            val buildFolder =
+              currentBuildParsed.workspaceURI.resolve("nested_folder/")
 
-              // generate a build
-              GenBuild.genBuildParsed(workspaceURI = buildFolder) map {
-                build =>
-                  (build, currentBuildParsed)
-              }
+            // generate a build
+            GenBuild.genBuildParsed(workspaceURI = buildFolder) map { build =>
+              (build, currentBuildParsed)
+            }
           }
 
-        forAll(generator) {
-          case (build, currentBuild) =>
-            // build is within a nested folder
-            val buildParentFolder = Paths.get(build.buildURI).getParent
-            val workspaceNestedFolder = Paths.get(currentBuild.workspaceURI.resolve("nested_folder"))
-            buildParentFolder shouldBe workspaceNestedFolder
+        forAll(generator) { case (build, currentBuild) =>
+          // build is within a nested folder
+          val buildParentFolder = Paths.get(build.buildURI).getParent
+          val workspaceNestedFolder = Paths.get(currentBuild.workspaceURI.resolve("nested_folder"))
+          buildParentFolder shouldBe workspaceNestedFolder
 
-            // Optional build file: Regardless, build should not get accessed from disk.
-            val buildCode =
-              Gen.option(build.code).sample.get
+          // Optional build file: Regardless, build should not get accessed from disk.
+          val buildCode =
+            Gen.option(build.code).sample.get
 
-            // no file-io should occur
-            implicit val file: FileAccess =
-              null
+          // no file-io should occur
+          implicit val file: FileAccess =
+            null
 
-            // invoke build
-            val actualWorkspace =
-              Build.parseAndCompile(
+          // invoke build
+          val actualWorkspace =
+            Build
+              .parseAndCompile(
                 buildURI = build.buildURI,
                 code = buildCode,
                 currentBuild = currentBuild
-              ).value
-
-            // expected error should target the created file
-            val expectedError =
-              ErrorInvalidBuildFileLocation(
-                buildURI = build.buildURI,
-                workspaceURI = currentBuild.workspaceURI
               )
+              .value
 
-            // build error should report the expectedError
-            val expectedWorkspace =
-              BuildState.BuildErrored(
-                buildURI = build.buildURI,
-                code = buildCode,
-                errors = ArraySeq(expectedError),
-                activateWorkspace = None
-              )
+          // expected error should target the created file
+          val expectedError =
+            ErrorInvalidBuildFileLocation(
+              buildURI = build.buildURI,
+              workspaceURI = currentBuild.workspaceURI
+            )
 
-            actualWorkspace shouldBe expectedWorkspace
+          // build error should report the expectedError
+          val expectedWorkspace =
+            BuildState.BuildErrored(
+              buildURI = build.buildURI,
+              code = buildCode,
+              errors = ArraySeq(expectedError),
+              activateWorkspace = None
+            )
+
+          actualWorkspace shouldBe expectedWorkspace
         }
       }
     }
@@ -140,29 +140,28 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
 
   "parseAndCompile" should {
     "report missing build file" in {
-      forAll(genFolderURI()) {
-        workspaceDir =>
-          val buildURI =
-            FileIO
-              .createDirectories(workspaceDir)
-              .resolve(Build.BUILD_FILE_NAME)
-              .toUri
+      forAll(genFolderURI()) { workspaceDir =>
+        val buildURI =
+          FileIO
+            .createDirectories(workspaceDir)
+            .resolve(Build.BUILD_FILE_NAME)
+            .toUri
 
-          implicit val file: FileAccess =
-            FileAccess.disk
+        implicit val file: FileAccess =
+          FileAccess.disk
 
-          val actual =
-            Build.parseAndCompile(buildURI)
+        val actual =
+          Build.parseAndCompile(buildURI)
 
-          val expected =
-            BuildState.BuildErrored(
-              buildURI = buildURI,
-              code = None,
-              errors = ArraySeq(ErrorBuildFileNotFound),
-              activateWorkspace = None
-            )
+        val expected =
+          BuildState.BuildErrored(
+            buildURI = buildURI,
+            code = None,
+            errors = ArraySeq(ErrorBuildFileNotFound),
+            activateWorkspace = None
+          )
 
-          actual shouldBe expected
+        actual shouldBe expected
       }
 
     }

@@ -11,30 +11,29 @@ object FileAccess {
     DiskFileAccess
 }
 
-/**
- * Implements functions accessing file IO.
- */
+/** Implements functions accessing file IO.
+  */
 trait FileAccess {
 
-  /**
-   * Checks if a source-file exists.
-   *
-   * @param fileURI source-file location
-   */
+  /** Checks if a source-file exists.
+    *
+    * @param fileURI
+    *   source-file location
+    */
   def exists(fileURI: URI): Either[AnyError, Boolean]
 
-  /**
-   * Fetch all workspace source file locations.
-   *
-   * @param workspaceURI Project/workspace location.
-   */
+  /** Fetch all workspace source file locations.
+    *
+    * @param workspaceURI
+    *   Project/workspace location.
+    */
   def list(workspaceURI: URI): Either[CompilerMessage.AnyError, Seq[URI]]
 
-  /**
-   * Fetch the source-code of a file.
-   *
-   * @param fileURI source-code location.
-   */
+  /** Fetch the source-code of a file.
+    *
+    * @param fileURI
+    *   source-code location.
+    */
   def read(fileURI: URI): Either[CompilerMessage.AnyError, String]
 
 }

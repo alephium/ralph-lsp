@@ -8,7 +8,8 @@ import scala.collection.immutable.ArraySeq
 private[workspace] object WorkspaceStateBuilder {
 
   def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                       compilationResult: Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.CodeAware]]): WorkspaceState.CompilerRun =
+                       compilationResult: Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.CodeAware]]
+  ): WorkspaceState.CompilerRun =
     compilationResult match {
       case Left(workspaceError) =>
         // File or sourcePosition position information is not available for this error,
@@ -16,7 +17,7 @@ private[workspace] object WorkspaceStateBuilder {
         WorkspaceState.Errored(
           sourceCode = currentState.sourceCode, // SourceCode remains the same as existing state
           workspaceErrors = ArraySeq(workspaceError), // errors to report
-          parsed = currentState,
+          parsed = currentState
         )
 
       case Right(compiledSource) =>
