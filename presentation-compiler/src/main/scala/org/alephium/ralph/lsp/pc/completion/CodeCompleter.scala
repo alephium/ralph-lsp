@@ -2,38 +2,27 @@ package org.alephium.ralph.lsp.pc.completion
 
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
+import java.io.File
+import java.nio.file.{  Files, FileSystems, Paths}
+import scala.io.Source
+import scala.collection.JavaConverters._
+import org.alephium.ralph.lsp.pc.util.PicklerUtil._
+
+import scala.util.{Failure, Success, Using}
 import java.net.URI
 import scala.util.Random
+import upickle.default._
+import com.typesafe.scalalogging.StrictLogging
 
-object CodeCompleter {
+object CodeCompleter extends StrictLogging {
 
   /**
    * Execute code completing given the current workspace state.
+   * Currently we ignore line/text context, we just return every built in functions
    */
   def complete(line: Int,
                character: Int,
                uri: URI,
-               workspace: WorkspaceState): Array[Suggestion] = {
-    val randomFunctionName = List("deposit", "transfer", "allocate", "upgrade", "assert")
-    val randomParamName = List("id", "name", "address", "addr")
-    val inputTypes = List("U256", "Address", "Bool")
-    val returnTypes = inputTypes ++ List("()")
-
-    def dummySuggestion() = {
-      val functionName = Random.shuffle(randomFunctionName).head
-      val paramName = Random.shuffle(randomParamName).head
-      val typeName = Random.shuffle(inputTypes).head
-      val returnType = Random.shuffle(returnTypes).head
-
-      Suggestion.Function(
-        label = s"$functionName($paramName: $typeName) -> $returnType",
-        insert = s"$functionName(???)",
-        detail = s"$functionName detailed",
-        documentation = s"documentation for $functionName"
-      )
-    }
-
-    Array.fill(Random.nextInt(10) max 3)(dummySuggestion())
-  }
-
+               workspace: WorkspaceState.SourceAware ): Array[Suggestion] =
+    workspace.build.dependencies.builtInFunctions.map(_.toSuggestion).toArray
 }

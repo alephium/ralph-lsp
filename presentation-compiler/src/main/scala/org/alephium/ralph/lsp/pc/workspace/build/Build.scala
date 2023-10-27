@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
+import org.alephium.ralph.lsp.pc.completion.BuiltInFunctions
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 
@@ -167,18 +168,25 @@ object Build {
   def buildDependencies(compiled: BuildState.CompileResult): BuildState.CompileResult =
     compiled match {
       case compiled: BuildCompiled =>
-        StdInterface.buildStdInterfaces match {
-          case Right(stdInterfaces) =>
-            compiled.copy(dependencies = compiled.dependencies.copy(stdInterfaces = stdInterfaces))
-          case Left(error) =>
-              BuildErrored(
-                buildURI = compiled.buildURI,
-                code = None,
-                errors = ArraySeq(error),
-                activateWorkspace = None
-              )
-        }
-      case errored: BuildErrored =>
-        errored
+        (for {
+          stdInterfaces <- StdInterface.buildStdInterfaces
+          builtInFunctions <- BuiltInFunctions.buildBuiltInFunctions
+        } yield{
+          compiled.copy(dependencies =
+            BuildDependencies(
+            stdInterfaces = stdInterfaces,
+            builtInFunctions = builtInFunctions
+          ))
+        }).left.map { error =>
+          BuildErrored(
+           buildURI = compiled.buildURI,
+           code = None,
+           errors = ArraySeq(error),
+           activateWorkspace = None
+          )
+        }.merge
+
+    case errored: BuildErrored =>
+      errored
     }
 }

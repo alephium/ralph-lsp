@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
+import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralphc.Config
 import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
@@ -47,7 +48,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         buildURI = expectedBuildPath.toUri,
         code = expectedCode,
         config = expectedCompiledConfig,
-        dependencies = BuildDependencies(StdInterface.buildStdInterfaces.right.get)
+        dependencies = GenSourceCode.buildDependencies
       )
   }
 

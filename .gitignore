@@ -1,4 +1,5 @@
 std/
+lsp-server/src/main/resources/ralph-built-in-functions.json
 *.class
 *.log
 .DS_Store

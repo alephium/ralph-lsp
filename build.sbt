@@ -37,6 +37,7 @@ lazy val `lsp-server` =
       assemblyMergeStrategy := {
         case PathList("module-info.class")        => MergeStrategy.discard
         case x if x.endsWith("module-info.class") => MergeStrategy.discard
+        case x if x.endsWith("ralph-built-in-functions.json") => MergeStrategy.first
         case other                                => assemblyMergeStrategy.value(other)
       },
       libraryDependencies ++=
@@ -84,3 +85,20 @@ downloadWeb3AndInstallStd := {
 
 //Download and install of web3 will always be performed before compilation
 Compile / compile := ((Compile / compile) dependsOn downloadWeb3AndInstallStd).value
+
+lazy val downloadRalphVSCodeAndInstallBuiltInFunctions = taskKey[Unit]("Download ralph-vscode source code and copy built-in functions json file")
+
+downloadRalphVSCodeAndInstallBuiltInFunctions := {
+  val fileName = "ralph-built-in-functions.json"
+  val dlDir = new File(s"target/ralph-vscode/ralph-vscode-${Version.ralphVSCode}")
+  val sourceFile = new File(s"target/ralph-vscode/ralph-vscode-${Version.ralphVSCode}/src/provider/builtIn/$fileName")
+  val targetFile = new File(s"lsp-server/src/main/resources/$fileName")
+
+  if(java.nio.file.Files.notExists(dlDir.toPath())) {
+      IO.unzipURL(new URL(s"https://github.com/alephium/ralph-vscode/archive/refs/tags/v${Version.ralphVSCode}.zip"), new File("target/ralph-vscode"))
+  }
+
+  IO.copyFile(sourceFile, targetFile)
+}
+
+Compile / compile := ((Compile / compile) dependsOn downloadRalphVSCodeAndInstallBuiltInFunctions).value

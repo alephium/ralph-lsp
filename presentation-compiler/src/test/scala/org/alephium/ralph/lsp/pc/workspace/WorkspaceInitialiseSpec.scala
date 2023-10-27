@@ -167,7 +167,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                       contractPath = Paths.get(build.buildURI.resolve(build.config.contractPath)),
                       artifactPath = Paths.get(build.buildURI.resolve(build.config.artifactPath))
                     ),
-                  dependencies = BuildDependencies(StdInterface.buildStdInterfaces.right.get)
+                  dependencies = GenSourceCode.buildDependencies
                 )
 
               // expect the workspace to be in un-compiled state, containing all source-code

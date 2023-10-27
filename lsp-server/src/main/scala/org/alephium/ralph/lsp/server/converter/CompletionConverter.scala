@@ -18,11 +18,16 @@ object CompletionConverter {
         item.setDetail(suggestion.detail)
         item.setDocumentation(suggestion.documentation)
         item.setInsertText(suggestion.insert)
-        item.setKind(CompletionItemKind.valueOf(suggestion.productPrefix))
+        item.setKind(getKind(suggestion))
         items.add(item)
     }
 
     new CompletionList(items)
   }
 
+  def getKind(suggestion: Suggestion) : CompletionItemKind =
+    suggestion match {
+      case _: Suggestion.Function => CompletionItemKind.Function
+      case _: Suggestion.Field => CompletionItemKind.Field
+    }
 }

@@ -3,6 +3,7 @@ import sbt._
 object Version {
   val scala213 = "2.13.11"
   val web3 = "0.22.0"
+  val ralphVSCode = "0.2.4"
 }
 
 object Dependencies {

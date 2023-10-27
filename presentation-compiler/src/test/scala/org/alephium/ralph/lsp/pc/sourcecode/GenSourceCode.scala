@@ -2,7 +2,10 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.FileIO
 import org.alephium.ralph.lsp.GenCommon._
+import org.alephium.ralph.lsp.pc.completion.BuiltInFunctions
+import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, GenBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.BuildDependencies
 import org.scalacheck.Gen
 
 import java.net.URI
@@ -77,4 +80,10 @@ object GenSourceCode {
 
   def deleteAll(sourceCode: Iterable[SourceCodeState]): Unit =
     sourceCode foreach delete
+
+  def buildDependencies: BuildDependencies =
+    BuildDependencies(
+      StdInterface.buildStdInterfaces.right.get,
+      BuiltInFunctions.buildBuiltInFunctions.right.get
+    )
 }

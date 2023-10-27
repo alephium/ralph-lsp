@@ -2,7 +2,6 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
-import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
 import org.alephium.ralph.lsp.pc.workspace.build.GenRalphc
 import org.alephium.ralph.lsp.GenCommon.genGoodCode
 import org.alephium.ralph.lsp.access.file.FileAccess
@@ -12,7 +11,6 @@ import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.ArraySeq
-import org.alephium.ralph.lsp.pc.workspace.build.BuildDependencies
 
 class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
@@ -73,7 +71,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
                 .compile(
                   sourceCode = ArraySeq(parsed),
                   compilerOptions = compilerOptions,
-                  buildDependencies = BuildDependencies(StdInterface.buildStdInterfaces.right.get)
+                  buildDependencies = buildDependencies
                 )
 
             // compilation successful

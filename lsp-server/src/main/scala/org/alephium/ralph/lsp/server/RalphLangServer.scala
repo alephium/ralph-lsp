@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.server
 
+import org.alephium.ralph.lsp.server.converter.CompletionConverter
 import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
@@ -7,16 +8,19 @@ import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.RalphLangServer._
+import org.alephium.ralph.lsp.pc.completion.CodeCompleter
 import org.alephium.ralph.lsp.server.converter.DiagnosticsConverter
 import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater}
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.CompletableFutures
 import org.eclipse.lsp4j.services._
+import org.eclipse.lsp4j.jsonrpc.messages
 
 import java.net.URI
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.IterableHasAsScala
+import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object RalphLangServer {
 
@@ -25,6 +29,7 @@ object RalphLangServer {
     val capabilities = new ServerCapabilities()
 
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
+    capabilities.setCompletionProvider(new CompletionOptions(true, java.util.Arrays.asList(".")))
 
     capabilities
   }
@@ -218,6 +223,34 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   override def getWorkspaceService: WorkspaceService =
     this
+
+  override def completion(params: CompletionParams): CompletableFuture[messages.Either[java.util.List[org.eclipse.lsp4j.CompletionItem],CompletionList]] =
+    CompletableFutures.computeAsync {
+      cancelChecker =>
+
+        val fileURI = new URI(params.getTextDocument.getUri)
+        val line = params.getPosition.getLine
+        val character = params.getPosition.getCharacter
+
+        cancelChecker.checkCanceled()
+
+        val completionList: CompletionList = (getOrBuildWorkspace(None) map {
+          source =>
+          val suggestions =
+            CodeCompleter.complete(
+              line = line,
+              character = character,
+              uri = fileURI,
+              workspace = source
+            )
+
+              CompletionConverter.toCompletionList(suggestions)
+          })
+          //TODO what should we do incase getting workspace fail?
+          .toOption.getOrElse(new CompletionList())
+
+        messages.Either.forRight[java.util.List[CompletionItem], CompletionList](completionList)
+    }
 
   /**
    * Apply code change and publish diagnostics.
