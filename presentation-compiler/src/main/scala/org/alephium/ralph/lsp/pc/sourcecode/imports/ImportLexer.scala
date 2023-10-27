@@ -11,7 +11,7 @@ object ImportLexer {
 
   def interfaceName[Unknown: P]: P[Unit] = {
     implicit val whitespace: P[_] => P[Unit] = fastparse.NoWhitespace.noWhitespaceImplicit
-    P((CharIn("a-z") | "/" | "_" | "-" | "." | " ").rep)
+    P((CharIn("a-z") | "/" | "_" | "-" | "." | " " | "\n").rep)
   }
 
   def importValue[Unknown: P]: P[Unit] = {

@@ -36,9 +36,13 @@ object ImportHandler {
   }
 
   private def replaceImport(code:String, parsedImport: ParsedImport): String = {
-    //We preserve same size as initial parsing
-    val patch = parsedImport.fullParse.replaceFirst("import", s"//mprt").replaceFirst(s""""${parsedImport.name}"""", s"//${parsedImport.name}")
-    code.patch(parsedImport.fullParseIndex, patch, patch.size)
+    //We preserve same size as initial parsing for source indexing
+    //but erase everything so parsing can work
+    val patch = parsedImport.fullParse.map{
+      case '\n' => '\n'
+      case _ => ' '
+    }
+    code.patch(parsedImport.fullParseIndex, patch, parsedImport.fullParse.size)
   }
 
   def compileImports(imports: Seq[ParsedImport])(implicit compiler: CompilerAccess, buildDependencies: BuildDependencies): Seq[Either[CompilerMessage.AnyError, Seq[ContractWithState]]] = {
