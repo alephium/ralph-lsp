@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.{CompiledContract, CompiledScript}
 import org.alephium.ralph.Ast.ContractWithState
-import org.alephium.ralph.lsp.pc.sourcecode.imports.ParsedImport
+import org.alephium.ralph.lsp.pc.sourcecode.imports.ImportState
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.warning.StringWarning
 
@@ -53,7 +53,7 @@ object SourceCodeState {
   case class Parsed(fileURI: URI,
                     code: String,
                     contracts: Seq[ContractWithState],
-                    imports: Seq[ParsedImport]) extends ParsedState
+                    imports: Seq[ImportState.Parsed]) extends ParsedState
 
   /** Represents: Successful code compilation */
   case class Compiled(fileURI: URI,

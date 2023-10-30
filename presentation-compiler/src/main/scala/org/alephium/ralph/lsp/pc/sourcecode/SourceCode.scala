@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.Ast.ContractWithState
-import org.alephium.ralph.lsp.pc.sourcecode.imports.{ImportHandler, ParsedImport}
+import org.alephium.ralph.lsp.pc.sourcecode.imports.{ImportHandler, ImportState}
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
@@ -135,7 +135,7 @@ private[pc] object SourceCode {
 
     val compilationResult =
       compiler.compileContracts(
-        contracts = contractsToCompile ++ importsAst,
+        contracts = contractsToCompile ++ importsAst.flatMap(_.compiledCode),
         options = compilerOptions
       )
 
@@ -159,7 +159,7 @@ private[pc] object SourceCode {
   }
 
   //Imports are a bit different than full source code compiling, we want to find all invalid import as well as returning the AST for the valid ones.
-  def compileImports(sourceCode:ArraySeq[SourceCodeState.Parsed],buildDependencies: BuildDependencies)(implicit compiler: CompilerAccess): ArraySeq[(Option[SourceCodeState.ErrorSource], Seq[ContractWithState])] = {
+  def compileImports(sourceCode:ArraySeq[SourceCodeState.Parsed],buildDependencies: BuildDependencies)(implicit compiler: CompilerAccess): ArraySeq[(Option[SourceCodeState.ErrorSource], Seq[ImportState.Compiled])] = {
     sourceCode.map { sourceCode =>
       val (errors, validImports) = ImportHandler.compileImports(sourceCode.imports)(compiler,buildDependencies).partitionMap(identity)
 
@@ -172,11 +172,11 @@ private[pc] object SourceCode {
         )
       }
 
-      (errorSource, validImports.distinct.flatten)
+      (errorSource, validImports.distinct)
     }
   }
 
-  private def parseContractsAndImports(code: String)(implicit compiler: CompilerAccess): Either[Seq[CompilerMessage.AnyError], (Seq[ContractWithState], Seq[ParsedImport])] =
+  private def parseContractsAndImports(code: String)(implicit compiler: CompilerAccess): Either[Seq[CompilerMessage.AnyError], (Seq[ContractWithState], Seq[ImportState.Parsed])] =
     for {
       codeWithImports <- imports.ImportHandler.parseImports(code)
       codeAst <- compiler.parseContracts(codeWithImports.code).left.map(Seq(_))

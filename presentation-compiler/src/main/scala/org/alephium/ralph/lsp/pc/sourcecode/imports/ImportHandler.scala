@@ -12,7 +12,7 @@ import org.alephium.ralph
 
 object ImportHandler {
 
-  case class ParseResult(code: String, parsedImports: Seq[ParsedImport])
+  case class ParseResult(code: String, parsedImports: Seq[ImportState.Parsed])
 
   /*
    * Parse source code and find all imports.
@@ -28,14 +28,14 @@ object ImportHandler {
     }
   }
 
-  private def findAndReplaceImports(initialCode: String, parsedImports:Seq[ParsedImport]) = {
+  private def findAndReplaceImports(initialCode: String, parsedImports:Seq[ImportState.Parsed]) = {
     parsedImports.foldLeft(initialCode) {
       case (code, parsedImport) =>
         replaceImport(code, parsedImport)
     }
   }
 
-  private def replaceImport(code:String, parsedImport: ParsedImport): String = {
+  private def replaceImport(code:String, parsedImport: ImportState.Parsed): String = {
     //We preserve same size as initial parsing for source indexing
     //but erase everything so parsing can work
     val patch = parsedImport.fullParse.map{
@@ -45,16 +45,16 @@ object ImportHandler {
     code.patch(parsedImport.fullParseIndex, patch, parsedImport.fullParse.size)
   }
 
-  def compileImports(imports: Seq[ParsedImport])(implicit compiler: CompilerAccess, buildDependencies: BuildDependencies): Seq[Either[CompilerMessage.AnyError, Seq[ContractWithState]]] = {
+  def compileImports(imports: Seq[ImportState.Parsed])(implicit compiler: CompilerAccess, buildDependencies: BuildDependencies): Seq[Either[CompilerMessage.AnyError, ImportState.Compiled]] = {
     imports.map { parsedImport =>
       for {
         code <- validateImportAndGetCode(parsedImport)
         compiled <- compiler.parseContracts(code)
-       } yield compiled
+       } yield ImportState.Compiled(parsedImport, compiled)
      }
   }
 
-  private def validateImportAndGetCode(parsedImport: ParsedImport)(implicit buildDependencies: BuildDependencies): Either[CompilerMessage.AnyError, String] =
+  private def validateImportAndGetCode(parsedImport: ImportState.Parsed)(implicit buildDependencies: BuildDependencies): Either[CompilerMessage.AnyError, String] =
     buildDependencies.stdInterfaces.get(parsedImport.name.value).toRight {
       ImportError.Unknown(parsedImport.name.value, SourceIndex(parsedImport.index, parsedImport.name.value.size))
   }
