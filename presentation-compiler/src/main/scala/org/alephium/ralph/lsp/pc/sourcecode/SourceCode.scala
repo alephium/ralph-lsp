@@ -131,11 +131,13 @@ private[pc] object SourceCode {
 
     val importErrors = importsErrorAndAst.map{ case (error,_) => error }.flatten
     //`distinct` as compiler will fail if we import the same interface in different files
-    val importsAst = importsErrorAndAst.map{ case (_, ast) => ast }.distinct.flatten
+    val importsAst = importsErrorAndAst.map{ case (_, imports) => imports }.flatten
+      .distinctBy(_.parsed.name)
+      .flatMap(_.compiledCode)
 
     val compilationResult =
       compiler.compileContracts(
-        contracts = contractsToCompile ++ importsAst.flatMap(_.compiledCode),
+        contracts = contractsToCompile ++ importsAst,
         options = compilerOptions
       )
 
