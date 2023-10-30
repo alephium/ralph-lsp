@@ -20,6 +20,9 @@ object BuildState {
   /** Parsed states */
   sealed trait ParseResult extends BuildState
 
+  /** Validation states */
+  sealed trait ValidationResult extends BuildState
+
   /** Compiled states */
   sealed trait CompileResult extends BuildState
 
@@ -28,11 +31,18 @@ object BuildState {
                          code: String,
                          config: RalphcParsedConfig) extends BuildState.ParseResult
 
+  /** Build is validated */
+  case class BuildValidated(buildURI: URI,
+                            code: String,
+                            config: RalphcCompiledConfig,
+                            depsVersion: BuildDependencies.Version.type) extends BuildState.ValidationResult
+
   /** Build is successfully compiled */
   case class BuildCompiled(buildURI: URI,
                            code: String,
                            config: RalphcCompiledConfig,
-                           dependencies: BuildDependencies) extends BuildState.CompileResult {
+                           dependencies: BuildDependencies,
+                           validated: BuildValidated) extends BuildState.CompileResult {
     def contractURI: URI =
       config.contractPath.toUri
 
@@ -57,6 +67,6 @@ object BuildState {
   case class BuildErrored(buildURI: URI,
                           code: Option[String],
                           errors: ArraySeq[CompilerMessage.AnyError],
-                          activateWorkspace: Option[WorkspaceState.SourceAware]) extends BuildState.ParseResult with BuildState.CompileResult
+                          activateWorkspace: Option[WorkspaceState.SourceAware]) extends BuildState.ParseResult with BuildState.CompileResult with ValidationResult
 
 }

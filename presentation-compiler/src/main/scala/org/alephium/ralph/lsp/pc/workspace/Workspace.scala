@@ -80,7 +80,8 @@ object Workspace {
         val newBuild =
           Build.parseAndCompile(
             buildURI = workspace.buildURI,
-            code = None
+            code = None,
+            currentBuild = None
           )
 
         initialise(newBuild)
@@ -110,6 +111,7 @@ object Workspace {
           Build.parseAndCompile(
             buildURI = buildURI,
             code = code,
+            currentBuild = None
           )
 
         initialise(build)

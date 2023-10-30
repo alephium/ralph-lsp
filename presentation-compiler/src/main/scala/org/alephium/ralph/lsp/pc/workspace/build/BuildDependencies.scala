@@ -9,4 +9,7 @@ object BuildDependencies {
     BuildDependencies(
       stdInterfaces = Map.empty
     )
+
+  //Currently version of dependencies are fix by the build.sbt
+  case object Version
 }

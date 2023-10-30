@@ -8,8 +8,9 @@ import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 import java.net.URI
 import java.nio.file.{Path, Paths}
 import scala.collection.immutable.ArraySeq
+import com.typesafe.scalalogging.StrictLogging
 
-object Build {
+object Build extends StrictLogging{
 
   val BUILD_FILE_EXTENSION = "ralph"
 
@@ -64,7 +65,7 @@ object Build {
     }
 
   /** Compile a parsed build */
-  def compile(parsed: BuildState.ParseResult)(implicit file: FileAccess): BuildState.CompileResult =
+  def validate(parsed: BuildState.ParseResult)(implicit file: FileAccess): BuildState.ValidationResult =
     parsed match {
       case errored: BuildErrored =>
         // there are parsing errors
@@ -72,11 +73,11 @@ object Build {
 
       case parsed: BuildParsed =>
         // parse successful. Perform compilation!
-       buildDependencies(BuildValidator.validate(parsed))
+       BuildValidator.validate(parsed)
     }
 
   /** Parse and compile from disk */
-  def parseAndCompile(buildURI: URI)(implicit file: FileAccess): BuildState.CompileResult =
+  def parseAndValidate(buildURI: URI)(implicit file: FileAccess): BuildState.ValidationResult =
     file.exists(buildURI) match {
       case Left(error) =>
         BuildErrored(
@@ -88,7 +89,7 @@ object Build {
 
       case Right(exists) =>
         if (exists)
-          compile(parse(buildURI))
+          validate(parse(buildURI))
         else
           BuildErrored(
             buildURI = buildURI,
@@ -99,8 +100,8 @@ object Build {
     }
 
   /** Parse and compile from memory */
-  def parseAndCompile(buildURI: URI,
-                      code: String)(implicit file: FileAccess): BuildState.CompileResult = {
+  def parseAndValidate(buildURI: URI,
+                      code: String)(implicit file: FileAccess): BuildState.ValidationResult = {
     // Code is already read. Parse and validate it.
     val parsed =
       parse(
@@ -108,21 +109,25 @@ object Build {
         json = code
       )
 
-    compile(parsed)
+    validate(parsed)
   }
 
   def parseAndCompile(buildURI: URI,
-                      code: Option[String])(implicit file: FileAccess): BuildState.CompileResult =
-    code match {
+                      code: Option[String],
+                      currentBuild:Option[BuildState.BuildCompiled])(implicit file: FileAccess): BuildState.CompileResult =
+    (code match {
       case Some(code) =>
-        parseAndCompile(
+        parseAndValidate(
           buildURI = buildURI,
           code = code
         )
 
       case None =>
         // Code is not known. Parse and validate it from disk.
-        parseAndCompile(buildURI)
+        parseAndValidate(buildURI)
+    }) match {
+      case validated:BuildState.BuildValidated => compile(validated, currentBuild)
+      case error: BuildErrored => error
     }
 
   /**
@@ -150,6 +155,7 @@ object Build {
         Build.parseAndCompile(
           buildURI = buildURI,
           code = code,
+          currentBuild = Some(currentBuild)
         ) match {
           case newBuild: BuildState.BuildCompiled =>
             // if the new build-file is the same as current build-file, return it as
@@ -164,21 +170,38 @@ object Build {
         }
     }
 
-  def buildDependencies(compiled: BuildState.CompileResult): BuildState.CompileResult =
-    compiled match {
-      case compiled: BuildCompiled =>
-        StdInterface.buildStdInterfaces match {
-          case Right(stdInterfaces) =>
-            compiled.copy(dependencies = compiled.dependencies.copy(stdInterfaces = stdInterfaces))
-          case Left(error) =>
-              BuildErrored(
-                buildURI = compiled.buildURI,
-                code = None,
-                errors = ArraySeq(error),
-                activateWorkspace = None
-              )
-        }
-      case errored: BuildErrored =>
-        errored
+  //Currently version of dependencies are fix by the build.sbt
+  //When version can be configured, we need here to check which version changed to load them
+  def compile(validated: BuildState.BuildValidated, previous: Option[BuildState.BuildCompiled]): BuildState.CompileResult =
+    previous match {
+      case Some(previous) if previous.validated.depsVersion == validated.depsVersion =>
+        toBuildCompiled(validated, previous.dependencies)
+      case _ =>
+        buildDependencies(validated)
     }
+
+  def toBuildCompiled(validated: BuildState.BuildValidated, deps: BuildDependencies): BuildState.BuildCompiled =
+    BuildState.BuildCompiled(
+      validated.buildURI,
+      validated.code,
+      validated.config,
+      deps,
+      validated
+    )
+
+  //Dependenciens are only load from disk, later we could imagine downloading them on the fly.
+  def buildDependencies(validated: BuildState.BuildValidated): BuildState.CompileResult = {
+    logger.debug("Loading dependencies from disk")
+    StdInterface.buildStdInterfaces match {
+      case Right(stdInterfaces) =>
+        toBuildCompiled(validated, BuildDependencies(stdInterfaces))
+      case Left(error) =>
+        BuildErrored(
+        buildURI = validated.buildURI,
+        code = None,
+        errors = ArraySeq(error),
+        activateWorkspace = None
+        )
+    }
+  }
 }

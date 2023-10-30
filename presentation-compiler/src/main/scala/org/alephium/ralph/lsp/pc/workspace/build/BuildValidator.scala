@@ -16,14 +16,14 @@ import scala.collection.mutable.ListBuffer
 object BuildValidator {
 
   /** Validate and promotes a parsed build-file to compiled */
-  def validate(parsed: BuildParsed)(implicit file: FileAccess): BuildState.CompileResult = {
+  def validate(parsed: BuildParsed)(implicit file: FileAccess): BuildState.ValidationResult = {
 
     /** Returns a successful compiled state */
     def success() = {
       val (_, absoluteContractPath, absoluteArtifactPath) =
         getAbsolutePaths(parsed)
 
-      BuildCompiled(
+      BuildValidated(
         buildURI = parsed.buildURI,
         code = parsed.code,
         config =
@@ -32,7 +32,7 @@ object BuildValidator {
             contractPath = absoluteContractPath,
             artifactPath = absoluteArtifactPath
           ),
-        dependencies = BuildDependencies.empty
+        depsVersion = BuildDependencies.Version
       )
     }
 
