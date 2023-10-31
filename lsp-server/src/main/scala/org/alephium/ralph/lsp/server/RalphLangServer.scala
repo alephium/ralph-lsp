@@ -38,7 +38,8 @@ object RalphLangServer {
         client = Some(client),
         listener = Some(listener),
         workspace = None,
-        buildErrors = None
+        buildErrors = None,
+        shutdownReceived = false
       )
 
     new RalphLangServer(initialState)
@@ -51,7 +52,8 @@ object RalphLangServer {
         client = None,
         listener = None,
         workspace = None,
-        buildErrors = None
+        buildErrors = None,
+        shutdownReceived = false
       )
     )
 
@@ -390,18 +392,24 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   }
 
   override def shutdown(): CompletableFuture[AnyRef] =
-    state.listener match {
-      case Some(listener) =>
-        CompletableFuture.supplyAsync {
-          () =>
-            java.lang.Boolean.valueOf(listener.cancel(true))
-        }
-
-      case None =>
-        CompletableFuture.failedFuture(new Exception("Listener not set"))
+    thisServer.synchronized {
+      logger.info("shutdown")
+      if(thisServer.state.shutdownReceived){
+        notifyAndThrow(ResponseError.ShutdownRequested)
+      } else {
+        thisServer.state = thisServer.state.copy(shutdownReceived = true)
+        CompletableFuture.completedFuture(java.lang.Boolean.TRUE)
+      }
     }
 
-  override def exit(): Unit =
-    System.exit(0)
-
+  override def exit(): Unit = {
+    thisServer.synchronized {
+      logger.info("exit")
+      if(thisServer.state.shutdownReceived) {
+        System.exit(0)
+      } else {
+        System.exit(1)
+      }
+    }
+  }
 }

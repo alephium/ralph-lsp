@@ -36,4 +36,9 @@ object ResponseError {
       message = s"Unknown file type: $fileURI"
     )
 
+  case object ShutdownRequested extends
+    ResponseError(
+      errorCode = ResponseErrorCode.InvalidRequest,
+      message = "Shutdown was requested"
+    )
 }

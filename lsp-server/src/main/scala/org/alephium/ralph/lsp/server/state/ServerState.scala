@@ -20,4 +20,6 @@ import java.util.concurrent.{Future => JFuture}
 case class ServerState(client: Option[RalphLangClient],
                        listener: Option[JFuture[Void]],
                        workspace: Option[WorkspaceState],
-                       buildErrors: Option[BuildState.BuildErrored])
+                       buildErrors: Option[BuildState.BuildErrored],
+                       shutdownReceived: Boolean
+                       )
