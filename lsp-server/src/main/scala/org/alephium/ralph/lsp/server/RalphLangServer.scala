@@ -402,14 +402,19 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       }
     }
 
-  override def exit(): Unit = {
+  def exitWithCode(): Int =
     thisServer.synchronized {
       logger.info("exit")
+
+      thisServer.state.listener.map(_.cancel(true))
+
       if(thisServer.state.shutdownReceived) {
-        System.exit(0)
+        0
       } else {
-        System.exit(1)
+        1
       }
     }
-  }
+
+  override def exit(): Unit =
+    System.exit(exitWithCode())
 }
