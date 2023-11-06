@@ -38,7 +38,8 @@ object RalphLangServer {
         client = Some(client),
         listener = Some(listener),
         workspace = None,
-        buildErrors = None
+        buildErrors = None,
+        shutdownReceived = false
       )
 
     new RalphLangServer(initialState)
@@ -51,7 +52,8 @@ object RalphLangServer {
         client = None,
         listener = None,
         workspace = None,
-        buildErrors = None
+        buildErrors = None,
+        shutdownReceived = false
       )
     )
 
@@ -389,19 +391,44 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     throw exception
   }
 
-  override def shutdown(): CompletableFuture[AnyRef] =
-    state.listener match {
-      case Some(listener) =>
-        CompletableFuture.supplyAsync {
-          () =>
-            java.lang.Boolean.valueOf(listener.cancel(true))
-        }
+  /** Write to log file and send the error to the client */
+  private def logAndSend[A](error: server.ResponseError): CompletableFuture[A] = {
+    logger.error(error.getMessage, error.toResponseErrorException)
+    val result = new CompletableFuture[A]()
+    result.completeExceptionally(error.toResponseErrorException)
+    result
+  }
 
-      case None =>
-        CompletableFuture.failedFuture(new Exception("Listener not set"))
+  override def shutdown(): CompletableFuture[AnyRef] =
+    thisServer.synchronized {
+      logger.info("shutdown")
+      if(thisServer.state.shutdownReceived){
+        logAndSend(ResponseError.ShutdownRequested)
+      } else {
+        thisServer.state = thisServer.state.copy(shutdownReceived = true)
+        CompletableFuture.completedFuture(java.lang.Boolean.TRUE)
+      }
+    }
+
+  def exitWithCode(): Int =
+    thisServer.synchronized {
+      logger.info("exit")
+
+      thisServer.state.listener match {
+        case Some(listener) =>
+          listener.cancel(true)
+
+        case None =>
+          logger.error("Listener is empty. Exit invoked on server that is not initialised")
+      }
+
+      if(thisServer.state.shutdownReceived) {
+        0
+      } else {
+        1
+      }
     }
 
   override def exit(): Unit =
-    System.exit(0)
-
+    System.exit(exitWithCode())
 }
