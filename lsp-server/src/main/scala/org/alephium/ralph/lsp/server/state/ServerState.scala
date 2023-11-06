@@ -21,5 +21,4 @@ case class ServerState(client: Option[RalphLangClient],
                        listener: Option[JFuture[Void]],
                        workspace: Option[WorkspaceState],
                        buildErrors: Option[BuildState.BuildErrored],
-                       shutdownReceived: Boolean
-                       )
+                       shutdownReceived: Boolean)

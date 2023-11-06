@@ -39,6 +39,6 @@ object ResponseError {
   case object ShutdownRequested extends
     ResponseError(
       errorCode = ResponseErrorCode.InvalidRequest,
-      message = "Shutdown was requested"
+      message = "Request Ignored: A server shutdown request is in progress"
     )
 }
