@@ -77,12 +77,12 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
       server.getState().listener.get.isCancelled shouldBe false
     }
 
-    "throw when receiving more than one shutdown request" in {
+    "return an `InvalidRequest` when receiving more than one shutdown request" in {
       val server = RalphLangServer(client, listener)
 
       server.shutdown().asScala.futureValue shouldBe true
-
-      assertThrows[ResponseErrorException](server.shutdown().asScala.futureValue)
+      //Testing messages as the two java classes aren't consider equal
+      server.shutdown().asScala.failed.futureValue.getMessage shouldBe ResponseError.ShutdownRequested.toResponseErrorException.getMessage
     }
   }
 

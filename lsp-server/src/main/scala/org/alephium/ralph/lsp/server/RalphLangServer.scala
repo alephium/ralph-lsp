@@ -391,11 +391,19 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     throw exception
   }
 
+  /** Write to log file and send the error to the client */
+  private def logAndSend[A](error: server.ResponseError): CompletableFuture[A] = {
+    logger.error(error.getMessage, error.toResponseErrorException)
+    val result = new CompletableFuture[A]()
+    result.completeExceptionally(error.toResponseErrorException)
+    result
+  }
+
   override def shutdown(): CompletableFuture[AnyRef] =
     thisServer.synchronized {
       logger.info("shutdown")
       if(thisServer.state.shutdownReceived){
-        notifyAndThrow(ResponseError.ShutdownRequested)
+        logAndSend(ResponseError.ShutdownRequested)
       } else {
         thisServer.state = thisServer.state.copy(shutdownReceived = true)
         CompletableFuture.completedFuture(java.lang.Boolean.TRUE)
