@@ -406,7 +406,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     thisServer.synchronized {
       logger.info("exit")
 
-      thisServer.state.listener.map(_.cancel(true))
+      thisServer.state.listener match {
+        case Some(listener) =>
+          listener.cancel(true)
+
+        case None =>
+          logger.error("Listener is empty. Exit invoked on server that is not initialised")
+      }
 
       if(thisServer.state.shutdownReceived) {
         0
