@@ -102,6 +102,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] =
     CompletableFutures.computeAsync {
       cancelChecker =>
+        logger.debug("Initialize request")
         // Previous commit uses the non-deprecated API but that does not work in vim.
         val rootURI =
           RalphLangServer.getRootUri(params)
@@ -114,10 +115,26 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         setWorkspace(workspace)
 
+        setClientCapabilities(params.getCapabilities())
+
         cancelChecker.checkCanceled()
 
         new InitializeResult(serverCapabilities())
     }
+
+  override def initialized(params: InitializedParams): Unit = {
+    logger.debug("Client initialized")
+    thisServer.state.clientCapabilities match {
+      case Some(capabilities) =>
+        if(capabilities.getWorkspace().getDidChangeWatchedFiles().getDynamicRegistration()) {
+          logger.debug("Register watched files")
+          getClient().registerWatchedFiles()
+        } else {
+          logger.debug("Client doesn't support dynamic registration for watched files")
+        }
+      case None => ()
+    }
+  }
 
   /** @inheritdoc */
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
