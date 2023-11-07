@@ -39,6 +39,7 @@ object RalphLangServer {
         listener = Some(listener),
         workspace = None,
         buildErrors = None,
+        clientCapabilities = None,
         shutdownReceived = false
       )
 
@@ -53,6 +54,7 @@ object RalphLangServer {
         listener = None,
         workspace = None,
         buildErrors = None,
+        clientCapabilities = None,
         shutdownReceived = false
       )
     )
@@ -328,6 +330,11 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   private def setWorkspace(workspace: WorkspaceState): Unit =
     thisServer.synchronized {
       thisServer.state = thisServer.state.copy(workspace = Some(workspace))
+    }
+
+  private def setClientCapabilities(clientCapabilities: ClientCapabilities): Unit =
+    thisServer.synchronized {
+      thisServer.state = thisServer.state.copy(clientCapabilities = Some(clientCapabilities))
     }
 
   /**

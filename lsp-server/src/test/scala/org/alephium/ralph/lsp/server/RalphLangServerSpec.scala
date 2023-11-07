@@ -4,7 +4,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.state.ServerState
-import org.eclipse.lsp4j.{InitializeParams, InitializeResult}
+import org.eclipse.lsp4j.{ClientCapabilities, InitializeParams, InitializeResult}
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -48,6 +48,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
           listener = Some(listener),
           workspace = Some(WorkspaceState.Created(workspaceURI)),
           buildErrors = None,
+          clientCapabilities = Some(initialise.getCapabilities),
           shutdownReceived = false
         )
     }

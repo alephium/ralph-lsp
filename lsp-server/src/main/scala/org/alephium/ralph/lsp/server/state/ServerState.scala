@@ -5,6 +5,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.server.RalphLangClient
 
 import java.util.concurrent.{Future => JFuture}
+import org.eclipse.lsp4j.ClientCapabilities
 
 /**
  * Stores Ralph's LSP server state.
@@ -21,4 +22,5 @@ case class ServerState(client: Option[RalphLangClient],
                        listener: Option[JFuture[Void]],
                        workspace: Option[WorkspaceState],
                        buildErrors: Option[BuildState.BuildErrored],
+                       clientCapabilities: Option[ClientCapabilities],
                        shutdownReceived: Boolean)
