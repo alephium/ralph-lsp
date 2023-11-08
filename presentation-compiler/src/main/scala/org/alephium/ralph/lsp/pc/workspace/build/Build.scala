@@ -23,7 +23,7 @@ object Build {
 
   /** Parse a build that is in-memory */
   def parse(buildURI: URI,
-            json: String): BuildState.ParseResult =
+            json: String): BuildState.IsParsed =
     RalphcConfig.parse(
       buildURI = buildURI,
       json = json
@@ -45,7 +45,7 @@ object Build {
     }
 
   /** Parse a build that is on-disk */
-  def parse(buildURI: URI)(implicit file: FileAccess): BuildState.ParseResult =
+  def parse(buildURI: URI)(implicit file: FileAccess): BuildState.IsParsed =
     file.read(buildURI) match {
       case Left(error) =>
         BuildErrored(
@@ -63,7 +63,7 @@ object Build {
     }
 
   /** Compile a parsed build */
-  def compile(parsed: BuildState.ParseResult)(implicit file: FileAccess): BuildState.CompileResult =
+  def compile(parsed: BuildState.IsParsed)(implicit file: FileAccess): BuildState.IsCompiled =
     parsed match {
       case errored: BuildErrored =>
         // there are parsing errors
@@ -75,7 +75,7 @@ object Build {
     }
 
   /** Parse and compile from disk */
-  def parseAndCompile(buildURI: URI)(implicit file: FileAccess): BuildState.CompileResult =
+  def parseAndCompile(buildURI: URI)(implicit file: FileAccess): BuildState.IsCompiled =
     file.exists(buildURI) match {
       case Left(error) =>
         BuildErrored(
@@ -99,7 +99,7 @@ object Build {
 
   /** Parse and compile from memory */
   def parseAndCompile(buildURI: URI,
-                      code: String)(implicit file: FileAccess): BuildState.CompileResult = {
+                      code: String)(implicit file: FileAccess): BuildState.IsCompiled = {
     // Code is already read. Parse and validate it.
     val parsed =
       parse(
@@ -111,7 +111,7 @@ object Build {
   }
 
   def parseAndCompile(buildURI: URI,
-                      code: Option[String])(implicit file: FileAccess): BuildState.CompileResult =
+                      code: Option[String])(implicit file: FileAccess): BuildState.IsCompiled =
     code match {
       case Some(code) =>
         parseAndCompile(
@@ -129,7 +129,7 @@ object Build {
    * */
   def parseAndCompile(buildURI: URI,
                       code: Option[String],
-                      currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess): Option[BuildState.CompileResult] =
+                      currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess): Option[BuildState.IsCompiled] =
     BuildValidator.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = currentBuild.workspaceURI

@@ -16,7 +16,7 @@ import scala.collection.mutable.ListBuffer
 object BuildValidator {
 
   /** Validate and promotes a parsed build-file to compiled */
-  def validate(parsed: BuildParsed)(implicit file: FileAccess): BuildState.CompileResult = {
+  def validate(parsed: BuildParsed)(implicit file: FileAccess): BuildState.IsCompiled = {
 
     /** Returns a successful compiled state */
     def success() = {

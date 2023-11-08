@@ -18,20 +18,20 @@ sealed trait BuildState {
 object BuildState {
 
   /** Parsed states */
-  sealed trait ParseResult extends BuildState
+  sealed trait IsParsed extends BuildState
 
   /** Compiled states */
-  sealed trait CompileResult extends BuildState
+  sealed trait IsCompiled extends BuildState
 
   /** Build is successfully parsed */
   case class BuildParsed(buildURI: URI,
                          code: String,
-                         config: RalphcParsedConfig) extends BuildState.ParseResult
+                         config: RalphcParsedConfig) extends BuildState.IsParsed
 
   /** Build is successfully compiled */
   case class BuildCompiled(buildURI: URI,
                            code: String,
-                           config: RalphcCompiledConfig) extends BuildState.CompileResult {
+                           config: RalphcCompiledConfig) extends BuildState.IsCompiled {
     def contractURI: URI =
       config.contractPath.toUri
 
@@ -56,6 +56,6 @@ object BuildState {
   case class BuildErrored(buildURI: URI,
                           code: Option[String],
                           errors: ArraySeq[CompilerMessage.AnyError],
-                          activateWorkspace: Option[WorkspaceState.IsSourceAware]) extends BuildState.ParseResult with BuildState.CompileResult
+                          activateWorkspace: Option[WorkspaceState.IsSourceAware]) extends BuildState.IsParsed with BuildState.IsCompiled
 
 }

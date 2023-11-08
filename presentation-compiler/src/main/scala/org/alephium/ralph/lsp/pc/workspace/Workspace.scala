@@ -24,7 +24,7 @@ object Workspace {
     WorkspaceState.Created(workspaceURI)
 
   /** Creates an un-compiled workspace for a successful build file. */
-  def initialise(state: BuildState.CompileResult)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+  def initialise(state: BuildState.IsCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     state match {
       case compiled: BuildState.BuildCompiled =>
         // Build file changed. Update the workspace and request a full workspace build.
@@ -143,7 +143,7 @@ object Workspace {
         }
     }
 
-  def cleanBuild(newBuild: BuildState.CompileResult,
+  def cleanBuild(newBuild: BuildState.IsCompiled,
                  currentBuild: BuildState.BuildCompiled,
                  sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     newBuild match {
