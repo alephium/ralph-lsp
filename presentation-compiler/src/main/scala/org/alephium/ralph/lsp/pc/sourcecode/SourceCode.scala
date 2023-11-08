@@ -1,6 +1,5 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
@@ -63,21 +62,20 @@ private[pc] object SourceCode {
                                           compiler: CompilerAccess): SourceCodeState =
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
-        parseContractsWithImports(code) match {
-          case Left(errors) =>
+        compiler.parseContracts(code) match {
+          case Left(error) =>
             SourceCodeState.ErrorSource(
               fileURI = fileURI,
               code = code,
-              errors = errors,
+              errors = Array(error),
               previous = None
             )
 
-          case Right((parsedCode, parsedImports)) =>
+          case Right(parsedCode) =>
             SourceCodeState.Parsed(
               fileURI = fileURI,
               code = code,
               contracts = parsedCode,
-              imports = parsedImports
             )
         }
 
@@ -124,14 +122,9 @@ private[pc] object SourceCode {
     val contractsToCompile =
       sourceCode.flatMap(_.contracts)
 
-    // Author: @tdroxler - Copied to resolve merge conflict
-    //FIXME: This works as we avoid having multiple time the same Interface twice, but it means we don't
-    //show an error on a file missing the import, as having the import define in another file is fine.
-    val imports = sourceCode.flatMap(_.imports).toMap
-
     val compilationResult =
       compiler.compileContracts(
-        contracts = contractsToCompile ++ imports.values.flatten,
+        contracts = contractsToCompile,
         options = compilerOptions
       )
 
@@ -140,22 +133,6 @@ private[pc] object SourceCode {
       compilationResult = compilationResult
     )
   }
-
-  private def parseContractsWithImports(code: String)(implicit compiler: CompilerAccess): Either[Seq[CompilerMessage.AnyError], (Seq[ContractWithState], Map[String, Seq[ContractWithState]])] =
-    for {
-      codeWithImports <- imports.ImportHandler.extractStdImports(code)
-      codeAst <- compiler.parseContracts(codeWithImports.code).left.map(Seq(_))
-      importsAst <- parseImports(codeWithImports.imports).left.map(Seq(_))
-    } yield {
-      (codeAst, importsAst)
-    }
-
-  private def parseImports(imports: Map[String, String]) (implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, Map[String, Seq[ContractWithState]]] =
-    imports.map{ case (file, code)=>
-      compiler.parseContracts(code).map(res => (file, res))
-    }.partitionMap(identity) match { case (lefts, right) =>
-      lefts.headOption.toLeft(right).map(_.toMap)
-    }
 
   private def getSourceCode(fileURI: URI)(implicit file: FileAccess): SourceCodeState.AccessedState =
     file.read(fileURI) match {
