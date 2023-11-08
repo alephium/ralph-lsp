@@ -19,11 +19,11 @@ object RalphLangClient {
     }
 
     def registerWatchedFiles(): CompletableFuture[Void] = {
-      val watchers = Seq(new FileSystemWatcher(messages.Either.forLeft("**/*"))).asJava;
-      val options = new DidChangeWatchedFilesRegistrationOptions(watchers);
+      val watchers = util.Arrays.asList(new FileSystemWatcher(messages.Either.forLeft("**/*")))
+      val options = new DidChangeWatchedFilesRegistrationOptions(watchers)
       val registration = new Registration(WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES, options)
 
-      client.registerCapability(new RegistrationParams(Seq(registration).asJava))
+      client.registerCapability(new RegistrationParams(util.Arrays.asList(registration)))
     }
   }
 }
