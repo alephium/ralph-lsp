@@ -134,7 +134,11 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         if(maybeDynamicRegistration.getOrElse(false)) {
           logger.debug("Register watched files")
-          getClient().registerWatchedFiles()
+          getClient().registerWatchedFiles().whenComplete { case (_, error) =>
+            if(error != null) {
+              logger.error("Failed to register watched files", error)
+            }
+          }
         } else {
           logger.debug("Client doesn't support dynamic registration for watched files")
         }
