@@ -126,7 +126,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     logger.debug("Client initialized")
     thisServer.state.clientCapabilities match {
       case Some(capabilities) =>
-        if(capabilities.getWorkspace().getDidChangeWatchedFiles().getDynamicRegistration()) {
+        val maybeDynamicRegistration: Option[Boolean] = for {
+          workspace <- Option(capabilities.getWorkspace())
+          didChangeWatchedFiles <- Option(workspace.getDidChangeWatchedFiles())
+          dynamicRegistration <- Option(didChangeWatchedFiles.getDynamicRegistration())
+        } yield dynamicRegistration
+
+        if(maybeDynamicRegistration.getOrElse(false)) {
           logger.debug("Register watched files")
           getClient().registerWatchedFiles()
         } else {
