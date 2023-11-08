@@ -5,7 +5,6 @@ import org.alephium.ralph.lsp.server.MessageMethods._
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.lsp4j.jsonrpc.messages
-import scala.jdk.CollectionConverters.SeqHasAsJava
 import java.util.concurrent.CompletableFuture
 
 object RalphLangClient {
@@ -19,11 +18,11 @@ object RalphLangClient {
     }
 
     def registerWatchedFiles(): CompletableFuture[Void] = {
-      val watchers = util.Arrays.asList(new FileSystemWatcher(messages.Either.forLeft("**/*")))
+      val watchers = java.util.Arrays.asList(new FileSystemWatcher(messages.Either.forLeft("**/*")))
       val options = new DidChangeWatchedFilesRegistrationOptions(watchers)
       val registration = new Registration(WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES, options)
 
-      client.registerCapability(new RegistrationParams(util.Arrays.asList(registration)))
+      client.registerCapability(new RegistrationParams(java.util.Arrays.asList(registration)))
     }
   }
 }
