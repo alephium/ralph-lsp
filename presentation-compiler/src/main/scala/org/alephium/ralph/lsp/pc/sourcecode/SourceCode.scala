@@ -81,7 +81,7 @@ private[pc] object SourceCode {
 
       case onDisk: SourceCodeState.OnDisk =>
         getSourceCode(onDisk.fileURI) match {
-          case errored: SourceCodeState.FailedState =>
+          case errored: SourceCodeState.IsError =>
             errored
 
           case gotCode =>
@@ -118,7 +118,7 @@ private[pc] object SourceCode {
    * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
    */
   def compile(sourceCode: ArraySeq[SourceCodeState.Parsed],
-              compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.CodeAware]] = {
+              compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsCodeAware]] = {
     val contractsToCompile =
       sourceCode.flatMap(_.contracts)
 
@@ -134,7 +134,7 @@ private[pc] object SourceCode {
     )
   }
 
-  private def getSourceCode(fileURI: URI)(implicit file: FileAccess): SourceCodeState.AccessedState =
+  private def getSourceCode(fileURI: URI)(implicit file: FileAccess): SourceCodeState.IsAccessed =
     file.read(fileURI) match {
       case Left(error) =>
         SourceCodeState.ErrorAccess(fileURI, error)

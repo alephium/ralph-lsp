@@ -20,7 +20,7 @@ private[sourcecode] object SourceCodeStateBuilder {
    * @return Workspace-level error if no source-code association was found, or else the next source-code state for each source URI.
    */
   def toSourceCodeState(parsedCode: ArraySeq[SourceCodeState.Parsed],
-                        compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.CodeAware]] =
+                        compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsCodeAware]] =
     compilationResult map {
       case (compiledContracts, compiledScripts) =>
         buildCompiledSourceCodeState(
@@ -41,7 +41,7 @@ private[sourcecode] object SourceCodeStateBuilder {
    */
   private def buildCompiledSourceCodeState(parsedCode: ArraySeq[SourceCodeState.Parsed],
                                            compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript]): ArraySeq[SourceCodeState.CodeAware] =
+                                           compiledScripts: Array[CompiledScript]): ArraySeq[SourceCodeState.IsCodeAware] =
     parsedCode map {
       sourceCodeState =>
         val matchedCode = // Map contracts and scripts to their fileURIs.
