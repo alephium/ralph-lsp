@@ -12,8 +12,8 @@ object GenWorkspace {
   def genCreated(directory: Gen[URI] = GenCommon.genFolderURI()): Gen[WorkspaceState.Created] =
     directory map WorkspaceState.Created
 
-  def persist[W <: WorkspaceState.SourceAware](workspace: W,
-                                               code: Gen[String] = genGoodCode()): W = {
+  def persist[W <: WorkspaceState.IsSourceAware](workspace: W,
+                                                 code: Gen[String] = genGoodCode()): W = {
     FileIO.createDirectories(workspace.workspaceURI)
     persistAll(
       sourceCode = workspace.sourceCode,

@@ -276,7 +276,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @param code File that changed and it's source-code.
    * @return Diagnostics if there were build errors, or-else the next workspace.
    */
-  def getOrBuildWorkspace(code: Option[WorkspaceFile]): Either[Iterable[PublishDiagnosticsParams], WorkspaceState.SourceAware] =
+  def getOrBuildWorkspace(code: Option[WorkspaceFile]): Either[Iterable[PublishDiagnosticsParams], WorkspaceState.IsSourceAware] =
     thisServer.synchronized {
       val workspace =
         getWorkspace()

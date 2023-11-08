@@ -108,7 +108,7 @@ object DiagnosticsConverter {
       case _: WorkspaceState.Created =>
         Iterable.empty
 
-      case currentWorkspace: WorkspaceState.SourceAware =>
+      case currentWorkspace: WorkspaceState.IsSourceAware =>
         // publish new workspace given previous workspace.
         toPublishDiagnostics(
           previousOrCurrentState = currentWorkspace,
@@ -122,14 +122,14 @@ object DiagnosticsConverter {
   def toPublishDiagnostics(currentWorkspace: WorkspaceState,
                            newWorkspace: WorkspaceState): Iterable[PublishDiagnosticsParams] =
     (currentWorkspace, newWorkspace) match {
-      case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.SourceAware) =>
+      case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.IsSourceAware) =>
         // publish first compilation result i.e. previous workspace had no compilation run.
         toPublishDiagnostics(
           previousOrCurrentState = newWorkspace,
           nextState = None
         )
 
-      case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState) =>
+      case (currentWorkspace: WorkspaceState.IsSourceAware, newWorkspace: WorkspaceState) =>
         // publish new workspace given previous workspace.
         toPublishDiagnostics(
           previousOrCurrentState = currentWorkspace,
@@ -149,7 +149,7 @@ object DiagnosticsConverter {
    *                               Set to [[None]] if previousState is the only state.
    * @return Diagnostics to publish for the current state.
    */
-  def toPublishDiagnostics(previousOrCurrentState: WorkspaceState.SourceAware,
+  def toPublishDiagnostics(previousOrCurrentState: WorkspaceState.IsSourceAware,
                            nextState: Option[WorkspaceState]): Iterable[PublishDiagnosticsParams] = {
     // build diagnostics sent for previous state, or the current state if this is the first run.
     val previousOrCurrentDiagnotics =
@@ -208,7 +208,7 @@ object DiagnosticsConverter {
   }
 
   /** Fetch workspace/project level diagnostics i.e. diagnostics that do have source information. */
-  def toWorkspaceDiagnostics(workspace: WorkspaceState.SourceAware): PublishDiagnosticsParams = {
+  def toWorkspaceDiagnostics(workspace: WorkspaceState.IsSourceAware): PublishDiagnosticsParams = {
     val workspaceDiagnostics =
       workspace match {
         case compiled: WorkspaceState.Errored =>
@@ -230,7 +230,7 @@ object DiagnosticsConverter {
   }
 
   /** Fetch source-code level diagnostics */
-  def toSourceCodeDiagnostics(state: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] =
+  def toSourceCodeDiagnostics(state: WorkspaceState.IsSourceAware): Iterable[PublishDiagnosticsParams] =
     state.sourceCode collect {
       case state: SourceCodeState.ErrorSource =>
         // transform multiple source code errors to diagnostics.
@@ -273,7 +273,7 @@ object DiagnosticsConverter {
     }
 
   /** Fetch all diagnostics for this workspace */
-  def toPublishDiagnostics(workspace: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] = {
+  def toPublishDiagnostics(workspace: WorkspaceState.IsSourceAware): Iterable[PublishDiagnosticsParams] = {
     val sourceCodeDiagnostics = toSourceCodeDiagnostics(workspace)
     val workspaceDiagnostics = toWorkspaceDiagnostics(workspace)
     sourceCodeDiagnostics ++ Seq(workspaceDiagnostics)

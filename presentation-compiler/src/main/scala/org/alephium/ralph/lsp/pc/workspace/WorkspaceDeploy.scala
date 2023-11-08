@@ -19,7 +19,7 @@ object WorkspaceDeploy {
    * @return New workspace state that PresentationalCompiler can continue with.
    */
   def compileForDeployment(workspaceURI: URI,
-                           config: RalphcCompiledConfig)(implicit compiler: CompilerAccess): WorkspaceState.CompilerRun = {
+                           config: RalphcCompiledConfig)(implicit compiler: CompilerAccess): WorkspaceState.IsCompiled = {
     val result =
       compiler.compileForDeployment(
         workspaceURI = workspaceURI,

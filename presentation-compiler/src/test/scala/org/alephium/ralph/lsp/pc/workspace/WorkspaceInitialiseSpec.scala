@@ -182,7 +182,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
     }
 
     /**
-     * TEST CASES: When current state is [[WorkspaceState.SourceAware]]
+     * TEST CASES: When current state is [[WorkspaceState.IsSourceAware]]
      */
     "current workspace state is SourceAware" should {
       "always return the current workspace" in {
@@ -191,7 +191,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
           null
 
         // no source or build is touched since workspace is already initialised
-        val expectedWorkspace: WorkspaceState.SourceAware =
+        val expectedWorkspace: WorkspaceState.IsSourceAware =
           WorkspaceState.UnCompiled(
             build = null,
             sourceCode = null
