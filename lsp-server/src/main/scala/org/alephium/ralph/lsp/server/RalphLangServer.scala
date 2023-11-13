@@ -122,6 +122,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         new InitializeResult(serverCapabilities())
     }
 
+  /** @inheritdoc */
   override def initialized(params: InitializedParams): Unit = {
     logger.debug("Client initialized")
     thisServer.state.clientCapabilities match {

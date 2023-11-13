@@ -17,6 +17,8 @@ object RalphLangClient {
       error
     }
 
+    /* Server needs to notify the client about which files to watch.
+     * The client will then send notifications when given files are deleted/created */
     def registerWatchedFiles(): CompletableFuture[Void] = {
       val watchers = java.util.Arrays.asList(new FileSystemWatcher(messages.Either.forLeft("**/*")))
       val options = new DidChangeWatchedFilesRegistrationOptions(watchers)
