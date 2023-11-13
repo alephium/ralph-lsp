@@ -26,7 +26,13 @@ private object DiskFileAccess extends FileAccess {
       Right(Files.exists(Paths.get(fileURI)))
     catch {
       case throwable: Throwable =>
-        Left(ThrowableError(throwable))
+        val error =
+          ThrowableError(
+            title = s"Failed to check if file '$fileURI' exists",
+            throwable = throwable
+          )
+
+        Left(error)
     }
 
   /** @inheritdoc */

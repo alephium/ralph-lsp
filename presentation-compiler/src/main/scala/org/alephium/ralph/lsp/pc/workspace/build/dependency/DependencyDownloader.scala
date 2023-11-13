@@ -5,9 +5,9 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
-import org.alephium.ralph.lsp.access.compiler.message.error.ThrowableError
 import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDownloadingDependency
 
 import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
@@ -44,9 +44,9 @@ object DependencyDownloader extends LazyLogging {
    * TODO: Downloading source-code should be installable.
    * See issue <a href="https://github.com/alephium/ralph-lsp/issues/44">#44</a>.
    */
-  private def downloadStdFromJar(errorIndex: SourceIndex): Either[ThrowableError, Iterable[SourceCodeState.UnCompiled]] =
+  private def downloadStdFromJar(errorIndex: SourceIndex): Either[ErrorDownloadingDependency, Iterable[SourceCodeState.UnCompiled]] =
     try {
-      // stdInterfaces performs IO. Catch exceptions.
+      // Errors must be reported to the user. See https://github.com/alephium/ralph-lsp/issues/41.
       val code =
         StdInterface.stdInterfaces map {
           case (path, code) =>
@@ -59,15 +59,14 @@ object DependencyDownloader extends LazyLogging {
       Right(code)
     } catch {
       case throwable: Throwable =>
-        val title = "Failed to download std dependency"
-        logger.error(title, throwable)
-
         val error =
-          ThrowableError(
-            title = title,
+          ErrorDownloadingDependency(
+            dependencyID = StdInterface.stdFolder,
             throwable = throwable,
             index = errorIndex
           )
+
+        logger.error(error.title, throwable)
 
         Left(error)
     }
