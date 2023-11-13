@@ -1,10 +1,10 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.workspace.Workspace
 import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildFileLocation}
 import org.alephium.ralph.lsp.FileIO
 import org.alephium.ralph.lsp.GenCommon.genFolderURI
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.workspace.build.GenBuild._
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
@@ -29,13 +29,16 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
           GenBuild
             .genBuildParsed()
             .map(persist)
-            .map(Build.compile(_)(FileAccess.disk))
+            .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc))
             .map(_.asInstanceOf[BuildState.BuildCompiled])
 
         forAll(outSideBuildGen, insideBuildGen) {
           case (outsideBuild, insideBuild) =>
             // no file-io should occur
             implicit val file: FileAccess =
+              null
+
+            implicit val compiler: CompilerAccess =
               null
 
             // build code is optional
@@ -63,6 +66,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
                 buildURI = outsideBuild.buildURI, // must not be expected build-file location.
                 code = buildCode,
                 errors = ArraySeq(expectedError),
+                dependency = insideBuild.dependency, // compiled dependency is carried to next compilation
                 activateWorkspace = None
               )
 
@@ -76,7 +80,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
           GenBuild
             .genBuildParsed()
             .map(persist)
-            .map(Build.compile(_)(FileAccess.disk))
+            .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc))
             .map(_.asInstanceOf[BuildState.BuildCompiled])
 
         val generator =
@@ -108,6 +112,9 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
             implicit val file: FileAccess =
               null
 
+            implicit val compiler: CompilerAccess =
+              null
+
             // invoke build
             val actualWorkspace =
               Build.parseAndCompile(
@@ -129,6 +136,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
                 buildURI = build.buildURI,
                 code = buildCode,
                 errors = ArraySeq(expectedError),
+                dependency = currentBuild.dependency, // compiled dependency is carried to next compilation
                 activateWorkspace = None
               )
 
@@ -151,14 +159,21 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
           implicit val file: FileAccess =
             FileAccess.disk
 
+          implicit val compiler: CompilerAccess =
+            CompilerAccess.ralphc
+
           val actual =
-            Build.parseAndCompile(buildURI)
+            Build.parseAndCompile(
+              buildURI = buildURI,
+              currentBuild = None
+            )
 
           val expected =
             BuildState.BuildErrored(
               buildURI = buildURI,
               code = None,
               errors = ArraySeq(ErrorBuildFileNotFound),
+              dependency = None,
               activateWorkspace = None
             )
 

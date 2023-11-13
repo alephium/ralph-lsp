@@ -1,14 +1,19 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.{CompiledContract, CompiledScript}
-import org.alephium.ralph.Ast.ContractWithState
+import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.warning.StringWarning
+import org.alephium.ralph.lsp.pc.util.URIUtil
 
 import java.net.URI
 
 sealed trait SourceCodeState {
   def fileURI: URI
+
+  /** @see [[URIUtil.importIdentifier]] */
+  def importIdentifier: Option[String] =
+    URIUtil.importIdentifier(fileURI)
 }
 
 object SourceCodeState {
@@ -17,50 +22,51 @@ object SourceCodeState {
     Ordering.by[SourceCodeState, URI](_.fileURI)
 
   /** Represents: Source code exists, but is neither Compiled or Accessed */
-  sealed trait Initialised extends SourceCodeState
+  sealed trait IsInitialised extends SourceCodeState
 
   /** Represents: Code was accessed. It can either be in Error state or Success state.
    *
    * [[OnDisk]] state is no longer achievable from this state unless the file gets removed/dropped entirely
    * from a configured workspace - [[WorkspaceState.CodeAware]].
    * */
-  sealed trait AccessedState extends SourceCodeState
+  sealed trait IsAccessed extends SourceCodeState
 
   /** Represents: State where the source code is known */
-  sealed trait CodeAware extends SourceCodeState {
+  sealed trait IsCodeAware extends SourceCodeState {
     def code: String
   }
 
   /** Represents: Code is parsed */
-  sealed trait ParsedState extends CodeAware
+  sealed trait IsParsed extends IsCodeAware
 
   /** Represents: Code errored */
-  sealed trait FailedState extends SourceCodeState
+  sealed trait IsError extends SourceCodeState
+
+  sealed trait IsCompiled extends IsParsed
 
   /** The code is on disk */
-  case class OnDisk(fileURI: URI) extends Initialised
+  case class OnDisk(fileURI: URI) extends IsInitialised
 
   /** The code is in memory but not parsed or compiled */
   case class UnCompiled(fileURI: URI,
-                        code: String) extends Initialised with AccessedState with CodeAware
+                        code: String) extends IsInitialised with IsAccessed with IsCodeAware
 
   /** Represents: Was unable to access code */
   case class ErrorAccess(fileURI: URI,
-                         error: CompilerMessage.AnyError) extends FailedState with AccessedState
+                         error: CompilerMessage.AnyError) extends IsError with IsAccessed
 
   /** Represents: Code is successfully parsed */
   case class Parsed(fileURI: URI,
                     code: String,
-                    contracts: Seq[ContractWithState],
-                    imports: Map[String, Seq[ContractWithState]]) extends ParsedState
+                    ast: Tree.Root) extends IsParsed
 
   /** Represents: Successful code compilation */
   case class Compiled(fileURI: URI,
                       code: String,
                       compiledCode: Seq[Either[CompiledContract, CompiledScript]],
-                      parsed: SourceCodeState.Parsed) extends ParsedState {
+                      parsed: SourceCodeState.Parsed) extends IsCompiled {
     def warnings: Seq[StringWarning] =
-      compiledCode.flatMap {
+      compiledCode flatMap {
         case Left(value) =>
           value.warnings map (StringWarning(_))
 
@@ -73,6 +79,6 @@ object SourceCodeState {
   case class ErrorSource(fileURI: URI,
                          code: String,
                          errors: Seq[CompilerMessage.AnyError],
-                         previous: Option[SourceCodeState.Parsed]) extends FailedState with CodeAware
+                         previous: Option[SourceCodeState.Parsed]) extends IsError with IsCompiled
 
 }

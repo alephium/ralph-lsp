@@ -44,28 +44,33 @@ object DiagnosticsConverter {
   }
 
   /**
-   * Given the current build-errors and the next,
-   * return diagnostics to publish to the client.
+   * Given the current build-errors and the next, return diagnostics to publish
+   * for the current compilation request.
    * */
   def toPublishDiagnostics(buildURI: Option[URI],
                            currentBuildErrors: Option[BuildState.BuildErrored],
-                           newBuildErrors: Option[BuildState.BuildErrored]): Option[PublishDiagnosticsParams] =
+                           newBuildErrors: Option[BuildState.BuildErrored]): Iterable[PublishDiagnosticsParams] =
     (currentBuildErrors, newBuildErrors) match {
       case (Some(build), None) =>
         // build errors were fixed. Clear old errors
-        val diagnostics =
+        val buildDiagnostics =
           toPublishDiagnostics(
             fileURI = build.buildURI,
             code = build.code,
-            errors = List.empty,
+            errors = List.empty, // clear old errors
             severity = DiagnosticSeverity.Error
           )
 
-        Some(diagnostics)
+        // build diagnostics for the dependency
+        val dependencyDiagnostics =
+          build.dependency.to(Array) flatMap toPublishDiagnostics
 
-      case (_, Some(build)) =>
-        // New state has errors, create diagnostics.
-        val diagnostics =
+        // collect all diagnostics
+        dependencyDiagnostics :+ buildDiagnostics
+
+      case (None, Some(build)) =>
+        // New build has errors, create diagnostics.
+        val buildDiagnostics =
           toPublishDiagnostics(
             fileURI = build.buildURI,
             code = build.code,
@@ -73,10 +78,34 @@ object DiagnosticsConverter {
             severity = DiagnosticSeverity.Error
           )
 
-        Some(diagnostics)
+        // build diagnostics for the dependency
+        val dependencyDiagnostics =
+          build.dependency.to(Array) flatMap toPublishDiagnostics
+
+        dependencyDiagnostics :+ buildDiagnostics
+
+      case (Some(oldBuild), Some(newBuild)) =>
+        // New build has errors, build diagnostics given previous build result.
+        val buildDiagnostics =
+          toPublishDiagnostics(
+            fileURI = newBuild.buildURI,
+            code = newBuild.code,
+            errors = newBuild.errors.to(List),
+            severity = DiagnosticSeverity.Error
+          )
+
+        // Build dependency diagnostics given previous dependency diagnostics.
+        val dependencyDiagnostics =
+          toPublishDiagnostics(
+            currentWorkspace = oldBuild.dependency,
+            newWorkspace = newBuild.dependency
+          )
+
+        dependencyDiagnostics.to(Array) :+ buildDiagnostics
 
       case (None, None) =>
-        None
+        // No state change occurred. Nothing to diagnose.
+        Iterable.empty
     }
 
   /**
@@ -108,7 +137,7 @@ object DiagnosticsConverter {
       case _: WorkspaceState.Created =>
         Iterable.empty
 
-      case currentWorkspace: WorkspaceState.SourceAware =>
+      case currentWorkspace: WorkspaceState.IsSourceAware =>
         // publish new workspace given previous workspace.
         toPublishDiagnostics(
           previousOrCurrentState = currentWorkspace,
@@ -122,14 +151,14 @@ object DiagnosticsConverter {
   def toPublishDiagnostics(currentWorkspace: WorkspaceState,
                            newWorkspace: WorkspaceState): Iterable[PublishDiagnosticsParams] =
     (currentWorkspace, newWorkspace) match {
-      case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.SourceAware) =>
+      case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.IsSourceAware) =>
         // publish first compilation result i.e. previous workspace had no compilation run.
         toPublishDiagnostics(
           previousOrCurrentState = newWorkspace,
           nextState = None
         )
 
-      case (currentWorkspace: WorkspaceState.SourceAware, newWorkspace: WorkspaceState) =>
+      case (currentWorkspace: WorkspaceState.IsSourceAware, newWorkspace: WorkspaceState) =>
         // publish new workspace given previous workspace.
         toPublishDiagnostics(
           previousOrCurrentState = currentWorkspace,
@@ -149,7 +178,7 @@ object DiagnosticsConverter {
    *                               Set to [[None]] if previousState is the only state.
    * @return Diagnostics to publish for the current state.
    */
-  def toPublishDiagnostics(previousOrCurrentState: WorkspaceState.SourceAware,
+  def toPublishDiagnostics(previousOrCurrentState: WorkspaceState.IsSourceAware,
                            nextState: Option[WorkspaceState]): Iterable[PublishDiagnosticsParams] = {
     // build diagnostics sent for previous state, or the current state if this is the first run.
     val previousOrCurrentDiagnotics =
@@ -208,7 +237,7 @@ object DiagnosticsConverter {
   }
 
   /** Fetch workspace/project level diagnostics i.e. diagnostics that do have source information. */
-  def toWorkspaceDiagnostics(workspace: WorkspaceState.SourceAware): PublishDiagnosticsParams = {
+  def toWorkspaceDiagnostics(workspace: WorkspaceState.IsSourceAware): PublishDiagnosticsParams = {
     val workspaceDiagnostics =
       workspace match {
         case compiled: WorkspaceState.Errored =>
@@ -230,7 +259,7 @@ object DiagnosticsConverter {
   }
 
   /** Fetch source-code level diagnostics */
-  def toSourceCodeDiagnostics(state: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] =
+  def toSourceCodeDiagnostics(state: WorkspaceState.IsSourceAware): Iterable[PublishDiagnosticsParams] =
     state.sourceCode collect {
       case state: SourceCodeState.ErrorSource =>
         // transform multiple source code errors to diagnostics.
@@ -273,7 +302,7 @@ object DiagnosticsConverter {
     }
 
   /** Fetch all diagnostics for this workspace */
-  def toPublishDiagnostics(workspace: WorkspaceState.SourceAware): Iterable[PublishDiagnosticsParams] = {
+  def toPublishDiagnostics(workspace: WorkspaceState.IsSourceAware): Iterable[PublishDiagnosticsParams] = {
     val sourceCodeDiagnostics = toSourceCodeDiagnostics(workspace)
     val workspaceDiagnostics = toWorkspaceDiagnostics(workspace)
     sourceCodeDiagnostics ++ Seq(workspaceDiagnostics)

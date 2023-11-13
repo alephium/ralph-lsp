@@ -13,7 +13,7 @@ class StdInterfaceSpec extends AnyWordSpec with Matchers {
 
     "respect `std/` structure" in {
       StdInterface.stdInterfaces.foreach { case (interface, _)=>
-        interface.startsWith("std/") shouldBe true
+        interface.toString.contains("std/") shouldBe true
       }
     }
 

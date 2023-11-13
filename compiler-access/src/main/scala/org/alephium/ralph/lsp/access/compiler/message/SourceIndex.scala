@@ -14,7 +14,8 @@ object SourceIndex {
    * This set the index to be an empty range.
    *
    * This is a temporary solution until an AST is available for `build.ralph`.
-   * See Issue <a href="https://github.com/alephium/ralph-lsp/issues/17">#17</a>.
+   *
+   * @see Issue <a href="https://github.com/alephium/ralph-lsp/issues/17">#17</a>.
    */
   def ensurePositive(index: Int, width: Int): SourceIndex =
     if (index < 0)

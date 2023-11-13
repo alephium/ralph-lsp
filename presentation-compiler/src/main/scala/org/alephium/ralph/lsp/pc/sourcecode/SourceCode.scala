@@ -1,10 +1,11 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.CompilerOptions
+import org.alephium.ralph.lsp.access.compiler.ast.Tree
+import org.alephium.ralph.lsp.pc.sourcecode.imports.Importer
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 
@@ -63,27 +64,26 @@ private[pc] object SourceCode {
                                           compiler: CompilerAccess): SourceCodeState =
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
-        parseContractsWithImports(code) match {
-          case Left(errors) =>
+        compiler.parseContracts(code) match {
+          case Left(error) =>
             SourceCodeState.ErrorSource(
               fileURI = fileURI,
               code = code,
-              errors = errors,
+              errors = Array(error),
               previous = None
             )
 
-          case Right((parsedCode, parsedImports)) =>
+          case Right(parsedCode) =>
             SourceCodeState.Parsed(
               fileURI = fileURI,
               code = code,
-              contracts = parsedCode,
-              imports = parsedImports
+              ast = parsedCode,
             )
         }
 
       case onDisk: SourceCodeState.OnDisk =>
         getSourceCode(onDisk.fileURI) match {
-          case errored: SourceCodeState.FailedState =>
+          case errored: SourceCodeState.IsError =>
             errored
 
           case gotCode =>
@@ -112,7 +112,7 @@ private[pc] object SourceCode {
     }
 
   /**
-   * Compile a group of source-code files that are dependant on each other.
+   * Compile a group of source-code files and performing type-check on imported code/import statements.
    *
    * @param sourceCode      Source-code to compile
    * @param compilerOptions Options to run for this compilation
@@ -120,44 +120,76 @@ private[pc] object SourceCode {
    * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
    */
   def compile(sourceCode: ArraySeq[SourceCodeState.Parsed],
-              compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.CodeAware]] = {
+              dependency: Option[ArraySeq[SourceCodeState.Compiled]],
+              compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
+    Importer.typeCheck(
+      sourceCode = sourceCode,
+      dependency = dependency
+    ) match {
+      case Left(importErrorCode) =>
+        // import type check resulted in errors. For example: It contains unknown imports.
+        // merge existing source-code with errored source-code
+        val newCode =
+          sourceCode.merge(importErrorCode)(Ordering.by(_.fileURI))
+
+        // new source-code with import errors
+        Right(newCode)
+
+      case Right(importedCode) =>
+        // Imports compiled ok. Compile source-code.
+        val parsedImported =
+          importedCode.map(_.parsed)
+
+        compileSource(
+          sourceCode = sourceCode,
+          importedCode = parsedImported,
+          compilerOptions = compilerOptions
+        )
+    }
+
+  /**
+   * Compile a group of source-code files that are dependant on each other.
+   *
+   * Pre-requisite: It is assumed that imports are already processed.
+   * If not, use [[SourceCode.compile]] instead.
+   *
+   * @param sourceCode      Source-code to compile
+   * @param compilerOptions Options to run for this compilation
+   * @param compiler        Target compiler
+   * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
+   */
+  private def compileSource(sourceCode: ArraySeq[SourceCodeState.Parsed],
+                            importedCode: ArraySeq[SourceCodeState.Parsed],
+                            compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsCompiled]] = {
+    val allCode =
+      sourceCode ++ importedCode
+
+    // Compile only the source-code. Import statements are already expected to be processed and included in `importedCode` collection.
     val contractsToCompile =
-      sourceCode.flatMap(_.contracts)
+      allCode flatMap {
+        state =>
+          // collect only the source-code ignoring all import statements.
+          state.ast.statements collect {
+            case source: Tree.Source =>
+              source.ast
+          }
+      }
 
-    // Author: @tdroxler - Copied to resolve merge conflict
-    //FIXME: This works as we avoid having multiple time the same Interface twice, but it means we don't
-    //show an error on a file missing the import, as having the import define in another file is fine.
-    val imports = sourceCode.flatMap(_.imports).toMap
-
+    // compile the source-code
     val compilationResult =
       compiler.compileContracts(
-        contracts = contractsToCompile ++ imports.values.flatten,
+        contracts = contractsToCompile,
         options = compilerOptions
       )
 
+    // transform compilation result to SourceCodeState
     SourceCodeStateBuilder.toSourceCodeState(
       parsedCode = sourceCode,
       compilationResult = compilationResult
     )
   }
 
-  private def parseContractsWithImports(code: String)(implicit compiler: CompilerAccess): Either[Seq[CompilerMessage.AnyError], (Seq[ContractWithState], Map[String, Seq[ContractWithState]])] =
-    for {
-      codeWithImports <- imports.ImportHandler.extractStdImports(code)
-      codeAst <- compiler.parseContracts(codeWithImports.code).left.map(Seq(_))
-      importsAst <- parseImports(codeWithImports.imports).left.map(Seq(_))
-    } yield {
-      (codeAst, importsAst)
-    }
-
-  private def parseImports(imports: Map[String, String]) (implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, Map[String, Seq[ContractWithState]]] =
-    imports.map{ case (file, code)=>
-      compiler.parseContracts(code).map(res => (file, res))
-    }.partitionMap(identity) match { case (lefts, right) =>
-      lefts.headOption.toLeft(right).map(_.toMap)
-    }
-
-  private def getSourceCode(fileURI: URI)(implicit file: FileAccess): SourceCodeState.AccessedState =
+  private def getSourceCode(fileURI: URI)(implicit file: FileAccess): SourceCodeState.IsAccessed =
     file.read(fileURI) match {
       case Left(error) =>
         SourceCodeState.ErrorAccess(fileURI, error)

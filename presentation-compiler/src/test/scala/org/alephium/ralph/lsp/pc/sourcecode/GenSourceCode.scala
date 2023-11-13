@@ -48,7 +48,7 @@ object GenSourceCode {
       )
 
   def genInitialised(code: Gen[String] = genGoodCode(),
-                     fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.Initialised] =
+                     fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.IsInitialised] =
     Gen.oneOf(
       genOnDisk(fileURI),
       genUnCompiled(code, fileURI)
@@ -57,7 +57,7 @@ object GenSourceCode {
   def persist[S <: SourceCodeState](sourceCode: S,
                                     code: Gen[String] = genGoodCode()): S =
     sourceCode match {
-      case aware: SourceCodeState.CodeAware =>
+      case aware: SourceCodeState.IsCodeAware =>
         FileIO.write(aware.code, aware.fileURI)
         sourceCode
 

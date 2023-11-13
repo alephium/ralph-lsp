@@ -1,6 +1,8 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralphc.Config
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -26,8 +28,15 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
     implicit val file: FileAccess =
       FileAccess.disk
 
+    implicit val compiler: CompilerAccess =
+      CompilerAccess.ralphc
+
     // Parse and compile the config file on disk
-    val readConfig = Build.parseAndCompile(expectedBuildPath.toUri)
+    val readConfig =
+      Build.parseAndCompile(
+        buildURI = expectedBuildPath.toUri,
+        currentBuild = None
+      )
 
     // The parsed code is the expected code, not the compiled.
     val expectedCode =
@@ -41,10 +50,25 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         artifactPath = Paths.get(workspacePath.resolve(config.artifactPath).toUri)
       )
 
+    val parsedBuild =
+      BuildState.BuildParsed(
+        buildURI = expectedBuildPath.toUri,
+        code = RalphcConfig.write(config),
+        config = config
+      )
+
+    val compiledStd =
+      Dependency
+        .downloadAndCompileStd(parsed = parsedBuild)
+        .asInstanceOf[BuildState.BuildCompiled]
+
+    compiledStd.dependency shouldBe defined
+
     readConfig shouldBe
       BuildState.BuildCompiled(
         buildURI = expectedBuildPath.toUri,
         code = expectedCode,
+        dependency = compiledStd.dependency,
         config = expectedCompiledConfig
       )
   }

@@ -18,20 +18,23 @@ sealed trait BuildState {
 object BuildState {
 
   /** Parsed states */
-  sealed trait ParseResult extends BuildState
+  sealed trait IsParsed extends BuildState
 
   /** Compiled states */
-  sealed trait CompileResult extends BuildState
+  sealed trait IsCompiled extends BuildState {
+    def dependency: Option[WorkspaceState.IsSourceAware]
+  }
 
   /** Build is successfully parsed */
   case class BuildParsed(buildURI: URI,
                          code: String,
-                         config: RalphcParsedConfig) extends BuildState.ParseResult
+                         config: RalphcParsedConfig) extends BuildState.IsParsed
 
   /** Build is successfully compiled */
   case class BuildCompiled(buildURI: URI,
                            code: String,
-                           config: RalphcCompiledConfig) extends BuildState.CompileResult {
+                           dependency: Option[WorkspaceState.Compiled],
+                           config: RalphcCompiledConfig) extends BuildState.IsCompiled {
     def contractURI: URI =
       config.contractPath.toUri
 
@@ -51,11 +54,12 @@ object BuildState {
    *                          These changes must still be applied to the workspace and carried on to the next compilation.
    *                          Set this to:
    *                          - [[None]] to continue with existing workspace
-   *                          - [[WorkspaceState.SourceAware]] to replace existing workspace.
+   *                          - [[WorkspaceState.IsSourceAware]] to replace existing workspace.
    */
   case class BuildErrored(buildURI: URI,
                           code: Option[String],
                           errors: ArraySeq[CompilerMessage.AnyError],
-                          activateWorkspace: Option[WorkspaceState.SourceAware]) extends BuildState.ParseResult with BuildState.CompileResult
+                          dependency: Option[WorkspaceState.IsSourceAware],
+                          activateWorkspace: Option[WorkspaceState.IsSourceAware]) extends BuildState.IsParsed with BuildState.IsCompiled
 
 }

@@ -18,7 +18,7 @@ sealed trait WorkspaceState {
 object WorkspaceState {
 
   /** Workspace state where the source-code is known and can be parsed and compiled */
-  sealed trait SourceAware extends WorkspaceState {
+  sealed trait IsSourceAware extends WorkspaceState {
     def build: BuildCompiled
 
     def workspaceURI: URI =
@@ -29,7 +29,7 @@ object WorkspaceState {
   }
 
   /** State: Represents a compilation run result */
-  sealed trait CompilerRun extends WorkspaceState.SourceAware {
+  sealed trait IsCompiled extends IsSourceAware {
     def parsed: WorkspaceState.Parsed
   }
 
@@ -38,11 +38,11 @@ object WorkspaceState {
 
   /** State: Source files might be un-compiled, parsed or compiled. This state can be parsed and compiled. */
   case class UnCompiled(build: BuildCompiled,
-                        sourceCode: ArraySeq[SourceCodeState]) extends WorkspaceState.SourceAware
+                        sourceCode: ArraySeq[SourceCodeState]) extends IsSourceAware
 
   /** State: All source files are parsed, therefore this workspace can be compiled */
   case class Parsed(build: BuildCompiled,
-                    sourceCode: ArraySeq[SourceCodeState.Parsed]) extends WorkspaceState.SourceAware
+                    sourceCode: ArraySeq[SourceCodeState.Parsed]) extends IsSourceAware
 
   /**
    * Result of an errored compiler run.
@@ -51,9 +51,9 @@ object WorkspaceState {
    * @param workspaceErrors Project/workspace level errors
    * @param parsed          Previous valid parsed state (used for code completion in-case the file has error)
    */
-  case class Errored(sourceCode: ArraySeq[SourceCodeState],
+  case class Errored(sourceCode: ArraySeq[SourceCodeState.IsParsed],
                      workspaceErrors: ArraySeq[CompilerMessage.AnyError],
-                     parsed: WorkspaceState.Parsed) extends CompilerRun {
+                     parsed: WorkspaceState.Parsed) extends IsCompiled {
     def build: BuildCompiled =
       parsed.build
   }
@@ -64,8 +64,8 @@ object WorkspaceState {
    * @param sourceCode New valid source code states.
    * @param parsed     Current parser run for this compiled code.
    */
-  case class Compiled(sourceCode: ArraySeq[SourceCodeState],
-                      parsed: WorkspaceState.Parsed) extends CompilerRun {
+  case class Compiled(sourceCode: ArraySeq[SourceCodeState.Compiled],
+                      parsed: WorkspaceState.Parsed) extends IsCompiled {
     def build: BuildCompiled =
       parsed.build
   }
