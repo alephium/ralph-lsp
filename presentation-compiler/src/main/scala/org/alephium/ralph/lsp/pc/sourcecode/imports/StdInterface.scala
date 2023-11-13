@@ -25,7 +25,7 @@ object StdInterface extends StrictLogging {
    * We rely here on `Using` https://www.scala-lang.org/api/2.13.6/scala/util/Using$.html
    * to handle resources.
    */
-  val stdInterfaces: Map[Path, String] =
+  def stdInterfaces: Map[Path, String] =
     Using.Manager { use =>
       val stdURL = getClass.getResource(s"/$stdFolder")
 
