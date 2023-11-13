@@ -39,6 +39,7 @@ object RalphLangServer {
         listener = Some(listener),
         workspace = None,
         buildErrors = None,
+        clientCapabilities = None,
         shutdownReceived = false
       )
 
@@ -53,6 +54,7 @@ object RalphLangServer {
         listener = None,
         workspace = None,
         buildErrors = None,
+        clientCapabilities = None,
         shutdownReceived = false
       )
     )
@@ -100,6 +102,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] =
     CompletableFutures.computeAsync {
       cancelChecker =>
+        logger.debug("Initialize request")
         // Previous commit uses the non-deprecated API but that does not work in vim.
         val rootURI =
           RalphLangServer.getRootUri(params)
@@ -112,10 +115,37 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         setWorkspace(workspace)
 
+        setClientCapabilities(params.getCapabilities())
+
         cancelChecker.checkCanceled()
 
         new InitializeResult(serverCapabilities())
     }
+
+  /** @inheritdoc */
+  override def initialized(params: InitializedParams): Unit = {
+    logger.debug("Client initialized")
+    thisServer.state.clientCapabilities match {
+      case Some(capabilities) =>
+        val maybeDynamicRegistration: Option[Boolean] = for {
+          workspace <- Option(capabilities.getWorkspace())
+          didChangeWatchedFiles <- Option(workspace.getDidChangeWatchedFiles())
+          dynamicRegistration <- Option(didChangeWatchedFiles.getDynamicRegistration())
+        } yield dynamicRegistration
+
+        if(maybeDynamicRegistration.getOrElse(false)) {
+          logger.debug("Register watched files")
+          getClient().registerWatchedFiles().whenComplete { case (_, error) =>
+            if(error != null) {
+              logger.error("Failed to register watched files", error)
+            }
+          }
+        } else {
+          logger.debug("Client doesn't support dynamic registration for watched files")
+        }
+      case None => ()
+    }
+  }
 
   /** @inheritdoc */
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
@@ -328,6 +358,11 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   private def setWorkspace(workspace: WorkspaceState): Unit =
     thisServer.synchronized {
       thisServer.state = thisServer.state.copy(workspace = Some(workspace))
+    }
+
+  private def setClientCapabilities(clientCapabilities: ClientCapabilities): Unit =
+    thisServer.synchronized {
+      thisServer.state = thisServer.state.copy(clientCapabilities = Some(clientCapabilities))
     }
 
   /**

@@ -4,7 +4,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.state.ServerState
-import org.eclipse.lsp4j.{InitializeParams, InitializeResult}
+import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -14,6 +14,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import scala.jdk.FutureConverters._
 import java.net.URI
 import java.util.concurrent.{ CompletionStage,CompletableFuture, Future => JFuture}
+import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.Promise
 
 class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory with ScalaFutures{
@@ -48,6 +49,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
           listener = Some(listener),
           workspace = Some(WorkspaceState.Created(workspaceURI)),
           buildErrors = None,
+          clientCapabilities = Some(initialise.getCapabilities),
           shutdownReceived = false
         )
     }
@@ -110,6 +112,65 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
       server.exitWithCode() shouldBe 1
       server.getState().listener.get.isCancelled shouldBe true
    }
+  }
+
+  "initialized" should {
+
+    def buildServer(dynamicRegistration: Option[Boolean], registered: AtomicBoolean) = {
+      implicit val compiler: CompilerAccess = CompilerAccess.ralphc
+      implicit val file: FileAccess = FileAccess.disk
+      val client: RalphLangClient = new EmptyRalphLangClient {
+        override def registerCapability(params: RegistrationParams): CompletableFuture[Void] = {
+          registered.set(true)
+          new CompletableFuture[Void]()
+        }
+      }
+      val listener = CompletableFuture.runAsync(() => ())
+      val server = RalphLangServer(client, listener)
+
+      val capabilities = dynamicRegistration match {
+        case None => new ClientCapabilities()
+        case Some(dynamicRegistration) =>
+          val watchedFilesCapabilities = new DidChangeWatchedFilesCapabilities(dynamicRegistration)
+          val workspaceCapabilities = new WorkspaceClientCapabilities()
+          workspaceCapabilities.setDidChangeWatchedFiles(watchedFilesCapabilities)
+          val result = new ClientCapabilities()
+          result.setWorkspace(workspaceCapabilities)
+          result
+      }
+
+      val initialise = new InitializeParams()
+      val workspaceURI = new URI("file://test")
+      initialise.setRootUri(workspaceURI.toString)
+      initialise.setCapabilities(capabilities)
+
+      server.initialize(initialise).get()
+      server
+    }
+
+    "register watched files if dynamic registration is true" in {
+      val registered = new AtomicBoolean(false)
+      val server = buildServer(Some(true), registered)
+      server.initialized(new InitializedParams())
+
+      registered.get shouldBe true
+    }
+
+    "not register watched files if dynamic registration is false" in {
+      val registered = new AtomicBoolean(false)
+      val server = buildServer(Some(false), registered)
+      server.initialized(new InitializedParams())
+
+      registered.get shouldBe false
+    }
+
+    "not register watched files if dynamic registration is not set" in {
+      val registered = new AtomicBoolean(false)
+      val server = buildServer(None, registered)
+      server.initialized(new InitializedParams())
+
+      registered.get shouldBe false
+    }
   }
 }
 
