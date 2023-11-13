@@ -51,7 +51,7 @@ object WorkspaceState {
    * @param workspaceErrors Project/workspace level errors
    * @param parsed          Previous valid parsed state (used for code completion in-case the file has error)
    */
-  case class Errored(sourceCode: ArraySeq[SourceCodeState],
+  case class Errored(sourceCode: ArraySeq[SourceCodeState.IsParsed],
                      workspaceErrors: ArraySeq[CompilerMessage.AnyError],
                      parsed: WorkspaceState.Parsed) extends IsCompiled {
     def build: BuildCompiled =
@@ -64,7 +64,7 @@ object WorkspaceState {
    * @param sourceCode New valid source code states.
    * @param parsed     Current parser run for this compiled code.
    */
-  case class Compiled(sourceCode: ArraySeq[SourceCodeState],
+  case class Compiled(sourceCode: ArraySeq[SourceCodeState.Compiled],
                       parsed: WorkspaceState.Parsed) extends IsCompiled {
     def build: BuildCompiled =
       parsed.build

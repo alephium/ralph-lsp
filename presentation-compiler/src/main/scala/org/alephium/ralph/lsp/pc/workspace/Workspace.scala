@@ -48,6 +48,7 @@ object Workspace {
             buildURI = state.buildURI,
             code = Some(state.code),
             errors = ArraySeq(error),
+            dependency = state.dependency,
             activateWorkspace = None
           )
 
@@ -69,7 +70,8 @@ object Workspace {
    *
    * @note Does not update the current state. The caller should set the new state.
    */
-  def build(workspace: WorkspaceState)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
+  def build(workspace: WorkspaceState)(implicit file: FileAccess,
+                                       compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
     workspace match {
       case workspace: WorkspaceState.IsSourceAware =>
         Right(workspace) // already initialised
@@ -78,7 +80,8 @@ object Workspace {
         val newBuild =
           Build.parseAndCompile(
             buildURI = workspace.buildURI,
-            code = None
+            code = None,
+            currentBuild = None
           )
 
         initialise(newBuild)
@@ -87,7 +90,8 @@ object Workspace {
   /** Build a created workspace */
   def build(buildURI: URI,
             code: Option[String],
-            workspace: WorkspaceState.Created)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+            workspace: WorkspaceState.Created)(implicit file: FileAccess,
+                                               compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     BuildValidator.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = workspace.workspaceURI
@@ -98,6 +102,7 @@ object Workspace {
             buildURI = buildURI,
             code = code,
             errors = ArraySeq(error),
+            dependency = None,
             activateWorkspace = None
           )
 
@@ -108,6 +113,7 @@ object Workspace {
           Build.parseAndCompile(
             buildURI = buildURI,
             code = code,
+            currentBuild = None,
           )
 
         initialise(build)
@@ -120,7 +126,8 @@ object Workspace {
    * @return Returns diagnostics in-case were build errors, or-else returns an initialised workspace.
    */
   def build(code: Option[WorkspaceFile],
-            workspace: WorkspaceState)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
+            workspace: WorkspaceState)(implicit file: FileAccess,
+                                       compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
     workspace match {
       case sourceAware: WorkspaceState.IsSourceAware =>
         // already built
@@ -143,10 +150,15 @@ object Workspace {
         }
     }
 
-  def cleanBuild(newBuild: BuildState.IsCompiled,
-                 currentBuild: BuildState.BuildCompiled,
-                 sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
-    newBuild match {
+  def build(buildCode: Option[String],
+            currentBuild: BuildState.BuildCompiled,
+            sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess,
+                                                   compiler: CompilerAccess): Option[Either[BuildState.BuildErrored, WorkspaceState.UnCompiled]] =
+    Build.parseAndCompile(
+      buildURI = currentBuild.buildURI,
+      code = buildCode,
+      currentBuild = currentBuild
+    ) map {
       case newBuild: BuildCompiled =>
         // Build compiled OK! Compile new source-files with this new build file
         val syncedCode =
@@ -162,6 +174,7 @@ object Workspace {
                 buildURI = newBuild.buildURI,
                 code = Some(newBuild.code),
                 errors = ArraySeq(error),
+                dependency = currentBuild.dependency,
                 activateWorkspace = None
               )
 
@@ -206,7 +219,7 @@ object Workspace {
     } else {
       // Parse all source code. TODO: Could be concurrent.
       val triedParsedStates =
-        workspace.sourceCode.map(SourceCode.parse)
+        workspace.sourceCode map SourceCode.parse
 
       // collect all parsed code
       val actualParsedStates =
@@ -258,6 +271,7 @@ object Workspace {
     val compilationResult =
       SourceCode.compile(
         sourceCode = workspace.sourceCode,
+        dependency = workspace.build.dependency.map(_.sourceCode),
         compilerOptions = workspace.build.config.compilerOptions
       )
 
@@ -276,26 +290,22 @@ object Workspace {
    * @return This function will always re-compile the build,
    *         so the output is always [[WorkspaceChangeResult.BuildChanged]].
    */
-  def cleanCompile(buildCode: Option[String],
-                   sourceCode: ArraySeq[SourceCodeState],
-                   workspace: WorkspaceState.IsSourceAware)(implicit file: FileAccess,
-                                                            compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
+  def compile(buildCode: Option[String],
+              sourceCode: ArraySeq[SourceCodeState],
+              workspace: WorkspaceState.IsSourceAware)(implicit file: FileAccess,
+                                                       compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
     // re-build the build file
     val buildResult =
-      Build.parseAndCompile(
-        buildURI = workspace.buildURI,
-        code = buildCode,
-        currentBuild = workspace.build
+      build(
+        buildCode = buildCode,
+        currentBuild = workspace.build,
+        sourceCode = sourceCode
       )
 
     val cleanBuildResult =
       buildResult match {
         case Some(buildResult) =>
-          cleanBuild(
-            newBuild = buildResult,
-            currentBuild = workspace.build,
-            sourceCode = sourceCode
-          )
+          buildResult
 
         case None =>
           // No build change occurred. Process the new source-code with exiting build.
@@ -368,7 +378,7 @@ object Workspace {
         workspace = workspace
       )
 
-    Workspace.cleanCompile(
+    Workspace.compile(
       buildCode = buildCode,
       sourceCode = newSourceCode,
       workspace = workspace

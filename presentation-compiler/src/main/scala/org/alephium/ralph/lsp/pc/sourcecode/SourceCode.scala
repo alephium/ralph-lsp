@@ -4,6 +4,8 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.CompilerOptions
+import org.alephium.ralph.lsp.access.compiler.ast.Tree
+import org.alephium.ralph.lsp.pc.sourcecode.imports.Importer
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 
@@ -75,7 +77,7 @@ private[pc] object SourceCode {
             SourceCodeState.Parsed(
               fileURI = fileURI,
               code = code,
-              contracts = parsedCode,
+              ast = parsedCode,
             )
         }
 
@@ -110,7 +112,7 @@ private[pc] object SourceCode {
     }
 
   /**
-   * Compile a group of source-code files that are dependant on each other.
+   * Compile a group of source-code files and imported code that are dependant on each other.
    *
    * @param sourceCode      Source-code to compile
    * @param compilerOptions Options to run for this compilation
@@ -118,16 +120,69 @@ private[pc] object SourceCode {
    * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
    */
   def compile(sourceCode: ArraySeq[SourceCodeState.Parsed],
-              compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsCodeAware]] = {
-    val contractsToCompile =
-      sourceCode.flatMap(_.contracts)
+              dependency: Option[ArraySeq[SourceCodeState.Compiled]],
+              compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
+    Importer.typeCheck(
+      sourceCode = sourceCode,
+      dependency = dependency
+    ) match {
+      case Left(importErrorCode) =>
+        // import type check resulted in errors. For example: It contains unknown imports.
+        // merge existing source-code with errored source-code
+        val newCode =
+          sourceCode.merge(importErrorCode)(Ordering.by(_.fileURI))
 
+        // new source-code with import errors
+        Right(newCode)
+
+      case Right(importedCode) =>
+        // Imports compiled ok. Compile source-code.
+        val parsedImported =
+          importedCode.map(_.parsed)
+
+        compileSource(
+          sourceCode = sourceCode,
+          importedCode = parsedImported,
+          compilerOptions = compilerOptions
+        )
+    }
+
+  /**
+   * Compile a group of source-code files that are dependant on each other.
+   *
+   * This function assumed that imports are already processed.
+   * If not, use [[SourceCode.compile]] instead.
+   *
+   * @param sourceCode      Source-code to compile
+   * @param compilerOptions Options to run for this compilation
+   * @param compiler        Target compiler
+   * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
+   */
+  private def compileSource(sourceCode: ArraySeq[SourceCodeState.Parsed],
+                            importedCode: ArraySeq[SourceCodeState.Parsed],
+                            compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsCompiled]] = {
+    val allCode =
+      sourceCode ++ importedCode
+
+    // Compile only the source-code. Imports statements are excluded.
+    val contractsToCompile =
+      allCode flatMap {
+        state =>
+          // collect only the source-code ignoring all import statements.
+          state.ast.statements collect {
+            case source: Tree.Source =>
+              source.ast
+          }
+      }
+
+    // compile the source-code
     val compilationResult =
       compiler.compileContracts(
         contracts = contractsToCompile,
         options = compilerOptions
       )
 
+    // transform compilation result to SourceCodeState
     SourceCodeStateBuilder.toSourceCodeState(
       parsedCode = sourceCode,
       compilationResult = compilationResult

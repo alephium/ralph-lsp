@@ -3,6 +3,7 @@ package org.alephium.ralph.lsp.access.compiler
 import fastparse.Parsed
 import org.alephium.api.model.CompileProjectResult
 import org.alephium.ralph._
+import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error._
 import org.alephium.ralph.lsp.access.util.TryUtil
@@ -21,11 +22,11 @@ import scala.collection.mutable
 private object RalphCompilerAccess extends CompilerAccess {
 
   /** @inheritdoc */
-  def parseContracts(code: String): Either[CompilerMessage.AnyError, Seq[Ast.ContractWithState]] =
+  def parseContracts(code: String): Either[CompilerMessage.AnyError, Tree.Root] =
     try
-      fastparse.parse(code, StatefulParser.multiContract(_)) match {
-        case Parsed.Success(ast: Ast.MultiContract, _) =>
-          Right(ast.contracts)
+      fastparse.parse(code, RalphParserExtension.multiContract(_)) match {
+        case Parsed.Success(source: Tree.Root, _) =>
+          Right(source)
 
         case failure: Parsed.Failure =>
           Left(FastParseError(failure))

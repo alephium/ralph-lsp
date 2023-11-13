@@ -5,6 +5,7 @@ import org.alephium.ralph.StatefulParser.{rawContract, rawInterface, rawTxScript
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 
+/** Functions that extend ralphc's default parser */
 private object RalphParserExtension {
 
   /**

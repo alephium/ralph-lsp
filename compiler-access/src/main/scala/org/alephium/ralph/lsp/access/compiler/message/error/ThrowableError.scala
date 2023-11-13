@@ -7,10 +7,12 @@ import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIn
  *
  * Stores the stacktrace for future error report improvements.
  */
-case class ThrowableError(throwable: Throwable) extends CompilerMessage.Error {
+case class ThrowableError(title: String,
+                          throwable: Throwable,
+                          index: SourceIndex = SourceIndex.empty) extends CompilerMessage.Error {
   override def message: String =
-    throwable.getMessage
-
-  override def index: SourceIndex =
-    SourceIndex.empty
+    if (title.isBlank)
+      throwable.getMessage
+    else
+      title + ": " + throwable.getMessage
 }

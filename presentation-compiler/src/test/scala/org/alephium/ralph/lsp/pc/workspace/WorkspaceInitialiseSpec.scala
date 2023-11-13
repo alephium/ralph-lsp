@@ -4,13 +4,16 @@ import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, GenBuild}
 import org.alephium.ralph.lsp.FileIO
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildSyntax}
 import org.alephium.ralphc.Config
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
+import org.scalatest.OptionValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.nio.file.Paths
@@ -34,6 +37,9 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
           implicit val file: FileAccess =
             FileAccess.disk
 
+          implicit val compiler: CompilerAccess =
+            CompilerAccess.ralphc
+
           forAll(GenWorkspace.genCreated()) {
             workspace =>
               val result = Workspace.build(workspace).left.value
@@ -43,6 +49,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                   buildURI = workspace.buildURI,
                   code = None,
                   errors = ArraySeq(ErrorBuildFileNotFound),
+                  dependency = None,
                   activateWorkspace = None
                 )
           }
@@ -51,6 +58,9 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
         "workspace directory exists with no build file" in {
           implicit val file: FileAccess =
             FileAccess.disk
+
+          implicit val compiler: CompilerAccess =
+            CompilerAccess.ralphc
 
           forAll(GenWorkspace.genCreated()) {
             workspace =>
@@ -65,6 +75,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                   buildURI = workspace.buildURI,
                   code = None,
                   errors = ArraySeq(ErrorBuildFileNotFound),
+                  dependency = None,
                   activateWorkspace = None
                 )
           }
@@ -73,6 +84,9 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
         "workspace directory exists with error build file" in {
           implicit val file: FileAccess =
             FileAccess.disk
+
+          implicit val compiler: CompilerAccess =
+            CompilerAccess.ralphc
 
           forAll(GenBuild.genBuildParsed()) {
             build =>
@@ -109,6 +123,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                         message = """expected json value got "b""""
                       )
                     ),
+                  dependency = None,
                   activateWorkspace = None
                 )
           }
@@ -122,6 +137,9 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
         "all workspaces source files are successfully accessed" in {
           implicit val file: FileAccess =
             FileAccess.disk
+
+          implicit val compiler: CompilerAccess =
+            CompilerAccess.ralphc
 
           forAll(GenBuild.genBuildParsed()) {
             build =>
@@ -159,6 +177,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                 BuildState.BuildCompiled(
                   buildURI = build.buildURI,
                   code = build.code,
+                  dependency = actualWorkspace.build.dependency,
                   config =
                     Config(
                       compilerOptions = build.config.compilerOptions,
@@ -188,6 +207,9 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
       "always return the current workspace" in {
         // no file access should occur since workspace is already initialised
         implicit val file: FileAccess =
+          null
+
+        implicit val compiler: CompilerAccess =
           null
 
         // no source or build is touched since workspace is already initialised

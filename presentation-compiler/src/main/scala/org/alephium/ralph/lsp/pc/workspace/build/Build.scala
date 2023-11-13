@@ -1,8 +1,10 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 
 import java.net.URI
 import java.nio.file.{Path, Paths}
@@ -33,6 +35,7 @@ object Build {
           buildURI = buildURI,
           code = Some(json),
           errors = ArraySeq(error),
+          dependency = None,
           activateWorkspace = None
         )
 
@@ -52,6 +55,7 @@ object Build {
           buildURI = buildURI,
           code = None,
           errors = ArraySeq(error),
+          dependency = None,
           activateWorkspace = None
         )
 
@@ -63,43 +67,62 @@ object Build {
     }
 
   /** Compile a parsed build */
-  def compile(parsed: BuildState.IsParsed)(implicit file: FileAccess): BuildState.IsCompiled =
+  def compile(parsed: BuildState.IsParsed,
+              currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
+                                                           compiler: CompilerAccess): BuildState.IsCompiled =
     parsed match {
       case errored: BuildErrored =>
         // there are parsing errors
         errored
 
       case parsed: BuildParsed =>
+        def compileDependency() =
+          Dependency.compile(
+            parsed = parsed,
+            currentBuild = currentBuild
+          )
+
         // parse successful. Perform compilation!
-        BuildValidator.validate(parsed)
+        BuildValidator
+          .validate(parsed)
+          .getOrElse(compileDependency())
     }
 
   /** Parse and compile from disk */
-  def parseAndCompile(buildURI: URI)(implicit file: FileAccess): BuildState.IsCompiled =
+  def parseAndCompile(buildURI: URI,
+                      currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
+                                                                   compiler: CompilerAccess): BuildState.IsCompiled =
     file.exists(buildURI) match {
       case Left(error) =>
         BuildErrored(
           buildURI = buildURI,
           code = None,
           errors = ArraySeq(error),
+          dependency = None,
           activateWorkspace = None
         )
 
       case Right(exists) =>
         if (exists)
-          compile(parse(buildURI))
+          compile(
+            parsed = parse(buildURI),
+            currentBuild = currentBuild
+          )
         else
           BuildErrored(
             buildURI = buildURI,
             code = None,
             errors = ArraySeq(ErrorBuildFileNotFound),
+            dependency = None,
             activateWorkspace = None
           )
     }
 
   /** Parse and compile from memory */
   def parseAndCompile(buildURI: URI,
-                      code: String)(implicit file: FileAccess): BuildState.IsCompiled = {
+                      code: String,
+                      currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
+                                                                   compiler: CompilerAccess): BuildState.IsCompiled = {
     // Code is already read. Parse and validate it.
     val parsed =
       parse(
@@ -107,21 +130,30 @@ object Build {
         json = code
       )
 
-    compile(parsed)
+    compile(
+      parsed = parsed,
+      currentBuild = currentBuild
+    )
   }
 
   def parseAndCompile(buildURI: URI,
-                      code: Option[String])(implicit file: FileAccess): BuildState.IsCompiled =
+                      code: Option[String],
+                      currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
+                                                                   compiler: CompilerAccess): BuildState.IsCompiled =
     code match {
       case Some(code) =>
         parseAndCompile(
           buildURI = buildURI,
-          code = code
+          code = code,
+          currentBuild = currentBuild
         )
 
       case None =>
         // Code is not known. Parse and validate it from disk.
-        parseAndCompile(buildURI)
+        parseAndCompile(
+          buildURI = buildURI,
+          currentBuild = currentBuild
+        )
     }
 
   /**
@@ -129,7 +161,8 @@ object Build {
    * */
   def parseAndCompile(buildURI: URI,
                       code: Option[String],
-                      currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess): Option[BuildState.IsCompiled] =
+                      currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess,
+                                                              compiler: CompilerAccess): Option[BuildState.IsCompiled] =
     BuildValidator.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = currentBuild.workspaceURI
@@ -140,6 +173,7 @@ object Build {
             buildURI = buildURI,
             code = code,
             errors = ArraySeq(error),
+            dependency = currentBuild.dependency,
             activateWorkspace = None
           )
 
@@ -149,6 +183,7 @@ object Build {
         Build.parseAndCompile(
           buildURI = buildURI,
           code = code,
+          currentBuild = Some(currentBuild),
         ) match {
           case newBuild: BuildState.BuildCompiled =>
             // if the new build-file is the same as current build-file, return it as
@@ -162,5 +197,17 @@ object Build {
             Some(errored)
         }
     }
+
+  /**
+   * Returns absolute paths of the build/config file.
+   *
+   * @return A 3-tuple `(workspacePath, absoluteContractPath, absoluteArtifactPath)`
+   */
+  def getAbsolutePaths(parsed: BuildParsed): (Path, Path, Path) = {
+    val workspacePath = Paths.get(parsed.workspaceURI)
+    val absoluteContractPath = workspacePath.resolve(Paths.get(parsed.config.contractPath).normalize)
+    val absoluteArtifactPath = workspacePath.resolve(Paths.get(parsed.config.artifactPath).normalize)
+    (workspacePath, absoluteContractPath, absoluteArtifactPath)
+  }
 
 }

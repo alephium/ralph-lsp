@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.sourcecode.imports
 
 import java.net.URI
-import java.nio.file.{ Files, FileSystems, Paths}
+import java.nio.file.{Files, FileSystems, Path, Paths}
 import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.util.{Failure, Success, Using}
@@ -9,7 +9,7 @@ import com.typesafe.scalalogging.StrictLogging
 
 object StdInterface extends StrictLogging {
 
-  private val stdFolder = "std"
+  val stdFolder = "std"
 
   /*
    * Get std interfaces, when using sbt it reads it from disk, when using with the jar
@@ -25,7 +25,7 @@ object StdInterface extends StrictLogging {
    * We rely here on `Using` https://www.scala-lang.org/api/2.13.6/scala/util/Using$.html
    * to handle resources.
    */
-  val stdInterfaces: Map[String, String] =
+  val stdInterfaces: Map[Path, String] =
     Using.Manager { use =>
       val stdURL = getClass.getResource(s"/$stdFolder")
 
@@ -41,21 +41,12 @@ object StdInterface extends StrictLogging {
 
       interfaceFiles.map { file =>
         val code = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines.mkString("\n")
-        (s"$stdFolder/${removeExtension(file.getFileName.toString)}", code)
+        (file, code)
       }.toMap
   } match {
     case Success(value) => value
     case Failure(error) =>
       logger.error(s"Cannot get std interfaces: $error")
       Map.empty
-  }
-
-
-  private def removeExtension(fname: String): String = {
-    val pos = fname.lastIndexOf('.');
-    if(pos > -1)
-      return fname.substring(0, pos);
-    else
-      return fname;
   }
 }

@@ -44,28 +44,33 @@ object DiagnosticsConverter {
   }
 
   /**
-   * Given the current build-errors and the next,
-   * return diagnostics to publish to the client.
+   * Given the current build-errors and the next, return diagnostics to publish
+   * for the current compilation request.
    * */
   def toPublishDiagnostics(buildURI: Option[URI],
                            currentBuildErrors: Option[BuildState.BuildErrored],
-                           newBuildErrors: Option[BuildState.BuildErrored]): Option[PublishDiagnosticsParams] =
+                           newBuildErrors: Option[BuildState.BuildErrored]): Iterable[PublishDiagnosticsParams] =
     (currentBuildErrors, newBuildErrors) match {
       case (Some(build), None) =>
         // build errors were fixed. Clear old errors
-        val diagnostics =
+        val buildDiagnostics =
           toPublishDiagnostics(
             fileURI = build.buildURI,
             code = build.code,
-            errors = List.empty,
+            errors = List.empty, // clear old errors
             severity = DiagnosticSeverity.Error
           )
 
-        Some(diagnostics)
+        // build diagnostics for the dependency
+        val dependencyDiagnostics =
+          build.dependency.to(Array) flatMap toPublishDiagnostics
 
-      case (_, Some(build)) =>
-        // New state has errors, create diagnostics.
-        val diagnostics =
+        // collect all diagnostics
+        dependencyDiagnostics :+ buildDiagnostics
+
+      case (None, Some(build)) =>
+        // New build has errors, create diagnostics.
+        val buildDiagnostics =
           toPublishDiagnostics(
             fileURI = build.buildURI,
             code = build.code,
@@ -73,10 +78,34 @@ object DiagnosticsConverter {
             severity = DiagnosticSeverity.Error
           )
 
-        Some(diagnostics)
+        // build diagnostics for the dependency
+        val dependencyDiagnostics =
+          build.dependency.to(Array) flatMap toPublishDiagnostics
+
+        dependencyDiagnostics :+ buildDiagnostics
+
+      case (Some(oldBuild), Some(newBuild)) =>
+        // New build has errors, build diagnostics given previous build result.
+        val buildDiagnostics =
+          toPublishDiagnostics(
+            fileURI = newBuild.buildURI,
+            code = newBuild.code,
+            errors = newBuild.errors.to(List),
+            severity = DiagnosticSeverity.Error
+          )
+
+        // Build dependency diagnostics given previous dependency diagnostics.
+        val dependencyDiagnostics =
+          toPublishDiagnostics(
+            currentWorkspace = oldBuild.dependency,
+            newWorkspace = newBuild.dependency
+          )
+
+        dependencyDiagnostics.to(Array) :+ buildDiagnostics
 
       case (None, None) =>
-        None
+        // No state change occurred. Nothing to diagnose.
+        Iterable.empty
     }
 
   /**

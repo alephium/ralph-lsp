@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.access.compiler
 
 import org.alephium.ralph.{Ast, CompiledContract, CompiledScript, CompilerOptions}
+import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralphc.Config
 
@@ -28,7 +29,7 @@ trait CompilerAccess {
    * @param code Code to parse.
    * @return Parsing error or successfully parsed AST.
    */
-  def parseContracts(code: String): Either[CompilerMessage.AnyError, Seq[Ast.ContractWithState]]
+    def parseContracts(code: String): Either[CompilerMessage.AnyError, Tree.Root]
 
   /**
    * Given the parsed AST and compiler options, compile the contracts.

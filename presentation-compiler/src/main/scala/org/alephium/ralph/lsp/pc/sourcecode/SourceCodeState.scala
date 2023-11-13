@@ -1,14 +1,19 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.{CompiledContract, CompiledScript}
-import org.alephium.ralph.Ast.ContractWithState
+import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.warning.StringWarning
+import org.alephium.ralph.lsp.pc.util.URIUtil
 
 import java.net.URI
 
 sealed trait SourceCodeState {
   def fileURI: URI
+
+  /** @see [[URIUtil.importIdentifier]] */
+  def importIdentifier: Option[String] =
+    URIUtil.importIdentifier(fileURI)
 }
 
 object SourceCodeState {
@@ -53,7 +58,7 @@ object SourceCodeState {
   /** Represents: Code is successfully parsed */
   case class Parsed(fileURI: URI,
                     code: String,
-                    contracts: Seq[ContractWithState]) extends IsParsed
+                    ast: Tree.Root) extends IsParsed
 
   /** Represents: Successful code compilation */
   case class Compiled(fileURI: URI,
