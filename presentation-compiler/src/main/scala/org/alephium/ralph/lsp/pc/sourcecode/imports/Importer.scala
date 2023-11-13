@@ -9,7 +9,7 @@ import scala.collection.immutable.ArraySeq
 object Importer {
 
   /**
-   * Perform type-check on all imports statements a workspace source-files.
+   * Perform type-check on import statements in all source-files within the workspace.
    *
    * @param sourceCode Workspace source code files that might contain import statements.
    * @param dependency Dependent code is searched to find imported code.
@@ -50,7 +50,7 @@ object Importer {
   }
 
   /**
-   * Perform type-check on all imports with in a single source file.
+   * Perform type-check on all import statements with in a single source file.
    *
    * @param sourceCode Source code of a file that might contain import statements.
    * @param dependency Dependent code is searched to find imported code.

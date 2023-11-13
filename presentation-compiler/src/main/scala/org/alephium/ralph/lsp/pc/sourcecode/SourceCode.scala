@@ -112,7 +112,7 @@ private[pc] object SourceCode {
     }
 
   /**
-   * Compile a group of source-code files and imported code that are dependant on each other.
+   * Compile a group of source-code files and performing type-check on imported code/import statements.
    *
    * @param sourceCode      Source-code to compile
    * @param compilerOptions Options to run for this compilation
@@ -150,7 +150,7 @@ private[pc] object SourceCode {
   /**
    * Compile a group of source-code files that are dependant on each other.
    *
-   * This function assumed that imports are already processed.
+   * Pre-requisite: It is assumed that imports are already processed.
    * If not, use [[SourceCode.compile]] instead.
    *
    * @param sourceCode      Source-code to compile
@@ -164,7 +164,7 @@ private[pc] object SourceCode {
     val allCode =
       sourceCode ++ importedCode
 
-    // Compile only the source-code. Imports statements are excluded.
+    // Compile only the source-code. Import statements are already expected to be processed and included in `importedCode` collection.
     val contractsToCompile =
       allCode flatMap {
         state =>

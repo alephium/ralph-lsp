@@ -7,6 +7,7 @@ import scala.collection.immutable.ArraySeq
 
 private[workspace] object WorkspaceStateBuilder {
 
+  /** @see [[org.alephium.ralph.lsp.pc.sourcecode.SourceCodeStateBuilder.toSourceCodeState]] */
   def toWorkspaceState(currentState: WorkspaceState.Parsed,
                        compilationResult: Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]]): WorkspaceState.IsCompiled =
     compilationResult match {

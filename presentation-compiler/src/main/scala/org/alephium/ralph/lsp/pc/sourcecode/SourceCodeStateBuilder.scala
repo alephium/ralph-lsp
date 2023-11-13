@@ -47,7 +47,7 @@ private[sourcecode] object SourceCodeStateBuilder {
       sourceCodeState =>
         val parsedContracts =
           sourceCodeState.ast.statements collect {
-            case statement: Tree.Source =>
+            case statement: Tree.Source => // collect only the source-code, ignoring import statements.
               statement.ast
           }
 
