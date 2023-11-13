@@ -79,26 +79,3 @@ vim.api.nvim_create_autocmd('FileType', {
     callback = function() ralph_init() end
 })
 ```
-
-# Run LSP in IntelliJ (Ultimate)
-
-Update the jar
-location [here](plugin-intellij/src/main/scala/org/alephium/ralph/lsp/plugin/intellij/RalphLspServerDescriptor.scala).
-Yep, this will eventually be automatically configured via sbt.
-
-Run the IDE:
-
-```shell
-sbt "project plugin-intellij; runIDE"
-```
-
-## Error highlighting
-
-Note: Currently this is implemented for when files are
-opened. See [didOpen()](lsp-server/src/main/scala/org/alephium/ralph/lsp/server/service/RalphTextDocumentService.scala).
-
-![img.png](docs/img.png)
-
-## Code completion
-
-![img.png](docs/img_1.png)

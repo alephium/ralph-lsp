@@ -50,24 +50,6 @@ lazy val `lsp-server` =
         )
     )
 
-lazy val `plugin-intellij` =
-  project
-    .enablePlugins(SbtIdeaPlugin)
-    .settings(
-      version := "0.0.1-SNAPSHOT",
-      scalaVersion := Version.scala213,
-      ThisBuild / intellijPluginName := "Ralph LSP",
-      ThisBuild / intellijBuild := "232.9559-EAP-CANDIDATE-SNAPSHOT",
-      ThisBuild / intellijPlatform := IntelliJPlatform.IdeaUltimate,
-      packageMethod := PackagingMethod.Standalone(),
-      Global / intellijAttachSources := true,
-      Compile / javacOptions ++= "--release" :: "17" :: Nil,
-      intellijPlugins += "com.intellij.properties".toPlugin,
-      libraryDependencies += "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5" withSources(),
-      Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
-      Test / unmanagedResourceDirectories += baseDirectory.value / "testResources"
-    )
-
 lazy val downloadWeb3AndInstallStd = taskKey[Unit]("Download alephium-web3 source code and copy std interface to the correct resource folder")
 
 downloadWeb3AndInstallStd := {
