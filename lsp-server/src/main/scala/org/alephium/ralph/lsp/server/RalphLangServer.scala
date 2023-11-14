@@ -145,6 +145,12 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         }
       case None => ()
     }
+
+    // Invoke initial compilation. Trigger it as build file changed.
+    didChangeAndPublish(
+      fileURI = getWorkspace().buildURI,
+      code = None
+    )
   }
 
   /** @inheritdoc */
@@ -331,10 +337,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           Left(diagnostics)
 
         case Right(workspace) =>
-          // Build passed. Set the workspace.
-          // No need to build diagnostics here, the caller should, since it's requested
-          // for this workspace for further compilation. The next compilation should publish diagnostics.
-          setWorkspace(workspace)
+          // Build passed.
+          // No need to build diagnostics or set the state here, the caller should,
+          // because the caller this workspace is requested for further compilation.
           Right(workspace)
       }
     }
