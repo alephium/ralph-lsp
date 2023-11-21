@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace
 
+import com.typesafe.scalalogging.LazyLogging
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
@@ -17,7 +18,7 @@ import scala.collection.immutable.ArraySeq
  *
  * All functions are all immutable. They all returns the next workspace state, given the current state.
  */
-object Workspace {
+object Workspace extends LazyLogging {
 
   /** First stage of a workspace where just the root workspace folder is known */
   def create(workspaceURI: URI): WorkspaceState.Created =
@@ -504,9 +505,20 @@ object Workspace {
               Some(Left(errored))
           }
 
-        case None =>
-          // no build change occurred, using existing workspace.
-          Some(Right(workspace))
+        case None => // no build change occurred
+          val newWorkspace =
+            workspace match {
+              case unCompiled: WorkspaceState.UnCompiled =>
+                // Build did not change but the workspace is still in un-compiled state. Parse and compile the workspace.
+                logger.debug("Build did not change. Compiling un-compiled workspace.")
+                parseAndCompile(unCompiled)
+
+              case workspace =>
+                // Already parsed and/or compiled. Continue with existing workspace.
+                workspace
+            }
+
+          Some(Right(newWorkspace))
       }
     else
       None // ignore file that is not in the root workspace directory
