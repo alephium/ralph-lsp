@@ -31,7 +31,7 @@ object RalphLangServer {
         listener = Some(listener),
         workspace = None,
         buildErrors = None,
-        clientCapabilities = None,
+        clientAllowsWatchedFilesDynamicRegistration = false,
         shutdownReceived = false
       )
 
@@ -46,7 +46,7 @@ object RalphLangServer {
         listener = None,
         workspace = None,
         buildErrors = None,
-        clientCapabilities = None,
+        clientAllowsWatchedFilesDynamicRegistration = false,
         shutdownReceived = false
       )
     )
@@ -72,6 +72,19 @@ object RalphLangServer {
     val watchers = java.util.Arrays.asList(new FileSystemWatcher(messages.Either.forLeft("**/*")))
     val options = new DidChangeWatchedFilesRegistrationOptions(watchers)
     new Registration(WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES, options)
+  }
+
+  /** Checks if the client all dynamic registeration of watched file */
+  def getAllowsWatchedFilesDynamicRegistration(params: InitializeParams): Boolean = {
+    val allows =
+      for {
+        capabilities <- Option(params.getCapabilities())
+        workspace <- Option(capabilities.getWorkspace())
+        didChangeWatchedFiles <- Option(workspace.getDidChangeWatchedFiles())
+        dynamicRegistration <- Option(didChangeWatchedFiles.getDynamicRegistration())
+      } yield dynamicRegistration
+
+    allows contains true
   }
 }
 
@@ -123,7 +136,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         setWorkspace(workspace)
 
-        setClientCapabilities(params.getCapabilities())
+        val maybeDynamicRegistration =
+          getAllowsWatchedFilesDynamicRegistration(params)
+
+        setClientAllowsWatchedFilesDynamicRegistration(maybeDynamicRegistration)
 
         cancelChecker.checkCanceled()
 
@@ -133,33 +149,28 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   /** @inheritdoc */
   override def initialized(params: InitializedParams): Unit = {
     logger.debug("Client initialized")
-    thisServer.state.clientCapabilities match {
-      case Some(capabilities) =>
-        val maybeDynamicRegistration: Option[Boolean] = for {
-          workspace <- Option(capabilities.getWorkspace())
-          didChangeWatchedFiles <- Option(workspace.getDidChangeWatchedFiles())
-          dynamicRegistration <- Option(didChangeWatchedFiles.getDynamicRegistration())
-        } yield dynamicRegistration
-
-        if(maybeDynamicRegistration.getOrElse(false)) {
-          logger.debug("Register watched files")
-          getClient().register(clientCapabilities()).whenComplete { case (_, error) =>
-            if(error != null) {
-              logger.error("Failed to register watched files", error)
-            }
-          }
-        } else {
-          logger.debug("Client doesn't support dynamic registration for watched files")
-        }
-      case None => ()
-    }
-
+    registerClientCapabilities()
     // Invoke initial compilation. Trigger it as build file changed.
     didChangeAndPublish(
       fileURI = getWorkspace().buildURI,
       code = None
     )
   }
+
+  /** Register needed capabilities with the client */
+  def registerClientCapabilities(): Unit =
+    if (state.clientAllowsWatchedFilesDynamicRegistration) {
+      logger.debug("Register watched files")
+      getClient()
+        .register(clientCapabilities())
+        .whenComplete {
+          case (_, error) =>
+            if (error != null)
+              logger.error("Failed to register watched files", error)
+        }
+    } else {
+      logger.debug("Client doesn't support dynamic registration for watched files")
+    }
 
   /** @inheritdoc */
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
@@ -373,9 +384,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       thisServer.state = thisServer.state.copy(workspace = Some(workspace))
     }
 
-  private def setClientCapabilities(clientCapabilities: ClientCapabilities): Unit =
+  private def setClientAllowsWatchedFilesDynamicRegistration(allows: Boolean): Unit =
     thisServer.synchronized {
-      thisServer.state = thisServer.state.copy(clientCapabilities = Some(clientCapabilities))
+      thisServer.state = thisServer.state.copy(clientAllowsWatchedFilesDynamicRegistration = allows)
     }
 
   /**
