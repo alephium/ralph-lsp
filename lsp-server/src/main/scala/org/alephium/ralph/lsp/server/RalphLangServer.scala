@@ -9,8 +9,9 @@ import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.DiagnosticsConverter
 import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater}
+import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.CompletableFutures
+import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
@@ -64,6 +65,13 @@ object RalphLangServer {
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
 
     capabilities
+  }
+
+  /** Build capabilities needed by from the server */
+  def clientCapabilities(): Registration = {
+    val watchers = java.util.Arrays.asList(new FileSystemWatcher(messages.Either.forLeft("**/*")))
+    val options = new DidChangeWatchedFilesRegistrationOptions(watchers)
+    new Registration(WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES, options)
   }
 }
 
@@ -135,7 +143,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         if(maybeDynamicRegistration.getOrElse(false)) {
           logger.debug("Register watched files")
-          getClient().registerWatchedFiles().whenComplete { case (_, error) =>
+          getClient().register(clientCapabilities()).whenComplete { case (_, error) =>
             if(error != null) {
               logger.error("Failed to register watched files", error)
             }
