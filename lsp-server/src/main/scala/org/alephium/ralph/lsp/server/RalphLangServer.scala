@@ -9,8 +9,9 @@ import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.DiagnosticsConverter
 import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater}
+import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.CompletableFutures
+import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
@@ -19,15 +20,6 @@ import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.IterableHasAsScala
 
 object RalphLangServer {
-
-  /** Build capabilities supported by the LSP server */
-  def serverCapabilities(): ServerCapabilities = {
-    val capabilities = new ServerCapabilities()
-
-    capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
-
-    capabilities
-  }
 
   /** Start server with pre-configured client */
   def apply(client: RalphLangClient,
@@ -39,7 +31,7 @@ object RalphLangServer {
         listener = Some(listener),
         workspace = None,
         buildErrors = None,
-        clientCapabilities = None,
+        clientAllowsWatchedFilesDynamicRegistration = false,
         shutdownReceived = false
       )
 
@@ -54,7 +46,7 @@ object RalphLangServer {
         listener = None,
         workspace = None,
         buildErrors = None,
-        clientCapabilities = None,
+        clientAllowsWatchedFilesDynamicRegistration = false,
         shutdownReceived = false
       )
     )
@@ -65,6 +57,35 @@ object RalphLangServer {
       //Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
       .orElse(Option(System.getProperty("user.dir")).map(dir => s"file://$dir"))
       .map(new URI(_))
+
+  /** Build capabilities supported by the LSP server */
+  def serverCapabilities(): ServerCapabilities = {
+    val capabilities = new ServerCapabilities()
+
+    capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
+
+    capabilities
+  }
+
+  /** Build capabilities needed by from the server */
+  def clientCapabilities(): Registration = {
+    val watchers = java.util.Arrays.asList(new FileSystemWatcher(messages.Either.forLeft("**/*")))
+    val options = new DidChangeWatchedFilesRegistrationOptions(watchers)
+    new Registration(WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES, options)
+  }
+
+  /** Checks if the client all dynamic registeration of watched file */
+  def getAllowsWatchedFilesDynamicRegistration(params: InitializeParams): Boolean = {
+    val allows =
+      for {
+        capabilities <- Option(params.getCapabilities())
+        workspace <- Option(capabilities.getWorkspace())
+        didChangeWatchedFiles <- Option(workspace.getDidChangeWatchedFiles())
+        dynamicRegistration <- Option(didChangeWatchedFiles.getDynamicRegistration())
+      } yield dynamicRegistration
+
+    allows contains true
+  }
 }
 
 /**
@@ -115,7 +136,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         setWorkspace(workspace)
 
-        setClientCapabilities(params.getCapabilities())
+        val maybeDynamicRegistration =
+          getAllowsWatchedFilesDynamicRegistration(params)
+
+        setClientAllowsWatchedFilesDynamicRegistration(maybeDynamicRegistration)
 
         cancelChecker.checkCanceled()
 
@@ -125,33 +149,28 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   /** @inheritdoc */
   override def initialized(params: InitializedParams): Unit = {
     logger.debug("Client initialized")
-    thisServer.state.clientCapabilities match {
-      case Some(capabilities) =>
-        val maybeDynamicRegistration: Option[Boolean] = for {
-          workspace <- Option(capabilities.getWorkspace())
-          didChangeWatchedFiles <- Option(workspace.getDidChangeWatchedFiles())
-          dynamicRegistration <- Option(didChangeWatchedFiles.getDynamicRegistration())
-        } yield dynamicRegistration
-
-        if(maybeDynamicRegistration.getOrElse(false)) {
-          logger.debug("Register watched files")
-          getClient().registerWatchedFiles().whenComplete { case (_, error) =>
-            if(error != null) {
-              logger.error("Failed to register watched files", error)
-            }
-          }
-        } else {
-          logger.debug("Client doesn't support dynamic registration for watched files")
-        }
-      case None => ()
-    }
-
+    registerClientCapabilities()
     // Invoke initial compilation. Trigger it as build file changed.
     didChangeAndPublish(
       fileURI = getWorkspace().buildURI,
       code = None
     )
   }
+
+  /** Register needed capabilities with the client */
+  def registerClientCapabilities(): Unit =
+    if (state.clientAllowsWatchedFilesDynamicRegistration) {
+      logger.debug("Register watched files")
+      getClient()
+        .register(clientCapabilities())
+        .whenComplete {
+          case (_, error) =>
+            if (error != null)
+              logger.error("Failed to register watched files", error)
+        }
+    } else {
+      logger.debug("Client doesn't support dynamic registration for watched files")
+    }
 
   /** @inheritdoc */
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
@@ -365,9 +384,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       thisServer.state = thisServer.state.copy(workspace = Some(workspace))
     }
 
-  private def setClientCapabilities(clientCapabilities: ClientCapabilities): Unit =
+  private def setClientAllowsWatchedFilesDynamicRegistration(allows: Boolean): Unit =
     thisServer.synchronized {
-      thisServer.state = thisServer.state.copy(clientCapabilities = Some(clientCapabilities))
+      thisServer.state = thisServer.state.copy(clientAllowsWatchedFilesDynamicRegistration = allows)
     }
 
   /**

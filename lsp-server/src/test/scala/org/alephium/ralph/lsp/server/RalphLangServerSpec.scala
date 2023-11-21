@@ -5,17 +5,16 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.state.ServerState
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.jdk.FutureConverters._
 import java.net.URI
-import java.util.concurrent.{ CompletionStage,CompletableFuture, Future => JFuture}
+import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.Promise
+import scala.jdk.FutureConverters._
 
 class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory with ScalaFutures{
 
@@ -49,7 +48,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
           listener = Some(listener),
           workspace = Some(WorkspaceState.Created(workspaceURI)),
           buildErrors = None,
-          clientCapabilities = Some(initialise.getCapabilities),
+          clientAllowsWatchedFilesDynamicRegistration = false,
           shutdownReceived = false
         )
     }
@@ -114,7 +113,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
    }
   }
 
-  "initialized" should {
+  "registerClientCapabilities" should {
 
     def buildServer(dynamicRegistration: Option[Boolean], registered: AtomicBoolean) = {
       implicit val compiler: CompilerAccess = CompilerAccess.ralphc
@@ -151,7 +150,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
     "register watched files if dynamic registration is true" in {
       val registered = new AtomicBoolean(false)
       val server = buildServer(Some(true), registered)
-      server.initialized(new InitializedParams())
+      server.registerClientCapabilities()
 
       registered.get shouldBe true
     }
@@ -159,7 +158,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
     "not register watched files if dynamic registration is false" in {
       val registered = new AtomicBoolean(false)
       val server = buildServer(Some(false), registered)
-      server.initialized(new InitializedParams())
+      server.registerClientCapabilities()
 
       registered.get shouldBe false
     }
@@ -167,7 +166,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
     "not register watched files if dynamic registration is not set" in {
       val registered = new AtomicBoolean(false)
       val server = buildServer(None, registered)
-      server.initialized(new InitializedParams())
+      server.registerClientCapabilities()
 
       registered.get shouldBe false
     }
