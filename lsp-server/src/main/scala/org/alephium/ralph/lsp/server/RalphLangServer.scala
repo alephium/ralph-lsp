@@ -20,15 +20,6 @@ import scala.jdk.CollectionConverters.IterableHasAsScala
 
 object RalphLangServer {
 
-  /** Build capabilities supported by the LSP server */
-  def serverCapabilities(): ServerCapabilities = {
-    val capabilities = new ServerCapabilities()
-
-    capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
-
-    capabilities
-  }
-
   /** Start server with pre-configured client */
   def apply(client: RalphLangClient,
             listener: JFuture[Void])(implicit compiler: CompilerAccess,
@@ -65,6 +56,15 @@ object RalphLangServer {
       //Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
       .orElse(Option(System.getProperty("user.dir")).map(dir => s"file://$dir"))
       .map(new URI(_))
+
+  /** Build capabilities supported by the LSP server */
+  def serverCapabilities(): ServerCapabilities = {
+    val capabilities = new ServerCapabilities()
+
+    capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
+
+    capabilities
+  }
 }
 
 /**
