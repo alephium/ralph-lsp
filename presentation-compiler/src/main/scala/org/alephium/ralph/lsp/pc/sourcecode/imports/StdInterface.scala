@@ -46,7 +46,10 @@ object StdInterface extends StrictLogging {
   } match {
     case Success(value) => value
     case Failure(error) =>
-      logger.error(s"Cannot get std interfaces: $error")
-      Map.empty
+      logger.error("Cannot get std interfaces", error)
+      // FIXME: Temporary solution for https://github.com/alephium/ralph-lsp/issues/41.
+      //        This will be properly resolved in https://github.com/alephium/ralph-lsp/issues/63.
+      //        We should NOT throw exceptions.
+      throw error
   }
 }
