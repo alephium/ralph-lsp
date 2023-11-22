@@ -28,8 +28,8 @@ Create a mandatory config file named `ralph.json` in your project's root directo
     "ignoreUpdateFieldsCheckWarnings": false,
     "ignoreCheckExternalCallerWarnings": false
   },
-  "contractPath": "./contracts",
-  "artifactPath": "./artifacts"
+  "contractPath": "contracts",
+  "artifactPath": "artifacts"
 }
 ```
 
