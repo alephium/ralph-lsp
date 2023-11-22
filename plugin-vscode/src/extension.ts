@@ -15,7 +15,10 @@ export function activate(context: ExtensionContext) {
     };
 
     const clientOptions: LanguageClientOptions = {
-        documentSelector: [{pattern: '**/*.{ral,ralph}'}]
+        documentSelector: [
+            {pattern: '**/*.ral'},
+            {language: 'json', pattern: '**/ralph.json'},
+        ]
     };
 
     // Create the client and store it.

@@ -72,7 +72,7 @@ object DependencyDownloader extends LazyLogging {
     }
 
   /**
-   * Currently dependencies do not contain a `build.ralph` file.
+   * Currently dependencies do not contain a `ralph.json` file.
    * This function create a default one for the `std` package.
    */
   private def defaultBuildForStd(): BuildState.BuildCompiled = {

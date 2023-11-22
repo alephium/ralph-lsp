@@ -12,10 +12,10 @@ import scala.collection.immutable.ArraySeq
 
 object Build {
 
-  val BUILD_FILE_EXTENSION = "ralph"
+  val BUILD_FILE_EXTENSION = "json"
 
   /** Build file of a workspace */
-  val BUILD_FILE_NAME = s"build.$BUILD_FILE_EXTENSION"
+  val BUILD_FILE_NAME = s"ralph.$BUILD_FILE_EXTENSION"
 
   def toBuildPath(workspacePath: Path): Path =
     workspacePath.resolve(BUILD_FILE_NAME)

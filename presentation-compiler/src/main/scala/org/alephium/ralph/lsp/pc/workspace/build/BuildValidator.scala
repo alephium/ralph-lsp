@@ -10,7 +10,7 @@ import java.net.URI
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ListBuffer
 
-/** Implements functions for validating `build.ralph` */
+/** Implements functions for validating `ralph.json` */
 object BuildValidator {
 
   /** Validate and promotes a parsed build-file to compiled */
