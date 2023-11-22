@@ -41,4 +41,11 @@ object ResponseError {
       errorCode = ResponseErrorCode.InvalidRequest,
       message = "Request Ignored: A server shutdown request is in progress"
     )
+
+  /** An unexpected internal error */
+  case class InternalError(exception: Throwable) extends
+    ResponseError(
+      errorCode = ResponseErrorCode.InternalError,
+      message = exception.toString
+    )
 }
