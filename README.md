@@ -55,7 +55,7 @@ Install the [ralph.vim](https://github.com/tdroxler/ralph.vim) plugin with your 
 
 Add the following to your lua configuration
 
-```vim
+```lua
 local function ralph_init()
 
   local capabilities = vim.lsp.protocol.make_client_capabilities()
