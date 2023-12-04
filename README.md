@@ -14,11 +14,11 @@ Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.j
 
 # Configuration
 
-Create a mandatory config file named `build.ralph` in your project's root directory. You can use the following sample as reference:
+Create a mandatory config file named `ralph.json` in your project's root directory. You can use the following sample as reference:
 
-`build.ralph`
+`ralph.json`
 
-```
+```json
 {
   "compilerOptions": {
     "ignoreUnusedConstantsWarnings": false,
@@ -28,8 +28,8 @@ Create a mandatory config file named `build.ralph` in your project's root direct
     "ignoreUpdateFieldsCheckWarnings": false,
     "ignoreCheckExternalCallerWarnings": false
   },
-  "contractPath": "./contracts",
-  "artifactPath": "./artifacts"
+  "contractPath": "contracts",
+  "artifactPath": "artifacts"
 }
 ```
 
@@ -55,14 +55,14 @@ Install the [ralph.vim](https://github.com/tdroxler/ralph.vim) plugin with your 
 
 Add the following to your lua configuration
 
-```
+```lua
 local function ralph_init()
 
   local capabilities = vim.lsp.protocol.make_client_capabilities()
 
   capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = true
 
-  local root_dir = vim.fs.dirname(vim.fs.find({'build.ralph', 'contracts', 'artifacts'}, { upward = true })[1])
+  local root_dir = vim.fs.dirname(vim.fs.find({'ralph.json', 'contracts', 'artifacts'}, { upward = true })[1])
   if root_dir == nil then root_dir = vim.fn.getcwd() end
 
    vim.lsp.start({

@@ -58,7 +58,7 @@ object Dependency {
         )
 
       case Right(dependencyStd) =>
-        // Compile std. A dependency is just a regular workspace with a `build.ralph` file.
+        // Compile std. A dependency is just a regular workspace with a `ralph.json` file.
         val dependencyStdCompiled =
           Workspace.parseAndCompile(dependencyStd)
 

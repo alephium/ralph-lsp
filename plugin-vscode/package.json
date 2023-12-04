@@ -14,9 +14,8 @@
   },
   "activationEvents": [
     "onLanguage:ralph",
-    "workspaceContains:*.ral",
-    "workspaceContains:*/*.ral",
-    "workspaceContains:*.ralph"
+    "workspaceContains:**/*.ral",
+    "workspaceContains:ralph.json"
   ],
   "main": "./out/extension",
   "scripts": {

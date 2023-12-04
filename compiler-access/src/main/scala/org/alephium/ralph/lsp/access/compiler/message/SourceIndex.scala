@@ -13,7 +13,7 @@ object SourceIndex {
    * Sending negative index to the client would be incorrect.
    * This set the index to be an empty range.
    *
-   * This is a temporary solution until an AST is available for `build.ralph`.
+   * This is a temporary solution until an AST is available for `ralph.json`.
    *
    * @see Issue <a href="https://github.com/alephium/ralph-lsp/issues/17">#17</a>.
    */
