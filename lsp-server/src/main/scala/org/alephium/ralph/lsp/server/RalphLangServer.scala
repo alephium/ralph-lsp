@@ -109,7 +109,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    */
   def setInitialState(client: RalphLangClient,
                       listener: () => JFuture[Void]): Unit =
-    thisServer.synchronized {
+    runSync {
       require(state.client.isEmpty, "Client is already set")
       require(state.listener.isEmpty, "Listener is already set")
 
@@ -147,15 +147,16 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   /** @inheritdoc */
-  override def initialized(params: InitializedParams): Unit = {
-    logger.debug("Client initialized")
-    registerClientCapabilities()
-    // Invoke initial compilation. Trigger it as build file changed.
-    didChangeAndPublish(
-      fileURI = getWorkspace().buildURI,
-      code = None
-    )
-  }
+  override def initialized(params: InitializedParams): Unit =
+    runSync {
+      logger.debug("Client initialized")
+      registerClientCapabilities()
+      // Invoke initial compilation. Trigger it as build file changed.
+      didChangeAndPublish(
+        fileURI = getWorkspace().buildURI,
+        code = None
+      )
+    }
 
   /** Register needed capabilities with the client */
   def registerClientCapabilities(): Unit =
@@ -173,59 +174,63 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   /** @inheritdoc */
-  override def didOpen(params: DidOpenTextDocumentParams): Unit = {
-    val fileURI = new URI(params.getTextDocument.getUri)
-    val code = Option(params.getTextDocument.getText)
+  override def didOpen(params: DidOpenTextDocumentParams): Unit =
+    runSync {
+      val fileURI = new URI(params.getTextDocument.getUri)
+      val code = Option(params.getTextDocument.getText)
 
-    logger.debug(s"didOpen. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
+      logger.debug(s"didOpen. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
-    didChangeAndPublish(
-      fileURI = fileURI,
-      code = code
-    )
-  }
-
-  /** @inheritdoc */
-  override def didChange(params: DidChangeTextDocumentParams): Unit = {
-    val fileURI = new URI(params.getTextDocument.getUri)
-    val code = Option(params.getContentChanges.get(0).getText)
-
-    logger.debug(s"didChange. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
-
-    didChangeAndPublish(
-      fileURI = fileURI,
-      code = code
-    )
-  }
+      didChangeAndPublish(
+        fileURI = fileURI,
+        code = code
+      )
+    }
 
   /** @inheritdoc */
-  override def didClose(params: DidCloseTextDocumentParams): Unit = {
-    val fileURI = new URI(params.getTextDocument.getUri)
+  override def didChange(params: DidChangeTextDocumentParams): Unit =
+    runSync {
+      val fileURI = new URI(params.getTextDocument.getUri)
+      val code = Option(params.getContentChanges.get(0).getText)
 
-    logger.debug(s"didClose. fileURI: $fileURI")
+      logger.debug(s"didChange. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
-    didChangeAndPublish(
-      fileURI = fileURI,
-      code = None
-    )
-  }
+      didChangeAndPublish(
+        fileURI = fileURI,
+        code = code
+      )
+    }
 
   /** @inheritdoc */
-  override def didSave(params: DidSaveTextDocumentParams): Unit = {
-    val fileURI = new URI(params.getTextDocument.getUri)
-    val code = Option(params.getText)
+  override def didClose(params: DidCloseTextDocumentParams): Unit =
+    runSync {
+      val fileURI = new URI(params.getTextDocument.getUri)
 
-    logger.debug(s"didSave. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
+      logger.debug(s"didClose. fileURI: $fileURI")
 
-    didChangeAndPublish(
-      fileURI = fileURI,
-      code = code
-    )
-  }
+      didChangeAndPublish(
+        fileURI = fileURI,
+        code = None
+      )
+    }
+
+  /** @inheritdoc */
+  override def didSave(params: DidSaveTextDocumentParams): Unit =
+    runSync {
+      val fileURI = new URI(params.getTextDocument.getUri)
+      val code = Option(params.getText)
+
+      logger.debug(s"didSave. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
+
+      didChangeAndPublish(
+        fileURI = fileURI,
+        code = code
+      )
+    }
 
   /** @inheritdoc */
   override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
-    thisServer.synchronized {
+    runSync {
       val changes =
         params.getChanges
 
@@ -284,7 +289,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    */
   private def didChangeAndPublish(fileURI: URI,
                                   code: Option[String]): Unit =
-    thisServer.synchronized {
+    runSync {
       val diagnostics =
         didChangeAndSet(
           fileURI = fileURI,
@@ -305,7 +310,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    */
   private def didChangeAndSet(fileURI: URI,
                               code: Option[String]): Iterable[PublishDiagnosticsParams] =
-    thisServer.synchronized {
+    runSync {
       val source =
         Some(WorkspaceFile(fileURI, code))
 
@@ -332,7 +337,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @return Diagnostics if there were build errors, or-else the next workspace.
    */
   def getOrBuildWorkspace(code: Option[WorkspaceFile]): Either[Iterable[PublishDiagnosticsParams], WorkspaceState.IsSourceAware] =
-    thisServer.synchronized {
+    runSync {
       val workspace =
         getWorkspace()
 
@@ -380,12 +385,12 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   /** Set the workspace */
   private def setWorkspace(workspace: WorkspaceState): Unit =
-    thisServer.synchronized {
+    runSync {
       thisServer.state = thisServer.state.copy(workspace = Some(workspace))
     }
 
   private def setClientAllowsWatchedFilesDynamicRegistration(allows: Boolean): Unit =
-    thisServer.synchronized {
+    runSync {
       thisServer.state = thisServer.state.copy(clientAllowsWatchedFilesDynamicRegistration = allows)
     }
 
@@ -396,7 +401,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @return Diagnostics for current workspace.
    */
   private def setWorkspaceChange(changeResult: Either[ErrorUnknownFileType, WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
-    thisServer.synchronized {
+    runSync {
       changeResult match {
         case Right(result) =>
           setWorkspaceChange(result)
@@ -417,7 +422,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @return Diagnostics for current workspace.
    */
   private def setWorkspaceChange(changeResult: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
-    thisServer.synchronized {
+    runSync {
       val currentServerState =
         thisServer.state
 
@@ -458,8 +463,32 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     result
   }
 
+  /**
+   * Run within a synchronised block and ensure all unexpected abrupt internal errors are logged.
+   * */
+  private def runSync[A](f: => A): A =
+    try
+      thisServer.synchronized {
+        f
+      }
+    catch {
+      case throwable: Throwable =>
+        state.client match {
+          case Some(client) =>
+            // client is known, notify them.
+            logger.error("Internal error occurred", throwable)
+            client log ResponseError.InternalError(throwable)
+
+          case None =>
+            // client is not known.
+            logger.error("Internal error occurred. Client not notified.", throwable)
+        }
+
+        throw throwable
+    }
+
   override def shutdown(): CompletableFuture[AnyRef] =
-    thisServer.synchronized {
+    runSync {
       logger.info("shutdown")
       if(thisServer.state.shutdownReceived){
         logAndSend(ResponseError.ShutdownRequested)
@@ -470,7 +499,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   def exitWithCode(): Int =
-    thisServer.synchronized {
+    runSync {
       logger.info("exit")
 
       thisServer.state.listener match {
