@@ -144,6 +144,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         cancelChecker.checkCanceled()
 
         new InitializeResult(serverCapabilities())
+    } whenComplete {
+      (_, error) =>
+        if (error != null)
+          logger.error("Failed to initialize server", error)
     }
 
   /** @inheritdoc */
