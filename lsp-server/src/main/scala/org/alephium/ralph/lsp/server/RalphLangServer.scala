@@ -144,6 +144,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         cancelChecker.checkCanceled()
 
         new InitializeResult(serverCapabilities())
+    } whenComplete {
+      (_, error) =>
+        if (error != null)
+          logger.error("Failed to initialize server", error)
     }
 
   /** @inheritdoc */
@@ -232,13 +236,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
     runSync {
       val changes =
-        params.getChanges
+        params.getChanges.asScala
 
-      logger.debug(s"didChangeWatchedFiles: ${changes.asScala.mkString("\n", "\n", "")}")
+      logger.debug(s"didChangeWatchedFiles: ${changes.mkString("\n", "\n", "")}")
 
       // collect events
       val events =
-        changes.asScala collect {
+        changes collect {
           event =>
             event.getType match {
               case FileChangeType.Deleted =>
@@ -265,10 +269,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
               setWorkspaceChange(deleteResult)
           }
 
-        val client =
-          getClient()
-
-        diagnostics.merge foreach client.publishDiagnostics
+        getClient() publish diagnostics.merge
       }
     }
 
@@ -296,9 +297,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           code = code
         )
 
-      val client = getClient()
-
-      diagnostics foreach client.publishDiagnostics
+      getClient() publish diagnostics
     }
 
   /**
@@ -450,7 +449,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   /** Write to log file, notify the client and throw to exit this request */
   private def notifyAndThrow(error: server.ResponseError): Nothing = {
     val client = getClient()
-    val exception = client.log(error).toResponseErrorException
+    val exception = client.show(error).toResponseErrorException
     logger.error(error.getMessage, exception)
     throw exception
   }
@@ -477,7 +476,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           case Some(client) =>
             // client is known, notify them.
             logger.error("Internal error occurred", throwable)
-            client log ResponseError.InternalError(throwable)
+            client show ResponseError.InternalError(throwable)
 
           case None =>
             // client is not known.
