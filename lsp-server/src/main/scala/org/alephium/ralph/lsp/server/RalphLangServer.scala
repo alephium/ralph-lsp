@@ -236,13 +236,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
     runSync {
       val changes =
-        params.getChanges
+        params.getChanges.asScala
 
-      logger.debug(s"didChangeWatchedFiles: ${changes.asScala.mkString("\n", "\n", "")}")
+      logger.debug(s"didChangeWatchedFiles: ${changes.mkString("\n", "\n", "")}")
 
       // collect events
       val events =
-        changes.asScala collect {
+        changes collect {
           event =>
             event.getType match {
               case FileChangeType.Deleted =>
