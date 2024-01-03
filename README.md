@@ -65,8 +65,6 @@ vim.api.nvim_create_autocmd('FileType', {
 After your IDE has booted up, create a mandatory config file named `ralph.json` in your project's root directory.
 You can use the following sample as reference:
 
-`ralph.json`
-
 ```json
 {
   "compilerOptions": {
