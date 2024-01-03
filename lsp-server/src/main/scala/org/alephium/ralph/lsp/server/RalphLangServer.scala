@@ -454,7 +454,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   /** Write to log file, notify the client and throw to exit this request */
   private def notifyAndThrow(error: server.ResponseError): Nothing = {
     val client = getClient()
-    val exception = client.log(error).toResponseErrorException
+    val exception = client.show(error).toResponseErrorException
     logger.error(error.getMessage, exception)
     throw exception
   }
@@ -481,7 +481,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           case Some(client) =>
             // client is known, notify them.
             logger.error("Internal error occurred", throwable)
-            client log ResponseError.InternalError(throwable)
+            client show ResponseError.InternalError(throwable)
 
           case None =>
             // client is not known.

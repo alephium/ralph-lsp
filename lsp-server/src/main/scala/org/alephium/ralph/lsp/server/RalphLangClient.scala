@@ -10,8 +10,8 @@ object RalphLangClient {
   /** Implements functions that are an extension to LSP4J's [[LanguageClient]]. */
   implicit class RalphLangClientExtension(val client: RalphLangClient) extends AnyVal {
 
-    def log(error: ResponseError): ResponseError = {
-      client.logMessage(new MessageParams(MessageType.Error, error.getMessage))
+    def show(error: ResponseError): ResponseError = {
+      client.showMessage(new MessageParams(MessageType.Error, error.getMessage))
       error
     }
 
