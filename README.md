@@ -12,31 +12,11 @@ sbt "project lsp-server; assembly;"
 
 Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar`
 
-# Configuration
-
-Create a mandatory config file named `ralph.json` in your project's root directory. You can use the following sample as reference:
-
-`ralph.json`
-
-```json
-{
-  "compilerOptions": {
-    "ignoreUnusedConstantsWarnings": false,
-    "ignoreUnusedVariablesWarnings": false,
-    "ignoreUnusedFieldsWarnings": false,
-    "ignoreUnusedPrivateFunctionsWarnings": false,
-    "ignoreUpdateFieldsCheckWarnings": false,
-    "ignoreCheckExternalCallerWarnings": false
-  },
-  "contractPath": "contracts",
-  "artifactPath": "artifacts"
-}
-```
-
 # Run LSP in VSCode
 
 Update the jar
-location [here](plugin-vscode/src/extension.ts).
+location [here](plugin-vscode/src/extension.ts) and ensure a folder is specified for the logs under the
+flag `-DRALPH_LSP_HOME`.
 
 Run the IDE:
 
@@ -67,7 +47,7 @@ local function ralph_init()
 
    vim.lsp.start({
      name = 'ralph-lsp',
-     cmd = {'java', '-jar', '<path-to-your-jar>/ralph-lsp.jar'},
+     cmd = {'java', '-jar', '-DRALPH_LSP_HOME=<path-to-your-log-folder>', '<path-to-your-jar>/ralph-lsp.jar'},
      root_dir = root_dir,
      capabilities = capabilities
    })
@@ -78,4 +58,26 @@ vim.api.nvim_create_autocmd('FileType', {
     pattern = { 'ralph' },
     callback = function() ralph_init() end
 })
+```
+
+# Configuration
+
+After your IDE has booted up, create a mandatory config file named `ralph.json` in your project's root directory.
+You can use the following sample as reference:
+
+`ralph.json`
+
+```json
+{
+  "compilerOptions": {
+    "ignoreUnusedConstantsWarnings": false,
+    "ignoreUnusedVariablesWarnings": false,
+    "ignoreUnusedFieldsWarnings": false,
+    "ignoreUnusedPrivateFunctionsWarnings": false,
+    "ignoreUpdateFieldsCheckWarnings": false,
+    "ignoreCheckExternalCallerWarnings": false
+  },
+  "contractPath": "contracts",
+  "artifactPath": "artifacts"
+}
 ```
