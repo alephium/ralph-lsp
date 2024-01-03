@@ -269,10 +269,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
               setWorkspaceChange(deleteResult)
           }
 
-        val client =
-          getClient()
-
-        diagnostics.merge foreach client.publishDiagnostics
+        getClient() publish diagnostics.merge
       }
     }
 
@@ -300,9 +297,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           code = code
         )
 
-      val client = getClient()
-
-      diagnostics foreach client.publishDiagnostics
+      getClient() publish diagnostics
     }
 
   /**

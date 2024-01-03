@@ -20,6 +20,12 @@ object RalphLangClient {
      */
     def register(registration: Registration): CompletableFuture[Void] =
       client.registerCapability(new RegistrationParams(java.util.Arrays.asList(registration)))
+
+    /**
+     * @see [[RalphLangClient.publishDiagnostics]]
+     */
+    def publish(diagnostics: Iterable[PublishDiagnosticsParams]): Unit =
+      diagnostics foreach client.publishDiagnostics
   }
 }
 
