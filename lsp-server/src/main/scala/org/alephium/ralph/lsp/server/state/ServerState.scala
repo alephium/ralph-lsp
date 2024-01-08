@@ -16,10 +16,12 @@ import java.util.concurrent.{Future => JFuture}
  *                    - On successful build compilation, this gets set to [[None]] and the workspace is updated with the new build file.
  *                    - If there are build errors, the workspace still handles requests using the most recent valid and compiled build file
  *                      until this build file is error-free and successfully compiled.
+ * @param trace       Client configured setting. See also [[org.eclipse.lsp4j.TraceValue]].
  */
 case class ServerState(client: Option[RalphLangClient],
                        listener: Option[JFuture[Void]],
                        workspace: Option[WorkspaceState],
                        buildErrors: Option[BuildState.BuildErrored],
                        clientAllowsWatchedFilesDynamicRegistration: Boolean,
+                       trace: Trace,
                        shutdownReceived: Boolean)

@@ -18,6 +18,23 @@
     "workspaceContains:ralph.json"
   ],
   "main": "./out/extension",
+  "contributes": {
+    "configuration": {
+      "properties": {
+        "ralph-lsp.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and Ralph language server."
+        }
+      }
+    }
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -b",

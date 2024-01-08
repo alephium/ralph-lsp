@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.server.state.ServerState
+import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 import org.eclipse.lsp4j._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -49,6 +49,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
           workspace = Some(WorkspaceState.Created(workspaceURI)),
           buildErrors = None,
           clientAllowsWatchedFilesDynamicRegistration = false,
+          trace = Trace.Off,
           shutdownReceived = false
         )
     }

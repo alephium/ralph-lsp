@@ -36,6 +36,12 @@ object ResponseError {
       message = s"Unknown file type: $fileURI"
     )
 
+  case class InvalidTraceSetting(setting: String) extends
+    ResponseError(
+      errorCode = ResponseErrorCode.InvalidRequest,
+      message = s"Invalid trace setting: $setting"
+    )
+
   case object ShutdownRequested extends
     ResponseError(
       errorCode = ResponseErrorCode.InvalidRequest,
