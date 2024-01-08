@@ -12,7 +12,9 @@ object Trace {
   case object Verbose extends Trace
 
   def apply(string: String): Either[InvalidTraceSetting, Trace] =
-    if (string equalsIgnoreCase Trace.Off.productPrefix)
+    if (string == null)
+      Right(Trace.Off)
+    else if (string equalsIgnoreCase Trace.Off.productPrefix)
       Right(Trace.Off)
     else if (string equalsIgnoreCase Trace.Messages.productPrefix)
       Right(Trace.Messages)
