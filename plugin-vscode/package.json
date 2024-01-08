@@ -1,10 +1,10 @@
 {
-  "name": "ralph-lsp-client",
+  "name": "ralph-lsp",
   "description": "LSP client for Ralph - The smart contract programming language for the Alephium blockchain",
   "author": "Alephium",
   "license": "LGPL-3.0",
   "version": "0.0.1",
-  "publisher": "vscode",
+  "publisher": "Alephium",
   "repository": {
     "type": "git",
     "url": "https://github.com/alephium/ralph-lsp"

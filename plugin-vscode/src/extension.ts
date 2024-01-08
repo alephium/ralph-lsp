@@ -23,8 +23,8 @@ export function activate(context: ExtensionContext) {
 
     // Create the client and store it.
     client = new LanguageClient(
-        'ralph-lsp-client',
-        'LSP client for Ralph',
+        'ralph-lsp',
+        'Ralph LSP',
         serverOptions,
         clientOptions
     );
