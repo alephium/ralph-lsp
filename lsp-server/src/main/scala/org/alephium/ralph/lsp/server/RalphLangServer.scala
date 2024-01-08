@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.DiagnosticsConverter
-import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater}
+import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater, Trace}
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
@@ -32,6 +32,7 @@ object RalphLangServer {
         workspace = None,
         buildErrors = None,
         clientAllowsWatchedFilesDynamicRegistration = false,
+        trace = Trace.Off,
         shutdownReceived = false
       )
 
@@ -47,6 +48,7 @@ object RalphLangServer {
         workspace = None,
         buildErrors = None,
         clientAllowsWatchedFilesDynamicRegistration = false,
+        trace = Trace.Off,
         shutdownReceived = false
       )
     )
@@ -140,6 +142,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           getAllowsWatchedFilesDynamicRegistration(params)
 
         setClientAllowsWatchedFilesDynamicRegistration(maybeDynamicRegistration)
+        setTraceSetting(params.getTrace)
 
         cancelChecker.checkCanceled()
 
@@ -393,6 +396,18 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       thisServer.state = thisServer.state.copy(clientAllowsWatchedFilesDynamicRegistration = allows)
     }
 
+  /** Store client configure trace setting. */
+  private def setTraceSetting(traceValue: String): Unit =
+    runSync {
+      Trace(traceValue) match {
+        case Left(error) =>
+          getClient() show error
+
+        case Right(trace) =>
+          thisServer.state = thisServer.state.copy(trace = trace)
+      }
+    }
+
   /**
    * Set the workspace and returns diagnostics to publish for current state.
    *
@@ -485,6 +500,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         throw throwable
     }
+
+  /** @inheritdoc */
+  override def setTrace(params: SetTraceParams): Unit =
+    setTraceSetting(params.getValue)
 
   override def shutdown(): CompletableFuture[AnyRef] =
     runSync {
