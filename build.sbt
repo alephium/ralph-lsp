@@ -39,6 +39,7 @@ lazy val `lsp-server` =
         case x if x.endsWith("module-info.class") => MergeStrategy.discard
         case other                                => assemblyMergeStrategy.value(other)
       },
+      Test / scalacOptions += "-Xmixin-force-forwarders:true", // reset to default for tests.
       libraryDependencies ++=
         Seq(
           Dependencies.lsp4j,
