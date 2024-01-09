@@ -28,7 +28,6 @@ lazy val `presentation-compiler` =
 
 lazy val `lsp-server` =
   project
-    .dependsOn(`presentation-compiler`)
     .settings(
       scalaVersion := Version.scala213,
       scalacOptions += "-Xmixin-force-forwarders:false", //Duplicate RPC method initialized.
@@ -49,7 +48,7 @@ lazy val `lsp-server` =
           Dependencies.logback,
           Dependencies.scalaLogging
         )
-    )
+    ).dependsOn(`presentation-compiler`)
 
 lazy val downloadWeb3AndInstallStd = taskKey[Unit]("Download alephium-web3 source code and copy std interface to the correct resource folder")
 
