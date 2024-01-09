@@ -23,7 +23,8 @@ object RalphLangServer {
 
   /** Start server with pre-configured client */
   def apply(client: RalphLangClient,
-            listener: JFuture[Void])(implicit compiler: CompilerAccess,
+            listener: JFuture[Void],
+            clientAllowsWatchedFilesDynamicRegistration: Boolean = false)(implicit compiler: CompilerAccess,
                                      file: FileAccess): RalphLangServer = {
     val initialState =
       ServerState(
@@ -31,7 +32,7 @@ object RalphLangServer {
         listener = Some(listener),
         workspace = None,
         buildErrors = None,
-        clientAllowsWatchedFilesDynamicRegistration = false,
+        clientAllowsWatchedFilesDynamicRegistration = clientAllowsWatchedFilesDynamicRegistration,
         trace = Trace.Off,
         shutdownReceived = false
       )
@@ -109,7 +110,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    *                 Client must be known before a connection is initialised.
    * @param listener LSP connection listener function.
    */
-  def setInitialState(client: RalphLangClient,
+  def setInitialState(client: LanguageClient,
                       listener: () => JFuture[Void]): Unit =
     runSync {
       require(state.client.isEmpty, "Client is already set")
@@ -117,7 +118,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
       // Client must be set first, before running the request listener,
       // so that it is available for responding to requests.
-      thisServer.state = state.copy(client = Some(client))
+      val ralphClient = RalphLangClient(client)
+      thisServer.state = state.copy(client = Some(ralphClient))
       thisServer.state = state.copy(listener = Some(listener()))
     }
 
