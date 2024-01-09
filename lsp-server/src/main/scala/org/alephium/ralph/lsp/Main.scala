@@ -3,8 +3,9 @@ package org.alephium.ralph.lsp
 import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.server.{RalphLangClient, RalphLangServer}
+import org.alephium.ralph.lsp.server.RalphLangServer
 import org.eclipse.lsp4j.jsonrpc.Launcher
+import org.eclipse.lsp4j.services.LanguageClient
 
 import java.io.{InputStream, OutputStream}
 
@@ -27,10 +28,10 @@ object Main extends StrictLogging {
 
     // configure LSP server
     val launcher =
-      new Launcher.Builder[RalphLangClient]()
+      new Launcher.Builder[LanguageClient]()
         .setInput(in)
         .setOutput(out)
-        .setRemoteInterface(classOf[RalphLangClient])
+        .setRemoteInterface(classOf[LanguageClient])
         .setLocalService(server)
         .create()
 

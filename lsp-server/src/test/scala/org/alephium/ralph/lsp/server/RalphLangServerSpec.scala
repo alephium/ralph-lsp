@@ -12,11 +12,10 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.net.URI
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
-import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.Promise
 import scala.jdk.FutureConverters._
 
-class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory with ScalaFutures{
+class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory with ScalaFutures {
 
   "initialize" should {
     "set server workspaces and respond with capabilities" in {
@@ -65,12 +64,12 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
   }
 
   "shutdown" should {
-    implicit val compiler: CompilerAccess = CompilerAccess.ralphc
-    implicit val file: FileAccess = FileAccess.disk
-    val client : RalphLangClient = new EmptyRalphLangClient{}
+    implicit val compiler: CompilerAccess = null
+    implicit val file: FileAccess = null
     val listener = CompletableFuture.runAsync(() => ())
 
     "return true, set `shutdownReceived` to true, but not cancel the listener" in {
+      val client = RalphLangClient(null)
       val server = RalphLangServer(client, listener)
 
       server.getState().shutdownReceived shouldBe false
@@ -80,6 +79,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
     }
 
     "return an `InvalidRequest` when receiving more than one shutdown request" in {
+      val client = RalphLangClient(null)
       val server = RalphLangServer(client, listener)
 
       server.shutdown().asScala.futureValue shouldBe true
@@ -91,7 +91,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
   "exit" should {
     implicit val compiler: CompilerAccess = CompilerAccess.ralphc
     implicit val file: FileAccess = FileAccess.disk
-    val client : RalphLangClient = new EmptyRalphLangClient{}
+    val client: RalphLangClient = RalphLangClient(null)
 
     //We use a Promise to have a non-completed future
     val listener = Promise[Void]().future.asJava.asInstanceOf[JFuture[Void]]
@@ -104,80 +104,62 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
 
       server.exitWithCode() shouldBe 0
       server.getState().listener.get.isCancelled shouldBe true
-   }
+    }
 
     "exit with error if shutdown wasn't requested" in {
       val server = RalphLangServer(client, listener)
 
       server.exitWithCode() shouldBe 1
       server.getState().listener.get.isCancelled shouldBe true
-   }
+    }
   }
 
   "registerClientCapabilities" should {
-
-    def buildServer(dynamicRegistration: Option[Boolean], registered: AtomicBoolean) = {
-      implicit val compiler: CompilerAccess = CompilerAccess.ralphc
-      implicit val file: FileAccess = FileAccess.disk
-      val client: RalphLangClient = new EmptyRalphLangClient {
-        override def registerCapability(params: RegistrationParams): CompletableFuture[Void] = {
-          registered.set(true)
-          new CompletableFuture[Void]()
-        }
-      }
-      val listener = CompletableFuture.runAsync(() => ())
-      val server = RalphLangServer(client, listener)
-
-      val capabilities = dynamicRegistration match {
-        case None => new ClientCapabilities()
-        case Some(dynamicRegistration) =>
-          val watchedFilesCapabilities = new DidChangeWatchedFilesCapabilities(dynamicRegistration)
-          val workspaceCapabilities = new WorkspaceClientCapabilities()
-          workspaceCapabilities.setDidChangeWatchedFiles(watchedFilesCapabilities)
-          val result = new ClientCapabilities()
-          result.setWorkspace(workspaceCapabilities)
-          result
-      }
-
-      val initialise = new InitializeParams()
-      val workspaceURI = new URI("file://test")
-      initialise.setRootUri(workspaceURI.toString)
-      initialise.setCapabilities(capabilities)
-
-      server.initialize(initialise).get()
-      server
-    }
-
     "register watched files if dynamic registration is true" in {
-      val registered = new AtomicBoolean(false)
-      val server = buildServer(Some(true), registered)
-      server.registerClientCapabilities()
+      implicit val compiler: CompilerAccess = null // compile is never accessed
+      implicit val file: FileAccess = null // file/disk IO is never accessed
 
-      registered.get shouldBe true
+      val client = mock[RalphLangClient]
+
+      val server =
+        RalphLangServer(
+          client = client,
+          listener = CompletableFuture.runAsync(() => ()),
+          clientAllowsWatchedFilesDynamicRegistration = true
+        )
+
+      server.getState().clientAllowsWatchedFilesDynamicRegistration shouldBe true
+
+      // register is called once with the default client-capabilities
+      (client.register _)
+        .expects(RalphLangServer.clientCapabilities())
+        .returning(new CompletableFuture[Void]())
+        .once()
+
+      server.registerClientCapabilities() shouldBe (())
     }
 
     "not register watched files if dynamic registration is false" in {
-      val registered = new AtomicBoolean(false)
-      val server = buildServer(Some(false), registered)
-      server.registerClientCapabilities()
+      implicit val compiler: CompilerAccess = null // compile is never accessed
+      implicit val file: FileAccess = null // file/disk IO is never accessed
 
-      registered.get shouldBe false
-    }
+      val client = mock[RalphLangClient]
 
-    "not register watched files if dynamic registration is not set" in {
-      val registered = new AtomicBoolean(false)
-      val server = buildServer(None, registered)
-      server.registerClientCapabilities()
+      val server =
+        RalphLangServer(
+          client = client,
+          listener = CompletableFuture.runAsync(() => ()),
+          clientAllowsWatchedFilesDynamicRegistration = false
+        )
 
-      registered.get shouldBe false
+      server.getState().clientAllowsWatchedFilesDynamicRegistration shouldBe false
+
+      // register is never called
+      (client.register _)
+        .expects(*)
+        .never()
+
+      server.registerClientCapabilities() shouldBe (())
     }
   }
-}
-
-trait EmptyRalphLangClient extends RalphLangClient {
-  def logMessage(x: org.eclipse.lsp4j.MessageParams): Unit = ()
-  def publishDiagnostics(x: org.eclipse.lsp4j.PublishDiagnosticsParams): Unit = ()
-  def showMessage(x: org.eclipse.lsp4j.MessageParams): Unit = ()
-  def showMessageRequest(x: org.eclipse.lsp4j.ShowMessageRequestParams): java.util.concurrent.CompletableFuture[org.eclipse.lsp4j.MessageActionItem] = ???
-  def telemetryEvent(x: Object): Unit = ()
 }
