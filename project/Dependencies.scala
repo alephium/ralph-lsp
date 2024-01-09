@@ -1,7 +1,7 @@
 import sbt._
 
 object Version {
-  val scala213 = "2.13.11"
+  val scala213 = "2.13.12"
   val web3 = "0.22.0"
 }
 
@@ -13,7 +13,7 @@ object Dependencies {
   lazy val scalaMock = "org.scalamock" %% "scalamock" % "5.2.0" % Test
 
   /** Core */
-  lazy val ralphc = "org.alephium" %% "alephium-ralphc" % "2.5.8"
+  lazy val ralphc = "org.alephium" %% "alephium-ralphc" % "2.5.9"
   lazy val lsp4j = "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.21.1"
 
   /** Logging */
