@@ -25,7 +25,7 @@ object RalphLangServer {
   def apply(client: RalphLangClient,
             listener: JFuture[Void],
             clientAllowsWatchedFilesDynamicRegistration: Boolean = false)(implicit compiler: CompilerAccess,
-                                     file: FileAccess): RalphLangServer = {
+                                                                          file: FileAccess): RalphLangServer = {
     val initialState =
       ServerState(
         client = Some(client),
