@@ -5,6 +5,8 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, 
 import org.alephium.ralph.lsp.FileIO
 import org.alephium.ralph.lsp.GenCommon.genFolderURI
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.pc.client.FileClientLogger
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.GenBuild._
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
@@ -16,6 +18,9 @@ import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
 class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+
+  implicit val clientLogger: ClientLogger =
+    FileClientLogger
 
   "build" should {
     "fail" when {
@@ -29,7 +34,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
           GenBuild
             .genBuildParsed()
             .map(persist)
-            .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc))
+            .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
             .map(_.asInstanceOf[BuildState.BuildCompiled])
 
         forAll(outSideBuildGen, insideBuildGen) {
@@ -80,7 +85,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
           GenBuild
             .genBuildParsed()
             .map(persist)
-            .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc))
+            .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
             .map(_.asInstanceOf[BuildState.BuildCompiled])
 
         val generator =

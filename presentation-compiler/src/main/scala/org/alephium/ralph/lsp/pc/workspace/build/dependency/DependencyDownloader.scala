@@ -1,10 +1,10 @@
 package org.alephium.ralph.lsp.pc.workspace.build.dependency
 
-import com.typesafe.scalalogging.LazyLogging
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, RalphcConfig}
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDownloadingDependency
@@ -12,14 +12,14 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDownloadingDependenc
 import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
-object DependencyDownloader extends LazyLogging {
+object DependencyDownloader extends StrictImplicitLogging {
 
   /**
    * Download the Std package and return an un-compiled workspace for compilation.
    *
    * @param errorIndex Use this index to report any errors processing the download.
    */
-  def downloadStd(errorIndex: SourceIndex): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
+  def downloadStd(errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
     downloadStdFromJar(errorIndex) match {
       case Right(source) =>
         // a default build file.
@@ -44,7 +44,7 @@ object DependencyDownloader extends LazyLogging {
    * TODO: Downloading source-code should be installable.
    * See issue <a href="https://github.com/alephium/ralph-lsp/issues/44">#44</a>.
    */
-  private def downloadStdFromJar(errorIndex: SourceIndex): Either[ErrorDownloadingDependency, Iterable[SourceCodeState.UnCompiled]] =
+  private def downloadStdFromJar(errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ErrorDownloadingDependency, Iterable[SourceCodeState.UnCompiled]] =
     try {
       // Errors must be reported to the user. See https://github.com/alephium/ralph-lsp/issues/41.
       val code =

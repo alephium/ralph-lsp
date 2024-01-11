@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import com.typesafe.scalalogging.LazyLogging
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
@@ -18,7 +18,7 @@ import scala.collection.immutable.ArraySeq
  *
  * All functions are all immutable. They all returns the next workspace state, given the current state.
  */
-object Workspace extends LazyLogging {
+object Workspace extends StrictImplicitLogging {
 
   /** First stage of a workspace where just the root workspace folder is known */
   def create(workspaceURI: URI): WorkspaceState.Created =
@@ -72,7 +72,8 @@ object Workspace extends LazyLogging {
    * @note Does not update the current state. The caller should set the new state.
    */
   def build(workspace: WorkspaceState)(implicit file: FileAccess,
-                                       compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
+                                       compiler: CompilerAccess,
+                                       logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
     workspace match {
       case workspace: WorkspaceState.IsSourceAware =>
         Right(workspace) // already initialised
@@ -92,7 +93,8 @@ object Workspace extends LazyLogging {
   def build(buildURI: URI,
             code: Option[String],
             workspace: WorkspaceState.Created)(implicit file: FileAccess,
-                                               compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+                                               compiler: CompilerAccess,
+                                               logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     BuildValidator.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = workspace.workspaceURI
@@ -128,7 +130,8 @@ object Workspace extends LazyLogging {
    */
   def build(code: Option[WorkspaceFile],
             workspace: WorkspaceState)(implicit file: FileAccess,
-                                       compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
+                                       compiler: CompilerAccess,
+                                       logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
     workspace match {
       case sourceAware: WorkspaceState.IsSourceAware =>
         // already built
@@ -154,7 +157,8 @@ object Workspace extends LazyLogging {
   def build(buildCode: Option[String],
             currentBuild: BuildState.BuildCompiled,
             sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess,
-                                                   compiler: CompilerAccess): Option[Either[BuildState.BuildErrored, WorkspaceState.UnCompiled]] =
+                                                   compiler: CompilerAccess,
+                                                   logger: ClientLogger): Option[Either[BuildState.BuildErrored, WorkspaceState.UnCompiled]] =
     Build.parseAndCompile(
       buildURI = currentBuild.buildURI,
       code = buildCode,
@@ -294,7 +298,8 @@ object Workspace extends LazyLogging {
   def compile(buildCode: Option[String],
               sourceCode: ArraySeq[SourceCodeState],
               workspace: WorkspaceState.IsSourceAware)(implicit file: FileAccess,
-                                                       compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
+                                                       compiler: CompilerAccess,
+                                                       logger: ClientLogger): WorkspaceChangeResult.BuildChanged = {
     // re-build the build file
     val buildResult =
       build(
@@ -346,7 +351,8 @@ object Workspace extends LazyLogging {
   def deleteOrCreate(events: ArraySeq[WorkspaceFileEvent],
                      buildErrors: Option[BuildState.BuildErrored],
                      workspace: WorkspaceState.IsSourceAware)(implicit file: FileAccess,
-                                                              compiler: CompilerAccess): WorkspaceChangeResult.BuildChanged = {
+                                                              compiler: CompilerAccess,
+                                                              logger: ClientLogger): WorkspaceChangeResult.BuildChanged = {
     // collect events that belong to this workspace
     val workspaceEvents =
       events filter {
@@ -427,7 +433,8 @@ object Workspace extends LazyLogging {
   def changed(fileURI: URI,
               code: Option[String],
               currentWorkspace: WorkspaceState.IsSourceAware)(implicit file: FileAccess,
-                                                              compiler: CompilerAccess): Either[ErrorUnknownFileType, WorkspaceChangeResult] = {
+                                                              compiler: CompilerAccess,
+                                                              logger: ClientLogger): Either[ErrorUnknownFileType, WorkspaceChangeResult] = {
     val fileExtension =
       URIUtil.getFileExtension(fileURI)
 
@@ -471,7 +478,8 @@ object Workspace extends LazyLogging {
   def buildChanged(buildURI: URI,
                    code: Option[String],
                    workspace: WorkspaceState.IsSourceAware)(implicit file: FileAccess,
-                                                            compiler: CompilerAccess): Option[Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware]] =
+                                                            compiler: CompilerAccess,
+                                                            logger: ClientLogger): Option[Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware]] =
     if (workspace.buildURI.resolve(buildURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
       Build.parseAndCompile(
         buildURI = buildURI,
@@ -532,7 +540,8 @@ object Workspace extends LazyLogging {
   def sourceCodeChanged(fileURI: URI,
                         updatedCode: Option[String],
                         workspace: WorkspaceState)(implicit file: FileAccess,
-                                                   compiler: CompilerAccess): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
+                                                   compiler: CompilerAccess,
+                                                   logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
     build(workspace) map {
       workspace =>
         if (URIUtil.contains(workspace.build.contractURI, fileURI)) {

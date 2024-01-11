@@ -6,14 +6,14 @@ import org.alephium.ralph.lsp.FileIO
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
+import org.alephium.ralph.lsp.pc.client.FileClientLogger
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildSyntax}
 import org.alephium.ralphc.Config
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
-import org.scalatest.OptionValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.nio.file.Paths
@@ -23,6 +23,9 @@ import scala.collection.immutable.ArraySeq
  * Test cases for [[Workspace.build]] function.
  */
 class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+
+  implicit val clientLogger: ClientLogger =
+    FileClientLogger
 
   "initialise" when {
     /**

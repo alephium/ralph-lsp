@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.server
 
-import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
@@ -25,7 +25,7 @@ object RalphLangServer {
   def apply(client: RalphLangClient,
             listener: JFuture[Void],
             clientAllowsWatchedFilesDynamicRegistration: Boolean = false)(implicit compiler: CompilerAccess,
-                                     file: FileAccess): RalphLangServer = {
+                                                                          file: FileAccess): RalphLangServer = {
     val initialState =
       ServerState(
         client = Some(client),
@@ -98,10 +98,16 @@ object RalphLangServer {
  * All mutable state management occurs here.
  */
 class RalphLangServer private(@volatile private var state: ServerState)(implicit compiler: CompilerAccess,
-                                                                        file: FileAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictLogging { thisServer =>
+                                                                        file: FileAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictImplicitLogging { thisServer =>
 
   def getState(): ServerState =
     thisServer.state
+
+  private implicit def logger: RalphLangClientLogger =
+    RalphLangClientLogger(
+      client = getClient(),
+      trace = state.trace
+    )
 
   /**
    * An initial call to this function is required before this server can start processing request.

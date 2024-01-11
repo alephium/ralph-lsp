@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
@@ -69,7 +70,8 @@ object Build {
   /** Compile a parsed build */
   def compile(parsed: BuildState.IsParsed,
               currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
-                                                           compiler: CompilerAccess): BuildState.IsCompiled =
+                                                           compiler: CompilerAccess,
+                                                           logger: ClientLogger): BuildState.IsCompiled =
     parsed match {
       case errored: BuildErrored =>
         // there are parsing errors
@@ -91,7 +93,8 @@ object Build {
   /** Parse and compile from disk */
   def parseAndCompile(buildURI: URI,
                       currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
-                                                                   compiler: CompilerAccess): BuildState.IsCompiled =
+                                                                   compiler: CompilerAccess,
+                                                                   logger: ClientLogger): BuildState.IsCompiled =
     file.exists(buildURI) match {
       case Left(error) =>
         BuildErrored(
@@ -122,7 +125,8 @@ object Build {
   def parseAndCompile(buildURI: URI,
                       code: String,
                       currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
-                                                                   compiler: CompilerAccess): BuildState.IsCompiled = {
+                                                                   compiler: CompilerAccess,
+                                                                   logger: ClientLogger): BuildState.IsCompiled = {
     // Code is already read. Parse and validate it.
     val parsed =
       parse(
@@ -139,7 +143,8 @@ object Build {
   def parseAndCompile(buildURI: URI,
                       code: Option[String],
                       currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
-                                                                   compiler: CompilerAccess): BuildState.IsCompiled =
+                                                                   compiler: CompilerAccess,
+                                                                   logger: ClientLogger): BuildState.IsCompiled =
     code match {
       case Some(code) =>
         parseAndCompile(
@@ -162,7 +167,8 @@ object Build {
   def parseAndCompile(buildURI: URI,
                       code: Option[String],
                       currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess,
-                                                              compiler: CompilerAccess): Option[BuildState.IsCompiled] =
+                                                              compiler: CompilerAccess,
+                                                              logger: ClientLogger): Option[BuildState.IsCompiled] =
     BuildValidator.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = currentBuild.workspaceURI
