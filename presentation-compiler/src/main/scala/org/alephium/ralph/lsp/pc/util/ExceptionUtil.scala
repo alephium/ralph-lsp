@@ -12,4 +12,12 @@ object ExceptionUtil {
     sw.toString
   }
 
+  /** Merge a message and exception into a String */
+  def mergeToString(message: String, cause: Throwable): String = {
+    val stringStackTrace = toStringStackTrace(cause)
+
+    s"""$message
+       |Cause: $stringStackTrace""".stripMargin
+  }
+
 }

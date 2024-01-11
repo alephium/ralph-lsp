@@ -2,7 +2,6 @@ package org.alephium.ralph.lsp.server
 
 import com.typesafe.scalalogging.Logger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.util.ExceptionUtil
 import org.alephium.ralph.lsp.server.state.Trace
 
 /**
@@ -31,15 +30,7 @@ case class RalphLangClientLogger(client: RalphLangClient,
 
   override def error(message: String, cause: Throwable)(implicit logger: Logger): Unit = {
     logger.error(message, cause)
-
-    val stringStackTrace = ExceptionUtil.toStringStackTrace(cause)
-
-    val clientMessage =
-      s"""$message
-         |Cause: $stringStackTrace
-         |""".stripMargin
-
-    client.error(clientMessage)
+    client.error(message, cause)
   }
 
   override def debug(message: String)(implicit logger: Logger): Unit = {

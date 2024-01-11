@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.pc.log
 
 import com.typesafe.scalalogging.Logger
 
+/** Defines APIs for publishing logs to an LSP client */
 trait ClientLogger {
 
   def info(message: String)(implicit logger: Logger): Unit
