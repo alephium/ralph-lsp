@@ -15,6 +15,21 @@ case class RalphLangClient(private val client: LanguageClient) {
     error
   }
 
+  def error(message: String): Unit =
+    client.logMessage(new MessageParams(MessageType.Error, message))
+
+  def warning(message: String): Unit =
+    client.logMessage(new MessageParams(MessageType.Warning, message))
+
+  def info(message: String): Unit =
+    client.logMessage(new MessageParams(MessageType.Info, message))
+
+  def log(message: String): Unit =
+    client.logMessage(new MessageParams(MessageType.Log, message))
+
+  def trace(message: String): Unit =
+    client.logTrace(new LogTraceParams(message))
+
   /**
    * @see [[RalphLangClient.registerCapability]]
    */
