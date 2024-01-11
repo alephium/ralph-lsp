@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture
 /**
  * The Ralph-LSP client.
  *
- * Implements functions to accessing [[LanguageClient]] APIs.
+ * Implements functions accessing [[LanguageClient]] APIs.
  */
 case class RalphLangClient(private val client: LanguageClient) {
 

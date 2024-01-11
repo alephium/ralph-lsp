@@ -79,3 +79,11 @@ You can use the following sample as reference:
   "artifactPath": "artifacts"
 }
 ```
+
+## Configure trace (VSCode)
+
+![image](https://github.com/alephium/ralph-lsp/assets/1773953/ac537faf-492f-468a-ab88-a39323e6e821)
+
+- `off` - Enables `info`, `warning` and `error`.
+- `messages` - Enables all the above including `debug`.
+- `verbose` - Enables all the above including `trace`.
