@@ -2,6 +2,8 @@ package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.client.FileClientLogger
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralphc.Config
 import org.scalatest.matchers.should.Matchers
@@ -13,6 +15,9 @@ import java.net.URI
 import java.nio.file.{Files, Paths}
 
 class RalphcConfigSpec extends AnyWordSpec with Matchers {
+
+  implicit val clientLogger: ClientLogger =
+    FileClientLogger
 
   "persist & read valid ralphc config" in {
     // create workspace structure with config file

@@ -4,6 +4,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
@@ -22,7 +23,8 @@ object Dependency {
    */
   def compile(parsed: BuildParsed,
               currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
-                                                           compiler: CompilerAccess): BuildState.IsCompiled =
+                                                           compiler: CompilerAccess,
+                                                           logger: ClientLogger): BuildState.IsCompiled =
     currentBuild.flatMap(_.dependency) match {
       case Some(dependency) =>
         // Existing build already has compiled dependency. Re-use it.
@@ -45,7 +47,8 @@ object Dependency {
    *         the field [[BuildState.BuildErrored.dependency]] as a regular workspace errors.
    */
   def downloadAndCompileStd(parsed: BuildParsed)(implicit file: FileAccess,
-                                                 compiler: CompilerAccess): BuildState.IsCompiled =
+                                                 compiler: CompilerAccess,
+                                                 logger: ClientLogger): BuildState.IsCompiled =
     DependencyDownloader.downloadStd(errorIndex = SourceIndex.empty) match { // download std
       case Left(errors) =>
         // report all download errors at build file level.
