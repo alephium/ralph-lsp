@@ -1,6 +1,6 @@
 {
   "name": "ralph-lsp",
-  "description": "LSP client for Ralph - The smart contract programming language for the Alephium blockchain",
+  "description": "Language server for Ralph - The smart contract programming language for the Alephium blockchain",
   "author": "Alephium",
   "license": "LGPL-3.0",
   "version": "0.0.1",
