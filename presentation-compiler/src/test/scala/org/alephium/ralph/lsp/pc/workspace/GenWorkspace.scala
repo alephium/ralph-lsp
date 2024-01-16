@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.{FileIO, GenCode, GenCommon}
+import org.alephium.ralph.lsp.{FileIO, GenCode, GenFile}
 import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
 import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
@@ -10,7 +10,7 @@ import java.net.URI
 
 object GenWorkspace {
 
-  def genCreated(directory: Gen[URI] = GenCommon.genFolderURI()): Gen[WorkspaceState.Created] =
+  def genCreated(directory: Gen[URI] = GenFile.genFolderURI()): Gen[WorkspaceState.Created] =
     directory map WorkspaceState.Created
 
   /**
@@ -19,7 +19,7 @@ object GenWorkspace {
    * @param directory The workspace directory
    * @param persist   When true, persist workspace directory and source code.
    */
-  def genCreatedWithSourceCode(directory: Gen[URI] = GenCommon.genFolderURI(),
+  def genCreatedWithSourceCode(directory: Gen[URI] = GenFile.genFolderURI(),
                                persist: Boolean = false): Gen[(WorkspaceState.Created, List[SourceCodeState.OnDisk])] =
     for {
       workspace <- GenWorkspace.genCreated(directory)

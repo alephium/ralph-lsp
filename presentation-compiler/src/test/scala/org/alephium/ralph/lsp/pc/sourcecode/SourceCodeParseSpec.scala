@@ -49,7 +49,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
             // test state
             testNoCompilerAccess(sourceCode)
             // delete file
-            FileIO.delete(sourceCode.fileURI)
+            GenSourceCode.delete(sourceCode)
         }
       }
 
@@ -93,7 +93,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
             testNoCompilerAccess(compiled.head)
 
             // delete file
-            FileIO.delete(compiled.head.fileURI)
+            GenSourceCode.delete(compiled.head)
         }
       }
     }

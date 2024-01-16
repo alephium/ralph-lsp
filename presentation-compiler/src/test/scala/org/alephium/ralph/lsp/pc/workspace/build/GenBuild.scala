@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 import org.alephium.ralph.lsp.pc.workspace.build.GenRalphc.genRalphcParsedConfig
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcParsedConfig
 import org.alephium.ralph.lsp.FileIO
-import org.alephium.ralph.lsp.GenCommon.genFolderURI
+import org.alephium.ralph.lsp.GenFile.genFolderURI
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers._
 

@@ -1,7 +1,8 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.GenCommon._
+import org.alephium.ralph.lsp.GenFile._
+import org.alephium.ralph.lsp.access.compiler.message.error.GenError.genError
 import org.alephium.ralph.lsp.pc.workspace.GenWorkspace
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers

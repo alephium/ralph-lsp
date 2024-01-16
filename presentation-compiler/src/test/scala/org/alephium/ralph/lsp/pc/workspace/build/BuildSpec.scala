@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildFileLocation}
 import org.alephium.ralph.lsp.FileIO
-import org.alephium.ralph.lsp.GenCommon.genFolderURI
+import org.alephium.ralph.lsp.GenFile.genFolderURI
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.client.FileClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger

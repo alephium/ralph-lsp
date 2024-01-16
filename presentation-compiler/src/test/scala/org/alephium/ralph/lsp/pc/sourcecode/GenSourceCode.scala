@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.{FileIO, GenCode}
-import org.alephium.ralph.lsp.GenCommon._
+import org.alephium.ralph.lsp.GenFile._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, GenBuild}
 import org.scalacheck.Gen
