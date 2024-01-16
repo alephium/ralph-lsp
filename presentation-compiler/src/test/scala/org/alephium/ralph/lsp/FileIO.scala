@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp
 
 import org.scalatest.matchers.should.Matchers._
 
+import java.io.File
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
@@ -42,6 +43,16 @@ object FileIO {
 
   def delete(uri: URI): Unit =
     Files.delete(Paths.get(uri))
+
+  /** Recursive delete all files in this folder */
+  def deleteAll(uri: URI): Unit =
+    deleteAll(new File(uri))
+
+  /** Recursive delete all files in this folder */
+  private def deleteAll(file: File): Unit = {
+    Option(file.listFiles()).foreach(_.foreach(deleteAll))
+    file.delete()
+  }
 
   def delete(path: Path): Unit =
     Files.delete(path)

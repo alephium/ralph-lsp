@@ -4,6 +4,7 @@ import org.alephium.ralph.lsp.{FileIO, GenCommon}
 import org.alephium.ralph.lsp.GenCommon._
 import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
+import org.alephium.ralph.lsp.GenExtensions.GenExtensionsImplicits
 import org.scalacheck.Gen
 
 import java.net.URI
@@ -23,7 +24,7 @@ object GenWorkspace {
                                persist: Boolean = false): Gen[(WorkspaceState.Created, List[SourceCodeState.OnDisk])] =
     for {
       workspace <- GenWorkspace.genCreated(directory)
-      sourceCode <- Gen.listOf(GenSourceCode.genOnDiskForRoot(workspace.workspaceURI))
+      sourceCode <- Gen.listOfMax()(GenSourceCode.genOnDiskForRoot(workspace.workspaceURI))
     } yield
       if (persist)
         (GenWorkspace.persist(workspace), GenSourceCode.persistAll(sourceCode))
