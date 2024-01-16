@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.pc.workspace
 import org.alephium.ralph.lsp.{FileIO, GenCode, GenCommon}
 import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
-import org.alephium.ralph.lsp.GenExtensions.GenExtensionsImplicits
+import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
 import org.scalacheck.Gen
 
 import java.net.URI

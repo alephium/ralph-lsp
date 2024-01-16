@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.GenWorkspace
 import org.alephium.ralph.lsp.FileIO
-import org.alephium.ralph.lsp.GenExtensions.GenExtensionsImplicits
+import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers

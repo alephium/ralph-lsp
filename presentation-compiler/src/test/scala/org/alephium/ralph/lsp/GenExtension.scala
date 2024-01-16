@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp
 
 import org.scalacheck.Gen
 
-object GenExtensions {
+object GenExtension {
 
   /** Extension functions to ScalaCheck [[Gen]] */
   implicit class GenExtensionsImplicits(val gen: Gen.type) extends AnyVal {
