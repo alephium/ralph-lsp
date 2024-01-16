@@ -33,7 +33,7 @@ object GenBuild {
     }
 
   def persist(parsed: BuildState.BuildParsed): BuildState.BuildParsed = {
-    FileIO.write(parsed.code, parsed.buildURI)
+    FileIO.write(parsed.buildURI, parsed.code)
     FileIO.createDirectories(parsed.workspaceURI.resolve(parsed.config.contractPath))
     FileIO.createDirectories(parsed.workspaceURI.resolve(parsed.config.artifactPath))
     parsed

@@ -58,11 +58,11 @@ object GenSourceCode {
                                     code: Gen[String] = genGoodCode()): S =
     sourceCode match {
       case aware: SourceCodeState.IsCodeAware =>
-        FileIO.write(aware.code, aware.fileURI)
+        FileIO.write(aware.fileURI, aware.code)
         sourceCode
 
       case aware: SourceCodeState =>
-        FileIO.write(code.sample.get, aware.fileURI)
+        FileIO.write(aware.fileURI, code.sample.get)
         sourceCode
     }
 

@@ -14,8 +14,8 @@ import java.nio.file.{Files, Path, Paths}
  * */
 object FileIO {
 
-  def writeBytes(bytes: Array[Byte],
-                 uri: URI): Path = {
+  def writeBytes(uri: URI,
+                 bytes: Array[Byte]): Path = {
     //convert URI to Path
     val filePath = Paths.get(uri)
     // ensure directories exists
@@ -24,8 +24,8 @@ object FileIO {
     Files.write(filePath, bytes)
   }
 
-  def write(string: String,
-            uri: URI): Path =
+  def write(uri: URI,
+            string: String): Path =
     writeBytes(
       uri = uri,
       bytes = string.getBytes(StandardCharsets.UTF_8)

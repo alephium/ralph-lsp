@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.{FileIO, GenCommon}
 import org.alephium.ralph.lsp.GenCommon._
+import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
 import org.scalacheck.Gen
 
@@ -11,6 +12,23 @@ object GenWorkspace {
 
   def genCreated(directory: Gen[URI] = GenCommon.genFolderURI()): Gen[WorkspaceState.Created] =
     directory map WorkspaceState.Created
+
+  /**
+   * Generate a [[org.alephium.ralph.lsp.pc.workspace.WorkspaceState.Created]] workspace with OnDisk source code.
+   *
+   * @param directory The workspace directory
+   * @param persist   When true, persist workspace directory and source code.
+   */
+  def genCreatedWithSourceCode(directory: Gen[URI] = GenCommon.genFolderURI(),
+                               persist: Boolean = false): Gen[(WorkspaceState.Created, List[SourceCodeState.OnDisk])] =
+    for {
+      workspace <- GenWorkspace.genCreated(directory)
+      sourceCode <- Gen.listOf(GenSourceCode.genOnDiskForRoot(workspace.workspaceURI))
+    } yield
+      if (persist)
+        (GenWorkspace.persist(workspace), GenSourceCode.persistAll(sourceCode))
+      else
+        (workspace, sourceCode)
 
   def persist[W <: WorkspaceState.IsSourceAware](workspace: W,
                                                  code: Gen[String] = genGoodCode()): W = {
@@ -22,6 +40,8 @@ object GenWorkspace {
     workspace
   }
 
-  def persist(workspace: WorkspaceState.Created): Unit =
+  def persist(workspace: WorkspaceState.Created): WorkspaceState.Created = {
     FileIO.createDirectories(workspace.workspaceURI)
+    workspace
+  }
 }

@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.lsp.GenCommon._
-import org.alephium.ralph.lsp.access.compiler.message.error.StringError
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.GenCommon._
+import org.alephium.ralph.lsp.pc.workspace.GenWorkspace
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -12,24 +12,44 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 class SourceCodeInitialiseSpec extends AnyWordSpec with Matchers with MockFactory with ScalaCheckDrivenPropertyChecks {
 
   "initialise" should {
-    "report failure to fetch source files" in {
-      forAll(genFolderURI()) {
-        workspaceURI =>
-          implicit val file: FileAccess =
-            mock[FileAccess]
+    "succeed" when {
+      "listing fileURIs on disk passes" in {
+        forAll(GenWorkspace.genCreatedWithSourceCode(persist = true)) {
+          case (workspace, sourceCode) =>
+            implicit val file: FileAccess =
+              FileAccess.disk
 
-          val error =
-            StringError("Something went wrong")
+            val actual =
+              SourceCode
+                .initialise(workspace.workspaceURI)
+                .value
 
-          (file.list _)
-            .expects(workspaceURI)
-            .returns(Left(error))
+            actual should contain theSameElementsAs sourceCode
+        }
+      }
+    }
 
-          val actualState =
-            SourceCode.initialise(workspaceURI).left.value
+    "fail" when {
+      "listing fileURIs on disk errors" in {
+        forAll(genFolderURI(), genError()) {
+          case (folder, error) =>
+            // use mock to inject IO failure
+            implicit val file: FileAccess =
+              mock[FileAccess]
 
-          actualState shouldBe error
+            (file.list _)
+              .expects(folder)
+              .returns(Left(error)) // inject error
 
+            // expect error
+            val actual =
+              SourceCode
+                .initialise(folder)
+                .left
+                .value
+
+            actual shouldBe error
+        }
       }
     }
   }
