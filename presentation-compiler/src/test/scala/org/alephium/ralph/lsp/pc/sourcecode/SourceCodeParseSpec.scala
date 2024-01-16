@@ -1,10 +1,10 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
 import org.alephium.ralph.lsp.pc.workspace.build.GenRalphc
-import org.alephium.ralph.lsp.GenCommon.genGoodCode
-import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.{FileIO, GenCode}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
@@ -39,12 +39,18 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
         val parsed =
           GenSourceCode
             .genInitialised()
-            .map(persist(_, genGoodCode()))
+            .map(persist(_, GenCode.genGoodCode()))
             .map(SourceCode.parse)
             .map(_.asInstanceOf[SourceCodeState.Parsed])
 
         // Parse it again: Already parsed, so it should not access the compiler
-        forAll(parsed)(testNoCompilerAccess)
+        forAll(parsed) {
+          sourceCode =>
+            // test state
+            testNoCompilerAccess(sourceCode)
+            // delete file
+            FileIO.delete(sourceCode.fileURI)
+        }
       }
 
       "source-code is already compiled" in {
@@ -58,7 +64,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
         val parsed =
           GenSourceCode
             .genInitialised()
-            .map(persist(_, genGoodCode()))
+            .map(persist(_, GenCode.genGoodCode()))
             .map(SourceCode.parse)
             .map(_.asInstanceOf[SourceCodeState.Parsed])
 
@@ -85,6 +91,9 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
             // Compile again: Already compiled, so it should not access the compiler.
             testNoCompilerAccess(compiled.head)
+
+            // delete file
+            FileIO.delete(compiled.head.fileURI)
         }
       }
     }

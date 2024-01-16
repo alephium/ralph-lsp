@@ -19,35 +19,6 @@ object GenCommon {
   val genCamelCase: Gen[String] =
     genName.map(_.capitalize)
 
-  def genContract(name: Gen[String] = genCamelCase): Gen[String] =
-    name map {
-      name =>
-        s"""
-           |Contract $name(id:U256){
-           |  pub fn getId() -> U256 {
-           |    return id
-           |  }
-           |}
-           |""".stripMargin
-    }
-
-  def genScript(name: Gen[String] = genCamelCase): Gen[String] =
-    name map {
-      name =>
-        s"""
-           |TxScript $name(x: U256, y: U256) {
-           |  assert!(x != y, 0)
-           |}
-           |""".stripMargin
-    }
-
-  /** Generate ralph code */
-  def genGoodCode(): Gen[String] =
-    Gen.oneOf(
-      genContract(genCamelCase),
-      genScript(genCamelCase),
-    )
-
   /** Generate ralph code */
   def genFolderPath(underTempDir: Boolean): Gen[Path] = {
     Gen.choose(2, 6) flatMap {
@@ -104,7 +75,7 @@ object GenCommon {
     genFolderPath(underTempDir = underTempDir).map(_.toUri)
 
   /** Generate an error for this code */
-  def genError(code: Gen[String] = genGoodCode()): Gen[CompilerMessage.AnyError] =
+  def genError(code: Gen[String] = GenCode.genGoodCode()): Gen[CompilerMessage.AnyError] =
     for {
       code <- code
       errorMessage <- Gen.alphaStr

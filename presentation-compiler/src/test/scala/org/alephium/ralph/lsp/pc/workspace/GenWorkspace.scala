@@ -1,7 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.{FileIO, GenCommon}
-import org.alephium.ralph.lsp.GenCommon._
+import org.alephium.ralph.lsp.{FileIO, GenCode, GenCommon}
 import org.alephium.ralph.lsp.pc.sourcecode.{GenSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
 import org.alephium.ralph.lsp.GenExtensions.GenExtensionsImplicits
@@ -32,7 +31,7 @@ object GenWorkspace {
         (workspace, sourceCode)
 
   def persist[W <: WorkspaceState.IsSourceAware](workspace: W,
-                                                 code: Gen[String] = genGoodCode()): W = {
+                                                 code: Gen[String] = GenCode.genGoodCode()): W = {
     FileIO.createDirectories(workspace.workspaceURI)
     persistAll(
       sourceCode = workspace.sourceCode,

@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.lsp.FileIO
+import org.alephium.ralph.lsp.{FileIO, GenCode}
 import org.alephium.ralph.lsp.GenCommon._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, GenBuild}
@@ -41,7 +41,7 @@ object GenSourceCode {
     } yield
       sourceCode
 
-  def genUnCompiled(code: Gen[String] = genGoodCode(),
+  def genUnCompiled(code: Gen[String] = GenCode.genGoodCode(),
                     fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.UnCompiled] =
     for {
       code <- code
@@ -52,7 +52,7 @@ object GenSourceCode {
         code = code
       )
 
-  def genInitialised(code: Gen[String] = genGoodCode(),
+  def genInitialised(code: Gen[String] = GenCode.genGoodCode(),
                      fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.IsInitialised] =
     Gen.oneOf(
       genOnDisk(fileURI),
@@ -60,7 +60,7 @@ object GenSourceCode {
     )
 
   def persist[S <: SourceCodeState](sourceCode: S,
-                                    code: Gen[String] = genGoodCode()): S =
+                                    code: Gen[String] = GenCode.genGoodCode()): S =
     sourceCode match {
       case aware: SourceCodeState.IsCodeAware =>
         FileIO.write(aware.fileURI, aware.code)
@@ -72,7 +72,7 @@ object GenSourceCode {
     }
 
   def persistAll[I <: Iterable[SourceCodeState]](sourceCode: I,
-                                                 code: Gen[String] = genGoodCode()): I = {
+                                                 code: Gen[String] = GenCode.genGoodCode()): I = {
     sourceCode foreach (persist(_, code))
     sourceCode
   }
