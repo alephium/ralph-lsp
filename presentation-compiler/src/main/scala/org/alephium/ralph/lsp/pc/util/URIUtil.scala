@@ -11,7 +11,7 @@ object URIUtil {
 
   // TODO: Probably an easier way to do this using URI.
   def getFileExtension(uri: URI): String =
-    Paths.get(uri).toFile.getName.dropWhile(_ != '.').drop(1)
+    getFileName(uri).dropWhile(_ != '.').drop(1)
 
   /** Is the child [[URI]] within the parent [[URI]] */
   def contains(parent: URI,
