@@ -8,16 +8,16 @@ object Version {
 object Dependencies {
 
   /** TEST */
-  lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.16" % Test
-  lazy val scalaCheck = "org.scalatestplus" %% "scalacheck-1-17" % "3.2.16.0" % Test
+  lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.17" % Test
+  lazy val scalaCheck = "org.scalatestplus" %% "scalacheck-1-17" % "3.2.17.0" % Test
   lazy val scalaMock = "org.scalamock" %% "scalamock" % "5.2.0" % Test
 
   /** Core */
-  lazy val ralphc = "org.alephium" %% "alephium-ralphc" % "2.5.9"
-  lazy val lsp4j = "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.21.1"
+  lazy val ralphc = "org.alephium" %% "alephium-ralphc" % "2.6.1"
+  lazy val lsp4j = "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.21.2"
 
   /** Logging */
   lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
-  lazy val logback = "ch.qos.logback" % "logback-classic" % "1.4.7"
+  lazy val logback = "ch.qos.logback" % "logback-classic" % "1.4.14"
 
 }
