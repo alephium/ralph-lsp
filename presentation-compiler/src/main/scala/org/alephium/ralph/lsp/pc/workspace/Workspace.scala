@@ -24,47 +24,6 @@ object Workspace extends StrictImplicitLogging {
   def create(workspaceURI: URI): WorkspaceState.Created =
     WorkspaceState.Created(workspaceURI)
 
-  /** Creates an un-compiled workspace for a successful build file. */
-  def initialise(state: BuildState.IsCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
-    state match {
-      case compiled: BuildState.BuildCompiled =>
-        // Build file changed. Update the workspace and request a full workspace build.
-        initialise(compiled)
-
-      case errored: BuildState.BuildErrored =>
-        Left(errored)
-    }
-
-  /**
-   * Initial workspaces collects paths to all OnDisk ralph files.
-   *
-   * @param state Current state of the workspace.
-   * @return New workspace state which aware of all workspace source code files.
-   */
-  def initialise(state: BuildState.BuildCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
-    SourceCode.initialise(state.contractURI) match {
-      case Left(error) =>
-        val buildError =
-          BuildState.BuildErrored(
-            buildURI = state.buildURI,
-            code = Some(state.code),
-            errors = ArraySeq(error),
-            dependency = state.dependency,
-            activateWorkspace = None
-          )
-
-        Left(buildError)
-
-      case Right(sourceCode) =>
-        val unCompiled =
-          WorkspaceState.UnCompiled(
-            build = state,
-            sourceCode = sourceCode
-          )
-
-        Right(unCompiled)
-    }
-
   /**
    * Returns existing workspace or initialises a new one from the configured build file.
    * Or else reports all workspace issues.
@@ -209,6 +168,47 @@ object Workspace extends StrictImplicitLogging {
 
         // Build not OK! Report the error, also clear all previous diagnostics
         Left(newError)
+    }
+
+  /** Creates an un-compiled workspace for a successful build file. */
+  def initialise(state: BuildState.IsCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+    state match {
+      case compiled: BuildState.BuildCompiled =>
+        // Build file changed. Update the workspace and request a full workspace build.
+        initialise(compiled)
+
+      case errored: BuildState.BuildErrored =>
+        Left(errored)
+    }
+
+  /**
+   * Initial workspaces collects paths to all OnDisk ralph files.
+   *
+   * @param state Current state of the workspace.
+   * @return New workspace state which aware of all workspace source code files.
+   */
+  def initialise(state: BuildState.BuildCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+    SourceCode.initialise(state.contractURI) match {
+      case Left(error) =>
+        val buildError =
+          BuildState.BuildErrored(
+            buildURI = state.buildURI,
+            code = Some(state.code),
+            errors = ArraySeq(error),
+            dependency = state.dependency,
+            activateWorkspace = None
+          )
+
+        Left(buildError)
+
+      case Right(sourceCode) =>
+        val unCompiled =
+          WorkspaceState.UnCompiled(
+            build = state,
+            sourceCode = sourceCode
+          )
+
+        Right(unCompiled)
     }
 
   /**
