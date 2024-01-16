@@ -44,4 +44,10 @@ object GenWorkspace {
     FileIO.createDirectories(workspace.workspaceURI)
     workspace
   }
+
+  /** Delete the workspace folder and all its content */
+  def delete[W <: WorkspaceState](workspace: W): W = {
+    FileIO.deleteAll(workspace.workspaceURI)
+    workspace
+  }
 }

@@ -26,6 +26,9 @@ class SourceCodeInitialiseSpec extends AnyWordSpec with Matchers with MockFactor
                 .value
 
             actual should contain theSameElementsAs sourceCode
+
+            // delete workspace
+            GenWorkspace.delete(workspace)
         }
       }
     }

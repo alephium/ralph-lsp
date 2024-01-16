@@ -2,7 +2,6 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.GenWorkspace
-import org.alephium.ralph.lsp.FileIO
 import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
@@ -50,8 +49,8 @@ class SourceCodeSynchroniseSpec extends AnyWordSpec with Matchers with MockFacto
           result.value should contain theSameElementsAs sourceCodeInside
 
           // clear all generate files
-          FileIO.deleteAll(workspace.workspaceURI)
-          sourceCodeOutside.map(_.fileURI) foreach FileIO.delete
+          GenWorkspace.delete(workspace)
+          sourceCodeOutside foreach GenSourceCode.delete
       }
     }
   }
