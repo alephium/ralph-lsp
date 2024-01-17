@@ -1,52 +1,29 @@
 package org.alephium.ralph.lsp
 
+import org.alephium.ralph.lsp.TestCommon._
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess.RALPH_FILE_EXTENSION
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
-import org.alephium.ralph.lsp.access.compiler.message.error.StringError
 import org.scalacheck.Gen
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.TryValues._
 
+import java.io.File
 import java.net.URI
-import java.nio.file.{Path, Paths}
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Path, Paths}
+import scala.io.Source
+import scala.util.Using
 
 /**
- * Common test data generator used by all other data types.
- */
-object GenCommon {
-  /** A random name. Restricted to 10 characters. */
-  val genName: Gen[String] =
-    Gen.listOfN(10, Gen.alphaChar).map(_.mkString)
+ * [[File]] IO related test functions
+ *
+ * No effect handling required for test-cases.
+ * Exceptions are OK for test-cases.
+ * */
+object TestFile {
 
-  val genCamelCase: Gen[String] =
-    genName.map(_.capitalize)
-
-  def genContract(name: Gen[String] = genCamelCase): Gen[String] =
-    name map {
-      name =>
-        s"""
-           |Contract $name(id:U256){
-           |  pub fn getId() -> U256 {
-           |    return id
-           |  }
-           |}
-           |""".stripMargin
-    }
-
-  def genScript(name: Gen[String] = genCamelCase): Gen[String] =
-    name map {
-      name =>
-        s"""
-           |TxScript $name(x: U256, y: U256) {
-           |  assert!(x != y, 0)
-           |}
-           |""".stripMargin
-    }
-
-  /** Generate ralph code */
-  def genGoodCode(): Gen[String] =
-    Gen.oneOf(
-      genContract(genCamelCase),
-      genScript(genCamelCase),
-    )
+  /** ********************
+   * Generators for Files
+   * ********************* */
 
   /** Generate ralph code */
   def genFolderPath(underTempDir: Boolean): Gen[Path] = {
@@ -103,18 +80,58 @@ object GenCommon {
   def genFolderURI(underTempDir: Boolean = true): Gen[URI] =
     genFolderPath(underTempDir = underTempDir).map(_.toUri)
 
-  /** Generate an error for this code */
-  def genError(code: Gen[String] = genGoodCode()): Gen[CompilerMessage.AnyError] =
-    for {
-      code <- code
-      errorMessage <- Gen.alphaStr
-      errorIndex <- Gen.choose(0, code.length - 1)
-    } yield
-      StringError(
-        message = errorMessage,
-        index = SourceIndex(0, errorIndex) // TODO: gen random index location
-      )
+  /** *************************
+   * File IO related functions
+   * ************************* */
 
-  def genErrors(code: String): Gen[List[CompilerMessage.AnyError]] =
-    Gen.listOf(genError(Gen.const(code)))
+  /** Write bytes to the URI */
+  def writeBytes(uri: URI,
+                 bytes: Array[Byte]): Path = {
+    //convert URI to Path
+    val filePath = Paths.get(uri)
+    // ensure directories exists
+    createDirectories(filePath.getParent)
+    //write to file
+    Files.write(filePath, bytes)
+  }
+
+  def write(uri: URI,
+            string: String): Path =
+    writeBytes(
+      uri = uri,
+      bytes = string.getBytes(StandardCharsets.UTF_8)
+    )
+
+  def createDirectories(path: Path): Path = {
+    val directory = Files.createDirectories(path)
+    directory shouldBe path
+    path
+  }
+
+  def createDirectories(uri: URI): Path =
+    createDirectories(Paths.get(uri))
+
+  def delete(uri: URI): Unit =
+    Files.delete(Paths.get(uri))
+
+  /** Recursive delete all files in this folder */
+  def deleteAll(uri: URI): Unit =
+    deleteAll(new File(uri))
+
+  /** Recursive delete all files in this folder */
+  private def deleteAll(file: File): Unit = {
+    Option(file.listFiles()).foreach(_.foreach(deleteAll))
+    file.delete()
+  }
+
+  def delete(path: Path): Unit =
+    Files.delete(path)
+
+  def exists(uri: URI): Boolean =
+    Files.exists(Paths.get(uri))
+
+  def readAll(uri: URI): String =
+    Using(Source.fromFile(uri))(_.mkString)
+      .success
+      .value
 }

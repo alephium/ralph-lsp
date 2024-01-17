@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 
 import scala.collection.immutable.ArraySeq
 
-private[sourcecode] object SourceCodeStateBuilder {
+private object SourceCodeStateBuilder {
 
   /**
    * Compilation results from `ralphc` do not retain the source file URIs or Path information.
@@ -81,15 +81,15 @@ private[sourcecode] object SourceCodeStateBuilder {
                                            compiledContracts: Array[CompiledContract],
                                            compiledScripts: Array[CompiledScript]): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
     parsedContracts
-     .collect { case c: Ast.Contract if !c.isAbstract => c } //Only contracts can be compiled
-     .map {
-      contract =>
-        findMatchingContractOrScript(
-          contract = contract,
-          compiledContracts = compiledContracts,
-          compiledScripts = compiledScripts
-        )
-    }
+      .collect { case c: Ast.Contract if !c.isAbstract => c } //Only contracts can be compiled
+      .map {
+        contract =>
+          findMatchingContractOrScript(
+            contract = contract,
+            compiledContracts = compiledContracts,
+            compiledScripts = compiledScripts
+          )
+      }
 
   private def findMatchingContractOrScript(contract: Ast.ContractWithState,
                                            compiledContracts: Array[CompiledContract],

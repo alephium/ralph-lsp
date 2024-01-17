@@ -22,6 +22,7 @@ project/plugins/project/
 #Intellij
 .idea
 *.iml
+.run
 
 # plugin-vscode
 plugin-vscode/node_modules

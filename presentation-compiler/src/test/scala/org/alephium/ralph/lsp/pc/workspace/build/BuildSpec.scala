@@ -2,12 +2,12 @@ package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildFileLocation}
-import org.alephium.ralph.lsp.FileIO
-import org.alephium.ralph.lsp.GenCommon.genFolderURI
+import org.alephium.ralph.lsp.TestFile
+import org.alephium.ralph.lsp.TestFile.genFolderURI
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.client.FileClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.GenBuild._
+import org.alephium.ralph.lsp.pc.workspace.build.TestBuild._
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -27,11 +27,11 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
       "build in not within the workspace" in {
         // build that is outside the workspace
         val outSideBuildGen =
-          GenBuild.genBuildParsed()
+          TestBuild.genBuildParsed()
 
         // build that is inside the workspace
         val insideBuildGen =
-          GenBuild
+          TestBuild
             .genBuildParsed()
             .map(persist)
             .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
@@ -82,7 +82,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
       "build is within the workspace, but in a nested folder" in {
         // generate a build and a workspace that are in different folders
         val existingBuild =
-          GenBuild
+          TestBuild
             .genBuildParsed()
             .map(persist)
             .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
@@ -96,7 +96,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
                 currentBuildParsed.workspaceURI.resolve("nested_folder/")
 
               // generate a build
-              GenBuild.genBuildParsed(workspaceURI = buildFolder) map {
+              TestBuild.genBuildParsed(workspaceURI = buildFolder) map {
                 build =>
                   (build, currentBuildParsed)
               }
@@ -156,7 +156,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
       forAll(genFolderURI()) {
         workspaceDir =>
           val buildURI =
-            FileIO
+            TestFile
               .createDirectories(workspaceDir)
               .resolve(Build.BUILD_FILE_NAME)
               .toUri

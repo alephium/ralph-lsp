@@ -14,56 +14,23 @@ import java.net.URI
 import scala.collection.immutable.ArraySeq
 
 /**
- * Implements functions operating on all source-code files within a workspace.
+ * Implements functions that operate on all source-code files within a workspace.
  *
- * All functions are all immutable. They all returns the next workspace state, given the current state.
+ * All functions are immutable, returning the next workspace state given the current state.
+ *
+ * The phases of compiler execution:
+ *  - [[Workspace.create]] - Creates a new workspace.
+ *  - [[Workspace.build]] - Builds the created workspace. A valid workspace must contain a build file, i.e., `ralph.json`. The `build` function also invokes `initialise` on success to return a workspace state.
+ *  - [[Workspace.initialise]] - Invoked by the build phase to create an initialised workspace with a valid build file.
+ *  - [[Workspace.parse]] - Parses an initialised workspace.
+ *  - [[Workspace.compile]] - Compiles a parsed workspace.
  */
+
 object Workspace extends StrictImplicitLogging {
 
   /** First stage of a workspace where just the root workspace folder is known */
   def create(workspaceURI: URI): WorkspaceState.Created =
     WorkspaceState.Created(workspaceURI)
-
-  /** Creates an un-compiled workspace for a successful build file. */
-  def initialise(state: BuildState.IsCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
-    state match {
-      case compiled: BuildState.BuildCompiled =>
-        // Build file changed. Update the workspace and request a full workspace build.
-        initialise(compiled)
-
-      case errored: BuildState.BuildErrored =>
-        Left(errored)
-    }
-
-  /**
-   * Initial workspaces collects paths to all OnDisk ralph files.
-   *
-   * @param state Current state of the workspace.
-   * @return New workspace state which aware of all workspace source code files.
-   */
-  def initialise(state: BuildState.BuildCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
-    SourceCode.initialise(state.contractURI) match {
-      case Left(error) =>
-        val buildError =
-          BuildState.BuildErrored(
-            buildURI = state.buildURI,
-            code = Some(state.code),
-            errors = ArraySeq(error),
-            dependency = state.dependency,
-            activateWorkspace = None
-          )
-
-        Left(buildError)
-
-      case Right(sourceCode) =>
-        val unCompiled =
-          WorkspaceState.UnCompiled(
-            build = state,
-            sourceCode = sourceCode
-          )
-
-        Right(unCompiled)
-    }
 
   /**
    * Returns existing workspace or initialises a new one from the configured build file.
@@ -209,6 +176,47 @@ object Workspace extends StrictImplicitLogging {
 
         // Build not OK! Report the error, also clear all previous diagnostics
         Left(newError)
+    }
+
+  /** Creates an un-compiled workspace for a successful build file. */
+  def initialise(state: BuildState.IsCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+    state match {
+      case compiled: BuildState.BuildCompiled =>
+        // Build file changed. Update the workspace and request a full workspace build.
+        initialise(compiled)
+
+      case errored: BuildState.BuildErrored =>
+        Left(errored)
+    }
+
+  /**
+   * Initial workspaces collects paths to all OnDisk ralph files.
+   *
+   * @param state Current state of the workspace.
+   * @return New workspace state which aware of all workspace source code files.
+   */
+  def initialise(state: BuildState.BuildCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+    SourceCode.initialise(state.contractURI) match {
+      case Left(error) =>
+        val buildError =
+          BuildState.BuildErrored(
+            buildURI = state.buildURI,
+            code = Some(state.code),
+            errors = ArraySeq(error),
+            dependency = state.dependency,
+            activateWorkspace = None
+          )
+
+        Left(buildError)
+
+      case Right(sourceCode) =>
+        val unCompiled =
+          WorkspaceState.UnCompiled(
+            build = state,
+            sourceCode = sourceCode
+          )
+
+        Right(unCompiled)
     }
 
   /**
@@ -547,7 +555,7 @@ object Workspace extends StrictImplicitLogging {
         if (URIUtil.contains(workspace.build.contractURI, fileURI)) {
           // source belongs to this workspace, process compilation including this file's changed code.
           val newSourceCode =
-            downgradeSourceState(
+            SourceCode.put(
               fileURI = fileURI,
               updatedCode = updatedCode,
               sourceCode = workspace.sourceCode
@@ -563,56 +571,8 @@ object Workspace extends StrictImplicitLogging {
           // parse and compile the new state.
           Workspace.parseAndCompile(unCompiledWorkspace)
         } else {
-          // file does not belong to this workspace, do not compile it and return initialised workspace.
+          // file does not belong to this workspace, do not compile it and return the current workspace.
           workspace
-        }
-    }
-
-  /**
-   * Downgrade the current state of updated source-code so it gets re-parsed and re-compiled.
-   * Also checks if the file is deleted so it could be removed from compilation.
-   *
-   * @param fileURI     Updated code's file-location
-   * @param updatedCode The updated code
-   * @param sourceCode  Existing source-code
-   * @return New source code with applied change.
-   */
-  def downgradeSourceState(fileURI: URI,
-                           updatedCode: Option[String],
-                           sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): ArraySeq[SourceCodeState] =
-    updatedCode match {
-      case Some(newCode) =>
-        // new source code, store it as un-compiled.
-        val newState =
-          SourceCodeState.UnCompiled(fileURI, newCode)
-
-        // update or add it to the existing collection
-        sourceCode put newState
-
-      case None =>
-        // no source code sent from client, check it still exists.
-        file.exists(fileURI) match {
-          case Left(error) =>
-            // failed to check
-            val newState =
-              SourceCodeState.ErrorAccess(
-                fileURI = fileURI,
-                error = error
-              )
-
-            sourceCode put newState
-
-          case Right(exists) =>
-            if (exists) {
-              // source-code exists, set it as on-disk so it gets read during the next parse & compilation.
-              val newState =
-                SourceCodeState.OnDisk(fileURI)
-
-              sourceCode put newState
-            } else {
-              // file does not exist, remove it.
-              sourceCode.filter(_.fileURI != fileURI)
-            }
         }
     }
 

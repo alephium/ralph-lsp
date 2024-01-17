@@ -5,7 +5,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 
 import scala.collection.immutable.ArraySeq
 
-private[workspace] object WorkspaceStateBuilder {
+private object WorkspaceStateBuilder {
 
   /** @see [[org.alephium.ralph.lsp.pc.sourcecode.SourceCodeStateBuilder.toSourceCodeState]] */
   def toWorkspaceState(currentState: WorkspaceState.Parsed,

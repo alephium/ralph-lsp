@@ -112,6 +112,56 @@ private[pc] object SourceCode {
     }
 
   /**
+   * Insert the updated code for the given file-URI to the collection.
+   *
+   * Downgrade the current state of updated source-code so it gets re-parsed and re-compiled.
+   * Also checks if the file is deleted so it could be removed from compilation.
+   *
+   * @param fileURI     Updated code's file-location
+   * @param updatedCode The updated code
+   * @param sourceCode  Existing source-code
+   * @return New source code with applied change.
+   */
+  def put(fileURI: URI,
+          updatedCode: Option[String],
+          sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): ArraySeq[SourceCodeState] =
+    updatedCode match {
+      case Some(newCode) =>
+        // new source code, store it as un-compiled.
+        val newState =
+          SourceCodeState.UnCompiled(fileURI, newCode)
+
+        // update or add it to the existing collection
+        sourceCode put newState
+
+      case None =>
+        // no source code sent from client, check it still exists.
+        file.exists(fileURI) match {
+          case Left(error) =>
+            // failed to check
+            val newState =
+              SourceCodeState.ErrorAccess(
+                fileURI = fileURI,
+                error = error
+              )
+
+            sourceCode put newState
+
+          case Right(exists) =>
+            if (exists) {
+              // source-code exists, set it as on-disk so it gets read during the next parse & compilation.
+              val newState =
+                SourceCodeState.OnDisk(fileURI)
+
+              sourceCode put newState
+            } else {
+              // file does not exist, remove it.
+              sourceCode.filter(_.fileURI != fileURI)
+            }
+        }
+    }
+
+  /**
    * Compile a group of source-code files and performing type-check on imported code/import statements.
    *
    * @param sourceCode      Source-code to compile
