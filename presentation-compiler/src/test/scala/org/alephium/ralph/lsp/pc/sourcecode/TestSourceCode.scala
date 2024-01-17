@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.alephium.ralph.lsp.TestFile._
+import org.alephium.ralph.lsp.access.compiler.message.error.TestError
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
 import org.scalacheck.Gen
@@ -38,6 +39,57 @@ object TestSourceCode {
       sourceCode <- TestSourceCode.genOnDisk(fileURI)
     } yield
       sourceCode
+
+  /** Generate a source code file on-disk */
+  def genOnDiskAndPersist(fileURI: Gen[URI] = genFileURI(),
+                          code: Gen[String] = TestCode.genGoodCode()): Gen[(SourceCodeState.OnDisk, String)] =
+    for {
+      onDisk <- TestSourceCode.genOnDisk(fileURI)
+      code <- code
+    } yield {
+      // write code to the source file
+      val persistedOnDisk = persist(onDisk, code)
+      (persistedOnDisk, code)
+    }
+
+  /**
+   * Generate an error state for a source-code state.
+   * These error states
+   */
+  def genErrorState(state: Gen[SourceCodeState] = genOnDisk(),
+                    code: Gen[String] = TestCode.genGoodCode()): Gen[SourceCodeState.IsError] =
+    Gen.oneOf(
+      genErrorAccess(state),
+      genErrorSource(state, code)
+    )
+
+  /**
+   * Generate an error state for a source-code state.
+   * These error states
+   */
+  def genErrorAccess(state: Gen[SourceCodeState] = genOnDisk()): Gen[SourceCodeState.ErrorAccess] =
+    for {
+      _state <- state
+      error <- TestError.genError()
+    } yield
+      SourceCodeState.ErrorAccess(
+        fileURI = _state.fileURI,
+        error = error
+      )
+
+  def genErrorSource(state: Gen[SourceCodeState] = genOnDisk(),
+                     code: Gen[String] = TestCode.genGoodCode()): Gen[SourceCodeState.ErrorSource] =
+    for {
+      _state <- state
+      _code <- code
+      errors <- Gen.listOf(TestError.genError())
+    } yield
+      SourceCodeState.ErrorSource(
+        fileURI = _state.fileURI,
+        code = _code,
+        errors = errors,
+        previous = None
+      )
 
   def genUnCompiled(code: Gen[String] = TestCode.genGoodCode(),
                     fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.UnCompiled] =

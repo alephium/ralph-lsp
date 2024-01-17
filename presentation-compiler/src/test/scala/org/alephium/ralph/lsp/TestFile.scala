@@ -4,11 +4,14 @@ import org.alephium.ralph.lsp.TestCommon._
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess.RALPH_FILE_EXTENSION
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers._
+import org.scalatest.TryValues._
 
 import java.io.File
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
+import scala.io.Source
+import scala.util.Using
 
 /**
  * [[File]] IO related test functions
@@ -127,4 +130,8 @@ object TestFile {
   def exists(uri: URI): Boolean =
     Files.exists(Paths.get(uri))
 
+  def readAll(uri: URI): String =
+    Using(Source.fromFile(uri))(_.mkString)
+      .success
+      .value
 }

@@ -35,4 +35,10 @@ object TestCode {
       genScript(genCamelCase),
     )
 
+  def genBadCode(): Gen[String] =
+    Gen.oneOf(
+      genContract(genCamelCase.map(_.toLowerCase)),
+      genScript(genCamelCase.map(_.toLowerCase)),
+    )
+
 }
