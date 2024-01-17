@@ -14,10 +14,18 @@ import java.net.URI
 import scala.collection.immutable.ArraySeq
 
 /**
- * Implements functions operating on all source-code files within a workspace.
+ * Implements functions that operate on all source-code files within a workspace.
  *
- * All functions are all immutable. They all returns the next workspace state, given the current state.
+ * All functions are immutable, returning the next workspace state given the current state.
+ *
+ * The phases of compiler execution:
+ *  - [[Workspace.create]] - Creates a new workspace.
+ *  - [[Workspace.build]] - Builds the created workspace. A valid workspace must contain a build file, i.e., `ralph.json`. The `build` function also invokes `initialise` on success to return a workspace state.
+ *  - [[Workspace.initialise]] - Invoked by the build phase to create an initialised workspace with a valid build file.
+ *  - [[Workspace.parse]] - Parses an initialised workspace.
+ *  - [[Workspace.compile]] - Compiles a parsed workspace.
  */
+
 object Workspace extends StrictImplicitLogging {
 
   /** First stage of a workspace where just the root workspace folder is known */
