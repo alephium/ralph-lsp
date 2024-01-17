@@ -17,6 +17,18 @@ object TestSourceCode {
   def genOnDisk(fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.OnDisk] =
     fileURI map SourceCodeState.OnDisk
 
+  /** Generate a source code file on-disk */
+  def genOnDiskAndPersist(fileURI: Gen[URI] = genFileURI(),
+                          code: Gen[String] = TestCode.genGoodCode()): Gen[(SourceCodeState.OnDisk, String)] =
+    for {
+      onDisk <- genOnDisk(fileURI)
+      code <- code
+    } yield {
+      // write code to the source file
+      val persistedOnDisk = persist(onDisk, code)
+      (persistedOnDisk, code)
+    }
+
   /** */
   def genOnDiskForRoot(rootURI: Gen[URI] = genFolderURI()): Gen[SourceCodeState.OnDisk] =
     for {
@@ -39,18 +51,6 @@ object TestSourceCode {
       sourceCode <- TestSourceCode.genOnDisk(fileURI)
     } yield
       sourceCode
-
-  /** Generate a source code file on-disk */
-  def genOnDiskAndPersist(fileURI: Gen[URI] = genFileURI(),
-                          code: Gen[String] = TestCode.genGoodCode()): Gen[(SourceCodeState.OnDisk, String)] =
-    for {
-      onDisk <- TestSourceCode.genOnDisk(fileURI)
-      code <- code
-    } yield {
-      // write code to the source file
-      val persistedOnDisk = persist(onDisk, code)
-      (persistedOnDisk, code)
-    }
 
   /**
    * Generate an error state for a source-code state.

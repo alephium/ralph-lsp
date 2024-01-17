@@ -22,7 +22,7 @@ class SourceCodeSynchroniseSpec extends AnyWordSpec with Matchers with MockFacto
           // a workspace with source-code inside the workspace
           (workspace, sourceCodeInside) <- TestWorkspace.genCreatedWithSourceCode(persist = true)
           // source code outside the workspace
-          sourceCodeOutside <- Gen.listOfMax()(TestSourceCode.genOnDisk()).map(TestSourceCode.persistAll(_))
+          sourceCodeOutside <- Gen.listOfMax()(TestSourceCode.genOnDiskAndPersist().map(_._1))
           // some or all of inside source-code
           someCodeInside <- Gen.someOf(sourceCodeInside)
           // some or all outside source-code
