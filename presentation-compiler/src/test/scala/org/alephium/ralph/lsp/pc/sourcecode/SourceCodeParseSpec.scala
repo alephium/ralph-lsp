@@ -2,9 +2,9 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode._
-import org.alephium.ralph.lsp.pc.workspace.build.GenRalphc
-import org.alephium.ralph.lsp.GenCode
+import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode._
+import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc
+import org.alephium.ralph.lsp.TestCode
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
@@ -37,9 +37,9 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
         // Generate a source code file and parse it
         val parsed =
-          GenSourceCode
+          TestSourceCode
             .genInitialised()
-            .map(persist(_, GenCode.genGoodCode()))
+            .map(persist(_, TestCode.genGoodCode()))
             .map(SourceCode.parse)
             .map(_.asInstanceOf[SourceCodeState.Parsed])
 
@@ -49,7 +49,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
             // test state
             testNoCompilerAccess(sourceCode)
             // delete file
-            GenSourceCode.delete(sourceCode)
+            TestSourceCode.delete(sourceCode)
         }
       }
 
@@ -62,13 +62,13 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
         // generate an already compiled source-code
         val parsed =
-          GenSourceCode
+          TestSourceCode
             .genInitialised()
-            .map(persist(_, GenCode.genGoodCode()))
+            .map(persist(_, TestCode.genGoodCode()))
             .map(SourceCode.parse)
             .map(_.asInstanceOf[SourceCodeState.Parsed])
 
-        forAll(parsed, GenRalphc.genCompilerOptions()) {
+        forAll(parsed, TestRalphc.genCompilerOptions()) {
           case (parsed, compilerOptions) =>
 
             // compile the source-code
@@ -93,7 +93,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
             testNoCompilerAccess(compiled.head)
 
             // delete file
-            GenSourceCode.delete(compiled.head)
+            TestSourceCode.delete(compiled.head)
         }
       }
     }

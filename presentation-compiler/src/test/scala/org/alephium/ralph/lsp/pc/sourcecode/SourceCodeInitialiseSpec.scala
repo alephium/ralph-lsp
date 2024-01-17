@@ -1,9 +1,9 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.GenFile._
-import org.alephium.ralph.lsp.access.compiler.message.error.GenError.genError
-import org.alephium.ralph.lsp.pc.workspace.GenWorkspace
+import org.alephium.ralph.lsp.TestFile._
+import org.alephium.ralph.lsp.access.compiler.message.error.TestError.genError
+import org.alephium.ralph.lsp.pc.workspace.TestWorkspace
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -15,7 +15,7 @@ class SourceCodeInitialiseSpec extends AnyWordSpec with Matchers with MockFactor
   "initialise" should {
     "succeed" when {
       "listing fileURIs on disk passes" in {
-        forAll(GenWorkspace.genCreatedWithSourceCode(persist = true)) {
+        forAll(TestWorkspace.genCreatedWithSourceCode(persist = true)) {
           case (workspace, sourceCode) =>
             implicit val file: FileAccess =
               FileAccess.disk
@@ -28,7 +28,7 @@ class SourceCodeInitialiseSpec extends AnyWordSpec with Matchers with MockFactor
             actual should contain theSameElementsAs sourceCode
 
             // delete workspace
-            GenWorkspace.delete(workspace)
+            TestWorkspace.delete(workspace)
         }
       }
     }

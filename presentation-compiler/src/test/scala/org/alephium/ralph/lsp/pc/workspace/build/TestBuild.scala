@@ -1,16 +1,16 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.pc.workspace.build.GenRalphc.genRalphcParsedConfig
+import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc.genRalphcParsedConfig
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcParsedConfig
-import org.alephium.ralph.lsp.FileIO
-import org.alephium.ralph.lsp.GenFile.genFolderURI
+import org.alephium.ralph.lsp.TestFile
+import org.alephium.ralph.lsp.TestFile.genFolderURI
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers._
 
 import java.net.URI
 
 /** Build specific generators */
-object GenBuild {
+object TestBuild {
 
   def genBuildParsed(workspaceURI: Gen[URI] = genFolderURI(),
                      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()): Gen[BuildState.BuildParsed] =
@@ -33,9 +33,9 @@ object GenBuild {
     }
 
   def persist(parsed: BuildState.BuildParsed): BuildState.BuildParsed = {
-    FileIO.write(parsed.buildURI, parsed.code)
-    FileIO.createDirectories(parsed.workspaceURI.resolve(parsed.config.contractPath))
-    FileIO.createDirectories(parsed.workspaceURI.resolve(parsed.config.artifactPath))
+    TestFile.write(parsed.buildURI, parsed.code)
+    TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.contractPath))
+    TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.artifactPath))
     parsed
   }
 }

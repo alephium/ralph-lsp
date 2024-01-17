@@ -1,13 +1,14 @@
 package org.alephium.ralph.lsp.access.compiler.message.error
 
-import org.alephium.ralph.lsp.GenCode
+import org.alephium.ralph.lsp.TestCode
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 import org.scalacheck.Gen
 
-object GenError {
+/** [[CompilerMessage]] related test functions */
+object TestError {
 
   /** Generate an error for this code */
-  def genError(code: Gen[String] = GenCode.genGoodCode()): Gen[CompilerMessage.AnyError] =
+  def genError(code: Gen[String] = TestCode.genGoodCode()): Gen[CompilerMessage.AnyError] =
     for {
       code <- code
       errorMessage <- Gen.alphaStr

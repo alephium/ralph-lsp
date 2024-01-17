@@ -1,9 +1,10 @@
 package org.alephium.ralph.lsp
 
-import org.alephium.ralph.lsp.GenCommon.genCamelCase
+import org.alephium.ralph.lsp.TestCommon.genCamelCase
 import org.scalacheck.Gen
 
-object GenCode {
+/** Ralph source code related test functions */
+object TestCode {
 
   def genContract(name: Gen[String] = genCamelCase): Gen[String] =
     name map {

@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.workspace.GenWorkspace
+import org.alephium.ralph.lsp.pc.workspace.TestWorkspace
 import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
@@ -20,9 +20,9 @@ class SourceCodeSynchroniseSpec extends AnyWordSpec with Matchers with MockFacto
       val generator =
         for {
           // a workspace with source-code inside the workspace
-          (workspace, sourceCodeInside) <- GenWorkspace.genCreatedWithSourceCode(persist = true)
+          (workspace, sourceCodeInside) <- TestWorkspace.genCreatedWithSourceCode(persist = true)
           // source code outside the workspace
-          sourceCodeOutside <- Gen.listOfMax()(GenSourceCode.genOnDisk()).map(GenSourceCode.persistAll(_))
+          sourceCodeOutside <- Gen.listOfMax()(TestSourceCode.genOnDisk()).map(TestSourceCode.persistAll(_))
           // some or all of inside source-code
           someCodeInside <- Gen.someOf(sourceCodeInside)
           // some or all outside source-code
@@ -49,8 +49,8 @@ class SourceCodeSynchroniseSpec extends AnyWordSpec with Matchers with MockFacto
           result.value should contain theSameElementsAs sourceCodeInside
 
           // clear all generate files
-          GenWorkspace.delete(workspace)
-          sourceCodeOutside foreach GenSourceCode.delete
+          TestWorkspace.delete(workspace)
+          sourceCodeOutside foreach TestSourceCode.delete
       }
     }
   }

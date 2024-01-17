@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.pc.sourcecode.GenSourceCode
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, GenBuild}
-import org.alephium.ralph.lsp.FileIO
+import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
+import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
@@ -43,7 +43,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
           implicit val compiler: CompilerAccess =
             CompilerAccess.ralphc
 
-          forAll(GenWorkspace.genCreated()) {
+          forAll(TestWorkspace.genCreated()) {
             workspace =>
               val result = Workspace.build(workspace).left.value
 
@@ -65,11 +65,11 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
           implicit val compiler: CompilerAccess =
             CompilerAccess.ralphc
 
-          forAll(GenWorkspace.genCreated()) {
+          forAll(TestWorkspace.genCreated()) {
             workspace =>
               // Workspace exists, but since the workspace is Created state, there is no build file
-              GenWorkspace.persist(workspace)
-              FileIO.exists(workspace.workspaceURI) shouldBe true
+              TestWorkspace.persist(workspace)
+              TestFile.exists(workspace.workspaceURI) shouldBe true
 
               val result = Workspace.build(workspace).left.value
 
@@ -91,20 +91,20 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
           implicit val compiler: CompilerAccess =
             CompilerAccess.ralphc
 
-          forAll(GenBuild.genBuildParsed()) {
+          forAll(TestBuild.genBuildParsed()) {
             build =>
               // error build file code
               val buildCode = "blah"
               // replace parsed build file with invalid code
               val errorBuild = build.copy(code = buildCode)
               // persist the error build file to the workspace
-              GenBuild.persist(errorBuild)
+              TestBuild.persist(errorBuild)
               // ensure the build exists
-              FileIO.exists(errorBuild.buildURI) shouldBe true
+              TestFile.exists(errorBuild.buildURI) shouldBe true
 
               // generate a workspace for the errored build-file
               val workspace =
-                GenWorkspace
+                TestWorkspace
                   .genCreated(errorBuild.workspaceURI)
                   .sample
                   .get
@@ -144,22 +144,22 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
           implicit val compiler: CompilerAccess =
             CompilerAccess.ralphc
 
-          forAll(GenBuild.genBuildParsed()) {
+          forAll(TestBuild.genBuildParsed()) {
             build =>
               // persist the build file to the workspace
-              GenBuild.persist(build)
+              TestBuild.persist(build)
               // ensure the build exists
-              FileIO.exists(build.buildURI) shouldBe true
+              TestFile.exists(build.buildURI) shouldBe true
 
               // generate randomly nested source-code within the build's contractPath
               val onDiskCode =
                 Gen
-                  .listOf(GenSourceCode.genOnDiskForBuild(build))
+                  .listOf(TestSourceCode.genOnDiskForBuild(build))
                   .sample
                   .get
 
               // persist generated source-code
-              GenSourceCode.persistAll(onDiskCode)
+              TestSourceCode.persistAll(onDiskCode)
 
               // create initial workspace
               val workspace =
