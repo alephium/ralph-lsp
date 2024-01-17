@@ -555,7 +555,7 @@ object Workspace extends StrictImplicitLogging {
         if (URIUtil.contains(workspace.build.contractURI, fileURI)) {
           // source belongs to this workspace, process compilation including this file's changed code.
           val newSourceCode =
-            SourceCode.put(
+            SourceCode.putOrRemove(
               fileURI = fileURI,
               updatedCode = updatedCode,
               sourceCode = workspace.sourceCode
