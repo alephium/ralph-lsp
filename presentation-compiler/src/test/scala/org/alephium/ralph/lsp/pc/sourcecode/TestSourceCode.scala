@@ -3,13 +3,18 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.alephium.ralph.lsp.TestFile._
 import org.alephium.ralph.lsp.access.compiler.message.error.TestError
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
+import org.alephium.ralph.CompilerOptions
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers._
+import org.scalatest.EitherValues._
 
 import java.net.URI
 import java.nio.file.Paths
+import scala.collection.immutable.ArraySeq
 
 /** [[SourceCode]] related test functions */
 object TestSourceCode {
@@ -108,6 +113,51 @@ object TestSourceCode {
       genOnDisk(fileURI),
       genUnCompiled(code, fileURI)
     )
+
+  def genParsed(code: Gen[String] = TestCode.genGoodCode(),
+                fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
+                                                  compiler: CompilerAccess): Gen[SourceCodeState.Parsed] = {
+    val unCompiled =
+      genUnCompiled(
+        code = code,
+        fileURI = fileURI
+      )
+
+    genParsed(unCompiled)
+  }
+
+  def genParsed(unCompiled: Gen[SourceCodeState.UnCompiled])(implicit file: FileAccess,
+                                                             compiler: CompilerAccess): Gen[SourceCodeState.Parsed] =
+    unCompiled
+      .map(SourceCode.parse)
+      .map(_.asInstanceOf[SourceCodeState.Parsed])
+
+  def genCompiled(code: Gen[String] = TestCode.genGoodCode(),
+                  fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
+                                                    compiler: CompilerAccess): Gen[SourceCodeState.IsParsed] = {
+    val parsed =
+      genParsed(
+        code = code,
+        fileURI = fileURI
+      )
+
+    genCompiled(parsed)
+  }
+
+  def genCompiled(parsed: Gen[SourceCodeState.Parsed])(implicit compiler: CompilerAccess): Gen[SourceCodeState.IsParsed] =
+    parsed map compile
+
+  def compile(parsed: SourceCodeState.Parsed)(implicit compiler: CompilerAccess): SourceCodeState.IsParsed = {
+    val result =
+      SourceCode.compile(
+        sourceCode = ArraySeq(parsed),
+        dependency = None,
+        compilerOptions = CompilerOptions.Default
+      )
+
+    result.value should have size 1
+    result.value.head
+  }
 
   def persist[S <: SourceCodeState](sourceCode: S,
                                     code: Gen[String] = TestCode.genGoodCode()): S =
