@@ -122,9 +122,9 @@ private[pc] object SourceCode {
    * @param sourceCode  Existing source-code
    * @return New source code with applied change.
    */
-  def put(fileURI: URI,
-          updatedCode: Option[String],
-          sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): ArraySeq[SourceCodeState] =
+  def putOrRemove(fileURI: URI,
+                  updatedCode: Option[String],
+                  sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): ArraySeq[SourceCodeState] =
     updatedCode match {
       case Some(newCode) =>
         // new source code, store it as un-compiled.
