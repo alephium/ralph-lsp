@@ -168,12 +168,15 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
           )
         }
 
+        val expectedImportError =
+          ImportError.Unknown(expectedAST)
+
         val expectedError =
           SourceCodeState.ErrorSource(
             fileURI = myCode.fileURI,
             code = myCode.code,
             previous = Some(myCode),
-            errors = ArraySeq(ImportError.Unknown(expectedAST)),
+            errors = ArraySeq(expectedImportError),
           )
 
         actualError should contain only expectedError
