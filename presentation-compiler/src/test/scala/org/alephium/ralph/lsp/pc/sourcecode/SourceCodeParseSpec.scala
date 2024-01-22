@@ -143,7 +143,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
                   SourceCodeState.Parsed(
                     fileURI = currentState.fileURI,
                     code = goodCode,
-                    ast = CompilerAccess.ralphc.parseContracts(goodCode).value
+                    ast = compiler.parseContracts(goodCode).value
                   )
 
                 // read the code written on disk
@@ -191,7 +191,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
             SourceCodeState.ErrorSource(
               fileURI = onDisk.fileURI,
               code = code,
-              errors = Seq(CompilerAccess.ralphc.parseContracts(code).left.value),
+              errors = Seq(compiler.parseContracts(code).left.value),
               previous = None
             )
 
