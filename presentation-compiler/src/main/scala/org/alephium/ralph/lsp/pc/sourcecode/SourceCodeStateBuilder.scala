@@ -81,7 +81,14 @@ private object SourceCodeStateBuilder {
                                            compiledContracts: Array[CompiledContract],
                                            compiledScripts: Array[CompiledScript]): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
     parsedContracts
-      .collect { case c: Ast.Contract if !c.isAbstract => c } //Only contracts can be compiled
+      .collect {
+        // Only Contracts and Scripts can be compiled
+        case contract: Ast.Contract if !contract.isAbstract =>
+          contract
+
+        case script: Ast.TxScript =>
+          script
+      }
       .map {
         contract =>
           findMatchingContractOrScript(

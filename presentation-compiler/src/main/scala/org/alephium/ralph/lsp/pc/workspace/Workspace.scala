@@ -295,24 +295,24 @@ object Workspace extends StrictImplicitLogging {
   }
 
   /**
-   * Re-compile the entire workspace with new build-code and source-code.
+   * Compile the source-code with the new build-code.
    *
-   * @param buildCode  New build-code
-   * @param sourceCode New source-code
-   * @param workspace  Current workspace
+   * @param buildCode    New build-code
+   * @param sourceCode   Source-code to compile
+   * @param currentBuild Current build
    * @return This function will always re-compile the build,
    *         so the output is always [[WorkspaceChangeResult.BuildChanged]].
    */
   def compile(buildCode: Option[String],
               sourceCode: ArraySeq[SourceCodeState],
-              workspace: WorkspaceState.IsSourceAware)(implicit file: FileAccess,
-                                                       compiler: CompilerAccess,
-                                                       logger: ClientLogger): WorkspaceChangeResult.BuildChanged = {
+              currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess,
+                                                      compiler: CompilerAccess,
+                                                      logger: ClientLogger): WorkspaceChangeResult.BuildChanged = {
     // re-build the build file
     val buildResult =
       build(
         buildCode = buildCode,
-        currentBuild = workspace.build,
+        currentBuild = currentBuild,
         sourceCode = sourceCode
       )
 
@@ -325,7 +325,7 @@ object Workspace extends StrictImplicitLogging {
           // No build change occurred. Process the new source-code with exiting build.
           val newWorkspace =
             WorkspaceState.UnCompiled(
-              build = workspace.build,
+              build = currentBuild,
               sourceCode = sourceCode
             )
 
@@ -396,7 +396,7 @@ object Workspace extends StrictImplicitLogging {
     Workspace.compile(
       buildCode = buildCode,
       sourceCode = newSourceCode,
-      workspace = workspace
+      currentBuild = workspace.build
     )
   }
 

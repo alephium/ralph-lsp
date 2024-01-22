@@ -54,7 +54,7 @@ object BuildState {
    *                          These changes must still be applied to the workspace and carried on to the next compilation.
    *                          Set this to:
    *                          - [[None]] to continue with existing workspace
-   *                          - [[WorkspaceState.IsSourceAware]] to replace existing workspace.
+   *                          - Some [[WorkspaceState.IsSourceAware]] to replace existing workspace.
    */
   case class BuildErrored(buildURI: URI,
                           code: Option[String],
