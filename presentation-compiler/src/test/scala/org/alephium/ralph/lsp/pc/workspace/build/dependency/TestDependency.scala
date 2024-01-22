@@ -11,6 +11,7 @@ import java.net.URI
 
 object TestDependency {
 
+  /** Build the standard library */
   def buildStd(): BuildState.BuildCompiled = {
     implicit val logger: ClientLogger =
       FileClientLogger
@@ -21,6 +22,7 @@ object TestDependency {
     implicit val compiler: CompilerAccess =
       CompilerAccess.ralphc
 
+    // create a default build file.
     val parsed =
       BuildState.BuildParsed(
         buildURI = URI.create("file:///ralph.json"),
@@ -28,14 +30,17 @@ object TestDependency {
         config = RalphcConfig.defaultParsedConfig
       )
 
+    // build the std dependency
     val dependencyBuild =
       Dependency.compile(
         parsed = parsed,
         currentBuild = None
       ).asInstanceOf[BuildState.BuildCompiled]
 
+    // dependency should exists in the build
     dependencyBuild.dependency shouldBe defined
 
+    // return the build (the build contains the std workspace)
     dependencyBuild
   }
 

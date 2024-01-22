@@ -18,6 +18,26 @@ object TestCode {
            |""".stripMargin
     }
 
+  def genAbstract(name: Gen[String] = genCamelCase): Gen[String] =
+    name map {
+      name =>
+        s"""
+           |Abstract Contract $name(){
+           |  pub fn action() -> ()
+           |}
+           |""".stripMargin
+    }
+
+  def genInterface(name: Gen[String] = genCamelCase): Gen[String] =
+    name map {
+      name =>
+        s"""
+           |Interface $name {
+           |  pub fn math() -> U256
+           |}
+           |""".stripMargin
+    }
+
   def genScript(name: Gen[String] = genCamelCase): Gen[String] =
     name map {
       name =>
@@ -32,12 +52,16 @@ object TestCode {
   def genGoodCode(): Gen[String] =
     Gen.oneOf(
       genContract(genCamelCase),
+      genAbstract(genCamelCase),
+      genInterface(genCamelCase),
       genScript(genCamelCase),
     )
 
   def genBadCode(): Gen[String] =
     Gen.oneOf(
       genContract(genCamelCase.map(_.toLowerCase)),
+      genAbstract(genCamelCase.map(_.toLowerCase)),
+      genInterface(genCamelCase.map(_.toLowerCase)),
       genScript(genCamelCase.map(_.toLowerCase)),
     )
 
