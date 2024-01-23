@@ -140,10 +140,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         val workspaceURI =
           rootURI getOrElse notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
 
-        val workspace =
-          Workspace.create(workspaceURI)
+        val pcState =
+          PCState(
+            workspace = Workspace.create(workspaceURI),
+            buildErrors = None
+          )
 
-        setWorkspace(workspace)
+        setPCState(pcState)
 
         val maybeDynamicRegistration =
           getAllowsWatchedFilesDynamicRegistration(params)
@@ -342,24 +345,6 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       val exception = error.toResponseErrorException
       logger.error(error.getMessage, exception)
       throw exception
-    }
-
-  /** Set the workspace */
-  private def setWorkspace(workspace: WorkspaceState): Unit =
-    runSync {
-      val newPCState =
-        thisServer.state.pcState match {
-          case Some(pcState) =>
-            pcState.copy(workspace = workspace)
-
-          case None =>
-            PCState(
-              workspace = workspace,
-              buildErrors = None
-            )
-        }
-
-      thisServer.state = thisServer.state.copy(pcState = Some(newPCState))
     }
 
   private def setPCState(pcState: PCState): Unit =
