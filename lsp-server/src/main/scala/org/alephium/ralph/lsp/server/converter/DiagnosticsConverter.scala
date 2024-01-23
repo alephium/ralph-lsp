@@ -27,15 +27,14 @@ object DiagnosticsConverter {
                            newState: ServerState): Iterable[PublishDiagnosticsParams] = {
     // fetch diagnostics to publish for the build file
     val buildDiagnostics =
-      toPublishDiagnostics(
-        buildURI = currentState.workspace.map(_.buildURI),
+      toPublishDiagnosticsForBuild(
         currentBuildErrors = currentState.buildErrors,
         newBuildErrors = newState.buildErrors
       )
 
     // fetch diagnostics to publish for the source-code
     val workspaceDiagnostics =
-      toPublishDiagnostics(
+      toPublishDiagnosticsForWorkspace(
         currentWorkspace = currentState.workspace,
         newWorkspace = newState.workspace
       )
@@ -47,9 +46,8 @@ object DiagnosticsConverter {
    * Given the current build-errors and the next, return diagnostics to publish
    * for the current compilation request.
    * */
-  def toPublishDiagnostics(buildURI: Option[URI],
-                           currentBuildErrors: Option[BuildState.BuildErrored],
-                           newBuildErrors: Option[BuildState.BuildErrored]): Iterable[PublishDiagnosticsParams] =
+  def toPublishDiagnosticsForBuild(currentBuildErrors: Option[BuildState.BuildErrored],
+                                   newBuildErrors: Option[BuildState.BuildErrored]): Iterable[PublishDiagnosticsParams] =
     (currentBuildErrors, newBuildErrors) match {
       case (Some(build), None) =>
         // build errors were fixed. Clear old errors
@@ -96,7 +94,7 @@ object DiagnosticsConverter {
 
         // Build dependency diagnostics given previous dependency diagnostics.
         val dependencyDiagnostics =
-          toPublishDiagnostics(
+          toPublishDiagnosticsForWorkspace(
             currentWorkspace = oldBuild.dependency,
             newWorkspace = newBuild.dependency
           )
@@ -112,8 +110,8 @@ object DiagnosticsConverter {
    * Given the current workspace and the next,
    * return diagnostics to publish to the client.
    * */
-  def toPublishDiagnostics(currentWorkspace: Option[WorkspaceState],
-                           newWorkspace: Option[WorkspaceState]): Iterable[PublishDiagnosticsParams] =
+  def toPublishDiagnosticsForWorkspace(currentWorkspace: Option[WorkspaceState],
+                                       newWorkspace: Option[WorkspaceState]): Iterable[PublishDiagnosticsParams] =
     (currentWorkspace, newWorkspace) match {
       case (Some(current), None) =>
         toPublishDiagnostics(current)
