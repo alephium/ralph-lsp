@@ -264,15 +264,11 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         }
 
       if (events.nonEmpty) {
-        val pcState =
-          getPCState()
-
         // Build OK! process delete or create
         val deleteResult =
           Workspace.deleteOrCreate(
             events = events.to(ArraySeq),
-            buildErrors = pcState.buildErrors,
-            workspace = pcState.workspace
+            pcState = getPCState()
           )
 
         // Set the updated workspace

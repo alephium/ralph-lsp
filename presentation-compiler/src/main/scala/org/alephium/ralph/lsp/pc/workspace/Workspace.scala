@@ -4,6 +4,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
+import org.alephium.ralph.lsp.pc.state.PCState
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, BuildValidator}
@@ -348,16 +349,15 @@ object Workspace extends StrictImplicitLogging {
 
   /** Delete or create a file within the workspace that may or may not be source-aware ([[WorkspaceState.IsSourceAware]]) */
   def deleteOrCreate(events: ArraySeq[WorkspaceFileEvent],
-                     buildErrors: Option[BuildState.BuildErrored],
-                     workspace: WorkspaceState)(implicit file: FileAccess,
-                                                compiler: CompilerAccess,
-                                                logger: ClientLogger): WorkspaceChangeResult.BuildChanged =
-    workspace match {
+                     pcState: PCState)(implicit file: FileAccess,
+                                       compiler: CompilerAccess,
+                                       logger: ClientLogger): WorkspaceChangeResult.BuildChanged =
+    pcState.workspace match {
       case aware: WorkspaceState.IsSourceAware =>
         // already source-aware, execute it!
         deleteOrCreate(
           events = events,
-          buildErrors = buildErrors,
+          buildErrors = pcState.buildErrors,
           workspace = aware
         )
 
@@ -373,7 +373,7 @@ object Workspace extends StrictImplicitLogging {
           case Right(aware) =>
             deleteOrCreate(
               events = events,
-              buildErrors = buildErrors,
+              buildErrors = pcState.buildErrors,
               workspace = aware
             )
         }
