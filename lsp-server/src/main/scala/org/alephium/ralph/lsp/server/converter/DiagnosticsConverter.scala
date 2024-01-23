@@ -1,12 +1,12 @@
 package org.alephium.ralph.lsp.server.converter
 
 import fastparse.IndexedParserInput
+import org.alephium.ralph.SourcePosition
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.state.PCState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.SourcePosition
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
-import org.alephium.ralph.lsp.server.state.ServerState
 import org.eclipse.lsp4j._
 
 import java.net.URI
@@ -18,13 +18,13 @@ import scala.jdk.CollectionConverters.SeqHasAsJava
 object DiagnosticsConverter {
 
   /**
-   * Given the current [[ServerState]] and the next [[ServerState]],
+   * Given the current [[PCState]] and the next [[PCState]],
    * return new diagnostics to publish.
    *
    * @return Diagnostics clearing resolved diagnostics dispatched in previous state.
    */
-  def toPublishDiagnostics(currentState: ServerState,
-                           newState: ServerState): Iterable[PublishDiagnosticsParams] = {
+  def toPublishDiagnostics(currentState: PCState,
+                           newState: PCState): Iterable[PublishDiagnosticsParams] = {
     // fetch diagnostics to publish for the build file
     val buildDiagnostics =
       toPublishDiagnosticsForBuild(
@@ -35,8 +35,8 @@ object DiagnosticsConverter {
     // fetch diagnostics to publish for the source-code
     val workspaceDiagnostics =
       toPublishDiagnosticsForWorkspace(
-        currentWorkspace = currentState.workspace,
-        newWorkspace = newState.workspace
+        currentWorkspace = Some(currentState.workspace),
+        newWorkspace = Some(newState.workspace)
       )
 
     buildDiagnostics ++ workspaceDiagnostics

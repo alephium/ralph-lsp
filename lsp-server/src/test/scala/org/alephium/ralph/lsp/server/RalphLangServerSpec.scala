@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.state.PCState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 import org.eclipse.lsp4j._
@@ -45,8 +46,13 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
         ServerState(
           client = Some(client),
           listener = Some(listener),
-          workspace = Some(WorkspaceState.Created(workspaceURI)),
-          buildErrors = None,
+          pcState =
+            Some(
+              PCState(
+                workspace = WorkspaceState.Created(workspaceURI),
+                buildErrors = None
+              )
+            ),
           clientAllowsWatchedFilesDynamicRegistration = false,
           trace = Trace.Off,
           shutdownReceived = false

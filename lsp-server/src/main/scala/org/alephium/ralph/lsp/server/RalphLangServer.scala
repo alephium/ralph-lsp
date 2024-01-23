@@ -3,15 +3,16 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
+import org.alephium.ralph.lsp.pc.state.PCState
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
+import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.DiagnosticsConverter
 import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater, Trace}
-import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.{messages, CompletableFutures}
+import org.eclipse.lsp4j.jsonrpc.{CompletableFutures, messages}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
@@ -30,8 +31,7 @@ object RalphLangServer {
       ServerState(
         client = Some(client),
         listener = Some(listener),
-        workspace = None,
-        buildErrors = None,
+        pcState = None,
         clientAllowsWatchedFilesDynamicRegistration = clientAllowsWatchedFilesDynamicRegistration,
         trace = Trace.Off,
         shutdownReceived = false
@@ -46,8 +46,7 @@ object RalphLangServer {
       ServerState(
         client = None,
         listener = None,
-        workspace = None,
-        buildErrors = None,
+        pcState = None,
         clientAllowsWatchedFilesDynamicRegistration = false,
         trace = Trace.Off,
         shutdownReceived = false
@@ -168,7 +167,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       registerClientCapabilities()
       // Invoke initial compilation. Trigger it as build file changed.
       didChangeAndPublish(
-        fileURI = getWorkspace().buildURI,
+        fileURI = getPCState().workspace.buildURI,
         code = None
       )
     }
@@ -265,15 +264,15 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         }
 
       if (events.nonEmpty) {
-        val workspace =
-          getWorkspace()
+        val pcState =
+          getPCState()
 
         // Build OK! process delete or create
         val deleteResult =
           Workspace.deleteOrCreate(
             events = events.to(ArraySeq),
-            buildErrors = thisServer.state.buildErrors,
-            workspace = workspace
+            buildErrors = pcState.buildErrors,
+            workspace = pcState.workspace
           )
 
         // Set the updated workspace
@@ -321,21 +320,21 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   private def didChangeAndSet(fileURI: URI,
                               code: Option[String]): Iterable[PublishDiagnosticsParams] =
     runSync {
-      val workspace =
-        getWorkspace()
+      val pcState =
+        getPCState()
 
       val changeResult =
         Workspace.changed(
           fileURI = fileURI,
           code = code,
-          currentWorkspace = workspace
+          currentWorkspace = pcState.workspace
         )
 
       setWorkspaceChange(changeResult)
     }
 
-  private def getWorkspace(): WorkspaceState =
-    state.workspace getOrElse {
+  private def getPCState(): PCState =
+    state.pcState getOrElse {
       // Workspace folder is not defined.
       // This is not expected to occur since `initialized` is always invoked first.
       notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
@@ -352,7 +351,24 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   /** Set the workspace */
   private def setWorkspace(workspace: WorkspaceState): Unit =
     runSync {
-      thisServer.state = thisServer.state.copy(workspace = Some(workspace))
+      val newPCState =
+        thisServer.state.pcState match {
+          case Some(pcState) =>
+            pcState.copy(workspace = workspace)
+
+          case None =>
+            PCState(
+              workspace = workspace,
+              buildErrors = None
+            )
+        }
+
+      thisServer.state = thisServer.state.copy(pcState = Some(newPCState))
+    }
+
+  private def setPCState(pcState: PCState): Unit =
+    runSync {
+      thisServer.state = thisServer.state.copy(pcState = Some(pcState))
     }
 
   private def setClientAllowsWatchedFilesDynamicRegistration(allows: Boolean): Unit =
@@ -401,21 +417,21 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    */
   private def setWorkspaceChange(changeResult: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
     runSync {
-      val currentServerState =
-        thisServer.state
+      val currentPCState =
+        getPCState()
 
-      val newServerState =
+      val newPCState =
         ServerStateUpdater.workspaceChanged(
           change = changeResult,
-          serverState = currentServerState
+          pcState = currentPCState
         )
 
-      newServerState match {
+      newPCState match {
         case Some(newState) =>
-          thisServer.state = newState
+          setPCState(newState)
 
           DiagnosticsConverter.toPublishDiagnostics(
-            currentState = currentServerState,
+            currentState = currentPCState,
             newState = newState
           )
 
