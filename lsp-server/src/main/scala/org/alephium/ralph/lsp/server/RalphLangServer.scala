@@ -265,22 +265,22 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         }
 
       if (events.nonEmpty) {
+        val workspace =
+          getWorkspace()
+
+        // Build OK! process delete or create
+        val deleteResult =
+          Workspace.deleteOrCreate(
+            events = events.to(ArraySeq),
+            buildErrors = thisServer.state.buildErrors,
+            workspace = workspace
+          )
+
+        // Set the updated workspace
         val diagnostics =
-          getOrBuildWorkspace(None) map { // build workspace
-            source =>
-              // Build OK! process delete or create
-              val deleteResult =
-                Workspace.deleteOrCreate(
-                  events = events.to(ArraySeq),
-                  buildErrors = thisServer.state.buildErrors,
-                  workspace = source
-                )
+          setWorkspaceChange(deleteResult)
 
-              // Set the updated workspace
-              setWorkspaceChange(deleteResult)
-          }
-
-        getClient() publish diagnostics.merge
+        getClient() publish diagnostics
       }
     }
 
@@ -321,61 +321,17 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   private def didChangeAndSet(fileURI: URI,
                               code: Option[String]): Iterable[PublishDiagnosticsParams] =
     runSync {
-      val source =
-        Some(WorkspaceFile(fileURI, code))
-
-      val diagnostics =
-        getOrBuildWorkspace(source) map {
-          workspace =>
-            val changeResult =
-              Workspace.changed(
-                fileURI = fileURI,
-                code = code,
-                currentWorkspace = workspace
-              )
-
-            setWorkspaceChange(changeResult)
-        }
-
-      diagnostics.merge
-    }
-
-  /**
-   * Fetch the existing workspace if it's already build and initialised or-else invoke new workspace build.
-   *
-   * @param code File that changed and it's source-code.
-   * @return Diagnostics if there were build errors, or-else the next workspace.
-   */
-  def getOrBuildWorkspace(code: Option[WorkspaceFile]): Either[Iterable[PublishDiagnosticsParams], WorkspaceState.IsSourceAware] =
-    runSync {
       val workspace =
         getWorkspace()
 
-      val buildResult =
-        Workspace.build(
+      val changeResult =
+        Workspace.changed(
+          fileURI = fileURI,
           code = code,
-          workspace = workspace
+          currentWorkspace = workspace
         )
 
-      // process build result
-      buildResult match {
-        case Left(error) =>
-          // build errored
-          val buildErrored =
-            WorkspaceChangeResult.BuildChanged(Some(Left(error)))
-
-          // set the build error and return diagnostics
-          val diagnostics =
-            setWorkspaceChange(changeResult = buildErrored)
-
-          Left(diagnostics)
-
-        case Right(workspace) =>
-          // Build passed.
-          // No need to build diagnostics or set the state here, the caller should,
-          // because the caller this workspace is requested for further compilation.
-          Right(workspace)
-      }
+      setWorkspaceChange(changeResult)
     }
 
   private def getWorkspace(): WorkspaceState =

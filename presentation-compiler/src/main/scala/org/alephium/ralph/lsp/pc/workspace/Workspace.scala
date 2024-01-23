@@ -346,6 +346,40 @@ object Workspace extends StrictImplicitLogging {
     }
   }
 
+  /** Delete or create a file within the workspace that may or may not be source-aware ([[WorkspaceState.IsSourceAware]]) */
+  def deleteOrCreate(events: ArraySeq[WorkspaceFileEvent],
+                     buildErrors: Option[BuildState.BuildErrored],
+                     workspace: WorkspaceState)(implicit file: FileAccess,
+                                                compiler: CompilerAccess,
+                                                logger: ClientLogger): WorkspaceChangeResult.BuildChanged =
+    workspace match {
+      case aware: WorkspaceState.IsSourceAware =>
+        // already source-aware, execute it!
+        deleteOrCreate(
+          events = events,
+          buildErrors = buildErrors,
+          workspace = aware
+        )
+
+      case created: WorkspaceState.Created =>
+        // not source-aware, build and then execute.
+        Workspace.build(
+          code = None,
+          workspace = created
+        ) match {
+          case Left(error) =>
+            WorkspaceChangeResult.BuildChanged(Some(Left(error)))
+
+          case Right(aware) =>
+            deleteOrCreate(
+              events = events,
+              buildErrors = buildErrors,
+              workspace = aware
+            )
+        }
+    }
+
+
   /**
    * Process the following:
    * - Deleted source files and folders
@@ -430,6 +464,39 @@ object Workspace extends StrictImplicitLogging {
           }
         else
           newSourceCode // ignore - not a Ralph source event
+    }
+
+  /** Process source or build file change for a workspace that may or may not be source-aware ([[WorkspaceState.IsSourceAware]]) */
+  def changed(fileURI: URI,
+              code: Option[String],
+              currentWorkspace: WorkspaceState)(implicit file: FileAccess,
+                                                compiler: CompilerAccess,
+                                                logger: ClientLogger): Either[ErrorUnknownFileType, WorkspaceChangeResult] =
+    currentWorkspace match {
+      case aware: WorkspaceState.IsSourceAware =>
+        // already source-aware, execute change request
+        changed(
+          fileURI = fileURI,
+          code = code,
+          currentWorkspace = aware
+        )
+
+      case created: WorkspaceState.Created =>
+        // not source-aware, build and then execute change request
+        Workspace.build(
+          code = Some(WorkspaceFile(fileURI, code)),
+          workspace = created
+        ) match {
+          case Left(error) =>
+            Right(WorkspaceChangeResult.BuildChanged(Some(Left(error))))
+
+          case Right(aware) =>
+            changed(
+              fileURI = fileURI,
+              code = code,
+              currentWorkspace = aware
+            )
+        }
     }
 
   /**
