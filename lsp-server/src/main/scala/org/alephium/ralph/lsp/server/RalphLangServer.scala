@@ -3,14 +3,14 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
-import org.alephium.ralph.lsp.pc.state.PCState
+import org.alephium.ralph.lsp.pc.state.{PCState, PCStateUpdater}
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.DiagnosticsConverter
-import org.alephium.ralph.lsp.server.state.{ServerState, ServerStateUpdater, Trace}
+import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{CompletableFutures, messages}
 import org.eclipse.lsp4j.services._
@@ -421,7 +421,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         getPCState()
 
       val newPCState =
-        ServerStateUpdater.workspaceChanged(
+        PCStateUpdater.workspaceChanged(
           change = changeResult,
           pcState = currentPCState
         )
@@ -488,7 +488,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def shutdown(): CompletableFuture[AnyRef] =
     runSync {
       logger.info("shutdown")
-      if(thisServer.state.shutdownReceived){
+      if (thisServer.state.shutdownReceived) {
         logAndSend(ResponseError.ShutdownRequested)
       } else {
         thisServer.state = thisServer.state.copy(shutdownReceived = true)
@@ -508,7 +508,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           logger.error("Listener is empty. Exit invoked on server that is not initialised")
       }
 
-      if(thisServer.state.shutdownReceived) {
+      if (thisServer.state.shutdownReceived) {
         0
       } else {
         1
