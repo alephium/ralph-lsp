@@ -1,10 +1,9 @@
-package org.alephium.ralph.lsp.server.state
+package org.alephium.ralph.lsp.pc.state
 
-import org.alephium.ralph.lsp.pc.state.PCState
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceChangeResult, WorkspaceState}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceChangeResult, WorkspaceState}
 
-object ServerStateUpdater {
+object PCStateUpdater {
 
   /**
    * Given the workspace change [[WorkspaceChangeResult]]
