@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
-import org.alephium.ralph.lsp.pc.state.{PCState, PCStateDiagnostics, PCStateUpdater}
+import org.alephium.ralph.lsp.pc.state.{PCState, PCStateDiagnostics}
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
@@ -267,16 +267,22 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         }
 
       if (events.nonEmpty) {
+        val currentPCState =
+          getPCState()
+
         // Build OK! process delete or create
-        val deleteResult =
+        val newPCState =
           Workspace.deleteOrCreate(
             events = events.to(ArraySeq),
-            pcState = getPCState()
+            pcState = currentPCState
           )
 
         // Set the updated workspace
         val diagnostics =
-          setWorkspaceChange(deleteResult)
+          setPCStateAndBuildDiagnostics(
+            currentPCState = currentPCState,
+            newPCState = newPCState
+          )
 
         getClient() publish diagnostics
       }
@@ -322,14 +328,17 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       val pcState =
         getPCState()
 
-      val changeResult =
+      val newPCState =
         Workspace.changed(
           fileURI = fileURI,
           code = code,
-          currentWorkspace = pcState.workspace
+          pcState = pcState
         )
 
-      setWorkspaceChange(changeResult)
+      setWorkspaceChange(
+        currentPCState = pcState,
+        newPCState = newPCState
+      )
     }
 
   private def getPCState(): PCState =
@@ -372,14 +381,22 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   /**
    * Set the workspace and returns diagnostics to publish for current state.
    *
-   * @param changeResult Compilation result returned by presentation-compiler.
+   * @param newPCState Compilation result returned by presentation-compiler.
    * @return Diagnostics for current workspace.
    */
-  private def setWorkspaceChange(changeResult: Either[ErrorUnknownFileType, WorkspaceChangeResult]): Iterable[PublishDiagnosticsParams] =
+  private def setWorkspaceChange(currentPCState: PCState,
+                                 newPCState: Either[ErrorUnknownFileType, Option[PCState]]): Iterable[PublishDiagnosticsParams] =
     runSync {
-      changeResult match {
-        case Right(result) =>
-          setWorkspaceChange(result)
+      newPCState match {
+        case Right(Some(newPCState)) =>
+          setPCStateAndBuildDiagnostics(
+            currentPCState = currentPCState,
+            newPCState = newPCState
+          )
+
+        case Right(None) =>
+          logger.debug("No server change occurred")
+          Iterable.empty
 
         case Left(ErrorUnknownFileType(fileURI)) =>
           // Means: This fileURI does not belong to this workspace or is of different type.
@@ -390,39 +407,27 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   /**
-   * Set the workspace and returns diagnostics to publish for current state.
+   * Set the new [[PCState]] and returns diagnostics to publish for the current state.
    *
-   * @param changeResult Compilation result returned by presentation-compiler.
-   *                     [[None]] indicates that the file-type does not belong to us.
+   * @param currentPCState The [[PCState]] that got used to run this compilation.
+   * @param newPCState     Compilation result returned by presentation-compiler.
+   *                       [[None]] indicates that the file-type does not belong to us.
    * @return Diagnostics for current workspace.
    */
-  private def setWorkspaceChange(changeResult: WorkspaceChangeResult): Iterable[PublishDiagnosticsParams] =
+  private def setPCStateAndBuildDiagnostics(currentPCState: PCState,
+                                            newPCState: PCState): Iterable[PublishDiagnosticsParams] =
     runSync {
-      val currentPCState =
-        getPCState()
+      setPCState(newPCState)
 
-      val newPCState =
-        PCStateUpdater.workspaceChanged(
-          change = changeResult,
-          pcState = currentPCState
+      // build diagnostics for this PCState change
+      val pcDiagnostics =
+        PCStateDiagnostics.toPublishDiagnostics(
+          currentState = currentPCState,
+          newState = newPCState
         )
 
-      newPCState match {
-        case Some(newState) =>
-          setPCState(newState)
-
-          val pcDiagnostics =
-            PCStateDiagnostics.toPublishDiagnostics(
-              currentState = currentPCState,
-              newState = newState
-            )
-
-          DiagnosticsConverter.toPublishParams(pcDiagnostics)
-
-        case None =>
-          logger.debug("No server change occurred")
-          None
-      }
+      // convert the diagnostics to LSP4J types
+      DiagnosticsConverter.toPublishParams(pcDiagnostics)
     }
 
   /** Write to log file, notify the client and throw to exit this request */
