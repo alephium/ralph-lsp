@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
-import org.alephium.ralph.lsp.pc.state.{PCState, PCStateUpdater}
+import org.alephium.ralph.lsp.pc.state.{PCState, PCStateDiagnostics, PCStateUpdater}
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
@@ -411,10 +411,13 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         case Some(newState) =>
           setPCState(newState)
 
-          DiagnosticsConverter.toPublishDiagnostics(
-            currentState = currentPCState,
-            newState = newState
-          )
+          val pcDiagnostics =
+            PCStateDiagnostics.toPublishDiagnostics(
+              currentState = currentPCState,
+              newState = newState
+            )
+
+          DiagnosticsConverter.toPublishParams(pcDiagnostics)
 
         case None =>
           logger.debug("No server change occurred")
