@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.pc.state
 import fastparse.IndexedParserInput
 import org.alephium.ralph.SourcePosition
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.pc.diagnostics.{CodeDiagnostic, CodeDiagnosticSeverity, FileDiagnostic}
+import org.alephium.ralph.lsp.pc.diagnostic.{CodeDiagnostic, CodeDiagnosticSeverity, FileDiagnostic}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState

@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.diagnostics
+package org.alephium.ralph.lsp.pc.diagnostic
 
 sealed trait CodeDiagnosticSeverity
 
