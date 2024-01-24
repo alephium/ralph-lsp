@@ -19,18 +19,18 @@ object PCStateDiagnostics {
    *
    * @return Diagnostics clearing resolved diagnostics dispatched in previous state.
    */
-  def toPublishDiagnostics(currentState: PCState,
-                           newState: PCState): Iterable[FileDiagnostic] = {
+  def toFileDiagnostics(currentState: PCState,
+                        newState: PCState): Iterable[FileDiagnostic] = {
     // fetch diagnostics to publish for the build file
     val buildDiagnostics =
-      toPublishDiagnosticsForBuild(
+      toFileDiagnosticsForBuild(
         currentBuildErrors = currentState.buildErrors,
         newBuildErrors = newState.buildErrors
       )
 
     // fetch diagnostics to publish for the source-code
     val workspaceDiagnostics =
-      toPublishDiagnosticsForWorkspace(
+      toFileDiagnosticsForWorkspace(
         currentWorkspace = Some(currentState.workspace),
         newWorkspace = Some(newState.workspace)
       )
@@ -42,13 +42,13 @@ object PCStateDiagnostics {
    * Given the current build-errors and the next, return diagnostics to publish
    * for the current compilation request.
    * */
-  def toPublishDiagnosticsForBuild(currentBuildErrors: Option[BuildState.BuildErrored],
-                                   newBuildErrors: Option[BuildState.BuildErrored]): Iterable[FileDiagnostic] =
+  def toFileDiagnosticsForBuild(currentBuildErrors: Option[BuildState.BuildErrored],
+                                newBuildErrors: Option[BuildState.BuildErrored]): Iterable[FileDiagnostic] =
     (currentBuildErrors, newBuildErrors) match {
       case (Some(build), None) =>
         // build errors were fixed. Clear old errors
         val buildDiagnostics =
-          toPublishDiagnostics(
+          toFileDiagnostics(
             fileURI = build.buildURI,
             code = build.code,
             errors = List.empty, // clear old errors
@@ -57,7 +57,7 @@ object PCStateDiagnostics {
 
         // build diagnostics for the dependency
         val dependencyDiagnostics =
-          build.dependency.to(Array) flatMap toPublishDiagnostics
+          build.dependency.to(Array) flatMap toFileDiagnostics
 
         // collect all diagnostics
         dependencyDiagnostics :+ buildDiagnostics
@@ -65,7 +65,7 @@ object PCStateDiagnostics {
       case (None, Some(build)) =>
         // New build has errors, create diagnostics.
         val buildDiagnostics =
-          toPublishDiagnostics(
+          toFileDiagnostics(
             fileURI = build.buildURI,
             code = build.code,
             errors = build.errors.to(List),
@@ -74,14 +74,14 @@ object PCStateDiagnostics {
 
         // build diagnostics for the dependency
         val dependencyDiagnostics =
-          build.dependency.to(Array) flatMap toPublishDiagnostics
+          build.dependency.to(Array) flatMap toFileDiagnostics
 
         dependencyDiagnostics :+ buildDiagnostics
 
       case (Some(oldBuild), Some(newBuild)) =>
         // New build has errors, build diagnostics given previous build result.
         val buildDiagnostics =
-          toPublishDiagnostics(
+          toFileDiagnostics(
             fileURI = newBuild.buildURI,
             code = newBuild.code,
             errors = newBuild.errors.to(List),
@@ -90,7 +90,7 @@ object PCStateDiagnostics {
 
         // Build dependency diagnostics given previous dependency diagnostics.
         val dependencyDiagnostics =
-          toPublishDiagnosticsForWorkspace(
+          toFileDiagnosticsForWorkspace(
             currentWorkspace = oldBuild.dependency,
             newWorkspace = newBuild.dependency
           )
@@ -106,17 +106,17 @@ object PCStateDiagnostics {
    * Given the current workspace and the next,
    * return diagnostics to publish to the client.
    * */
-  def toPublishDiagnosticsForWorkspace(currentWorkspace: Option[WorkspaceState],
-                                       newWorkspace: Option[WorkspaceState]): Iterable[FileDiagnostic] =
+  def toFileDiagnosticsForWorkspace(currentWorkspace: Option[WorkspaceState],
+                                    newWorkspace: Option[WorkspaceState]): Iterable[FileDiagnostic] =
     (currentWorkspace, newWorkspace) match {
       case (Some(current), None) =>
-        toPublishDiagnostics(current)
+        toFileDiagnostics(current)
 
       case (None, Some(next)) =>
-        toPublishDiagnostics(next)
+        toFileDiagnostics(next)
 
       case (Some(current), Some(next)) =>
-        toPublishDiagnostics(
+        toFileDiagnostics(
           currentWorkspace = current,
           newWorkspace = next
         )
@@ -126,14 +126,14 @@ object PCStateDiagnostics {
     }
 
   /** Fetch all diagnostics for this workspace */
-  def toPublishDiagnostics(currentWorkspace: WorkspaceState): Iterable[FileDiagnostic] =
+  def toFileDiagnostics(currentWorkspace: WorkspaceState): Iterable[FileDiagnostic] =
     currentWorkspace match {
       case _: WorkspaceState.Created =>
         Iterable.empty
 
       case currentWorkspace: WorkspaceState.IsSourceAware =>
         // publish new workspace given previous workspace.
-        toPublishDiagnostics(
+        toFileDiagnostics(
           previousOrCurrentState = currentWorkspace,
           nextState = None
         )
@@ -142,19 +142,19 @@ object PCStateDiagnostics {
   /**
    * Given the current workspace and the next, fetch diagnostics to dispatch, clearing resolved diagnostics.
    * */
-  def toPublishDiagnostics(currentWorkspace: WorkspaceState,
-                           newWorkspace: WorkspaceState): Iterable[FileDiagnostic] =
+  def toFileDiagnostics(currentWorkspace: WorkspaceState,
+                        newWorkspace: WorkspaceState): Iterable[FileDiagnostic] =
     (currentWorkspace, newWorkspace) match {
       case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.IsSourceAware) =>
         // publish first compilation result i.e. previous workspace had no compilation run.
-        toPublishDiagnostics(
+        toFileDiagnostics(
           previousOrCurrentState = newWorkspace,
           nextState = None
         )
 
       case (currentWorkspace: WorkspaceState.IsSourceAware, newWorkspace: WorkspaceState) =>
         // publish new workspace given previous workspace.
-        toPublishDiagnostics(
+        toFileDiagnostics(
           previousOrCurrentState = currentWorkspace,
           nextState = Some(newWorkspace)
         )
@@ -172,17 +172,17 @@ object PCStateDiagnostics {
    *                               Set to [[None]] if previousState is the only state.
    * @return Diagnostics to publish for the current state.
    */
-  def toPublishDiagnostics(previousOrCurrentState: WorkspaceState.IsSourceAware,
-                           nextState: Option[WorkspaceState]): Iterable[FileDiagnostic] = {
+  def toFileDiagnostics(previousOrCurrentState: WorkspaceState.IsSourceAware,
+                        nextState: Option[WorkspaceState]): Iterable[FileDiagnostic] = {
     // build diagnostics sent for previous state, or the current state if this is the first run.
     val previousOrCurrentDiagnotics =
-      toPublishDiagnostics(previousOrCurrentState)
+      toFileDiagnostics(previousOrCurrentState)
 
     nextState match {
       case Some(nextState) =>
         // diagnostics to send for the current run
         val newDiagnostics =
-          toPublishDiagnostics(nextState)
+          toFileDiagnostics(nextState)
 
         // Collects diagnostics published in previous run that are now resolved.
         val resolvedDiagnostics =
@@ -303,17 +303,17 @@ object PCStateDiagnostics {
     }
 
   /** Fetch all diagnostics for this workspace */
-  def toPublishDiagnostics(workspace: WorkspaceState.IsSourceAware): Iterable[FileDiagnostic] = {
+  def toFileDiagnostics(workspace: WorkspaceState.IsSourceAware): Iterable[FileDiagnostic] = {
     val sourceCodeDiagnostics = toSourceCodeDiagnostics(workspace)
     val workspaceDiagnostics = toWorkspaceDiagnostics(workspace)
     sourceCodeDiagnostics ++ Seq(workspaceDiagnostics)
   }
 
   /** Build a diagnostic instance give the error and file information */
-  def toPublishDiagnostics(fileURI: URI,
-                           code: Option[String],
-                           errors: List[CompilerMessage.AnyError],
-                           severity: CodeDiagnosticSeverity): FileDiagnostic = {
+  def toFileDiagnostics(fileURI: URI,
+                        code: Option[String],
+                        errors: List[CompilerMessage.AnyError],
+                        severity: CodeDiagnosticSeverity): FileDiagnostic = {
     val diagnostics =
       errors map {
         error =>

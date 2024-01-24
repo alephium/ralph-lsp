@@ -421,7 +421,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
       // build diagnostics for this PCState change
       val pcDiagnostics =
-        PCStateDiagnostics.toPublishDiagnostics(
+        PCStateDiagnostics.toFileDiagnostics(
           currentState = currentPCState,
           newState = newPCState
         )

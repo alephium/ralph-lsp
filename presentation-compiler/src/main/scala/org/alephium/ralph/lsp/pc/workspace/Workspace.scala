@@ -333,7 +333,6 @@ object Workspace extends StrictImplicitLogging {
           Right(newWorkspace)
       }
 
-
     newWorkspace map parseAndCompile
   }
 
