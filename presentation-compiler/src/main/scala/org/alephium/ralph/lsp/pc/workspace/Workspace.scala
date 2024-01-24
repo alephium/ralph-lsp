@@ -352,31 +352,19 @@ object Workspace extends StrictImplicitLogging {
                      pcState: PCState)(implicit file: FileAccess,
                                        compiler: CompilerAccess,
                                        logger: ClientLogger): WorkspaceChangeResult.BuildChanged =
-    pcState.workspace match {
-      case aware: WorkspaceState.IsSourceAware =>
-        // already source-aware, execute it!
+    Workspace.build(
+      code = None,
+      workspace = pcState.workspace
+    ) match {
+      case Left(error) =>
+        WorkspaceChangeResult.BuildChanged(Some(Left(error)))
+
+      case Right(aware) =>
         deleteOrCreate(
           events = events,
           buildErrors = pcState.buildErrors,
           workspace = aware
         )
-
-      case created: WorkspaceState.Created =>
-        // not source-aware, build and then execute.
-        Workspace.build(
-          code = None,
-          workspace = created
-        ) match {
-          case Left(error) =>
-            WorkspaceChangeResult.BuildChanged(Some(Left(error)))
-
-          case Right(aware) =>
-            deleteOrCreate(
-              events = events,
-              buildErrors = pcState.buildErrors,
-              workspace = aware
-            )
-        }
     }
 
 
@@ -472,31 +460,19 @@ object Workspace extends StrictImplicitLogging {
               currentWorkspace: WorkspaceState)(implicit file: FileAccess,
                                                 compiler: CompilerAccess,
                                                 logger: ClientLogger): Either[ErrorUnknownFileType, WorkspaceChangeResult] =
-    currentWorkspace match {
-      case aware: WorkspaceState.IsSourceAware =>
-        // already source-aware, execute change request
+    Workspace.build(
+      code = Some(WorkspaceFile(fileURI, code)),
+      workspace = currentWorkspace
+    ) match {
+      case Left(error) =>
+        Right(WorkspaceChangeResult.BuildChanged(Some(Left(error))))
+
+      case Right(aware) =>
         changed(
           fileURI = fileURI,
           code = code,
           currentWorkspace = aware
         )
-
-      case created: WorkspaceState.Created =>
-        // not source-aware, build and then execute change request
-        Workspace.build(
-          code = Some(WorkspaceFile(fileURI, code)),
-          workspace = created
-        ) match {
-          case Left(error) =>
-            Right(WorkspaceChangeResult.BuildChanged(Some(Left(error))))
-
-          case Right(aware) =>
-            changed(
-              fileURI = fileURI,
-              code = code,
-              currentWorkspace = aware
-            )
-        }
     }
 
   /**
