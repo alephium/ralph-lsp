@@ -39,7 +39,7 @@ private[pc] object SourceCode {
                   sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState]] =
     initialise(sourceDirectory) map {
       onDiskFiles =>
-        // clear code that is no within the source directory
+        // clear code that is not within the source directory
         val directorySource =
           sourceCode filter {
             state =>
