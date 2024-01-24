@@ -325,18 +325,18 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   private def didChangeAndSet(fileURI: URI,
                               code: Option[String]): Iterable[PublishDiagnosticsParams] =
     runSync {
-      val pcState =
+      val currentPCState =
         getPCState()
 
       val newPCState =
         Workspace.changed(
           fileURI = fileURI,
           code = code,
-          pcState = pcState
+          pcState = currentPCState
         )
 
-      setWorkspaceChange(
-        currentPCState = pcState,
+      setPCStateAndBuildDiagnostics(
+        currentPCState = currentPCState,
         newPCState = newPCState
       )
     }
@@ -384,8 +384,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @param newPCState Compilation result returned by presentation-compiler.
    * @return Diagnostics for current workspace.
    */
-  private def setWorkspaceChange(currentPCState: PCState,
-                                 newPCState: Either[ErrorUnknownFileType, Option[PCState]]): Iterable[PublishDiagnosticsParams] =
+  private def setPCStateAndBuildDiagnostics(currentPCState: PCState,
+                                            newPCState: Either[ErrorUnknownFileType, Option[PCState]]): Iterable[PublishDiagnosticsParams] =
     runSync {
       newPCState match {
         case Right(Some(newPCState)) =>
