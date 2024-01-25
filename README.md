@@ -7,7 +7,7 @@ Currently supports text document level events and diagnostics.
 # Build the jar
 
 ```shell
-sbt "project lsp-server; assembly;"
+sbt "compile; lsp-server/assembly"
 ```
 
 Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar`
