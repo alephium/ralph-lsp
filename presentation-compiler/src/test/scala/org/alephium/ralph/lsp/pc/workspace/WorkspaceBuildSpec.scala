@@ -1,14 +1,14 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild}
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.client.FileClientLogger
+import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildSyntax}
+import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildFileLocation, ErrorInvalidBuildSyntax}
 import org.alephium.ralphc.Config
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
@@ -16,18 +16,19 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+import java.net.URI
 import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
 /**
  * Test cases for [[Workspace.build]] function.
  */
-class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class WorkspaceBuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   implicit val clientLogger: ClientLogger =
-    FileClientLogger
+    TestClientLogger
 
-  "initialise" when {
+  "build WorkspaceState" when {
     /**
      * TEST CASES: When current state is [[WorkspaceState.Created]]
      */
@@ -81,6 +82,8 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                   dependency = None,
                   activateWorkspace = None
                 )
+
+              TestWorkspace delete workspace
           }
         }
 
@@ -129,6 +132,8 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                   dependency = None,
                   activateWorkspace = None
                 )
+
+              TestWorkspace delete workspace
           }
         }
       }
@@ -166,14 +171,14 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                 WorkspaceState.Created(build.workspaceURI)
 
               // invoke initialise on the created workspace
-              val result =
+              val buildResult =
                 Workspace.build(workspace).value
 
               // sort the resulting workspace state's source code
               val actualWorkspace =
-                result
+                buildResult
                   .asInstanceOf[WorkspaceState.UnCompiled]
-                  .copy(sourceCode = result.sourceCode.sortBy(_.fileURI))
+                  .copy(sourceCode = buildResult.sourceCode.sortBy(_.fileURI))
 
               // expect the build to be compiled
               val expectedBuild =
@@ -198,6 +203,8 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
               // assert workspace
               actualWorkspace shouldBe expectedWorkspace
+
+              TestWorkspace delete workspace
           }
         }
       }
@@ -209,11 +216,8 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
     "current workspace state is SourceAware" should {
       "always return the current workspace" in {
         // no file access should occur since workspace is already initialised
-        implicit val file: FileAccess =
-          null
-
-        implicit val compiler: CompilerAccess =
-          null
+        implicit val file: FileAccess = null
+        implicit val compiler: CompilerAccess = null
 
         // no source or build is touched since workspace is already initialised
         val expectedWorkspace: WorkspaceState.IsSourceAware =
@@ -229,5 +233,107 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
       }
     }
 
+  }
+
+  "build from a build file" when {
+    /**
+     * Failed test-cases
+     */
+    "build file not placed in the root workspace folder" should {
+
+      implicit val file: FileAccess = null
+      implicit val compiler: CompilerAccess = null
+
+      def expectInvalidBuildLocationError(buildURI: URI,
+                                          workspace: WorkspaceState.Created) = {
+        val buildResult =
+          Workspace.build(
+            buildURI = buildURI,
+            code = None,
+            workspace = workspace
+          ).left.value
+
+        val expectedError =
+          ErrorInvalidBuildFileLocation(
+            buildURI = buildURI,
+            workspaceURI = workspace.workspaceURI
+          )
+
+        buildResult shouldBe
+          BuildState.BuildErrored(
+            buildURI = buildURI,
+            code = None,
+            errors = ArraySeq(expectedError),
+            dependency = None,
+            activateWorkspace = None
+          )
+      }
+
+      "report build error" in {
+        forAll(TestWorkspace.genCreated()) {
+          workspace =>
+            // build file is within an "inner" folder with in the workspace
+            expectInvalidBuildLocationError(
+              buildURI = Paths.get(workspace.workspaceURI).resolve("inner").resolve(Build.BUILD_FILE_NAME).toUri,
+              workspace = workspace
+            )
+
+            // build file is within the parent folder of the workspace
+            expectInvalidBuildLocationError(
+              buildURI = Paths.get(workspace.workspaceURI).getParent.resolve(Build.BUILD_FILE_NAME).toUri,
+              workspace = workspace
+            )
+        }
+      }
+    }
+
+    "build file is incorrectly named" should {
+      implicit val file: FileAccess = null
+      implicit val compiler: CompilerAccess = null
+
+      def expectInvalidBuildFileNameError(buildURI: URI,
+                                          workspace: WorkspaceState.Created) = {
+        val buildResult =
+          Workspace.build(
+            buildURI = buildURI,
+            code = None,
+            workspace = workspace
+          ).left.value
+
+        buildResult shouldBe
+          BuildState.BuildErrored(
+            buildURI = buildURI,
+            code = None,
+            errors = ArraySeq(ErrorBuildFileNotFound),
+            dependency = None,
+            activateWorkspace = None
+          )
+      }
+
+      "report build error" in {
+        forAll(TestWorkspace.genCreated()) {
+          workspace =>
+            // file is within an "inner" folder with in the workspace
+            expectInvalidBuildFileNameError(
+              buildURI = Paths.get(workspace.workspaceURI).resolve("inner").resolve("blah" + Build.BUILD_FILE_NAME).toUri,
+              workspace = workspace
+            )
+
+            // file is within the parent folder of the workspace
+            expectInvalidBuildFileNameError(
+              buildURI = Paths.get(workspace.workspaceURI).getParent.resolve("blah" + Build.BUILD_FILE_NAME).toUri,
+              workspace = workspace
+            )
+
+            // file is in the root workspace
+            expectInvalidBuildFileNameError(
+              buildURI = Paths.get(workspace.workspaceURI).resolve("blah" + Build.BUILD_FILE_NAME).toUri,
+              workspace = workspace
+            )
+
+        }
+
+      }
+    }
   }
 }

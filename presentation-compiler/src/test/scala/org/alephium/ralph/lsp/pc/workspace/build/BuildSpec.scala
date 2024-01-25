@@ -5,7 +5,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, 
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.TestFile.genFolderURI
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.pc.client.FileClientLogger
+import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild._
 import org.scalacheck.Gen
@@ -20,7 +20,7 @@ import scala.collection.immutable.ArraySeq
 class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   implicit val clientLogger: ClientLogger =
-    FileClientLogger
+    TestClientLogger
 
   "build" should {
     "fail" when {

@@ -28,6 +28,10 @@ object URIUtil {
       .resolve(child)
       .startsWith(parent)
 
+  def isFileName(fileURI: URI,
+                 fileName: String): Boolean =
+    getFileName(fileURI) == fileName
+
   def isFirstChild(parent: URI,
                    child: URI): Boolean =
     isFirstChild(
