@@ -1,19 +1,21 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode
-import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild}
 import org.alephium.ralph.lsp.TestFile
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.TestDependency
 import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildFileLocation, ErrorInvalidBuildSyntax}
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild}
 import org.alephium.ralphc.Config
 import org.scalacheck.Gen
+import org.scalatest.EitherValues._
+import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.net.URI
@@ -28,7 +30,7 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
   implicit val clientLogger: ClientLogger =
     TestClientLogger
 
-  "build WorkspaceState" when {
+  "Build function 1: build WorkspaceState" when {
     /**
      * TEST CASES: When current state is [[WorkspaceState.Created]]
      */
@@ -105,14 +107,11 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
               // ensure the build exists
               TestFile.exists(errorBuild.buildURI) shouldBe true
 
-              // generate a workspace for the errored build-file
+              // create a workspace for the errored build-file
               val workspace =
-                TestWorkspace
-                  .genCreated(errorBuild.workspaceURI)
-                  .sample
-                  .get
+                WorkspaceState.Created(errorBuild.workspaceURI)
 
-              // invoke initialise workspace
+              // invoke build
               val result =
                 Workspace.build(workspace).left.value
 
@@ -235,103 +234,235 @@ class WorkspaceBuildSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
 
   }
 
-  "build from a build file" when {
+  "Build function 2: building from a build file URI" when {
     /**
      * Failed test-cases
      */
-    "build file not placed in the root workspace folder" should {
+    "fail" when {
+      "build file is not placed in the root workspace folder" should {
 
-      implicit val file: FileAccess = null
-      implicit val compiler: CompilerAccess = null
+        implicit val file: FileAccess = null
+        implicit val compiler: CompilerAccess = null
 
-      def expectInvalidBuildLocationError(buildURI: URI,
-                                          workspace: WorkspaceState.Created) = {
-        val buildResult =
-          Workspace.build(
-            buildURI = buildURI,
-            code = None,
-            workspace = workspace
-          ).left.value
+        /** Expect the build reports invalid build file location */
+        def expectInvalidBuildLocationError(buildURI: URI,
+                                            workspace: WorkspaceState.Created) = {
+          val buildResult =
+            Workspace.build(
+              buildURI = buildURI,
+              code = None,
+              workspace = workspace
+            ).left.value
 
-        val expectedError =
-          ErrorInvalidBuildFileLocation(
-            buildURI = buildURI,
-            workspaceURI = workspace.workspaceURI
-          )
+          val expectedError =
+            ErrorInvalidBuildFileLocation(
+              buildURI = buildURI,
+              workspaceURI = workspace.workspaceURI
+            )
 
-        buildResult shouldBe
-          BuildState.BuildErrored(
-            buildURI = buildURI,
-            code = None,
-            errors = ArraySeq(expectedError),
-            dependency = None,
-            activateWorkspace = None
-          )
+          buildResult shouldBe
+            BuildState.BuildErrored(
+              buildURI = buildURI,
+              code = None,
+              errors = ArraySeq(expectedError),
+              dependency = None,
+              activateWorkspace = None
+            )
+        }
+
+        "report build error" in {
+          forAll(TestWorkspace.genCreated()) {
+            workspace =>
+              // build file is within an "inner" folder within the workspace directory
+              expectInvalidBuildLocationError(
+                buildURI = Paths.get(workspace.workspaceURI).resolve("inner").resolve(Build.BUILD_FILE_NAME).toUri,
+                workspace = workspace
+              )
+
+              // build file is within the parent folder of the workspace directory
+              expectInvalidBuildLocationError(
+                buildURI = Paths.get(workspace.workspaceURI).getParent.resolve(Build.BUILD_FILE_NAME).toUri,
+                workspace = workspace
+              )
+          }
+        }
       }
 
-      "report build error" in {
-        forAll(TestWorkspace.genCreated()) {
-          workspace =>
-            // build file is within an "inner" folder with in the workspace
-            expectInvalidBuildLocationError(
-              buildURI = Paths.get(workspace.workspaceURI).resolve("inner").resolve(Build.BUILD_FILE_NAME).toUri,
-              workspace = workspace
-            )
+      "build file is incorrectly named" should {
+        implicit val file: FileAccess = null
+        implicit val compiler: CompilerAccess = null
 
-            // build file is within the parent folder of the workspace
-            expectInvalidBuildLocationError(
-              buildURI = Paths.get(workspace.workspaceURI).getParent.resolve(Build.BUILD_FILE_NAME).toUri,
+        def expectInvalidBuildFileNameError(buildURI: URI,
+                                            workspace: WorkspaceState.Created) = {
+          val buildResult =
+            Workspace.build(
+              buildURI = buildURI,
+              code = None,
               workspace = workspace
+            ).left.value
+
+          buildResult shouldBe
+            BuildState.BuildErrored(
+              buildURI = buildURI,
+              code = None,
+              errors = ArraySeq(ErrorBuildFileNotFound),
+              dependency = None,
+              activateWorkspace = None
             )
+        }
+
+        "report build error" in {
+          forAll(TestWorkspace.genCreated()) {
+            workspace =>
+              // file is within an "inner" folder with in the workspace
+              expectInvalidBuildFileNameError(
+                buildURI = Paths.get(workspace.workspaceURI).resolve("inner").resolve("blah" + Build.BUILD_FILE_NAME).toUri,
+                workspace = workspace
+              )
+
+              // file is within the parent folder of the workspace
+              expectInvalidBuildFileNameError(
+                buildURI = Paths.get(workspace.workspaceURI).getParent.resolve("blah" + Build.BUILD_FILE_NAME).toUri,
+                workspace = workspace
+              )
+
+              // file is correctly placed in the root workspace, but has invalid file name.
+              expectInvalidBuildFileNameError(
+                buildURI = Paths.get(workspace.workspaceURI).resolve("blah" + Build.BUILD_FILE_NAME).toUri,
+                workspace = workspace
+              )
+          }
+        }
+      }
+
+      "build file has errors" in {
+        forAll(TestBuild.genBuildParsed()) {
+          _build =>
+            // error build file code
+            val buildCode = "blah"
+            // replace parsed build file with invalid code
+            val build = _build.copy(code = buildCode)
+            // persist the error build file to the workspace
+            TestBuild.persist(build)
+            // ensure the build exists
+            TestFile.exists(build.buildURI) shouldBe true
+
+            // create a workspace for the errored build-file
+            val workspace =
+              WorkspaceState.Created(build.workspaceURI)
+
+            // expect same result in both cases: When the build code is not provided and provided.
+            Array(
+              Some(build.code), // build code provided
+              None, // build code not provided
+            ) map {
+              buildCode =>
+                implicit val file: FileAccess =
+                  if (buildCode.isDefined) // if the build code is provided, no disk IO should occur, so use null.
+                    null
+                  else // else allow disk IO
+                    FileAccess.disk
+
+                implicit val compiler: CompilerAccess =
+                  CompilerAccess.ralphc
+
+                // invoke build
+                val actualError =
+                  Workspace.build(
+                    buildURI = build.buildURI,
+                    code = buildCode,
+                    workspace = workspace
+                  ).left.value
+
+                val expectedError =
+                  BuildState.BuildErrored(
+                    buildURI = workspace.buildURI,
+                    code = Some(build.code),
+                    errors =
+                      ArraySeq(
+                        ErrorInvalidBuildSyntax(
+                          fileURI = build.buildURI,
+                          index = SourceIndex(0, 1),
+                          message = """expected json value got "b""""
+                        )
+                      ),
+                    dependency = None,
+                    activateWorkspace = None
+                  )
+
+                // the workspace should contain error targeting the build-file
+                actualError shouldBe expectedError
+            }
+
+            TestWorkspace delete workspace
         }
       }
     }
 
-    "build file is incorrectly named" should {
-      implicit val file: FileAccess = null
-      implicit val compiler: CompilerAccess = null
+    "succeed" when {
+      "build file is OK" in {
+        forAll(TestBuild.genBuildParsed()) {
+          build =>
+            // persist the error build file to the workspace
+            TestBuild.persist(build)
+            // ensure the build exists
+            TestFile.exists(build.buildURI) shouldBe true
 
-      def expectInvalidBuildFileNameError(buildURI: URI,
-                                          workspace: WorkspaceState.Created) = {
-        val buildResult =
-          Workspace.build(
-            buildURI = buildURI,
-            code = None,
-            workspace = workspace
-          ).left.value
+            // create a workspace for the errored build-file
+            val workspace =
+              WorkspaceState.Created(build.workspaceURI)
 
-        buildResult shouldBe
-          BuildState.BuildErrored(
-            buildURI = buildURI,
-            code = None,
-            errors = ArraySeq(ErrorBuildFileNotFound),
-            dependency = None,
-            activateWorkspace = None
-          )
-      }
+            // expect same result in both cases: When the build code is not provided and provided.
+            Array(
+              Some(build.code), // build code provided
+              None, // build code not provided
+            ) map {
+              buildCode =>
+                implicit val file: FileAccess =
+                  FileAccess.disk
 
-      "report build error" in {
-        forAll(TestWorkspace.genCreated()) {
-          workspace =>
-            // file is within an "inner" folder with in the workspace
-            expectInvalidBuildFileNameError(
-              buildURI = Paths.get(workspace.workspaceURI).resolve("inner").resolve("blah" + Build.BUILD_FILE_NAME).toUri,
-              workspace = workspace
-            )
+                implicit val compiler: CompilerAccess =
+                  CompilerAccess.ralphc
 
-            // file is within the parent folder of the workspace
-            expectInvalidBuildFileNameError(
-              buildURI = Paths.get(workspace.workspaceURI).getParent.resolve("blah" + Build.BUILD_FILE_NAME).toUri,
-              workspace = workspace
-            )
+                // invoke build
+                val actualWorkspace =
+                  Workspace.build(
+                    buildURI = build.buildURI,
+                    code = buildCode,
+                    workspace = workspace
+                  ).value
 
-            // file is in the root workspace
-            expectInvalidBuildFileNameError(
-              buildURI = Paths.get(workspace.workspaceURI).resolve("blah" + Build.BUILD_FILE_NAME).toUri,
-              workspace = workspace
-            )
+                // expect an un-compiled workspace
+                val expectedWorkspace =
+                  WorkspaceState.UnCompiled(
+                    build =
+                      BuildState.BuildCompiled(
+                        buildURI = workspace.buildURI,
+                        code = build.code,
+                        dependency =
+                          Some(TestDependency.buildStd().dependency.value), // standard dependency must be defined
+                        config =
+                          org.alephium.ralphc.Config( // compiler configuration must use the paths from the build file
+                            build.config.compilerOptions,
+                            Paths.get(workspace.workspaceURI.resolve(build.config.contractPath)),
+                            Paths.get(workspace.workspaceURI.resolve(build.config.artifactPath)),
+                          )
+                      ),
+                    sourceCode = ArraySeq.empty // workspace is empty with no source code
+                  )
 
+                actualWorkspace shouldBe expectedWorkspace
+            }
+
+            TestWorkspace delete workspace
         }
+      }
+    }
+  }
+
+  "Build function 3: Building from a WorkspaceFile" should {
+    "not access disk" when {
+      "build code is provided" in {
 
       }
     }
