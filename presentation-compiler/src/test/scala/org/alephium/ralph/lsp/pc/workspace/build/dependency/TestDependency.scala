@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace.build.dependency
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.client.FileClientLogger
+import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, RalphcConfig}
 import org.scalatest.matchers.should.Matchers._
@@ -14,7 +14,7 @@ object TestDependency {
   /** Build the standard library */
   def buildStd(): BuildState.BuildCompiled = {
     implicit val logger: ClientLogger =
-      FileClientLogger
+      TestClientLogger
 
     implicit val file: FileAccess =
       null

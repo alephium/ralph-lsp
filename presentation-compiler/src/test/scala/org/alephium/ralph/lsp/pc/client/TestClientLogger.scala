@@ -3,8 +3,8 @@ package org.alephium.ralph.lsp.pc.client
 import com.typesafe.scalalogging.Logger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 
-/** Test logger that has no remote client. This simply logs to a file. */
-object FileClientLogger extends ClientLogger {
+/** Test logger that has no remote client. This simply logs to SLF4J. */
+object TestClientLogger extends ClientLogger {
 
   override def info(message: String)(implicit logger: Logger): Unit =
     logger.info(message)
