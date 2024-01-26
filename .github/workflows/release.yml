@@ -21,7 +21,7 @@ jobs:
         id: get_version
         run: |
           version=$(echo ${GITHUB_REF/refs\/tags\//} | cut -c 2-)
-          echo ::set-output name=VERSION::$version
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
         shell: bash
       - run: sbt "compile; lsp-server/assembly"
       - name: Create Release
