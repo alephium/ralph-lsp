@@ -41,7 +41,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: lsp-server/target/scala-2.13/ralph-lsp-${{ steps.get_version.outputs.VERSION }}.jar
+          asset_path: lsp-server/target/scala-2.13/ralph-lsp.jar
           asset_name: ralph-lsp-${{ steps.get_version.outputs.VERSION }}.jar
           asset_content_type: application/java-archive
 
