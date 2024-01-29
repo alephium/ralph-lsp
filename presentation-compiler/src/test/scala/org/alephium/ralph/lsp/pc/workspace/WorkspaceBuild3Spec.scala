@@ -9,13 +9,13 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
 import org.scalatest.EitherValues._
-import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
+import scala.util.Random
 
 /**
  * Test cases for [[Workspace.build(Option[String], BuildState.BuildCompiled, ArraySeq[SourceCodeState])]] function.
@@ -29,18 +29,18 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
     "fail" when {
       "new build code contains invalid syntax" in {
         // initially there exists a valid build file.
-        val buildCompiled =
-          TestBuild
-            .genCompiled()
-            .map(TestBuild.persist)
-            .sample
-            .get
-
         implicit val file: FileAccess =
           FileAccess.disk
 
         implicit val compiler: CompilerAccess =
           CompilerAccess.ralphc
+
+        val buildCompiled =
+          TestBuild
+            .genCompiledOK()
+            .map(TestBuild.persist)
+            .sample
+            .get
 
         // random source-code that should be carried forward even on build compilation failure.
         val sourceCode =
@@ -52,7 +52,7 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
             newBuildCode = Some("blah"),
             currentBuild = buildCompiled,
             sourceCode = sourceCode
-          ).value
+          )
 
         // expect this build error state
         val expectedBuildError =
@@ -78,6 +78,52 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
           )
 
         actualBuildError.left.value shouldBe expectedBuildError
+      }
+    }
+
+    "succeed" when {
+      "build is unchanged" in {
+        implicit val file: FileAccess =
+          FileAccess.disk
+
+        implicit val compiler: CompilerAccess =
+          CompilerAccess.ralphc
+
+        // random source-code that should be carried forward even on build compilation failure.
+        forAll(TestBuild.genCompiledWithSourceCodeInAndOut()) {
+          case (buildCompiled, workspaceSourceCode, outsideSourceCode) =>
+            val allSourceCode =
+              Random.shuffle(workspaceSourceCode ++ outsideSourceCode)
+
+            // run the build with the new build code as the current compiled build
+            val actualWorkspace =
+              Workspace.build(
+                newBuildCode = Some(buildCompiled.code), //new build code is the same as existing compiled build.
+                currentBuild = buildCompiled,
+                sourceCode = allSourceCode.to(ArraySeq) // build with all source-code
+              ).value
+
+            // sort the source-files
+            val actualSortedWorkspace =
+              actualWorkspace.copy(sourceCode = actualWorkspace.sourceCode.sortBy(_.fileURI))
+
+            val expectedWorkspace =
+              WorkspaceState.UnCompiled(
+                build = buildCompiled,
+                // expect the source-code to only include the workspace's source-code.
+                // outsideSourceCode are filtered out.
+                sourceCode = workspaceSourceCode.to(ArraySeq)
+              )
+
+            // sort the source-files
+            val expectedSortedWorkspace =
+              expectedWorkspace.copy(sourceCode = expectedWorkspace.sourceCode.sortBy(_.fileURI))
+
+            actualSortedWorkspace shouldBe expectedSortedWorkspace
+
+            // clear generated files
+            TestWorkspace delete WorkspaceState.Created(buildCompiled.workspaceURI)
+        }
       }
     }
   }
