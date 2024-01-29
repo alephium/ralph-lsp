@@ -91,7 +91,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
           implicit val compiler: CompilerAccess =
             CompilerAccess.ralphc
 
-          forAll(TestBuild.genBuildParsed()) {
+          forAll(TestBuild.genParsed()) {
             build =>
               // error build file code
               val buildCode = "blah"
@@ -143,7 +143,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
           implicit val compiler: CompilerAccess =
             CompilerAccess.ralphc
 
-          forAll(TestBuild.genBuildParsed()) {
+          forAll(TestBuild.genParsed()) {
             build =>
               // persist the build file to the workspace
               TestBuild.persist(build)

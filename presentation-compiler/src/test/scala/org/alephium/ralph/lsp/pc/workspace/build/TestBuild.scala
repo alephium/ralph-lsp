@@ -15,8 +15,8 @@ import java.nio.file.Paths
 /** Build specific generators */
 object TestBuild {
 
-  def genBuildParsed(workspaceURI: Gen[URI] = genFolderURI(),
-                     config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()): Gen[BuildState.BuildParsed] =
+  def genParsed(workspaceURI: Gen[URI] = genFolderURI(),
+                config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()): Gen[BuildState.BuildParsed] =
     for {
       workspaceURI <- workspaceURI
       parsedConfig <- config
@@ -35,12 +35,12 @@ object TestBuild {
       }
     }
 
-  def persist(parsed: BuildState.BuildParsed): BuildState.BuildParsed = {
-    TestFile.write(parsed.buildURI, parsed.code)
-    TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.contractPath))
-    TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.artifactPath))
-    parsed
-  }
+  def genCompiled(workspaceURI: Gen[URI] = genFolderURI(),
+                  config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()): Gen[BuildState.BuildCompiled] =
+    genParsed(
+      workspaceURI = workspaceURI,
+      config = config
+    ) map toCompiled
 
   /**
    * Converts the Parsed build [[BuildState.BuildParsed]] to a Compiled build [[BuildState.BuildCompiled]].
@@ -61,4 +61,19 @@ object TestBuild {
           artifactPath = Paths.get(build.workspaceURI.resolve(build.config.artifactPath)),
         )
     )
+
+
+  def persist(parsed: BuildState.BuildParsed): BuildState.BuildParsed = {
+    TestFile.write(parsed.buildURI, parsed.code)
+    TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.contractPath))
+    TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.artifactPath))
+    parsed
+  }
+
+  def persist(compiled: BuildState.BuildCompiled): BuildState.BuildCompiled = {
+    TestFile.write(compiled.buildURI, compiled.code)
+    TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.config.contractPath.toUri))
+    TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.config.artifactPath.toUri))
+    compiled
+  }
 }
