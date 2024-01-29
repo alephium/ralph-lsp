@@ -7,9 +7,9 @@ import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.state.{PCState, PCStateUpdater}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, BuildValidator}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -34,10 +34,11 @@ object Workspace extends StrictImplicitLogging {
     WorkspaceState.Created(workspaceURI)
 
   /**
-   * Returns existing workspace or initialises a new one from the configured build file.
-   * Or else reports all workspace issues.
+   * Build only a [[WorkspaceState.Created]] workspace.
+   * All other workspace states are returned as-is, they do not get re-compiled.
    *
-   * @note Does not update the current state. The caller should set the new state.
+   * @param workspace The workspace to build.
+   * @return A built workspace which is source and build aware.
    */
   def build(workspace: WorkspaceState)(implicit file: FileAccess,
                                        compiler: CompilerAccess,
@@ -55,39 +56,6 @@ object Workspace extends StrictImplicitLogging {
           )
 
         initialise(newBuild)
-    }
-
-  /** Build a created workspace */
-  def build(buildURI: URI,
-            code: Option[String],
-            workspace: WorkspaceState.Created)(implicit file: FileAccess,
-                                               compiler: CompilerAccess,
-                                               logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
-    BuildValidator.validateBuildURI(
-      buildURI = buildURI,
-      workspaceURI = workspace.workspaceURI
-    ) match {
-      case Left(error) =>
-        val buildError =
-          BuildState.BuildErrored(
-            buildURI = buildURI,
-            code = code,
-            errors = ArraySeq(error),
-            dependency = None,
-            activateWorkspace = None
-          )
-
-        Left(buildError)
-
-      case Right(buildURI) =>
-        val build =
-          Build.parseAndCompile(
-            buildURI = buildURI,
-            code = code,
-            currentBuild = None,
-          )
-
-        initialise(build)
     }
 
   /**
@@ -110,11 +78,14 @@ object Workspace extends StrictImplicitLogging {
         code match {
           case Some(code) if code.fileURI == currentWorkspace.buildURI =>
             // this request is for the build file, build it using the code sent by the client
-            Workspace.build(
-              buildURI = code.fileURI,
-              code = code.text,
-              workspace = currentWorkspace
-            )
+            val build =
+              Build.parseAndCompile(
+                buildURI = code.fileURI,
+                code = code.text,
+                currentBuild = None
+              )
+
+            initialise(build)
 
           case _ =>
             // else build from disk
@@ -122,14 +93,25 @@ object Workspace extends StrictImplicitLogging {
         }
     }
 
-  def build(buildCode: Option[String],
+  /**
+   * Build without any [[WorkspaceState]] information.
+   *
+   * Source-code is built just from the input build information
+   * and is synchronised with source files on disk.
+   *
+   * @param newBuildCode New build file's text content.
+   * @param currentBuild Currently known compiled build.
+   * @param sourceCode   The source-code to initialise into a un-compiled workspace.
+   * @return An un-compiled workspace with the new compiled build file.
+   */
+  def build(newBuildCode: Option[String],
             currentBuild: BuildState.BuildCompiled,
             sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess,
                                                    compiler: CompilerAccess,
                                                    logger: ClientLogger): Option[Either[BuildState.BuildErrored, WorkspaceState.UnCompiled]] =
     Build.parseAndCompile(
       buildURI = currentBuild.buildURI,
-      code = buildCode,
+      code = newBuildCode,
       currentBuild = currentBuild
     ) map {
       case newBuild: BuildCompiled =>
@@ -142,13 +124,20 @@ object Workspace extends StrictImplicitLogging {
 
         syncedCode match {
           case Left(error) =>
+            // activate this workspace so that the most recently source-code is available.
+            val activateWorkspace =
+              WorkspaceState.UnCompiled(
+                build = newBuild,
+                sourceCode = sourceCode
+              )
+
             val buildErrored =
               BuildState.BuildErrored(
                 buildURI = newBuild.buildURI,
                 code = Some(newBuild.code),
                 errors = ArraySeq(error),
                 dependency = currentBuild.dependency,
-                activateWorkspace = None
+                activateWorkspace = Some(activateWorkspace)
               )
 
             Left(buildErrored)
@@ -312,7 +301,7 @@ object Workspace extends StrictImplicitLogging {
     // re-build the build file
     val buildResult =
       build(
-        buildCode = buildCode,
+        newBuildCode = buildCode,
         currentBuild = currentBuild,
         sourceCode = sourceCode
       )
