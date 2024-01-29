@@ -27,7 +27,7 @@
           "default": "<path-to>/ralph-lsp.jar",
           "description": "Ralph LSP server jar location. Don't forget to reload after editing. Open the command palette (Ctrl + Shift + P) and execute the command: Reload Window"
         },
-        "ralphLsp.trace.server": {
+        "ralphLSP.trace.server": {
           "type": "string",
           "enum": [
             "off",
@@ -36,6 +36,11 @@
           ],
           "default": "off",
           "description": "Traces the communication between VS Code and Ralph language server."
+        },
+        "ralphLSP.server.home": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Home folder of Ralph LSP server, storing the logs. Will fallback to `<your-home-folder>/.ralph-lsp"
         }
       }
     }

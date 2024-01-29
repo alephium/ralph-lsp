@@ -13,7 +13,16 @@ export function activate(context: ExtensionContext) {
     const jarPath = config.get('server.jar') as string
 
     if(fs.existsSync(jarPath)) {
-        const args: string[] = ["-jar", "-DRALPH_LSP_HOME=<path-to-your-log-folder>", jarPath]
+        const logFolder = config.get('server.home') as string
+
+        let args: string[]
+
+        if(logFolder == null) {
+            args = ["-jar",  jarPath]
+        } else {
+            args = ["-jar", `-DRALPH_LSP_HOME=${logFolder}`, jarPath]
+        }
+
         const serverOptions: ServerOptions = {
             command: "java",
             args: args
