@@ -108,12 +108,15 @@ object Workspace extends StrictImplicitLogging {
             currentBuild: BuildState.BuildCompiled,
             sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess,
                                                    compiler: CompilerAccess,
-                                                   logger: ClientLogger): Option[Either[BuildState.BuildErrored, WorkspaceState.UnCompiled]] =
-    Build.parseAndCompile(
-      buildURI = currentBuild.buildURI,
-      code = newBuildCode,
-      currentBuild = currentBuild
-    ) map {
+                                                   logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] = {
+    val newBuild =
+      Build.parseAndCompile(
+        buildURI = currentBuild.buildURI,
+        code = newBuildCode,
+        currentBuild = currentBuild
+      ) getOrElse currentBuild // if the build code is the same and existing build, then compile using existing build.
+
+    newBuild match {
       case newBuild: BuildCompiled =>
         // Build compiled OK! Compile new source-files with this new build file
         val syncedCode =
@@ -167,6 +170,7 @@ object Workspace extends StrictImplicitLogging {
         // Build not OK! Report the error, also clear all previous diagnostics
         Left(newError)
     }
+  }
 
   /** Creates an un-compiled workspace for a successful build file. */
   def initialise(state: BuildState.IsCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
@@ -290,40 +294,19 @@ object Workspace extends StrictImplicitLogging {
    * @param buildCode    New build-code
    * @param sourceCode   Source-code to compile
    * @param currentBuild Current build
-   * @return This function will always re-compile the build,
-   *         so the output is always [[WorkspaceChangeResult.BuildChanged]].
+   * @return New compiled workspace state.
    */
   def compile(buildCode: Option[String],
               sourceCode: ArraySeq[SourceCodeState],
               currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess,
                                                       compiler: CompilerAccess,
-                                                      logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] = {
+                                                      logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
     // re-build the build file
-    val buildResult =
-      build(
-        newBuildCode = buildCode,
-        currentBuild = currentBuild,
-        sourceCode = sourceCode
-      )
-
-    val newWorkspace =
-      buildResult match {
-        case Some(buildResult) =>
-          buildResult
-
-        case None =>
-          // No build change occurred. Process the new source-code with exiting build.
-          val newWorkspace =
-            WorkspaceState.UnCompiled(
-              build = currentBuild,
-              sourceCode = sourceCode
-            )
-
-          Right(newWorkspace)
-      }
-
-    newWorkspace map parseAndCompile
-  }
+    build(
+      newBuildCode = buildCode,
+      currentBuild = currentBuild,
+      sourceCode = sourceCode
+    ) map parseAndCompile
 
   /**
    * Delete or create a file within the workspace that may or may not be source-aware ([[WorkspaceState.IsSourceAware]])

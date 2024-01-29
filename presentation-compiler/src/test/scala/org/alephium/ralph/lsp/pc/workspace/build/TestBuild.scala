@@ -1,7 +1,12 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
+import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.TestFile.genFolderURI
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcParsedConfig
 import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc.genRalphcParsedConfig
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.TestDependency
@@ -35,12 +40,43 @@ object TestBuild {
       }
     }
 
+  /** Generate a successfully compiled BuildState */
+  def genCompiledOK(workspaceURI: Gen[URI] = genFolderURI(),
+                    config: Gen[RalphcParsedConfig] = genRalphcParsedConfig())(implicit file: FileAccess,
+                                                                               compiler: CompilerAccess,
+                                                                               logger: ClientLogger): Gen[BuildState.BuildCompiled] =
+    genCompiled(
+      workspaceURI = workspaceURI,
+      config = config
+    ).map(_.asInstanceOf[BuildState.BuildCompiled])
+
   def genCompiled(workspaceURI: Gen[URI] = genFolderURI(),
-                  config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()): Gen[BuildState.BuildCompiled] =
+                  config: Gen[RalphcParsedConfig] = genRalphcParsedConfig())(implicit file: FileAccess,
+                                                                             compiler: CompilerAccess,
+                                                                             logger: ClientLogger): Gen[BuildState.IsCompiled] =
     genParsed(
       workspaceURI = workspaceURI,
       config = config
-    ) map toCompiled
+    ) map {
+      parsed =>
+        Build.compile(
+          parsed = persist(parsed),
+          currentBuild = None
+        )
+    }
+
+  /** Generate a successfully compiled build file with source-code inside the workspace and also outside */
+  def genCompiledWithSourceCodeInAndOut(workspaceURI: Gen[URI] = genFolderURI())(implicit file: FileAccess,
+                                                                                 compiler: CompilerAccess,
+                                                                                 logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk], List[SourceCodeState.OnDisk])] =
+    for {
+      // a compiled OK build file.
+      buildCompiled <- TestBuild.genCompiledOK(workspaceURI = workspaceURI)
+      // write source-code files to build's contract path
+      workspaceSourceCode <- Gen.listOfMax(5)(TestSourceCode.genOnDiskForRoot(buildCompiled.contractURI)).map(TestSourceCode.persistAll(_))
+      // write source-code files that are not in the workspace (expect these to get filtered out)
+      outsideSourceCode <- Gen.listOfMax(5)(TestSourceCode.genOnDisk()).map(TestSourceCode.persistAll(_))
+    } yield (buildCompiled, workspaceSourceCode, outsideSourceCode)
 
   /**
    * Converts the Parsed build [[BuildState.BuildParsed]] to a Compiled build [[BuildState.BuildCompiled]].
