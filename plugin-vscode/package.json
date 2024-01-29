@@ -20,9 +20,14 @@
   "main": "./out/extension",
   "contributes": {
     "configuration": {
+      "title": "Ralph LSP settings",
       "properties": {
-        "ralph-lsp.trace.server": {
-          "scope": "window",
+        "ralphLSP.server.jar": {
+          "type": "string",
+          "default": "<path-to>/ralph-lsp.jar",
+          "description": "Ralph LSP server jar location. Don't forget to reload after editing. Open the command palette (Ctrl + Shift + P) and execute the command: Reload Window"
+        },
+        "ralphLsp.trace.server": {
           "type": "string",
           "enum": [
             "off",
@@ -38,10 +43,12 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -b",
+    "build": "./node_modules/.bin/vsce package",
     "watch": "tsc -b -w"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.0"
+    "vscode-languageclient": "^9.0.0",
+    "vsce": "^2.15.0"
   },
   "devDependencies": {
     "@types/vscode": "^1.75.1",
