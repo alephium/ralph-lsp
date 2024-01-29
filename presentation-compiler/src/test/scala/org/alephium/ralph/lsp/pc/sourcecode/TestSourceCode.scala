@@ -48,7 +48,7 @@ object TestSourceCode {
     }
 
   /** Generate random source files within the build's [[BuildState.BuildParsed.config.contractPath]] */
-  def genOnDiskForBuild(build: Gen[BuildState.BuildParsed] = TestBuild.genBuildParsed()): Gen[SourceCodeState.OnDisk] =
+  def genOnDiskForBuild(build: Gen[BuildState.BuildParsed] = TestBuild.genParsed()): Gen[SourceCodeState.OnDisk] =
     for {
       build <- build
       workspacePath = Gen.const(Paths.get(build.workspaceURI.resolve(build.config.contractPath)))

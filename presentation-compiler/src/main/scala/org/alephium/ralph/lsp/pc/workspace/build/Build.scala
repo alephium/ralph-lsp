@@ -75,7 +75,14 @@ object Build {
     parsed match {
       case errored: BuildErrored =>
         // there are parsing errors
-        errored
+        currentBuild match {
+          case Some(currentBuild) =>
+            // carry the dependency for existing build forward.
+            errored.copy(dependency = currentBuild.dependency)
+
+          case None =>
+            errored
+        }
 
       case parsed: BuildParsed =>
         def compileDependency() =
@@ -101,7 +108,7 @@ object Build {
           buildURI = buildURI,
           code = None,
           errors = ArraySeq(error),
-          dependency = None,
+          dependency = currentBuild.flatMap(_.dependency),
           activateWorkspace = None
         )
 
@@ -116,7 +123,7 @@ object Build {
             buildURI = buildURI,
             code = None,
             errors = ArraySeq(ErrorBuildFileNotFound),
-            dependency = None,
+            dependency = currentBuild.flatMap(_.dependency),
             activateWorkspace = None
           )
     }

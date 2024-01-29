@@ -26,7 +26,7 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
       "build code is provided" in {
         val build =
           TestBuild
-            .genBuildParsed()
+            .genParsed()
             .map(TestBuild.persist)
             .sample
             .get
@@ -110,7 +110,7 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
       "build code is not provided" in {
         val build =
           TestBuild
-            .genBuildParsed()
+            .genParsed()
             .map(TestBuild.persist)
             .sample
             .get

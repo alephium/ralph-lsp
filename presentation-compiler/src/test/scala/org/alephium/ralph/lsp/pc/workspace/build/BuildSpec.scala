@@ -27,12 +27,12 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
       "build in not within the workspace" in {
         // build that is outside the workspace
         val outSideBuildGen =
-          TestBuild.genBuildParsed()
+          TestBuild.genParsed()
 
         // build that is inside the workspace
         val insideBuildGen =
           TestBuild
-            .genBuildParsed()
+            .genParsed()
             .map(persist)
             .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
             .map(_.asInstanceOf[BuildState.BuildCompiled])
@@ -83,7 +83,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
         // generate a build and a workspace that are in different folders
         val existingBuild =
           TestBuild
-            .genBuildParsed()
+            .genParsed()
             .map(persist)
             .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
             .map(_.asInstanceOf[BuildState.BuildCompiled])
@@ -96,7 +96,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
                 currentBuildParsed.workspaceURI.resolve("nested_folder/")
 
               // generate a build
-              TestBuild.genBuildParsed(workspaceURI = buildFolder) map {
+              TestBuild.genParsed(workspaceURI = buildFolder) map {
                 build =>
                   (build, currentBuildParsed)
               }
