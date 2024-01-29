@@ -6,11 +6,9 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.TestDependency
 import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildFileLocation, ErrorInvalidBuildSyntax}
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild}
 import org.scalatest.EitherValues._
-import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -229,19 +227,7 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
                 // expect an un-compiled workspace
                 val expectedWorkspace =
                   WorkspaceState.UnCompiled(
-                    build =
-                      BuildState.BuildCompiled(
-                        buildURI = workspace.buildURI,
-                        code = build.code,
-                        dependency =
-                          Some(TestDependency.buildStd().dependency.value), // standard dependency must be defined
-                        config =
-                          org.alephium.ralphc.Config( // compiler configuration must use the paths from the build file
-                            build.config.compilerOptions,
-                            Paths.get(workspace.workspaceURI.resolve(build.config.contractPath)),
-                            Paths.get(workspace.workspaceURI.resolve(build.config.artifactPath)),
-                          )
-                      ),
+                    build = TestBuild.toCompiled(build),
                     sourceCode = ArraySeq.empty // workspace is empty with no source code
                   )
 
