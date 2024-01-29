@@ -10,15 +10,11 @@ Currently supports text document level events and diagnostics.
 sbt "compile; lsp-server/assembly"
 ```
 
-Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar`
+The JAR file gets generated to `plugin-vscode/out/ralph-lsp.jar`.
 
 # Run LSP in VSCode
 
-Update the jar
-location [here](plugin-vscode/src/extension.ts) and ensure a folder is specified for the logs under the
-flag `-DRALPH_LSP_HOME`.
-
-Run the IDE:
+Open the plugin directory `plugin-vscode` in VSCode and then `Run` the plugin:
 
 ```shell
 cd plugin-vscode
