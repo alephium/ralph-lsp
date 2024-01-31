@@ -65,18 +65,27 @@ object TestBuild {
         )
     }
 
-  /** Generate a successfully compiled build file with source-code inside the workspace and also outside */
+  /** Generate a successfully compiled build file with source-code inside and also outside the workspace */
   def genCompiledWithSourceCodeInAndOut(workspaceURI: Gen[URI] = genFolderURI())(implicit file: FileAccess,
                                                                                  compiler: CompilerAccess,
                                                                                  logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk], List[SourceCodeState.OnDisk])] =
     for {
       // a compiled OK build file.
-      buildCompiled <- TestBuild.genCompiledOK(workspaceURI = workspaceURI)
-      // write source-code files to build's contract path
-      workspaceSourceCode <- Gen.listOfMax(5)(TestSourceCode.genOnDiskForRoot(buildCompiled.contractURI)).map(TestSourceCode.persistAll(_))
+      (buildCompiled, workspaceSourceCode) <- genCompiledWithSourceCode(workspaceURI = workspaceURI)
       // write source-code files that are not in the workspace (expect these to get filtered out)
       outsideSourceCode <- Gen.listOfMax(5)(TestSourceCode.genOnDisk()).map(TestSourceCode.persistAll(_))
     } yield (buildCompiled, workspaceSourceCode, outsideSourceCode)
+
+  /** Generate a successfully compiled build file with source-code inside the workspace */
+  def genCompiledWithSourceCode(workspaceURI: Gen[URI] = genFolderURI())(implicit file: FileAccess,
+                                                                         compiler: CompilerAccess,
+                                                                         logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk])] =
+    for {
+      // a compiled OK build file.
+      buildCompiled <- TestBuild.genCompiledOK(workspaceURI = workspaceURI)
+      // write source-code files to build's contract path
+      workspaceSourceCode <- Gen.listOfMax(5)(TestSourceCode.genOnDiskForRoot(buildCompiled.contractURI)).map(TestSourceCode.persistAll(_))
+    } yield (buildCompiled, workspaceSourceCode)
 
   /**
    * Converts the Parsed build [[BuildState.BuildParsed]] to a Compiled build [[BuildState.BuildCompiled]].
