@@ -220,30 +220,27 @@ object Workspace extends StrictImplicitLogging {
    *         or [[WorkspaceState.Parsed]] is returned on successful parse.
    */
   def parse(workspace: WorkspaceState.UnCompiled)(implicit file: FileAccess,
-                                                  compiler: CompilerAccess): WorkspaceState.IsSourceAware =
-    if (workspace.sourceCode.isEmpty) {
-      workspace
-    } else {
-      // Parse all source code. TODO: Could be concurrent.
-      val triedParsedStates =
-        workspace.sourceCode map SourceCode.parse
+                                                  compiler: CompilerAccess): WorkspaceState.IsParsed = {
+    // Parse all source code. TODO: Could be concurrent.
+    val triedParsedStates =
+      workspace.sourceCode map SourceCode.parse
 
-      // collect all parsed code
-      val actualParsedStates =
-        triedParsedStates.collect {
-          case state: SourceCodeState.Parsed =>
-            state
+    // collect all parsed code
+    val actualParsedStates =
+      triedParsedStates.collect {
+        case state: SourceCodeState.Parsed =>
+          state
 
-          case code: SourceCodeState.Compiled =>
-            code.parsed
-        }
+        case code: SourceCodeState.Compiled =>
+          code.parsed
+      }
 
-      // if there is a difference in size then there are error states in the workspace.
-      if (actualParsedStates.size != triedParsedStates.size)
-        WorkspaceState.UnCompiled(workspace.build, triedParsedStates)
-      else // Successfully parsed and can be moved onto compilation process.
-        WorkspaceState.Parsed(workspace.build, actualParsedStates)
-    }
+    // if there is a difference in size then there are error states in the workspace.
+    if (actualParsedStates.size != triedParsedStates.size)
+      WorkspaceState.UnCompiled(workspace.build, triedParsedStates)
+    else // Successfully parsed and can be moved onto compilation process.
+      WorkspaceState.Parsed(workspace.build, actualParsedStates)
+  }
 
   /**
    * Parse and compile the workspace.
@@ -258,17 +255,9 @@ object Workspace extends StrictImplicitLogging {
         // Still un-compiled. There are errors.
         unCompiled
 
-      case errored: WorkspaceState.Errored =>
-        errored // there are still workspace level errors
-
       case parsed: WorkspaceState.Parsed =>
         // Successfully parsed! Compile it!
         compile(parsed)
-
-      case compiled: WorkspaceState.Compiled =>
-        // State already compiled. Process it's parsed state.
-        // FIXME: It might not be necessary to re-compile this state since it's already compiled.
-        compile(compiled.parsed)
     }
 
   /**
