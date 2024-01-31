@@ -249,7 +249,7 @@ object Workspace extends StrictImplicitLogging {
    * @return New workspace state with compilation results of all source files.
    */
   def parseAndCompile(workspace: WorkspaceState.UnCompiled)(implicit file: FileAccess,
-                                                            compiler: CompilerAccess): WorkspaceState.IsSourceAware =
+                                                            compiler: CompilerAccess): WorkspaceState.IsParsedAndCompiled =
     parse(workspace) match {
       case unCompiled: WorkspaceState.UnCompiled =>
         // Still un-compiled. There are errors.
@@ -289,7 +289,7 @@ object Workspace extends StrictImplicitLogging {
               sourceCode: ArraySeq[SourceCodeState],
               currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess,
                                                       compiler: CompilerAccess,
-                                                      logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
+                                                      logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsParsedAndCompiled] =
     // re-build the build file
     build(
       newBuildCode = buildCode,
