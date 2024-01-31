@@ -3,6 +3,8 @@ package org.alephium.ralph.lsp
 import org.alephium.ralph.lsp.TestCommon.genCamelCase
 import org.scalacheck.Gen
 
+import scala.util.Random
+
 /** Ralph source code related test functions */
 object TestCode {
 
@@ -64,5 +66,18 @@ object TestCode {
       genInterface(genCamelCase.map(_.toLowerCase)),
       genScript(genCamelCase.map(_.toLowerCase)),
     )
+
+  def genGoodOrBad(): Gen[String] =
+    Gen.oneOf(
+      TestCode.genGoodCode(),
+      TestCode.genBadCode()
+    )
+
+  def genAtLeastOneBadCode(): Gen[List[String]] =
+    for {
+      goodAndBad <- Gen.listOf(genGoodOrBad())
+      bad <- genBadCode()
+    } yield
+      Random.shuffle(goodAndBad :+ bad)
 
 }

@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
-import org.alephium.ralph.lsp.TestFile
+import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.alephium.ralph.lsp.TestFile.genFolderURI
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
@@ -66,25 +66,31 @@ object TestBuild {
     }
 
   /** Generate a successfully compiled build file with source-code inside and also outside the workspace */
-  def genCompiledWithSourceCodeInAndOut(workspaceURI: Gen[URI] = genFolderURI())(implicit file: FileAccess,
-                                                                                 compiler: CompilerAccess,
-                                                                                 logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk], List[SourceCodeState.OnDisk])] =
+  def genCompiledWithSourceCodeInAndOut(workspaceURI: Gen[URI] = genFolderURI(),
+                                        code: Gen[String] = TestCode.genGoodCode(),
+                                        minSourceCount: Int = 0,
+                                        maxSourceCount: Int = 10)(implicit file: FileAccess,
+                                                                  compiler: CompilerAccess,
+                                                                  logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk], List[SourceCodeState.OnDisk])] =
     for {
       // a compiled OK build file.
-      (buildCompiled, workspaceSourceCode) <- genCompiledWithSourceCode(workspaceURI = workspaceURI)
+      (buildCompiled, workspaceSourceCode) <- genCompiledWithSourceCode(workspaceURI = workspaceURI, minSourceCount = minSourceCount, maxSourceCount = maxSourceCount)
       // write source-code files that are not in the workspace (expect these to get filtered out)
-      outsideSourceCode <- Gen.listOfMax(5)(TestSourceCode.genOnDisk()).map(TestSourceCode.persistAll(_))
+      outsideSourceCode <- Gen.listOfRange(minSourceCount, maxSourceCount)(TestSourceCode.genOnDisk()).map(TestSourceCode.persistAll(_, code))
     } yield (buildCompiled, workspaceSourceCode, outsideSourceCode)
 
   /** Generate a successfully compiled build file with source-code inside the workspace */
-  def genCompiledWithSourceCode(workspaceURI: Gen[URI] = genFolderURI())(implicit file: FileAccess,
-                                                                         compiler: CompilerAccess,
-                                                                         logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk])] =
+  def genCompiledWithSourceCode(workspaceURI: Gen[URI] = genFolderURI(),
+                                code: Gen[String] = TestCode.genGoodCode(),
+                                minSourceCount: Int = 0,
+                                maxSourceCount: Int = 10)(implicit file: FileAccess,
+                                                          compiler: CompilerAccess,
+                                                          logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk])] =
     for {
       // a compiled OK build file.
       buildCompiled <- TestBuild.genCompiledOK(workspaceURI = workspaceURI)
       // write source-code files to build's contract path
-      workspaceSourceCode <- Gen.listOfMax(5)(TestSourceCode.genOnDiskForRoot(buildCompiled.contractURI)).map(TestSourceCode.persistAll(_))
+      workspaceSourceCode <- Gen.listOfRange(minSourceCount, maxSourceCount)(TestSourceCode.genOnDiskForRoot(buildCompiled.contractURI)).map(TestSourceCode.persistAll(_, code))
     } yield (buildCompiled, workspaceSourceCode)
 
   /**
