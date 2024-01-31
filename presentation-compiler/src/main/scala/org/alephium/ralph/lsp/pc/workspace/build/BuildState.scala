@@ -22,7 +22,7 @@ object BuildState {
 
   /** Compiled states */
   sealed trait IsCompiled extends BuildState {
-    def dependency: Option[WorkspaceState.IsSourceAware]
+    def dependency: Option[WorkspaceState.IsParsedAndCompiled]
   }
 
   /** Build is successfully parsed */
@@ -59,7 +59,7 @@ object BuildState {
   case class BuildErrored(buildURI: URI,
                           code: Option[String],
                           errors: ArraySeq[CompilerMessage.AnyError],
-                          dependency: Option[WorkspaceState.IsSourceAware],
+                          dependency: Option[WorkspaceState.IsParsedAndCompiled],
                           activateWorkspace: Option[WorkspaceState.IsSourceAware]) extends BuildState.IsParsed with BuildState.IsCompiled
 
 }
