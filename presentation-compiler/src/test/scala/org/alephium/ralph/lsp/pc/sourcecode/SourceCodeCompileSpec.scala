@@ -98,12 +98,13 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
         result(2).fileURI shouldBe source(2).fileURI
         result(2).code shouldBe source(2).code
         result(2).parsed shouldBe source(2)
-        result(2).compiledCode shouldBe empty // interface is not compiled
+        result(2).compiledCode shouldBe empty // Interface is not compiled
 
         /** Fourth: MyInterface */
         result(3).fileURI shouldBe source(3).fileURI
         result(3).code shouldBe source(3).code
         result(3).parsed shouldBe source(3)
+        result(3).compiledCode should have size 1
         result(3).compiledCode.head.value shouldBe a[CompiledScript] // Script is compiled
       }
     }

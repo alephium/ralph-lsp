@@ -20,16 +20,18 @@ object BuildValidator {
 
   /** Checks that buildURI is in the project's root directory */
   def validateBuildURI(buildURI: URI,
-                       workspaceURI: URI): Either[ErrorInvalidBuildFileLocation, URI] =
-    if (URIUtil.isFirstChild(workspaceURI, buildURI)) // Build file must be in the root workspace directory.
-      Right(buildURI)
-    else
+                       workspaceURI: URI): Either[CompilerMessage.Error, URI] =
+    if (!URIUtil.isFileName(buildURI, Build.BUILD_FILE_NAME))
+      Left(ErrorBuildFileNotFound)
+    else if (!URIUtil.isFirstChild(workspaceURI, buildURI)) // Build file must be in the root workspace directory.
       Left(
         ErrorInvalidBuildFileLocation(
           buildURI = buildURI,
           workspaceURI = workspaceURI
         )
       )
+    else
+      Right(buildURI)
 
   /** Validate that the configured paths are within the workspace directory */
   private def validatePathsInWorkspace(parsed: BuildParsed): Option[BuildState.BuildErrored] = {

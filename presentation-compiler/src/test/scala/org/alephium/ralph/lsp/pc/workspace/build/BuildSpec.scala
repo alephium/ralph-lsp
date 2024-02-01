@@ -5,7 +5,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, 
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.TestFile.genFolderURI
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.pc.client.FileClientLogger
+import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild._
 import org.scalacheck.Gen
@@ -20,19 +20,19 @@ import scala.collection.immutable.ArraySeq
 class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   implicit val clientLogger: ClientLogger =
-    FileClientLogger
+    TestClientLogger
 
   "build" should {
     "fail" when {
       "build in not within the workspace" in {
         // build that is outside the workspace
         val outSideBuildGen =
-          TestBuild.genBuildParsed()
+          TestBuild.genParsed()
 
         // build that is inside the workspace
         val insideBuildGen =
           TestBuild
-            .genBuildParsed()
+            .genParsed()
             .map(persist)
             .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
             .map(_.asInstanceOf[BuildState.BuildCompiled])
@@ -83,7 +83,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
         // generate a build and a workspace that are in different folders
         val existingBuild =
           TestBuild
-            .genBuildParsed()
+            .genParsed()
             .map(persist)
             .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
             .map(_.asInstanceOf[BuildState.BuildCompiled])
@@ -96,7 +96,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
                 currentBuildParsed.workspaceURI.resolve("nested_folder/")
 
               // generate a build
-              TestBuild.genBuildParsed(workspaceURI = buildFolder) map {
+              TestBuild.genParsed(workspaceURI = buildFolder) map {
                 build =>
                   (build, currentBuildParsed)
               }

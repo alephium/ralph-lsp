@@ -1,233 +1,136 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
-import org.alephium.ralph.lsp.TestFile
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.message.error.StringError
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.client.FileClientLogger
+import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildSyntax}
-import org.alephium.ralphc.Config
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild}
 import org.scalacheck.Gen
+import org.scalamock.scalatest.MockFactory
+import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
 /**
- * Test cases for [[Workspace.build]] function.
+ * Test cases for [[Workspace.initialise]] function.
  */
-class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
   implicit val clientLogger: ClientLogger =
-    FileClientLogger
+    TestClientLogger
 
-  "initialise" when {
-    /**
-     * TEST CASES: When current state is [[WorkspaceState.Created]]
-     */
-    "current WorkspaceState is Created" should {
-      /**
-       * FAIL TEST CASES
-       */
-      "fail" when {
-        "workspace directory does not exist" in {
-          implicit val file: FileAccess =
-            FileAccess.disk
+  implicit val compiler: CompilerAccess =
+    CompilerAccess.ralphc
 
-          implicit val compiler: CompilerAccess =
-            CompilerAccess.ralphc
+  "fail" when {
+    "input build state is already an error state" in {
+      // generator that emits error build files
+      val generator =
+        TestBuild
+          .genParsed()
+          .map {
+            parsed =>
+              val errored =
+                Build.compile(
+                  parsed = parsed,
+                  currentBuild = None
+                )(FileAccess.disk, compiler, clientLogger)
 
-          forAll(TestWorkspace.genCreated()) {
-            workspace =>
-              val result = Workspace.build(workspace).left.value
-
-              result shouldBe
-                BuildState.BuildErrored(
-                  buildURI = workspace.buildURI,
-                  code = None,
-                  errors = ArraySeq(ErrorBuildFileNotFound),
-                  dependency = None,
-                  activateWorkspace = None
-                )
+              // errored because contractsURI is not a persisted folder
+              errored.asInstanceOf[BuildState.BuildErrored]
           }
-        }
 
-        "workspace directory exists with no build file" in {
+      forAll(generator) {
+        expectedError =>
+          // no IO should occur
           implicit val file: FileAccess =
-            FileAccess.disk
+            null
 
-          implicit val compiler: CompilerAccess =
-            CompilerAccess.ralphc
+          val actualError =
+            Workspace.initialise(expectedError: BuildState.IsCompiled)
 
-          forAll(TestWorkspace.genCreated()) {
-            workspace =>
-              // Workspace exists, but since the workspace is Created state, there is no build file
-              TestWorkspace.persist(workspace)
-              TestFile.exists(workspace.workspaceURI) shouldBe true
-
-              val result = Workspace.build(workspace).left.value
-
-              result shouldBe
-                BuildState.BuildErrored(
-                  buildURI = workspace.buildURI,
-                  code = None,
-                  errors = ArraySeq(ErrorBuildFileNotFound),
-                  dependency = None,
-                  activateWorkspace = None
-                )
-          }
-        }
-
-        "workspace directory exists with error build file" in {
-          implicit val file: FileAccess =
-            FileAccess.disk
-
-          implicit val compiler: CompilerAccess =
-            CompilerAccess.ralphc
-
-          forAll(TestBuild.genBuildParsed()) {
-            build =>
-              // error build file code
-              val buildCode = "blah"
-              // replace parsed build file with invalid code
-              val errorBuild = build.copy(code = buildCode)
-              // persist the error build file to the workspace
-              TestBuild.persist(errorBuild)
-              // ensure the build exists
-              TestFile.exists(errorBuild.buildURI) shouldBe true
-
-              // generate a workspace for the errored build-file
-              val workspace =
-                TestWorkspace
-                  .genCreated(errorBuild.workspaceURI)
-                  .sample
-                  .get
-
-              // invoke initialise workspace
-              val result =
-                Workspace.build(workspace).left.value
-
-              // the workspace should contain error targeting the build-file
-              result shouldBe
-                BuildState.BuildErrored(
-                  buildURI = workspace.buildURI,
-                  code = Some(buildCode),
-                  errors =
-                    ArraySeq(
-                      ErrorInvalidBuildSyntax(
-                        fileURI = build.buildURI,
-                        index = SourceIndex(0, 1),
-                        message = """expected json value got "b""""
-                      )
-                    ),
-                  dependency = None,
-                  activateWorkspace = None
-                )
-          }
-        }
+          // the same state is returned
+          actualError.left.value shouldBe expectedError
       }
+    }
 
-      /**
-       * SUCCESS TEST CASES
-       */
-      "succeed" when {
-        "all workspaces source files are successfully accessed" in {
-          implicit val file: FileAccess =
-            FileAccess.disk
-
-          implicit val compiler: CompilerAccess =
-            CompilerAccess.ralphc
-
-          forAll(TestBuild.genBuildParsed()) {
-            build =>
-              // persist the build file to the workspace
-              TestBuild.persist(build)
-              // ensure the build exists
-              TestFile.exists(build.buildURI) shouldBe true
-
-              // generate randomly nested source-code within the build's contractPath
-              val onDiskCode =
+    "there is an IO error" in {
+      // initially there exists a valid build file.
+      val generator =
+        TestBuild
+          .genCompiledOK()(FileAccess.disk, compiler, clientLogger)
+          .map {
+            compiled =>
+              // randomly set dependency to None or Some
+              val dependencyRandom =
                 Gen
-                  .listOf(TestSourceCode.genOnDiskForBuild(build))
+                  .oneOf(None, compiled.dependency)
                   .sample
                   .get
 
-              // persist generated source-code
-              TestSourceCode.persistAll(onDiskCode)
-
-              // create initial workspace
-              val workspace =
-                WorkspaceState.Created(build.workspaceURI)
-
-              // invoke initialise on the created workspace
-              val result =
-                Workspace.build(workspace).value
-
-              // sort the resulting workspace state's source code
-              val actualWorkspace =
-                result
-                  .asInstanceOf[WorkspaceState.UnCompiled]
-                  .copy(sourceCode = result.sourceCode.sortBy(_.fileURI))
-
-              // expect the build to be compiled
-              val expectedBuild =
-                BuildState.BuildCompiled(
-                  buildURI = build.buildURI,
-                  code = build.code,
-                  dependency = actualWorkspace.build.dependency,
-                  config =
-                    Config(
-                      compilerOptions = build.config.compilerOptions,
-                      contractPath = Paths.get(build.buildURI.resolve(build.config.contractPath)),
-                      artifactPath = Paths.get(build.buildURI.resolve(build.config.artifactPath))
-                    )
-                )
-
-              // expect the workspace to be in un-compiled state, containing all source-code
-              val expectedWorkspace =
-                WorkspaceState.UnCompiled(
-                  build = expectedBuild,
-                  sourceCode = onDiskCode.sortBy(_.fileURI).to(ArraySeq)
-                )
-
-              // assert workspace
-              actualWorkspace shouldBe expectedWorkspace
+              compiled.copy(dependency = dependencyRandom)
           }
-        }
+
+      forAll(generator) {
+        initialBuild =>
+          // use mock to inject IO error
+          implicit val file: FileAccess =
+            mock[FileAccess]
+
+          val errorIO =
+            StringError("Kaboom!")
+
+          // inject IO error
+          (file.list _)
+            .expects(initialBuild.contractURI)
+            .returns(Left(errorIO))
+            .once()
+
+          val actualError =
+            Workspace.initialise(initialBuild: BuildState.IsCompiled)
+
+          val expectedError =
+            BuildState.BuildErrored(
+              buildURI = initialBuild.buildURI,
+              code = Some(initialBuild.code),
+              errors = ArraySeq(errorIO), // the error is reported
+              dependency = initialBuild.dependency, // dependency is carried forward
+              activateWorkspace = None // continue with existing workspace
+            )
+
+          actualError.left.value shouldBe expectedError
       }
     }
+  }
 
-    /**
-     * TEST CASES: When current state is [[WorkspaceState.IsSourceAware]]
-     */
-    "current workspace state is SourceAware" should {
-      "always return the current workspace" in {
-        // no file access should occur since workspace is already initialised
-        implicit val file: FileAccess =
-          null
+  "succeed" when {
+    "input build is compiled OK" in {
+      implicit val fileAccess: FileAccess =
+        FileAccess.disk
 
-        implicit val compiler: CompilerAccess =
-          null
+      // the input build is good!
+      forAll(TestBuild.genCompiledWithSourceCode()) {
+        case (buildCompiled, sourceCode) =>
+          val actualWorkspace =
+            Workspace
+              .initialise(buildCompiled: BuildState.IsCompiled)
+              .value
 
-        // no source or build is touched since workspace is already initialised
-        val expectedWorkspace: WorkspaceState.IsSourceAware =
-          WorkspaceState.UnCompiled(
-            build = null,
-            sourceCode = null
-          )
+          val actualWorkspaceSorted =
+            actualWorkspace.copy(sourceCode = actualWorkspace.sourceCode.sortBy(_.fileURI))
 
-        val actualWorkspace =
-          Workspace.build(expectedWorkspace).value
+          val expectedWorkspace =
+            WorkspaceState.UnCompiled(
+              build = buildCompiled,
+              sourceCode = sourceCode.sortBy(_.fileURI).to(ArraySeq)
+            )
 
-        actualWorkspace shouldBe expectedWorkspace
+          actualWorkspaceSorted shouldBe expectedWorkspace
       }
     }
-
   }
 }

@@ -80,7 +80,7 @@ object Dependency {
    * @return A compiled result.
    */
   private def toBuildState(parentWorkspaceBuild: BuildState.BuildParsed,
-                           dependencyResult: WorkspaceState.IsSourceAware): BuildState.IsCompiled =
+                           dependencyResult: WorkspaceState.IsParsedAndCompiled): BuildState.IsCompiled =
     dependencyResult match {
       case compiledStd: WorkspaceState.Compiled => // Dependency compiled OK. Convert the build state to compiled.
         val (_, absoluteContractPath, absoluteArtifactPath) =
@@ -108,21 +108,6 @@ object Dependency {
           code = Some(parentWorkspaceBuild.code),
           errors = ArraySeq.empty,
           dependency = Some(state), // dependency workspace with error.
-          activateWorkspace = None
-        )
-
-      case parsed: WorkspaceState.Parsed =>
-        // FIXME: This state should NEVER be the case in reality. A parsed state is ALWAYS compilable.
-        //        Stronger types are needed for [[Workspace.parseAndCompile]] that disallow it from returning
-        //        a parsed state as its result.
-        val error =
-          StringError("Failed to compile dependency. Compilation resulted in a parsed state.")
-
-        BuildState.BuildErrored(
-          buildURI = parsed.buildURI,
-          code = Some(parsed.build.code),
-          errors = ArraySeq(error),
-          dependency = None,
           activateWorkspace = None
         )
     }

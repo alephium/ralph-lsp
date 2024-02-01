@@ -28,8 +28,14 @@ object WorkspaceState {
     def sourceCode: ArraySeq[SourceCodeState]
   }
 
-  /** State: Represents a compilation run result */
-  sealed trait IsCompiled extends IsSourceAware {
+  /** Represents the results of a parser run */
+  sealed trait IsParsed extends IsSourceAware
+
+  /** Represents the results of a parser run and then a compilation run. */
+  sealed trait IsParsedAndCompiled extends IsSourceAware
+
+  /** State: Represents a parse and compilation run result */
+  sealed trait IsCompiled extends IsParsedAndCompiled {
     def parsed: WorkspaceState.Parsed
   }
 
@@ -38,11 +44,11 @@ object WorkspaceState {
 
   /** State: Source files might be un-compiled, parsed or compiled. This state can be parsed and compiled. */
   case class UnCompiled(build: BuildCompiled,
-                        sourceCode: ArraySeq[SourceCodeState]) extends IsSourceAware
+                        sourceCode: ArraySeq[SourceCodeState]) extends IsParsed with IsParsedAndCompiled
 
   /** State: All source files are parsed, therefore this workspace can be compiled */
   case class Parsed(build: BuildCompiled,
-                    sourceCode: ArraySeq[SourceCodeState.Parsed]) extends IsSourceAware
+                    sourceCode: ArraySeq[SourceCodeState.Parsed]) extends IsParsed
 
   /**
    * Result of an errored compiler run.
