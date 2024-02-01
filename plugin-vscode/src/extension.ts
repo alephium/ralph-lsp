@@ -33,7 +33,7 @@ export function activate(context: ExtensionContext) {
     console.log("Activating Ralph LSP client");
 
     const args =
-        build_args(false); // TODO: Fetch this as an environment variable.
+        build_args(true);
 
     const serverOptions: ServerOptions = {
         command: "java",
