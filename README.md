@@ -4,7 +4,7 @@ Language server for Ralph.
 
 Currently supports text document level events and diagnostics.
 
-# Build the jar
+# Build the JAR
 
 ```shell
 sbt "compile; lsp-server/assembly"
@@ -12,20 +12,24 @@ sbt "compile; lsp-server/assembly"
 
 Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar`
 
+# Build the JAR for VSCode
+
+```shell
+sbt "compile; lsp-server/assembly; copyJARToVSCode"
+```
+
+The JAR file gets generated to `plugin-vscode/out/ralph-lsp.jar`.
+
 # Run LSP in VSCode
 
-Update the jar
-location [here](plugin-vscode/src/extension.ts) and ensure a folder is specified for the logs under the
-flag `-DRALPH_LSP_HOME`.
-
-Run the IDE:
+Open the plugin directory `plugin-vscode` in VSCode:
 
 ```shell
 cd plugin-vscode
 code .
 ```
 
-![img.png](docs/img_2.png)
+Run the plugin by selecting the menu option `Run -> Run Without Debugging` or `Run -> Start Debugging`.
 
 # Run LSP in neovim
 
@@ -87,3 +91,9 @@ You can use the following sample as reference:
 - `off` - Enables `info`, `warning` and `error`.
 - `messages` - Enables all the above including `debug`.
 - `verbose` - Enables all the above including `trace`.
+
+# Release VSCode plugin
+
+- Run "[Build the JAR for VSCode](#build-the-jar-for-vscode)"
+- Run `vsce package <version>`
+- Run `vsce publish`
