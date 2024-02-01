@@ -91,3 +91,9 @@ You can use the following sample as reference:
 - `off` - Enables `info`, `warning` and `error`.
 - `messages` - Enables all the above including `debug`.
 - `verbose` - Enables all the above including `trace`.
+
+# Release VSCode plugin
+
+- Run "[Build the JAR for VSCode](#build-the-jar-for-vscode)"
+- Run `vsce package <version>`
+- Run `vsce publish`
