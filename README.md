@@ -4,10 +4,18 @@ Language server for Ralph.
 
 Currently supports text document level events and diagnostics.
 
-# Build the jar
+# Build the JAR
 
 ```shell
 sbt "compile; lsp-server/assembly"
+```
+
+Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar`
+
+# Build the JAR for VSCode
+
+```shell
+sbt "compile; lsp-server/assembly; copyJARToVSCode"
 ```
 
 The JAR file gets generated to `plugin-vscode/out/ralph-lsp.jar`.
