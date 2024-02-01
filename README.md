@@ -22,14 +22,14 @@ The JAR file gets generated to `plugin-vscode/out/ralph-lsp.jar`.
 
 # Run LSP in VSCode
 
-Open the plugin directory `plugin-vscode` in VSCode and then `Run` the plugin:
+Open the plugin directory `plugin-vscode` in VSCode:
 
 ```shell
 cd plugin-vscode
 code .
 ```
 
-![img.png](docs/img_2.png)
+Run the plugin by selecting the menu option `Run -> Run Without Debugging` or `Run -> Start Debugging`.
 
 # Run LSP in neovim
 
