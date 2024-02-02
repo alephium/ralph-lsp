@@ -40,7 +40,7 @@ jobs:
           cd plugin-vscode
           npm install -g vsce
           npm install
-          vsce package -o ralph-lsp-${{ steps.get_version.outputs.VERSION }}.vsix
+          vsce package
 
       - name: Create Release
         id: create_release
