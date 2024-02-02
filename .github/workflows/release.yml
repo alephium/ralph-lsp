@@ -17,6 +17,7 @@ jobs:
           distribution: temurin
           java-version: 11
           cache: sbt
+
       - name: Get the version
         id: get_version
         run: |
@@ -24,6 +25,23 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_OUTPUT
         shell: bash
       - run: sbt "compile; lsp-server/assembly"
+
+      - name: Install jq
+        run: sudo apt-get install jq
+
+      - name: Update version in package.json
+        run: |
+          cd plugin-vscode
+          jq --arg version "${{ steps.get_version.outputs.VERSION }}" '.version = $version' package.json > tmp_package.json && mv tmp_package.json package.json
+
+      - name: Package VSCode Extension
+        run: |
+          sbt copyJARToVSCode
+          cd plugin-vscode
+          npm install -g vsce
+          npm install
+          vsce package
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -35,6 +53,7 @@ jobs:
           body: Some solid code
           draft: false
           prerelease: false
+
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -45,3 +64,19 @@ jobs:
           asset_name: ralph-lsp-${{ steps.get_version.outputs.VERSION }}.jar
           asset_content_type: application/java-archive
 
+      - name: Upload Release Asset (VSCode Extension)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: plugin-vscode/ralph-lsp-${{ steps.get_version.outputs.VERSION }}.vsix
+          asset_name: ralph-lsp-${{ steps.get_version.outputs.VERSION }}.vsix
+          asset_content_type: application/octet-stream
+
+#      - name: Publish VSCode Extension
+#        env:
+#          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+#        run: |
+#          cd plugin-vscode
+#          vsce publish -p $VSCE_TOKEN
