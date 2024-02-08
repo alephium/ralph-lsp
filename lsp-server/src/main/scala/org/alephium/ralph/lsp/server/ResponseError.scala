@@ -54,4 +54,10 @@ object ResponseError {
       errorCode = ResponseErrorCode.InternalError,
       message = exception.toString
     )
+
+  case object WorkspaceNotCompiled extends
+    ResponseError(
+      errorCode = ResponseErrorCode.InternalError,
+      message = "Workspace is not compiled"
+    )
 }
