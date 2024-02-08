@@ -127,4 +127,7 @@ object TestBuild {
     TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.config.artifactPath.toUri))
     compiled
   }
+
+  def delete(build: BuildState): Unit =
+    TestFile delete build.buildURI
 }

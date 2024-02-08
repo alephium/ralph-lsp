@@ -364,7 +364,6 @@ object Workspace extends StrictImplicitLogging {
         )
     }
 
-
   /**
    * Apply events to workspace source-code.
    *
