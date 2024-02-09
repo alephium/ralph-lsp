@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.completion.CodeCompleter
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.pc.state.{PCState, PCStateDiagnostics}
 import org.alephium.ralph.lsp.pc.workspace._
@@ -9,13 +10,14 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.alephium.ralph.lsp.server.RalphLangServer._
-import org.alephium.ralph.lsp.server.converter.DiagnosticsConverter
+import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter}
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{CompletableFutures, messages}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
+import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.IterableHasAsScala
@@ -65,6 +67,7 @@ object RalphLangServer {
     val capabilities = new ServerCapabilities()
 
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
+    capabilities.setCompletionProvider(new CompletionOptions(false, util.Arrays.asList(".")))
 
     capabilities
   }
@@ -286,6 +289,47 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         getClient() publish diagnostics
       }
+    }
+
+  /** @inheritdoc */
+  override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
+    CompletableFutures.computeAsync {
+      cancelChecker =>
+        val fileURI = new URI(params.getTextDocument.getUri)
+        val line = params.getPosition.getLine
+        val character = params.getPosition.getCharacter
+
+        cancelChecker.checkCanceled()
+
+        val currentPCState =
+          getPCState()
+
+        val sourceAware =
+          currentPCState.workspace match {
+            case _: WorkspaceState.Created =>
+              // Workspace must be compiled at least once to enable code completion.
+              // The server must've invoked the initial compilation in the boot-up initialize function.
+              notifyAndThrow(ResponseError.WorkspaceNotCompiled)
+
+            case sourceAware: WorkspaceState.IsSourceAware =>
+              // Can provide code completion.
+              sourceAware
+          }
+
+        val suggestions =
+          CodeCompleter.complete(
+            line = line,
+            character = character,
+            uri = fileURI,
+            workspace = sourceAware
+          )
+
+        val completionList =
+          CompletionConverter.toCompletionList(suggestions)
+
+        cancelChecker.checkCanceled()
+
+        messages.Either.forRight[util.List[CompletionItem], CompletionList](completionList)
     }
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
