@@ -118,7 +118,7 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
         val workspace =
           WorkspaceState.Created(build.workspaceURI)
 
-        // test with a worksoace-file that is either none or not a build file.
+        // test with a workspace-file that is either none or not a build file.
         // The end result should be the same for both.
         val workspaceFile =
           Array(
