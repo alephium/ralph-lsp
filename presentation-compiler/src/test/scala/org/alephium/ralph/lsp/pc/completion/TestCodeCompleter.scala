@@ -40,7 +40,7 @@ object TestCodeCompleter {
         val character =
           line.indexOf(completion_indicator)
 
-        // remove the @@
+        // remove @@
         val codeWithoutAtSymbol =
           code.replaceFirst(completion_indicator, "")
 
@@ -58,7 +58,7 @@ object TestCodeCompleter {
         completion
 
       case None =>
-        fail("@@ not provided")
+        fail(s"Completion location indicator '$completion_indicator' not provided")
     }
   }
 
