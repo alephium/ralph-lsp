@@ -26,4 +26,7 @@ object StringUtil {
     index
   }
 
+  def codeLines(code: String): Array[String] =
+    code.split("\r\n|\r|\n")
+
 }
