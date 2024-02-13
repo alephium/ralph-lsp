@@ -1,13 +1,12 @@
 package org.alephium.ralph.lsp.pc.workspace.build.dependency
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.error.StringError
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
-import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 import org.alephium.ralphc.Config
 
 import scala.collection.immutable.ArraySeq
