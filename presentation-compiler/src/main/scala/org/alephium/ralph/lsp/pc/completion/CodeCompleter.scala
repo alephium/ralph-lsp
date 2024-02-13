@@ -50,12 +50,12 @@ object CodeCompleter extends StrictImplicitLogging {
                 sourceCode = parsed
               )
 
-            case unCompiled: SourceCodeState.Compiled =>
+            case compiled: SourceCodeState.Compiled =>
               complete(
                 line = line,
                 character = character,
                 workspace = workspace,
-                sourceCode = unCompiled.parsed
+                sourceCode = compiled.parsed
               )
 
             case errored: SourceCodeState.ErrorSource =>
