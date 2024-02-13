@@ -2,13 +2,13 @@ package org.alephium.ralph.lsp.pc.sourcecode.imports
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
-import org.alephium.ralph.lsp.access.compiler.message.error.ImportError
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.error.ImportError
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
+import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.net.URI
@@ -144,26 +144,42 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
 
         // The error must report the import's AST as UnknownImport
         val expectedAST = {
-          val my_packageName = "my_package/my_file"
-          val my_packageNameQuoted = s""""$my_packageName""""
-          val fullImport = s"""import $my_packageNameQuoted"""
+          val my_package = "my_package"
+          val my_file = "my_file"
+          val my_package_file = "my_package/my_file"
+          val my_package_file_quoted = s""""$my_package_file""""
+          val import_statement = s"""import $my_package_file_quoted"""
 
           Tree.Import(
-            pkg =
+            string =
               Tree.StringLiteral(
-                value = my_packageName,
+                name =
+                  Tree.Name(
+                    value = my_package_file,
+                    index =
+                      SourceIndex(
+                        index = myCode.code.lastIndexOf(my_package_file),
+                        width = my_package_file.length
+                      )
+                  ),
                 index =
                   SourceIndex(
-                    index = myCode.code.lastIndexOf(my_packageNameQuoted),
-                    // + 2 because the parser fetches the tail end spaces
-                    width = my_packageNameQuoted.length + 2
+                    index = myCode.code.lastIndexOf(my_package_file_quoted),
+                    width = my_package_file_quoted.length
                   )
+              ),
+            path =
+              Some(
+                Tree.Path(
+                  folder = Tree.Name(my_package, SourceIndex(myCode.code.lastIndexOf(my_package), my_package.length)),
+                  file = Tree.Name(my_file, SourceIndex(myCode.code.lastIndexOf(my_file), my_file.length)),
+                  index = SourceIndex(myCode.code.lastIndexOf(my_package_file), my_package_file.length)
+                )
               ),
             index =
               SourceIndex(
-                index = myCode.code.lastIndexOf(fullImport),
-                // + 2 because the parser fetches the tail end spaces
-                width = fullImport.length + 2
+                index = myCode.code.lastIndexOf(import_statement),
+                width = import_statement.length
               )
           )
         }

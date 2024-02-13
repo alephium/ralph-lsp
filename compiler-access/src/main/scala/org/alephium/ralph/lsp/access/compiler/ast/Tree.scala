@@ -20,14 +20,29 @@ object Tree {
 
   sealed trait Statement extends Tree
 
-  case class Import(pkg: StringLiteral,
+  /**
+   * An import statement e.g. `import "std/nft_interface"`
+   *
+   * @param string The string content e.g: `"std/nft_interface"`
+   * @param path   The file and folder paths
+   * @param index  Index of the full import statement.
+   */
+  case class Import(string: StringLiteral,
+                    path: Option[Path],
                     index: SourceIndex) extends Statement
+
+  case class Path(folder: Name,
+                  file: Name,
+                  index: SourceIndex) extends Tree
 
   case class Source(ast: Ast.ContractWithState,
                     index: SourceIndex) extends Statement
 
   sealed trait Literal extends Tree
 
-  case class StringLiteral(value: String,
+  case class StringLiteral(name: Name,
                            index: SourceIndex) extends Literal
+
+  case class Name(value: String,
+                  index: SourceIndex) extends Tree
 }

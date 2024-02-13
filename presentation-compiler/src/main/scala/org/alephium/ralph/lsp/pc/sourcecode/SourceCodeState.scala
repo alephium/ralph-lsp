@@ -34,6 +34,10 @@ object SourceCodeState {
   /** Represents: State where the source code is known */
   sealed trait IsCodeAware extends SourceCodeState {
     def code: String
+
+    /** Lazily executed. Can have concurrent access. Use by code completion. */
+    lazy val codeLines: Array[String] =
+      code.split("\r\n|\r|\n")
   }
 
   /** Represents: Code is parsed */

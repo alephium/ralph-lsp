@@ -32,4 +32,15 @@ object SourceIndex {
  * @param width Width of targeted token/code trailing the `index`.
  */
 
-final case class SourceIndex(index: Int, width: Int)
+final case class SourceIndex(index: Int, width: Int) { self =>
+  def toIndex =
+    self.index + width
+
+  /** Checks if the given index is within this SourceIndex's from and to index */
+  def contains(index: Int): Boolean =
+    index >= self.index && index <= toIndex
+
+  /** Offset this SourceIndex */
+  def +(right: Int): SourceIndex =
+    copy(self.index + right)
+}
