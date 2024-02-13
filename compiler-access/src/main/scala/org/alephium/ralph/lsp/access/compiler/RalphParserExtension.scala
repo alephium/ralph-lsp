@@ -29,10 +29,10 @@ private object RalphParserExtension {
 
   /** A statement can be an import or ralphc's contract */
   private def statement[Unknown: P]: P[Tree.Statement] =
-    P(importer | source)
+    P(importStatement | sourceStatement)
 
   /** Parse import syntax */
-  def importer[Unknown: P]: P[Tree.Import] =
+  private def importStatement[Unknown: P]: P[Tree.Import] =
     P(Index ~ "import" ~ stringLiteral ~ Index) map {
       case (fromIndex, importPackage, toIndex) =>
         val index =
@@ -54,7 +54,7 @@ private object RalphParserExtension {
    * This function is a clone of [[org.alephium.ralph.StatefulParser.multiContract]]
    * but without the requirement that it be the start of the file, so imports are allowed.
    * */
-  private def source[Unknown: P]: P[Tree.Source] =
+  private def sourceStatement[Unknown: P]: P[Tree.Source] =
     P(Index ~ (rawTxScript | rawContract | rawInterface) ~ Index) map {
       case (fromIndex, code, toIndex) =>
         val index =
