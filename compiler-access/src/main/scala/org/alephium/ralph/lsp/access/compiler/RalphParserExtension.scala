@@ -3,6 +3,7 @@ package org.alephium.ralph.lsp.access.compiler
 import fastparse._
 import org.alephium.ralph.StatefulParser.{rawContract, rawInterface, rawTxScript, whitespace}
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
+import org.alephium.ralph.lsp.access.compiler.ast.Tree.StringLiteral
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 
 /** Functions that extend ralphc's default parser */
@@ -29,23 +30,87 @@ private object RalphParserExtension {
 
   /** A statement can be an import or ralphc's contract */
   private def statement[Unknown: P]: P[Tree.Statement] =
-    P(importer | source)
+    P(importStatement | sourceStatement)
 
   /** Parse import syntax */
-  def importer[Unknown: P]: P[Tree.Import] =
-    P(Index ~ "import" ~ stringLiteral ~ Index) map {
-      case (fromIndex, importPackage, toIndex) =>
-        val index =
+  private def importStatement[Unknown: P]: P[Tree.Import] =
+    P(Index ~~ "import" ~ stringLiteral ~~ Index) map {
+      case (fromIndex, stringLiteral, toIndex) =>
+        val importIndex =
           SourceIndex(
             index = fromIndex,
             width = toIndex - fromIndex
           )
 
+        val importPath =
+          parsePath(stringLiteral)
+
         Tree.Import(
-          index = index,
-          pkg = importPackage
+          string = stringLiteral,
+          path = importPath,
+          index = importIndex
         )
     }
+
+  /**
+   * Lazily parse the string literal to separate the folder-name and file-name.
+   *
+   * On error, ignore parse.
+   *
+   * @param stringLiteral The String literal to parse.
+   */
+  private def parsePath(stringLiteral: StringLiteral): Option[Tree.Path] =
+    fastparse.parse(stringLiteral.name.value, importPaths(_)) match {
+      case Parsed.Success((packagePath, filePath), _) =>
+        // the above parse occurs on a string value, add the offset such
+        // that the indexes are set according to the entire source-code.
+        val offsetIndex =
+          stringLiteral.name.index.index
+
+        val path =
+          Tree.Path(
+            folder = packagePath.copy(index = packagePath.index + offsetIndex),
+            file = filePath.copy(index = filePath.index + offsetIndex),
+            index = stringLiteral.name.index
+          )
+
+        Some(path)
+
+      case _: Parsed.Failure =>
+        None
+    }
+
+  private def importPaths[Unknown: P]: P[(Tree.Name, Tree.Name)] =
+    // Parser for `std/nft_interface`
+    P(Index ~~ CharsWhile(_ != '/').! ~~ Index ~ "/" ~~ Index ~~ AnyChar.rep.! ~~ Index) map {
+      case (fromPackageIndex, packageName, toPackageIndex, fromFileNameIndex, fileName, toFileNameIndex) =>
+        val packageIndex =
+          SourceIndex(
+            index = fromPackageIndex,
+            width = toPackageIndex - fromPackageIndex
+          )
+
+        val fileIndex =
+          SourceIndex(
+            index = fromFileNameIndex,
+            width = toFileNameIndex - fromFileNameIndex
+          )
+
+        val packagePath =
+          Tree.Name(
+            value = packageName,
+            index = packageIndex
+          )
+
+        val filePath =
+          Tree.Name(
+            value = fileName,
+            index = fileIndex
+          )
+
+        (packagePath, filePath)
+    }
+
 
   /**
    *
@@ -54,8 +119,8 @@ private object RalphParserExtension {
    * This function is a clone of [[org.alephium.ralph.StatefulParser.multiContract]]
    * but without the requirement that it be the start of the file, so imports are allowed.
    * */
-  private def source[Unknown: P]: P[Tree.Source] =
-    P(Index ~ (rawTxScript | rawContract | rawInterface) ~ Index) map {
+  private def sourceStatement[Unknown: P]: P[Tree.Source] =
+    P(Index ~~ (rawTxScript | rawContract | rawInterface) ~~ Index) map {
       case (fromIndex, code, toIndex) =>
         val index =
           SourceIndex(
@@ -78,16 +143,25 @@ private object RalphParserExtension {
    * }}}
    * */
   private def stringLiteral[Unknown: P]: P[Tree.StringLiteral] =
-    P(Index ~ "\"" ~~ CharsWhile(_ != '"').! ~~ "\"" ~ Index) map { // TODO: See if negative look ahead with AnyChar.rep would work instead of `CharsWhile`
-      case (fromIndex, string, toIndex) =>
+    P(Index ~~ "\"" ~~ Index ~~ CharsWhile(_ != '"').!.? ~~ Index ~~ "\"" ~~ Index) map { // TODO: See if negative look ahead with AnyChar.rep would work instead of `CharsWhile`
+      case (fromIndex, nameFromIndex, string, nameToIndex, toIndex) =>
         val index =
           SourceIndex(
             index = fromIndex,
             width = toIndex - fromIndex
           )
 
+        val name =
+          Tree.Name(
+            value = string getOrElse "",
+            index = SourceIndex(
+              index = nameFromIndex,
+              width = nameToIndex - nameFromIndex
+            )
+          )
+
         Tree.StringLiteral(
-          value = string,
+          name = name,
           index = index
         )
     }

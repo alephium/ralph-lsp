@@ -4,11 +4,12 @@ import org.alephium.ralph.lsp.pc.completion.Suggestion
 import org.eclipse.lsp4j._
 
 import java.util
+import scala.collection.immutable.ArraySeq
 
 /** Implements functions that transform internal code-completion types to LSP4J */
 object CompletionConverter {
 
-  def toCompletionList(suggestions: Array[Suggestion]): CompletionList = {
+  def toCompletionList(suggestions: ArraySeq[Suggestion]): CompletionList = {
     val items = new util.ArrayList[CompletionItem]()
 
     suggestions foreach {

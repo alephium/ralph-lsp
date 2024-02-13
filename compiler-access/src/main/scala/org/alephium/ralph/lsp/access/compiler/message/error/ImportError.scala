@@ -7,9 +7,9 @@ sealed trait ImportError extends CompilerMessage.Error
 
 object ImportError {
   final case class Unknown(ast: Tree.Import) extends ImportError {
-    val message: String = s"Unknown import: \"${ast.pkg.value}\""
+    val message: String = s"Unknown import: \"${ast.string.name.value}\""
 
     override def index: SourceIndex =
-      ast.pkg.index
+      ast.string.index
   }
 }
