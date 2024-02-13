@@ -20,6 +20,7 @@ import java.net.URI
 import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.collection.immutable.ArraySeq
+import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.IterableHasAsScala
 
 object RalphLangServer {
@@ -252,22 +253,21 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
     runSync {
       val changes =
-        params.getChanges.asScala
+        params.getChanges.asScala.to(ArraySeq)
 
       logger.debug(s"didChangeWatchedFiles: ${changes.mkString("\n", "\n", "")}")
 
       // collect events
       val events =
-        changes collect {
-          event =>
-            event.getType match {
-              case FileChangeType.Deleted =>
-                WorkspaceFileEvent.Deleted(new URI(event.getUri))
+        changes
+          .map(event => (event.getType, event))
+          .collect {
+            case (FileChangeType.Deleted, event) =>
+              WorkspaceFileEvent.Deleted(new URI(event.getUri))
 
-              case FileChangeType.Created =>
-                WorkspaceFileEvent.Created(new URI(event.getUri))
-            }
-        }
+            case (FileChangeType.Created, event) =>
+              WorkspaceFileEvent.Created(new URI(event.getUri))
+          }
 
       if (events.nonEmpty) {
         val currentPCState =
@@ -276,7 +276,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         // Build OK! process delete or create
         val newPCState =
           Workspace.deleteOrCreate(
-            events = events.to(ArraySeq),
+            events = events,
             pcState = currentPCState
           )
 
