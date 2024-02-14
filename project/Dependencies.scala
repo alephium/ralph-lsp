@@ -14,7 +14,7 @@ object Dependencies {
 
   /** Core */
   lazy val ralphc = "org.alephium" %% "alephium-ralphc" % "2.8.3"
-  lazy val lsp4j = "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.21.2"
+  lazy val lsp4j = "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.22.0"
 
   /** Logging */
   lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
