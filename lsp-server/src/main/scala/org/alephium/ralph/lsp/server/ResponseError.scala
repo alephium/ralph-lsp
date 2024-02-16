@@ -55,6 +55,12 @@ object ResponseError {
       message = exception.toString
     )
 
+  case class StringInternalError(message: String) extends
+    ResponseError(
+      errorCode = ResponseErrorCode.InternalError,
+      message = message
+    )
+
   case object WorkspaceNotCompiled extends
     ResponseError(
       errorCode = ResponseErrorCode.InternalError,

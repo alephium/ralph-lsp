@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.completion.CodeCompleter
+import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.pc.state.{PCState, PCStateDiagnostics}
 import org.alephium.ralph.lsp.pc.workspace._
@@ -311,13 +311,29 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
               sourceAware
           }
 
-        val suggestions =
+        val completionResult =
           CodeCompleter.complete(
             line = line,
             character = character,
             uri = fileURI,
             workspace = sourceAware
           )
+
+        val suggestions =
+          completionResult match {
+            case Some(Right(suggestions)) =>
+              // completion successful
+              suggestions
+
+            case Some(Left(error)) =>
+              // Completion failed: Notify the client of the failure
+              getClient() show ResponseError.StringInternalError(error.message)
+              ArraySeq.empty[Suggestion]
+
+            case None =>
+              // Not a ralph file or it does not belong to the workspace's contract-uri directory.
+              ArraySeq.empty[Suggestion]
+          }
 
         val completionList =
           CompletionConverter.toCompletionList(suggestions)
