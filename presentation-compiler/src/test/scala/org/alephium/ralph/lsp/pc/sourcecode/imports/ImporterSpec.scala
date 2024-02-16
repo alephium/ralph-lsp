@@ -146,13 +146,14 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
         val expectedAST = {
           val my_package = "my_package"
           val my_file = "my_file"
-          val my_package_file = "my_package/my_file"
+          val my_package_file = s"$my_package/$my_file"
           val my_package_file_quoted = s""""$my_package_file""""
           val import_statement = s"""import $my_package_file_quoted"""
 
           Tree.Import(
             string =
               Tree.StringLiteral(
+                value = my_package_file_quoted,
                 name =
                   Tree.Name(
                     value = my_package_file,

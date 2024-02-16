@@ -3,7 +3,6 @@ package org.alephium.ralph.lsp.access.compiler
 import fastparse._
 import org.alephium.ralph.StatefulParser.{rawContract, rawInterface, rawTxScript, whitespace}
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
-import org.alephium.ralph.lsp.access.compiler.ast.Tree.StringLiteral
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 
 /** Functions that extend ralphc's default parser */
@@ -43,7 +42,7 @@ private object RalphParserExtension {
           )
 
         val importPath =
-          parsePath(stringLiteral)
+          parsePath(stringLiteral.name)
 
         Tree.Import(
           string = stringLiteral,
@@ -59,19 +58,19 @@ private object RalphParserExtension {
    *
    * @param stringLiteral The String literal to parse.
    */
-  private def parsePath(stringLiteral: StringLiteral): Option[Tree.ImportPath] =
-    fastparse.parse(stringLiteral.name.value, importPaths(_)) match {
+  private def parsePath(name: Tree.Name): Option[Tree.ImportPath] =
+    fastparse.parse(name.value, importPaths(_)) match {
       case Parsed.Success((packagePath, filePath), _) =>
         // the above parse occurs on a string value, add the offset such
         // that the indexes are set according to the entire source-code.
         val offsetIndex =
-          stringLiteral.name.index.from
+          name.index.from
 
         val path =
           Tree.ImportPath(
             folder = packagePath.copy(index = packagePath.index + offsetIndex),
             file = filePath.copy(index = filePath.index + offsetIndex),
-            index = stringLiteral.name.index
+            index = name.index
           )
 
         Some(path)
@@ -151,9 +150,12 @@ private object RalphParserExtension {
             width = toIndex - fromIndex
           )
 
+        val value =
+          string getOrElse ""
+
         val name =
           Tree.Name(
-            value = string getOrElse "",
+            value = value,
             index = SourceIndex(
               from = nameFromIndex,
               width = nameToIndex - nameFromIndex
@@ -161,6 +163,7 @@ private object RalphParserExtension {
           )
 
         Tree.StringLiteral(
+          value = s"\"$value\"",
           name = name,
           index = index
         )

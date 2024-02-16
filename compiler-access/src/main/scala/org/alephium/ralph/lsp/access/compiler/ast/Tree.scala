@@ -40,7 +40,13 @@ object Tree {
 
   sealed trait Literal extends Tree
 
-  case class StringLiteral(name: Name,
+  /**
+   * @param value The string value with quotes.
+   * @param name  The string value without quotes.
+   * @param index [[SourceIndex]] of the string with quotes.
+   */
+  case class StringLiteral(value: String,
+                           name: Name,
                            index: SourceIndex) extends Literal
 
   case class Name(value: String,
