@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
+import org.alephium.ralph.lsp.access.compiler.RalphParserExtension
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.warning.StringWarning
@@ -12,8 +13,10 @@ sealed trait SourceCodeState {
   def fileURI: URI
 
   /** @see [[URIUtil.importIdentifier]] */
-  def importIdentifier: Option[String] =
-    URIUtil.importIdentifier(fileURI)
+  def importIdentifier: Option[Tree.Import] =
+    URIUtil
+      .importIdentifier(fileURI)
+      .flatMap(RalphParserExtension.lazyParseImportIdentifier)
 }
 
 object SourceCodeState {
@@ -35,7 +38,7 @@ object SourceCodeState {
   sealed trait IsCodeAware extends SourceCodeState {
     def code: String
 
-    /** Lazily executed. Can have concurrent access. Use by code completion. */
+    /** Lazily executed. Can have concurrent access. Used by code completion. */
     lazy val codeLines: Array[String] =
       StringUtil.codeLines(code)
   }

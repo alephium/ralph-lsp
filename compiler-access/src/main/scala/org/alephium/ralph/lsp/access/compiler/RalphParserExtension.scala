@@ -6,7 +6,7 @@ import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 
 /** Functions that extend ralphc's default parser */
-private object RalphParserExtension {
+object RalphParserExtension {
 
   /**
    * An extension to Ralphc's parse function [[org.alephium.ralph.StatefulParser.multiContract]]
@@ -25,6 +25,16 @@ private object RalphParserExtension {
           statements = statements,
           index = index
         )
+    }
+
+  /** Parse an import identifier ignoring errors */
+  def lazyParseImportIdentifier(identifier: String): Option[Tree.Import] =
+    fastparse.parse(s"import \"$identifier\"", importStatement(_)) match {
+      case Parsed.Success(tree, _) =>
+        Some(tree)
+
+      case _: Parsed.Failure =>
+        None
     }
 
   /** A statement can be an import or ralphc's contract */
@@ -56,7 +66,7 @@ private object RalphParserExtension {
    *
    * On error, ignore parse.
    *
-   * @param stringLiteral The String literal to parse.
+   * @param name The String value to parse.
    */
   private def parsePath(name: Tree.Name): Option[Tree.ImportPath] =
     fastparse.parse(name.value, importPaths(_)) match {

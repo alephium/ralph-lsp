@@ -84,7 +84,7 @@ object CodeCompleter extends StrictImplicitLogging {
   private def complete(line: Int,
                        character: Int,
                        workspace: WorkspaceState.IsSourceAware,
-                       sourceCode: SourceCodeState.Parsed): ArraySeq[Suggestion] = {
+                       sourceCode: SourceCodeState.Parsed)(implicit logger: ClientLogger): ArraySeq[Suggestion] = {
     // fetch the requested index from line number and character number.
     val cursorIndex =
       StringUtil.computeIndex(
