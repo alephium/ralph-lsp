@@ -28,12 +28,12 @@ object Tree {
    * @param index  Index of the full import statement.
    */
   case class Import(string: StringLiteral,
-                    path: Option[Path],
+                    path: Option[ImportPath],
                     index: SourceIndex) extends Statement
 
-  case class Path(folder: Name,
-                  file: Name,
-                  index: SourceIndex) extends Tree
+  case class ImportPath(folder: Name,
+                        file: Name,
+                        index: SourceIndex) extends Tree
 
   case class Source(ast: Ast.ContractWithState,
                     index: SourceIndex) extends Statement

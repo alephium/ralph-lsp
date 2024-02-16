@@ -214,7 +214,7 @@ object PCStateDiagnostics {
     val ((fromLine, fromCharacter), (toLine, toCharacter)) =
       code match {
         case Some(code) =>
-          val fastParseLineNumber = IndexedParserInput(code).prettyIndex(message.index.index)
+          val fastParseLineNumber = IndexedParserInput(code).prettyIndex(message.index.from)
           val sourcePosition = SourcePosition.parse(fastParseLineNumber)
 
           val start = (sourcePosition.rowIndex, sourcePosition.colIndex)

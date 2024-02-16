@@ -5,7 +5,7 @@ object SourceIndex {
   /** Empty range */
   val empty: SourceIndex =
     SourceIndex(
-      index = 0,
+      from = 0,
       width = 0
     )
 
@@ -22,25 +22,25 @@ object SourceIndex {
       SourceIndex.empty
     else
       SourceIndex(
-        index = index,
+        from = index,
         width = width
       )
 }
 
 /**
- * @param index Source position within the program.
+ * @param from  Source position within the program.
  * @param width Width of targeted token/code trailing the `index`.
  */
 
-final case class SourceIndex(index: Int, width: Int) { self =>
-  def toIndex =
-    self.index + width
+final case class SourceIndex(from: Int, width: Int) {
+  def to: Int =
+    from + width
 
   /** Checks if the given index is within this SourceIndex's from and to index */
   def contains(index: Int): Boolean =
-    index >= self.index && index <= toIndex
+    index >= from && index <= to
 
   /** Offset this SourceIndex */
   def +(right: Int): SourceIndex =
-    copy(self.index + right)
+    copy(from + right)
 }

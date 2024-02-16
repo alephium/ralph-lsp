@@ -18,7 +18,7 @@ private object RalphParserExtension {
       case (fromIndex, statements, toIndex) =>
         val index =
           SourceIndex(
-            index = fromIndex,
+            from = fromIndex,
             width = toIndex - fromIndex
           )
 
@@ -38,7 +38,7 @@ private object RalphParserExtension {
       case (fromIndex, stringLiteral, toIndex) =>
         val importIndex =
           SourceIndex(
-            index = fromIndex,
+            from = fromIndex,
             width = toIndex - fromIndex
           )
 
@@ -59,16 +59,16 @@ private object RalphParserExtension {
    *
    * @param stringLiteral The String literal to parse.
    */
-  private def parsePath(stringLiteral: StringLiteral): Option[Tree.Path] =
+  private def parsePath(stringLiteral: StringLiteral): Option[Tree.ImportPath] =
     fastparse.parse(stringLiteral.name.value, importPaths(_)) match {
       case Parsed.Success((packagePath, filePath), _) =>
         // the above parse occurs on a string value, add the offset such
         // that the indexes are set according to the entire source-code.
         val offsetIndex =
-          stringLiteral.name.index.index
+          stringLiteral.name.index.from
 
         val path =
-          Tree.Path(
+          Tree.ImportPath(
             folder = packagePath.copy(index = packagePath.index + offsetIndex),
             file = filePath.copy(index = filePath.index + offsetIndex),
             index = stringLiteral.name.index
@@ -86,13 +86,13 @@ private object RalphParserExtension {
       case (fromPackageIndex, packageName, toPackageIndex, fromFileNameIndex, fileName, toFileNameIndex) =>
         val packageIndex =
           SourceIndex(
-            index = fromPackageIndex,
+            from = fromPackageIndex,
             width = toPackageIndex - fromPackageIndex
           )
 
         val fileIndex =
           SourceIndex(
-            index = fromFileNameIndex,
+            from = fromFileNameIndex,
             width = toFileNameIndex - fromFileNameIndex
           )
 
@@ -124,7 +124,7 @@ private object RalphParserExtension {
       case (fromIndex, code, toIndex) =>
         val index =
           SourceIndex(
-            index = fromIndex,
+            from = fromIndex,
             width = toIndex - fromIndex
           )
 
@@ -147,7 +147,7 @@ private object RalphParserExtension {
       case (fromIndex, nameFromIndex, string, nameToIndex, toIndex) =>
         val index =
           SourceIndex(
-            index = fromIndex,
+            from = fromIndex,
             width = toIndex - fromIndex
           )
 
@@ -155,7 +155,7 @@ private object RalphParserExtension {
           Tree.Name(
             value = string getOrElse "",
             index = SourceIndex(
-              index = nameFromIndex,
+              from = nameFromIndex,
               width = nameToIndex - nameFromIndex
             )
           )
