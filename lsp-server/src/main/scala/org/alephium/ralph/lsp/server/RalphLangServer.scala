@@ -13,7 +13,7 @@ import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter}
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.{CompletableFutures, messages}
+import org.eclipse.lsp4j.jsonrpc.{CancelChecker, CompletableFutures, messages}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
@@ -133,7 +133,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   /** @inheritdoc */
   override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] =
-    CompletableFutures.computeAsync {
+    runAsync {
       cancelChecker =>
         logger.debug("Initialize request")
         // Previous commit uses the non-deprecated API but that does not work in vim.
@@ -160,10 +160,6 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         cancelChecker.checkCanceled()
 
         new InitializeResult(serverCapabilities())
-    } whenComplete {
-      (_, error) =>
-        if (error != null)
-          logger.error("Failed to initialize server", error)
     }
 
   /** @inheritdoc */
@@ -292,7 +288,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   /** @inheritdoc */
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
-    CompletableFutures.computeAsync {
+    runAsync {
       cancelChecker =>
         val fileURI = new URI(params.getTextDocument.getUri)
         val line = params.getPosition.getLine
@@ -512,6 +508,15 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         throw throwable
     }
+
+  private def runAsync[A](f: CancelChecker => A): CompletableFuture[A] =
+    CompletableFutures
+      .computeAsync(f(_))
+      .whenComplete {
+        (_, error) =>
+          if (error != null)
+            logger.error("Async request failed", error)
+      }
 
   /** @inheritdoc */
   override def setTrace(params: SetTraceParams): Unit =
