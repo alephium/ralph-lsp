@@ -359,7 +359,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           else
             Paths.get(RALPH_LSP_HOME)
 
-        val completionResult =
+        val goToResult =
           GoToDefinition.goTo(
             line = line,
             character = character,
@@ -369,7 +369,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           )
 
         val locations =
-          completionResult match {
+          goToResult match {
             case Some(Right(uris)) =>
               // successful
               uris map {

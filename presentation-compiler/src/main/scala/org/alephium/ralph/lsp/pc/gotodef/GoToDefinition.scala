@@ -67,7 +67,7 @@ object GoToDefinition extends StrictImplicitLogging {
             GoToImport.goTo(
               cursorIndex = cursorIndex,
               dependencyDir = dependencyDir,
-              workspace.build.dependency,
+              dependency = workspace.build.dependency,
               importStatement = importStatement
             )
 

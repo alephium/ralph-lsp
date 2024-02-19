@@ -51,8 +51,8 @@ object GoToImport {
             sourceCode.importIdentifier map {
               importIdentifier =>
                 val importPath = importIdentifier.string.name.value
-                val fullFilePath = dependencyDir resolve s"$importPath.${CompilerAccess.RALPH_FILE_EXTENSION}"
-                fullFilePath.toUri
+                val absoluteImportPath = dependencyDir resolve s"$importPath.${CompilerAccess.RALPH_FILE_EXTENSION}"
+                absoluteImportPath.toUri
             }
         }
 
