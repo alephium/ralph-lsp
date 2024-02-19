@@ -67,6 +67,7 @@ lazy val downloadWeb3AndInstallStd = taskKey[Unit]("Download alephium-web3 sourc
 downloadWeb3AndInstallStd := {
   val web3Dir = new File(s"target/web3/alephium-web3-${Version.web3}")
   val stdDir = new File("compiler-access/src/main/resources/std")
+  val vscodeStdDir = new File("plugin-vscode/out/std")
   val web3StdDir = new File(s"target/web3/alephium-web3-${Version.web3}/packages/web3/std")
 
   if(java.nio.file.Files.notExists(web3Dir.toPath())) {
@@ -74,6 +75,15 @@ downloadWeb3AndInstallStd := {
   }
 
   IO.copyDirectory(web3StdDir, stdDir)
+  IO.copyDirectory(web3StdDir, vscodeStdDir)
+  setReadOnly(vscodeStdDir)
+}
+
+def setReadOnly(directory: File): Unit = {
+  directory.setReadOnly()
+  val files = directory.listFiles()
+  if (files != null)
+    files foreach (_.setReadOnly())
 }
 
 //Download and install of web3 will always be performed before compilation
