@@ -315,7 +315,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           CodeCompleter.complete(
             line = line,
             character = character,
-            uri = fileURI,
+            fileURI = fileURI,
             workspace = sourceAware
           )
 
@@ -326,8 +326,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
               suggestions
 
             case Some(Left(error)) =>
-              // Completion failed: Notify the client of the failure
-              getClient() show ResponseError.StringInternalError(error.message)
+              // Completion failed: Log the error message
+              logger.error("Code completion failed: " + error.message)
               ArraySeq.empty[Suggestion]
 
             case None =>
