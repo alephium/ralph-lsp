@@ -3,6 +3,7 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
+import org.alephium.ralph.lsp.pc.gotodef.GoToDefinition
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.pc.state.{PCState, PCStateDiagnostics}
 import org.alephium.ralph.lsp.pc.workspace._
@@ -17,12 +18,16 @@ import org.eclipse.lsp4j.jsonrpc.{CancelChecker, CompletableFutures, messages}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
+import java.nio.file.Paths
 import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.IterableHasAsScala
 
 object RalphLangServer {
+
+  val RALPH_LSP_HOME: String =
+    "RALPH_LSP_HOME"
 
   /** Start server with pre-configured client */
   def apply(client: RalphLangClient,
@@ -68,6 +73,7 @@ object RalphLangServer {
 
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
     capabilities.setCompletionProvider(new CompletionOptions(false, util.Arrays.asList(".")))
+    capabilities.setDefinitionProvider(true)
 
     capabilities
   }
@@ -296,20 +302,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         cancelChecker.checkCanceled()
 
-        val currentPCState =
-          getPCState()
-
         val sourceAware =
-          currentPCState.workspace match {
-            case _: WorkspaceState.Created =>
-              // Workspace must be compiled at least once to enable code completion.
-              // The server must've invoked the initial compilation in the boot-up initialize function.
-              notifyAndThrow(ResponseError.WorkspaceNotCompiled)
-
-            case sourceAware: WorkspaceState.IsSourceAware =>
-              // Can provide code completion.
-              sourceAware
-          }
+          getWorkspaceSourceAwareOrThrow()
 
         val completionResult =
           CodeCompleter.complete(
@@ -340,7 +334,65 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         cancelChecker.checkCanceled()
 
-        messages.Either.forRight[util.List[CompletionItem], CompletionList](completionList)
+        messages.Either.forRight(completionList)
+    }
+
+  /** @inheritdoc */
+  override def definition(params: DefinitionParams): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =
+    runAsync {
+      cancelChecker =>
+        val fileURI = new URI(params.getTextDocument.getUri)
+        val line = params.getPosition.getLine
+        val character = params.getPosition.getCharacter
+
+        cancelChecker.checkCanceled()
+
+        val sourceAware =
+          getWorkspaceSourceAwareOrThrow()
+
+        val RALPH_LSP_HOME =
+          System.getProperty(RalphLangServer.RALPH_LSP_HOME)
+
+        val dependencyDir =
+          if (RALPH_LSP_HOME == null)
+            throw ResponseError.StringInternalError(s"Missing JVM argument `${RalphLangServer.RALPH_LSP_HOME}`").toResponseErrorException
+          else
+            Paths.get(RALPH_LSP_HOME)
+
+        val completionResult =
+          GoToDefinition.goTo(
+            line = line,
+            character = character,
+            fileURI = fileURI,
+            dependencyDir = dependencyDir,
+            workspace = sourceAware
+          )
+
+        val locations =
+          completionResult match {
+            case Some(Right(uris)) =>
+              // successful
+              uris map {
+                uri =>
+                  new Location(
+                    uri.toString,
+                    new Range(new Position(0, 0), new Position(0, 0))
+                  )
+              }
+
+            case Some(Left(error)) =>
+              // Go-to definition failed: Log the error message
+              logger.error("Go-to definition failed: " + error.message)
+              ArraySeq.empty[Location]
+
+            case None =>
+              // Not a ralph file or it does not belong to the workspace's contract-uri directory.
+              ArraySeq.empty[Location]
+          }
+
+        cancelChecker.checkCanceled()
+
+        messages.Either.forLeft(util.Arrays.asList(locations: _*))
     }
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
@@ -410,6 +462,22 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       logger.error(error.getMessage, exception)
       throw exception
     }
+
+  private def getWorkspaceSourceAwareOrThrow(): WorkspaceState.IsSourceAware = {
+    val currentPCState =
+      getPCState()
+
+    currentPCState.workspace match {
+      case _: WorkspaceState.Created =>
+        // Workspace must be compiled at least once to enable code completion.
+        // The server must've invoked the initial compilation in the boot-up initialize function.
+        notifyAndThrow(ResponseError.WorkspaceNotCompiled)
+
+      case sourceAware: WorkspaceState.IsSourceAware =>
+        // Can provide code completion.
+        sourceAware
+    }
+  }
 
   private def setPCState(pcState: PCState): Unit =
     runSync {
