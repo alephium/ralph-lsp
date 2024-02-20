@@ -4,6 +4,16 @@ Language server for Ralph.
 
 Currently supports text document level events and diagnostics.
 
+# Install VSCode plugin
+
+Follow these steps:
+
+1. Download: Get the `.vsix` plugin file from the [latest release](https://github.com/alephium/ralph-lsp/releases).
+2. Install:
+    - Open Visual Studio Code.
+    - Go to Extensions > Views and More Actions > Install from VSIX...
+    - Select the downloaded `.vsix` file and click "Install".
+
 # Build the JAR
 
 ```shell
