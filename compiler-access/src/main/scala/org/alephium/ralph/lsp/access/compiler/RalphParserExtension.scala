@@ -3,11 +3,10 @@ package org.alephium.ralph.lsp.access.compiler
 import fastparse._
 import org.alephium.ralph.StatefulParser.{rawContract, rawInterface, rawTxScript, whitespace}
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
-import org.alephium.ralph.lsp.access.compiler.ast.Tree.StringLiteral
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 
 /** Functions that extend ralphc's default parser */
-private object RalphParserExtension {
+object RalphParserExtension {
 
   /**
    * An extension to Ralphc's parse function [[org.alephium.ralph.StatefulParser.multiContract]]
@@ -18,7 +17,7 @@ private object RalphParserExtension {
       case (fromIndex, statements, toIndex) =>
         val index =
           SourceIndex(
-            index = fromIndex,
+            from = fromIndex,
             width = toIndex - fromIndex
           )
 
@@ -26,6 +25,16 @@ private object RalphParserExtension {
           statements = statements,
           index = index
         )
+    }
+
+  /** Parse an import identifier ignoring errors */
+  def lazyParseImportIdentifier(identifier: String): Option[Tree.Import] =
+    fastparse.parse(s"import \"$identifier\"", importStatement(_)) match {
+      case Parsed.Success(tree, _) =>
+        Some(tree)
+
+      case _: Parsed.Failure =>
+        None
     }
 
   /** A statement can be an import or ralphc's contract */
@@ -38,12 +47,12 @@ private object RalphParserExtension {
       case (fromIndex, stringLiteral, toIndex) =>
         val importIndex =
           SourceIndex(
-            index = fromIndex,
+            from = fromIndex,
             width = toIndex - fromIndex
           )
 
         val importPath =
-          parsePath(stringLiteral)
+          parsePath(stringLiteral.name)
 
         Tree.Import(
           string = stringLiteral,
@@ -57,21 +66,21 @@ private object RalphParserExtension {
    *
    * On error, ignore parse.
    *
-   * @param stringLiteral The String literal to parse.
+   * @param name The String value to parse.
    */
-  private def parsePath(stringLiteral: StringLiteral): Option[Tree.Path] =
-    fastparse.parse(stringLiteral.name.value, importPaths(_)) match {
+  private def parsePath(name: Tree.Name): Option[Tree.ImportPath] =
+    fastparse.parse(name.value, importPaths(_)) match {
       case Parsed.Success((packagePath, filePath), _) =>
         // the above parse occurs on a string value, add the offset such
         // that the indexes are set according to the entire source-code.
         val offsetIndex =
-          stringLiteral.name.index.index
+          name.index.from
 
         val path =
-          Tree.Path(
+          Tree.ImportPath(
             folder = packagePath.copy(index = packagePath.index + offsetIndex),
             file = filePath.copy(index = filePath.index + offsetIndex),
-            index = stringLiteral.name.index
+            index = name.index
           )
 
         Some(path)
@@ -86,13 +95,13 @@ private object RalphParserExtension {
       case (fromPackageIndex, packageName, toPackageIndex, fromFileNameIndex, fileName, toFileNameIndex) =>
         val packageIndex =
           SourceIndex(
-            index = fromPackageIndex,
+            from = fromPackageIndex,
             width = toPackageIndex - fromPackageIndex
           )
 
         val fileIndex =
           SourceIndex(
-            index = fromFileNameIndex,
+            from = fromFileNameIndex,
             width = toFileNameIndex - fromFileNameIndex
           )
 
@@ -124,7 +133,7 @@ private object RalphParserExtension {
       case (fromIndex, code, toIndex) =>
         val index =
           SourceIndex(
-            index = fromIndex,
+            from = fromIndex,
             width = toIndex - fromIndex
           )
 
@@ -147,20 +156,24 @@ private object RalphParserExtension {
       case (fromIndex, nameFromIndex, string, nameToIndex, toIndex) =>
         val index =
           SourceIndex(
-            index = fromIndex,
+            from = fromIndex,
             width = toIndex - fromIndex
           )
 
+        val value =
+          string getOrElse ""
+
         val name =
           Tree.Name(
-            value = string getOrElse "",
+            value = value,
             index = SourceIndex(
-              index = nameFromIndex,
+              from = nameFromIndex,
               width = nameToIndex - nameFromIndex
             )
           )
 
         Tree.StringLiteral(
+          value = s"\"$value\"",
           name = name,
           index = index
         )

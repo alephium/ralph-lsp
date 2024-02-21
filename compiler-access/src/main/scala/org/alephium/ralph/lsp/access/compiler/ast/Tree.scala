@@ -28,19 +28,25 @@ object Tree {
    * @param index  Index of the full import statement.
    */
   case class Import(string: StringLiteral,
-                    path: Option[Path],
+                    path: Option[ImportPath],
                     index: SourceIndex) extends Statement
 
-  case class Path(folder: Name,
-                  file: Name,
-                  index: SourceIndex) extends Tree
+  case class ImportPath(folder: Name,
+                        file: Name,
+                        index: SourceIndex) extends Tree
 
   case class Source(ast: Ast.ContractWithState,
                     index: SourceIndex) extends Statement
 
   sealed trait Literal extends Tree
 
-  case class StringLiteral(name: Name,
+  /**
+   * @param value The string value with quotes.
+   * @param name  The string value without quotes.
+   * @param index [[SourceIndex]] of the string with quotes.
+   */
+  case class StringLiteral(value: String,
+                           name: Name,
                            index: SourceIndex) extends Literal
 
   case class Name(value: String,

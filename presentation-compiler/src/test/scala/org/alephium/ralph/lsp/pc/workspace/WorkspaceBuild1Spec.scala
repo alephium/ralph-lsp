@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode
 import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildSyntax}
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild}
 import org.scalacheck.Gen
 import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
@@ -176,7 +176,10 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
               // expect the build to be compiled
               val expectedBuild =
-                TestBuild.toCompiled(build)
+                Build.compile(
+                  parsed = build,
+                  currentBuild = None
+                ).asInstanceOf[BuildState.BuildCompiled]
 
               // expect the workspace to be in un-compiled state, containing all source-code
               val expectedWorkspace =

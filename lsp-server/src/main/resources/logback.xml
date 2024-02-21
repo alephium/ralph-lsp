@@ -5,13 +5,13 @@
               value="%-63(%date{ISO8601} [%.13thread]) %-5level %-50(%logger{20}) - %msg%n"/>
 
     <appender name="LOGFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${RALPH_LSP_HOME:-${user.home}/.ralph-lsp}/logs/ralph-lsp.log</file>
+        <file>${RALPH_LSP_LOG_HOME:-${user.home}/.ralph-lsp}/logs/ralph-lsp.log</file>
         <append>true</append>
         <encoder>
             <pattern>${filePattern}</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <fileNamePattern>${RALPH_LSP_HOME:-${user.home}/.ralph-lsp}/logs/ralph-lsp.%i.log</fileNamePattern>
+            <fileNamePattern>${RALPH_LSP_LOG_HOME:-${user.home}/.ralph-lsp}/logs/ralph-lsp.%i.log</fileNamePattern>
             <minIndex>1</minIndex>
             <maxIndex>10</maxIndex>
         </rollingPolicy>

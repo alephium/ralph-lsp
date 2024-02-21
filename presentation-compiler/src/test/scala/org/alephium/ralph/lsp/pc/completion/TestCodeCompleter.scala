@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.pc.completion
 
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
@@ -11,6 +12,8 @@ import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
 import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, Workspace, WorkspaceState}
 import org.scalacheck.Gen
 import org.scalatest.Assertions.fail
+import org.scalatest.EitherValues._
+import org.scalatest.OptionValues._
 
 import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
@@ -55,7 +58,7 @@ object TestCodeCompleter {
         // delete the workspace
         TestWorkspace delete workspace
 
-        completion
+        completion.value
 
       case None =>
         fail(s"Completion location indicator '$completion_indicator' not provided")
@@ -72,7 +75,7 @@ object TestCodeCompleter {
    */
   private def apply(line: Int,
                     character: Int,
-                    code: Gen[String]): (ArraySeq[Suggestion], WorkspaceState.IsParsedAndCompiled) = {
+                    code: Gen[String]): (Either[CompilerMessage.Error, ArraySeq[Suggestion]], WorkspaceState.IsParsedAndCompiled) = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess = FileAccess.disk
     implicit val compiler: CompilerAccess = CompilerAccess.ralphc
@@ -114,10 +117,10 @@ object TestCodeCompleter {
       CodeCompleter.complete(
         line = line,
         character = character,
-        uri = sourceCode.fileURI,
+        fileURI = sourceCode.fileURI,
         workspace = compiledWorkspace
       )
 
-    (completionResult, compiledWorkspace)
+    (completionResult.value, compiledWorkspace)
   }
 }

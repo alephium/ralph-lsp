@@ -146,31 +146,32 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
         val expectedAST = {
           val my_package = "my_package"
           val my_file = "my_file"
-          val my_package_file = "my_package/my_file"
+          val my_package_file = s"$my_package/$my_file"
           val my_package_file_quoted = s""""$my_package_file""""
           val import_statement = s"""import $my_package_file_quoted"""
 
           Tree.Import(
             string =
               Tree.StringLiteral(
+                value = my_package_file_quoted,
                 name =
                   Tree.Name(
                     value = my_package_file,
                     index =
                       SourceIndex(
-                        index = myCode.code.lastIndexOf(my_package_file),
+                        from = myCode.code.lastIndexOf(my_package_file),
                         width = my_package_file.length
                       )
                   ),
                 index =
                   SourceIndex(
-                    index = myCode.code.lastIndexOf(my_package_file_quoted),
+                    from = myCode.code.lastIndexOf(my_package_file_quoted),
                     width = my_package_file_quoted.length
                   )
               ),
             path =
               Some(
-                Tree.Path(
+                Tree.ImportPath(
                   folder = Tree.Name(my_package, SourceIndex(myCode.code.lastIndexOf(my_package), my_package.length)),
                   file = Tree.Name(my_file, SourceIndex(myCode.code.lastIndexOf(my_file), my_file.length)),
                   index = SourceIndex(myCode.code.lastIndexOf(my_package_file), my_package_file.length)
@@ -178,7 +179,7 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
               ),
             index =
               SourceIndex(
-                index = myCode.code.lastIndexOf(import_statement),
+                from = myCode.code.lastIndexOf(import_statement),
                 width = import_statement.length
               )
           )

@@ -31,10 +31,12 @@ object TestRalphc {
       compilerOptions <- compilerOptions
       contractsFolderName <- genName
       artifactsFolderName <- genName
+      dependenciesFolderName <- genName
     } yield
       RalphcParsedConfig(
         compilerOptions = compilerOptions,
         contractPath = contractsFolderName,
-        artifactPath = artifactsFolderName
+        artifactPath = artifactsFolderName,
+        dependencyPath = dependenciesFolderName
       )
 }

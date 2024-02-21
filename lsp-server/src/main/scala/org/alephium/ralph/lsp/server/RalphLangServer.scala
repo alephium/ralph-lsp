@@ -2,7 +2,8 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.completion.CodeCompleter
+import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
+import org.alephium.ralph.lsp.pc.gotodef.GoToDefinition
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.pc.state.{PCState, PCStateDiagnostics}
 import org.alephium.ralph.lsp.pc.workspace._
@@ -13,7 +14,7 @@ import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter}
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.{CompletableFutures, messages}
+import org.eclipse.lsp4j.jsonrpc.{CancelChecker, CompletableFutures, messages}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
@@ -68,6 +69,7 @@ object RalphLangServer {
 
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
     capabilities.setCompletionProvider(new CompletionOptions(false, util.Arrays.asList(".")))
+    capabilities.setDefinitionProvider(true)
 
     capabilities
   }
@@ -133,7 +135,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   /** @inheritdoc */
   override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] =
-    CompletableFutures.computeAsync {
+    runAsync {
       cancelChecker =>
         logger.debug("Initialize request")
         // Previous commit uses the non-deprecated API but that does not work in vim.
@@ -160,10 +162,6 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         cancelChecker.checkCanceled()
 
         new InitializeResult(serverCapabilities())
-    } whenComplete {
-      (_, error) =>
-        if (error != null)
-          logger.error("Failed to initialize server", error)
     }
 
   /** @inheritdoc */
@@ -292,7 +290,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   /** @inheritdoc */
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
-    CompletableFutures.computeAsync {
+    runAsync {
       cancelChecker =>
         val fileURI = new URI(params.getTextDocument.getUri)
         val line = params.getPosition.getLine
@@ -300,35 +298,100 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         cancelChecker.checkCanceled()
 
-        val currentPCState =
-          getPCState()
+        getPCState().workspace match {
+          case sourceAware: WorkspaceState.IsSourceAware =>
+            val completionResult =
+              CodeCompleter.complete(
+                line = line,
+                character = character,
+                fileURI = fileURI,
+                workspace = sourceAware
+              )
 
-        val sourceAware =
-          currentPCState.workspace match {
-            case _: WorkspaceState.Created =>
-              // Workspace must be compiled at least once to enable code completion.
-              // The server must've invoked the initial compilation in the boot-up initialize function.
-              notifyAndThrow(ResponseError.WorkspaceNotCompiled)
+            val suggestions =
+              completionResult match {
+                case Some(Right(suggestions)) =>
+                  // completion successful
+                  suggestions
 
-            case sourceAware: WorkspaceState.IsSourceAware =>
-              // Can provide code completion.
-              sourceAware
-          }
+                case Some(Left(error)) =>
+                  // Completion failed: Log the error message
+                  logger.error("Code completion failed: " + error.message)
+                  ArraySeq.empty[Suggestion]
 
-        val suggestions =
-          CodeCompleter.complete(
-            line = line,
-            character = character,
-            uri = fileURI,
-            workspace = sourceAware
-          )
+                case None =>
+                  // Not a ralph file or it does not belong to the workspace's contract-uri directory.
+                  ArraySeq.empty[Suggestion]
+              }
 
-        val completionList =
-          CompletionConverter.toCompletionList(suggestions)
+            val completionList =
+              CompletionConverter.toCompletionList(suggestions)
+
+            cancelChecker.checkCanceled()
+
+            messages.Either.forRight(completionList)
+
+          case _: WorkspaceState.Created =>
+            // Workspace must be compiled at least once to enable code completion.
+            // The server must've invoked the initial compilation in the boot-up initialize function.
+            logger.info("Code completion unsuccessful: Workspace is not compiled")
+            messages.Either.forLeft(util.Arrays.asList())
+        }
+    }
+
+  /** @inheritdoc */
+  override def definition(params: DefinitionParams): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =
+    runAsync {
+      cancelChecker =>
+        val fileURI = new URI(params.getTextDocument.getUri)
+        val line = params.getPosition.getLine
+        val character = params.getPosition.getCharacter
 
         cancelChecker.checkCanceled()
 
-        messages.Either.forRight[util.List[CompletionItem], CompletionList](completionList)
+        getPCState().workspace match {
+          case sourceAware: WorkspaceState.IsSourceAware =>
+            // Can provide GoTo definition.
+            val goToResult =
+              GoToDefinition.goTo(
+                line = line,
+                character = character,
+                fileURI = fileURI,
+                workspace = sourceAware
+              )
+
+            val locations =
+              goToResult match {
+                case Some(Right(uris)) =>
+                  // successful
+                  uris map {
+                    uri =>
+                      new Location(
+                        uri.toString,
+                        new Range(new Position(0, 0), new Position(0, 0))
+                      )
+                  }
+
+                case Some(Left(error)) =>
+                  // Go-to definition failed: Log the error message
+                  logger.error("Go-to definition failed: " + error.message)
+                  ArraySeq.empty[Location]
+
+                case None =>
+                  // Not a ralph file or it does not belong to the workspace's contract-uri directory.
+                  ArraySeq.empty[Location]
+              }
+
+            cancelChecker.checkCanceled()
+
+            messages.Either.forLeft(util.Arrays.asList(locations: _*))
+
+          case _: WorkspaceState.Created =>
+            // Workspace must be compiled at least once to enable GoTo definition.
+            // The server must've invoked the initial compilation in the boot-up initialize function.
+            logger.info("Go-to definition unsuccessful: Workspace is not compiled")
+            messages.Either.forLeft(util.Arrays.asList())
+        }
     }
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
@@ -512,6 +575,15 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         throw throwable
     }
+
+  private def runAsync[A](f: CancelChecker => A): CompletableFuture[A] =
+    CompletableFutures
+      .computeAsync(f(_))
+      .whenComplete {
+        (_, error) =>
+          if (error != null)
+            logger.error("Async request failed", error)
+      }
 
   /** @inheritdoc */
   override def setTrace(params: SetTraceParams): Unit =

@@ -1,11 +1,12 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.{Dependency, DependencyDB}
 
 import java.net.URI
 import java.nio.file.{Path, Paths}
@@ -92,9 +93,15 @@ object Build {
           )
 
         // parse successful. Perform compilation!
-        BuildValidator
-          .validate(parsed)
-          .getOrElse(compileDependency())
+        val compilationResult =
+          BuildValidator
+            .validate(parsed)
+            .getOrElse(compileDependency())
+
+        DependencyDB.persist(
+          parentBuild = compilationResult,
+          index = getDependantPathIndex(parsed)
+        )
     }
 
   /** Parse and compile from disk */
@@ -102,7 +109,7 @@ object Build {
                       currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
                                                                    compiler: CompilerAccess,
                                                                    logger: ClientLogger): BuildState.IsCompiled =
-    file.exists(buildURI) match {
+    file.exists(buildURI, SourceIndex.empty) match {
       case Left(error) =>
         BuildErrored(
           buildURI = buildURI,
@@ -216,11 +223,43 @@ object Build {
    *
    * @return A 3-tuple `(workspacePath, absoluteContractPath, absoluteArtifactPath)`
    */
-  def getAbsolutePaths(parsed: BuildParsed): (Path, Path, Path) = {
+  def getAbsolutePaths(parsed: BuildParsed): (Path, Path, Path, Path) = {
     val workspacePath = Paths.get(parsed.workspaceURI)
     val absoluteContractPath = workspacePath.resolve(Paths.get(parsed.config.contractPath).normalize)
     val absoluteArtifactPath = workspacePath.resolve(Paths.get(parsed.config.artifactPath).normalize)
-    (workspacePath, absoluteContractPath, absoluteArtifactPath)
+    val absoluteDependenciesPath = workspacePath.resolve(Paths.get(parsed.config.dependencyPath).normalize)
+    (workspacePath, absoluteContractPath, absoluteArtifactPath, absoluteDependenciesPath)
+  }
+
+  def getPathIndexes(parsed: BuildParsed): (SourceIndex, SourceIndex, SourceIndex) = {
+    val contractPath = parsed.config.contractPath
+    val artifactPath = parsed.config.artifactPath
+
+    val contractPathIndex =
+      SourceIndex.ensurePositive(
+        index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+        width = contractPath.length
+      )
+
+    val artifactPathIndex =
+      SourceIndex.ensurePositive(
+        index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+        width = artifactPath.length
+      )
+
+    val dependencyPathIndex =
+      getDependantPathIndex(parsed)
+
+    (contractPathIndex, artifactPathIndex, dependencyPathIndex)
+  }
+
+  def getDependantPathIndex(parsed: BuildParsed): SourceIndex = {
+    val dependencyPath = parsed.config.dependencyPath
+
+    SourceIndex.ensurePositive(
+      index = parsed.code.lastIndexOf(dependencyPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+      width = dependencyPath.length
+    )
   }
 
 }

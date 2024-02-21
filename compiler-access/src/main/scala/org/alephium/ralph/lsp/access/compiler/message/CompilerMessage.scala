@@ -30,7 +30,7 @@ object CompilerMessage {
 
     final def index: SourceIndex =
       SourceIndex(
-        index = error.position,
+        from = error.position,
         width = error.foundLength
       )
   }
