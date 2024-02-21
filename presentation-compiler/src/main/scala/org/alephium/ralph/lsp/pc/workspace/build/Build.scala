@@ -5,7 +5,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.{Dependency, DependencyDB}
 
 import java.net.URI
 import java.nio.file.{Path, Paths}
@@ -92,9 +92,12 @@ object Build {
           )
 
         // parse successful. Perform compilation!
-        BuildValidator
-          .validate(parsed)
-          .getOrElse(compileDependency())
+        val compilationResult =
+          BuildValidator
+            .validate(parsed)
+            .getOrElse(compileDependency())
+
+        DependencyDB.persist(compilationResult)
     }
 
   /** Parse and compile from disk */

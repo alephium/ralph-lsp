@@ -1,13 +1,13 @@
 package org.alephium.ralph.lsp.access.file
 
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error._
-import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.util.TryUtil
 import org.alephium.ralphc.{Compiler => RalphC}
 
 import java.net.URI
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
 import scala.io.Source
 import scala.util.{Failure, Success, Using}
 
@@ -57,5 +57,16 @@ private object DiskFileAccess extends FileAccess {
       case Success(code) =>
         Right(code)
     }
+
+  override def write(fileURI: URI,
+                     string: String): Either[CompilerMessage.AnyError, Path] =
+    try {
+      //convert URI to Path
+      val filePath = Paths.get(fileURI)
+      // ensure directories exists
+      Files.createDirectories(filePath.getParent)
+      val createdFile = Files.writeString(Paths.get(fileURI), string)
+      Right(createdFile)
+    } catch TryUtil.catchAllThrows
 
 }

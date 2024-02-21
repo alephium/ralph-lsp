@@ -4,6 +4,7 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage.AnyError
 
 import java.net.URI
+import java.nio.file.Path
 
 object FileAccess {
   // disk file-io
@@ -36,5 +37,9 @@ trait FileAccess {
    * @param fileURI source-code location.
    */
   def read(fileURI: URI): Either[CompilerMessage.AnyError, String]
+
+  /** Write string to the given file URI. */
+  def write(fileURI: URI,
+            string: String): Either[CompilerMessage.AnyError, Path]
 
 }
