@@ -4,13 +4,13 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, WorkspaceState}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
+import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, WorkspaceState}
 import org.alephium.ralphc.Config
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
 import org.scalatest.TryValues.convertTryToSuccessOrFailure
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import java.net.URI
 import java.nio.file.{Files, Paths}
@@ -66,8 +66,10 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
 
     val compiledStd =
       Dependency
-        .downloadAndCompileStd(parsed = parsedBuild)
-        .asInstanceOf[BuildState.BuildCompiled]
+        .downloadAndCompileStd(
+          parsed = parsedBuild,
+          absoluteDependenciesPath = workspacePath.resolve(config.dependencyPath)
+        ).asInstanceOf[BuildState.BuildCompiled]
 
     compiledStd.dependency shouldBe defined
 

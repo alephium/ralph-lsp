@@ -4,11 +4,11 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 import org.alephium.ralphc.Config
 
+import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 
 object Dependency {
@@ -20,22 +20,29 @@ object Dependency {
    * @param currentBuild Current compiled build.
    * @return
    */
-  def compile(parsed: BuildParsed,
+  def compile(parsed: BuildState.BuildParsed,
               currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
                                                            compiler: CompilerAccess,
-                                                           logger: ClientLogger): BuildState.IsCompiled =
+                                                           logger: ClientLogger): BuildState.IsCompiled = {
+    val (_, _, _, absoluteDependenciesPath) =
+      Build.getAbsolutePaths(parsed)
+
     currentBuild.flatMap(_.dependency) match {
-      case Some(dependency) =>
+      case Some(dependency) if absoluteDependenciesPath == dependency.build.dependencyPath =>
         // Existing build already has compiled dependency. Re-use it.
         toBuildState(
           parentWorkspaceBuild = parsed,
           dependencyResult = dependency
         )
 
-      case None =>
+      case _ =>
         // Existing code requires a dependency build.
-        downloadAndCompileStd(parsed)
+        downloadAndCompileStd(
+          parsed = parsed,
+          absoluteDependenciesPath = absoluteDependenciesPath
+        )
     }
+  }
 
   /**
    * Download and compile standard/std dependency for a parsed Build [[BuildState.BuildParsed]].
@@ -45,10 +52,14 @@ object Dependency {
    *         the parent workspace. If there are errors, they will be in
    *         the field [[BuildState.BuildErrored.dependency]] as a regular workspace errors.
    */
-  def downloadAndCompileStd(parsed: BuildParsed)(implicit file: FileAccess,
-                                                 compiler: CompilerAccess,
-                                                 logger: ClientLogger): BuildState.IsCompiled =
-    DependencyDownloader.downloadStd(errorIndex = SourceIndex.empty) match { // download std
+  def downloadAndCompileStd(parsed: BuildState.BuildParsed,
+                            absoluteDependenciesPath: Path)(implicit file: FileAccess,
+                                                            compiler: CompilerAccess,
+                                                            logger: ClientLogger): BuildState.IsCompiled =
+    DependencyDownloader.downloadStd(
+      dependencyPath = absoluteDependenciesPath,
+      errorIndex = SourceIndex.empty
+    ) match { // download std
       case Left(errors) =>
         // report all download errors at build file level.
         BuildState.BuildErrored(
