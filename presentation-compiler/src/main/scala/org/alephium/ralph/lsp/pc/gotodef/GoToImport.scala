@@ -30,7 +30,7 @@ object GoToImport {
     importStatement.path match {
       case Some(importPath) =>
         if (importPath.folder.index contains cursorIndex) // check: is the cursor on a folder
-          dependency // return all files that are with the folder
+          dependency // return all files that are within the folder
             .sourceCode
             .filter(_.importIdentifier.exists(_.path.exists(_.folder.value == importPath.folder.value)))
         else if (importPath.file.index contains cursorIndex) // check: is the cursor for a file

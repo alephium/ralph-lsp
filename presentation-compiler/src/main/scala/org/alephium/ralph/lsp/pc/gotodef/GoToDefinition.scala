@@ -59,7 +59,7 @@ object GoToDefinition extends StrictImplicitLogging {
       case Some(statement) =>
         statement match {
           case importStatement: Tree.Import =>
-            // request is for import statement completion
+            // request is for import go-to definition
             GoToImport.goTo(
               cursorIndex = cursorIndex,
               dependency = workspace.build.dependency,
@@ -67,11 +67,10 @@ object GoToDefinition extends StrictImplicitLogging {
             )
 
           case _: Tree.Source =>
-            ArraySeq.empty // TODO: Provide source level completion.
+            ArraySeq.empty // TODO: Provide source level go-to definition.
         }
 
       case None =>
-        // TODO: Provide top level completion.
         ArraySeq.empty
     }
   }
