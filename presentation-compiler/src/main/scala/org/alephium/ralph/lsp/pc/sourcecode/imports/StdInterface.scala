@@ -5,6 +5,7 @@ import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDownloadingDependency
 
+import java.io.File
 import java.net.URI
 import java.nio.file.{FileSystems, Files, Path, Paths}
 import scala.io.Source
@@ -32,7 +33,7 @@ object StdInterface extends StrictImplicitLogging {
   def stdInterfaces(dependencyPath: Path,
                     errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ErrorDownloadingDependency, List[SourceCodeState.UnCompiled]] =
     Using.Manager { use =>
-      val stdURL = getClass.getResource(s"/$stdFolder")
+      val stdURL = getClass.getResource(s"${File.separatorChar}$stdFolder")
 
       val stdPath = if (stdURL.getProtocol == "file") {
         Paths.get(stdURL.toURI)
