@@ -82,7 +82,7 @@ object Dependency {
                            dependencyResult: WorkspaceState.IsParsedAndCompiled): BuildState.IsCompiled =
     dependencyResult match {
       case compiledStd: WorkspaceState.Compiled => // Dependency compiled OK. Convert the build state to compiled.
-        val (_, absoluteContractPath, absoluteArtifactPath) =
+        val (_, absoluteContractPath, absoluteArtifactPath, absoluteDependenciesPath) =
           Build.getAbsolutePaths(parentWorkspaceBuild)
 
         val config =
@@ -97,6 +97,7 @@ object Dependency {
           buildURI = parentWorkspaceBuild.buildURI,
           code = parentWorkspaceBuild.code,
           dependency = Some(compiledStd), // store the compiled dependency in the build.
+          dependencyPath = absoluteDependenciesPath,
           config = config
         )
 

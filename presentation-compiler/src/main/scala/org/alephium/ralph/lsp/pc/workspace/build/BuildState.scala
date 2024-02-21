@@ -5,7 +5,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.{RalphcCompiledCon
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 import java.net.URI
-import java.nio.file.Paths
+import java.nio.file.{Path, Paths}
 import scala.collection.immutable.ArraySeq
 
 sealed trait BuildState {
@@ -34,6 +34,7 @@ object BuildState {
   case class BuildCompiled(buildURI: URI,
                            code: String,
                            dependency: Option[WorkspaceState.Compiled],
+                           dependencyPath: Path,
                            config: RalphcCompiledConfig) extends BuildState.IsCompiled {
     def contractURI: URI =
       config.contractPath.toUri

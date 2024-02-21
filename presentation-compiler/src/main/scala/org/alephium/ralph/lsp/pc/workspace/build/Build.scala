@@ -216,11 +216,12 @@ object Build {
    *
    * @return A 3-tuple `(workspacePath, absoluteContractPath, absoluteArtifactPath)`
    */
-  def getAbsolutePaths(parsed: BuildParsed): (Path, Path, Path) = {
+  def getAbsolutePaths(parsed: BuildParsed): (Path, Path, Path, Path) = {
     val workspacePath = Paths.get(parsed.workspaceURI)
     val absoluteContractPath = workspacePath.resolve(Paths.get(parsed.config.contractPath).normalize)
     val absoluteArtifactPath = workspacePath.resolve(Paths.get(parsed.config.artifactPath).normalize)
-    (workspacePath, absoluteContractPath, absoluteArtifactPath)
+    val absoluteDependenciesPath = workspacePath.resolve(Paths.get(parsed.config.dependencyPath).normalize)
+    (workspacePath, absoluteContractPath, absoluteArtifactPath, absoluteDependenciesPath)
   }
 
 }

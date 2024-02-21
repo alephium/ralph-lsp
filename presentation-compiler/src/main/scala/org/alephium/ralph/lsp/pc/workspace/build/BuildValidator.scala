@@ -39,7 +39,7 @@ object BuildValidator {
     val artifactPath = parsed.config.artifactPath
 
     // absolute source paths
-    val (workspacePath, absoluteContractPath, absoluteArtifactPath) =
+    val (workspacePath, absoluteContractPath, absoluteArtifactPath, _) =
       Build.getAbsolutePaths(parsed)
 
     val errors =
@@ -88,9 +88,10 @@ object BuildValidator {
   private def validatePathsExists(parsed: BuildParsed)(implicit file: FileAccess): Option[BuildState.BuildErrored] = {
     val contractPath = parsed.config.contractPath
     val artifactPath = parsed.config.artifactPath
+    val dependencyPath = parsed.config.dependencyPath
 
     // absolute source paths
-    val (_, absoluteContractPath, absoluteArtifactPath) =
+    val (_, absoluteContractPath, absoluteArtifactPath, absoluteDependenciesPath) =
       Build.getAbsolutePaths(parsed)
 
     // do these paths exists with the workspace directory?
@@ -98,10 +99,11 @@ object BuildValidator {
       for {
         contractExists <- file.exists(absoluteContractPath.toUri)
         artifactsExists <- file.exists(absoluteArtifactPath.toUri)
-      } yield (contractExists, artifactsExists)
+        dependenciesExists <- file.exists(absoluteDependenciesPath.toUri)
+      } yield (contractExists, artifactsExists, dependenciesExists)
 
     compileResult match {
-      case Right((contractExists, artifactsExists)) =>
+      case Right((contractExists, artifactsExists, dependenciesExists)) =>
         val errors =
           ListBuffer.empty[CompilerMessage.AnyError]
 
@@ -126,6 +128,18 @@ object BuildValidator {
                 SourceIndex.ensurePositive(
                   index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
                   width = artifactPath.length
+                )
+            )
+
+        // check if dependencies path exists
+        if (!dependenciesExists)
+          errors addOne
+            ErrorDirectoryDoesNotExists(
+              dirPath = dependencyPath,
+              index =
+                SourceIndex.ensurePositive(
+                  index = parsed.code.lastIndexOf(dependencyPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+                  width = dependencyPath.length
                 )
             )
 

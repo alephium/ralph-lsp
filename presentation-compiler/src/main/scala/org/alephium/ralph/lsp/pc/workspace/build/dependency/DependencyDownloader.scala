@@ -95,8 +95,9 @@ object DependencyDownloader extends StrictImplicitLogging {
     BuildState.BuildCompiled(
       buildURI = buildDir.toUri,
       code = json,
-      config = compiledConfig,
-      dependency = None
+      dependency = None,
+      dependencyPath = workspaceDir,
+      config = compiledConfig
     )
   }
 }

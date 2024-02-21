@@ -105,6 +105,8 @@ object TestBuild {
       code = build.code,
       dependency =
         Some(TestDependency.buildStd().dependency.value), // standard dependency must be defined
+      dependencyPath =
+        Paths.get(build.workspaceURI.resolve(build.config.dependencyPath)),
       config =
         org.alephium.ralphc.Config( // compiler configuration must use the paths from the build file
           compilerOptions = build.config.compilerOptions,
@@ -118,6 +120,7 @@ object TestBuild {
     TestFile.write(parsed.buildURI, parsed.code)
     TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.contractPath))
     TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.artifactPath))
+    TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.dependencyPath))
     parsed
   }
 
@@ -125,6 +128,7 @@ object TestBuild {
     TestFile.write(compiled.buildURI, compiled.code)
     TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.config.contractPath.toUri))
     TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.config.artifactPath.toUri))
+    TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.dependencyPath.toUri))
     compiled
   }
 
