@@ -8,7 +8,6 @@ import org.alephium.ralph.lsp.pc.util.StringUtil
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 
 import java.net.URI
-import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 
 object GoToDefinition extends StrictImplicitLogging {
@@ -26,7 +25,6 @@ object GoToDefinition extends StrictImplicitLogging {
   def goTo(line: Int,
            character: Int,
            fileURI: URI,
-           dependencyDir: Path,
            workspace: WorkspaceState.IsSourceAware): Option[Either[CompilerMessage.Error, ArraySeq[URI]]] =
     Workspace.findParsed(
       fileURI = fileURI,
@@ -38,7 +36,6 @@ object GoToDefinition extends StrictImplicitLogging {
             goTo(
               line = line,
               character = character,
-              dependencyDir = dependencyDir,
               workspace = workspace,
               sourceCode = parsed
             )
@@ -47,7 +44,6 @@ object GoToDefinition extends StrictImplicitLogging {
 
   private def goTo(line: Int,
                    character: Int,
-                   dependencyDir: Path,
                    workspace: WorkspaceState.IsSourceAware,
                    sourceCode: SourceCodeState.Parsed): ArraySeq[URI] = {
     // fetch the requested index from line number and character number.
@@ -66,7 +62,6 @@ object GoToDefinition extends StrictImplicitLogging {
             // request is for import statement completion
             GoToImport.goTo(
               cursorIndex = cursorIndex,
-              dependencyDir = dependencyDir,
               dependency = workspace.build.dependency,
               importStatement = importStatement
             )

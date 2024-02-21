@@ -20,10 +20,10 @@ function build_args(release: boolean) {
     let args: string[];
 
     if (release) {
-        args = ["-jar", `-DRALPH_LSP_HOME=${dirName}`, jarPath]; // arguments for plugin release
+        args = ["-jar", jarPath]; // arguments for plugin release
     } else {
         const logsPath = path.resolve(dirName, "../../"); // path for logs
-        args = ["-jar", `-DRALPH_LSP_HOME=${dirName}`, `-DRALPH_LSP_LOG_HOME=${logsPath}`, jarPath]; // arguments for local development
+        args = ["-jar", `-DRALPH_LSP_LOG_HOME=${logsPath}`, jarPath]; // arguments for local development
     }
 
     return args;

@@ -5,20 +5,17 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 import java.net.URI
-import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 
 object GoToImport {
 
   def goTo(cursorIndex: Int,
-           dependencyDir: Path,
            dependency: Option[WorkspaceState.Compiled],
            importStatement: Tree.Import): ArraySeq[URI] =
     dependency match {
       case Some(dependency) =>
         goTo(
           cursorIndex = cursorIndex,
-          dependencyDir = dependencyDir,
           dependency = dependency,
           importStatement = importStatement
         ).map(_.fileURI)
@@ -28,7 +25,6 @@ object GoToImport {
     }
 
   private def goTo(cursorIndex: Int,
-                   dependencyDir: Path,
                    dependency: WorkspaceState.Compiled,
                    importStatement: Tree.Import): ArraySeq[SourceCodeState.Compiled] =
     importStatement.path match {

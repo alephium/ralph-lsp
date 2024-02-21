@@ -18,16 +18,12 @@ import org.eclipse.lsp4j.jsonrpc.{CancelChecker, CompletableFutures, messages}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
-import java.nio.file.Paths
 import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.IterableHasAsScala
 
 object RalphLangServer {
-
-  val RALPH_LSP_HOME: String =
-    "RALPH_LSP_HOME"
 
   /** Start server with pre-configured client */
   def apply(client: RalphLangClient,
@@ -350,21 +346,11 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         val sourceAware =
           getWorkspaceSourceAwareOrThrow()
 
-        val RALPH_LSP_HOME =
-          System.getProperty(RalphLangServer.RALPH_LSP_HOME)
-
-        val dependencyDir =
-          if (RALPH_LSP_HOME == null)
-            throw ResponseError.StringInternalError(s"Missing JVM argument `${RalphLangServer.RALPH_LSP_HOME}`").toResponseErrorException
-          else
-            Paths.get(RALPH_LSP_HOME)
-
         val goToResult =
           GoToDefinition.goTo(
             line = line,
             character = character,
             fileURI = fileURI,
-            dependencyDir = dependencyDir,
             workspace = sourceAware
           )
 
