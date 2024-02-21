@@ -80,7 +80,8 @@ You can use the following sample as reference:
     "ignoreCheckExternalCallerWarnings": false
   },
   "contractPath": "contracts",
-  "artifactPath": "artifacts"
+  "artifactPath": "artifacts",
+  "dependencyPath": "dependencies"
 }
 ```
 

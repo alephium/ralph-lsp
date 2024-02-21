@@ -389,7 +389,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           case _: WorkspaceState.Created =>
             // Workspace must be compiled at least once to enable GoTo definition.
             // The server must've invoked the initial compilation in the boot-up initialize function.
-            logger.info("GoTo definition unsuccessful: Workspace is not compiled")
+            logger.info("Go-to definition unsuccessful: Workspace is not compiled")
             messages.Either.forLeft(util.Arrays.asList())
         }
     }
