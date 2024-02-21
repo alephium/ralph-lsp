@@ -298,39 +298,45 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         cancelChecker.checkCanceled()
 
-        val sourceAware =
-          getWorkspaceSourceAwareOrThrow()
+        getPCState().workspace match {
+          case sourceAware: WorkspaceState.IsSourceAware =>
+            val completionResult =
+              CodeCompleter.complete(
+                line = line,
+                character = character,
+                fileURI = fileURI,
+                workspace = sourceAware
+              )
 
-        val completionResult =
-          CodeCompleter.complete(
-            line = line,
-            character = character,
-            fileURI = fileURI,
-            workspace = sourceAware
-          )
+            val suggestions =
+              completionResult match {
+                case Some(Right(suggestions)) =>
+                  // completion successful
+                  suggestions
 
-        val suggestions =
-          completionResult match {
-            case Some(Right(suggestions)) =>
-              // completion successful
-              suggestions
+                case Some(Left(error)) =>
+                  // Completion failed: Log the error message
+                  logger.error("Code completion failed: " + error.message)
+                  ArraySeq.empty[Suggestion]
 
-            case Some(Left(error)) =>
-              // Completion failed: Log the error message
-              logger.error("Code completion failed: " + error.message)
-              ArraySeq.empty[Suggestion]
+                case None =>
+                  // Not a ralph file or it does not belong to the workspace's contract-uri directory.
+                  ArraySeq.empty[Suggestion]
+              }
 
-            case None =>
-              // Not a ralph file or it does not belong to the workspace's contract-uri directory.
-              ArraySeq.empty[Suggestion]
-          }
+            val completionList =
+              CompletionConverter.toCompletionList(suggestions)
 
-        val completionList =
-          CompletionConverter.toCompletionList(suggestions)
+            cancelChecker.checkCanceled()
 
-        cancelChecker.checkCanceled()
+            messages.Either.forRight(completionList)
 
-        messages.Either.forRight(completionList)
+          case _: WorkspaceState.Created =>
+            // Workspace must be compiled at least once to enable code completion.
+            // The server must've invoked the initial compilation in the boot-up initialize function.
+            logger.info("Code completion unsuccessful: Workspace is not compiled")
+            messages.Either.forLeft(util.Arrays.asList())
+        }
     }
 
   /** @inheritdoc */
@@ -343,42 +349,49 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         cancelChecker.checkCanceled()
 
-        val sourceAware =
-          getWorkspaceSourceAwareOrThrow()
+        getPCState().workspace match {
+          case sourceAware: WorkspaceState.IsSourceAware =>
+            // Can provide GoTo definition.
+            val goToResult =
+              GoToDefinition.goTo(
+                line = line,
+                character = character,
+                fileURI = fileURI,
+                workspace = sourceAware
+              )
 
-        val goToResult =
-          GoToDefinition.goTo(
-            line = line,
-            character = character,
-            fileURI = fileURI,
-            workspace = sourceAware
-          )
+            val locations =
+              goToResult match {
+                case Some(Right(uris)) =>
+                  // successful
+                  uris map {
+                    uri =>
+                      new Location(
+                        uri.toString,
+                        new Range(new Position(0, 0), new Position(0, 0))
+                      )
+                  }
 
-        val locations =
-          goToResult match {
-            case Some(Right(uris)) =>
-              // successful
-              uris map {
-                uri =>
-                  new Location(
-                    uri.toString,
-                    new Range(new Position(0, 0), new Position(0, 0))
-                  )
+                case Some(Left(error)) =>
+                  // Go-to definition failed: Log the error message
+                  logger.error("Go-to definition failed: " + error.message)
+                  ArraySeq.empty[Location]
+
+                case None =>
+                  // Not a ralph file or it does not belong to the workspace's contract-uri directory.
+                  ArraySeq.empty[Location]
               }
 
-            case Some(Left(error)) =>
-              // Go-to definition failed: Log the error message
-              logger.error("Go-to definition failed: " + error.message)
-              ArraySeq.empty[Location]
+            cancelChecker.checkCanceled()
 
-            case None =>
-              // Not a ralph file or it does not belong to the workspace's contract-uri directory.
-              ArraySeq.empty[Location]
-          }
+            messages.Either.forLeft(util.Arrays.asList(locations: _*))
 
-        cancelChecker.checkCanceled()
-
-        messages.Either.forLeft(util.Arrays.asList(locations: _*))
+          case _: WorkspaceState.Created =>
+            // Workspace must be compiled at least once to enable GoTo definition.
+            // The server must've invoked the initial compilation in the boot-up initialize function.
+            logger.info("GoTo definition unsuccessful: Workspace is not compiled")
+            messages.Either.forLeft(util.Arrays.asList())
+        }
     }
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
@@ -448,22 +461,6 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       logger.error(error.getMessage, exception)
       throw exception
     }
-
-  private def getWorkspaceSourceAwareOrThrow(): WorkspaceState.IsSourceAware = {
-    val currentPCState =
-      getPCState()
-
-    currentPCState.workspace match {
-      case _: WorkspaceState.Created =>
-        // Workspace must be compiled at least once to enable code completion.
-        // The server must've invoked the initial compilation in the boot-up initialize function.
-        notifyAndThrow(ResponseError.WorkspaceNotCompiled)
-
-      case sourceAware: WorkspaceState.IsSourceAware =>
-        // Can provide code completion.
-        sourceAware
-    }
-  }
 
   private def setPCState(pcState: PCState): Unit =
     runSync {
