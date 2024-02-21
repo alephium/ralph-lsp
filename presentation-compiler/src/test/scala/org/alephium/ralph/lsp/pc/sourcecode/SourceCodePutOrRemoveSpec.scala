@@ -94,7 +94,7 @@ class SourceCodePutOrRemoveSpec extends AnyWordSpec with Matchers with MockFacto
 
         // return an error accessing disk
         (file.exists _)
-          .expects(onDisk.fileURI)
+          .expects(onDisk.fileURI, *)
           .returns(Left(ioError))
 
         // insert

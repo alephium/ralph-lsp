@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build.dependency
 
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
@@ -16,14 +16,15 @@ object DependencyDB extends StrictImplicitLogging {
    * @param parentBuild Build of the parent workspace.
    * @return Compiled compiled or build errors.
    */
-  def persist(parentBuild: BuildState.IsCompiled)(implicit file: FileAccess,
-                                                  logger: ClientLogger): BuildState.IsCompiled =
+  def persist(parentBuild: BuildState.IsCompiled,
+              index: SourceIndex)(implicit file: FileAccess,
+                                  logger: ClientLogger): BuildState.IsCompiled =
     parentBuild match {
       case build: BuildState.BuildCompiled =>
         val result =
           build
             .dependency
-            .map(_.sourceCode map persist)
+            .map(_.sourceCode.map(persistSource(_, index)))
 
         result match {
           case Some(result) =>
@@ -49,9 +50,13 @@ object DependencyDB extends StrictImplicitLogging {
         errored
     }
 
-  private def persist(source: SourceCodeState.Compiled)(implicit file: FileAccess,
-                                                        logger: ClientLogger): Either[CompilerMessage.AnyError, Path] =
-    file.exists(source.fileURI) flatMap {
+  private def persistSource(source: SourceCodeState.Compiled,
+                            index: SourceIndex)(implicit file: FileAccess,
+                                                logger: ClientLogger): Either[CompilerMessage.AnyError, Path] =
+    file.exists(
+      fileURI = source.fileURI,
+      index = index
+    ) flatMap {
       exists =>
         if (!exists) {
           logger.trace(s"Writing dependency code. URI: ${source.fileURI}")

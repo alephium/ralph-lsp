@@ -1,10 +1,10 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
+import org.alephium.ralph.lsp.pc.workspace.build.error._
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -42,6 +42,9 @@ object BuildValidator {
     val (workspacePath, absoluteContractPath, absoluteArtifactPath, _) =
       Build.getAbsolutePaths(parsed)
 
+    val (contractPathIndex, artifactPathIndex, _) =
+      Build.getPathIndexes(parsed)
+
     val errors =
       ListBuffer.empty[CompilerMessage.AnyError]
 
@@ -50,11 +53,7 @@ object BuildValidator {
       errors addOne
         ErrorDirectoryOutsideWorkspace(
           dirPath = contractPath,
-          index =
-            SourceIndex.ensurePositive(
-              index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-              width = contractPath.length
-            )
+          index = contractPathIndex
         )
 
     // Validate: is the artifact path within the workspace
@@ -62,11 +61,7 @@ object BuildValidator {
       errors addOne
         ErrorDirectoryDoesNotExists(
           dirPath = artifactPath,
-          index =
-            SourceIndex.ensurePositive(
-              index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-              width = artifactPath.length
-            )
+          index = artifactPathIndex
         )
 
     // Check if errors exists
@@ -94,12 +89,15 @@ object BuildValidator {
     val (_, absoluteContractPath, absoluteArtifactPath, absoluteDependenciesPath) =
       Build.getAbsolutePaths(parsed)
 
+    val (contractPathIndex, artifactPathIndex, dependencyPathIndex) =
+      Build.getPathIndexes(parsed)
+
     // do these paths exists with the workspace directory?
     val compileResult =
       for {
-        contractExists <- file.exists(absoluteContractPath.toUri)
-        artifactsExists <- file.exists(absoluteArtifactPath.toUri)
-        dependenciesExists <- file.exists(absoluteDependenciesPath.toUri)
+        contractExists <- file.exists(absoluteContractPath.toUri, contractPathIndex)
+        artifactsExists <- file.exists(absoluteArtifactPath.toUri, artifactPathIndex)
+        dependenciesExists <- file.exists(absoluteDependenciesPath.toUri, dependencyPathIndex)
       } yield (contractExists, artifactsExists, dependenciesExists)
 
     compileResult match {
@@ -112,11 +110,7 @@ object BuildValidator {
           errors addOne
             ErrorDirectoryDoesNotExists(
               dirPath = contractPath,
-              index =
-                SourceIndex.ensurePositive(
-                  index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-                  width = contractPath.length
-                )
+              index = contractPathIndex
             )
 
         // check if artifact path exists
@@ -124,11 +118,7 @@ object BuildValidator {
           errors addOne
             ErrorDirectoryDoesNotExists(
               dirPath = artifactPath,
-              index =
-                SourceIndex.ensurePositive(
-                  index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-                  width = artifactPath.length
-                )
+              index = artifactPathIndex
             )
 
         // check if dependencies path exists
@@ -136,11 +126,7 @@ object BuildValidator {
           errors addOne
             ErrorDirectoryDoesNotExists(
               dirPath = dependencyPath,
-              index =
-                SourceIndex.ensurePositive(
-                  index = parsed.code.lastIndexOf(dependencyPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-                  width = dependencyPath.length
-                )
+              index = dependencyPathIndex
             )
 
         // check if errors exists

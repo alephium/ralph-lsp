@@ -1,7 +1,6 @@
 package org.alephium.ralph.lsp.access.file
 
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage.AnyError
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 
 import java.net.URI
 import java.nio.file.Path
@@ -22,7 +21,8 @@ trait FileAccess {
    *
    * @param fileURI source-file location
    */
-  def exists(fileURI: URI): Either[AnyError, Boolean]
+  def exists(fileURI: URI,
+             index: SourceIndex): Either[CompilerMessage.AnyError, Boolean]
 
   /**
    * Fetch all workspace source file locations.
