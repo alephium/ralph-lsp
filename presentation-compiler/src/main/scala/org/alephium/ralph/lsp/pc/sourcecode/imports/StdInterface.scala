@@ -1,14 +1,17 @@
 package org.alephium.ralph.lsp.pc.sourcecode.imports
 
-import com.typesafe.scalalogging.StrictLogging
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
+import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDownloadingDependency
 
 import java.net.URI
 import java.nio.file.{FileSystems, Files, Path, Paths}
-import scala.collection.JavaConverters._
 import scala.io.Source
+import scala.jdk.CollectionConverters.{IteratorHasAsScala, MapHasAsJava}
 import scala.util.{Failure, Success, Using}
 
-object StdInterface extends StrictLogging {
+object StdInterface extends StrictImplicitLogging {
 
   val stdFolder = "std"
 
@@ -26,7 +29,8 @@ object StdInterface extends StrictLogging {
    * We rely here on `Using` https://www.scala-lang.org/api/2.13.6/scala/util/Using$.html
    * to handle resources.
    */
-  def stdInterfaces(dependencyPath: Path): Map[Path, String] =
+  def stdInterfaces(dependencyPath: Path,
+                    errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ErrorDownloadingDependency, List[SourceCodeState.UnCompiled]] =
     Using.Manager { use =>
       val stdURL = getClass.getResource(s"/$stdFolder")
 
@@ -43,15 +47,25 @@ object StdInterface extends StrictLogging {
       interfaceFiles.map { file =>
         val code = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines.mkString("\n")
         val filePath = dependencyPath.resolve(Paths.get(stdFolder).resolve(file.getFileName.toString))
-        (filePath, code)
-      }.toMap
+        SourceCodeState.UnCompiled(
+          fileURI = filePath.toUri,
+          code = code
+        )
+      }
     } match {
-      case Success(value) => value
-      case Failure(error) =>
-        logger.error("Cannot get std interfaces", error)
-        // FIXME: Temporary solution for https://github.com/alephium/ralph-lsp/issues/41.
-        //        This will be properly resolved in https://github.com/alephium/ralph-lsp/issues/63.
-        //        We should NOT throw exceptions.
-        throw error
+      case Success(map) =>
+        Right(map)
+
+      case Failure(throwable) =>
+        val error =
+          ErrorDownloadingDependency(
+            dependencyID = StdInterface.stdFolder,
+            throwable = throwable,
+            index = errorIndex
+          )
+
+        logger.error(error.title, throwable)
+
+        Left(error)
     }
 }

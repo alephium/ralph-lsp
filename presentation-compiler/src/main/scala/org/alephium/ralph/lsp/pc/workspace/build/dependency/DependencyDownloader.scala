@@ -3,10 +3,8 @@ package org.alephium.ralph.lsp.pc.workspace.build.dependency
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
-import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDownloadingDependency
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, RalphcConfig}
 
 import java.nio.file.Path
@@ -21,7 +19,7 @@ object DependencyDownloader extends StrictImplicitLogging {
    */
   def downloadStd(dependencyPath: Path,
                   errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
-    downloadStdFromJar(
+    StdInterface.stdInterfaces(
       dependencyPath = dependencyPath,
       errorIndex = errorIndex
     ) match {
@@ -40,40 +38,6 @@ object DependencyDownloader extends StrictImplicitLogging {
 
       case Left(error) =>
         Left(ArraySeq(error))
-    }
-
-  /**
-   * Download std code from local jar file.
-   *
-   * TODO: Downloading source-code should be installable.
-   * See issue <a href="https://github.com/alephium/ralph-lsp/issues/44">#44</a>.
-   */
-  private def downloadStdFromJar(dependencyPath: Path,
-                                 errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ErrorDownloadingDependency, Iterable[SourceCodeState.UnCompiled]] =
-    try {
-      // Errors must be reported to the user. See https://github.com/alephium/ralph-lsp/issues/41.
-      val code =
-        StdInterface.stdInterfaces(dependencyPath) map {
-          case (path, code) =>
-            SourceCodeState.UnCompiled(
-              fileURI = path.toUri,
-              code = code
-            )
-        }
-
-      Right(code)
-    } catch {
-      case throwable: Throwable =>
-        val error =
-          ErrorDownloadingDependency(
-            dependencyID = StdInterface.stdFolder,
-            throwable = throwable,
-            index = errorIndex
-          )
-
-        logger.error(error.title, throwable)
-
-        Left(error)
     }
 
   /**
