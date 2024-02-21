@@ -1,9 +1,10 @@
 package org.alephium.ralph.lsp.access.file
 
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage.AnyError
+import org.alephium.ralph.lsp.access.compiler.message.error.ThrowableError
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 
 import java.net.URI
+import java.nio.file.Path
 
 object FileAccess {
   // disk file-io
@@ -21,7 +22,8 @@ trait FileAccess {
    *
    * @param fileURI source-file location
    */
-  def exists(fileURI: URI): Either[AnyError, Boolean]
+  def exists(fileURI: URI,
+             index: SourceIndex): Either[CompilerMessage.AnyError, Boolean]
 
   /**
    * Fetch all workspace source file locations.
@@ -36,5 +38,10 @@ trait FileAccess {
    * @param fileURI source-code location.
    */
   def read(fileURI: URI): Either[CompilerMessage.AnyError, String]
+
+  /** Write string to the given file URI. */
+  def write(fileURI: URI,
+            string: String,
+            index: SourceIndex): Either[ThrowableError, Path]
 
 }

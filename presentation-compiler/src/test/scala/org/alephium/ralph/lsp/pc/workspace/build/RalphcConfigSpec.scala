@@ -5,11 +5,12 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
+import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, WorkspaceState}
 import org.alephium.ralphc.Config
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
 import org.scalatest.TryValues.convertTryToSuccessOrFailure
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import java.net.URI
 import java.nio.file.{Files, Paths}
@@ -25,6 +26,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
     val workspacePath = Files.createTempDirectory("root_workspace")
     Files.createDirectory(workspacePath.resolve(config.contractPath))
     Files.createDirectory(workspacePath.resolve(config.artifactPath))
+    Files.createDirectory(workspacePath.resolve(config.dependencyPath))
     // Persist the default config to the workspace
     val expectedBuildPath = workspacePath.resolve(Build.BUILD_FILE_NAME)
     val actualBuildPath = RalphcConfig.persist(workspacePath, config).success.value
@@ -64,18 +66,26 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
 
     val compiledStd =
       Dependency
-        .downloadAndCompileStd(parsed = parsedBuild)
-        .asInstanceOf[BuildState.BuildCompiled]
+        .downloadAndCompileStd(
+          parsed = parsedBuild,
+          absoluteDependenciesPath = workspacePath.resolve(config.dependencyPath)
+        ).asInstanceOf[BuildState.BuildCompiled]
 
     compiledStd.dependency shouldBe defined
+
+    val expectedDependenciesPath =
+      Paths.get(workspacePath.resolve(config.dependencyPath).toUri)
 
     readConfig shouldBe
       BuildState.BuildCompiled(
         buildURI = expectedBuildPath.toUri,
         code = expectedCode,
         dependency = compiledStd.dependency,
+        dependencyPath = expectedDependenciesPath,
         config = expectedCompiledConfig
       )
+
+    TestWorkspace delete WorkspaceState.Created(workspacePath.toUri)
   }
 
   "parse" should {
@@ -92,7 +102,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
           |    "ignoreCheckExternalCallerWarnings": false
           |  },
           |  "contractPath": "contracts",
-          |  "artifactPath": "artifacts"
+          |  "artifactPath": "artifacts",
+          |  "dependencyPath": "dependencies"
           |}
           |""".stripMargin
 

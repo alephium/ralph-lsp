@@ -27,14 +27,16 @@ object RalphcConfig {
 
   case class RalphcParsedConfig(compilerOptions: CompilerOptions,
                                 contractPath: String,
-                                artifactPath: String)
+                                artifactPath: String,
+                                dependencyPath: String)
 
   /** Default parsed config */
   val defaultParsedConfig: RalphcParsedConfig =
     RalphcParsedConfig(
       compilerOptions = CompilerOptions.Default,
       contractPath = "contracts",
-      artifactPath = "artifacts"
+      artifactPath = "artifacts",
+      dependencyPath = "dependencies"
     )
 
   def parse(buildURI: URI,

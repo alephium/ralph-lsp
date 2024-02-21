@@ -12,8 +12,13 @@ import java.net.URI
 sealed trait SourceCodeState {
   def fileURI: URI
 
-  /** @see [[URIUtil.importIdentifier]] */
-  def importIdentifier: Option[Tree.Import] =
+  /**
+   * Lazily initialise import statements for all files.
+   *
+   * Can be concurrently accessed or not accessed at all.
+   *
+   * @see [[URIUtil.importIdentifier]] */
+  lazy val importIdentifier: Option[Tree.Import] =
     URIUtil
       .importIdentifier(fileURI)
       .flatMap(RalphParserExtension.lazyParseImportIdentifier)

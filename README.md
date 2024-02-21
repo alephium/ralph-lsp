@@ -51,7 +51,7 @@ local function ralph_init()
 
    vim.lsp.start({
      name = 'ralph-lsp',
-     cmd = {'java', '-jar', '-DRALPH_LSP_HOME=<path-to-your-log-folder>', '<path-to-your-jar>/ralph-lsp.jar'},
+     cmd = {'java', '-jar', '-DRALPH_LSP_LOG_HOME=<path-to-your-log-folder>', '<path-to-your-jar>/ralph-lsp.jar'},
      root_dir = root_dir,
      capabilities = capabilities
    })
@@ -80,7 +80,8 @@ You can use the following sample as reference:
     "ignoreCheckExternalCallerWarnings": false
   },
   "contractPath": "contracts",
-  "artifactPath": "artifacts"
+  "artifactPath": "artifacts",
+  "dependencyPath": "dependencies"
 }
 ```
 

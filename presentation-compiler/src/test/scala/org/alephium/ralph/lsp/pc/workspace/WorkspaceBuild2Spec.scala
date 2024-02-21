@@ -5,7 +5,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild}
 import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -24,6 +24,12 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
   "Build function 2: Building from a WorkspaceFile" should {
     "not access disk" when {
       "build code is provided" in {
+        implicit val file: FileAccess =
+          FileAccess.disk
+
+        implicit val compiler: CompilerAccess =
+          CompilerAccess.ralphc
+
         val build =
           TestBuild
             .genParsed()
@@ -31,17 +37,17 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
             .sample
             .get
 
+        val compiledBuild =
+          Build.compile(
+            parsed = build,
+            currentBuild = None
+          ).asInstanceOf[BuildState.BuildCompiled]
+
         val workspace =
           WorkspaceState.Created(build.workspaceURI)
 
         // Test that a workspace is initialised as un-compiled.
         def doTest(workspaceFile: WorkspaceFile) = {
-          implicit val file: FileAccess =
-            FileAccess.disk
-
-          implicit val compiler: CompilerAccess =
-            CompilerAccess.ralphc
-
           // execute build
           val actualWorkspace =
             Workspace.build(
@@ -51,7 +57,7 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
           val expectedWorkspace =
             WorkspaceState.UnCompiled(
-              build = TestBuild.toCompiled(build),
+              build = compiledBuild,
               sourceCode = ArraySeq.empty // workspace is empty with no source code
             )
 
@@ -108,12 +114,24 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
     "access disk" when {
       "build code is not provided" in {
+        implicit val file: FileAccess =
+          FileAccess.disk
+
+        implicit val compiler: CompilerAccess =
+          CompilerAccess.ralphc
+
         val build =
           TestBuild
             .genParsed()
             .map(TestBuild.persist)
             .sample
             .get
+
+        val compiledBuild =
+          Build.compile(
+            parsed = build,
+            currentBuild = None
+          ).asInstanceOf[BuildState.BuildCompiled]
 
         val workspace =
           WorkspaceState.Created(build.workspaceURI)
@@ -133,12 +151,6 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
         workspaceFile foreach {
           workspaceFile =>
-            implicit val file: FileAccess =
-              FileAccess.disk
-
-            implicit val compiler: CompilerAccess =
-              CompilerAccess.ralphc
-
             // execute build.
             val actualWorkspace =
               Workspace.build(
@@ -149,7 +161,7 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
             // workspace is successfully initialised.
             val expectedWorkspace =
               WorkspaceState.UnCompiled(
-                build = TestBuild.toCompiled(build),
+                build = compiledBuild,
                 sourceCode = ArraySeq.empty // workspace is empty with no source code
               )
 
