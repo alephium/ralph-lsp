@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.access.file
 
+import org.alephium.ralph.lsp.access.compiler.message.error.ThrowableError
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 
 import java.net.URI
@@ -40,6 +41,7 @@ trait FileAccess {
 
   /** Write string to the given file URI. */
   def write(fileURI: URI,
-            string: String): Either[CompilerMessage.AnyError, Path]
+            string: String,
+            index: SourceIndex): Either[ThrowableError, Path]
 
 }

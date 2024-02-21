@@ -61,7 +61,8 @@ private object DiskFileAccess extends FileAccess {
     }
 
   override def write(fileURI: URI,
-                     string: String): Either[CompilerMessage.AnyError, Path] =
+                     string: String,
+                     index: SourceIndex): Either[ThrowableError, Path] =
     try {
       //convert URI to Path
       val filePath = Paths.get(fileURI)
@@ -69,6 +70,16 @@ private object DiskFileAccess extends FileAccess {
       Files.createDirectories(filePath.getParent)
       val createdFile = Files.writeString(Paths.get(fileURI), string)
       Right(createdFile)
-    } catch TryUtil.catchAllThrows
+    } catch {
+      case throwable: Throwable =>
+        val error =
+          ThrowableError(
+            title = s"Failed to write file '$fileURI'",
+            throwable = throwable,
+            index = index
+          )
+
+        Left(error)
+    }
 
 }

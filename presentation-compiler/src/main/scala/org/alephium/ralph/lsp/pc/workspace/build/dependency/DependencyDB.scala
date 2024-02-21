@@ -62,7 +62,8 @@ object DependencyDB extends StrictImplicitLogging {
           logger.trace(s"Writing dependency code. URI: ${source.fileURI}")
           file.write(
             fileURI = source.fileURI,
-            string = source.code
+            string = source.code,
+            index = index
           )
         } else {
           logger.trace(s"Dependency code already exists. URI: ${source.fileURI}")
