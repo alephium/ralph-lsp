@@ -21,34 +21,43 @@ object DependencyDB extends StrictImplicitLogging {
                                   logger: ClientLogger): BuildState.IsCompiled =
     parentBuild match {
       case build: BuildState.BuildCompiled =>
-        val result =
-          build
-            .dependency
-            .map(_.sourceCode.map(persistSource(_, index)))
-
-        result match {
-          case Some(result) =>
-            val (errors, _) =
-              result partitionMap identity
-
-            if (errors.nonEmpty)
-              BuildState.BuildErrored(
-                buildURI = build.buildURI,
-                code = Some(build.code),
-                errors = errors,
-                dependency = None,
-                activateWorkspace = None
-              )
-            else
-              build
-
-          case None =>
-            build
-        }
+        persistCompiled(
+          build = build,
+          index = index
+        )
 
       case errored: BuildState.BuildErrored =>
         errored
     }
+
+  private def persistCompiled(build: BuildState.BuildCompiled,
+                              index: SourceIndex)(implicit file: FileAccess,
+                                                  logger: ClientLogger): BuildState.IsCompiled = {
+    val result =
+      build
+        .dependency
+        .map(_.sourceCode.map(persistSource(_, index)))
+
+    result match {
+      case Some(result) =>
+        val (errors, _) =
+          result partitionMap identity
+
+        if (errors.nonEmpty)
+          BuildState.BuildErrored(
+            buildURI = build.buildURI,
+            code = Some(build.code),
+            errors = errors,
+            dependency = None,
+            activateWorkspace = None
+          )
+        else
+          build
+
+      case None =>
+        build
+    }
+  }
 
   private def persistSource(source: SourceCodeState.Compiled,
                             index: SourceIndex)(implicit file: FileAccess,
