@@ -4,12 +4,15 @@ import org.alephium.ralph.lsp.access.compiler.message.error.ThrowableError
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 
 import java.net.URI
-import java.nio.file.Path
+import java.nio.file.{Path, Paths}
 
 object FileAccess {
   // disk file-io
   def disk: FileAccess =
     DiskFileAccess
+
+  def USER_HOME: Option[Path] =
+    Option(Paths.get(System.getProperty("user.home")))
 }
 
 /**
