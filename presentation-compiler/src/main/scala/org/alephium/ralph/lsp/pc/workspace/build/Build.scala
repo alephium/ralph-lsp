@@ -275,7 +275,7 @@ object Build {
     (contractPathIndex, artifactPathIndex, dependencyPathIndex)
   }
 
-  /** @return Index of the `dependencyPath` if it is configured, or the index of the last closing brace. */
+  /** @return Index of the `dependencyPath` if configured, or-else the index of the last closing brace. */
   def getDependantPathIndex(parsed: BuildParsed): SourceIndex = {
     // if dependencyPath is None use the index of the last closing brace "}" to report errors
     val errorIndexToken =

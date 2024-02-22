@@ -91,7 +91,8 @@ object BuildValidator {
           file.exists(absoluteDependenciesPath.toUri, dependencyPathIndex)
 
         case None =>
-          // user did not define dependencies. Mark it as exists, the dependency manager will try to write to default path.
+          // User did not define dependencies.
+          // Mark it as exists here, which defers the default dependencyPath validation and its persistence to the dependency compiler.
           Right(true)
       }
 
