@@ -3,8 +3,8 @@ package org.alephium.ralph.lsp.pc.workspace.build
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
-import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
 import org.alephium.ralph.lsp.pc.workspace.build.Build.toBuildPath
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
 
 import java.net.URI
 import java.nio.charset.StandardCharsets
@@ -28,7 +28,7 @@ object RalphcConfig {
   case class RalphcParsedConfig(compilerOptions: CompilerOptions,
                                 contractPath: String,
                                 artifactPath: String,
-                                dependencyPath: String)
+                                dependencyPath: Option[String] = None)
 
   /** Default parsed config */
   val defaultParsedConfig: RalphcParsedConfig =
@@ -36,7 +36,7 @@ object RalphcConfig {
       compilerOptions = CompilerOptions.Default,
       contractPath = "contracts",
       artifactPath = "artifacts",
-      dependencyPath = "dependencies"
+      dependencyPath = None
     )
 
   def parse(buildURI: URI,

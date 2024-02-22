@@ -11,6 +11,12 @@ object PicklerUtil {
   implicit val pathReader: ReadWriter[Path] =
     readwriter[String].bimap(_.toString, Paths.get(_))
 
+  implicit val optionStringReader: ReadWriter[Option[String]] =
+    readwriter[String].bimap(
+      value => value.orNull,
+      string => Option(string)
+    )
+
   implicit val compilerOptionsReaderWriter: ReadWriter[CompilerOptions] =
     macroRW
 

@@ -4,6 +4,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDefaultDependencyDirectoryDoesNotExists
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 import org.alephium.ralphc.Config
@@ -12,6 +13,11 @@ import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 
 object Dependency {
+
+  def defaultPath(): Option[Path] =
+    FileAccess
+      .USER_HOME
+      .map(_.resolve(".ralph-lsp").resolve("dependencies"))
 
   /**
    * Compile this build's dependency.
@@ -24,22 +30,46 @@ object Dependency {
               currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
                                                            compiler: CompilerAccess,
                                                            logger: ClientLogger): BuildState.IsCompiled = {
-    val (_, _, _, absoluteDependenciesPath) =
-      Build.getAbsolutePaths(parsed)
+    val absoluteDependenciesPath =
+      Build
+        .getAbsoluteDependenciesPath(parsed)
+        .orElse(defaultPath())
 
-    currentBuild.flatMap(_.dependency) match {
-      case Some(dependency) if absoluteDependenciesPath == dependency.build.dependencyPath =>
-        // Existing build already has compiled dependency. Re-use it.
-        toBuildState(
-          parentWorkspaceBuild = parsed,
-          dependencyResult = dependency
-        )
+    absoluteDependenciesPath match {
+      case Some(absoluteDependenciesPath) =>
+        currentBuild.flatMap(_.dependency) match {
+          case Some(dependency) if absoluteDependenciesPath == dependency.build.dependencyPath =>
+            // Existing build already has compiled dependency and dependencyPath is unchanged. Re-use the dependency.
+            toBuildState(
+              parentWorkspaceBuild = parsed,
+              dependencyResult = dependency,
+              absoluteDependenciesPath = absoluteDependenciesPath
+            )
 
-      case _ =>
-        // Existing code requires a dependency build.
-        downloadAndCompileStd(
-          parsed = parsed,
-          absoluteDependenciesPath = absoluteDependenciesPath
+          case _ =>
+            // Existing code requires a dependency build.
+            downloadAndCompileStd(
+              parsed = parsed,
+              absoluteDependenciesPath = absoluteDependenciesPath
+            )
+        }
+
+      case None =>
+        val error =
+          ErrorDefaultDependencyDirectoryDoesNotExists(
+            SourceIndex(
+              // since the user did not configure a dependencyPath, report this error at the last closing brace of the build file.
+              from = parsed.code.lastIndexOf("}"),
+              width = 1
+            )
+          )
+
+        BuildState.BuildErrored(
+          buildURI = parsed.buildURI,
+          code = Some(parsed.code),
+          errors = ArraySeq(error),
+          dependency = None,
+          activateWorkspace = None
         )
     }
   }
@@ -52,10 +82,10 @@ object Dependency {
    *         the parent workspace. If there are errors, they will be in
    *         the field [[BuildState.BuildErrored.dependency]] as a regular workspace errors.
    */
-  def downloadAndCompileStd(parsed: BuildState.BuildParsed,
-                            absoluteDependenciesPath: Path)(implicit file: FileAccess,
-                                                            compiler: CompilerAccess,
-                                                            logger: ClientLogger): BuildState.IsCompiled =
+  private def downloadAndCompileStd(parsed: BuildState.BuildParsed,
+                                    absoluteDependenciesPath: Path)(implicit file: FileAccess,
+                                                                    compiler: CompilerAccess,
+                                                                    logger: ClientLogger): BuildState.IsCompiled =
     DependencyDownloader.downloadStd(
       dependencyPath = absoluteDependenciesPath,
       errorIndex = SourceIndex.empty
@@ -78,7 +108,8 @@ object Dependency {
         // store it within a compiled build-state
         toBuildState(
           parentWorkspaceBuild = parsed,
-          dependencyResult = dependencyStdCompiled
+          dependencyResult = dependencyStdCompiled,
+          absoluteDependenciesPath = absoluteDependenciesPath
         )
     }
 
@@ -90,11 +121,12 @@ object Dependency {
    * @return A compiled result.
    */
   private def toBuildState(parentWorkspaceBuild: BuildState.BuildParsed,
-                           dependencyResult: WorkspaceState.IsParsedAndCompiled): BuildState.IsCompiled =
+                           dependencyResult: WorkspaceState.IsParsedAndCompiled,
+                           absoluteDependenciesPath: Path): BuildState.IsCompiled =
     dependencyResult match {
       case compiledStd: WorkspaceState.Compiled => // Dependency compiled OK. Convert the build state to compiled.
-        val (_, absoluteContractPath, absoluteArtifactPath, absoluteDependenciesPath) =
-          Build.getAbsolutePaths(parentWorkspaceBuild)
+        val (absoluteContractPath, absoluteArtifactPath) =
+          Build.getAbsoluteContractArtifactPaths(parentWorkspaceBuild)
 
         val config =
           Config(

@@ -35,9 +35,6 @@ object BuildValidator {
 
   /** Validate that the configured paths are within the workspace directory */
   private def validatePathsInWorkspace(parsed: BuildParsed): Option[BuildState.BuildErrored] = {
-    val contractPath = parsed.config.contractPath
-    val artifactPath = parsed.config.artifactPath
-
     // absolute source paths
     val (workspacePath, absoluteContractPath, absoluteArtifactPath, _) =
       Build.getAbsolutePaths(parsed)
@@ -52,7 +49,7 @@ object BuildValidator {
     if (!URIUtil.contains(workspacePath, absoluteContractPath))
       errors addOne
         ErrorDirectoryOutsideWorkspace(
-          dirPath = contractPath,
+          dirPath = parsed.config.contractPath,
           index = contractPathIndex
         )
 
@@ -60,7 +57,7 @@ object BuildValidator {
     if (!URIUtil.contains(workspacePath, absoluteArtifactPath))
       errors addOne
         ErrorDirectoryDoesNotExists(
-          dirPath = artifactPath,
+          dirPath = parsed.config.artifactPath,
           index = artifactPathIndex
         )
 
@@ -81,10 +78,6 @@ object BuildValidator {
 
   /** Validate that the configured paths exist within the workspace directory */
   private def validatePathsExists(parsed: BuildParsed)(implicit file: FileAccess): Option[BuildState.BuildErrored] = {
-    val contractPath = parsed.config.contractPath
-    val artifactPath = parsed.config.artifactPath
-    val dependencyPath = parsed.config.dependencyPath
-
     // absolute source paths
     val (_, absoluteContractPath, absoluteArtifactPath, absoluteDependenciesPath) =
       Build.getAbsolutePaths(parsed)
@@ -92,12 +85,22 @@ object BuildValidator {
     val (contractPathIndex, artifactPathIndex, dependencyPathIndex) =
       Build.getPathIndexes(parsed)
 
+    def dependenciesExists() =
+      absoluteDependenciesPath match {
+        case Some(absoluteDependenciesPath) =>
+          file.exists(absoluteDependenciesPath.toUri, dependencyPathIndex)
+
+        case None =>
+          // user did not define dependencies. Mark it as exists, the dependency manager will try to write to default path.
+          Right(true)
+      }
+
     // do these paths exists with the workspace directory?
     val compileResult =
       for {
         contractExists <- file.exists(absoluteContractPath.toUri, contractPathIndex)
         artifactsExists <- file.exists(absoluteArtifactPath.toUri, artifactPathIndex)
-        dependenciesExists <- file.exists(absoluteDependenciesPath.toUri, dependencyPathIndex)
+        dependenciesExists <- dependenciesExists()
       } yield (contractExists, artifactsExists, dependenciesExists)
 
     compileResult match {
@@ -109,7 +112,7 @@ object BuildValidator {
         if (!contractExists)
           errors addOne
             ErrorDirectoryDoesNotExists(
-              dirPath = contractPath,
+              dirPath = parsed.config.contractPath,
               index = contractPathIndex
             )
 
@@ -117,17 +120,20 @@ object BuildValidator {
         if (!artifactsExists)
           errors addOne
             ErrorDirectoryDoesNotExists(
-              dirPath = artifactPath,
+              dirPath = parsed.config.artifactPath,
               index = artifactPathIndex
             )
 
         // check if dependencies path exists
         if (!dependenciesExists)
-          errors addOne
-            ErrorDirectoryDoesNotExists(
-              dirPath = dependencyPath,
-              index = dependencyPathIndex
-            )
+          parsed.config.dependencyPath foreach {
+            dependencyPath =>
+              errors addOne
+                ErrorDirectoryDoesNotExists(
+                  dirPath = dependencyPath,
+                  index = dependencyPathIndex
+                )
+          }
 
         // check if errors exists
         if (errors.isEmpty) {
