@@ -12,7 +12,8 @@ object FileAccess {
     DiskFileAccess
 
   def USER_HOME: Option[Path] =
-    Option(Paths.get(System.getProperty("user.home")))
+    Option(System.getProperty("user.home"))
+      .map(Paths.get(_))
 }
 
 /**
