@@ -1,12 +1,14 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 
 import java.net.URI
+import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ListBuffer
 
@@ -85,23 +87,12 @@ object BuildValidator {
     val (contractPathIndex, artifactPathIndex, dependencyPathIndex) =
       Build.getPathIndexes(parsed)
 
-    def dependenciesExists() =
-      absoluteDependenciesPath match {
-        case Some(absoluteDependenciesPath) =>
-          file.exists(absoluteDependenciesPath.toUri, dependencyPathIndex)
-
-        case None =>
-          // User did not define dependencies.
-          // Mark it as exists here, which defers the default dependencyPath validation and its persistence to the dependency compiler.
-          Right(true)
-      }
-
     // do these paths exists with the workspace directory?
     val compileResult =
       for {
         contractExists <- file.exists(absoluteContractPath.toUri, contractPathIndex)
         artifactsExists <- file.exists(absoluteArtifactPath.toUri, artifactPathIndex)
-        dependenciesExists <- dependenciesExists()
+        dependenciesExists <- dependencyPathExists(absoluteDependenciesPath, dependencyPathIndex)
       } yield (contractExists, artifactsExists, dependenciesExists)
 
     compileResult match {
@@ -167,4 +158,37 @@ object BuildValidator {
     }
   }
 
+  /**
+   * Checks if the configured `dependencyPath` exists.
+   *
+   * @param absoluteDependenciesPath The absolute dependency path.
+   * @param dependencyPathIndex      The index in the source for reporting errors.
+   * @return `true` if the `dependencyPath` exists or if it's the default value ([[Dependency.defaultPath]]), otherwise `false`.
+   */
+  private def dependencyPathExists(absoluteDependenciesPath: Option[Path],
+                                   dependencyPathIndex: SourceIndex)(implicit file: FileAccess): Either[CompilerMessage.AnyError, Boolean] =
+    absoluteDependenciesPath match {
+      case Some(absoluteDependenciesPath) =>
+        file
+          .exists(absoluteDependenciesPath.toUri, dependencyPathIndex)
+          .map {
+            exists =>
+              if (!exists)
+                // The dependency path does not exist but allow using the default path,
+                // which will be created and written to by the dependency compiler.
+                Dependency
+                  .defaultPath()
+                  .exists {
+                    defaultPath =>
+                      defaultPath.resolve(absoluteDependenciesPath) == defaultPath
+                  }
+              else
+                exists
+          }
+
+      case None =>
+        // User did not define the dependencyPath.
+        // Mark it as exists here, which defers the dependencies being written to the default dependencyPath via the dependency compiler.
+        Right(true)
+    }
 }
