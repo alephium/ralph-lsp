@@ -11,9 +11,6 @@ object TryUtil {
     case error: FormattableError =>
       Left(FormattedError(error))
 
-    case error: org.alephium.ralph.Compiler.Error =>
-      Left(NativeError(error))
-
     case error: Throwable =>
       Left(ThrowableError(error))
   }
