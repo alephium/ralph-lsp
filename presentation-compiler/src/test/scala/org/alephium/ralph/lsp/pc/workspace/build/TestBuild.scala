@@ -94,7 +94,7 @@ object TestBuild {
     TestFile.write(parsed.buildURI, parsed.code)
     TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.contractPath))
     TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.artifactPath))
-    TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.dependencyPath))
+    parsed.config.dependencyPath foreach (path => TestFile.createDirectories(parsed.workspaceURI.resolve(path)))
     parsed
   }
 

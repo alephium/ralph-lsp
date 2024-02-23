@@ -29,21 +29,22 @@ object SourceCodeState {
   implicit val ordering: Ordering[SourceCodeState] =
     Ordering.by[SourceCodeState, URI](_.fileURI)
 
-  /** Represents: Source code exists, but is neither Compiled or Accessed */
+  /** Represents: Source code exists, but it's neither Compiled or Accessed */
   sealed trait IsInitialised extends SourceCodeState
 
-  /** Represents: Code was accessed. It can either be in Error state or Success state.
+  /**
+   * Represents: Code was accessed. It can either be in Error state or Success state.
    *
    * [[OnDisk]] state is no longer achievable from this state unless the file gets removed/dropped entirely
-   * from a configured workspace - [[WorkspaceState.CodeAware]].
+   * from its source-aware workspace [[org.alephium.ralph.lsp.pc.workspace.WorkspaceState.IsSourceAware]].
    * */
   sealed trait IsAccessed extends SourceCodeState
 
-  /** Represents: State where the source code is known */
+  /** Represents: States where the code text is known */
   sealed trait IsCodeAware extends SourceCodeState {
     def code: String
 
-    /** Lazily executed. Can have concurrent access. Used by code completion. */
+    /** Lazily executed. Can have concurrent access or no access at all. Used by code completion. */
     lazy val codeLines: Array[String] =
       StringUtil.codeLines(code)
   }
@@ -72,7 +73,7 @@ object SourceCodeState {
                     code: String,
                     ast: Tree.Root) extends IsParsed
 
-  /** Represents: Successful code compilation */
+  /** Represents: Code is successfully compiled */
   case class Compiled(fileURI: URI,
                       code: String,
                       compiledCode: Seq[Either[CompiledContract, CompiledScript]],
@@ -87,7 +88,10 @@ object SourceCodeState {
       }
   }
 
-  /** Represents: Failed but it stores previous successful parse so code-completion can use this state */
+  /**
+   * Represents: Failed during the parse or compilation phase.
+   * If the parse phase was successfully but compilation failed, the parsed state is stored here for features like code-completion.
+   * */
   case class ErrorSource(fileURI: URI,
                          code: String,
                          errors: Seq[CompilerMessage.AnyError],

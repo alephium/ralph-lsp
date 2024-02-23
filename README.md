@@ -81,18 +81,24 @@ You can use the following sample as reference:
 
 ```json
 {
-  "compilerOptions": {
-    "ignoreUnusedConstantsWarnings": false,
-    "ignoreUnusedVariablesWarnings": false,
-    "ignoreUnusedFieldsWarnings": false,
-    "ignoreUnusedPrivateFunctionsWarnings": false,
-    "ignoreUpdateFieldsCheckWarnings": false,
-    "ignoreCheckExternalCallerWarnings": false
-  },
-  "contractPath": "contracts",
-  "artifactPath": "artifacts",
-  "dependencyPath": "dependencies"
+   "compilerOptions": {
+      "ignoreUnusedConstantsWarnings": false,
+      "ignoreUnusedVariablesWarnings": false,
+      "ignoreUnusedFieldsWarnings": false,
+      "ignoreUnusedPrivateFunctionsWarnings": false,
+      "ignoreUpdateFieldsCheckWarnings": false,
+      "ignoreCheckExternalCallerWarnings": false
+   },
+   "contractPath": "contracts",
+   "artifactPath": "artifacts"
 }
+```
+
+The `dependencyPath` field is optional. If not set, the default path (`<user.home>/.ralph-lsp/dependencies/`) will be
+used.
+
+```json
+"dependencyPath": "dependencies"
 ```
 
 ## Configure trace (VSCode)

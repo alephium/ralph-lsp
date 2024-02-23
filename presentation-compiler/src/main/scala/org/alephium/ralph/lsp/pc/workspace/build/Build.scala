@@ -4,9 +4,9 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.error._
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{Dependency, DependencyDB}
+import org.alephium.ralph.lsp.pc.workspace.build.error._
 
 import java.net.URI
 import java.nio.file.{Path, Paths}
@@ -219,18 +219,40 @@ object Build {
     }
 
   /**
-   * Returns absolute paths of the build/config file.
+   * Absolute paths of all path settings in the build file.
    *
-   * @return A 3-tuple `(workspacePath, absoluteContractPath, absoluteArtifactPath)`
+   * @return A 4-tuple `(workspacePath, absoluteContractPath, absoluteArtifactPath, dependencyPath)`
    */
-  def getAbsolutePaths(parsed: BuildParsed): (Path, Path, Path, Path) = {
+  def getAbsolutePaths(parsed: BuildParsed): (Path, Path, Path, Option[Path]) = {
     val workspacePath = Paths.get(parsed.workspaceURI)
     val absoluteContractPath = workspacePath.resolve(Paths.get(parsed.config.contractPath).normalize)
     val absoluteArtifactPath = workspacePath.resolve(Paths.get(parsed.config.artifactPath).normalize)
-    val absoluteDependenciesPath = workspacePath.resolve(Paths.get(parsed.config.dependencyPath).normalize)
+    val absoluteDependenciesPath = getAbsoluteDependenciesPath(parsed)
+
     (workspacePath, absoluteContractPath, absoluteArtifactPath, absoluteDependenciesPath)
   }
 
+  /** Absolute paths of contract and artifacts settings in the build file. */
+  def getAbsoluteContractArtifactPaths(parsed: BuildParsed): (Path, Path) = {
+    val workspacePath = Paths.get(parsed.workspaceURI)
+    val absoluteContractPath = workspacePath.resolve(Paths.get(parsed.config.contractPath).normalize)
+    val absoluteArtifactPath = workspacePath.resolve(Paths.get(parsed.config.artifactPath).normalize)
+
+    (absoluteContractPath, absoluteArtifactPath)
+  }
+
+  /** Absolute paths of dependencyPath settings in the build file. */
+  def getAbsoluteDependenciesPath(parsed: BuildParsed): Option[Path] =
+    parsed.config.dependencyPath map {
+      dependencyPath =>
+        Paths.get(parsed.workspaceURI).resolve(Paths.get(dependencyPath).normalize)
+    }
+
+  /**
+   * Indexes of contractPath, artifactPath and dependencyPathIndex from the ralph.json
+   *
+   * TODO: This will function will be removed when an AST is available for the JSON.
+   * */
   def getPathIndexes(parsed: BuildParsed): (SourceIndex, SourceIndex, SourceIndex) = {
     val contractPath = parsed.config.contractPath
     val artifactPath = parsed.config.artifactPath
@@ -253,12 +275,15 @@ object Build {
     (contractPathIndex, artifactPathIndex, dependencyPathIndex)
   }
 
+  /** @return Index of the `dependencyPath` if configured, or-else the index of the last closing brace. */
   def getDependantPathIndex(parsed: BuildParsed): SourceIndex = {
-    val dependencyPath = parsed.config.dependencyPath
+    // if dependencyPath is None use the index of the last closing brace "}" to report errors
+    val errorIndexToken =
+      parsed.config.dependencyPath getOrElse "}"
 
     SourceIndex.ensurePositive(
-      index = parsed.code.lastIndexOf(dependencyPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-      width = dependencyPath.length
+      index = parsed.code.lastIndexOf(errorIndexToken), // TODO: lastIndexOf is temporary solution until an AST is available.
+      width = errorIndexToken.length
     )
   }
 

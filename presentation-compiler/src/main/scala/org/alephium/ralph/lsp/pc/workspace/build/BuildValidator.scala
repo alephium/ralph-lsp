@@ -1,12 +1,14 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 
 import java.net.URI
+import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ListBuffer
 
@@ -35,9 +37,6 @@ object BuildValidator {
 
   /** Validate that the configured paths are within the workspace directory */
   private def validatePathsInWorkspace(parsed: BuildParsed): Option[BuildState.BuildErrored] = {
-    val contractPath = parsed.config.contractPath
-    val artifactPath = parsed.config.artifactPath
-
     // absolute source paths
     val (workspacePath, absoluteContractPath, absoluteArtifactPath, _) =
       Build.getAbsolutePaths(parsed)
@@ -52,7 +51,7 @@ object BuildValidator {
     if (!URIUtil.contains(workspacePath, absoluteContractPath))
       errors addOne
         ErrorDirectoryOutsideWorkspace(
-          dirPath = contractPath,
+          dirPath = parsed.config.contractPath,
           index = contractPathIndex
         )
 
@@ -60,7 +59,7 @@ object BuildValidator {
     if (!URIUtil.contains(workspacePath, absoluteArtifactPath))
       errors addOne
         ErrorDirectoryDoesNotExists(
-          dirPath = artifactPath,
+          dirPath = parsed.config.artifactPath,
           index = artifactPathIndex
         )
 
@@ -81,10 +80,6 @@ object BuildValidator {
 
   /** Validate that the configured paths exist within the workspace directory */
   private def validatePathsExists(parsed: BuildParsed)(implicit file: FileAccess): Option[BuildState.BuildErrored] = {
-    val contractPath = parsed.config.contractPath
-    val artifactPath = parsed.config.artifactPath
-    val dependencyPath = parsed.config.dependencyPath
-
     // absolute source paths
     val (_, absoluteContractPath, absoluteArtifactPath, absoluteDependenciesPath) =
       Build.getAbsolutePaths(parsed)
@@ -97,7 +92,7 @@ object BuildValidator {
       for {
         contractExists <- file.exists(absoluteContractPath.toUri, contractPathIndex)
         artifactsExists <- file.exists(absoluteArtifactPath.toUri, artifactPathIndex)
-        dependenciesExists <- file.exists(absoluteDependenciesPath.toUri, dependencyPathIndex)
+        dependenciesExists <- dependencyPathExists(absoluteDependenciesPath, dependencyPathIndex)
       } yield (contractExists, artifactsExists, dependenciesExists)
 
     compileResult match {
@@ -109,7 +104,7 @@ object BuildValidator {
         if (!contractExists)
           errors addOne
             ErrorDirectoryDoesNotExists(
-              dirPath = contractPath,
+              dirPath = parsed.config.contractPath,
               index = contractPathIndex
             )
 
@@ -117,17 +112,20 @@ object BuildValidator {
         if (!artifactsExists)
           errors addOne
             ErrorDirectoryDoesNotExists(
-              dirPath = artifactPath,
+              dirPath = parsed.config.artifactPath,
               index = artifactPathIndex
             )
 
         // check if dependencies path exists
         if (!dependenciesExists)
-          errors addOne
-            ErrorDirectoryDoesNotExists(
-              dirPath = dependencyPath,
-              index = dependencyPathIndex
-            )
+          parsed.config.dependencyPath foreach {
+            dependencyPath =>
+              errors addOne
+                ErrorDirectoryDoesNotExists(
+                  dirPath = dependencyPath,
+                  index = dependencyPathIndex
+                )
+          }
 
         // check if errors exists
         if (errors.isEmpty) {
@@ -160,4 +158,37 @@ object BuildValidator {
     }
   }
 
+  /**
+   * Checks if the configured `dependencyPath` exists.
+   *
+   * @param absoluteDependenciesPath The absolute dependency path.
+   * @param dependencyPathIndex      The index in the source for reporting errors.
+   * @return `true` if the `dependencyPath` exists or if it's the default value ([[Dependency.defaultPath]]), otherwise `false`.
+   */
+  private def dependencyPathExists(absoluteDependenciesPath: Option[Path],
+                                   dependencyPathIndex: SourceIndex)(implicit file: FileAccess): Either[CompilerMessage.AnyError, Boolean] =
+    absoluteDependenciesPath match {
+      case Some(absoluteDependenciesPath) =>
+        file
+          .exists(absoluteDependenciesPath.toUri, dependencyPathIndex)
+          .map {
+            exists =>
+              if (!exists)
+                // The dependency path does not exist but allow using the default path,
+                // which will be created and written to by the dependency compiler.
+                Dependency
+                  .defaultPath()
+                  .exists {
+                    defaultPath =>
+                      defaultPath.resolve(absoluteDependenciesPath) == defaultPath
+                  }
+              else
+                exists
+          }
+
+      case None =>
+        // User did not define the dependencyPath.
+        // Mark it as exists here, which defers the dependencies being written to the default dependencyPath via the dependency compiler.
+        Right(true)
+    }
 }
