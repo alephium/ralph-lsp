@@ -109,7 +109,7 @@ object Build {
                       currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
                                                                    compiler: CompilerAccess,
                                                                    logger: ClientLogger): BuildState.IsCompiled =
-    file.exists(buildURI, SourceIndex.empty) match {
+    file.exists(buildURI, SourceIndex.zero) match {
       case Left(error) =>
         BuildErrored(
           buildURI = buildURI,

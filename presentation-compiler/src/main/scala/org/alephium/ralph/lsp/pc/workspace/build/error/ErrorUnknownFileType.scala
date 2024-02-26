@@ -9,5 +9,5 @@ case class ErrorUnknownFileType(fileURI: URI) extends CompilerMessage.Error {
     s"Unknown file type: $fileURI"
 
   override def index: SourceIndex =
-    SourceIndex.empty
+    SourceIndex.zero
 }

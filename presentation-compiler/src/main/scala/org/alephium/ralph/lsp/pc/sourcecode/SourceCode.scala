@@ -137,7 +137,7 @@ private[pc] object SourceCode {
 
       case None =>
         // no source code sent from client, check it still exists.
-        file.exists(fileURI, SourceIndex.empty) match {
+        file.exists(fileURI, SourceIndex.zero) match {
           case Left(error) =>
             // failed to check
             val newState =

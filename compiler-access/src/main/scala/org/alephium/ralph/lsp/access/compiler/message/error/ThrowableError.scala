@@ -20,7 +20,7 @@ object ThrowableError {
  */
 case class ThrowableError(title: String,
                           throwable: Throwable,
-                          index: SourceIndex = SourceIndex.empty) extends CompilerMessage.Error {
+                          index: SourceIndex = SourceIndex.zero) extends CompilerMessage.Error {
   override def message: String =
     if (title.isBlank)
       throwable.getMessage

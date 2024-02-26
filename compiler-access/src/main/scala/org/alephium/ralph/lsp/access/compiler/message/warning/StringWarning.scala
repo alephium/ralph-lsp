@@ -9,7 +9,7 @@ object StringWarning {
   @inline def apply(message: String): StringWarning =
     StringWarning(
       message = message,
-      index = SourceIndex.empty
+      index = SourceIndex.zero
     )
 }
 

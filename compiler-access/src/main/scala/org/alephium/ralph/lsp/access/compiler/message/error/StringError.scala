@@ -6,7 +6,7 @@ object StringError {
   @inline def apply(message: String): StringError =
     StringError(
       message = message,
-      index = SourceIndex.empty
+      index = SourceIndex.zero
     )
 }
 /**

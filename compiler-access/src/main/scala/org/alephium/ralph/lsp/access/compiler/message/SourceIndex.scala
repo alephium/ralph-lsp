@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.access.compiler.message
 object SourceIndex {
 
   /** Empty range */
-  val empty: SourceIndex =
+  val zero: SourceIndex =
     SourceIndex(
       from = 0,
       width = 0
@@ -19,7 +19,7 @@ object SourceIndex {
    */
   def ensurePositive(index: Int, width: Int): SourceIndex =
     if (index < 0)
-      SourceIndex.empty
+      SourceIndex.zero
     else
       SourceIndex(
         from = index,

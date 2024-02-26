@@ -9,5 +9,5 @@ case class SourceCodeNotFound(uri: URI) extends CompilerMessage.Error {
     s"Source code not found. URI: $uri"
 
   override def index: SourceIndex =
-    SourceIndex.empty
+    SourceIndex.zero
 }

@@ -9,5 +9,5 @@ case class SourceCodeAccessFailed(uri: URI) extends CompilerMessage.Error {
     s"Source code errored on access. URI: $uri"
 
   override def index: SourceIndex =
-    SourceIndex.empty
+    SourceIndex.zero
 }

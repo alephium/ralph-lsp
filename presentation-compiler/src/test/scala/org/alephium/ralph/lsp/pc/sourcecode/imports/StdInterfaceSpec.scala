@@ -17,7 +17,7 @@ class StdInterfaceSpec extends AnyWordSpec with Matchers {
     val stdInterfaces =
       StdInterface.stdInterfaces(
         dependencyPath = Paths.get("my_workspace"),
-        errorIndex = SourceIndex.empty
+        errorIndex = SourceIndex.zero
       ).value
 
     "be defined" in {

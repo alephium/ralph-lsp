@@ -70,7 +70,7 @@ object RalphcConfig {
         val error =
           ErrorInvalidBuildSyntax(
             fileURI = buildURI,
-            index = SourceIndex.empty,
+            index = SourceIndex.zero,
             message = throwable.getMessage
           )
 

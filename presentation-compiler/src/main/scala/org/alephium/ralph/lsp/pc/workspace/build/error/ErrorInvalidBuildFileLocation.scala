@@ -10,5 +10,5 @@ case class ErrorInvalidBuildFileLocation(buildURI: URI,
     "Build file must be placed in the root workspace directory"
 
   override def index: SourceIndex =
-    SourceIndex.empty
+    SourceIndex.zero
 }

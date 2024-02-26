@@ -8,5 +8,5 @@ case object ErrorBuildFileNotFound extends CompilerMessage.Error {
     s"Build file not found. Create a '${Build.BUILD_FILE_NAME}' file in the project's root folder."
 
   override def index: SourceIndex =
-    SourceIndex.empty
+    SourceIndex.zero
 }
