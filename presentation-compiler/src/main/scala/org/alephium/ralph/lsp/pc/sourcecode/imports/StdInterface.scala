@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.sourcecode.imports
 
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
+import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDownloadingDependency

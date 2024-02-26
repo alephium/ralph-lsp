@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.sourcecode.imports
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
+import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.error.ImportError
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
@@ -159,13 +159,13 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
                     value = my_package_file,
                     index =
                       SourceIndex(
-                        from = myCode.code.lastIndexOf(my_package_file),
+                        index = myCode.code.lastIndexOf(my_package_file),
                         width = my_package_file.length
                       )
                   ),
                 index =
                   SourceIndex(
-                    from = myCode.code.lastIndexOf(my_package_file_quoted),
+                    index = myCode.code.lastIndexOf(my_package_file_quoted),
                     width = my_package_file_quoted.length
                   )
               ),
@@ -179,7 +179,7 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
               ),
             index =
               SourceIndex(
-                from = myCode.code.lastIndexOf(import_statement),
+                index = myCode.code.lastIndexOf(import_statement),
                 width = import_statement.length
               )
           )

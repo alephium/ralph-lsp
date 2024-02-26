@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.pc.gotodef
 
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 

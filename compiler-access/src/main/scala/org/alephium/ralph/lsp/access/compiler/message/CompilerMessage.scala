@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.access.compiler.message
 
+import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.error.CompilerError.FormattableError
 
 /**
@@ -30,7 +31,7 @@ object CompilerMessage {
 
     final def index: SourceIndex =
       SourceIndex(
-        from = error.position,
+        index = error.position,
         width = error.foundLength
       )
   }

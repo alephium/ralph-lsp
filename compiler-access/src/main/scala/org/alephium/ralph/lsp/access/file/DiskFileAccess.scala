@@ -2,7 +2,8 @@ package org.alephium.ralph.lsp.access.file
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.error._
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
+import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.util.TryUtil
 import org.alephium.ralphc.{Compiler => RalphC}
 

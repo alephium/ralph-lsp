@@ -1,7 +1,8 @@
 package org.alephium.ralph.lsp.access.compiler.message.error
 
 import org.alephium.ralph.lsp.TestCode
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
+import org.alephium.ralph.SourceIndex
 import org.scalacheck.Gen
 
 /** [[CompilerMessage]] related test functions */

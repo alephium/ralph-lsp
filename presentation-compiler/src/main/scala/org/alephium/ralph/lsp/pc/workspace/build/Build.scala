@@ -1,7 +1,9 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
+import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
@@ -109,7 +111,7 @@ object Build {
                       currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
                                                                    compiler: CompilerAccess,
                                                                    logger: ClientLogger): BuildState.IsCompiled =
-    file.exists(buildURI, SourceIndex.zero) match {
+    file.exists(buildURI, SourceIndexExtra.zero) match {
       case Left(error) =>
         BuildErrored(
           buildURI = buildURI,

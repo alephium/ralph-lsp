@@ -1,10 +1,10 @@
 package org.alephium.ralph.lsp.pc.sourcecode.imports
 
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
+import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.EitherValues._
 
 import java.nio.file.Paths
 
@@ -17,7 +17,7 @@ class StdInterfaceSpec extends AnyWordSpec with Matchers {
     val stdInterfaces =
       StdInterface.stdInterfaces(
         dependencyPath = Paths.get("my_workspace"),
-        errorIndex = SourceIndex.zero
+        errorIndex = SourceIndexExtra.zero
       ).value
 
     "be defined" in {

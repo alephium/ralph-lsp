@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.access.compiler.message.error
 
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
+import org.alephium.ralph.SourceIndex
 
 object ThrowableError {
 
@@ -20,7 +21,7 @@ object ThrowableError {
  */
 case class ThrowableError(title: String,
                           throwable: Throwable,
-                          index: SourceIndex = SourceIndex.zero) extends CompilerMessage.Error {
+                          index: SourceIndex = SourceIndexExtra.zero) extends CompilerMessage.Error {
   override def message: String =
     if (title.isBlank)
       throwable.getMessage
