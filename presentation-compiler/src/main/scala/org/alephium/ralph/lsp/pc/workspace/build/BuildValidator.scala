@@ -38,10 +38,10 @@ object BuildValidator {
   /** Validate that the configured paths are within the workspace directory */
   private def validatePathsInWorkspace(parsed: BuildParsed): Option[BuildState.BuildErrored] = {
     // absolute source paths
-    val (workspacePath, absoluteContractPath, absoluteArtifactPath, _) =
+    val (workspacePath, absoluteContractPath, absoluteArtifactPath, absoluteDependencyPath) =
       Build.getAbsolutePaths(parsed)
 
-    val (contractPathIndex, artifactPathIndex, _) =
+    val (contractPathIndex, artifactPathIndex, dependencyPathIndex) =
       Build.getPathIndexes(parsed)
 
     val errors =
@@ -62,6 +62,17 @@ object BuildValidator {
           dirPath = parsed.config.artifactPath,
           index = artifactPathIndex
         )
+
+    // Validate: DependencyPath and ContractPath should not overlap
+    absoluteDependencyPath foreach {
+      absoluteDependencyPath =>
+        if (URIUtil.contains(absoluteContractPath, absoluteDependencyPath) || URIUtil.contains(absoluteDependencyPath, absoluteContractPath)) {
+          // TODO: When `contractPath` and `dependencyPath` are identical then both errors will have the same index, which means
+          //       both errors get reported at the same field. This will be fixed when an AST is available in issue #17.
+          errors addOne ErrorDependencyPathIsWithinContractPath(index = contractPathIndex)
+          errors addOne ErrorDependencyPathIsWithinContractPath(index = dependencyPathIndex)
+        }
+    }
 
     // Check if errors exists
     if (errors.isEmpty)
