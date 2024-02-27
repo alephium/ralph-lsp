@@ -3,8 +3,8 @@ package org.alephium.ralph.lsp
 import org.alephium.ralph.lsp.TestCommon._
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess.RALPH_FILE_EXTENSION
 import org.scalacheck.Gen
-import org.scalatest.matchers.should.Matchers._
 import org.scalatest.TryValues._
+import org.scalatest.matchers.should.Matchers._
 
 import java.io.File
 import java.net.URI

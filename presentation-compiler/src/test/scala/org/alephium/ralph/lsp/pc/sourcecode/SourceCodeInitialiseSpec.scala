@@ -1,13 +1,13 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.TestFile._
 import org.alephium.ralph.lsp.access.compiler.message.error.TestError.genError
+import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.TestWorkspace
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 class SourceCodeInitialiseSpec extends AnyWordSpec with Matchers with MockFactory with ScalaCheckDrivenPropertyChecks {

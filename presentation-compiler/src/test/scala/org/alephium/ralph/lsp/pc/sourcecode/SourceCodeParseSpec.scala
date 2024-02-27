@@ -1,14 +1,14 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.error.TestError
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode._
 import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc
+import org.alephium.ralph.lsp.{TestCode, TestFile}
+import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.ArraySeq

@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.access.file
 
-import org.alephium.ralph.lsp.access.compiler.message.error.ThrowableError
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.error.ThrowableError
 
 import java.net.URI
 import java.nio.file.{Path, Paths}

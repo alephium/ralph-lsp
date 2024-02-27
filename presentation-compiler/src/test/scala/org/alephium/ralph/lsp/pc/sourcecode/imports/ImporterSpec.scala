@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.pc.sourcecode.imports
 
+import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
-import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.error.ImportError
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
