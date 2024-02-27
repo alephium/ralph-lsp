@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
+import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDependencyPathIsWithinContractPath
 import org.scalatest.OptionValues._
