@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.error._
 import org.alephium.ralph.lsp.pc.sourcecode.imports.Importer
@@ -137,7 +137,7 @@ private[pc] object SourceCode {
 
       case None =>
         // no source code sent from client, check it still exists.
-        file.exists(fileURI, SourceIndex.empty) match {
+        file.exists(fileURI, SourceIndexExtra.zero) match {
           case Left(error) =>
             // failed to check
             val newState =

@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.server.converter
 
 import org.alephium.ralph.lsp.pc.diagnostic.{CodeDiagnostic, CodeDiagnosticSeverity, FileDiagnostic}
 import org.eclipse.lsp4j._
+
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
 /** Convert diagnostics returned from presentation-compiler to LSP4J types */

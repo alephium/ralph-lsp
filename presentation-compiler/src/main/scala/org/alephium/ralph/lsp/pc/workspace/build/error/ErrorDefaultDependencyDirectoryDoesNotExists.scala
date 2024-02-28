@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace.build.error
 
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.workspace.build.Build
 
 case class ErrorDefaultDependencyDirectoryDoesNotExists(index: SourceIndex) extends CompilerMessage.Error {

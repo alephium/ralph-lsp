@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.CompilerOptions
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
 import org.alephium.ralph.lsp.pc.workspace.build.Build.toBuildPath
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
@@ -70,7 +70,7 @@ object RalphcConfig {
         val error =
           ErrorInvalidBuildSyntax(
             fileURI = buildURI,
-            index = SourceIndex.empty,
+            index = SourceIndexExtra.zero,
             message = throwable.getMessage
           )
 

@@ -1,7 +1,8 @@
 package org.alephium.ralph.lsp.pc.workspace.build.dependency
 
+import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDefaultDependencyDirectoryDoesNotExists
@@ -59,7 +60,7 @@ object Dependency {
           ErrorDefaultDependencyDirectoryDoesNotExists(
             SourceIndex(
               // since the user did not configure a dependencyPath, report this error at the last closing brace of the build file.
-              from = parsed.code.lastIndexOf("}"),
+              index = parsed.code.lastIndexOf("}"),
               width = 1
             )
           )
@@ -88,7 +89,7 @@ object Dependency {
                                                                     logger: ClientLogger): BuildState.IsCompiled =
     DependencyDownloader.downloadStd(
       dependencyPath = absoluteDependenciesPath,
-      errorIndex = SourceIndex.empty
+      errorIndex = SourceIndexExtra.zero
     ) match { // download std
       case Left(errors) =>
         // report all download errors at build file level.

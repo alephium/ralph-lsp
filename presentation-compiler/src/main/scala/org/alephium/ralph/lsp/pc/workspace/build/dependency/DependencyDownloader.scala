@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.workspace.build.dependency
 
-import org.alephium.ralph.CompilerOptions
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.{CompilerOptions, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState

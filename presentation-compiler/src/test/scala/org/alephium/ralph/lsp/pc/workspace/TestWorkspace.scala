@@ -1,9 +1,9 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.{TestCode, TestFile}
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
-import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode._
 import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
+import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode._
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
+import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.scalacheck.Gen
 
 import java.net.URI

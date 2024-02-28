@@ -1,7 +1,6 @@
 package org.alephium.ralph.lsp.access.compiler.ast
 
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
-import org.alephium.ralph.Ast
+import org.alephium.ralph.{Ast, SourceIndex}
 
 /** Ralph Syntax Tree (AST) */
 sealed trait Tree {

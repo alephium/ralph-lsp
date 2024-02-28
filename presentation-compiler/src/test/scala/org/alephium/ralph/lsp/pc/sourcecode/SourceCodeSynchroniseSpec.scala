@@ -1,13 +1,13 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
+import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.TestWorkspace
-import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.ArraySeq

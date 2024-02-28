@@ -1,12 +1,13 @@
 package org.alephium.ralph.lsp.access.compiler.message.error
 
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndex}
+import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 
 object StringError {
   @inline def apply(message: String): StringError =
     StringError(
       message = message,
-      index = SourceIndex.empty
+      index = SourceIndexExtra.zero
     )
 }
 /**

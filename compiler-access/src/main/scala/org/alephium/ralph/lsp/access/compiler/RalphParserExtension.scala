@@ -1,9 +1,10 @@
 package org.alephium.ralph.lsp.access.compiler
 
 import fastparse._
+import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.StatefulParser.{rawContract, rawInterface, rawTxScript, whitespace}
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 
 /** Functions that extend ralphc's default parser */
 object RalphParserExtension {
@@ -17,7 +18,7 @@ object RalphParserExtension {
       case (fromIndex, statements, toIndex) =>
         val index =
           SourceIndex(
-            from = fromIndex,
+            index = fromIndex,
             width = toIndex - fromIndex
           )
 
@@ -47,7 +48,7 @@ object RalphParserExtension {
       case (fromIndex, stringLiteral, toIndex) =>
         val importIndex =
           SourceIndex(
-            from = fromIndex,
+            index = fromIndex,
             width = toIndex - fromIndex
           )
 
@@ -95,13 +96,13 @@ object RalphParserExtension {
       case (fromPackageIndex, packageName, toPackageIndex, fromFileNameIndex, fileName, toFileNameIndex) =>
         val packageIndex =
           SourceIndex(
-            from = fromPackageIndex,
+            index = fromPackageIndex,
             width = toPackageIndex - fromPackageIndex
           )
 
         val fileIndex =
           SourceIndex(
-            from = fromFileNameIndex,
+            index = fromFileNameIndex,
             width = toFileNameIndex - fromFileNameIndex
           )
 
@@ -133,7 +134,7 @@ object RalphParserExtension {
       case (fromIndex, code, toIndex) =>
         val index =
           SourceIndex(
-            from = fromIndex,
+            index = fromIndex,
             width = toIndex - fromIndex
           )
 
@@ -156,7 +157,7 @@ object RalphParserExtension {
       case (fromIndex, nameFromIndex, string, nameToIndex, toIndex) =>
         val index =
           SourceIndex(
-            from = fromIndex,
+            index = fromIndex,
             width = toIndex - fromIndex
           )
 
@@ -167,7 +168,7 @@ object RalphParserExtension {
           Tree.Name(
             value = value,
             index = SourceIndex(
-              from = nameFromIndex,
+              index = nameFromIndex,
               width = nameToIndex - nameFromIndex
             )
           )

@@ -1,7 +1,8 @@
 package org.alephium.ralph.lsp.pc.workspace.build
 
+import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
@@ -109,7 +110,7 @@ object Build {
                       currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
                                                                    compiler: CompilerAccess,
                                                                    logger: ClientLogger): BuildState.IsCompiled =
-    file.exists(buildURI, SourceIndex.empty) match {
+    file.exists(buildURI, SourceIndexExtra.zero) match {
       case Left(error) =>
         BuildErrored(
           buildURI = buildURI,
@@ -258,13 +259,13 @@ object Build {
     val artifactPath = parsed.config.artifactPath
 
     val contractPathIndex =
-      SourceIndex.ensurePositive(
+      SourceIndexExtra.ensurePositive(
         index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
         width = contractPath.length
       )
 
     val artifactPathIndex =
-      SourceIndex.ensurePositive(
+      SourceIndexExtra.ensurePositive(
         index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
         width = artifactPath.length
       )
@@ -281,7 +282,7 @@ object Build {
     val errorIndexToken =
       parsed.config.dependencyPath getOrElse "}"
 
-    SourceIndex.ensurePositive(
+    SourceIndexExtra.ensurePositive(
       index = parsed.code.lastIndexOf(errorIndexToken), // TODO: lastIndexOf is temporary solution until an AST is available.
       width = errorIndexToken.length
     )
