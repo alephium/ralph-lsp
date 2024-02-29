@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.access.compiler.message
 
-import org.alephium.ralph.SourceIndex
+import fastparse.IndexedParserInput
+import org.alephium.ralph.{SourceIndex, SourcePosition}
 
 object SourceIndexExtra {
 
@@ -41,5 +42,15 @@ object SourceIndexExtra {
     /** Offset this SourceIndex */
     def +(right: Int): SourceIndex =
       sourceIndex.copy(index = from + right)
+
+    /** Convert [[SourceIndex]] that contains index information to [[CodeRange]] that contains line and character information */
+    def toCodeRange(code: String): CodeRange = {
+      val fastParseLineNumber = IndexedParserInput(code).prettyIndex(sourceIndex.from)
+      val sourcePosition = SourcePosition.parse(fastParseLineNumber)
+
+      val start = CodePosition(sourcePosition.rowIndex, sourcePosition.colIndex)
+      val end = CodePosition(sourcePosition.rowIndex, sourcePosition.colIndex + sourceIndex.width)
+      CodeRange(start, end)
+    }
   }
 }
