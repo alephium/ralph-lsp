@@ -1,25 +1,32 @@
 package org.alephium.ralph.lsp.pc.gotodef
 
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
+import org.alephium.ralph.lsp.access.compiler.message.CodeRange
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
+import org.alephium.ralph.lsp.pc.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
-import java.net.URI
 import scala.collection.immutable.ArraySeq
 
 object GoToImport {
 
   def goTo(cursorIndex: Int,
            dependency: Option[WorkspaceState.Compiled],
-           importStatement: Tree.Import): ArraySeq[URI] =
+           importStatement: Tree.Import): ArraySeq[GoToLocation] =
     dependency match {
       case Some(dependency) =>
         goTo(
           cursorIndex = cursorIndex,
           dependency = dependency,
           importStatement = importStatement
-        ).map(_.fileURI)
+        ) map {
+          code =>
+            GoToLocation(
+              uri = code.fileURI,
+              codeRange = CodeRange.zero
+            )
+        }
 
       case None =>
         ArraySeq.empty

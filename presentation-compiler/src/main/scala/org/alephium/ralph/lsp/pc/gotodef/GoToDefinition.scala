@@ -3,6 +3,7 @@ package org.alephium.ralph.lsp.pc.gotodef
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
+import org.alephium.ralph.lsp.pc.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.util.StringUtil
@@ -25,7 +26,7 @@ object GoToDefinition extends StrictImplicitLogging {
   def goTo(line: Int,
            character: Int,
            fileURI: URI,
-           workspace: WorkspaceState.IsSourceAware): Option[Either[CompilerMessage.Error, ArraySeq[URI]]] =
+           workspace: WorkspaceState.IsSourceAware): Option[Either[CompilerMessage.Error, ArraySeq[GoToLocation]]] =
     Workspace.findParsed(
       fileURI = fileURI,
       workspace = workspace
@@ -45,7 +46,7 @@ object GoToDefinition extends StrictImplicitLogging {
   private def goTo(line: Int,
                    character: Int,
                    workspace: WorkspaceState.IsSourceAware,
-                   sourceCode: SourceCodeState.Parsed): ArraySeq[URI] = {
+                   sourceCode: SourceCodeState.Parsed): ArraySeq[GoToLocation] = {
     // fetch the requested index from line number and character number.
     val cursorIndex =
       StringUtil.computeIndex(
