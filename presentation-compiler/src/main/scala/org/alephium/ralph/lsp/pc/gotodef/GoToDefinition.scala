@@ -17,10 +17,10 @@ object GoToDefinition extends StrictImplicitLogging {
   /**
    * Provides go-to definition for the cursor position within the current workspace state.
    *
-   * @param line          Line position in a document (zero-based).
-   * @param character     Character offset on a line in a document (zero-based).
-   * @param fileURI       The text document's uri.
-   * @param workspace     Current workspace state.
+   * @param line      Line position in a document (zero-based).
+   * @param character Character offset on a line in a document (zero-based).
+   * @param fileURI   The text document's uri.
+   * @param workspace Current workspace state.
    * @return
    */
   def goTo(line: Int,
@@ -67,8 +67,13 @@ object GoToDefinition extends StrictImplicitLogging {
               importStatement = importStatement
             )
 
-          case _: Tree.Source =>
-            ArraySeq.empty // TODO: Provide source level go-to definition.
+          case source: Tree.Source =>
+            // request is for source-code go-to definition
+            GoToSource.goTo(
+              cursorIndex = cursorIndex,
+              sourceCode = sourceCode,
+              sourceAST = source
+            )
         }
 
       case None =>
