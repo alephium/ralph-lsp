@@ -29,13 +29,17 @@ case class Node[A] private(data: A,
           Some(next)
       }
 
+  /** Walk down from current node reaching all it's children and grand-children */
   def walkDown: Iterator[Node[A]] =
     new Iterator[Node[A]] {
       private val iter =
-        Iterator(self) ++
-          children
-            .iterator
-            .flatMap(_.walkDown)
+        children
+          .iterator
+          .flatMap {
+            child =>
+              Iterator(child) ++
+                child.walkDown
+          }
 
       override def hasNext: Boolean =
         iter.hasNext
@@ -44,6 +48,7 @@ case class Node[A] private(data: A,
         iter.next()
     }
 
+  /** Walk parent nodes from the current node */
   def walkParents: Iterator[Node[A]] =
     new Iterator[Node[A]] {
       private val iter =
