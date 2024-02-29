@@ -33,13 +33,10 @@ case class Node[A] private(data: A,
   def walkDown: Iterator[Node[A]] =
     new Iterator[Node[A]] {
       private val iter =
-        children
-          .iterator
-          .flatMap {
-            child =>
-              Iterator(child) ++
-                child.walkDown
-          }
+        Iterator(self) ++
+          children
+            .iterator
+            .flatMap(_.walkDown)
 
       override def hasNext: Boolean =
         iter.hasNext
@@ -48,7 +45,37 @@ case class Node[A] private(data: A,
         iter.next()
     }
 
-  /** Walk parent nodes from the current node */
+  /** Reaches ALL nodes walking up from a node and then down, excluding this/self node and it's children */
+  def walkUpDown: Iterator[A] =
+    new Iterator[A] {
+      private var lastParent = self
+
+      private val iter: Iterator[A] =
+        self
+          .walkParents
+          .map {
+            parentNode =>
+              // For the next parent, filter children that are not already processed in previous iteration (walking up)
+              val newChildren =
+                parentNode
+                  .children
+                  .filter(_ ne lastParent)
+
+              lastParent = parentNode
+              // Create a node copy without the previously processed parent node
+              // Note: Due to this transformation, this tree is not longer the same as original tree.
+              parentNode.copy(children = newChildren)
+          }
+          .flatMap(_.walkDown) // while walking up also traverse down each node.
+          .map(_.data) // return data because the node's children are transformed above.
+
+      override def hasNext: Boolean =
+        iter.hasNext
+
+      override def next(): A =
+        iter.next()
+    }
+
   def walkParents: Iterator[Node[A]] =
     new Iterator[Node[A]] {
       private val iter =
