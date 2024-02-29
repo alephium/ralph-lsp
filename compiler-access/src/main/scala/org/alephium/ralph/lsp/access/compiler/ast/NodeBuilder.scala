@@ -24,6 +24,7 @@ object NodeBuilder extends StrictLogging {
 
         case ast: Ast.Contract =>
           buildMany(ast.stdInterfaceId.toSeq) ++
+            buildOne(ast.ident) ++
             buildMany(ast.templateVars) ++
             buildMany(ast.fields) ++
             buildMany(ast.funcs) ++
