@@ -20,6 +20,30 @@ case class Node[A] private(data: A,
   def parent: Option[Node[A]] =
     _parent
 
+  def headOption: Option[Node[A]] =
+    parent
+      .iterator
+      .flatMap(_.walkParents)
+      .foldLeft(Option.empty[Node[A]]) {
+        case (_, next) =>
+          Some(next)
+      }
+
+  def walkDown: Iterator[Node[A]] =
+    new Iterator[Node[A]] {
+      private val iter =
+        Iterator(self) ++
+          children
+            .iterator
+            .flatMap(_.walkDown)
+
+      override def hasNext: Boolean =
+        iter.hasNext
+
+      override def next(): Node[A] =
+        iter.next()
+    }
+
   def walkParents: Iterator[Node[A]] =
     new Iterator[Node[A]] {
       private val iter =
