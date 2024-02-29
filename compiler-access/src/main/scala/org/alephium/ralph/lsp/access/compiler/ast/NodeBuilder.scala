@@ -14,27 +14,31 @@ object NodeBuilder extends StrictLogging {
    * @return Root node of the tree.
    */
   def buildRootNode(ast: Ast.ContractWithState): Node[Positioned] = {
-    val fieldsTree = buildMany(ast.fields)
-    val eventsTree = buildMany(ast.events)
-    val constantVarsTree = buildMany(ast.constantVars)
-    val inheritancesTree = buildMany(ast.inheritances)
-    val enumsTree = buildMany(ast.enums)
-    val templateVarsTree = buildMany(ast.templateVars)
-    val funcsTree = buildMany(ast.funcs)
-    val eventsInfoTree = buildMany(ast.eventsInfo())
-    val builtInContractFuncsTree = buildMany(ast.builtInContractFuncs())
-
-    // TODO: All the above types really siblings? If they are not, they need to build a tree structure using source-index.
+    // TODO: Are all these siblings? If they are not, they need to build a tree structure using source-index.
     val rootSiblings =
-      fieldsTree ++
-        eventsTree ++
-        constantVarsTree ++
-        inheritancesTree ++
-        enumsTree ++
-        templateVarsTree ++
-        funcsTree ++
-        eventsInfoTree ++
-        builtInContractFuncsTree
+      ast match {
+        case ast: Ast.TxScript =>
+          buildOne(ast.ident) ++
+            buildMany(ast.templateVars) ++
+            buildMany(ast.funcs)
+
+        case ast: Ast.Contract =>
+          buildMany(ast.stdInterfaceId.toSeq) ++
+            buildMany(ast.templateVars) ++
+            buildMany(ast.fields) ++
+            buildMany(ast.funcs) ++
+            buildMany(ast.events) ++
+            buildMany(ast.constantVars) ++
+            buildMany(ast.enums) ++
+            buildMany(ast.inheritances)
+
+        case ast: Ast.ContractInterface =>
+          buildMany(ast.stdId.toSeq) ++
+            buildOne(ast.ident) ++
+            buildMany(ast.funcs) ++
+            buildMany(ast.events) ++
+            buildMany(ast.inheritances)
+      }
 
     // sort the sibling according to their source-index i.e. following their order of position in code.
     val sortedRootSiblings =
@@ -68,6 +72,10 @@ object NodeBuilder extends StrictLogging {
 
   private def positionedProducts: PartialFunction[Any, Seq[Node[Positioned]]] = {
     case positioned: Positioned =>
+      val children = buildOne(positioned)
+      List(Node(positioned, children))
+
+    case Some(positioned: Positioned) =>
       val children = buildOne(positioned)
       List(Node(positioned, children))
 
