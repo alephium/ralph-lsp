@@ -12,6 +12,16 @@ object Node {
   }
 }
 
+/**
+ * A [[Node]] represents a single position within a tree.
+ *
+ * Each node allows tree traversal in both forward and backward directions
+ * using the functions like [[walkDown]], [[walkUpDown]] and others.
+ *
+ * @param data     The data stored in this node.
+ * @param children This node's child nodes.
+ * @tparam A Data type.
+ */
 case class Node[A] private(data: A,
                            children: Seq[Node[A]]) { self =>
   private var _parent: Option[Node[A]] =
