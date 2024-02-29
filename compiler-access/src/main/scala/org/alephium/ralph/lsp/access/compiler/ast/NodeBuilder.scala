@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.access.compiler.ast
 
 import com.typesafe.scalalogging.StrictLogging
-import org.alephium.ralph.Ast
 import org.alephium.ralph.Ast.Positioned
+import org.alephium.ralph.{Ast, SourceIndex}
 
 /** Functions that build a traversable tree from [[Ast.ContractWithState]], returning the root [[Node]]. */
 object NodeBuilder extends StrictLogging {
@@ -13,7 +13,8 @@ object NodeBuilder extends StrictLogging {
    * @param ast The [[Ast.ContractWithState]] instance
    * @return Root node of the tree.
    */
-  def buildRootNode(ast: Ast.ContractWithState): Node[Positioned] = {
+  def buildRootNode(ast: Ast.ContractWithState,
+                    rootIndex: SourceIndex): Node[Positioned] = {
     // TODO: Are all these siblings? If they are not, they need to build a tree structure using source-index.
     val rootSiblings =
       ast match {
@@ -47,7 +48,7 @@ object NodeBuilder extends StrictLogging {
 
     // Root node
     Node(
-      data = RootPositioned,
+      data = RootPosition(rootIndex),
       children = sortedRootSiblings
     )
   }
