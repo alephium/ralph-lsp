@@ -19,7 +19,6 @@ object GoToDefinition extends StrictImplicitLogging {
    * @param line          Line position in a document (zero-based).
    * @param character     Character offset on a line in a document (zero-based).
    * @param fileURI       The text document's uri.
-   * @param dependencyDir Directory where the dependency code exists.
    * @param workspace     Current workspace state.
    * @return
    */
