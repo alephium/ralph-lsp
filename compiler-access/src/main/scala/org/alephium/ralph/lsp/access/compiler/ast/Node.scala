@@ -94,4 +94,20 @@ case class Node[A] private(data: A,
       override def next(): Node[A] =
         iter.next()
     }
+
+  /**
+   * Find the last node for which this predicate is true.
+   *
+   * This function is useful for find the closest node that contains a source-index.
+   * */
+  def findLast(f: A => Boolean): Option[Node[A]] =
+    self
+      .walkDown
+      .foldLeft(Option.empty[Node[A]]) {
+        case (closest, nextNode) =>
+          if (f(nextNode.data))
+            Some(nextNode)
+          else
+            closest
+      }
 }
