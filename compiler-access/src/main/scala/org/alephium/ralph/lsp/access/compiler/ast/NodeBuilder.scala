@@ -23,7 +23,7 @@ object NodeBuilder extends StrictLogging {
             buildMany(ast.funcs)
 
         case ast: Ast.Contract =>
-          buildMany(ast.stdInterfaceId.toSeq) ++
+          buildOne(ast.stdInterfaceId) ++
             buildOne(ast.ident) ++
             buildMany(ast.templateVars) ++
             buildMany(ast.fields) ++
@@ -34,7 +34,7 @@ object NodeBuilder extends StrictLogging {
             buildMany(ast.inheritances)
 
         case ast: Ast.ContractInterface =>
-          buildMany(ast.stdId.toSeq) ++
+          buildOne(ast.stdId) ++
             buildOne(ast.ident) ++
             buildMany(ast.funcs) ++
             buildMany(ast.events) ++
@@ -52,10 +52,10 @@ object NodeBuilder extends StrictLogging {
     )
   }
 
-  private def buildOne(positioned: Positioned): List[Node[Positioned]] =
-    positioned match {
-      case positioned: Product =>
-        positioned
+  private def buildOne(product: Any): List[Node[Positioned]] =
+    product match {
+      case product: Product =>
+        product
           .productIterator
           .toList
           .collect(positionedProducts)
