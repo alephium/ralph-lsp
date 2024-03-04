@@ -48,7 +48,7 @@ object URIUtil {
                 count: Int): Option[Path] = {
     val right =
       Paths
-        .get(uri.toString)
+        .get(uri)
         .iterator()
         .asScala
         .toList
@@ -73,7 +73,12 @@ object URIUtil {
       count = 2
     ) map {
       identifier =>
-        val string = identifier.toString
+        val string =
+          identifier
+            .iterator()
+            .asScala
+            .mkString("/") // import statements use forward slash.
+
         string.substring(0, string.lastIndexOf("."))
     }
 }
