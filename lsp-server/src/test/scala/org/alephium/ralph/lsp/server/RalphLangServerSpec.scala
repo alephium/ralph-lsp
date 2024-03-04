@@ -11,7 +11,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.net.URI
+import java.nio.file.Paths
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.concurrent.Promise
 import scala.jdk.FutureConverters._
@@ -32,7 +32,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
 
       // this is the initial message received from LSP client.
       val initialise = new InitializeParams()
-      val workspaceURI = new URI("file://test")
+      val workspaceURI = Paths.get("test").toUri
       initialise.setRootUri(workspaceURI.toString)
 
       // invoke server with the initialise message

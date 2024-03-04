@@ -12,7 +12,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import java.net.URI
+import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
 /**
@@ -45,7 +45,7 @@ class WorkspaceFindParsedSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
           // file is not in the workspace
           Workspace.findParsed(
-            fileURI = URI.create("file:///blah.ral"),
+            fileURI = Paths.get("blah.ral").toUri,
             workspace = workspace
           ) shouldBe None
 

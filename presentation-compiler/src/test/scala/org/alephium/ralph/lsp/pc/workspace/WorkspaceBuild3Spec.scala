@@ -13,7 +13,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import java.net.URI
+import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 import scala.util.Random
 
@@ -44,7 +44,7 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
         // random source-code that should be carried forward even on build compilation failure.
         val sourceCode =
-          ArraySeq(SourceCodeState.OnDisk(URI.create("file:///blah.ral")))
+          ArraySeq(SourceCodeState.OnDisk(Paths.get("blah.ral").toUri))
 
         // run the build and expect syntax error
         val actualBuildError =

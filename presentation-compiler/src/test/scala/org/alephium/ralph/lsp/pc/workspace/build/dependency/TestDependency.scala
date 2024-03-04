@@ -4,10 +4,10 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, RalphcConfig}
 import org.scalatest.matchers.should.Matchers._
 
-import java.net.URI
+import java.nio.file.Paths
 
 object TestDependency {
 
@@ -25,7 +25,7 @@ object TestDependency {
     // create a default build file.
     val parsed =
       BuildState.BuildParsed(
-        buildURI = URI.create("file:///ralph.json"),
+        buildURI = Paths.get(Build.BUILD_FILE_NAME).toUri,
         code = RalphcConfig.write(RalphcConfig.defaultParsedConfig),
         config = RalphcConfig.defaultParsedConfig
       )
