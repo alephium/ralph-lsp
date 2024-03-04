@@ -18,6 +18,7 @@ import org.eclipse.lsp4j.jsonrpc.{CancelChecker, CompletableFutures, messages}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
+import java.nio.file.Paths
 import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.collection.immutable.ArraySeq
@@ -59,9 +60,13 @@ object RalphLangServer {
   def getRootUri(params: InitializeParams): Option[URI] =
     Option(params.getRootUri)
       .orElse(Option(params.getRootPath))
+      .map(URI.create)
       //Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
-      .orElse(Option(System.getProperty("user.dir")).map(dir => s"file://$dir"))
-      .map(new URI(_))
+      .orElse {
+        Option(System.getProperty("user.dir"))
+          .map(Paths.get(_))
+          .map(_.toUri)
+      }
 
   /** Build capabilities supported by the LSP server */
   def serverCapabilities(): ServerCapabilities = {

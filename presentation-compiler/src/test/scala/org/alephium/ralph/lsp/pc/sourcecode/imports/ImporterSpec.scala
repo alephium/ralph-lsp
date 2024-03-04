@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.pc.sourcecode.imports
 
 import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.error.ImportError
@@ -11,7 +12,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import java.net.URI
 import scala.collection.immutable.ArraySeq
 
 class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
@@ -60,12 +60,22 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
         implicit val file: FileAccess =
           null
 
+        val fileURI =
+          TestFile
+            .genFolderPath(true)
+            .sample
+            .get
+            // the import statement for this file would be `import "my_package/my_file"`
+            .resolve("my_package")
+            .resolve("my_file.ral")
+            .toUri
+
         // create and compile a dependency file
         val dependency =
           TestSourceCode
             .genCompiled(
               fileURI =
-                URI.create("my_package/my_file.ral"), // the import statement here would be `import "my_package/my_file"`
+                fileURI,
               code =
                 """
                   |Contract ImportedContract(id: U256) {

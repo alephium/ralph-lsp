@@ -25,8 +25,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
     "parse workspace build file" when {
       "dependencyPath is provided" in {
         val build_ralph =
-          """
-            |{
+          """{
             |  "compilerOptions": {
             |    "ignoreUnusedConstantsWarnings": false,
             |    "ignoreUnusedVariablesWarnings": false,
@@ -49,8 +48,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
 
       "dependencyPath is not provided" in {
         val build_ralph =
-          """
-            |{
+          """{
             |  "compilerOptions": {
             |    "ignoreUnusedConstantsWarnings": false,
             |    "ignoreUnusedVariablesWarnings": false,

@@ -33,7 +33,7 @@ object StdInterface extends StrictImplicitLogging {
   def stdInterfaces(dependencyPath: Path,
                     errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ErrorDownloadingDependency, List[SourceCodeState.UnCompiled]] =
     Using.Manager { use =>
-      val stdURL = getClass.getResource(s"${File.separatorChar}$stdFolder")
+      val stdURL = getClass.getResource(s"/$stdFolder")
 
       val stdPath = if (stdURL.getProtocol == "file") {
         Paths.get(stdURL.toURI)
