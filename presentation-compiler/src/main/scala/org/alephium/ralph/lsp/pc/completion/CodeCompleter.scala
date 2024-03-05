@@ -33,27 +33,25 @@ object CodeCompleter extends StrictImplicitLogging {
       result =>
         result map {
           parsed =>
+            // fetch the requested index from line number and character number.
+            val cursorIndex =
+              StringUtil.computeIndex(
+                lines = parsed.codeLines,
+                line = line,
+                character = character
+              )
+
             complete(
-              line = line,
-              character = character,
+              cursorIndex = cursorIndex,
               workspace = workspace,
               sourceCode = parsed
             )
         }
     }
 
-  private def complete(line: Int,
-                       character: Int,
+  private def complete(cursorIndex: Int,
                        workspace: WorkspaceState.IsSourceAware,
-                       sourceCode: SourceCodeState.Parsed)(implicit logger: ClientLogger): ArraySeq[Suggestion] = {
-    // fetch the requested index from line number and character number.
-    val cursorIndex =
-      StringUtil.computeIndex(
-        lines = sourceCode.codeLines,
-        line = line,
-        character = character
-      )
-
+                       sourceCode: SourceCodeState.Parsed)(implicit logger: ClientLogger): ArraySeq[Suggestion] =
     // find the statement where this cursorIndex sits.
     sourceCode.ast.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>
@@ -74,5 +72,4 @@ object CodeCompleter extends StrictImplicitLogging {
         // TODO: Provide top level completion.
         ArraySeq.empty
     }
-  }
 }

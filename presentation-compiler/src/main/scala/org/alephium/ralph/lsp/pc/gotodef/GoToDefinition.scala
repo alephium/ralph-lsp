@@ -34,27 +34,25 @@ object GoToDefinition extends StrictImplicitLogging {
       result =>
         result map {
           parsed =>
+            // fetch the requested index from line number and character number.
+            val cursorIndex =
+              StringUtil.computeIndex(
+                lines = parsed.codeLines,
+                line = line,
+                character = character
+              )
+
             goTo(
-              line = line,
-              character = character,
+              cursorIndex = cursorIndex,
               workspace = workspace,
               sourceCode = parsed
             )
         }
     }
 
-  private def goTo(line: Int,
-                   character: Int,
+  private def goTo(cursorIndex: Int,
                    workspace: WorkspaceState.IsSourceAware,
-                   sourceCode: SourceCodeState.Parsed): ArraySeq[GoToLocation] = {
-    // fetch the requested index from line number and character number.
-    val cursorIndex =
-      StringUtil.computeIndex(
-        lines = sourceCode.codeLines,
-        line = line,
-        character = character
-      )
-
+                   sourceCode: SourceCodeState.Parsed): ArraySeq[GoToLocation] =
     // find the statement where this cursorIndex sits.
     sourceCode.ast.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>
@@ -79,5 +77,4 @@ object GoToDefinition extends StrictImplicitLogging {
       case None =>
         ArraySeq.empty
     }
-  }
 }
