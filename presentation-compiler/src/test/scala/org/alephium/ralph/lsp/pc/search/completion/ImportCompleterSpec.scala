@@ -16,18 +16,18 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "cursor is before the quotes" in {
-      TestCodeSearcher[Suggestion]("""import @@"std" """) shouldBe empty
-      TestCodeSearcher[Suggestion]("""import @@"std/" """) shouldBe empty
+      TestCodeSearcher[Suggestion]("""import @@"std" """)._1 shouldBe empty
+      TestCodeSearcher[Suggestion]("""import @@"std/" """)._1 shouldBe empty
     }
 
     "cursor is after the quotes" in {
-      TestCodeSearcher[Suggestion]("""import "std"@@ """) shouldBe empty
-      TestCodeSearcher[Suggestion]("""import "std/"@@ """) shouldBe empty
+      TestCodeSearcher[Suggestion]("""import "std"@@ """)._1 shouldBe empty
+      TestCodeSearcher[Suggestion]("""import "std/"@@ """)._1 shouldBe empty
     }
 
     "cursor is right after the import statement" in {
-      TestCodeSearcher[Suggestion]("""import@@ "std" """) shouldBe empty
-      TestCodeSearcher[Suggestion]("""import@@ "std/" """) shouldBe empty
+      TestCodeSearcher[Suggestion]("""import@@ "std" """)._1 shouldBe empty
+      TestCodeSearcher[Suggestion]("""import@@ "std/" """)._1 shouldBe empty
     }
   }
 
@@ -50,17 +50,17 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
       }
 
     "cursor is between the quotes" in {
-      TestCodeSearcher[Suggestion]("""import "@@" """) should contain theSameElementsAs expected
-      TestCodeSearcher[Suggestion]("""import "s@@" """) should contain theSameElementsAs expected
-      TestCodeSearcher[Suggestion]("""import "st@@" """) should contain theSameElementsAs expected
-      TestCodeSearcher[Suggestion]("""import "std@@" """) should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "@@" """)._1 should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "s@@" """)._1 should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "st@@" """)._1 should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "std@@" """)._1 should contain theSameElementsAs expected
     }
 
     "cursor is before the forward slash" in {
-      TestCodeSearcher[Suggestion]("""import "@@std/" """) should contain theSameElementsAs expected
-      TestCodeSearcher[Suggestion]("""import "s@@td/" """) should contain theSameElementsAs expected
-      TestCodeSearcher[Suggestion]("""import "st@@d/" """) should contain theSameElementsAs expected
-      TestCodeSearcher[Suggestion]("""import "std@@/" """) should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "@@std/" """)._1 should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "s@@td/" """)._1 should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "st@@d/" """)._1 should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "std@@/" """)._1 should contain theSameElementsAs expected
     }
   }
 
@@ -83,11 +83,11 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
       }
 
     "cursor is after the forward slash" in {
-      TestCodeSearcher[Suggestion]("""import "std/@@" """) should contain theSameElementsAs expected
-      TestCodeSearcher[Suggestion]("""import "std/fungible@@" """) should contain theSameElementsAs expected
-      TestCodeSearcher[Suggestion]("""import "std/fungible_@@" """) should contain theSameElementsAs expected
-      TestCodeSearcher[Suggestion]("""import "std/nft@@" """) should contain theSameElementsAs expected
-      TestCodeSearcher[Suggestion]("""import "std/nft_@@" """) should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "std/@@" """)._1 should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "std/fungible@@" """)._1 should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "std/fungible_@@" """)._1 should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "std/nft@@" """)._1 should contain theSameElementsAs expected
+      TestCodeSearcher[Suggestion]("""import "std/nft_@@" """)._1 should contain theSameElementsAs expected
     }
   }
 }
