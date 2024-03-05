@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.search.gotodef.data
 
 import org.alephium.ralph.Ast
-import org.alephium.ralph.lsp.access.compiler.message.CodeRange
+import org.alephium.ralph.lsp.access.compiler.message.LineRange
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 
@@ -36,7 +36,7 @@ object GoToLocation {
         sourceIndex =>
           GoToLocation(
             uri = sourceCode.fileURI,
-            codeRange = sourceIndex.toCodeRange(sourceCode.code)
+            lineRange = sourceIndex.toLineRange(sourceCode.code)
           )
       }
 }
@@ -45,7 +45,7 @@ object GoToLocation {
  * Represents a location in source code that can be navigated to.
  *
  * @param uri       The URI of the source file.
- * @param codeRange The range of code within the source file.
+ * @param lineRange The range of code within the source file.
  */
 case class GoToLocation(uri: URI,
-                        codeRange: CodeRange)
+                        lineRange: LineRange)

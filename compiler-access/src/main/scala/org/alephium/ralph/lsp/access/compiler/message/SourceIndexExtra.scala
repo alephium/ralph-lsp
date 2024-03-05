@@ -43,14 +43,14 @@ object SourceIndexExtra {
     def +(right: Int): SourceIndex =
       sourceIndex.copy(index = from + right)
 
-    /** Convert [[SourceIndex]] that contains index information to [[CodeRange]] that contains line and character information */
-    def toCodeRange(code: String): CodeRange = {
+    /** Convert [[SourceIndex]] that contains index information to [[LineRange]] that contains line and character information */
+    def toLineRange(code: String): LineRange = {
       val fastParseLineNumber = IndexedParserInput(code).prettyIndex(sourceIndex.from)
       val sourcePosition = SourcePosition.parse(fastParseLineNumber)
 
-      val start = CodePosition(sourcePosition.rowIndex, sourcePosition.colIndex)
-      val end = CodePosition(sourcePosition.rowIndex, sourcePosition.colIndex + sourceIndex.width)
-      CodeRange(start, end)
+      val start = LinePosition(sourcePosition.rowIndex, sourcePosition.colIndex)
+      val end = LinePosition(sourcePosition.rowIndex, sourcePosition.colIndex + sourceIndex.width)
+      LineRange(start, end)
     }
   }
 }

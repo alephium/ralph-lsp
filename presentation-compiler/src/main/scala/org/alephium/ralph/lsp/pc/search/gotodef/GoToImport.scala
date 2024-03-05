@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
-import org.alephium.ralph.lsp.access.compiler.message.CodeRange
+import org.alephium.ralph.lsp.access.compiler.message.LineRange
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
@@ -24,7 +24,7 @@ object GoToImport {
           code =>
             GoToLocation(
               uri = code.fileURI,
-              codeRange = CodeRange.zero
+              lineRange = LineRange.zero
             )
         }
 

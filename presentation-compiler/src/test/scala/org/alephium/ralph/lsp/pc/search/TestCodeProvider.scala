@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.{CodePosition, CodeRange, CompilerMessage}
+import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange, CompilerMessage}
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
@@ -91,10 +91,10 @@ object TestCodeProvider {
     (goToStart, goToEnd) match {
       case (Some((startLine, startLineIndex)), Some((endLine, endLineIndex))) =>
         // Code range should be where << and >> are located
-        val expectedCodeRange =
-          CodeRange(
-            CodePosition(startLineIndex, startLine.indexOf(">>")),
-            CodePosition(endLineIndex, endLine.replaceFirst(">>", "").indexOf("<<"))
+        val expectedLineRange =
+          LineRange(
+            LinePosition(startLineIndex, startLine.indexOf(">>")),
+            LinePosition(endLineIndex, endLine.replaceFirst(">>", "").indexOf("<<"))
           )
 
         // remove << and >>
@@ -113,7 +113,7 @@ object TestCodeProvider {
         searchResult.head shouldBe
           GoToLocation(
             uri = sourceCode.fileURI,
-            codeRange = expectedCodeRange
+            lineRange = expectedLineRange
           )
 
       case (None, None) =>

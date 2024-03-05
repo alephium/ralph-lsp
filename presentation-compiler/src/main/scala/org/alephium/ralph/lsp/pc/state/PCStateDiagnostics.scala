@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.pc.state
 
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, CodeRange}
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
 import org.alephium.ralph.lsp.pc.diagnostic.{CodeDiagnostic, CodeDiagnosticSeverity, FileDiagnostic}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
@@ -213,12 +213,12 @@ object PCStateDiagnostics {
     val range =
       code match {
         case Some(code) =>
-          message.index.toCodeRange(code)
+          message.index.toLineRange(code)
 
         case None =>
           // If source-code text is not known, then the line-number can't be fetched.
           // So return this error at file-level with an empty range.
-          CodeRange.zero
+          LineRange.zero
       }
 
     CodeDiagnostic(
