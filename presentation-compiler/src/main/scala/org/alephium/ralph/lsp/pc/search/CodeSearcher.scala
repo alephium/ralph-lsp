@@ -13,6 +13,15 @@ import java.net.URI
 import scala.collection.immutable.ArraySeq
 
 trait CodeSearcher[A] {
+
+  /**
+   * Performs a search operation at the cursor index within the source-code of a workspace.
+   *
+   * @param cursorIndex The index location where the search operation is performed.
+   * @param sourceCode  The parsed state of the source-code where the search is executed.
+   * @param workspace   The workspace state where the source-code is located.
+   * @return An [[ArraySeq]] of search results of type [[A]].
+   */
   def search(cursorIndex: Int,
              sourceCode: SourceCodeState.Parsed,
              workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): ArraySeq[A]
@@ -20,11 +29,11 @@ trait CodeSearcher[A] {
 
 object CodeSearcher {
 
-  /** The code-completer instance */
+  /** The code-completer implementation of [[CodeSearcher]] */
   implicit val codeCompleter: CodeSearcher[Suggestion] =
     CodeCompleter
 
-  /** The go-to definition instance */
+  /** The go-to definition implementation of [[CodeSearcher]] */
   implicit val goToDefinition: CodeSearcher[GoToLocation] =
     GoToDefinition
 
@@ -36,9 +45,7 @@ object CodeSearcher {
    * @param fileURI   The text document's uri.
    * @param workspace Current workspace state.
    * @tparam A The type to search.
-   * @return
    */
-
   def search[A](line: Int,
                 character: Int,
                 fileURI: URI,

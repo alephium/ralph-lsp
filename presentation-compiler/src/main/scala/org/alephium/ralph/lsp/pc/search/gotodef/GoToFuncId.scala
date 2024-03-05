@@ -27,6 +27,7 @@ object GoToFuncId {
       }
       .flatten
 
+  /** Find the local function with the given function id ([[Ast.FuncId]]) */
   private def goToLocalFunction(funcId: Ast.FuncId,
                                 source: Tree.Source): Option[Ast.FuncId] =
     funcId
