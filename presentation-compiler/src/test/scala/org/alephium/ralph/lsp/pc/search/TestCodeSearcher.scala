@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.search.completion
+package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
@@ -6,7 +6,6 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.search.CodeSearcher
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode
 import org.alephium.ralph.lsp.pc.util.StringUtil
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
