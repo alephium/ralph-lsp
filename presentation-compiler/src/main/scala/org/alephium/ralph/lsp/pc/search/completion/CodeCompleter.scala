@@ -9,6 +9,9 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 import scala.collection.immutable.ArraySeq
 
+/**
+ * Implements [[CodeSearcher]] that provides code completion results of type [[Suggestion]].
+ */
 private[search] object CodeCompleter extends CodeSearcher[Suggestion] with StrictImplicitLogging {
 
   override def search(cursorIndex: Int,

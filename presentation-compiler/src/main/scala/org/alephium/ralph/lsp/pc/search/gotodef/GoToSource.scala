@@ -35,7 +35,7 @@ object GoToSource {
   }
 
   private def goTo(cursorIndex: Int,
-                   source: Tree.Source): Option[Ast.Argument] =
+                   source: Tree.Source): Option[Ast.Positioned] =
     source
       .rootNode
       .findLast(_.sourceIndex.exists(_ contains cursorIndex)) // find the node closest to this source-index
@@ -44,7 +44,16 @@ object GoToSource {
           // the clicked/closest node is an ident
           GoToIdent.goTo(
             identNode = identNode,
-            ident = ident
+            ident = ident,
+            source = source
+          )
+
+        case funcIdNode @ Node(funcId: Ast.FuncId, _) =>
+          // the clicked/closest node is functionId
+          GoToFuncId.goTo(
+            funcIdNode = funcIdNode,
+            funcId = funcId,
+            source = source
           )
       }
       .flatten

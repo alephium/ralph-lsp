@@ -10,6 +10,9 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 import scala.collection.immutable.ArraySeq
 
+/**
+ * Implements [[CodeSearcher]] that provides go-to definition results of type [[GoToLocation]].
+ */
 private[search] object GoToDefinition extends CodeSearcher[GoToLocation] with StrictImplicitLogging {
 
   override def search(cursorIndex: Int,
