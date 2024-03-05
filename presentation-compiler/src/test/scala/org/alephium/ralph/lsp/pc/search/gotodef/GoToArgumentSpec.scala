@@ -61,4 +61,18 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       )
     }
   }
+
+  "go to the nearest argument" in {
+    goTo(
+      """
+        |// the furthest argument
+        |Contract GoToField(interface: MyInterface) {
+        |  // the nearest argument
+        |  pub fn local_function(>>interface: MyInterface<<) -> () {
+        |    let result = interface@@.function()
+        |  }
+        |}
+        |""".stripMargin
+    )
+  }
 }

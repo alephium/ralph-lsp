@@ -107,7 +107,9 @@ object TestCodeProvider {
         val (searchResult, sourceCode) =
           TestCodeProvider[GoToLocation](codeWithoutGoToSymbols)
 
-        searchResult should contain only
+        searchResult should have size 1
+
+        searchResult.head shouldBe
           GoToLocation(
             uri = sourceCode.fileURI,
             codeRange = expectedCodeRange
