@@ -12,6 +12,12 @@ import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 import java.net.URI
 import scala.collection.immutable.ArraySeq
 
+/**
+ * A trait representing a code provider, which performs search operations
+ * within the source code of a workspace.
+ *
+ * @tparam A The type of search results.
+ */
 trait CodeProvider[A] {
 
   /**
@@ -51,7 +57,7 @@ object CodeProvider {
                 fileURI: URI,
                 workspace: WorkspaceState.IsSourceAware)(implicit provider: CodeProvider[A],
                                                          logger: ClientLogger): Option[Either[CompilerMessage.Error, ArraySeq[A]]] =
-    Workspace.findParsed(
+    Workspace.findParsed( // find the parsed file where this search was executed.
       fileURI = fileURI,
       workspace = workspace
     ) map {
@@ -66,6 +72,7 @@ object CodeProvider {
                 character = character
               )
 
+            // execute the search
             provider.search(
               cursorIndex = cursorIndex,
               sourceCode = parsed,

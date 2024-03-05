@@ -109,6 +109,7 @@ object TestCodeProvider {
 
         searchResult should have size 1
 
+        // assert that the go-to definition jumps to the text between the go-to symbols << and >>
         searchResult.head shouldBe
           GoToLocation(
             uri = sourceCode.fileURI,
@@ -116,7 +117,7 @@ object TestCodeProvider {
           )
 
       case (None, None) =>
-        // Expect empty result because no << and >> provided.
+        // Expect empty result because no go-to symbols << and >> were provided.
         val (searchResult, _) =
           TestCodeProvider[GoToLocation](code)
 

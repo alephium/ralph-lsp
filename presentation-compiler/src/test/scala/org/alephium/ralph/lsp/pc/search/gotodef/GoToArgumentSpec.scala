@@ -60,6 +60,25 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "function and the argument have the same name" in {
+      goTo(
+        """
+          |Contract MyContract(interface: MyInterface) {
+          |
+          |  // argument_b is also a function, but it should still go to the argument.
+          |  pub fn function_a(>>argument_b: Bool<<) -> () {
+          |    let go_to_function = @@argument_b
+          |    let result = blah.function()
+          |  }
+          |
+          |  pub fn argument_b(boolean: Bool) -> () {
+          |
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
   "go to the nearest argument" in {
