@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.completion
+package org.alephium.ralph.lsp.pc.search.completion
 
 sealed trait Suggestion extends Product {
   def label: String

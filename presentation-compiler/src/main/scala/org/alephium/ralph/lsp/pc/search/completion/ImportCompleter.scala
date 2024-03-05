@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.completion
+package org.alephium.ralph.lsp.pc.search.completion
 
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._

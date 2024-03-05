@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.gotodef.data
+package org.alephium.ralph.lsp.pc.search.gotodef.data
 
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.message.CodeRange

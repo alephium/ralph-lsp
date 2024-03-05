@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.completion
+package org.alephium.ralph.lsp.pc.search.completion
 
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.search.CodeSearcher
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode
 import org.alephium.ralph.lsp.pc.util.StringUtil
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
@@ -18,7 +19,7 @@ import org.scalatest.OptionValues._
 import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
-object TestCodeCompleter {
+object TestCodeSearcher {
 
   /** Use this in your test-case for */
   private val completion_indicator =
@@ -32,7 +33,7 @@ object TestCodeCompleter {
    *   TestCompleter(""" import "@@" """)
    * }}}
    */
-  def apply(code: String): ArraySeq[Suggestion] = {
+  def apply[A](code: String)(implicit searcher: CodeSearcher[A]): ArraySeq[A] = {
     val lines =
       StringUtil.codeLines(code)
 
@@ -49,7 +50,7 @@ object TestCodeCompleter {
 
         // run completion at that line and character
         val (completion, workspace) =
-          TestCodeCompleter(
+          TestCodeSearcher(
             line = lineIndex,
             character = character,
             code = codeWithoutAtSymbol
@@ -73,9 +74,9 @@ object TestCodeCompleter {
    * @param code      The code to run completion on.
    * @return Suggestions and the created workspace.
    */
-  private def apply(line: Int,
-                    character: Int,
-                    code: Gen[String]): (Either[CompilerMessage.Error, ArraySeq[Suggestion]], WorkspaceState.IsParsedAndCompiled) = {
+  private def apply[A](line: Int,
+                       character: Int,
+                       code: Gen[String])(implicit searcher: CodeSearcher[A]): (Either[CompilerMessage.Error, ArraySeq[A]], WorkspaceState.IsParsedAndCompiled) = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess = FileAccess.disk
     implicit val compiler: CompilerAccess = CompilerAccess.ralphc
@@ -114,7 +115,7 @@ object TestCodeCompleter {
 
     // execute completion.
     val completionResult =
-      CodeCompleter.complete(
+      CodeSearcher.search(
         line = line,
         character = character,
         fileURI = sourceCode.fileURI,

@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.server.converter
 
 import org.alephium.ralph.lsp.access.compiler.message.CodeRange
-import org.alephium.ralph.lsp.pc.gotodef.data.GoToLocation
+import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.eclipse.lsp4j
 
 /** Converts Go-to definition types to LSP4J types */

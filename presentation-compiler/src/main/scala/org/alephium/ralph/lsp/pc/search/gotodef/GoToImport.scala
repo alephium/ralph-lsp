@@ -1,9 +1,9 @@
-package org.alephium.ralph.lsp.pc.gotodef
+package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CodeRange
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.lsp.pc.gotodef.data.GoToLocation
+import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 

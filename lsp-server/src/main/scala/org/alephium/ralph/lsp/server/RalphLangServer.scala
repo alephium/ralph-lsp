@@ -2,9 +2,10 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
-import org.alephium.ralph.lsp.pc.gotodef.GoToDefinition
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
+import org.alephium.ralph.lsp.pc.search.CodeSearcher
+import org.alephium.ralph.lsp.pc.search.completion.Suggestion
+import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.state.{PCState, PCStateDiagnostics}
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
@@ -306,7 +307,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         getPCState().workspace match {
           case sourceAware: WorkspaceState.IsSourceAware =>
             val completionResult =
-              CodeCompleter.complete(
+              CodeSearcher.search[Suggestion](
                 line = line,
                 character = character,
                 fileURI = fileURI,
@@ -358,7 +359,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           case sourceAware: WorkspaceState.IsSourceAware =>
             // Can provide GoTo definition.
             val goToResult =
-              GoToDefinition.goTo(
+              CodeSearcher.search[GoToLocation](
                 line = line,
                 character = character,
                 fileURI = fileURI,

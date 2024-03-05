@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.gotodef
+package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.Ast
 import org.alephium.ralph.Ast.Positioned

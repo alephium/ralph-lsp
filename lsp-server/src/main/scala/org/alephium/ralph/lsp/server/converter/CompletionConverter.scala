@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.server.converter
 
-import org.alephium.ralph.lsp.pc.completion.Suggestion
+import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.eclipse.lsp4j._
 
 import java.util
