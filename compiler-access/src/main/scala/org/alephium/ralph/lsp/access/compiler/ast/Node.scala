@@ -16,7 +16,7 @@ object Node {
  * A [[Node]] represents a single position within a tree.
  *
  * Each node allows tree traversal in both forward and backward directions
- * using the functions like [[walkDown]], [[walkUpDown]] and others.
+ * using the functions like [[walkDown]], [[walkParents]] and others.
  *
  * @param data     The data stored in this node.
  * @param children This node's child nodes.
@@ -52,37 +52,6 @@ case class Node[A] private(data: A,
         iter.hasNext
 
       override def next(): Node[A] =
-        iter.next()
-    }
-
-  /** Reaches ALL nodes walking up from a node and then down, excluding this/self node and it's children */
-  def walkUpDown: Iterator[A] =
-    new Iterator[A] {
-      private var lastParent = self
-
-      private val iter: Iterator[A] =
-        self
-          .walkParents
-          .map {
-            parentNode =>
-              // For the next parent, filter children that are not already processed in previous iteration (walking up)
-              val newChildren =
-                parentNode
-                  .children
-                  .filter(_ ne lastParent)
-
-              lastParent = parentNode
-              // Create a node copy without the previously processed parent node
-              // Note: Due to this transformation, this tree is not longer the same as original tree.
-              parentNode.copy(children = newChildren)
-          }
-          .flatMap(_.walkDown) // while walking up also traverse down each node.
-          .map(_.data) // return data because the node's children are transformed above.
-
-      override def hasNext: Boolean =
-        iter.hasNext
-
-      override def next(): A =
         iter.next()
     }
 
