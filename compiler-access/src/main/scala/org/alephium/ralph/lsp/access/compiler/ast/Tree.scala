@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.access.compiler.ast
 
+import org.alephium.ralph.lsp.access.compiler.ast.node.{Node, NodeBuilder}
 import org.alephium.ralph.lsp.access.compiler.ast.scope.{ScopeTable, ScopeTableBuilder}
 import org.alephium.ralph.{Ast, SourceIndex}
 

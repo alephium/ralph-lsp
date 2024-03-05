@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.access.compiler.ast
+package org.alephium.ralph.lsp.access.compiler.ast.node
 
 import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.Ast.Positioned

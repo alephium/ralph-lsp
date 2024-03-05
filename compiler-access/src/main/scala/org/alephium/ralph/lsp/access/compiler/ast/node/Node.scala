@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.access.compiler.ast
+package org.alephium.ralph.lsp.access.compiler.ast.node
 
 object Node {
   @inline def apply[A](data: A): Node[A] =

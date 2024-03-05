@@ -1,5 +1,7 @@
 package org.alephium.ralph.lsp.access.compiler.ast
 
+import org.alephium.ralph.lsp.access.compiler.ast.node.Node
+
 object TestNode {
 
   val root: Node[String] =

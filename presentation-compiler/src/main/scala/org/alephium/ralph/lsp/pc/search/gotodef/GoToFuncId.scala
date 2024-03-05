@@ -2,7 +2,8 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.Ast
 import org.alephium.ralph.Ast.Positioned
-import org.alephium.ralph.lsp.access.compiler.ast.{Node, Tree}
+import org.alephium.ralph.lsp.access.compiler.ast.Tree
+import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 
 object GoToFuncId {
 

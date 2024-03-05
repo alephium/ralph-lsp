@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.access.compiler.ast
 
+import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
