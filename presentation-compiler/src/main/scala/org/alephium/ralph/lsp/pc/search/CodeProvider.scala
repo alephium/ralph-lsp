@@ -2,8 +2,8 @@ package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.search.completion.{CodeCompleter, Suggestion}
-import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefinition
+import org.alephium.ralph.lsp.pc.search.completion.{CodeCompletionProvider, Suggestion}
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefinitionProvider
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.util.StringUtil
@@ -12,7 +12,7 @@ import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 import java.net.URI
 import scala.collection.immutable.ArraySeq
 
-trait CodeSearcher[A] {
+trait CodeProvider[A] {
 
   /**
    * Performs a search operation at the cursor index within the source-code of a workspace.
@@ -27,15 +27,15 @@ trait CodeSearcher[A] {
              workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): ArraySeq[A]
 }
 
-object CodeSearcher {
+object CodeProvider {
 
-  /** The code-completer implementation of [[CodeSearcher]] */
-  implicit val codeCompleter: CodeSearcher[Suggestion] =
-    CodeCompleter
+  /** The code-completer implementation of [[CodeProvider]]. */
+  implicit val codeCompleter: CodeProvider[Suggestion] =
+    CodeCompletionProvider
 
-  /** The go-to definition implementation of [[CodeSearcher]] */
-  implicit val goToDefinition: CodeSearcher[GoToLocation] =
-    GoToDefinition
+  /** The go-to definition implementation of [[CodeProvider]]. */
+  implicit val goToDefinition: CodeProvider[GoToLocation] =
+    GoToDefinitionProvider
 
   /**
    * Execute search at cursor position within the current workspace state.
@@ -49,14 +49,14 @@ object CodeSearcher {
   def search[A](line: Int,
                 character: Int,
                 fileURI: URI,
-                workspace: WorkspaceState.IsSourceAware)(implicit searcher: CodeSearcher[A],
+                workspace: WorkspaceState.IsSourceAware)(implicit provider: CodeProvider[A],
                                                          logger: ClientLogger): Option[Either[CompilerMessage.Error, ArraySeq[A]]] =
     Workspace.findParsed(
       fileURI = fileURI,
       workspace = workspace
     ) map {
-      result =>
-        result map {
+      parsedOpt =>
+        parsedOpt map {
           parsed =>
             // fetch the requested index from line number and character number.
             val cursorIndex =
@@ -66,7 +66,7 @@ object CodeSearcher {
                 character = character
               )
 
-            searcher.search(
+            provider.search(
               cursorIndex = cursorIndex,
               sourceCode = parsed,
               workspace = workspace

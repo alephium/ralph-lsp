@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
-import org.alephium.ralph.lsp.pc.search.CodeSearcher
+import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.state.{PCState, PCStateDiagnostics}
@@ -307,7 +307,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         getPCState().workspace match {
           case sourceAware: WorkspaceState.IsSourceAware =>
             val completionResult =
-              CodeSearcher.search[Suggestion](
+              CodeProvider.search[Suggestion](
                 line = line,
                 character = character,
                 fileURI = fileURI,
@@ -359,7 +359,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           case sourceAware: WorkspaceState.IsSourceAware =>
             // Can provide GoTo definition.
             val goToResult =
-              CodeSearcher.search[GoToLocation](
+              CodeProvider.search[GoToLocation](
                 line = line,
                 character = character,
                 fileURI = fileURI,

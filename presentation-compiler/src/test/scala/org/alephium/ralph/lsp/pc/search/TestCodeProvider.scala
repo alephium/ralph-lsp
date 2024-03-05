@@ -20,7 +20,7 @@ import org.scalatest.matchers.should.Matchers._
 import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
-object TestCodeSearcher {
+object TestCodeProvider {
 
   /** Use this in your test-case for */
   private val SEARCH_INDICATOR =
@@ -34,7 +34,7 @@ object TestCodeSearcher {
    *   TestCompleter(""" import "@@" """)
    * }}}
    */
-  def apply[A](code: String)(implicit searcher: CodeSearcher[A]): (ArraySeq[A], SourceCodeState.IsCodeAware) = {
+  def apply[A](code: String)(implicit provider: CodeProvider[A]): (ArraySeq[A], SourceCodeState.IsCodeAware) = {
     val lines =
       StringUtil.codeLines(code)
 
@@ -51,7 +51,7 @@ object TestCodeSearcher {
 
         // run completion at that line and character
         val (searchResult, workspace) =
-          TestCodeSearcher(
+          TestCodeProvider(
             line = lineIndex,
             character = character,
             code = codeWithoutAtSymbol
@@ -105,7 +105,7 @@ object TestCodeSearcher {
 
         // Execute go-to definition.
         val (searchResult, sourceCode) =
-          TestCodeSearcher[GoToLocation](codeWithoutGoToSymbols)
+          TestCodeProvider[GoToLocation](codeWithoutGoToSymbols)
 
         searchResult should contain only
           GoToLocation(
@@ -116,7 +116,7 @@ object TestCodeSearcher {
       case (None, None) =>
         // Expect empty result because no << and >> provided.
         val (searchResult, _) =
-          TestCodeSearcher[GoToLocation](code)
+          TestCodeProvider[GoToLocation](code)
 
         searchResult shouldBe empty
 
@@ -135,7 +135,7 @@ object TestCodeSearcher {
    */
   private def apply[A](line: Int,
                        character: Int,
-                       code: Gen[String])(implicit searcher: CodeSearcher[A]): (Either[CompilerMessage.Error, ArraySeq[A]], WorkspaceState.IsParsedAndCompiled) = {
+                       code: Gen[String])(implicit provider: CodeProvider[A]): (Either[CompilerMessage.Error, ArraySeq[A]], WorkspaceState.IsParsedAndCompiled) = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess = FileAccess.disk
     implicit val compiler: CompilerAccess = CompilerAccess.ralphc
@@ -174,7 +174,7 @@ object TestCodeSearcher {
 
     // execute completion.
     val completionResult =
-      CodeSearcher.search(
+      CodeProvider.search(
         line = line,
         character = character,
         fileURI = sourceCode.fileURI,

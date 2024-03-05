@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
-import org.alephium.ralph.lsp.pc.search.TestCodeSearcher._
+import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
