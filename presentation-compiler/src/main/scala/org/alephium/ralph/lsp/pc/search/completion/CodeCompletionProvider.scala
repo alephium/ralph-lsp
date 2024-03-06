@@ -11,6 +11,8 @@ import scala.collection.immutable.ArraySeq
 
 /**
  * Implements [[CodeProvider]] that provides code completion results of type [[Suggestion]].
+ *
+ * To execution this function invoke [[CodeProvider.search]] with [[Suggestion]] as type parameter.
  */
 private[search] object CodeCompletionProvider extends CodeProvider[Suggestion] with StrictImplicitLogging {
 

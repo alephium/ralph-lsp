@@ -7,7 +7,14 @@ import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 
 private object GoToIdent {
 
-  /** Given a [[Node]] of type ident [[Ast.Ident]] provide go-to definition */
+  /**
+   * Navigate to the nearest argument for the given identifier.
+   *
+   * @param identNode The node representing the identifier in the AST.
+   * @param ident     The identifier for which the argument definition is sought.
+   * @param source    The source tree to search within.
+   * @return An option containing the closest argument if found, otherwise None.
+   * */
   def goTo(identNode: Node[Positioned],
            ident: Ast.Ident,
            source: Tree.Source): Option[Ast.Argument] =
@@ -25,6 +32,13 @@ private object GoToIdent {
       }
       .flatten
 
+  /** Navigate to the nearest argument for the given variable.
+   *
+   * @param variableNode The node representing the variable.
+   * @param variable     The variable to find the argument for.
+   * @param source       The source tree to search within.
+   * @return An option containing the closest argument if found, otherwise None.
+   * */
   private def goToVariable(variableNode: Node[Positioned],
                            variable: Ast.Variable[_],
                            source: Tree.Source): Option[Ast.Argument] =

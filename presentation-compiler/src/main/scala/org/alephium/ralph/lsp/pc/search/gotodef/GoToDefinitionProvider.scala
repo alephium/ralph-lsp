@@ -12,6 +12,8 @@ import scala.collection.immutable.ArraySeq
 
 /**
  * Implements [[CodeProvider]] that provides go-to definition results of type [[GoToLocation]].
+ *
+ * To execution this function invoke [[CodeProvider.search]] with [[GoToLocation]] as type parameter.
  */
 private[search] object GoToDefinitionProvider extends CodeProvider[GoToLocation] with StrictImplicitLogging {
 

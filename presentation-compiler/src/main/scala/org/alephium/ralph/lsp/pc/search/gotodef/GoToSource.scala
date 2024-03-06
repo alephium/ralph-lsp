@@ -12,12 +12,12 @@ import scala.collection.immutable.ArraySeq
 private object GoToSource {
 
   /**
-   * Go to definition for source-code.
+   * Navigates to the definition of a token in the source code.
    *
-   * @param cursorIndex The Requested index (token clicked by user).
-   * @param sourceCode  The requested file.
+   * @param cursorIndex The index of the token clicked by the user.
+   * @param sourceCode  The requested source file.
    * @param sourceAST   Parsed AST of the requested source file's code.
-   * @return Target go-to location.
+   * @return An array sequence containing the target go-to location(s).
    */
   def goTo(cursorIndex: Int,
            sourceCode: SourceCodeState.Parsed,
@@ -35,6 +35,13 @@ private object GoToSource {
     )
   }
 
+  /**
+   * Navigates to the definition of a token in the source code.
+   *
+   * @param cursorIndex The index of the token clicked by the user.
+   * @param source      The source tree to navigate within.
+   * @return An option containing the positioned AST element if found, otherwise None.
+   */
   private def goTo(cursorIndex: Int,
                    source: Tree.Source): Option[Ast.Positioned] =
     source

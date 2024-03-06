@@ -7,7 +7,14 @@ import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 
 private object GoToFuncId {
 
-  /** Given a [[Ast.FuncId]], jump to where this function is defined. */
+  /**
+   * Navigate to the definition of a function for the given [[Ast.FuncId]].
+   *
+   * @param funcIdNode The node representing the [[Ast.FuncId]] in the AST.
+   * @param funcId     The [[Ast.FuncId]] of the function to find the definition for.
+   * @param source     The source tree to search within.
+   * @return An option containing the [[Ast.FuncId]] of the function definition if found, otherwise None.
+   * */
   def goTo(funcIdNode: Node[Positioned],
            funcId: Ast.FuncId,
            source: Tree.Source): Option[Ast.FuncId] =
@@ -28,7 +35,13 @@ private object GoToFuncId {
       }
       .flatten
 
-  /** Find the local function with the given function id ([[Ast.FuncId]]) */
+  /**
+   * Navigate to the local function within the source code for the given [[Ast.FuncId]].
+   *
+   * @param funcId The [[Ast.FuncId]] of the local function to locate.
+   * @param source The source tree to search within.
+   * @return An option containing the [[Ast.FuncId]] of the local function if found, otherwise None.
+   * */
   private def goToLocalFunction(funcId: Ast.FuncId,
                                 source: Tree.Source): Option[Ast.FuncId] =
     funcId

@@ -1,9 +1,11 @@
 package org.alephium.ralph.lsp.access.compiler.ast.node
 
 object Node {
+  /** Create a [[Node]] with no children */
   @inline def apply[A](data: A): Node[A] =
     new Node(data, List.empty)
 
+  /** Create a [[Node]] with children */
   @inline def apply[A](data: A, children: Seq[Node[A]]): Node[A] = {
     val parent = new Node(data, children)
     // set the parent for each child node to allow traversing up.

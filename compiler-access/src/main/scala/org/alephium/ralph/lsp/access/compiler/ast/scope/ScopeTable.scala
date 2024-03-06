@@ -75,10 +75,10 @@ object ScopeTable {
 }
 
 /**
- * Stores all declarations and their scope.
+ * Stores type definitions and their respective scopes.
  *
- * @param arguments All arguments and their scopes.
- * @param functions All functions and their scopes.
+ * @param arguments A map containing all arguments and their respective scopes.
+ * @param functions A map containing all functions and their respective scopes.
  */
 case class ScopeTable(private val arguments: mutable.Map[String, Array[Scope.Argument]],
                       private val functions: mutable.Map[String, Array[Scope.Function]]) {

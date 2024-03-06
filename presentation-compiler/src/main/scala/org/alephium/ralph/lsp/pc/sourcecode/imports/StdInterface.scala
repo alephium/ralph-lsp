@@ -5,7 +5,6 @@ import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDownloadingDependency
 
-import java.io.File
 import java.net.URI
 import java.nio.file.{FileSystems, Files, Path, Paths}
 import scala.io.Source
