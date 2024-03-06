@@ -61,7 +61,7 @@ object Importer {
         case imported: Tree.Import => // type all import statements
           // TODO: Build a cached Map stored in BuildState instead of doing this linear search.
           // import statement should exists in dependant code.
-          dependency.find(_.importIdentifier.map(_.string.name.value) contains imported.string.name.value) match {
+          dependency.find(_.importIdentifier.exists(_.string.name.value == imported.string.name.value)) match {
             case Some(dependency) =>
               Right(dependency) // Import exists! Good!
 
