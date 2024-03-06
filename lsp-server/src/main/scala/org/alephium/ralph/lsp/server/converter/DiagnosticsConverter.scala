@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.server.converter
 
+import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange}
 import org.alephium.ralph.lsp.pc.diagnostic.{CodeDiagnostic, CodeDiagnosticSeverity, FileDiagnostic}
 import org.eclipse.lsp4j._
 
@@ -18,14 +19,20 @@ object DiagnosticsConverter {
 
   def toDiagnostic(diagnostic: CodeDiagnostic): Diagnostic =
     new Diagnostic(
-      new Range(
-        new Position(diagnostic.fromLine, diagnostic.fromCharacter),
-        new Position(diagnostic.toLine, diagnostic.toCharacter)
-      ),
+      toRange(diagnostic.range),
       diagnostic.message,
       toDiagnosticSeverity(diagnostic.severity),
       "RalphLSP"
     )
+
+  def toRange(range: LineRange): Range =
+    new Range(
+      toPosition(range.from),
+      toPosition(range.to)
+    )
+
+  def toPosition(position: LinePosition): Position =
+    new Position(position.line, position.character)
 
   def toDiagnosticSeverity(severity: CodeDiagnosticSeverity): DiagnosticSeverity =
     severity match {

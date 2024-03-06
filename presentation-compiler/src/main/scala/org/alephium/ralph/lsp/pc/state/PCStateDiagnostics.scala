@@ -222,10 +222,7 @@ object PCStateDiagnostics {
       }
 
     CodeDiagnostic(
-      fromLine = range.from.line,
-      fromCharacter = range.from.character,
-      toLine = range.to.line,
-      toCharacter = range.to.character,
+      range = range,
       message = message.message,
       severity = severity
     )
