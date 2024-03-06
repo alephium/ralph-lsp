@@ -9,7 +9,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 
 import scala.collection.immutable.ArraySeq
 
-object GoToSource {
+private object GoToSource {
 
   /**
    * Go to definition for source-code.

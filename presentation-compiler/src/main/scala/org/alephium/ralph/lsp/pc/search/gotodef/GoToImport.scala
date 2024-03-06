@@ -9,7 +9,7 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 import scala.collection.immutable.ArraySeq
 
-object GoToImport {
+private object GoToImport {
 
   def goTo(cursorIndex: Int,
            dependency: Option[WorkspaceState.Compiled],

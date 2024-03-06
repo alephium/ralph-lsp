@@ -5,7 +5,7 @@ import org.alephium.ralph.Ast.Positioned
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 
-object GoToFuncId {
+private object GoToFuncId {
 
   /** Given a [[Ast.FuncId]], jump to where this function is defined. */
   def goTo(funcIdNode: Node[Positioned],

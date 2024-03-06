@@ -5,7 +5,7 @@ import org.alephium.ralph.Ast.Positioned
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 
-object GoToIdent {
+private object GoToIdent {
 
   /** Given a [[Node]] of type ident [[Ast.Ident]] provide go-to definition */
   def goTo(identNode: Node[Positioned],

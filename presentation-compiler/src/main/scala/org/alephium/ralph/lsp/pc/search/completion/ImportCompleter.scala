@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 import scala.collection.immutable.ArraySeq
 
-object ImportCompleter extends StrictImplicitLogging {
+private object ImportCompleter extends StrictImplicitLogging {
 
   /**
    * Perform import code completion within the given dependency.
