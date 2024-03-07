@@ -7,7 +7,7 @@ import org.scalatest.wordspec.AnyWordSpec
 class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
   "return in empty" when {
-    "function does not exists" in {
+    "function does not exist" in {
       goTo(
         """
           |Contract MyContract(interface: MyInterface) {

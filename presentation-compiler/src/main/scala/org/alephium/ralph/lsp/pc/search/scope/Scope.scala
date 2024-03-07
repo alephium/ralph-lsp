@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.access.compiler.ast.scope
+package org.alephium.ralph.lsp.pc.search.scope
 
 import org.alephium.ralph.{Ast, SourceIndex}
 
@@ -15,5 +15,4 @@ object Scope {
   /** An argument [[Ast.Argument]] and it's scope */
   case class Argument(typeDef: Ast.Argument,
                       scope: SourceIndex) extends Scope
-
 }
