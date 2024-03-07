@@ -6,7 +6,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
-  "return in empty" when {
+  "return empty" when {
     "argument does not exists" in {
       goTo(
         """
@@ -21,7 +21,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
   }
 
-  "go to a single contract argument" when {
+  "return non-empty" when {
     "initial character is selected" in {
       goTo(
         """
@@ -79,19 +79,21 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "there are multiple arguments with the same name" in {
+      goTo(
+        """
+          |// the furthest argument
+          |Contract GoToField(>>interface: MyInterface<<) {
+          |
+          |  // the nearest argument
+          |  pub fn local_function(>>interface: MyInterface<<) -> () {
+          |    let result = interface@@.function()
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
-  "go to the nearest argument" in {
-    goTo(
-      """
-        |// the furthest argument
-        |Contract GoToField(interface: MyInterface) {
-        |  // the nearest argument
-        |  pub fn local_function(>>interface: MyInterface<<) -> () {
-        |    let result = interface@@.function()
-        |  }
-        |}
-        |""".stripMargin
-    )
-  }
 }

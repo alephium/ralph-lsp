@@ -4,6 +4,10 @@ import org.alephium.ralph.Ast
 import org.alephium.ralph.Ast.Positioned
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
+import org.alephium.ralph.lsp.pc.search.scope.ScopeBuilder
+
+import scala.collection.immutable.ArraySeq
 
 private object GoToIdent {
 
@@ -17,10 +21,11 @@ private object GoToIdent {
    * */
   def goTo(identNode: Node[Positioned],
            ident: Ast.Ident,
-           source: Tree.Source): Option[Ast.Argument] =
+           source: Tree.Source): ArraySeq[Ast.Argument] =
     identNode
       .parent // take one step up to check the type of ident node.
       .map(_.data)
+      .to(ArraySeq)
       .collect {
         case variable: Ast.Variable[_] if variable.id == ident => // Is it a variable?
           // The user clicked on a variable. Take 'em there!
@@ -41,17 +46,19 @@ private object GoToIdent {
    * */
   private def goToVariable(variableNode: Node[Positioned],
                            variable: Ast.Variable[_],
-                           source: Tree.Source): Option[Ast.Argument] =
+                           source: Tree.Source): ArraySeq[Ast.Argument] =
     variable
       .sourceIndex
+      .to(ArraySeq)
       .flatMap {
         variableIndex =>
-          source
-            .scopeTable
-            .nearestArgument(
-              name = variable.id.name,
-              nearestToIndex = variableIndex
-            )
+          ScopeBuilder
+            .buildArguments(source)
+            .filter {
+              argument =>
+                argument.typeDef.ident == variable.id &&
+                  argument.scope.contains(variableIndex.index)
+            }
+            .map(_.typeDef)
       }
-      .map(_.typeDef)
 }

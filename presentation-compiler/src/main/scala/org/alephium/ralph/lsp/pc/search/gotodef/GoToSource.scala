@@ -31,7 +31,7 @@ private object GoToSource {
     // covert go-to node to GoToLocation
     GoToLocation(
       sourceCode = sourceCode,
-      ast = goToResult.to(ArraySeq)
+      ast = goToResult
     )
   }
 
@@ -43,10 +43,11 @@ private object GoToSource {
    * @return An option containing the positioned AST element if found, otherwise None.
    */
   private def goTo(cursorIndex: Int,
-                   source: Tree.Source): Option[Ast.Positioned] =
+                   source: Tree.Source): ArraySeq[Ast.Positioned] =
     source
       .rootNode
       .findLast(_.sourceIndex.exists(_ contains cursorIndex)) // find the node closest to this source-index
+      .to(ArraySeq)
       .collect {
         case identNode @ Node(ident: Ast.Ident, _) =>
           // the clicked/closest node is an ident

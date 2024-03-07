@@ -84,48 +84,44 @@ object TestCodeProvider {
         .codeLines(code)
         .zipWithIndex
 
-    val goToStart = lines.find(_._1.contains(">>"))
-    val goToEnd = lines.find(_._1.contains("<<"))
+    val goToStart = lines.filter(_._1.contains(">>"))
+    val goToEnd = lines.filter(_._1.contains("<<"))
 
-    // find the line where the go-to symbols >> and << are located
-    (goToStart, goToEnd) match {
-      case (Some((startLine, startLineIndex)), Some((endLine, endLineIndex))) =>
-        // Code range should be where << and >> are located
-        val expectedLineRange =
-          LineRange(
-            LinePosition(startLineIndex, startLine.indexOf(">>")),
-            LinePosition(endLineIndex, endLine.replaceFirst(">>", "").indexOf("<<"))
-          )
+    val expectedLineRanges =
+      if (goToStart.length != goToEnd.length)
+        fail(s"Matching GoTo location indicators '<< and >>' not provided")
+      else
+        goToStart
+          .zip(goToEnd)
+          .map {
+            case ((startLine, startLineIndex), (endLine, endLineIndex)) =>
+              // Code range should be where << and >> are located
+              LineRange(
+                LinePosition(startLineIndex, startLine.indexOf(">>")),
+                LinePosition(endLineIndex, endLine.replaceFirst(">>", "").indexOf("<<"))
+              )
+          }
 
-        // remove << and >>
-        val codeWithoutGoToSymbols =
-          code
-            .replaceFirst(">>", "")
-            .replaceFirst("<<", "")
+    // remove << and >>
+    val codeWithoutGoToSymbols =
+      code.replaceAll(">>|<<", "")
 
-        // Execute go-to definition.
-        val (searchResult, sourceCode) =
-          TestCodeProvider[GoToLocation](codeWithoutGoToSymbols)
+    // Execute go-to definition.
+    val (searchResult, sourceCode) =
+      TestCodeProvider[GoToLocation](codeWithoutGoToSymbols)
 
-        searchResult should have size 1
-
-        // assert that the go-to definition jumps to the text between the go-to symbols << and >>
-        searchResult.head shouldBe
+    // Expect GoToLocations to also contain the fileURI
+    val expectedGoToLocations =
+      expectedLineRanges map {
+        lineRange =>
           GoToLocation(
             uri = sourceCode.fileURI,
-            lineRange = expectedLineRange
+            lineRange = lineRange
           )
+      }
 
-      case (None, None) =>
-        // Expect empty result because no go-to symbols << and >> were provided.
-        val (searchResult, _) =
-          TestCodeProvider[GoToLocation](code)
-
-        searchResult shouldBe empty
-
-      case (_, _) =>
-        fail(s"GoTo location indicator '<< and >>' not provided")
-    }
+    // assert that the go-to definition jumps to all text between the go-to symbols << and >>
+    searchResult should contain theSameElementsAs expectedGoToLocations
   }
 
   /**
