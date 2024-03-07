@@ -19,7 +19,7 @@ private object GoToFuncId {
    * */
   def goTo(funcIdNode: Node[Positioned],
            funcId: Ast.FuncId,
-           source: Tree.Source): ArraySeq[Ast.FuncId] =
+           source: Tree.Source): ArraySeq[Ast.Positioned] =
     funcIdNode
       .parent // take one step up to check the type of function call.
       .map(_.data)
@@ -29,6 +29,12 @@ private object GoToFuncId {
           // The user clicked on a local function. Take 'em there!
           goToLocalFunction(
             funcId = funcId,
+            source = source
+          )
+
+        case funcDef: Ast.FuncDef[_] if funcDef.id == funcId =>
+          goToFunctionCalls(
+            funcDef = funcDef,
             source = source
           )
 
@@ -53,5 +59,24 @@ private object GoToFuncId {
       .funcs
       .filter(_.id == funcId)
       .map(_.id)
+      .to(ArraySeq)
+
+  /**
+   * Navigate to all local function calls where the given function definition [[Ast.FuncDef]]
+   * is invoked.
+   *
+   * @param funcDef The [[Ast.FuncDef]] to locate calls for.
+   * @param source  The source tree to search within.
+   * @return An option containing the function call expression [[Ast.CallExpr]] of the local function calls, otherwise None.
+   * */
+  private def goToFunctionCalls(funcDef: Ast.FuncDef[_],
+                                source: Tree.Source): ArraySeq[Ast.CallExpr[_]] =
+    source
+      .rootNode
+      .walkDown
+      .collect {
+        case Node(exp: Ast.CallExpr[_], _) if exp.id == funcDef.id =>
+          exp
+      }
       .to(ArraySeq)
 }
