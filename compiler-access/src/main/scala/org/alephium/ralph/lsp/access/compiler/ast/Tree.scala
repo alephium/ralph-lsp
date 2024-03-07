@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.access.compiler.ast
 
+import org.alephium.ralph.lsp.access.compiler.ast.node.{Node, NodeBuilder}
 import org.alephium.ralph.{Ast, SourceIndex}
 
 /** Ralph Syntax Tree (AST) */
@@ -35,7 +36,17 @@ object Tree {
                         index: SourceIndex) extends Tree
 
   case class Source(ast: Ast.ContractWithState,
-                    index: SourceIndex) extends Statement
+                    index: SourceIndex) extends Statement {
+    // TODO: Move the following to a cache like Caffeine.
+
+    /**
+     * The root [[Node]] of the tree created from [[ast]].
+     *
+     * @note Lazily initialised as it can have concurrent access or no access at all.
+     * */
+    lazy val rootNode: Node[Ast.Positioned] =
+      NodeBuilder.buildRootNode(ast, index)
+  }
 
   sealed trait Literal extends Tree
 

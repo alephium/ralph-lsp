@@ -1,9 +1,7 @@
 package org.alephium.ralph.lsp.pc.state
 
-import fastparse.IndexedParserInput
-import org.alephium.ralph.SourcePosition
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
 import org.alephium.ralph.lsp.pc.diagnostic.{CodeDiagnostic, CodeDiagnosticSeverity, FileDiagnostic}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
@@ -212,27 +210,19 @@ object PCStateDiagnostics {
   def toDiagnostic(code: Option[String],
                    message: CompilerMessage,
                    severity: CodeDiagnosticSeverity): CodeDiagnostic = {
-    val ((fromLine, fromCharacter), (toLine, toCharacter)) =
+    val range =
       code match {
         case Some(code) =>
-          val fastParseLineNumber = IndexedParserInput(code).prettyIndex(message.index.from)
-          val sourcePosition = SourcePosition.parse(fastParseLineNumber)
-
-          val start = (sourcePosition.rowIndex, sourcePosition.colIndex)
-          val end = (sourcePosition.rowIndex, sourcePosition.colIndex + message.index.width)
-          (start, end)
+          message.index.toLineRange(code)
 
         case None =>
           // If source-code text is not known, then the line-number can't be fetched.
           // So return this error at file-level with an empty range.
-          ((0, 0), (0, 0))
+          LineRange.zero
       }
 
     CodeDiagnostic(
-      fromLine = fromLine,
-      fromCharacter = fromCharacter,
-      toLine = toLine,
-      toCharacter = toCharacter,
+      range = range,
       message = message.message,
       severity = severity
     )

@@ -2,16 +2,17 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.completion.{CodeCompleter, Suggestion}
-import org.alephium.ralph.lsp.pc.gotodef.GoToDefinition
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
+import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.completion.Suggestion
+import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.state.{PCState, PCStateDiagnostics}
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.alephium.ralph.lsp.server.RalphLangServer._
-import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter}
+import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter, GoToConverter}
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{CancelChecker, CompletableFutures, messages}
@@ -306,7 +307,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         getPCState().workspace match {
           case sourceAware: WorkspaceState.IsSourceAware =>
             val completionResult =
-              CodeCompleter.complete(
+              CodeProvider.search[Suggestion](
                 line = line,
                 character = character,
                 fileURI = fileURI,
@@ -358,7 +359,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           case sourceAware: WorkspaceState.IsSourceAware =>
             // Can provide GoTo definition.
             val goToResult =
-              GoToDefinition.goTo(
+              CodeProvider.search[GoToLocation](
                 line = line,
                 character = character,
                 fileURI = fileURI,
@@ -367,15 +368,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
             val locations =
               goToResult match {
-                case Some(Right(uris)) =>
+                case Some(Right(goToLocations)) =>
                   // successful
-                  uris map {
-                    uri =>
-                      new Location(
-                        uri.toString,
-                        new Range(new Position(0, 0), new Position(0, 0))
-                      )
-                  }
+                  goToLocations map GoToConverter.toLocation
 
                 case Some(Left(error)) =>
                   // Go-to definition failed: Log the error message

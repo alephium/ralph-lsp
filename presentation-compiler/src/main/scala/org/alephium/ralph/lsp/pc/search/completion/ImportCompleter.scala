@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.completion
+package org.alephium.ralph.lsp.pc.search.completion
 
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 import scala.collection.immutable.ArraySeq
 
-object ImportCompleter extends StrictImplicitLogging {
+private object ImportCompleter extends StrictImplicitLogging {
 
   /**
    * Perform import code completion within the given dependency.
