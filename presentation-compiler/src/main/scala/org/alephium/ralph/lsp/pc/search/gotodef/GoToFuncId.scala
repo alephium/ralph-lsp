@@ -22,8 +22,8 @@ private object GoToFuncId {
            source: Tree.Source): ArraySeq[Ast.FuncId] =
     funcIdNode
       .parent // take one step up to check the type of function call.
-      .to(ArraySeq)
       .map(_.data)
+      .to(ArraySeq)
       .collect {
         case callExpr: Ast.CallExpr[_] if callExpr.id == funcId =>
           // The user clicked on a local function. Take 'em there!

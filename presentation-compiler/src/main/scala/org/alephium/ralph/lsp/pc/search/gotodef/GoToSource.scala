@@ -31,7 +31,7 @@ private object GoToSource {
     // covert go-to node to GoToLocation
     GoToLocation(
       sourceCode = sourceCode,
-      ast = goToResult.to(ArraySeq)
+      ast = goToResult
     )
   }
 
