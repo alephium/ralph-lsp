@@ -5,6 +5,8 @@ import org.alephium.ralph.Ast.Positioned
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 
+import scala.collection.immutable.ArraySeq
+
 private object GoToFuncId {
 
   /**
@@ -17,9 +19,10 @@ private object GoToFuncId {
    * */
   def goTo(funcIdNode: Node[Positioned],
            funcId: Ast.FuncId,
-           source: Tree.Source): Option[Ast.FuncId] =
+           source: Tree.Source): ArraySeq[Ast.FuncId] =
     funcIdNode
       .parent // take one step up to check the type of function call.
+      .to(ArraySeq)
       .map(_.data)
       .collect {
         case callExpr: Ast.CallExpr[_] if callExpr.id == funcId =>
@@ -31,7 +34,7 @@ private object GoToFuncId {
 
         case callExpr: Ast.ContractCallExpr if callExpr.callId == funcId =>
           // TODO: The user clicked on a external function call. Take 'em there!
-          None
+          ArraySeq.empty
       }
       .flatten
 
@@ -43,17 +46,12 @@ private object GoToFuncId {
    * @return An option containing the [[Ast.FuncId]] of the local function if found, otherwise None.
    * */
   private def goToLocalFunction(funcId: Ast.FuncId,
-                                source: Tree.Source): Option[Ast.FuncId] =
-    funcId
-      .sourceIndex
-      .flatMap {
-        sourceIndex =>
-          source
-            .scopeTable
-            .nearestFunction(
-              name = funcId.name,
-              nearestToIndex = sourceIndex
-            )
-      }
-      .map(_.typeDef)
+                                source: Tree.Source): ArraySeq[Ast.FuncId] =
+    // TODO: Improve selection by checking function argument count and types.
+    source
+      .ast
+      .funcs
+      .filter(_.id == funcId)
+      .map(_.id)
+      .to(ArraySeq)
 }
