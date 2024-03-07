@@ -54,15 +54,6 @@ object ScopeTableBuilder {
                            table: ScopeTable): Unit =
     functions foreach {
       function =>
-        table.putFunction(
-          name = function.id.name,
-          namedScope =
-            Scope.Function(
-              funcDef = function,
-              scope = contractScope
-            )
-        )
-
         putFunctionsArguments(
           function = function,
           table = table

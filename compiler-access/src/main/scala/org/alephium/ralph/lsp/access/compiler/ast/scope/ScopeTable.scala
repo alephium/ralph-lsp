@@ -12,8 +12,7 @@ object ScopeTable {
   /** Creates an empty scope table */
   def apply(): ScopeTable =
     ScopeTable(
-      arguments = mutable.Map.empty,
-      functions = mutable.Map.empty
+      arguments = mutable.Map.empty
     )
 
   /**
@@ -78,10 +77,8 @@ object ScopeTable {
  * Stores type definitions and their respective scopes.
  *
  * @param arguments A map containing all arguments and their respective scopes.
- * @param functions A map containing all functions and their respective scopes.
  */
-case class ScopeTable(private val arguments: mutable.Map[String, Array[Scope.Argument]],
-                      private val functions: mutable.Map[String, Array[Scope.Function]]) {
+case class ScopeTable(private val arguments: mutable.Map[String, Array[Scope.Argument]]) {
 
   /** @inheritdoc [[ScopeTable.put]] */
   def putArgument(name: String,
@@ -92,15 +89,6 @@ case class ScopeTable(private val arguments: mutable.Map[String, Array[Scope.Arg
       map = arguments
     )
 
-  /** @inheritdoc [[ScopeTable.put]] */
-  def putFunction(name: String,
-                  namedScope: Scope.Function): Option[Array[Scope.Function]] =
-    put(
-      name = name,
-      typeDef = namedScope,
-      map = functions
-    )
-
   /** @inheritdoc [[ScopeTable.nearest]] */
   def nearestArgument(name: String,
                       nearestToIndex: SourceIndex): Option[Scope.Argument] =
@@ -108,14 +96,5 @@ case class ScopeTable(private val arguments: mutable.Map[String, Array[Scope.Arg
       name = name,
       index = nearestToIndex,
       map = arguments
-    )
-
-  /** @inheritdoc [[ScopeTable.nearest]] */
-  def nearestFunction(name: String,
-                      nearestToIndex: SourceIndex): Option[Scope.Function] =
-    nearest(
-      name = name,
-      index = nearestToIndex,
-      map = functions
     )
 }
