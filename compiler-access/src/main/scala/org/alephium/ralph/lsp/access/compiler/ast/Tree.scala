@@ -1,7 +1,6 @@
 package org.alephium.ralph.lsp.access.compiler.ast
 
 import org.alephium.ralph.lsp.access.compiler.ast.node.{Node, NodeBuilder}
-import org.alephium.ralph.lsp.access.compiler.ast.scope.{ScopeTable, ScopeTableBuilder}
 import org.alephium.ralph.{Ast, SourceIndex}
 
 /** Ralph Syntax Tree (AST) */
@@ -47,9 +46,6 @@ object Tree {
      * */
     lazy val rootNode: Node[Ast.Positioned] =
       NodeBuilder.buildRootNode(ast, index)
-
-    lazy val scopeTable: ScopeTable =
-      ScopeTableBuilder.build(ast, index)
   }
 
   sealed trait Literal extends Tree

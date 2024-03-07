@@ -15,7 +15,7 @@ private object GoToFuncId {
    * @param funcIdNode The node representing the [[Ast.FuncId]] in the AST.
    * @param funcId     The [[Ast.FuncId]] of the function to find the definition for.
    * @param source     The source tree to search within.
-   * @return An option containing the [[Ast.FuncId]] of the function definition if found, otherwise None.
+   * @return An array sequence containing the positioned ASTs of the searched function.
    * */
   def goTo(funcIdNode: Node[Positioned],
            funcId: Ast.FuncId,
@@ -32,9 +32,15 @@ private object GoToFuncId {
             source = source
           )
 
+        case funcCall: Ast.FuncCall[_] if funcCall.id == funcId =>
+          goToLocalFunction(
+            funcId = funcCall.id,
+            source = source
+          )
+
         case funcDef: Ast.FuncDef[_] if funcDef.id == funcId =>
           goToFunctionCalls(
-            funcDef = funcDef,
+            funcId = funcDef.id,
             source = source
           )
 
@@ -49,7 +55,7 @@ private object GoToFuncId {
    *
    * @param funcId The [[Ast.FuncId]] of the local function to locate.
    * @param source The source tree to search within.
-   * @return An option containing the [[Ast.FuncId]] of the local function if found, otherwise None.
+   * @return An array sequence containing all the local function definitions.
    * */
   private def goToLocalFunction(funcId: Ast.FuncId,
                                 source: Tree.Source): ArraySeq[Ast.FuncId] =
@@ -65,18 +71,21 @@ private object GoToFuncId {
    * Navigate to all local function calls where the given function definition [[Ast.FuncDef]]
    * is invoked.
    *
-   * @param funcDef The [[Ast.FuncDef]] to locate calls for.
-   * @param source  The source tree to search within.
-   * @return An option containing the function call expression [[Ast.CallExpr]] of the local function calls, otherwise None.
+   * @param funcId The [[Ast.FuncId]] of the [[Ast.FuncDef]] to locate calls for.
+   * @param source The source tree to search within.
+   * @return An array sequence containing all the local function calls.
    * */
-  private def goToFunctionCalls(funcDef: Ast.FuncDef[_],
-                                source: Tree.Source): ArraySeq[Ast.CallExpr[_]] =
+  private def goToFunctionCalls(funcId: Ast.FuncId,
+                                source: Tree.Source): ArraySeq[Ast.Positioned] =
     source
       .rootNode
       .walkDown
       .collect {
-        case Node(exp: Ast.CallExpr[_], _) if exp.id == funcDef.id =>
+        case Node(exp: Ast.CallExpr[_], _) if exp.id == funcId =>
           exp
+
+        case Node(funcCall: Ast.FuncCall[_], _) if funcCall.id == funcId =>
+          funcCall
       }
       .to(ArraySeq)
 }
