@@ -61,7 +61,8 @@ object Dependency {
             SourceIndex(
               // since the user did not configure a dependencyPath, report this error at the last closing brace of the build file.
               index = parsed.code.lastIndexOf("}"),
-              width = 1
+              width = 1,
+              Some(parsed.buildURI)
             )
           )
 

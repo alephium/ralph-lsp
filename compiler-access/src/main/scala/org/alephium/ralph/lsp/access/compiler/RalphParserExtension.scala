@@ -1,13 +1,18 @@
 package org.alephium.ralph.lsp.access.compiler
 
 import fastparse._
-import org.alephium.ralph.SourceIndex
-import org.alephium.ralph.StatefulParser.{rawContract, rawInterface, rawTxScript, whitespace}
+import org.alephium.ralph.{Parser, SourceIndex}
+import org.alephium.ralph.SourceFileStatefulParser
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
+import com.typesafe.scalalogging.StrictLogging
 
 /** Functions that extend ralphc's default parser */
-object RalphParserExtension {
+class RalphParserExtension(file:java.net.URI) extends StrictLogging{
+    implicit val fileURI:java.net.URI = file
+
+    val statefulParser = new SourceFileStatefulParser()(Some(fileURI))
+    import statefulParser._
 
   /**
    * An extension to Ralphc's parse function [[org.alephium.ralph.StatefulParser.multiContract]]
@@ -19,7 +24,8 @@ object RalphParserExtension {
         val index =
           SourceIndex(
             index = fromIndex,
-            width = toIndex - fromIndex
+            width = toIndex - fromIndex,
+            Some(fileURI)
           )
 
         Tree.Root(
@@ -49,7 +55,8 @@ object RalphParserExtension {
         val importIndex =
           SourceIndex(
             index = fromIndex,
-            width = toIndex - fromIndex
+            width = toIndex - fromIndex,
+            Some(fileURI)
           )
 
         val importPath =
@@ -97,13 +104,15 @@ object RalphParserExtension {
         val packageIndex =
           SourceIndex(
             index = fromPackageIndex,
-            width = toPackageIndex - fromPackageIndex
+            width = toPackageIndex - fromPackageIndex,
+            Some(fileURI)
           )
 
         val fileIndex =
           SourceIndex(
             index = fromFileNameIndex,
-            width = toFileNameIndex - fromFileNameIndex
+            width = toFileNameIndex - fromFileNameIndex,
+            Some(fileURI)
           )
 
         val packagePath =
@@ -135,7 +144,8 @@ object RalphParserExtension {
         val index =
           SourceIndex(
             index = fromIndex,
-            width = toIndex - fromIndex
+            width = toIndex - fromIndex,
+            Some(fileURI)
           )
 
         Tree.Source(
@@ -158,7 +168,8 @@ object RalphParserExtension {
         val index =
           SourceIndex(
             index = fromIndex,
-            width = toIndex - fromIndex
+            width = toIndex - fromIndex,
+            Some(fileURI)
           )
 
         val value =
@@ -169,7 +180,8 @@ object RalphParserExtension {
             value = value,
             index = SourceIndex(
               index = nameFromIndex,
-              width = nameToIndex - nameFromIndex
+              width = nameToIndex - nameFromIndex,
+              Some(fileURI)
             )
           )
 

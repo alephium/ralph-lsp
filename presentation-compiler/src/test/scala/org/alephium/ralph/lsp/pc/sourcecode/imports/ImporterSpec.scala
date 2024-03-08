@@ -14,6 +14,8 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.ArraySeq
 
+import java.net.URI
+
 class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   "typeCheck" should {
@@ -159,6 +161,7 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
           val my_package_file = s"$my_package/$my_file"
           val my_package_file_quoted = s""""$my_package_file""""
           val import_statement = s"""import $my_package_file_quoted"""
+          val fileURI = Some(myCode.fileURI)
 
           Tree.Import(
             string =
@@ -170,27 +173,30 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
                     index =
                       SourceIndex(
                         index = myCode.code.lastIndexOf(my_package_file),
-                        width = my_package_file.length
+                        width = my_package_file.length,
+                        fileURI = fileURI
                       )
                   ),
                 index =
                   SourceIndex(
                     index = myCode.code.lastIndexOf(my_package_file_quoted),
-                    width = my_package_file_quoted.length
+                    width = my_package_file_quoted.length,
+                    fileURI = fileURI
                   )
               ),
             path =
               Some(
                 Tree.ImportPath(
-                  folder = Tree.Name(my_package, SourceIndex(myCode.code.lastIndexOf(my_package), my_package.length)),
-                  file = Tree.Name(my_file, SourceIndex(myCode.code.lastIndexOf(my_file), my_file.length)),
-                  index = SourceIndex(myCode.code.lastIndexOf(my_package_file), my_package_file.length)
+                  folder = Tree.Name(my_package, SourceIndex(myCode.code.lastIndexOf(my_package), my_package.length, fileURI = fileURI)),
+                  file = Tree.Name(my_file, SourceIndex(myCode.code.lastIndexOf(my_file), my_file.length, fileURI = fileURI)),
+                  index = SourceIndex(myCode.code.lastIndexOf(my_package_file), my_package_file.length, fileURI = fileURI)
                 )
               ),
             index =
               SourceIndex(
                 index = myCode.code.lastIndexOf(import_statement),
-                width = import_statement.length
+                width = import_statement.length,
+                fileURI = fileURI
               )
           )
         }

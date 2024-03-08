@@ -32,7 +32,8 @@ object CompilerMessage {
     final def index: SourceIndex =
       SourceIndex(
         index = error.position,
-        width = error.foundLength
+        width = error.foundLength,
+        error.fileURI
       )
   }
 

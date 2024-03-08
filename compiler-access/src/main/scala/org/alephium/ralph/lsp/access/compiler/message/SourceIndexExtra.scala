@@ -22,7 +22,8 @@ object SourceIndexExtra {
     else
       new SourceIndex(
         index = index,
-        width = width
+        width = width,
+        None
       )
 
   implicit class SourceIndexExtension(val sourceIndex: SourceIndex) extends AnyVal {

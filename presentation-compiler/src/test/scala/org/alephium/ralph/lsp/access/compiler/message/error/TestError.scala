@@ -17,7 +17,7 @@ object TestError {
     } yield
       StringError(
         message = errorMessage,
-        index = SourceIndex(0, errorIndex) // TODO: gen random index location
+        index = SourceIndex(0, errorIndex, None) // TODO: gen random index location
       )
 
   def genErrors(code: String): Gen[List[CompilerMessage.AnyError]] =

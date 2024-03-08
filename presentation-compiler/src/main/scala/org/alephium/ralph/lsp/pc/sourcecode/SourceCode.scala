@@ -65,7 +65,7 @@ private[pc] object SourceCode {
                                           compiler: CompilerAccess): SourceCodeState =
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
-        compiler.parseContracts(code) match {
+        compiler.parseContracts(fileURI, code) match {
           case Left(error) =>
             SourceCodeState.ErrorSource(
               fileURI = fileURI,
@@ -260,7 +260,7 @@ private[pc] object SourceCode {
       allCode flatMap {
         state =>
           // collect only the source-code ignoring all import statements.
-          state.ast.statements collect {
+          state.ast.statements.collect {
             case source: Tree.Source =>
               source.ast
           }

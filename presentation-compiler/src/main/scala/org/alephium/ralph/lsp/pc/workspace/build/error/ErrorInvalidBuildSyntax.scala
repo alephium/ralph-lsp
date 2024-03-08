@@ -17,7 +17,7 @@ object ErrorInvalidBuildSyntax {
 
     ErrorInvalidBuildSyntax(
       fileURI = buildURI,
-      index = SourceIndex(error.index, 1),
+      index = SourceIndex(error.index, 1,Some(buildURI)),
       message = errorMessage
     )
   }
@@ -33,13 +33,17 @@ object ErrorInvalidBuildSyntax {
 
     ErrorInvalidBuildSyntax(
       fileURI = buildURI,
-      index = SourceIndex(error.index, 1),
+      index = SourceIndex(error.index, 1, Some(buildURI)),
       message = errorMessage
     )
   }
 
 }
 
+/*
+ * fileURI is redundant with the one in `index`, but as long as `SourceIndex.fileURI` is optional
+ * it's better to keep it.
+ */
 case class ErrorInvalidBuildSyntax(fileURI: URI,
                                    index: SourceIndex,
                                    override val message: String) extends CompilerMessage.Error

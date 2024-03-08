@@ -63,7 +63,7 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
               ArraySeq(
                 ErrorInvalidBuildSyntax( /// the syntax error
                   fileURI = buildCompiled.buildURI,
-                  index = SourceIndex(0, 1),
+                  index = SourceIndex(0, 1, Some(buildCompiled.buildURI)),
                   message = """expected json value got "b""""
                 )
               ),
