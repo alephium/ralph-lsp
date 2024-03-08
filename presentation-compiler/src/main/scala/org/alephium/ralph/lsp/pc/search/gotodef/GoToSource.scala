@@ -64,6 +64,14 @@ private object GoToSource {
             funcId = funcId,
             source = source
           )
+
+        case typIdNode @ Node(typeId: Ast.TypeId, _) =>
+          // the clicked/closest node is TypeId
+          GoToTypeId.goTo(
+            identNode = typIdNode,
+            typeId = typeId,
+            source = source
+          )
       }
       .flatten
 
