@@ -88,9 +88,9 @@ private object GoToIdent {
       }
 
   /**
-   * Navigate to the enum field(s) for the given variable.
+   * Navigate to the enum field(s) for the given selected enum field.
    *
-   * @param fieldSelector The enum field to find.
+   * @param fieldSelector The selected enum field to find.
    * @param source        The source tree to search within.
    * @return An array sequence of [[Ast.EnumField]]s matching the search result.
    * */
