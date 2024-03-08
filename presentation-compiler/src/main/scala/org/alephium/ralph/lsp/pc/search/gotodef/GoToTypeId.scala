@@ -31,6 +31,13 @@ private object GoToTypeId {
             enumSelector = enumFieldSelector,
             source = source
           )
+
+        case enumDef: Ast.EnumDef if enumDef.id == typeId =>
+          // The user clicked on an enum definition. Take 'em there!
+          goToEnumDefCalls(
+            enumDef = enumDef,
+            source = source
+          )
       }
       .flatten
 
@@ -53,5 +60,22 @@ private object GoToTypeId {
       case _: Ast.ContractInterface | _: Ast.TxScript =>
         ArraySeq.empty
     }
+
+  /** Navigate to the enum type name calls.
+   *
+   * @param enumDef The enum definition to find calls for.
+   * @param source  The source tree to search within.
+   * @return An array sequence of enum type [[Ast.TypeId]]s matching the search result.
+   * */
+  private def goToEnumDefCalls(enumDef: Ast.EnumDef,
+                               source: Tree.Source): ArraySeq[Ast.TypeId] =
+    source
+      .rootNode
+      .walkDown
+      .collect {
+        case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumDef.id =>
+          selector.enumId
+      }
+      .to(ArraySeq)
 
 }
