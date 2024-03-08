@@ -24,10 +24,9 @@ private object GoToIdent {
            source: Tree.Source): ArraySeq[Ast.Positioned] =
     identNode
       .parent // take one step up to check the type of ident node.
-      .map(_.data)
       .to(ArraySeq)
       .collect {
-        case variable: Ast.Variable[_] if variable.id == ident => // Is it a variable?
+        case Node(variable: Ast.Variable[_], _) if variable.id == ident => // Is it a variable?
           // The user clicked on a variable. Take 'em there!
           goToVariable(
             variableNode = identNode,
@@ -35,12 +34,30 @@ private object GoToIdent {
             source = source
           )
 
-        case fieldSelector: Ast.EnumFieldSelector[_] if fieldSelector.field == ident =>
+        case Node(fieldSelector: Ast.EnumFieldSelector[_], _) if fieldSelector.field == ident =>
           // The user clicked on an enum field. Take 'em there!
           goToEnumField(
             fieldSelector = fieldSelector,
             source = source
           )
+
+        case node @ Node(field: Ast.EnumField, _) if field.ident == ident =>
+          // The user clicked on an enum field.
+          // Check the parent to find the enum type.
+          node
+            .parent
+            .map(_.data)
+            .to(ArraySeq)
+            .collect {
+              // Check: Parent is an enum definition which contains the enum field.
+              case enumDef: Ast.EnumDef if enumDef.fields.exists(_.ident == field.ident) =>
+                goToEnumFieldCalls(
+                  enumType = enumDef.id,
+                  enumField = field,
+                  source = source
+                )
+            }
+            .flatten
       }
       .flatten
 
@@ -90,4 +107,25 @@ private object GoToIdent {
       case _: Ast.ContractInterface | _: Ast.TxScript =>
         ArraySeq.empty
     }
+
+  /**
+   * Navigate to all enum calls for the given enum type and field.
+   *
+   * @param enumType  The enum type to find.
+   * @param enumField The enum field to find.
+   * @param source    The source tree to search within.
+   * @return An array sequence of enum field identities matching the search result.
+   * */
+  private def goToEnumFieldCalls(enumType: Ast.TypeId,
+                                 enumField: Ast.EnumField,
+                                 source: Tree.Source): ArraySeq[Ast.Ident] =
+    source
+      .rootNode
+      .walkDown
+      .collect {
+        // find all the selections matching the enum and the enum's field type.
+        case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumType && selector.field == enumField.ident =>
+          selector.field
+      }
+      .to(ArraySeq)
 }
