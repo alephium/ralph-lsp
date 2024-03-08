@@ -34,7 +34,7 @@ private object GoToTypeId {
 
         case enumDef: Ast.EnumDef if enumDef.id == typeId =>
           // The user clicked on an enum definition. Take 'em there!
-          goToEnumDefCalls(
+          goToEnumTypeCalls(
             enumDef = enumDef,
             source = source
           )
@@ -63,12 +63,12 @@ private object GoToTypeId {
 
   /** Navigate to the enum type name calls.
    *
-   * @param enumDef The enum definition to find calls for.
+   * @param enumDef The enum definition contain the enum type identifier to find calls for.
    * @param source  The source tree to search within.
    * @return An array sequence of enum type [[Ast.TypeId]]s matching the search result.
    * */
-  private def goToEnumDefCalls(enumDef: Ast.EnumDef,
-                               source: Tree.Source): ArraySeq[Ast.TypeId] =
+  private def goToEnumTypeCalls(enumDef: Ast.EnumDef,
+                                source: Tree.Source): ArraySeq[Ast.TypeId] =
     source
       .rootNode
       .walkDown
