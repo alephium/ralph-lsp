@@ -67,6 +67,13 @@ private object GoToIdent {
                 )
             }
             .flatten
+
+        case Node(constantDef: Ast.ConstantVarDef, _) if constantDef.ident == ident =>
+          // The user clicked on an constant definition. Take 'em there!
+          goToVariableUsages(
+            ident = constantDef.ident,
+            source = source
+          )
       }
       .flatten
 
@@ -153,6 +160,25 @@ private object GoToIdent {
         // find all the selections matching the enum and the enum's field type.
         case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumType && selector.field == enumField.ident =>
           selector.field
+      }
+      .to(ArraySeq)
+
+  /**
+   * Navigate to all variable usages for the given identifier.
+   *
+   * @param ident  The variable identifier.
+   * @param source The source tree to search within.
+   * @return An array sequence of variable usage IDs.
+   */
+  private def goToVariableUsages(ident: Ast.Ident,
+                                 source: Tree.Source): ArraySeq[Ast.Ident] =
+    source
+      .rootNode
+      .walkDown
+      .collect {
+        // find all the selections matching the variable name.
+        case Node(variable: Ast.Variable[_], _) if variable.id == ident =>
+          variable.id
       }
       .to(ArraySeq)
 }
