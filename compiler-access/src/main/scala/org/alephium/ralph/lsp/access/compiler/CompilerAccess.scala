@@ -29,7 +29,7 @@ trait CompilerAccess {
    * @param code Code to parse.
    * @return Parsing error or successfully parsed AST.
    */
-  def parseContracts(fileURI:URI, code: String): Either[CompilerMessage.AnyError, Tree.Root]
+  def parseContracts(fileURI: URI, code: String): Either[CompilerMessage.AnyError, Tree.Root]
 
   /**
    * Given the parsed AST and compiler options, compile the contracts.
