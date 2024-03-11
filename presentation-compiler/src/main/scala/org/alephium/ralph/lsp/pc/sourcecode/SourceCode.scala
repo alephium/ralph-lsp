@@ -251,7 +251,7 @@ private[pc] object SourceCode {
    */
   private def compileSource(sourceCode: ArraySeq[SourceCodeState.Parsed],
                             importedCode: ArraySeq[SourceCodeState.Parsed],
-                            compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsCompiled]] = {
+                            compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] = {
     val allCode =
       sourceCode ++ importedCode
 

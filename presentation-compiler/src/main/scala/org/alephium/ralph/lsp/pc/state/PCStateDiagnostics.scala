@@ -229,44 +229,25 @@ object PCStateDiagnostics {
   }
 
   /** Fetch workspace/project level diagnostics i.e. diagnostics that do have source information. */
-  def toWorkspaceDiagnostics(workspace: WorkspaceState.IsSourceAware): Iterable[FileDiagnostic] = {
-    workspace match {
-      case compiled: WorkspaceState.Errored =>
-        // Group by fileURI provided errors
-        compiled.workspaceErrors groupBy(_.index.fileURI) map {
-          case (Some(fileURI), errors) =>
-            // fileURI is known, we try to find the source code.
-            compiled.sourceCode.find(_.fileURI == fileURI) match {
-              case Some(source) =>
-                // Source code is known, we report errors at source-code level.
-                toFileDiagnostics(
-                  fileURI = fileURI,
-                  code = Some(source.code),
-                  errors = errors.toList,
-                  severity = CodeDiagnosticSeverity.Error
-                )
-
-              case None =>
-                // Source code is not known, we report errors at workspace level.
-                toFileDiagnostics(
-                  fileURI = workspace.workspaceURI,
-                  code = None,
-                  errors = errors.toList,
-                  severity = CodeDiagnosticSeverity.Error
-                )
-            }
-            case (None, errors) =>
-              //  fileURI is not known, we report errors at workspace level.
-              toFileDiagnostics(
-                fileURI = workspace.workspaceURI,
+  def toWorkspaceDiagnostics(workspace: WorkspaceState.IsSourceAware): FileDiagnostic = {
+    val workspaceDiagnostics =
+      workspace match {
+        case compiled: WorkspaceState.Errored =>
+          compiled.workspaceErrors map {
+            error =>
+              // These are workspace level errors such as `Compiler.Error`, their source-code information is unknown.
+              toDiagnostic(
                 code = None,
-                errors = errors.toList,
+                message = error,
                 severity = CodeDiagnosticSeverity.Error
               )
-        }
-      case _ =>
-        Seq.empty
-    }
+          }
+
+        case _ =>
+          Seq.empty
+      }
+
+    FileDiagnostic(workspace.workspaceURI, workspaceDiagnostics)
   }
 
   /** Fetch source-code level diagnostics */
@@ -316,7 +297,7 @@ object PCStateDiagnostics {
   def toFileDiagnostics(workspace: WorkspaceState.IsSourceAware): Iterable[FileDiagnostic] = {
     val sourceCodeDiagnostics = toSourceCodeDiagnostics(workspace)
     val workspaceDiagnostics = toWorkspaceDiagnostics(workspace)
-    sourceCodeDiagnostics ++ workspaceDiagnostics
+    sourceCodeDiagnostics ++ Seq(workspaceDiagnostics)
   }
 
   /** Build a diagnostic instance give the error and file information */

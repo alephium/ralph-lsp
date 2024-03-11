@@ -21,15 +21,68 @@ private object SourceCodeStateBuilder {
    * @return Workspace-level error if no source-code association was found, or else the next source-code state for each source URI.
    */
   def toSourceCodeState(parsedCode: ArraySeq[SourceCodeState.Parsed],
-                        compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsCompiled]] =
-    compilationResult map {
-      case (compiledContracts, compiledScripts) =>
-        buildCompiledSourceCodeState(
+                        compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
+    compilationResult match {
+      case Left(error) =>
+        // update the error to SourceCodeState
+        toSourceCodeError(
           parsedCode = parsedCode,
-          compiledContracts = compiledContracts,
-          compiledScripts = compiledScripts
-        )
+          error = error
+        ) match {
+          case Some(updatedSourceCode) =>
+            Right(updatedSourceCode)
+
+          case None =>
+            Left(error)
+        }
+
+      case Right((compiledContracts, compiledScripts)) =>
+        val state =
+          buildCompiledSourceCodeState(
+            parsedCode = parsedCode,
+            compiledContracts = compiledContracts,
+            compiledScripts = compiledScripts
+          )
+
+        Right(state)
     }
+
+  /**
+   * If `fileURI` exists in the given compilation error, this function updates the current [[SourceCodeState]] at
+   * that `fileURI` with an error state [[SourceCodeState.ErrorSource]] indicating that this source file errored
+   * during compilation.
+   *
+   * @param parsedCode The parsed code used for compilation.
+   * @param error      The error occurred during compilation.
+   * @return An [[ArraySeq]] of [[SourceCodeState]]s if the `fileURI` is defined in the
+   *         error's [[org.alephium.ralph.SourceIndex]], otherwise, [[None]].
+   */
+  private def toSourceCodeError(parsedCode: ArraySeq[SourceCodeState.Parsed],
+                                error: CompilerMessage.AnyError): Option[ArraySeq[SourceCodeState.IsParsed]] =
+    error
+      .index
+      .fileURI
+      .flatMap {
+        fileURI => // fileURI exists
+          parsedCode
+            .find(_.fileURI == fileURI) // find the target file
+            .map {
+              parsed =>
+                // Update the target file to an error state.
+                val sourceError =
+                  SourceCodeState.ErrorSource(
+                    fileURI = fileURI,
+                    code = parsed.code,
+                    errors = ArraySeq(error),
+                    previous = Some(parsed)
+                  )
+
+                // replace the source-code state.
+                parsedCode
+                  .filter(_.fileURI != fileURI)
+                  .appended(sourceError)
+            }
+      }
 
   /**
    * Maps compiled-code to it's parsed code.
