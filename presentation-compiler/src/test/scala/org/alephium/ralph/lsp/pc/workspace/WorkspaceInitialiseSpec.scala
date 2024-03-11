@@ -82,7 +82,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
             mock[FileAccess]
 
           val errorIO =
-            StringError("Kaboom!")
+            StringError("Kaboom!", initialBuild.buildURI)
 
           // inject IO error
           (file.list _)

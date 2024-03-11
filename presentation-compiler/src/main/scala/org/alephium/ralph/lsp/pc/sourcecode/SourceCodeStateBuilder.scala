@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
 import org.alephium.ralph.{Ast, CompiledContract, CompiledScript}
 
+import java.net.URI
 import scala.collection.immutable.ArraySeq
 
 private object SourceCodeStateBuilder {
@@ -21,6 +22,7 @@ private object SourceCodeStateBuilder {
    * @return Workspace-level error if no source-code association was found, or else the next source-code state for each source URI.
    */
   def toSourceCodeState(parsedCode: ArraySeq[SourceCodeState.Parsed],
+                        workspaceErrorURI: URI,
                         compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
     compilationResult match {
       case Left(error) =>
@@ -41,7 +43,8 @@ private object SourceCodeStateBuilder {
           buildCompiledSourceCodeState(
             parsedCode = parsedCode,
             compiledContracts = compiledContracts,
-            compiledScripts = compiledScripts
+            compiledScripts = compiledScripts,
+            workspaceErrorURI = workspaceErrorURI
           )
 
         Right(state)
@@ -95,7 +98,8 @@ private object SourceCodeStateBuilder {
    */
   private def buildCompiledSourceCodeState(parsedCode: ArraySeq[SourceCodeState.Parsed],
                                            compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript]): ArraySeq[SourceCodeState.IsCompiled] =
+                                           compiledScripts: Array[CompiledScript],
+                                           workspaceErrorURI: URI): ArraySeq[SourceCodeState.IsCompiled] =
     parsedCode map {
       sourceCodeState =>
         val parsedContracts =
@@ -108,7 +112,8 @@ private object SourceCodeStateBuilder {
           findMatchingContractOrScript(
             parsedContracts = parsedContracts,
             compiledContracts = compiledContracts,
-            compiledScripts = compiledScripts
+            compiledScripts = compiledScripts,
+            workspaceErrorURI = workspaceErrorURI
           )
 
         val (errors, compiledCode) =
@@ -132,7 +137,8 @@ private object SourceCodeStateBuilder {
 
   private def findMatchingContractOrScript(parsedContracts: Seq[ContractWithState],
                                            compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript]): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
+                                           compiledScripts: Array[CompiledScript],
+                                           workspaceErrorURI: URI): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
     parsedContracts
       .collect {
         // Only Contracts and Scripts can be compiled
@@ -147,13 +153,15 @@ private object SourceCodeStateBuilder {
           findMatchingContractOrScript(
             contract = contract,
             compiledContracts = compiledContracts,
-            compiledScripts = compiledScripts
+            compiledScripts = compiledScripts,
+            workspaceErrorURI = workspaceErrorURI
           )
       }
 
   private def findMatchingContractOrScript(contract: Ast.ContractWithState,
                                            compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript]): Either[StringError, Either[CompiledContract, CompiledScript]] = {
+                                           compiledScripts: Array[CompiledScript],
+                                           workspaceErrorURI: URI): Either[StringError, Either[CompiledContract, CompiledScript]] = {
     val matchingContract = findMatchingContract(contract, compiledContracts)
     val matchingScript = findMatchingScript(contract, compiledScripts)
 
@@ -161,7 +169,12 @@ private object SourceCodeStateBuilder {
       case (Some(contract), Some(_)) =>
         // This is already disallowed by the ralph compiler.
         // This should never occur in reality but this is needed so type checks are covered.
-        val error = StringError(s"Found a contract and script with the duplicate type name '${contract.ast.name}'")
+        val error =
+          StringError(
+            message = s"Found a contract and script with the duplicate type name '${contract.ast.name}'",
+            fileURI = workspaceErrorURI
+          )
+
         Left(error)
 
       case (Some(contract), None) =>
@@ -173,7 +186,12 @@ private object SourceCodeStateBuilder {
       case (None, None) =>
         // Code submitted to compile should always return a result.
         // This should never occur in reality but this is needed so type checks are covered.
-        val error = StringError(s"Code '${contract.name}' not compiled.")
+        val error =
+          StringError(
+            message = s"Code '${contract.name}' not compiled.",
+            fileURI = workspaceErrorURI
+          )
+
         Left(error)
     }
   }

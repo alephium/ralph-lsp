@@ -152,7 +152,8 @@ object TestSourceCode {
       SourceCode.compile(
         sourceCode = ArraySeq(parsed),
         dependency = None,
-        compilerOptions = CompilerOptions.Default
+        compilerOptions = CompilerOptions.Default,
+        workspaceErrorURI = parsed.fileURI
       )
 
     result.value should have size 1

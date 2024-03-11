@@ -3,11 +3,14 @@ package org.alephium.ralph.lsp.access.compiler.message.error
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 
+import java.net.URI
+
 object StringError {
-  @inline def apply(message: String): StringError =
+  @inline def apply(message: String,
+                    fileURI: URI): StringError =
     StringError(
       message = message,
-      index = SourceIndexExtra.zero
+      index = SourceIndexExtra.zero(fileURI)
     )
 }
 /**

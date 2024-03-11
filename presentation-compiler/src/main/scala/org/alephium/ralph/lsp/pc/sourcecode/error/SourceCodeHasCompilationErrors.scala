@@ -10,5 +10,5 @@ case class SourceCodeHasCompilationErrors(uri: URI) extends CompilerMessage.Erro
     s"Source code has compilation error(s). URI: $uri"
 
   override def index: SourceIndex =
-    SourceIndexExtra.zero
+    SourceIndexExtra.zero(uri)
 }

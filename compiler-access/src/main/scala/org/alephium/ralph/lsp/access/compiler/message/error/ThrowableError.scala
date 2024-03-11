@@ -3,13 +3,17 @@ package org.alephium.ralph.lsp.access.compiler.message.error
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 
+import java.net.URI
+
 object ThrowableError {
 
   /** Without title */
-  def apply(throwable: Throwable): ThrowableError =
+  def apply(throwable: Throwable,
+            fileURI: URI): ThrowableError =
     new ThrowableError(
       title = "",
-      throwable = throwable
+      throwable = throwable,
+      index = SourceIndexExtra.zero(fileURI)
     )
 
 }
@@ -21,7 +25,7 @@ object ThrowableError {
  */
 case class ThrowableError(title: String,
                           throwable: Throwable,
-                          index: SourceIndex = SourceIndexExtra.zero) extends CompilerMessage.Error {
+                          index: SourceIndex) extends CompilerMessage.Error {
   override def message: String =
     if (title.isBlank)
       throwable.getMessage

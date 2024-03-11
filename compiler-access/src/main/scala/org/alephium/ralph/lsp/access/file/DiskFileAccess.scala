@@ -49,13 +49,13 @@ private object DiskFileAccess extends FileAccess {
           ).map(_.toUri)
 
       Right(uris)
-    } catch TryUtil.catchAllThrows
+    } catch TryUtil.catchAllThrows(workspaceURI)
 
   /** @inheritdoc */
   override def read(fileURI: URI): Either[CompilerMessage.AnyError, String] =
     Using(Source.fromFile(fileURI))(_.mkString) match {
       case Failure(exception) =>
-        TryUtil.catchAllThrows(exception)
+        TryUtil.catchAllThrows(fileURI)(exception)
 
       case Success(code) =>
         Right(code)
