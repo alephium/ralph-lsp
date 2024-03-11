@@ -33,9 +33,12 @@ trait CompilerAccess {
 
   /**
    * Given the parsed AST and compiler options, compile the contracts.
+   *
+   * @param workspaceErrorURI The [[URI]] to report errors to when `fileURI` is absent from compilation errors.
    */
   def compileContracts(contracts: Seq[Ast.ContractWithState],
-                       options: CompilerOptions): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]
+                       options: CompilerOptions,
+                       workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]
 
   /**
    * Compile the entire workspace from disk and prepare for deployment.

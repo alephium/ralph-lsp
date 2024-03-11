@@ -10,5 +10,5 @@ case class SourceCodeIsNotCompiled(uri: URI) extends CompilerMessage.Error {
     s"Source code is on-disk and not compiled. URI: $uri"
 
   override def index: SourceIndex =
-    SourceIndexExtra.zero
+    SourceIndexExtra.zero(uri)
 }

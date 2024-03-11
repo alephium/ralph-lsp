@@ -4,10 +4,12 @@ import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.lsp.pc.workspace.build.Build
 
-case object ErrorBuildFileNotFound extends CompilerMessage.Error {
+import java.net.URI
+
+case class ErrorBuildFileNotFound(buildURI: URI) extends CompilerMessage.Error {
   override def message: String =
     s"Build file not found. Create a '${Build.BUILD_FILE_NAME}' file in the project's root folder."
 
   override def index: SourceIndex =
-    SourceIndexExtra.zero
+    SourceIndexExtra.zero(buildURI)
 }

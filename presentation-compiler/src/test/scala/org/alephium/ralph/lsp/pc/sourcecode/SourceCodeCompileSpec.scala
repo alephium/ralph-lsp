@@ -1,15 +1,17 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.lsp.TestCode
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.TestDependency
+import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.alephium.ralph.{CompiledContract, CompiledScript, CompilerOptions}
 import org.scalatest.EitherValues._
+import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
 class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
@@ -24,7 +26,8 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
           SourceCode.compile(
             sourceCode = ArraySeq.empty,
             dependency = None,
-            compilerOptions = CompilerOptions.Default
+            compilerOptions = CompilerOptions.Default,
+            workspaceErrorURI = TestFile.genFolderURI().sample.value
           ).value
 
         result shouldBe empty
@@ -41,7 +44,8 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
           SourceCode.compile(
             sourceCode = ArraySeq.empty,
             dependency = dependencyBuild.dependency.map(_.sourceCode),
-            compilerOptions = CompilerOptions.Default
+            compilerOptions = CompilerOptions.Default,
+            workspaceErrorURI = TestFile.genFolderURI().sample.value
           ).value
 
         result shouldBe empty
@@ -74,7 +78,8 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
             .compile(
               sourceCode = source,
               dependency = None,
-              compilerOptions = CompilerOptions.Default
+              compilerOptions = CompilerOptions.Default,
+              workspaceErrorURI = Paths.get(source.head.fileURI).getParent.toUri // workspace URI
             )
             .value
             .map(_.asInstanceOf[SourceCodeState.Compiled])

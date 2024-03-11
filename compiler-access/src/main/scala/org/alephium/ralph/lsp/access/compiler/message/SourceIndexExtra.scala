@@ -3,10 +3,16 @@ package org.alephium.ralph.lsp.access.compiler.message
 import fastparse.IndexedParserInput
 import org.alephium.ralph.{SourceIndex, SourcePosition}
 
+import java.net.URI
+
 object SourceIndexExtra {
 
-  val zero: SourceIndex =
-    org.alephium.ralph.SourceIndex.empty
+  def zero(fileURI: URI): SourceIndex =
+    SourceIndex(
+      index = 0,
+      width = 0,
+      fileURI = Some(fileURI)
+    )
 
   /**
    * Sending negative index to the client would be incorrect.
@@ -16,14 +22,16 @@ object SourceIndexExtra {
    *
    * @see Issue <a href="https://github.com/alephium/ralph-lsp/issues/17">#17</a>.
    */
-  def ensurePositive(index: Int, width: Int): SourceIndex =
+  def ensurePositive(index: Int,
+                     width: Int,
+                     fileURI: URI): SourceIndex =
     if (index < 0)
-      zero
+      zero(fileURI)
     else
       new SourceIndex(
         index = index,
         width = width,
-        None
+        fileURI = Some(fileURI)
       )
 
   implicit class SourceIndexExtension(val sourceIndex: SourceIndex) extends AnyVal {

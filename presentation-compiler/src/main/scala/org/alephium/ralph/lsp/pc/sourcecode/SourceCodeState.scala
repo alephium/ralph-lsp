@@ -81,10 +81,10 @@ object SourceCodeState {
     def warnings: Seq[StringWarning] =
       compiledCode flatMap {
         case Left(value) =>
-          value.warnings map (StringWarning(_))
+          value.warnings map (StringWarning(_, fileURI))
 
         case Right(value) =>
-          value.warnings map (StringWarning(_))
+          value.warnings map (StringWarning(_, fileURI))
       }
   }
 

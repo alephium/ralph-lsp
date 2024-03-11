@@ -90,7 +90,7 @@ object Dependency {
                                                                     logger: ClientLogger): BuildState.IsCompiled =
     DependencyDownloader.downloadStd(
       dependencyPath = absoluteDependenciesPath,
-      errorIndex = SourceIndexExtra.zero
+      errorIndex = SourceIndexExtra.zero(parsed.buildURI)
     ) match { // download std
       case Left(errors) =>
         // report all download errors at build file level.

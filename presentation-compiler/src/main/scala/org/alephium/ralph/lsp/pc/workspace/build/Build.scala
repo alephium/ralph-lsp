@@ -110,7 +110,7 @@ object Build {
                       currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
                                                                    compiler: CompilerAccess,
                                                                    logger: ClientLogger): BuildState.IsCompiled =
-    file.exists(buildURI, SourceIndexExtra.zero) match {
+    file.exists(buildURI, SourceIndexExtra.zero(buildURI)) match {
       case Left(error) =>
         BuildErrored(
           buildURI = buildURI,
@@ -130,7 +130,7 @@ object Build {
           BuildErrored(
             buildURI = buildURI,
             code = None,
-            errors = ArraySeq(ErrorBuildFileNotFound),
+            errors = ArraySeq(ErrorBuildFileNotFound(buildURI)),
             dependency = currentBuild.flatMap(_.dependency),
             activateWorkspace = None
           )
@@ -261,13 +261,15 @@ object Build {
     val contractPathIndex =
       SourceIndexExtra.ensurePositive(
         index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-        width = contractPath.length
+        width = contractPath.length,
+        fileURI = parsed.buildURI
       )
 
     val artifactPathIndex =
       SourceIndexExtra.ensurePositive(
         index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-        width = artifactPath.length
+        width = artifactPath.length,
+        fileURI = parsed.buildURI
       )
 
     val dependencyPathIndex =
@@ -284,7 +286,8 @@ object Build {
 
     SourceIndexExtra.ensurePositive(
       index = parsed.code.lastIndexOf(errorIndexToken), // TODO: lastIndexOf is temporary solution until an AST is available.
-      width = errorIndexToken.length
+      width = errorIndexToken.length,
+      fileURI = parsed.buildURI
     )
   }
 

@@ -72,9 +72,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
         actual.value.errors should contain theSameElementsAs
           ArraySeq(
             // error for field dependencyPath
-            ErrorDependencyPathIsWithinContractPath(SourceIndex(build.code.lastIndexOf(config.dependencyPath.value), config.dependencyPath.value.length, None)),
+            ErrorDependencyPathIsWithinContractPath(SourceIndex(build.code.lastIndexOf(config.dependencyPath.value), config.dependencyPath.value.length, Some(build.buildURI))),
             // error for field contractPath
-            ErrorDependencyPathIsWithinContractPath(SourceIndex(build.code.lastIndexOf(config.contractPath), config.contractPath.length, None))
+            ErrorDependencyPathIsWithinContractPath(SourceIndex(build.code.lastIndexOf(config.contractPath), config.contractPath.length, Some(build.buildURI)))
           )
 
         TestBuild delete build
