@@ -1,31 +1,28 @@
 package org.alephium.ralph.lsp.access.compiler
 
 import fastparse._
-import org.alephium.ralph.{Parser, SourceIndex}
-import org.alephium.ralph.SourceFileStatefulParser
+import org.alephium.ralph.StatefulParser.whitespace
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import com.typesafe.scalalogging.StrictLogging
+import org.alephium.ralph.{SourceFileStatefulParser, SourceIndex}
+
+import java.net.URI
 
 /** Functions that extend ralphc's default parser */
-class RalphParserExtension(file:java.net.URI) extends StrictLogging{
-    implicit val fileURI:java.net.URI = file
-
-    val statefulParser = new SourceFileStatefulParser()(Some(fileURI))
-    import statefulParser._
+object RalphParserExtension {
 
   /**
    * An extension to Ralphc's parse function [[org.alephium.ralph.StatefulParser.multiContract]]
    * that add support for import syntax.
    */
-  def multiContract[Unknown: P]: P[Tree.Root] =
-    P(Start ~ Index ~ statement.rep(1) ~ Index ~ End) map {
+  def multiContract[Unknown: P](fileURI: URI): P[Tree.Root] =
+    P(Start ~ Index ~ statement(fileURI).rep(1) ~ Index ~ End) map {
       case (fromIndex, statements, toIndex) =>
         val index =
           SourceIndex(
             index = fromIndex,
             width = toIndex - fromIndex,
-            Some(fileURI)
+            fileURI = Some(fileURI)
           )
 
         Tree.Root(
@@ -35,8 +32,8 @@ class RalphParserExtension(file:java.net.URI) extends StrictLogging{
     }
 
   /** Parse an import identifier ignoring errors */
-  def lazyParseImportIdentifier(identifier: String): Option[Tree.Import] =
-    fastparse.parse(s"import \"$identifier\"", importStatement(_)) match {
+  def lazyParseImportIdentifier(identifier: String, fileURI: URI): Option[Tree.Import] =
+    fastparse.parse(s"import \"$identifier\"", importStatement(fileURI)(_)) match {
       case Parsed.Success(tree, _) =>
         Some(tree)
 
@@ -45,22 +42,25 @@ class RalphParserExtension(file:java.net.URI) extends StrictLogging{
     }
 
   /** A statement can be an import or ralphc's contract */
-  private def statement[Unknown: P]: P[Tree.Statement] =
-    P(importStatement | sourceStatement)
+  private def statement[Unknown: P](fileURI: URI): P[Tree.Statement] =
+    P(importStatement(fileURI) | sourceStatement(fileURI))
 
   /** Parse import syntax */
-  private def importStatement[Unknown: P]: P[Tree.Import] =
-    P(Index ~~ "import" ~ stringLiteral ~~ Index) map {
+  private def importStatement[Unknown: P](fileURI: URI): P[Tree.Import] =
+    P(Index ~~ "import" ~ stringLiteral(fileURI) ~~ Index) map {
       case (fromIndex, stringLiteral, toIndex) =>
         val importIndex =
           SourceIndex(
             index = fromIndex,
             width = toIndex - fromIndex,
-            Some(fileURI)
+            fileURI = Some(fileURI)
           )
 
         val importPath =
-          parsePath(stringLiteral.name)
+          parsePath(
+            name = stringLiteral.name,
+            fileURI = fileURI
+          )
 
         Tree.Import(
           string = stringLiteral,
@@ -76,8 +76,8 @@ class RalphParserExtension(file:java.net.URI) extends StrictLogging{
    *
    * @param name The String value to parse.
    */
-  private def parsePath(name: Tree.Name): Option[Tree.ImportPath] =
-    fastparse.parse(name.value, importPaths(_)) match {
+  private def parsePath(name: Tree.Name, fileURI: URI): Option[Tree.ImportPath] =
+    fastparse.parse(name.value, importPaths(fileURI)(_)) match {
       case Parsed.Success((packagePath, filePath), _) =>
         // the above parse occurs on a string value, add the offset such
         // that the indexes are set according to the entire source-code.
@@ -97,7 +97,7 @@ class RalphParserExtension(file:java.net.URI) extends StrictLogging{
         None
     }
 
-  private def importPaths[Unknown: P]: P[(Tree.Name, Tree.Name)] =
+  private def importPaths[Unknown: P](fileURI: URI): P[(Tree.Name, Tree.Name)] =
     // Parser for `std/nft_interface`
     P(Index ~~ CharsWhile(_ != '/').! ~~ Index ~ "/" ~~ Index ~~ AnyChar.rep.! ~~ Index) map {
       case (fromPackageIndex, packageName, toPackageIndex, fromFileNameIndex, fileName, toFileNameIndex) =>
@@ -105,14 +105,14 @@ class RalphParserExtension(file:java.net.URI) extends StrictLogging{
           SourceIndex(
             index = fromPackageIndex,
             width = toPackageIndex - fromPackageIndex,
-            Some(fileURI)
+            fileURI = Some(fileURI)
           )
 
         val fileIndex =
           SourceIndex(
             index = fromFileNameIndex,
             width = toFileNameIndex - fromFileNameIndex,
-            Some(fileURI)
+            fileURI = Some(fileURI)
           )
 
         val packagePath =
@@ -138,14 +138,17 @@ class RalphParserExtension(file:java.net.URI) extends StrictLogging{
    * This function is a clone of [[org.alephium.ralph.StatefulParser.multiContract]]
    * but without the requirement that it be the start of the file, so imports are allowed.
    * */
-  private def sourceStatement[Unknown: P]: P[Tree.Source] =
-    P(Index ~~ (rawTxScript | rawContract | rawInterface) ~~ Index) map {
+  private def sourceStatement[Unknown: P](fileURI: URI): P[Tree.Source] = {
+    val ralphParser =
+      new SourceFileStatefulParser()(Some(fileURI))
+
+    P(Index ~~ (ralphParser.rawTxScript | ralphParser.rawContract | ralphParser.rawInterface) ~~ Index) map {
       case (fromIndex, code, toIndex) =>
         val index =
           SourceIndex(
             index = fromIndex,
             width = toIndex - fromIndex,
-            Some(fileURI)
+            fileURI = Some(fileURI)
           )
 
         Tree.Source(
@@ -153,6 +156,7 @@ class RalphParserExtension(file:java.net.URI) extends StrictLogging{
           index = index
         )
     }
+  }
 
   /**
    * A string literal. For example in the following code
@@ -162,14 +166,14 @@ class RalphParserExtension(file:java.net.URI) extends StrictLogging{
    *   import "package_name/file"
    * }}}
    * */
-  private def stringLiteral[Unknown: P]: P[Tree.StringLiteral] =
+  private def stringLiteral[Unknown: P](fileURI: URI): P[Tree.StringLiteral] =
     P(Index ~~ "\"" ~~ Index ~~ CharsWhile(_ != '"').!.? ~~ Index ~~ "\"" ~~ Index) map { // TODO: See if negative look ahead with AnyChar.rep would work instead of `CharsWhile`
       case (fromIndex, nameFromIndex, string, nameToIndex, toIndex) =>
         val index =
           SourceIndex(
             index = fromIndex,
             width = toIndex - fromIndex,
-            Some(fileURI)
+            fileURI = Some(fileURI)
           )
 
         val value =
@@ -181,7 +185,7 @@ class RalphParserExtension(file:java.net.URI) extends StrictLogging{
             index = SourceIndex(
               index = nameFromIndex,
               width = nameToIndex - nameFromIndex,
-              Some(fileURI)
+              fileURI = Some(fileURI)
             )
           )
 

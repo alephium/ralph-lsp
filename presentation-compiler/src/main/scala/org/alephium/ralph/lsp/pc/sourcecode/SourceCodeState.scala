@@ -21,7 +21,7 @@ sealed trait SourceCodeState {
   lazy val importIdentifier: Option[Tree.Import] =
     URIUtil
       .importIdentifier(fileURI)
-      .flatMap(new RalphParserExtension(fileURI).lazyParseImportIdentifier)
+      .flatMap(RalphParserExtension.lazyParseImportIdentifier(_, fileURI))
 }
 
 object SourceCodeState {

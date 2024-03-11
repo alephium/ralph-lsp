@@ -22,9 +22,9 @@ import scala.collection.mutable
 private object RalphCompilerAccess extends CompilerAccess {
 
   /** @inheritdoc */
-  def parseContracts(fileURI:URI, code: String): Either[CompilerMessage.AnyError, Tree.Root] =
+  def parseContracts(fileURI: URI, code: String): Either[CompilerMessage.AnyError, Tree.Root] =
     try
-      fastparse.parse(code, new RalphParserExtension(fileURI).multiContract(_)) match {
+      fastparse.parse(code, RalphParserExtension.multiContract(fileURI)(_)) match {
         case Parsed.Success(source: Tree.Root, _) =>
           Right(source)
 
