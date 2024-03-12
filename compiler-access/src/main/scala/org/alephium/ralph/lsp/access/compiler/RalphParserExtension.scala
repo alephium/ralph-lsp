@@ -1,15 +1,16 @@
 package org.alephium.ralph.lsp.access.compiler
 
 import fastparse._
-import org.alephium.ralph.StatefulParser.whitespace
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.{Ast, SourceFileStatefulParser, SourceIndex}
+import org.alephium.ralph.{Ast, StatefulParser, SourceIndex}
 
 import java.net.URI
 
 /** Functions that extend ralphc's default parser */
 object RalphParserExtension {
+
+  implicit val whitespace: P[_] => P[Unit] = new StatefulParser(None).whitespace
 
   /**
    * An extension to Ralphc's parse function [[org.alephium.ralph.StatefulParser.multiContract]]
@@ -140,7 +141,7 @@ object RalphParserExtension {
    * */
   private def sourceStatement[Unknown: P](fileURI: URI): P[Tree.Source] = {
     val ralphParser =
-      new SourceFileStatefulParser()(Some(fileURI))
+      new StatefulParser(Some(fileURI))
 
     P(Index ~~ (ralphParser.rawTxScript | ralphParser.rawContract | ralphParser.rawInterface | ralphParser.rawStruct) ~~ Index) map {
       case (fromIndex, code, toIndex) =>
