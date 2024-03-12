@@ -266,6 +266,7 @@ private[pc] object SourceCode {
               .collect {
                 // collect only the source-code ignoring all import statements.
                 case source: Tree.Source =>
+                  source.clearStructCache()
                   source.ast
               }
         }

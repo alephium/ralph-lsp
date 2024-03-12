@@ -46,6 +46,22 @@ object Tree {
      * */
     lazy val rootNode: Node[Ast.Positioned] =
       NodeBuilder.buildRootNode(ast, index)
+
+    /**
+     * Solution for issue <a href="https://github.com/alephium/ralph-lsp/issues/135">#135</a>.
+     *
+     * Clear AST cached objects to enable recompilation of [[Ast.Struct]].
+     */
+    def clearStructCache(): Unit =
+      rootNode
+        .walkDown
+        .map(_.data)
+        .foreach {
+          case typed: Ast.StructCtor[_] =>
+            typed.tpe = None
+
+          case _ =>
+        }
   }
 
   sealed trait Literal extends Tree
