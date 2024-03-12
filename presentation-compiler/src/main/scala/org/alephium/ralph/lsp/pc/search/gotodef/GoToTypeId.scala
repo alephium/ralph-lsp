@@ -50,14 +50,14 @@ private object GoToTypeId {
   private def goToEnumType(enumSelector: Ast.EnumFieldSelector[_],
                            source: Tree.Source): ArraySeq[Ast.TypeId] =
     source.ast match {
-      case contract: Ast.Contract =>
+      case Left(contract: Ast.Contract) =>
         contract
           .enums
           .filter(_.id == enumSelector.enumId)
           .map(_.id)
           .to(ArraySeq)
 
-      case _: Ast.ContractInterface | _: Ast.TxScript =>
+      case Left(_: Ast.ContractInterface | _: Ast.TxScript) | Right(_: Ast.Struct) =>
         ArraySeq.empty
     }
 

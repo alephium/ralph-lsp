@@ -256,20 +256,27 @@ private[pc] object SourceCode {
       sourceCode ++ importedCode
 
     // Compile only the source-code. Import statements are already expected to be processed and included in `importedCode` collection.
-    val contractsToCompile =
-      allCode flatMap {
-        state =>
-          // collect only the source-code ignoring all import statements.
-          state.ast.statements collect {
-            case source: Tree.Source =>
-              source.ast
-          }
-      }
+    val (contracts, structs) =
+      allCode
+        .flatMap {
+          state =>
+            state
+              .ast
+              .statements
+              .collect {
+                // collect only the source-code ignoring all import statements.
+                case source: Tree.Source =>
+                  source.clearStructCache()
+                  source.ast
+              }
+        }
+        .partitionMap(identity)
 
     // compile the source-code
     val compilationResult =
       compiler.compileContracts(
-        contracts = contractsToCompile,
+        contracts = contracts,
+        structs = structs,
         options = compilerOptions
       )
 

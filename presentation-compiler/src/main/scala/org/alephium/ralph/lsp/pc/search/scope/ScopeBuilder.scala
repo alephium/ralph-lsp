@@ -12,10 +12,16 @@ object ScopeBuilder {
    * @return A sequence of scope arguments.
    */
   def buildArguments(tree: Tree.Source): Seq[Scope.Argument] =
-    buildArguments(
-      ast = tree.ast,
-      astScope = tree.index
-    )
+    tree.ast match {
+      case Left(ast) =>
+        buildArguments(
+          ast = ast,
+          astScope = tree.index
+        )
+
+      case Right(_) =>
+        Seq.empty
+    }
 
   private def buildArguments(ast: Ast.ContractWithState,
                              astScope: SourceIndex): Seq[Scope.Argument] =
