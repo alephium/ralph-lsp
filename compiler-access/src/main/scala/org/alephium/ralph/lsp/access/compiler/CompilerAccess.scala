@@ -35,6 +35,7 @@ trait CompilerAccess {
    * Given the parsed AST and compiler options, compile the contracts.
    */
   def compileContracts(contracts: Seq[Ast.ContractWithState],
+                       structs: Seq[Ast.Struct],
                        options: CompilerOptions): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]
 
   /**

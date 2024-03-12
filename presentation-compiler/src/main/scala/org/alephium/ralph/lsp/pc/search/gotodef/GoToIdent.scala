@@ -131,14 +131,14 @@ private object GoToIdent {
   private def goToEnumField(fieldSelector: Ast.EnumFieldSelector[_],
                             source: Tree.Source): ArraySeq[Ast.EnumField] =
     source.ast match {
-      case contract: Ast.Contract =>
+      case Left(contract: Ast.Contract) =>
         contract
           .enums
           .filter(_.id == fieldSelector.enumId)
           .flatMap(_.fields.find(_.ident == fieldSelector.field))
           .to(ArraySeq)
 
-      case _: Ast.ContractInterface | _: Ast.TxScript =>
+      case Left(_: Ast.ContractInterface | _: Ast.TxScript) | Right(_: Ast.Struct) =>
         ArraySeq.empty
     }
 

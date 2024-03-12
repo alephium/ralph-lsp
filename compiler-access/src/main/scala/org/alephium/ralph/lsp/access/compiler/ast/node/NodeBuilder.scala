@@ -13,17 +13,17 @@ object NodeBuilder extends StrictLogging {
    * @param ast The [[Ast.ContractWithState]] instance
    * @return Root node of the tree.
    */
-  def buildRootNode(ast: Ast.ContractWithState,
+  def buildRootNode(ast: Either[Ast.ContractWithState, Ast.Struct],
                     rootIndex: SourceIndex): Node[Positioned] = {
     // TODO: Are all these siblings? If they are not, they need to build a tree structure using source-index.
     val rootSiblings =
       ast match {
-        case ast: Ast.TxScript =>
+        case Left(ast: Ast.TxScript) =>
           buildOne(ast.ident) ++
             buildMany(ast.templateVars) ++
             buildMany(ast.funcs)
 
-        case ast: Ast.Contract =>
+        case Left(ast: Ast.Contract) =>
           buildOne(ast.stdInterfaceId) ++
             buildOne(ast.ident) ++
             buildMany(ast.templateVars) ++
@@ -34,12 +34,16 @@ object NodeBuilder extends StrictLogging {
             buildMany(ast.enums) ++
             buildMany(ast.inheritances)
 
-        case ast: Ast.ContractInterface =>
+        case Left(ast: Ast.ContractInterface) =>
           buildOne(ast.stdId) ++
             buildOne(ast.ident) ++
             buildMany(ast.funcs) ++
             buildMany(ast.events) ++
             buildMany(ast.inheritances)
+
+        case Right(ast: Ast.Struct) =>
+          buildOne(ast.id) ++
+            buildMany(ast.fields)
       }
 
     // sort the sibling according to their source-index i.e. following their order of position in code.

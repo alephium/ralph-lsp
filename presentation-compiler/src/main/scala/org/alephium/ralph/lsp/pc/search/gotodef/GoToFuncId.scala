@@ -60,12 +60,17 @@ private object GoToFuncId {
   private def goToLocalFunction(funcId: Ast.FuncId,
                                 source: Tree.Source): ArraySeq[Ast.FuncId] =
     // TODO: Improve selection by checking function argument count and types.
-    source
-      .ast
-      .funcs
-      .filter(_.id == funcId)
-      .map(_.id)
-      .to(ArraySeq)
+    source.ast match {
+      case Left(ast) =>
+        ast
+          .funcs
+          .filter(_.id == funcId)
+          .map(_.id)
+          .to(ArraySeq)
+
+      case Right(_) =>
+        ArraySeq.empty
+    }
 
   /**
    * Navigate to all local function calls where the given function definition [[Ast.FuncDef]]

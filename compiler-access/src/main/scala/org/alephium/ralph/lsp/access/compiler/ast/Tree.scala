@@ -35,7 +35,7 @@ object Tree {
                         file: Name,
                         index: SourceIndex) extends Tree
 
-  case class Source(ast: Ast.ContractWithState,
+  case class Source(ast: Either[Ast.ContractWithState, Ast.Struct],
                     index: SourceIndex) extends Statement {
     // TODO: Move the following to a cache like Caffeine.
 
