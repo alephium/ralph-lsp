@@ -12,37 +12,78 @@ import scala.collection.immutable.ArraySeq
 private object GoToIdent {
 
   /**
-   * Navigate to the nearest argument for the given identifier.
+   * Navigate to the argument(s) for the given identifier.
    *
    * @param identNode The node representing the identifier in the AST.
    * @param ident     The identifier for which the argument definition is sought.
    * @param source    The source tree to search within.
-   * @return An option containing the closest argument if found, otherwise None.
+   * @return An array sequence of positioned ASTs matching the search result.
    * */
   def goTo(identNode: Node[Positioned],
            ident: Ast.Ident,
-           source: Tree.Source): ArraySeq[Ast.Argument] =
+           source: Tree.Source): ArraySeq[Ast.Positioned] =
     identNode
       .parent // take one step up to check the type of ident node.
-      .map(_.data)
       .to(ArraySeq)
       .collect {
-        case variable: Ast.Variable[_] if variable.id == ident => // Is it a variable?
+        case Node(variable: Ast.Variable[_], _) if variable.id == ident => // Is it a variable?
           // The user clicked on a variable. Take 'em there!
-          goToVariable(
-            variableNode = identNode,
-            variable = variable,
+          val variables =
+            goToVariable(
+              variableNode = identNode,
+              variable = variable,
+              source = source
+            )
+
+          val constants =
+            goToConstants(
+              source = source,
+              ident = ident
+            )
+
+          variables ++ constants
+
+        case Node(fieldSelector: Ast.EnumFieldSelector[_], _) if fieldSelector.field == ident =>
+          // The user clicked on an enum field. Take 'em there!
+          goToEnumField(
+            fieldSelector = fieldSelector,
+            source = source
+          )
+
+        case node @ Node(field: Ast.EnumField, _) if field.ident == ident =>
+          // The user clicked on an enum field.
+          // Check the parent to find the enum type.
+          node
+            .parent
+            .map(_.data)
+            .to(ArraySeq)
+            .collect {
+              // Check: Parent is an enum definition which contains the enum field.
+              case enumDef: Ast.EnumDef if enumDef.fields.exists(_.ident == field.ident) =>
+                goToEnumFieldCalls(
+                  enumType = enumDef.id,
+                  enumField = field,
+                  source = source
+                )
+            }
+            .flatten
+
+        case Node(constantDef: Ast.ConstantVarDef, _) if constantDef.ident == ident =>
+          // The user clicked on an constant definition. Take 'em there!
+          goToVariableUsages(
+            ident = constantDef.ident,
             source = source
           )
       }
       .flatten
 
-  /** Navigate to the nearest argument for the given variable.
+  /**
+   * Navigate to the argument(s) for the given variable.
    *
    * @param variableNode The node representing the variable.
    * @param variable     The variable to find the argument for.
    * @param source       The source tree to search within.
-   * @return An option containing the closest argument if found, otherwise None.
+   * @return An array sequence of [[Ast.Argument]]s matching the search result.
    * */
   private def goToVariable(variableNode: Node[Positioned],
                            variable: Ast.Variable[_],
@@ -61,4 +102,83 @@ private object GoToIdent {
             }
             .map(_.typeDef)
       }
+
+  /**
+   * Navigate to the constant definitions for the given identifier.
+   *
+   * @param source The source tree to search within.
+   * @param ident  The constant identification to find.
+   * @return The constant definitions.
+   */
+  private def goToConstants(source: Tree.Source,
+                            ident: Ast.Ident): Iterator[Ast.ConstantVarDef] =
+    source
+      .rootNode
+      .walkDown
+      .map(_.data)
+      .collect {
+        case constant: Ast.ConstantVarDef if constant.ident == ident =>
+          constant
+      }
+
+  /**
+   * Navigate to the enum field(s) for the given selected enum field.
+   *
+   * @param fieldSelector The selected enum field to find.
+   * @param source        The source tree to search within.
+   * @return An array sequence of [[Ast.EnumField]]s matching the search result.
+   * */
+  private def goToEnumField(fieldSelector: Ast.EnumFieldSelector[_],
+                            source: Tree.Source): ArraySeq[Ast.EnumField] =
+    source.ast match {
+      case Left(contract: Ast.Contract) =>
+        contract
+          .enums
+          .filter(_.id == fieldSelector.enumId)
+          .flatMap(_.fields.find(_.ident == fieldSelector.field))
+          .to(ArraySeq)
+
+      case Left(_: Ast.ContractInterface | _: Ast.TxScript) | Right(_: Ast.Struct) =>
+        ArraySeq.empty
+    }
+
+  /**
+   * Navigate to all enum calls for the given enum type and field.
+   *
+   * @param enumType  The enum type to find.
+   * @param enumField The enum field to find.
+   * @param source    The source tree to search within.
+   * @return An array sequence of enum field identities matching the search result.
+   * */
+  private def goToEnumFieldCalls(enumType: Ast.TypeId,
+                                 enumField: Ast.EnumField,
+                                 source: Tree.Source): ArraySeq[Ast.Ident] =
+    source
+      .rootNode
+      .walkDown
+      .collect {
+        // find all the selections matching the enum and the enum's field type.
+        case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumType && selector.field == enumField.ident =>
+          selector.field
+      }
+      .to(ArraySeq)
+
+  /**
+   * Navigate to all variable usages for the given identifier.
+   *
+   * @param ident  The variable identifier.
+   * @param source The source tree to search within.
+   * @return An array sequence of variable usage IDs.
+   */
+  private def goToVariableUsages(ident: Ast.Ident,
+                                 source: Tree.Source): ArraySeq[Ast.Ident] =
+    source
+      .rootNode
+      .walkDown
+      .collect {
+        // find all the selections matching the variable name.
+        case Node(variable: Ast.Variable[_], _) if variable.id == ident =>
+          variable.id
+      }
+      .to(ArraySeq)
 }

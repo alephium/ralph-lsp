@@ -103,10 +103,21 @@ private object SourceCodeStateBuilder {
     parsedCode map {
       sourceCodeState =>
         val parsedContracts =
-          sourceCodeState.ast.statements collect {
-            case statement: Tree.Source => // collect only the source-code, ignoring import statements.
-              statement.ast
-          }
+          sourceCodeState
+            .ast
+            .statements
+            .collect {
+              case statement: Tree.Source => // collect only the source-code, ignoring import statements.
+                statement.ast
+            }
+            .collect {
+              // Only Contracts and Scripts can be compiled
+              case Left(contract: Ast.Contract) if !contract.isAbstract =>
+                contract
+
+              case Left(script: Ast.TxScript) =>
+                script
+            }
 
         val matchedCode = // Map contracts and scripts to their fileURIs.
           findMatchingContractOrScript(
@@ -139,24 +150,15 @@ private object SourceCodeStateBuilder {
                                            compiledContracts: Array[CompiledContract],
                                            compiledScripts: Array[CompiledScript],
                                            workspaceErrorURI: URI): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
-    parsedContracts
-      .collect {
-        // Only Contracts and Scripts can be compiled
-        case contract: Ast.Contract if !contract.isAbstract =>
-          contract
-
-        case script: Ast.TxScript =>
-          script
-      }
-      .map {
-        contract =>
-          findMatchingContractOrScript(
-            contract = contract,
-            compiledContracts = compiledContracts,
-            compiledScripts = compiledScripts,
-            workspaceErrorURI = workspaceErrorURI
-          )
-      }
+    parsedContracts map {
+      contract =>
+        findMatchingContractOrScript(
+          contract = contract,
+          compiledContracts = compiledContracts,
+          compiledScripts = compiledScripts,
+          workspaceErrorURI = workspaceErrorURI
+        )
+    }
 
   private def findMatchingContractOrScript(contract: Ast.ContractWithState,
                                            compiledContracts: Array[CompiledContract],

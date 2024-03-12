@@ -35,11 +35,12 @@ private object RalphCompilerAccess extends CompilerAccess {
 
   /** @inheritdoc */
   def compileContracts(contracts: Seq[Ast.ContractWithState],
+                       structs: Seq[Ast.Struct],
                        options: CompilerOptions,
                        workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
       val multiContract =
-        Ast.MultiContract(contracts, None)
+        Ast.MultiContract(contracts, structs, None)
 
       val extendedContracts =
         multiContract.extendedContracts()

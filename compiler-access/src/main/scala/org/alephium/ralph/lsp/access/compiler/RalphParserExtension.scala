@@ -4,7 +4,7 @@ import fastparse._
 import org.alephium.ralph.StatefulParser.whitespace
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.{SourceFileStatefulParser, SourceIndex}
+import org.alephium.ralph.{Ast, SourceFileStatefulParser, SourceIndex}
 
 import java.net.URI
 
@@ -142,8 +142,25 @@ object RalphParserExtension {
     val ralphParser =
       new SourceFileStatefulParser()(Some(fileURI))
 
-    P(Index ~~ (ralphParser.rawTxScript | ralphParser.rawContract | ralphParser.rawInterface) ~~ Index) map {
+    P(Index ~~ (ralphParser.rawTxScript | ralphParser.rawContract | ralphParser.rawInterface | ralphParser.rawStruct) ~~ Index) map {
       case (fromIndex, code, toIndex) =>
+        val ast =
+          code match {
+            case struct: Ast.Struct =>
+              Right(struct)
+
+            case contract: Ast.ContractWithState =>
+              Left(contract)
+
+            case _: Ast.AssetScript =>
+              // parser functions from ralphc also result in the `Ast.AssetScript` type.
+              // For whatever reason, if `AssetScript` is returned, report it as a parser failure since it is unexpected.
+              val ctx = implicitly[P[_]]
+              val fail = ctx.freshFailure()
+              ctx.setMsg(fromIndex, () => "TxScript, Contract, Interface or Struct. Found AssetScript.")
+              return fail
+          }
+
         val index =
           SourceIndex(
             index = fromIndex,
@@ -152,7 +169,7 @@ object RalphParserExtension {
           )
 
         Tree.Source(
-          ast = code,
+          ast = ast,
           index = index
         )
     }
