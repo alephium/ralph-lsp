@@ -109,7 +109,7 @@ private[pc] object SourceCode {
       case error: SourceCodeState.ErrorSource =>
         // Code was already parsed and it errored.
         // Return the same state.
-        error
+        parse(error.previous.getOrElse(SourceCodeState.UnCompiled(error.fileURI, error.code)))
     }
 
   /**
