@@ -49,13 +49,19 @@ object SourceCodeState {
       StringUtil.codeLines(code)
   }
 
-  /** Represents: Code is parsed */
+  /** Represents: Code that is parsed. */
   sealed trait IsParsed extends IsCodeAware
 
-  /** Represents: Code errored */
+  /** Represents: Code that is compiled. */
+  sealed trait IsCompiled extends IsParsed
+
+  /** Represents: Code that contains error(s). */
   sealed trait IsError extends SourceCodeState
 
-  sealed trait IsCompiled extends IsParsed
+  /** Represents: Code that errored during parsing or compilation. */
+  sealed trait IsParserOrCompilationError extends IsError with IsCodeAware {
+    def errors: Seq[CompilerMessage.AnyError]
+  }
 
   /** The code is on disk */
   case class OnDisk(fileURI: URI) extends IsInitialised
@@ -73,6 +79,12 @@ object SourceCodeState {
                     code: String,
                     ast: Tree.Root) extends IsParsed
 
+
+  /** Represents: Error during the parser phase. */
+  case class ErrorParser(fileURI: URI,
+                         code: String,
+                         errors: Seq[CompilerMessage.AnyError]) extends IsParserOrCompilationError with IsParsed
+
   /** Represents: Code is successfully compiled */
   case class Compiled(fileURI: URI,
                       code: String,
@@ -88,13 +100,11 @@ object SourceCodeState {
       }
   }
 
-  /**
-   * Represents: Failed during the parse or compilation phase.
-   * If the parse phase was successfully but compilation failed, the parsed state is stored here for features like code-completion.
-   * */
-  case class ErrorSource(fileURI: URI,
-                         code: String,
-                         errors: Seq[CompilerMessage.AnyError],
-                         previous: Option[SourceCodeState.Parsed]) extends IsError with IsCompiled
+  /** Represents: Error during the compilation phase. */
+  case class ErrorCompilation(fileURI: URI,
+                              code: String,
+                              errors: Seq[CompilerMessage.AnyError],
+                              parsed: SourceCodeState.Parsed) extends IsParserOrCompilationError with IsCompiled
+
 
 }

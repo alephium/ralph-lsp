@@ -23,7 +23,7 @@ private object WorkspaceStateBuilder {
       case Right(compiledSource) =>
         val (errors, compiled) =
           compiledSource partitionMap {
-            case error: SourceCodeState.ErrorSource =>
+            case error: SourceCodeState.IsParserOrCompilationError =>
               Left(error)
 
             case parsed: SourceCodeState.Parsed =>
