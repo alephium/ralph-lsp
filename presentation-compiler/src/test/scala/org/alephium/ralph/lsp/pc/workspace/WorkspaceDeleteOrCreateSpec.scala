@@ -1,10 +1,11 @@
 package org.alephium.ralph.lsp.pc.workspace
 
+import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState , TestSourceCode}
 import org.alephium.ralph.lsp.pc.state.PCState
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
@@ -12,6 +13,8 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+
+import org.scalacheck.Gen
 
 import scala.collection.immutable.ArraySeq
 import scala.util.Random
@@ -223,6 +226,84 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
           compiledWorkspace.sourceCode.map(_.fileURI) should contain theSameElementsAs expectedSourceCode.map(_.fileURI)
 
           // clear test data
+          TestWorkspace delete workspace
+      }
+    }
+
+    "abstract contract is deleted then created" in {
+        implicit val file: FileAccess =
+          FileAccess.disk
+
+        implicit val compiler: CompilerAccess =
+          CompilerAccess.ralphc
+
+        forAll(TestBuild.genExtendedContract()) {
+          case (build, contract, extension, extensionCode, extensionName) =>
+          val allCode = ArraySeq(contract, extension)
+
+          // Create an empty uncompiled workspace
+          val workspace =
+            WorkspaceState.UnCompiled(
+              build = build,
+              sourceCode = ArraySeq.empty
+            )
+
+          val initialPCState =
+            PCState(
+              workspace = workspace,
+              buildErrors = None
+            )
+
+          // Add the all code to the workspace
+          val compiledPCState =
+            Workspace.deleteOrCreate(
+              events = allCode.to(ArraySeq).map { code =>
+                WorkspaceFileEvent.Created(code.fileURI)
+              },
+              pcState = initialPCState
+            )
+
+          // The workspace compile and contains both abstract contract and contract
+          val compiledWorkspace = compiledPCState.workspace.asInstanceOf[WorkspaceState.Compiled]
+
+          compiledWorkspace.sourceCode.map(_.fileURI) should contain theSameElementsAs allCode.map(_.fileURI)
+
+          // Delete the abstract contract
+          TestSourceCode delete extension
+          val erroredState =
+            Workspace.deleteOrCreate(
+              events = ArraySeq(WorkspaceFileEvent.Deleted(extension.fileURI)),
+              pcState = compiledPCState
+            )
+
+          // The workspace is not compiling anymore
+          val erroredWorkspace = erroredState.workspace.asInstanceOf[WorkspaceState.Errored]
+
+          // But error isn't at workspace level
+          erroredWorkspace.workspaceErrors shouldBe empty
+
+          // The error is in the contract file, as the abstract contract is missing
+          erroredWorkspace.sourceCode.size shouldBe 1
+          val sourceState  = erroredWorkspace.sourceCode.head.asInstanceOf[SourceCodeState.ErrorCompilation]
+          sourceState.fileURI shouldBe contract.fileURI
+          val messages = sourceState.errors.map(_.message)
+          messages.size shouldBe 1
+          messages.head shouldBe s"""Contract "$extensionName" does not exist"""
+
+          // Recreate the abstract contract
+          TestSourceCode persist (extension, code = Gen.const(extensionCode))
+
+          val recompiledPCState =
+            Workspace.deleteOrCreate(
+              events = ArraySeq(
+                WorkspaceFileEvent.Created(extension.fileURI),
+              ),
+              pcState = erroredState
+            )
+
+          val recompiledWorkspace = recompiledPCState.workspace.asInstanceOf[WorkspaceState.Compiled]
+          recompiledWorkspace.sourceCode.map(_.fileURI) should contain theSameElementsAs allCode.map(_.fileURI)
+
           TestWorkspace delete workspace
       }
     }

@@ -106,6 +106,21 @@ object TestBuild {
     compiled
   }
 
+  def genExtendedContract()(implicit file: FileAccess,
+                            compiler: CompilerAccess,
+                            logger: ClientLogger) : Gen[(BuildState.BuildCompiled, SourceCodeState.OnDisk, SourceCodeState.OnDisk, String, String)] =
+    for {
+      build <- TestBuild.genCompiledOK()
+      (contract, extension, extensionName) <- TestCode.genExtendedContract()
+      contractFile <- TestSourceCode.genOnDiskForRoot(rootURI = Gen.const(build.contractURI))
+      extensionFile <- TestSourceCode.genOnDiskForRoot(rootURI = Gen.const(build.contractURI))
+    } yield {
+      val contractOnDisk = TestSourceCode.persist(contractFile, code = Gen.const(contract))
+      val extensionOnDisk = TestSourceCode.persist(extensionFile, code = Gen.const(extension))
+
+      (build, contractOnDisk, extensionOnDisk, extension, extensionName)
+    }
+
   def delete(build: BuildState): Unit =
     TestFile delete build.buildURI
 }
