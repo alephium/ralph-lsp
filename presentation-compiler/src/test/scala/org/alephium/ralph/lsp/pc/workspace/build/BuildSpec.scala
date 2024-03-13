@@ -177,7 +177,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
             BuildState.BuildErrored(
               buildURI = buildURI,
               code = None,
-              errors = ArraySeq(ErrorBuildFileNotFound),
+              errors = ArraySeq(ErrorBuildFileNotFound(buildURI)),
               dependency = None,
               activateWorkspace = None
             )

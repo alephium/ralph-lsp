@@ -65,7 +65,8 @@ object TestSourceCode {
                     code: Gen[String] = TestCode.genGoodCode()): Gen[SourceCodeState.IsError] =
     Gen.oneOf(
       genErrorAccess(state),
-      genErrorSource(state, code)
+      genParserError(state, code)
+      // TODO: Add genCompilationError
     )
 
   /**
@@ -82,18 +83,17 @@ object TestSourceCode {
         error = error
       )
 
-  def genErrorSource(state: Gen[SourceCodeState] = genOnDisk(),
-                     code: Gen[String] = TestCode.genGoodCode()): Gen[SourceCodeState.ErrorSource] =
+  def genParserError(state: Gen[SourceCodeState] = genOnDisk(),
+                     code: Gen[String] = TestCode.genGoodCode()): Gen[SourceCodeState.ErrorParser] =
     for {
       _state <- state
       _code <- code
       errors <- Gen.listOf(TestError.genError())
     } yield
-      SourceCodeState.ErrorSource(
+      SourceCodeState.ErrorParser(
         fileURI = _state.fileURI,
         code = _code,
-        errors = errors,
-        previous = None
+        errors = errors
       )
 
   def genUnCompiled(code: Gen[String] = TestCode.genGoodCode(),
@@ -152,7 +152,8 @@ object TestSourceCode {
       SourceCode.compile(
         sourceCode = ArraySeq(parsed),
         dependency = None,
-        compilerOptions = CompilerOptions.Default
+        compilerOptions = CompilerOptions.Default,
+        workspaceErrorURI = parsed.fileURI
       )
 
     result.value should have size 1

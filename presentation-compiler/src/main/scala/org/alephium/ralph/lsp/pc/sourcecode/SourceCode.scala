@@ -65,13 +65,12 @@ private[pc] object SourceCode {
                                           compiler: CompilerAccess): SourceCodeState =
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
-        compiler.parseContracts(code) match {
+        compiler.parseContracts(fileURI, code) match {
           case Left(error) =>
-            SourceCodeState.ErrorSource(
+            SourceCodeState.ErrorParser(
               fileURI = fileURI,
               code = code,
-              errors = Array(error),
-              previous = None
+              errors = Array(error)
             )
 
           case Right(parsedCode) =>
@@ -106,10 +105,14 @@ private[pc] object SourceCode {
       case parsed @ (_: SourceCodeState.Parsed | _: SourceCodeState.Compiled) =>
         parsed // code is already in parsed state, return the same state
 
-      case error: SourceCodeState.ErrorSource =>
-        // Code was already parsed and it errored.
-        // Return the same state.
+      case error: SourceCodeState.ErrorParser =>
+        // This code was already contain parser errors, no need to reparse.
         error
+
+      case error: SourceCodeState.ErrorCompilation =>
+        // This code contains compilations errors that might have been fixed.
+        // Since it is already parsed, return the existing parsed state, without re-parsing.
+        error.parsed
     }
 
   /**
@@ -137,7 +140,7 @@ private[pc] object SourceCode {
 
       case None =>
         // no source code sent from client, check it still exists.
-        file.exists(fileURI, SourceIndexExtra.zero) match {
+        file.exists(fileURI, SourceIndexExtra.zero(fileURI)) match {
           case Left(error) =>
             // failed to check
             val newState =
@@ -188,14 +191,11 @@ private[pc] object SourceCode {
           case compiled: SourceCodeState.Compiled =>
             Right(compiled.parsed)
 
-          case errored: SourceCodeState.ErrorSource =>
-            errored.previous match {
-              case Some(previousParsed) =>
-                Right(previousParsed)
+          case _: SourceCodeState.ErrorParser =>
+            Left(SourceCodeHasCompilationErrors(fileURI))
 
-              case None =>
-                Left(SourceCodeHasCompilationErrors(fileURI))
-            }
+          case errored: SourceCodeState.ErrorCompilation =>
+            Right(errored.parsed)
         }
 
       case None =>
@@ -205,14 +205,16 @@ private[pc] object SourceCode {
   /**
    * Compile a group of source-code files and performing type-check on imported code/import statements.
    *
-   * @param sourceCode      Source-code to compile
-   * @param compilerOptions Options to run for this compilation
-   * @param compiler        Target compiler
+   * @param sourceCode        Source-code to compile
+   * @param compilerOptions   Options to run for this compilation
+   * @param workspaceErrorURI URI to report errors that contain no `fileURI`.
+   * @param compiler          Target compiler
    * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
    */
   def compile(sourceCode: ArraySeq[SourceCodeState.Parsed],
               dependency: Option[ArraySeq[SourceCodeState.Compiled]],
-              compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
+              compilerOptions: CompilerOptions,
+              workspaceErrorURI: URI)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
     Importer.typeCheck(
       sourceCode = sourceCode,
       dependency = dependency
@@ -234,7 +236,8 @@ private[pc] object SourceCode {
         compileSource(
           sourceCode = sourceCode,
           importedCode = parsedImported,
-          compilerOptions = compilerOptions
+          compilerOptions = compilerOptions,
+          workspaceErrorURI = workspaceErrorURI
         )
     }
 
@@ -244,14 +247,16 @@ private[pc] object SourceCode {
    * Pre-requisite: It is assumed that imports are already processed.
    * If not, use [[SourceCode.compile]] instead.
    *
-   * @param sourceCode      Source-code to compile
-   * @param compilerOptions Options to run for this compilation
-   * @param compiler        Target compiler
+   * @param sourceCode        Source-code to compile
+   * @param compilerOptions   Options to run for this compilation
+   * @param workspaceErrorURI URI to report errors that contain no `fileURI`.
+   * @param compiler          Target compiler
    * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
    */
   private def compileSource(sourceCode: ArraySeq[SourceCodeState.Parsed],
                             importedCode: ArraySeq[SourceCodeState.Parsed],
-                            compilerOptions: CompilerOptions)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsCompiled]] = {
+                            compilerOptions: CompilerOptions,
+                            workspaceErrorURI: URI)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] = {
     val allCode =
       sourceCode ++ importedCode
 
@@ -277,13 +282,15 @@ private[pc] object SourceCode {
       compiler.compileContracts(
         contracts = contracts,
         structs = structs,
-        options = compilerOptions
+        options = compilerOptions,
+        workspaceErrorURI = workspaceErrorURI
       )
 
     // transform compilation result to SourceCodeState
     SourceCodeStateBuilder.toSourceCodeState(
       parsedCode = sourceCode,
-      compilationResult = compilationResult
+      compilationResult = compilationResult,
+      workspaceErrorURI = workspaceErrorURI
     )
   }
 

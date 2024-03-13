@@ -22,21 +22,22 @@ import scala.collection.mutable
 private object RalphCompilerAccess extends CompilerAccess {
 
   /** @inheritdoc */
-  def parseContracts(code: String): Either[CompilerMessage.AnyError, Tree.Root] =
+  def parseContracts(fileURI: URI, code: String): Either[CompilerMessage.AnyError, Tree.Root] =
     try
-      fastparse.parse(code, RalphParserExtension.multiContract(_)) match {
+      fastparse.parse(code, RalphParserExtension.multiContract(fileURI)(_)) match {
         case Parsed.Success(source: Tree.Root, _) =>
           Right(source)
 
         case failure: Parsed.Failure =>
           Left(FastParseError(failure))
       }
-    catch TryUtil.catchAllThrows
+    catch TryUtil.catchAllThrows(fileURI)
 
   /** @inheritdoc */
   def compileContracts(contracts: Seq[Ast.ContractWithState],
                        structs: Seq[Ast.Struct],
-                       options: CompilerOptions): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
+                       options: CompilerOptions,
+                       workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
       val multiContract =
         Ast.MultiContract(contracts, structs, None)
@@ -53,7 +54,7 @@ private object RalphCompilerAccess extends CompilerAccess {
         extendedContracts.genStatefulScripts()(options)
 
       Right((statefulContracts.toArray, statefulScripts.toArray))
-    } catch TryUtil.catchAllThrows
+    } catch TryUtil.catchAllThrows(workspaceErrorURI)
 
   /** @inheritdoc */
   override def compileForDeployment(workspaceURI: URI,
@@ -62,12 +63,12 @@ private object RalphCompilerAccess extends CompilerAccess {
       val ralphc = RalphC(config)
       ralphc.compileProject() match {
         case Left(error) =>
-          Left(StringError(error))
+          Left(StringError(error, workspaceURI))
 
         case Right(result) =>
           Right(buildSuccessfulCompilation(result, ralphc.metaInfos))
       }
-    } catch TryUtil.catchAllThrows
+    } catch TryUtil.catchAllThrows(workspaceURI)
 
   private def buildSuccessfulCompilation(result: CompileProjectResult,
                                          metaInfos: mutable.Map[String, MetaInfo]): (Array[CompiledContract], Array[CompiledScript]) = {

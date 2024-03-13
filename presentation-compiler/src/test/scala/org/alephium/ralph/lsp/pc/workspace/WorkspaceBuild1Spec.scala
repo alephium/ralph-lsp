@@ -49,7 +49,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
                 BuildState.BuildErrored(
                   buildURI = workspace.buildURI,
                   code = None,
-                  errors = ArraySeq(ErrorBuildFileNotFound),
+                  errors = ArraySeq(ErrorBuildFileNotFound(workspace.buildURI)),
                   dependency = None,
                   activateWorkspace = None
                 )
@@ -75,7 +75,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
                 BuildState.BuildErrored(
                   buildURI = workspace.buildURI,
                   code = None,
-                  errors = ArraySeq(ErrorBuildFileNotFound),
+                  errors = ArraySeq(ErrorBuildFileNotFound(workspace.buildURI)),
                   dependency = None,
                   activateWorkspace = None
                 )
@@ -119,7 +119,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
                     ArraySeq(
                       ErrorInvalidBuildSyntax(
                         fileURI = build.buildURI,
-                        index = SourceIndex(0, 1),
+                        index = SourceIndex(0, 1, Some(build.buildURI)),
                         message = """expected json value got "b""""
                       )
                     ),

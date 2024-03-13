@@ -253,7 +253,7 @@ object PCStateDiagnostics {
   /** Fetch source-code level diagnostics */
   def toSourceCodeDiagnostics(state: WorkspaceState.IsSourceAware): Iterable[FileDiagnostic] =
     state.sourceCode collect {
-      case state: SourceCodeState.ErrorSource =>
+      case state: SourceCodeState.IsParserOrCompilationError =>
         // transform multiple source code errors to diagnostics.
         val diagnostics =
           state.errors map {

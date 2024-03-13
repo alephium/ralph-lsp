@@ -50,6 +50,23 @@ object TestCode {
            |""".stripMargin
     }
 
+  def genExtendedContract(name: Gen[String] = genCamelCase, extensionName: Gen[String] = genCamelCase): Gen[(String,String, String)] =
+    for {
+      name <- name
+      extensionName <- extensionName
+      extension <- genAbstract(Gen.const(extensionName))
+    } yield {
+      val contract = s"""
+         |Contract $name(id:U256) extends $extensionName() {
+         |  pub fn action() -> () {
+         |    return
+         |  }
+         |}
+         |""".stripMargin
+
+      (contract, extension, extensionName)
+    }
+
   /** Generate ralph code */
   def genGoodCode(): Gen[String] =
     Gen.oneOf(

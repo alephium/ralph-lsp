@@ -17,7 +17,7 @@ object Importer {
    *         - Right: The imported code.
    */
   def typeCheck(sourceCode: ArraySeq[SourceCodeState.Parsed],
-                dependency: Option[ArraySeq[SourceCodeState.Compiled]]): Either[ArraySeq[SourceCodeState.ErrorSource], ArraySeq[SourceCodeState.Compiled]] = {
+                dependency: Option[ArraySeq[SourceCodeState.Compiled]]): Either[ArraySeq[SourceCodeState.ErrorCompilation], ArraySeq[SourceCodeState.Compiled]] = {
     val dependencyOrEmpty =
       dependency getOrElse ArraySeq.empty
 
@@ -55,7 +55,7 @@ object Importer {
    *         - Right: The imported code.
    */
   def typeCheck(sourceCode: SourceCodeState.Parsed,
-                dependency: ArraySeq[SourceCodeState.Compiled]): Either[SourceCodeState.ErrorSource, Seq[SourceCodeState.Compiled]] = {
+                dependency: ArraySeq[SourceCodeState.Compiled]): Either[SourceCodeState.ErrorCompilation, Seq[SourceCodeState.Compiled]] = {
     val imported =
       sourceCode.ast.statements collect {
         case imported: Tree.Import => // type all import statements
@@ -80,11 +80,11 @@ object Importer {
     if (importErrors.nonEmpty) {
       // build a source-code state that reports all import errors in this file.
       val sourceError =
-        SourceCodeState.ErrorSource(
+        SourceCodeState.ErrorCompilation(
           fileURI = sourceCode.fileURI,
           code = sourceCode.code,
           errors = importErrors,
-          previous = Some(sourceCode)
+          parsed = sourceCode
         )
 
       Left(sourceError)

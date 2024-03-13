@@ -269,7 +269,8 @@ object Workspace extends StrictImplicitLogging {
       SourceCode.compile(
         sourceCode = workspace.sourceCode,
         dependency = workspace.build.dependency.map(_.sourceCode),
-        compilerOptions = workspace.build.config.compilerOptions
+        compilerOptions = workspace.build.config.compilerOptions,
+        workspaceErrorURI = workspace.workspaceURI
       )
 
     WorkspaceStateBuilder.toWorkspaceState(
