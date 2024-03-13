@@ -14,8 +14,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.ArraySeq
 
-import java.net.URI
-
 class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   "typeCheck" should {
@@ -205,10 +203,10 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
           ImportError.Unknown(expectedAST)
 
         val expectedError =
-          SourceCodeState.ErrorSource(
+          SourceCodeState.ErrorCompilation(
             fileURI = myCode.fileURI,
             code = myCode.code,
-            previous = Some(myCode),
+            parsed = myCode,
             errors = ArraySeq(expectedImportError),
           )
 

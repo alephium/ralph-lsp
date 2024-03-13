@@ -168,7 +168,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
         // ErrorSource state means the source-code has already been parsed and it previously errored.
         // Re-parsing will not yield a different result so expect no disk-IO or compiler-IO
-        forAll(TestSourceCode.genErrorSource()) {
+        forAll(TestSourceCode.genParserError()) {
           error =>
             SourceCode.parse(error) shouldBe error
         }
@@ -189,11 +189,10 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
           // expect error state is returned
           newState shouldBe
-            SourceCodeState.ErrorSource(
+            SourceCodeState.ErrorParser(
               fileURI = onDisk.fileURI,
               code = code,
-              errors = Seq(compiler.parseContracts(onDisk.fileURI, code).left.value),
-              previous = None
+              errors = Seq(compiler.parseContracts(onDisk.fileURI, code).left.value)
             )
 
           TestSourceCode.delete(onDisk)

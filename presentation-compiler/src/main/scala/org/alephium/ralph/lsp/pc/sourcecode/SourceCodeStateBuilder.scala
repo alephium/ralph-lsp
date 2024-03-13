@@ -27,7 +27,7 @@ private object SourceCodeStateBuilder {
     compilationResult match {
       case Left(error) =>
         // update the error to SourceCodeState
-        toSourceCodeError(
+        toCompilationError(
           parsedCode = parsedCode,
           error = error
         ) match {
@@ -52,7 +52,7 @@ private object SourceCodeStateBuilder {
 
   /**
    * If `fileURI` exists in the given compilation error, this function updates the current [[SourceCodeState]] at
-   * that `fileURI` with an error state [[SourceCodeState.ErrorSource]] indicating that this source file errored
+   * that `fileURI` with an error state [[SourceCodeState.ErrorCompilation]] indicating that this source file errored
    * during compilation.
    *
    * @param parsedCode The parsed code used for compilation.
@@ -60,8 +60,8 @@ private object SourceCodeStateBuilder {
    * @return An [[ArraySeq]] of [[SourceCodeState]]s if the `fileURI` is defined in the
    *         error's [[org.alephium.ralph.SourceIndex]], otherwise, [[None]].
    */
-  private def toSourceCodeError(parsedCode: ArraySeq[SourceCodeState.Parsed],
-                                error: CompilerMessage.AnyError): Option[ArraySeq[SourceCodeState.IsParsed]] =
+  private def toCompilationError(parsedCode: ArraySeq[SourceCodeState.Parsed],
+                                 error: CompilerMessage.AnyError): Option[ArraySeq[SourceCodeState.IsParsed]] =
     error
       .index
       .fileURI
@@ -73,11 +73,11 @@ private object SourceCodeStateBuilder {
               parsed =>
                 // Update the target file to an error state.
                 val sourceError =
-                  SourceCodeState.ErrorSource(
+                  SourceCodeState.ErrorCompilation(
                     fileURI = fileURI,
                     code = parsed.code,
                     errors = ArraySeq(error),
-                    previous = Some(parsed)
+                    parsed = parsed
                   )
 
                 // replace the source-code state.
@@ -131,11 +131,11 @@ private object SourceCodeStateBuilder {
           matchedCode partitionMap identity
 
         if (errors.nonEmpty) // if true, return errors
-          SourceCodeState.ErrorSource(
+          SourceCodeState.ErrorCompilation(
             fileURI = sourceCodeState.fileURI,
             code = sourceCodeState.code,
             errors = errors,
-            previous = Some(sourceCodeState)
+            parsed = sourceCodeState
           )
         else // else, return successfully compiled
           SourceCodeState.Compiled(

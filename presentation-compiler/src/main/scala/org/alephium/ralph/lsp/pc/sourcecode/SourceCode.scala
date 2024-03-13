@@ -67,11 +67,10 @@ private[pc] object SourceCode {
       case SourceCodeState.UnCompiled(fileURI, code) =>
         compiler.parseContracts(fileURI, code) match {
           case Left(error) =>
-            SourceCodeState.ErrorSource(
+            SourceCodeState.ErrorParser(
               fileURI = fileURI,
               code = code,
-              errors = Array(error),
-              previous = None
+              errors = Array(error)
             )
 
           case Right(parsedCode) =>
@@ -106,10 +105,14 @@ private[pc] object SourceCode {
       case parsed @ (_: SourceCodeState.Parsed | _: SourceCodeState.Compiled) =>
         parsed // code is already in parsed state, return the same state
 
-      case error: SourceCodeState.ErrorSource =>
-        // Code was already parsed and it errored.
-        // Return the same state.
+      case error: SourceCodeState.ErrorParser =>
+        // This code was already contain parser errors, no need to reparse.
         error
+
+      case error: SourceCodeState.ErrorCompilation =>
+        // This code contains compilations errors that might have been fixed.
+        // Since it is already parsed, return the existing parsed state, without re-parsing.
+        error.parsed
     }
 
   /**
@@ -188,14 +191,11 @@ private[pc] object SourceCode {
           case compiled: SourceCodeState.Compiled =>
             Right(compiled.parsed)
 
-          case errored: SourceCodeState.ErrorSource =>
-            errored.previous match {
-              case Some(previousParsed) =>
-                Right(previousParsed)
+          case _: SourceCodeState.ErrorParser =>
+            Left(SourceCodeHasCompilationErrors(fileURI))
 
-              case None =>
-                Left(SourceCodeHasCompilationErrors(fileURI))
-            }
+          case errored: SourceCodeState.ErrorCompilation =>
+            Right(errored.parsed)
         }
 
       case None =>

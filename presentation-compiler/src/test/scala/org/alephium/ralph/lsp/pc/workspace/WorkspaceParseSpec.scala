@@ -51,7 +51,7 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
           val expectedSourceCodeStates =
             sourceCode
               .map(SourceCode.parse)
-              .map(_.asInstanceOf[SourceCodeState.ErrorSource])
+              .map(_.asInstanceOf[SourceCodeState.ErrorParser])
 
           val expectedWorkspace =
             WorkspaceState.UnCompiled(
