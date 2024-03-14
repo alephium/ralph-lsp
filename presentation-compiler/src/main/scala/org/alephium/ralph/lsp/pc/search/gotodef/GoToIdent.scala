@@ -78,6 +78,18 @@ private object GoToIdent {
             ident = constantDef.ident,
             from = source.rootNode
           )
+
+        case node @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == ident =>
+          // User selected a named variable. Find its usages.
+          goToNearestFuncDef(node)
+            .iterator
+            .flatMap {
+              case (functionNode, _) =>
+                goToVariableUsages(
+                  ident = namedVar.ident,
+                  from = functionNode
+                )
+            }
       }
       .flatten
 
