@@ -16,9 +16,9 @@ import scala.collection.immutable.ArraySeq
  */
 private[search] object CodeCompletionProvider extends CodeProvider[Suggestion] with StrictImplicitLogging {
 
-  override def search(cursorIndex: Int,
-                      sourceCode: SourceCodeState.Parsed,
-                      workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): ArraySeq[Suggestion] =
+  override def search(cursorIndex: Int, sourceCode: SourceCodeState.Parsed, workspace: WorkspaceState.IsSourceAware)(
+      implicit logger: ClientLogger
+  ): ArraySeq[Suggestion] =
     // find the statement where this cursorIndex sits.
     sourceCode.ast.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>

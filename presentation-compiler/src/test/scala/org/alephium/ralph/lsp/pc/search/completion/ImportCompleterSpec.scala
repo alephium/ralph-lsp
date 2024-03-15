@@ -38,7 +38,7 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
         "std/fungible_token_unimplemented",
         "std/nft_collection_interface",
         "std/nft_collection_with_royalty_interface",
-        "std/nft_interface",
+        "std/nft_interface"
       ) map {
         suggestion =>
           Suggestion.Field(
@@ -71,7 +71,7 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
         "fungible_token_unimplemented",
         "nft_collection_interface",
         "nft_collection_with_royalty_interface",
-        "nft_interface",
+        "nft_interface"
       ) map {
         suggestion =>
           Suggestion.Field(

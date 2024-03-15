@@ -7,7 +7,7 @@ import org.alephium.ralph.error.CompilerError.FormattableError
  * A compiler message can be an `error` or a `warning`.
  *
  * In LSP this type is named Diagnostics.
- * */
+ */
 sealed trait CompilerMessage {
   def message: String
 

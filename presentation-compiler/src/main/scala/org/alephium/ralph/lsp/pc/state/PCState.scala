@@ -12,5 +12,4 @@ import org.alephium.ralph.lsp.pc.workspace.build.BuildState
  *                     - If there are build errors, the workspace still handles requests using the most recent valid and compiled build file
  *                       until this build file is error-free and successfully compiled.
  */
-case class PCState(workspace: WorkspaceState,
-                   buildErrors: Option[BuildState.BuildErrored])
+case class PCState(workspace: WorkspaceState, buildErrors: Option[BuildState.BuildErrored])

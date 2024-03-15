@@ -100,10 +100,12 @@ class WorkspaceFindParsedSpec extends AnyWordSpec with Matchers with ScalaCheckD
           sourceCode foreach {
             sourceCode =>
               val parsedSource =
-                Workspace.findParsed(
-                  fileURI = sourceCode.fileURI,
-                  workspace = compiledWorkspace
-                ).value
+                Workspace
+                  .findParsed(
+                    fileURI = sourceCode.fileURI,
+                    workspace = compiledWorkspace
+                  )
+                  .value
 
               parsedSource.value.fileURI shouldBe sourceCode.fileURI
           }

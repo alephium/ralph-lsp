@@ -14,8 +14,7 @@ object GenExtension {
     def listOfAtLeastOneMax[T](max: Int = 10)(gen: Gen[T]): Gen[List[T]] =
       listOfRange(min = 1, max = max)(gen)
 
-    def listOfRange[T](min: Int = 0,
-                       max: Int = 10)(gen: Gen[T]): Gen[List[T]] =
+    def listOfRange[T](min: Int = 0, max: Int = 10)(gen: Gen[T]): Gen[List[T]] =
       for {
         maxOf <- Gen.choose(min, max)
         list <- Gen.listOfN(maxOf, gen)

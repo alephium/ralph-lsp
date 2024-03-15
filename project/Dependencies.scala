@@ -4,7 +4,6 @@ object Version {
   val scala213 = "2.13.13"
   val web3 = "0.36.1"
 }
-
 object Dependencies {
 
   /** TEST */
@@ -19,5 +18,4 @@ object Dependencies {
   /** Logging */
   lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
   lazy val logback = "ch.qos.logback" % "logback-classic" % "1.5.3"
-
 }

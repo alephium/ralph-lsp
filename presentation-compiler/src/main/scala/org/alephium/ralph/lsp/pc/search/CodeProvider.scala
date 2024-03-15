@@ -28,9 +28,9 @@ trait CodeProvider[A] {
    * @param workspace   The workspace state where the source-code is located.
    * @return An [[ArraySeq]] of search results of type [[A]].
    */
-  def search(cursorIndex: Int,
-             sourceCode: SourceCodeState.Parsed,
-             workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): ArraySeq[A]
+  def search(cursorIndex: Int, sourceCode: SourceCodeState.Parsed, workspace: WorkspaceState.IsSourceAware)(
+      implicit logger: ClientLogger
+  ): ArraySeq[A]
 }
 
 object CodeProvider {
@@ -52,11 +52,10 @@ object CodeProvider {
    * @param workspace Current workspace state.
    * @tparam A The type to search.
    */
-  def search[A](line: Int,
-                character: Int,
-                fileURI: URI,
-                workspace: WorkspaceState.IsSourceAware)(implicit provider: CodeProvider[A],
-                                                         logger: ClientLogger): Option[Either[CompilerMessage.Error, ArraySeq[A]]] =
+  def search[A](line: Int, character: Int, fileURI: URI, workspace: WorkspaceState.IsSourceAware)(
+      implicit provider: CodeProvider[A],
+      logger: ClientLogger
+  ): Option[Either[CompilerMessage.Error, ArraySeq[A]]] =
     Workspace.findParsed( // find the parsed file where this search was executed.
       fileURI = fileURI,
       workspace = workspace

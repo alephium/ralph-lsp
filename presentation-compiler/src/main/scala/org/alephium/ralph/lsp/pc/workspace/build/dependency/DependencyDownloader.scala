@@ -17,8 +17,9 @@ object DependencyDownloader extends StrictImplicitLogging {
    *
    * @param errorIndex Use this index to report any errors processing the download.
    */
-  def downloadStd(dependencyPath: Path,
-                  errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
+  def downloadStd(dependencyPath: Path, errorIndex: SourceIndex)(
+      implicit logger: ClientLogger
+  ): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
     StdInterface.stdInterfaces(
       dependencyPath = dependencyPath,
       errorIndex = errorIndex

@@ -16,12 +16,9 @@ private object GoToTypeId {
    * @param typeId    The type identifier for which the [[Ast.TypeId]] is sought.
    * @param source    The source tree to search within.
    * @return An array sequence of positioned ASTs matching the search result.
-   * */
-  def goTo(identNode: Node[Positioned],
-           typeId: Ast.TypeId,
-           source: Tree.Source): ArraySeq[Ast.Positioned] =
-    identNode
-      .parent // take one step up to check the type of TypeId node.
+   */
+  def goTo(identNode: Node[Positioned], typeId: Ast.TypeId, source: Tree.Source): ArraySeq[Ast.Positioned] =
+    identNode.parent // take one step up to check the type of TypeId node.
       .map(_.data)
       .to(ArraySeq)
       .collect {
@@ -41,18 +38,17 @@ private object GoToTypeId {
       }
       .flatten
 
-  /** Navigate to the enum types for the given enum field selector.
+  /**
+   * Navigate to the enum types for the given enum field selector.
    *
    * @param enumSelector The enum type to find.
    * @param source       The source tree to search within.
    * @return An array sequence of enum [[Ast.TypeId]]s matching the search result.
-   * */
-  private def goToEnumType(enumSelector: Ast.EnumFieldSelector[_],
-                           source: Tree.Source): ArraySeq[Ast.TypeId] =
+   */
+  private def goToEnumType(enumSelector: Ast.EnumFieldSelector[_], source: Tree.Source): ArraySeq[Ast.TypeId] =
     source.ast match {
       case Left(contract: Ast.Contract) =>
-        contract
-          .enums
+        contract.enums
           .filter(_.id == enumSelector.enumId)
           .map(_.id)
           .to(ArraySeq)
@@ -61,17 +57,15 @@ private object GoToTypeId {
         ArraySeq.empty
     }
 
-  /** Navigate to the enum type name calls.
+  /**
+   * Navigate to the enum type name calls.
    *
    * @param enumDef The enum definition contain the enum type identifier to find calls for.
    * @param source  The source tree to search within.
    * @return An array sequence of enum type [[Ast.TypeId]]s matching the search result.
-   * */
-  private def goToEnumTypeCalls(enumDef: Ast.EnumDef,
-                                source: Tree.Source): ArraySeq[Ast.TypeId] =
-    source
-      .rootNode
-      .walkDown
+   */
+  private def goToEnumTypeCalls(enumDef: Ast.EnumDef, source: Tree.Source): ArraySeq[Ast.TypeId] =
+    source.rootNode.walkDown
       .collect {
         case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumDef.id =>
           selector.enumId

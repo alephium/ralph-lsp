@@ -13,8 +13,7 @@ object NodeBuilder extends StrictLogging {
    * @param ast The [[Ast.ContractWithState]] instance
    * @return Root node of the tree.
    */
-  def buildRootNode(ast: Either[Ast.ContractWithState, Ast.Struct],
-                    rootIndex: SourceIndex): Node[Positioned] = {
+  def buildRootNode(ast: Either[Ast.ContractWithState, Ast.Struct], rootIndex: SourceIndex): Node[Positioned] = {
     // TODO: Are all these siblings? If they are not, they need to build a tree structure using source-index.
     val rootSiblings =
       ast match {
@@ -60,9 +59,7 @@ object NodeBuilder extends StrictLogging {
   private def buildOne(product: Any): List[Node[Positioned]] =
     product match {
       case product: Product =>
-        product
-          .productIterator
-          .toList
+        product.productIterator.toList
           .collect(positionedProducts)
           .flatten
 

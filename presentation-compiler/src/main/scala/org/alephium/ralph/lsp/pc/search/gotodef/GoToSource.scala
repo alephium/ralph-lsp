@@ -19,9 +19,7 @@ private object GoToSource {
    * @param sourceAST   Parsed AST of the requested source file's code.
    * @return An array sequence containing the target go-to location(s).
    */
-  def goTo(cursorIndex: Int,
-           sourceCode: SourceCodeState.Parsed,
-           sourceAST: Tree.Source): ArraySeq[GoToLocation] = {
+  def goTo(cursorIndex: Int, sourceCode: SourceCodeState.Parsed, sourceAST: Tree.Source): ArraySeq[GoToLocation] = {
     val goToResult =
       goTo(
         cursorIndex = cursorIndex,
@@ -42,10 +40,8 @@ private object GoToSource {
    * @param source      The source tree to navigate within.
    * @return An option containing the positioned AST element if found, otherwise None.
    */
-  private def goTo(cursorIndex: Int,
-                   source: Tree.Source): ArraySeq[Ast.Positioned] =
-    source
-      .rootNode
+  private def goTo(cursorIndex: Int, source: Tree.Source): ArraySeq[Ast.Positioned] =
+    source.rootNode
       .findLast(_.sourceIndex.exists(_ contains cursorIndex)) // find the node closest to this source-index
       .to(ArraySeq)
       .collect {

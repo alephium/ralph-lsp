@@ -13,7 +13,8 @@ private object GoToImport {
 
   def goTo(cursorIndex: Int,
            dependency: Option[WorkspaceState.Compiled],
-           importStatement: Tree.Import): ArraySeq[GoToLocation] =
+           importStatement: Tree.Import
+          ): ArraySeq[GoToLocation] =
     dependency match {
       case Some(dependency) =>
         goTo(
@@ -34,7 +35,8 @@ private object GoToImport {
 
   private def goTo(cursorIndex: Int,
                    dependency: WorkspaceState.Compiled,
-                   importStatement: Tree.Import): ArraySeq[SourceCodeState.Compiled] =
+                   importStatement: Tree.Import
+                  ): ArraySeq[SourceCodeState.Compiled] =
     importStatement.path match {
       case Some(importPath) =>
         if (importPath.folder.index contains cursorIndex) // check: is the cursor on a folder

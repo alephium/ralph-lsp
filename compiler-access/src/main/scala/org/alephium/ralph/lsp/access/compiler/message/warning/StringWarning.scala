@@ -9,13 +9,11 @@ import java.net.URI
  * String warning reported by `ralphc` not containing source-location information.
  */
 object StringWarning {
-  @inline def apply(message: String,
-                    fileURI: URI): StringWarning =
+  @inline def apply(message: String, fileURI: URI): StringWarning =
     StringWarning(
       message = message,
       index = SourceIndexExtra.zero(fileURI)
     )
 }
 
-case class StringWarning(message: String,
-                         index: SourceIndex) extends CompilerMessage.Warning
+case class StringWarning(message: String, index: SourceIndex) extends CompilerMessage.Warning

@@ -33,9 +33,7 @@ class NodeWalkDownSpec extends AnyWordSpec with Matchers {
 
   "include self" in {
     val allNodes =
-      TestNode
-        .root
-        .walkDown
+      TestNode.root.walkDown
         .map(_.data)
         .toList
 

@@ -17,9 +17,9 @@ import scala.collection.immutable.ArraySeq
  */
 private[search] object GoToDefinitionProvider extends CodeProvider[GoToLocation] with StrictImplicitLogging {
 
-  override def search(cursorIndex: Int,
-                      sourceCode: SourceCodeState.Parsed,
-                      workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): ArraySeq[GoToLocation] =
+  override def search(cursorIndex: Int, sourceCode: SourceCodeState.Parsed, workspace: WorkspaceState.IsSourceAware)(
+      implicit logger: ClientLogger
+  ): ArraySeq[GoToLocation] =
     // find the statement where this cursorIndex sits.
     sourceCode.ast.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>

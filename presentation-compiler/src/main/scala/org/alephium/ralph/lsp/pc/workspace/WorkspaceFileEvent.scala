@@ -10,6 +10,7 @@ sealed trait WorkspaceFileEvent {
 }
 
 object WorkspaceFileEvent {
+
   /** A file or folder is created */
   case class Created(uri: URI) extends WorkspaceFileEvent
 

@@ -24,7 +24,8 @@ object TestSourceCode {
 
   /** Generate a source code file on-disk */
   def genOnDiskAndPersist(fileURI: Gen[URI] = genFileURI(),
-                          code: Gen[String] = TestCode.genGoodCode()): Gen[(SourceCodeState.OnDisk, String)] =
+                          code: Gen[String] = TestCode.genGoodCode()
+                         ): Gen[(SourceCodeState.OnDisk, String)] =
     for {
       onDisk <- genOnDisk(fileURI)
       code <- code
@@ -34,7 +35,8 @@ object TestSourceCode {
       (persistedOnDisk, code)
     }
 
-  /** */
+  /**
+   */
   def genOnDiskForRoot(rootURI: Gen[URI] = genFolderURI()): Gen[SourceCodeState.OnDisk] =
     for {
       rootURI <- rootURI
@@ -54,15 +56,15 @@ object TestSourceCode {
       workspacePath = Gen.const(Paths.get(build.workspaceURI.resolve(build.config.contractPath)))
       fileURI = genFileURI(rootFolder = workspacePath)
       sourceCode <- TestSourceCode.genOnDisk(fileURI)
-    } yield
-      sourceCode
+    } yield sourceCode
 
   /**
    * Generate an error state for a source-code state.
    * These error states
    */
   def genErrorState(state: Gen[SourceCodeState] = genOnDisk(),
-                    code: Gen[String] = TestCode.genGoodCode()): Gen[SourceCodeState.IsError] =
+                    code: Gen[String] = TestCode.genGoodCode()
+                   ): Gen[SourceCodeState.IsError] =
     Gen.oneOf(
       genErrorAccess(state),
       genParserError(state, code)
@@ -77,46 +79,46 @@ object TestSourceCode {
     for {
       _state <- state
       error <- TestError.genError()
-    } yield
-      SourceCodeState.ErrorAccess(
-        fileURI = _state.fileURI,
-        error = error
-      )
+    } yield SourceCodeState.ErrorAccess(
+      fileURI = _state.fileURI,
+      error = error
+    )
 
   def genParserError(state: Gen[SourceCodeState] = genOnDisk(),
-                     code: Gen[String] = TestCode.genGoodCode()): Gen[SourceCodeState.ErrorParser] =
+                     code: Gen[String] = TestCode.genGoodCode()
+                    ): Gen[SourceCodeState.ErrorParser] =
     for {
       _state <- state
       _code <- code
       errors <- Gen.listOf(TestError.genError())
-    } yield
-      SourceCodeState.ErrorParser(
-        fileURI = _state.fileURI,
-        code = _code,
-        errors = errors
-      )
+    } yield SourceCodeState.ErrorParser(
+      fileURI = _state.fileURI,
+      code = _code,
+      errors = errors
+    )
 
   def genUnCompiled(code: Gen[String] = TestCode.genGoodCode(),
-                    fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.UnCompiled] =
+                    fileURI: Gen[URI] = genFileURI()
+                   ): Gen[SourceCodeState.UnCompiled] =
     for {
       code <- code
       fileURI <- fileURI
-    } yield
-      SourceCodeState.UnCompiled(
-        fileURI = fileURI,
-        code = code
-      )
+    } yield SourceCodeState.UnCompiled(
+      fileURI = fileURI,
+      code = code
+    )
 
   def genInitialised(code: Gen[String] = TestCode.genGoodCode(),
-                     fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.IsInitialised] =
+                     fileURI: Gen[URI] = genFileURI()
+                    ): Gen[SourceCodeState.IsInitialised] =
     Gen.oneOf(
       genOnDisk(fileURI),
       genUnCompiled(code, fileURI)
     )
 
   def genParsed(code: Gen[String] = TestCode.genGoodCode(),
-                fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
-                                                  compiler: CompilerAccess): Gen[SourceCodeState.Parsed] = {
+                fileURI: Gen[URI] = genFileURI()
+               )(implicit file: FileAccess, compiler: CompilerAccess): Gen[SourceCodeState.Parsed] = {
     val unCompiled =
       genUnCompiled(
         code = code,
@@ -126,15 +128,16 @@ object TestSourceCode {
     genParsed(unCompiled)
   }
 
-  def genParsed(unCompiled: Gen[SourceCodeState.UnCompiled])(implicit file: FileAccess,
-                                                             compiler: CompilerAccess): Gen[SourceCodeState.Parsed] =
+  def genParsed(
+      unCompiled: Gen[SourceCodeState.UnCompiled]
+  )(implicit file: FileAccess, compiler: CompilerAccess): Gen[SourceCodeState.Parsed] =
     unCompiled
       .map(SourceCode.parse)
       .map(_.asInstanceOf[SourceCodeState.Parsed])
 
   def genCompiled(code: Gen[String] = TestCode.genGoodCode(),
-                  fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
-                                                    compiler: CompilerAccess): Gen[SourceCodeState.IsParsed] = {
+                  fileURI: Gen[URI] = genFileURI()
+                 )(implicit file: FileAccess, compiler: CompilerAccess): Gen[SourceCodeState.IsParsed] = {
     val parsed =
       genParsed(
         code = code,
@@ -144,7 +147,9 @@ object TestSourceCode {
     genCompiled(parsed)
   }
 
-  def genCompiled(parsed: Gen[SourceCodeState.Parsed])(implicit compiler: CompilerAccess): Gen[SourceCodeState.IsParsed] =
+  def genCompiled(parsed: Gen[SourceCodeState.Parsed])(
+      implicit compiler: CompilerAccess
+  ): Gen[SourceCodeState.IsParsed] =
     parsed map compile
 
   def compile(parsed: SourceCodeState.Parsed)(implicit compiler: CompilerAccess): SourceCodeState.IsParsed = {
@@ -160,8 +165,7 @@ object TestSourceCode {
     result.value.head
   }
 
-  def persist[S <: SourceCodeState](sourceCode: S,
-                                    code: Gen[String] = TestCode.genGoodCode()): S =
+  def persist[S <: SourceCodeState](sourceCode: S, code: Gen[String] = TestCode.genGoodCode()): S =
     sourceCode match {
       case aware: SourceCodeState.IsCodeAware =>
         TestFile.write(aware.fileURI, aware.code)
@@ -172,8 +176,7 @@ object TestSourceCode {
         sourceCode
     }
 
-  def persistAll[I <: Iterable[SourceCodeState]](sourceCode: I,
-                                                 code: Gen[String] = TestCode.genGoodCode()): I = {
+  def persistAll[I <: Iterable[SourceCodeState]](sourceCode: I, code: Gen[String] = TestCode.genGoodCode()): I = {
     sourceCode foreach (persist(_, code))
     sourceCode
   }

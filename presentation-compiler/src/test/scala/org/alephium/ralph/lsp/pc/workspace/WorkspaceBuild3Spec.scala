@@ -59,14 +59,13 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
           BuildState.BuildErrored(
             buildURI = buildCompiled.buildURI,
             code = Some("blah"), // the invalid build code is carried forward
-            errors =
-              ArraySeq(
-                ErrorInvalidBuildSyntax( /// the syntax error
-                  fileURI = buildCompiled.buildURI,
-                  index = SourceIndex(0, 1, Some(buildCompiled.buildURI)),
-                  message = """expected json value got "b""""
-                )
-              ),
+            errors = ArraySeq(
+              ErrorInvalidBuildSyntax( /// the syntax error
+                fileURI = buildCompiled.buildURI,
+                index = SourceIndex(0, 1, Some(buildCompiled.buildURI)),
+                message = """expected json value got "b""""
+              )
+            ),
             dependency = buildCompiled.dependency, // dependency is carried forward
             activateWorkspace = // new workspace is activated with input source-code
               Some(
@@ -97,11 +96,13 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
             // run the build with the new build code as the current compiled build
             val actualWorkspace =
-              Workspace.build(
-                newBuildCode = Some(buildCompiled.code), //new build code is the same as existing compiled build.
-                currentBuild = buildCompiled,
-                sourceCode = allSourceCode.to(ArraySeq) // build with all source-code
-              ).value
+              Workspace
+                .build(
+                  newBuildCode = Some(buildCompiled.code), // new build code is the same as existing compiled build.
+                  currentBuild = buildCompiled,
+                  sourceCode = allSourceCode.to(ArraySeq) // build with all source-code
+                )
+                .value
 
             // sort the source-files
             val actualSortedWorkspace =

@@ -14,11 +14,10 @@ object TestError {
       code <- code
       errorMessage <- Gen.alphaStr
       errorIndex <- Gen.choose(0, code.length - 1)
-    } yield
-      StringError(
-        message = errorMessage,
-        index = SourceIndex(0, errorIndex, None) // TODO: gen random index location
-      )
+    } yield StringError(
+      message = errorMessage,
+      index = SourceIndex(0, errorIndex, None) // TODO: gen random index location
+    )
 
   def genErrors(code: String): Gen[List[CompilerMessage.AnyError]] =
     Gen.listOf(genError(Gen.const(code)))

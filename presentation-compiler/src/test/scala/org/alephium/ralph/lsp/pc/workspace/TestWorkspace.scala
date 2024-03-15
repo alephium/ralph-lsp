@@ -21,7 +21,8 @@ object TestWorkspace {
    * @param persist   When true, persist workspace directory and source code.
    */
   def genCreatedWithSourceCode(directory: Gen[URI] = TestFile.genFolderURI(),
-                               persist: Boolean = false): Gen[(WorkspaceState.Created, List[SourceCodeState.OnDisk])] =
+                               persist: Boolean = false
+                              ): Gen[(WorkspaceState.Created, List[SourceCodeState.OnDisk])] =
     for {
       workspace <- TestWorkspace.genCreated(directory)
       sourceCode <- Gen.listOfMax()(TestSourceCode.genOnDiskForRoot(workspace.workspaceURI))
@@ -31,8 +32,7 @@ object TestWorkspace {
       else
         (workspace, sourceCode)
 
-  def persist[W <: WorkspaceState.IsSourceAware](workspace: W,
-                                                 code: Gen[String] = TestCode.genGoodCode()): W = {
+  def persist[W <: WorkspaceState.IsSourceAware](workspace: W, code: Gen[String] = TestCode.genGoodCode()): W = {
     TestFile.createDirectories(workspace.workspaceURI)
     persistAll(
       sourceCode = workspace.sourceCode,

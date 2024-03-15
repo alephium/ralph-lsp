@@ -17,13 +17,15 @@ class StdInterfaceSpec extends AnyWordSpec with Matchers {
 
   "stdInterfaces" should {
     val stdInterfaces =
-      StdInterface.stdInterfaces(
-        dependencyPath = Paths.get("my_workspace"),
-        errorIndex = SourceIndexExtra.zero(TestFile.genFolderURI().sample.value)
-      ).value
+      StdInterface
+        .stdInterfaces(
+          dependencyPath = Paths.get("my_workspace"),
+          errorIndex = SourceIndexExtra.zero(TestFile.genFolderURI().sample.value)
+        )
+        .value
 
     "be defined" in {
-      //Will fail if web3 wasn't download correctly
+      // Will fail if web3 wasn't download correctly
       stdInterfaces.nonEmpty shouldBe true
     }
 

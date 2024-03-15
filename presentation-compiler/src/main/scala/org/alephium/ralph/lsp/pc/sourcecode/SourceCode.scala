@@ -20,7 +20,9 @@ import scala.collection.immutable.ArraySeq
 private[pc] object SourceCode {
 
   /** Fetch all source files on disk */
-  def initialise(sourceDirectory: URI)(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.OnDisk]] =
+  def initialise(
+      sourceDirectory: URI
+  )(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.OnDisk]] =
     file
       .list(sourceDirectory)
       .map(_.map(SourceCodeState.OnDisk).to(ArraySeq))
@@ -36,8 +38,9 @@ private[pc] object SourceCode {
    * @param sourceCode      Collection to add missing source files
    * @return Source files that are in-sync with files on disk.
    */
-  def synchronise(sourceDirectory: URI,
-                  sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState]] =
+  def synchronise(sourceDirectory: URI, sourceCode: ArraySeq[SourceCodeState])(
+      implicit file: FileAccess
+  ): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState]] =
     initialise(sourceDirectory) map {
       onDiskFiles =>
         // clear code that is not within the source directory
@@ -61,8 +64,7 @@ private[pc] object SourceCode {
    * @return New source code state
    */
   @tailrec
-  def parse(sourceState: SourceCodeState)(implicit file: FileAccess,
-                                          compiler: CompilerAccess): SourceCodeState =
+  def parse(sourceState: SourceCodeState)(implicit file: FileAccess, compiler: CompilerAccess): SourceCodeState =
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
         compiler.parseContracts(fileURI, code) match {
@@ -77,7 +79,7 @@ private[pc] object SourceCode {
             SourceCodeState.Parsed(
               fileURI = fileURI,
               code = code,
-              ast = parsedCode,
+              ast = parsedCode
             )
         }
 
@@ -126,9 +128,9 @@ private[pc] object SourceCode {
    * @param sourceCode  Existing source-code
    * @return New source code with applied change.
    */
-  def putOrRemove(fileURI: URI,
-                  updatedCode: Option[String],
-                  sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess): ArraySeq[SourceCodeState] =
+  def putOrRemove(fileURI: URI, updatedCode: Option[String], sourceCode: ArraySeq[SourceCodeState])(
+      implicit file: FileAccess
+  ): ArraySeq[SourceCodeState] =
     updatedCode match {
       case Some(newCode) =>
         // new source code, store it as un-compiled.
@@ -165,7 +167,6 @@ private[pc] object SourceCode {
         }
     }
 
-
   /**
    * Find the parsed state ([[SourceCodeState.Parsed]]) for the given file URI.
    *
@@ -175,7 +176,8 @@ private[pc] object SourceCode {
    *         - Left: An error, if the source-code is not in a parsed state.
    */
   def findParsed(fileURI: URI,
-                 sourceCode: ArraySeq[SourceCodeState]): Either[CompilerMessage.Error, SourceCodeState.Parsed] =
+                 sourceCode: ArraySeq[SourceCodeState]
+                ): Either[CompilerMessage.Error, SourceCodeState.Parsed] =
     sourceCode.find(_.fileURI == fileURI) match {
       case Some(source) =>
         source match {
@@ -211,10 +213,12 @@ private[pc] object SourceCode {
    * @param compiler          Target compiler
    * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
    */
-  def compile(sourceCode: ArraySeq[SourceCodeState.Parsed],
-              dependency: Option[ArraySeq[SourceCodeState.Compiled]],
-              compilerOptions: CompilerOptions,
-              workspaceErrorURI: URI)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
+  def compile(
+      sourceCode: ArraySeq[SourceCodeState.Parsed],
+      dependency: Option[ArraySeq[SourceCodeState.Compiled]],
+      compilerOptions: CompilerOptions,
+      workspaceErrorURI: URI
+  )(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
     Importer.typeCheck(
       sourceCode = sourceCode,
       dependency = dependency
@@ -253,10 +257,12 @@ private[pc] object SourceCode {
    * @param compiler          Target compiler
    * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
    */
-  private def compileSource(sourceCode: ArraySeq[SourceCodeState.Parsed],
-                            importedCode: ArraySeq[SourceCodeState.Parsed],
-                            compilerOptions: CompilerOptions,
-                            workspaceErrorURI: URI)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] = {
+  private def compileSource(
+      sourceCode: ArraySeq[SourceCodeState.Parsed],
+      importedCode: ArraySeq[SourceCodeState.Parsed],
+      compilerOptions: CompilerOptions,
+      workspaceErrorURI: URI
+  )(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] = {
     val allCode =
       sourceCode ++ importedCode
 
@@ -265,9 +271,7 @@ private[pc] object SourceCode {
       allCode
         .flatMap {
           state =>
-            state
-              .ast
-              .statements
+            state.ast.statements
               .collect {
                 // collect only the source-code ignoring all import statements.
                 case source: Tree.Source =>

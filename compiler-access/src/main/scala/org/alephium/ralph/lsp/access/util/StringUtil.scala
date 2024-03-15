@@ -11,9 +11,7 @@ object StringUtil {
    * @param character The position of the character within the line
    * @return The index of the character in the source code
    */
-  def computeIndex(code: String,
-                   line: Int,
-                   character: Int): Int = {
+  def computeIndex(code: String, line: Int, character: Int): Int = {
 
     val separatorLength = lineSeparatorLength(code)
     val lines = codeLines(code)
@@ -33,6 +31,5 @@ object StringUtil {
     code.split("\r\n|\r|\n")
 
   def lineSeparatorLength(code: String): Int =
-    if(code.contains("\r\n")) 2 else 1
+    if (code.contains("\r\n")) 2 else 1
 }
-

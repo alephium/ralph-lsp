@@ -132,9 +132,9 @@ object TestCodeProvider {
    * @param code      The code to run completion on.
    * @return Suggestions and the created workspace.
    */
-  private def apply[A](line: Int,
-                       character: Int,
-                       code: Gen[String])(implicit provider: CodeProvider[A]): (Either[CompilerMessage.Error, ArraySeq[A]], WorkspaceState.IsParsedAndCompiled) = {
+  private def apply[A](line: Int, character: Int, code: Gen[String])(
+      implicit provider: CodeProvider[A]
+  ): (Either[CompilerMessage.Error, ArraySeq[A]], WorkspaceState.IsParsedAndCompiled) = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess = FileAccess.disk
     implicit val compiler: CompilerAccess = CompilerAccess.ralphc
@@ -155,10 +155,13 @@ object TestCodeProvider {
 
     // write the source code
     val (sourceCode, _) =
-      TestSourceCode.genOnDiskAndPersist(
-        fileURI = sourceFile,
-        code = code.sample.get
-      ).sample.get
+      TestSourceCode
+        .genOnDiskAndPersist(
+          fileURI = sourceFile,
+          code = code.sample.get
+        )
+        .sample
+        .get
 
     // create a workspace for the build file
     val workspace =

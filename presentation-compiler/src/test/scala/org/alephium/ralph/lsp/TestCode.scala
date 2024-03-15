@@ -50,7 +50,9 @@ object TestCode {
            |""".stripMargin
     }
 
-  def genExtendedContract(name: Gen[String] = genCamelCase, extensionName: Gen[String] = genCamelCase): Gen[(String,String, String)] =
+  def genExtendedContract(name: Gen[String] = genCamelCase,
+                          extensionName: Gen[String] = genCamelCase
+                         ): Gen[(String, String, String)] =
     for {
       name <- name
       extensionName <- extensionName
@@ -73,7 +75,7 @@ object TestCode {
       genContract(genCamelCase),
       genAbstract(genCamelCase),
       genInterface(genCamelCase),
-      genScript(genCamelCase),
+      genScript(genCamelCase)
     )
 
   def genBadCode(): Gen[String] =
@@ -81,7 +83,7 @@ object TestCode {
       genContract(genCamelCase.map(_.toLowerCase)),
       genAbstract(genCamelCase.map(_.toLowerCase)),
       genInterface(genCamelCase.map(_.toLowerCase)),
-      genScript(genCamelCase.map(_.toLowerCase)),
+      genScript(genCamelCase.map(_.toLowerCase))
     )
 
   def genGoodOrBad(): Gen[String] =
@@ -94,7 +96,6 @@ object TestCode {
     for {
       goodAndBad <- Gen.listOf(genGoodOrBad())
       bad <- genBadCode()
-    } yield
-      Random.shuffle(goodAndBad :+ bad)
+    } yield Random.shuffle(goodAndBad :+ bad)
 
 }

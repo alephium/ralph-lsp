@@ -71,7 +71,6 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
         forAll(parsed, TestRalphc.genCompilerOptions()) {
           case (parsed, compilerOptions) =>
-
             // compile the source-code
             val compiledResult =
               SourceCode
@@ -84,8 +83,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
             // compilation successful
             val compiled =
-              compiledResult
-                .value
+              compiledResult.value
                 .asInstanceOf[ArraySeq[SourceCodeState.Compiled]]
 
             // it should contain only one result
@@ -110,13 +108,12 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
       "source-code in state OnDisk, UnCompiled and ErrorAccess" in {
         forAll(TestSourceCode.genOnDiskAndPersist(), TestError.genError()) {
           case ((onDisk, goodCode), error) =>
-
             /**
              * Generate an [[SourceCodeState.UnCompiled]] and [[SourceCodeState.ErrorAccess]] for this onDisk state.
              *
              * The end result should be the same, the code should still successfully parse for all these states
              * because the code on-disk is "Good Code".
-             * */
+             */
 
             val unCompiled =
               SourceCodeState.UnCompiled(

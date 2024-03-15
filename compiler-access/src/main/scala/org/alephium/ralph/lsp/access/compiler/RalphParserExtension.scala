@@ -131,19 +131,19 @@ object RalphParserExtension {
         (packagePath, filePath)
     }
 
-
   /**
-   *
    * Parse a ralphc contract.
    *
    * This function is a clone of [[org.alephium.ralph.StatefulParser.multiContract]]
    * but without the requirement that it be the start of the file, so imports are allowed.
-   * */
+   */
   private def sourceStatement[Unknown: P](fileURI: URI): P[Tree.Source] = {
     val ralphParser =
       new StatefulParser(Some(fileURI))
 
-    P(Index ~~ (ralphParser.rawTxScript | ralphParser.rawContract | ralphParser.rawInterface | ralphParser.rawStruct) ~~ Index) map {
+    P(
+      Index ~~ (ralphParser.rawTxScript | ralphParser.rawContract | ralphParser.rawInterface | ralphParser.rawStruct) ~~ Index
+    ) map {
       case (fromIndex, code, toIndex) =>
         val ast =
           code match {
@@ -183,7 +183,7 @@ object RalphParserExtension {
    * {{{
    *   import "package_name/file"
    * }}}
-   * */
+   */
   private def stringLiteral[Unknown: P](fileURI: URI): P[Tree.StringLiteral] =
     P(Index ~~ "\"" ~~ Index ~~ CharsWhile(_ != '"').!.? ~~ Index ~~ "\"" ~~ Index) map { // TODO: See if negative look ahead with AnyChar.rep would work instead of `CharsWhile`
       case (fromIndex, nameFromIndex, string, nameToIndex, toIndex) =>

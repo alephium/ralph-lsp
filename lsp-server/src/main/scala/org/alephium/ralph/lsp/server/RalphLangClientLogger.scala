@@ -10,8 +10,7 @@ import org.alephium.ralph.lsp.server.state.Trace
  * @param client The remote client proxy.
  * @param trace  Current trace setting configured by the LSP client.
  */
-case class RalphLangClientLogger(client: RalphLangClient,
-                                 trace: Trace) extends ClientLogger {
+case class RalphLangClientLogger(client: RalphLangClient, trace: Trace) extends ClientLogger {
 
   override def info(message: String)(implicit logger: Logger): Unit = {
     logger.info(message)

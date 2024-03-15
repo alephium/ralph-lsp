@@ -27,8 +27,7 @@ trait FileAccess {
    *
    * @param fileURI source-file location
    */
-  def exists(fileURI: URI,
-             index: SourceIndex): Either[CompilerMessage.AnyError, Boolean]
+  def exists(fileURI: URI, index: SourceIndex): Either[CompilerMessage.AnyError, Boolean]
 
   /**
    * Fetch all workspace source file locations.
@@ -45,8 +44,6 @@ trait FileAccess {
   def read(fileURI: URI): Either[CompilerMessage.AnyError, String]
 
   /** Write string to the given file URI. */
-  def write(fileURI: URI,
-            string: String,
-            index: SourceIndex): Either[ThrowableError, Path]
+  def write(fileURI: URI, string: String, index: SourceIndex): Either[ThrowableError, Path]
 
 }

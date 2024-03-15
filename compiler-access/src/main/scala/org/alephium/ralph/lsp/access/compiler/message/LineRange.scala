@@ -8,5 +8,4 @@ object LineRange {
     )
 }
 
-case class LineRange(from: LinePosition,
-                     to: LinePosition)
+case class LineRange(from: LinePosition, to: LinePosition)

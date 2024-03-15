@@ -39,7 +39,8 @@ trait CompilerAccess {
   def compileContracts(contracts: Seq[Ast.ContractWithState],
                        structs: Seq[Ast.Struct],
                        options: CompilerOptions,
-                       workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]
+                       workspaceErrorURI: URI
+                      ): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]
 
   /**
    * Compile the entire workspace from disk and prepare for deployment.
@@ -47,6 +48,7 @@ trait CompilerAccess {
    * Prerequisite: All files are flushed to disk
    */
   def compileForDeployment(workspaceURI: URI,
-                           config: Config): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]
+                           config: Config
+                          ): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]
 
 }

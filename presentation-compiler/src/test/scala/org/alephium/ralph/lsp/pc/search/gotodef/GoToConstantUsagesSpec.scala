@@ -46,7 +46,6 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
              |""".stripMargin
         )
 
-
       "constant and contract have the same ID" in {
         // the constant name is also "MyConstant"
         doTest(contractName = "MyConstant")

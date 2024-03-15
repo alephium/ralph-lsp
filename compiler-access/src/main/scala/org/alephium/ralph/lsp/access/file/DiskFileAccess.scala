@@ -22,8 +22,7 @@ import scala.util.{Failure, Success, Using}
 private object DiskFileAccess extends FileAccess {
 
   /** @inheritdoc */
-  override def exists(fileURI: URI,
-                      index: SourceIndex): Either[ThrowableError, Boolean] =
+  override def exists(fileURI: URI, index: SourceIndex): Either[ThrowableError, Boolean] =
     try
       Right(Files.exists(Paths.get(fileURI)))
     catch {
@@ -46,7 +45,8 @@ private object DiskFileAccess extends FileAccess {
           .getSourceFiles(
             path = Paths.get(workspaceURI),
             ext = s".${CompilerAccess.RALPH_FILE_EXTENSION}"
-          ).map(_.toUri)
+          )
+          .map(_.toUri)
 
       Right(uris)
     } catch TryUtil.catchAllThrows(workspaceURI)
@@ -61,11 +61,9 @@ private object DiskFileAccess extends FileAccess {
         Right(code)
     }
 
-  override def write(fileURI: URI,
-                     string: String,
-                     index: SourceIndex): Either[ThrowableError, Path] =
+  override def write(fileURI: URI, string: String, index: SourceIndex): Either[ThrowableError, Path] =
     try {
-      //convert URI to Path
+      // convert URI to Path
       val filePath = Paths.get(fileURI)
       // ensure directories exists
       Files.createDirectories(filePath.getParent)

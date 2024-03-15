@@ -15,7 +15,7 @@ class URIUtilSpec extends AnyWordSpec with Matchers {
           val uri = "file:///c%3A/Users/user/test.ral"
           val expected = "file:///c:/Users/user/test.ral"
 
-          URIUtil.uri(uri) shouldBe new URI(expected )
+          URIUtil.uri(uri) shouldBe new URI(expected)
         }
       }
     }

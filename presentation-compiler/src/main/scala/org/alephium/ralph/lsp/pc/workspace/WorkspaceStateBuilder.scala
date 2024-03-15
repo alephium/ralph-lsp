@@ -9,7 +9,8 @@ private object WorkspaceStateBuilder {
 
   /** @see [[org.alephium.ralph.lsp.pc.sourcecode.SourceCodeStateBuilder.toSourceCodeState]] */
   def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                       compilationResult: Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]]): WorkspaceState.IsCompiled =
+                       compilationResult: Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]]
+                      ): WorkspaceState.IsCompiled =
     compilationResult match {
       case Left(workspaceError) =>
         // File or sourcePosition position information is not available for this error,
@@ -17,7 +18,7 @@ private object WorkspaceStateBuilder {
         WorkspaceState.Errored(
           sourceCode = currentState.sourceCode, // SourceCode remains the same as existing state
           workspaceErrors = ArraySeq(workspaceError), // errors to report
-          parsed = currentState,
+          parsed = currentState
         )
 
       case Right(compiledSource) =>
@@ -38,7 +39,7 @@ private object WorkspaceStateBuilder {
           WorkspaceState.Errored(
             sourceCode = compiledSource, // SourceCode remains the same as existing state
             workspaceErrors = ArraySeq.empty, // errors to report
-            parsed = currentState,
+            parsed = currentState
           )
         else
           WorkspaceState.Compiled(

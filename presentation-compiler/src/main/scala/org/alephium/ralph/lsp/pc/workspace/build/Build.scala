@@ -27,8 +27,7 @@ object Build {
     toBuildPath(Paths.get(workspaceURI)).toUri
 
   /** Parse a build that is in-memory */
-  def parse(buildURI: URI,
-            json: String): BuildState.IsParsed =
+  def parse(buildURI: URI, json: String): BuildState.IsParsed =
     RalphcConfig.parse(
       buildURI = buildURI,
       json = json
@@ -71,9 +70,8 @@ object Build {
 
   /** Compile a parsed build */
   def compile(parsed: BuildState.IsParsed,
-              currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
-                                                           compiler: CompilerAccess,
-                                                           logger: ClientLogger): BuildState.IsCompiled =
+              currentBuild: Option[BuildState.IsCompiled]
+             )(implicit file: FileAccess, compiler: CompilerAccess, logger: ClientLogger): BuildState.IsCompiled =
     parsed match {
       case errored: BuildErrored =>
         // there are parsing errors
@@ -106,10 +104,10 @@ object Build {
     }
 
   /** Parse and compile from disk */
-  def parseAndCompile(buildURI: URI,
-                      currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
-                                                                   compiler: CompilerAccess,
-                                                                   logger: ClientLogger): BuildState.IsCompiled =
+  def parseAndCompile(
+      buildURI: URI,
+      currentBuild: Option[BuildState.IsCompiled]
+  )(implicit file: FileAccess, compiler: CompilerAccess, logger: ClientLogger): BuildState.IsCompiled =
     file.exists(buildURI, SourceIndexExtra.zero(buildURI)) match {
       case Left(error) =>
         BuildErrored(
@@ -137,11 +135,11 @@ object Build {
     }
 
   /** Parse and compile from memory */
-  def parseAndCompile(buildURI: URI,
-                      code: String,
-                      currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
-                                                                   compiler: CompilerAccess,
-                                                                   logger: ClientLogger): BuildState.IsCompiled = {
+  def parseAndCompile(
+      buildURI: URI,
+      code: String,
+      currentBuild: Option[BuildState.IsCompiled]
+  )(implicit file: FileAccess, compiler: CompilerAccess, logger: ClientLogger): BuildState.IsCompiled = {
     // Code is already read. Parse and validate it.
     val parsed =
       parse(
@@ -155,11 +153,11 @@ object Build {
     )
   }
 
-  def parseAndCompile(buildURI: URI,
-                      code: Option[String],
-                      currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
-                                                                   compiler: CompilerAccess,
-                                                                   logger: ClientLogger): BuildState.IsCompiled =
+  def parseAndCompile(
+      buildURI: URI,
+      code: Option[String],
+      currentBuild: Option[BuildState.IsCompiled]
+  )(implicit file: FileAccess, compiler: CompilerAccess, logger: ClientLogger): BuildState.IsCompiled =
     code match {
       case Some(code) =>
         parseAndCompile(
@@ -178,12 +176,12 @@ object Build {
 
   /**
    * Parse and re-compile the build file.
-   * */
-  def parseAndCompile(buildURI: URI,
-                      code: Option[String],
-                      currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess,
-                                                              compiler: CompilerAccess,
-                                                              logger: ClientLogger): Option[BuildState.IsCompiled] =
+   */
+  def parseAndCompile(
+      buildURI: URI,
+      code: Option[String],
+      currentBuild: BuildState.BuildCompiled
+  )(implicit file: FileAccess, compiler: CompilerAccess, logger: ClientLogger): Option[BuildState.IsCompiled] =
     BuildValidator.validateBuildURI(
       buildURI = buildURI,
       workspaceURI = currentBuild.workspaceURI
@@ -204,7 +202,7 @@ object Build {
         Build.parseAndCompile(
           buildURI = buildURI,
           code = code,
-          currentBuild = Some(currentBuild),
+          currentBuild = Some(currentBuild)
         ) match {
           case newBuild: BuildState.BuildCompiled =>
             // if the new build-file is the same as current build-file, return it as
@@ -253,21 +251,23 @@ object Build {
    * Indexes of contractPath, artifactPath and dependencyPathIndex from the ralph.json
    *
    * TODO: This will function will be removed when an AST is available for the JSON.
-   * */
+   */
   def getPathIndexes(parsed: BuildParsed): (SourceIndex, SourceIndex, SourceIndex) = {
     val contractPath = parsed.config.contractPath
     val artifactPath = parsed.config.artifactPath
 
     val contractPathIndex =
       SourceIndexExtra.ensurePositive(
-        index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+        index =
+          parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
         width = contractPath.length,
         fileURI = parsed.buildURI
       )
 
     val artifactPathIndex =
       SourceIndexExtra.ensurePositive(
-        index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
+        index =
+          parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
         width = artifactPath.length,
         fileURI = parsed.buildURI
       )
@@ -285,7 +285,8 @@ object Build {
       parsed.config.dependencyPath getOrElse "}"
 
     SourceIndexExtra.ensurePositive(
-      index = parsed.code.lastIndexOf(errorIndexToken), // TODO: lastIndexOf is temporary solution until an AST is available.
+      index =
+        parsed.code.lastIndexOf(errorIndexToken), // TODO: lastIndexOf is temporary solution until an AST is available.
       width = errorIndexToken.length,
       fileURI = parsed.buildURI
     )

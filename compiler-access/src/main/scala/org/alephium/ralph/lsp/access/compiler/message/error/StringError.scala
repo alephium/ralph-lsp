@@ -6,15 +6,14 @@ import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIn
 import java.net.URI
 
 object StringError {
-  @inline def apply(message: String,
-                    fileURI: URI): StringError =
+  @inline def apply(message: String, fileURI: URI): StringError =
     StringError(
       message = message,
       index = SourceIndexExtra.zero(fileURI)
     )
 }
+
 /**
  * String error reported by `ralphc` not containing source-location information.
  */
-case class StringError(message: String,
-                       index: SourceIndex) extends CompilerMessage.Error
+case class StringError(message: String, index: SourceIndex) extends CompilerMessage.Error

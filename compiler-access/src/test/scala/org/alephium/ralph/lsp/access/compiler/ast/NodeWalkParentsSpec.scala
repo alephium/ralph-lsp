@@ -36,16 +36,12 @@ class NodeWalkParentsSpec extends AnyWordSpec with Matchers {
   "return non-empty" when {
     "1-3-2-2-1 and 1-3-2-2-2 (middle nodes)" in {
       val midNode1 =
-        TestNode
-          .root
-          .walkDown
+        TestNode.root.walkDown
           .find(_.data == "1-3-2-2-1")
           .value
 
       val midNode2 =
-        TestNode
-          .root
-          .walkDown
+        TestNode.root.walkDown
           .find(_.data == "1-3-2-2-2")
           .value
 
@@ -66,9 +62,7 @@ class NodeWalkParentsSpec extends AnyWordSpec with Matchers {
 
     "1-4-2 (bottom last node)" in {
       val lastNode =
-        TestNode
-          .root
-          .walkDown
+        TestNode.root.walkDown
           .find(_.data == "1-4-2")
           .value
 

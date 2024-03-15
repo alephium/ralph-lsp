@@ -31,8 +31,8 @@ object RalphLangServer {
   /** Start server with pre-configured client */
   def apply(client: RalphLangClient,
             listener: JFuture[Void],
-            clientAllowsWatchedFilesDynamicRegistration: Boolean = false)(implicit compiler: CompilerAccess,
-                                                                          file: FileAccess): RalphLangServer = {
+            clientAllowsWatchedFilesDynamicRegistration: Boolean = false
+           )(implicit compiler: CompilerAccess, file: FileAccess): RalphLangServer = {
     val initialState =
       ServerState(
         client = Some(client),
@@ -46,8 +46,7 @@ object RalphLangServer {
     new RalphLangServer(initialState)
   }
 
-  def apply()(implicit compiler: CompilerAccess,
-              file: FileAccess): RalphLangServer =
+  def apply()(implicit compiler: CompilerAccess, file: FileAccess): RalphLangServer =
     new RalphLangServer(
       ServerState(
         client = None,
@@ -63,7 +62,7 @@ object RalphLangServer {
     Option(params.getRootUri)
       .orElse(Option(params.getRootPath))
       .map(URI.create)
-      //Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
+      // Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
       .orElse {
         Option(System.getProperty("user.dir"))
           .map(Paths.get(_))
@@ -108,8 +107,13 @@ object RalphLangServer {
  * This class is the only one with mutable state in this repo.
  * All mutable state management occurs here.
  */
-class RalphLangServer private(@volatile private var state: ServerState)(implicit compiler: CompilerAccess,
-                                                                        file: FileAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictImplicitLogging { thisServer =>
+class RalphLangServer private (@volatile private var state: ServerState)(
+    implicit compiler: CompilerAccess,
+    file: FileAccess
+) extends LanguageServer
+    with TextDocumentService
+    with WorkspaceService
+    with StrictImplicitLogging { thisServer =>
 
   def getState(): ServerState =
     thisServer.state
@@ -127,8 +131,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    *                 Client must be known before a connection is initialised.
    * @param listener LSP connection listener function.
    */
-  def setInitialState(client: LanguageClient,
-                      listener: () => JFuture[Void]): Unit =
+  def setInitialState(client: LanguageClient, listener: () => JFuture[Void]): Unit =
     runSync {
       require(state.client.isEmpty, "Client is already set")
       require(state.listener.isEmpty, "Listener is already set")
@@ -296,7 +299,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   /** @inheritdoc */
-  override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
+  override def completion(
+      params: CompletionParams
+  ): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
     runAsync {
       cancelChecker =>
         val fileURI = uri(params.getTextDocument.getUri)
@@ -347,7 +352,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     }
 
   /** @inheritdoc */
-  override def definition(params: DefinitionParams): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =
+  override def definition(
+      params: DefinitionParams
+  ): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =
     runAsync {
       cancelChecker =>
         val fileURI = uri(params.getTextDocument.getUri)
@@ -410,8 +417,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @param fileURI File that changed
    * @param code    Source-code of the changed file.
    */
-  private def didChangeAndPublish(fileURI: URI,
-                                  code: Option[String]): Unit =
+  private def didChangeAndPublish(fileURI: URI, code: Option[String]): Unit =
     runSync {
       val diagnostics =
         didChangeAndSet(
@@ -429,8 +435,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @param code    Source-code of the changed file.
    * @return Diagnostics of the new workspace.
    */
-  private def didChangeAndSet(fileURI: URI,
-                              code: Option[String]): Iterable[PublishDiagnosticsParams] =
+  private def didChangeAndSet(fileURI: URI, code: Option[String]): Iterable[PublishDiagnosticsParams] =
     runSync {
       val currentPCState =
         getPCState()
@@ -492,7 +497,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @return Diagnostics for current workspace.
    */
   private def setPCStateAndBuildDiagnostics(currentPCState: PCState,
-                                            newPCState: Either[ErrorUnknownFileType, Option[PCState]]): Iterable[PublishDiagnosticsParams] =
+                                            newPCState: Either[ErrorUnknownFileType, Option[PCState]]
+                                           ): Iterable[PublishDiagnosticsParams] =
     runSync {
       newPCState match {
         case Right(Some(newPCState)) =>
@@ -522,7 +528,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @return Diagnostics for current workspace.
    */
   private def setPCStateAndBuildDiagnostics(currentPCState: PCState,
-                                            newPCState: PCState): Iterable[PublishDiagnosticsParams] =
+                                            newPCState: PCState
+                                           ): Iterable[PublishDiagnosticsParams] =
     runSync {
       setPCState(newPCState)
 
@@ -555,7 +562,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   /**
    * Run within a synchronised block and ensure all unexpected abrupt internal errors are logged.
-   * */
+   */
   private def runSync[A](f: => A): A =
     try
       thisServer.synchronized {

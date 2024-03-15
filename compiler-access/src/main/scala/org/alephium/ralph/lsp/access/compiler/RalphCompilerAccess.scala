@@ -37,7 +37,8 @@ private object RalphCompilerAccess extends CompilerAccess {
   def compileContracts(contracts: Seq[Ast.ContractWithState],
                        structs: Seq[Ast.Struct],
                        options: CompilerOptions,
-                       workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
+                       workspaceErrorURI: URI
+                      ): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
       val multiContract =
         Ast.MultiContract(contracts, structs, None)
@@ -57,8 +58,10 @@ private object RalphCompilerAccess extends CompilerAccess {
     } catch TryUtil.catchAllThrows(workspaceErrorURI)
 
   /** @inheritdoc */
-  override def compileForDeployment(workspaceURI: URI,
-                                    config: Config): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
+  override def compileForDeployment(
+      workspaceURI: URI,
+      config: Config
+  ): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
       val ralphc = RalphC(config)
       ralphc.compileProject() match {
@@ -71,7 +74,8 @@ private object RalphCompilerAccess extends CompilerAccess {
     } catch TryUtil.catchAllThrows(workspaceURI)
 
   private def buildSuccessfulCompilation(result: CompileProjectResult,
-                                         metaInfos: mutable.Map[String, MetaInfo]): (Array[CompiledContract], Array[CompiledScript]) = {
+                                         metaInfos: mutable.Map[String, MetaInfo]
+                                        ): (Array[CompiledContract], Array[CompiledScript]) = {
     val scripts: Array[CompiledScript] = ???
     //      result.scripts map {
     //        script =>
@@ -93,9 +97,7 @@ private object RalphCompilerAccess extends CompilerAccess {
 
   /** Given the MetaInfo, fetch the file URI */
   private def getFileURI(metaInfo: MetaInfo): URI =
-    metaInfo
-      .artifactPath
-      .getParent
+    metaInfo.artifactPath.getParent
       .resolve(s"${metaInfo.name}.ral")
       .toUri
 

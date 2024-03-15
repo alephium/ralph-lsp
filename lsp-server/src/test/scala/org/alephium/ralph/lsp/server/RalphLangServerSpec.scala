@@ -46,13 +46,12 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
         ServerState(
           client = Some(client),
           listener = Some(listener),
-          pcState =
-            Some(
-              PCState(
-                workspace = WorkspaceState.Created(workspaceURI),
-                buildErrors = None
-              )
-            ),
+          pcState = Some(
+            PCState(
+              workspace = WorkspaceState.Created(workspaceURI),
+              buildErrors = None
+            )
+          ),
           clientAllowsWatchedFilesDynamicRegistration = false,
           trace = Trace.Off,
           shutdownReceived = false
@@ -103,19 +102,25 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
       server.shutdown().asScala.futureValue shouldBe true
 
       // shutdown error message is logged to the client once
-      (client.error(_: String, _: Throwable))
+      (client
+        .error(_: String, _: Throwable))
         .expects(ResponseError.ShutdownRequested.getMessage, *)
         .once()
 
-      //Testing messages as the two java classes aren't consider equal
-      server.shutdown().asScala.failed.futureValue.getMessage shouldBe ResponseError.ShutdownRequested.toResponseErrorException.getMessage
+      // Testing messages as the two java classes aren't consider equal
+      server
+        .shutdown()
+        .asScala
+        .failed
+        .futureValue
+        .getMessage shouldBe ResponseError.ShutdownRequested.toResponseErrorException.getMessage
     }
   }
 
   "exit" should {
     implicit val compiler: CompilerAccess = CompilerAccess.ralphc
     implicit val file: FileAccess = FileAccess.disk
-    //We use a Promise to have a non-completed future
+    // We use a Promise to have a non-completed future
     val listener = Promise[Void]().future.asJava.asInstanceOf[JFuture[Void]]
 
     "cancel listener and exit successfully if shutdown was triggered" in {

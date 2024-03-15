@@ -8,4 +8,3 @@ object MessageMethods {
   /* Unique ids used to register/unregister capabilities */
   val WORKSPACE_WATCHED_FILES_ID: String = UUID.randomUUID().toString()
 }
-

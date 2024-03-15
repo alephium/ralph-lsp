@@ -32,10 +32,12 @@ object TestDependency {
 
     // build the std dependency
     val dependencyBuild =
-      Dependency.compile(
-        parsed = parsed,
-        currentBuild = None
-      ).asInstanceOf[BuildState.BuildCompiled]
+      Dependency
+        .compile(
+          parsed = parsed,
+          currentBuild = None
+        )
+        .asInstanceOf[BuildState.BuildCompiled]
 
     // dependency should exists in the build
     dependencyBuild.dependency shouldBe defined

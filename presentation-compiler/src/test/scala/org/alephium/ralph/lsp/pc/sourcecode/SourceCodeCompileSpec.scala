@@ -23,12 +23,14 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
           CompilerAccess.ralphc
 
         val result =
-          SourceCode.compile(
-            sourceCode = ArraySeq.empty,
-            dependency = None,
-            compilerOptions = CompilerOptions.Default,
-            workspaceErrorURI = TestFile.genFolderURI().sample.value
-          ).value
+          SourceCode
+            .compile(
+              sourceCode = ArraySeq.empty,
+              dependency = None,
+              compilerOptions = CompilerOptions.Default,
+              workspaceErrorURI = TestFile.genFolderURI().sample.value
+            )
+            .value
 
         result shouldBe empty
       }
@@ -41,12 +43,14 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
           TestDependency.buildStd()
 
         val result =
-          SourceCode.compile(
-            sourceCode = ArraySeq.empty,
-            dependency = dependencyBuild.dependency.map(_.sourceCode),
-            compilerOptions = CompilerOptions.Default,
-            workspaceErrorURI = TestFile.genFolderURI().sample.value
-          ).value
+          SourceCode
+            .compile(
+              sourceCode = ArraySeq.empty,
+              dependency = dependencyBuild.dependency.map(_.sourceCode),
+              compilerOptions = CompilerOptions.Default,
+              workspaceErrorURI = TestFile.genFolderURI().sample.value
+            )
+            .value
 
         result shouldBe empty
       }

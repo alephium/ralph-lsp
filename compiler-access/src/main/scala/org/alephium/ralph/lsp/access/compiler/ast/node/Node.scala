@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.access.compiler.ast.node
 
 object Node {
+
   /** Create a [[Node]] with no children */
   @inline def apply[A](data: A): Node[A] =
     new Node(data, List.empty)
@@ -24,8 +25,7 @@ object Node {
  * @param children This node's child nodes.
  * @tparam A Data type.
  */
-case class Node[A] private(data: A,
-                           children: Seq[Node[A]]) { self =>
+case class Node[A] private (data: A, children: Seq[Node[A]]) { self =>
   private var _parent: Option[Node[A]] =
     None
 
@@ -33,8 +33,7 @@ case class Node[A] private(data: A,
     _parent
 
   def headOption: Option[Node[A]] =
-    parent
-      .iterator
+    parent.iterator
       .flatMap(_.walkParents)
       .foldLeft(Option.empty[Node[A]]) {
         case (_, next) =>
@@ -46,8 +45,7 @@ case class Node[A] private(data: A,
     new Iterator[Node[A]] {
       private val iter =
         Iterator(self) ++
-          children
-            .iterator
+          children.iterator
             .flatMap(_.walkDown)
 
       override def hasNext: Boolean =
@@ -60,9 +58,7 @@ case class Node[A] private(data: A,
   def walkParents: Iterator[Node[A]] =
     new Iterator[Node[A]] {
       private val iter =
-        self
-          .parent
-          .iterator
+        self.parent.iterator
           .flatMap {
             parent =>
               Iterator(parent) ++
@@ -80,10 +76,9 @@ case class Node[A] private(data: A,
    * Find the last node for which this predicate is true.
    *
    * This function is useful for find the closest node that contains a source-index.
-   * */
+   */
   def findLast(f: A => Boolean): Option[Node[A]] =
-    self
-      .walkDown
+    self.walkDown
       .foldLeft(Option.empty[Node[A]]) {
         case (closest, nextNode) =>
           if (f(nextNode.data))

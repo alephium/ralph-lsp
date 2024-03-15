@@ -5,7 +5,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState , TestSourceCode}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
 import org.alephium.ralph.lsp.pc.state.PCState
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
@@ -22,7 +22,11 @@ import scala.util.Random
 /**
  * Test cases for [[Workspace.deleteOrCreate]] function.
  */
-class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
+class WorkspaceDeleteOrCreateSpec
+    extends AnyWordSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks
+    with MockFactory {
 
   implicit val clientLogger: ClientLogger =
     TestClientLogger
@@ -64,16 +68,15 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
             val expectedPCState =
               PCState(
                 workspace = workspace,
-                buildErrors =
-                  Some(
-                    BuildState.BuildErrored(
-                      buildURI = build.buildURI,
-                      code = None, // because workspace is in created state
-                      errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
-                      dependency = None, // because workspace is in created state
-                      activateWorkspace = None
-                    )
+                buildErrors = Some(
+                  BuildState.BuildErrored(
+                    buildURI = build.buildURI,
+                    code = None, // because workspace is in created state
+                    errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
+                    dependency = None, // because workspace is in created state
+                    activateWorkspace = None
                   )
+                )
               )
 
             actualPCState shouldBe expectedPCState
@@ -91,7 +94,6 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
 
         forAll(TestBuild.genCompiledWithSourceCodeInAndOut()) {
           case (build, sourceCodeIn, sourceCodeOut) =>
-
             /**
              * FAIL SCENARIO
              */
@@ -129,16 +131,16 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
             val expectedPCState =
               PCState(
                 workspace = workspace,
-                buildErrors =
-                  Some(
-                    BuildState.BuildErrored(
-                      buildURI = build.buildURI,
-                      code = None, // no code is stored because the build is deleted
-                      errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
-                      dependency = build.dependency, // dependency from previous build is carried
-                      activateWorkspace = Some(workspace) // the same workspace with inside-code and outside-code is stored.
-                    )
+                buildErrors = Some(
+                  BuildState.BuildErrored(
+                    buildURI = build.buildURI,
+                    code = None, // no code is stored because the build is deleted
+                    errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
+                    dependency = build.dependency, // dependency from previous build is carried
+                    activateWorkspace =
+                      Some(workspace) // the same workspace with inside-code and outside-code is stored.
                   )
+                )
               )
 
             actualPCState shouldBe expectedPCState
@@ -231,14 +233,14 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
     }
 
     "abstract contract is deleted then created" in {
-        implicit val file: FileAccess =
-          FileAccess.disk
+      implicit val file: FileAccess =
+        FileAccess.disk
 
-        implicit val compiler: CompilerAccess =
-          CompilerAccess.ralphc
+      implicit val compiler: CompilerAccess =
+        CompilerAccess.ralphc
 
-        forAll(TestBuild.genExtendedContract()) {
-          case (build, contract, extension, extensionCode, extensionName) =>
+      forAll(TestBuild.genExtendedContract()) {
+        case (build, contract, extension, extensionCode, extensionName) =>
           val allCode = ArraySeq(contract, extension)
 
           // Create an empty uncompiled workspace
@@ -257,8 +259,9 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
           // Add the all code to the workspace
           val compiledPCState =
             Workspace.deleteOrCreate(
-              events = allCode.to(ArraySeq).map { code =>
-                WorkspaceFileEvent.Created(code.fileURI)
+              events = allCode.to(ArraySeq).map {
+                code =>
+                  WorkspaceFileEvent.Created(code.fileURI)
               },
               pcState = initialPCState
             )
@@ -284,7 +287,7 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
 
           // The error is in the contract file, as the abstract contract is missing
           erroredWorkspace.sourceCode.size shouldBe 1
-          val sourceState  = erroredWorkspace.sourceCode.head.asInstanceOf[SourceCodeState.ErrorCompilation]
+          val sourceState = erroredWorkspace.sourceCode.head.asInstanceOf[SourceCodeState.ErrorCompilation]
           sourceState.fileURI shouldBe contract.fileURI
           val messages = sourceState.errors.map(_.message)
           messages.size shouldBe 1
@@ -296,7 +299,7 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
           val recompiledPCState =
             Workspace.deleteOrCreate(
               events = ArraySeq(
-                WorkspaceFileEvent.Created(extension.fileURI),
+                WorkspaceFileEvent.Created(extension.fileURI)
               ),
               pcState = erroredState
             )

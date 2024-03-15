@@ -27,8 +27,7 @@ class SourceCodeSynchroniseSpec extends AnyWordSpec with Matchers with MockFacto
           someCodeInside <- Gen.someOf(sourceCodeInside)
           // some or all outside source-code
           someCodeOutside <- Gen.someOf(sourceCodeOutside)
-        } yield
-          (workspace, sourceCodeInside, sourceCodeOutside, someCodeInside, someCodeOutside)
+        } yield (workspace, sourceCodeInside, sourceCodeOutside, someCodeInside, someCodeOutside)
 
       implicit val fileAccess: FileAccess =
         FileAccess.disk

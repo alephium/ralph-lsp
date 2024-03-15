@@ -16,12 +16,9 @@ private object GoToIdent {
    * @param ident     The identifier for which the argument definition is sought.
    * @param source    The source tree to search within.
    * @return An array sequence of positioned ASTs matching the search result.
-   * */
-  def goTo(identNode: Node[Ast.Positioned],
-           ident: Ast.Ident,
-           source: Tree.Source): ArraySeq[Ast.Positioned] =
-    identNode
-      .parent // take one step up to check the type of ident node.
+   */
+  def goTo(identNode: Node[Ast.Positioned], ident: Ast.Ident, source: Tree.Source): ArraySeq[Ast.Positioned] =
+    identNode.parent // take one step up to check the type of ident node.
       .to(ArraySeq)
       .collect {
         case variableNode @ Node(variable: Ast.Variable[_], _) if variable.id == ident => // Is it a variable?
@@ -57,8 +54,7 @@ private object GoToIdent {
         case node @ Node(field: Ast.EnumField, _) if field.ident == ident =>
           // The user clicked on an enum field.
           // Check the parent to find the enum type.
-          node
-            .parent
+          node.parent
             .map(_.data)
             .to(ArraySeq)
             .collect {
@@ -81,8 +77,7 @@ private object GoToIdent {
 
         case node @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == ident =>
           // User selected a named variable. Find its usages.
-          goToNearestFuncDef(node)
-            .iterator
+          goToNearestFuncDef(node).iterator
             .flatMap {
               case (functionNode, _) =>
                 goToVariableUsages(
@@ -100,10 +95,11 @@ private object GoToIdent {
    * @param variable     The variable to find the argument for.
    * @param source       The source tree to search within.
    * @return An array sequence of [[Ast.Argument]]s matching the search result.
-   * */
+   */
   private def goToArguments(variableNode: Node[Ast.Positioned],
                             variable: Ast.Variable[_],
-                            source: Tree.Source): Iterator[Ast.Argument] = {
+                            source: Tree.Source
+                           ): Iterator[Ast.Argument] = {
     val functionArguments =
       goToNearestFunctionArguments(
         childNode = variableNode,
@@ -126,11 +122,8 @@ private object GoToIdent {
    * @param ident  The constant identification to find.
    * @return The constant definitions.
    */
-  private def goToConstants(source: Tree.Source,
-                            ident: Ast.Ident): Iterator[Ast.ConstantVarDef] =
-    source
-      .rootNode
-      .walkDown
+  private def goToConstants(source: Tree.Source, ident: Ast.Ident): Iterator[Ast.ConstantVarDef] =
+    source.rootNode.walkDown
       .map(_.data)
       .collect {
         case constant: Ast.ConstantVarDef if constant.ident == ident =>
@@ -144,14 +137,11 @@ private object GoToIdent {
    * @param ident     The identifier of the named variable to search for.
    * @return Variable definitions containing the named variable.
    */
-  private def goToLocalVariables(childNode: Node[Ast.Positioned],
-                                 ident: Ast.Ident): Iterator[Ast.VarDef[_]] =
-    goToNearestFuncDef(childNode)
-      .iterator
+  private def goToLocalVariables(childNode: Node[Ast.Positioned], ident: Ast.Ident): Iterator[Ast.VarDef[_]] =
+    goToNearestFuncDef(childNode).iterator
       .flatMap {
         case (functionNode, _) =>
-          functionNode
-            .walkDown
+          functionNode.walkDown
             .collect {
               case Node(varDef: Ast.VarDef[_], _) if AstExtra.containsNamedVar(varDef, ident) =>
                 varDef
@@ -164,13 +154,11 @@ private object GoToIdent {
    * @param fieldSelector The selected enum field to find.
    * @param source        The source tree to search within.
    * @return An array sequence of [[Ast.EnumField]]s matching the search result.
-   * */
-  private def goToEnumField(fieldSelector: Ast.EnumFieldSelector[_],
-                            source: Tree.Source): ArraySeq[Ast.EnumField] =
+   */
+  private def goToEnumField(fieldSelector: Ast.EnumFieldSelector[_], source: Tree.Source): ArraySeq[Ast.EnumField] =
     source.ast match {
       case Left(contract: Ast.Contract) =>
-        contract
-          .enums
+        contract.enums
           .filter(_.id == fieldSelector.enumId)
           .flatMap(_.fields.find(_.ident == fieldSelector.field))
           .to(ArraySeq)
@@ -186,16 +174,16 @@ private object GoToIdent {
    * @param enumField The enum field to find.
    * @param source    The source tree to search within.
    * @return An array sequence of enum field identities matching the search result.
-   * */
+   */
   private def goToEnumFieldCalls(enumType: Ast.TypeId,
                                  enumField: Ast.EnumField,
-                                 source: Tree.Source): ArraySeq[Ast.Ident] =
-    source
-      .rootNode
-      .walkDown
+                                 source: Tree.Source
+                                ): ArraySeq[Ast.Ident] =
+    source.rootNode.walkDown
       .collect {
         // find all the selections matching the enum and the enum's field type.
-        case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumType && selector.field == enumField.ident =>
+        case Node(selector: Ast.EnumFieldSelector[_], _)
+            if selector.enumId == enumType && selector.field == enumField.ident =>
           selector.field
       }
       .to(ArraySeq)
@@ -207,10 +195,8 @@ private object GoToIdent {
    * @param from  The node to search within, walking downwards.
    * @return An array sequence of variable usage IDs.
    */
-  private def goToVariableUsages(ident: Ast.Ident,
-                                 from: Node[Ast.Positioned]): ArraySeq[Ast.Ident] =
-    from
-      .walkDown
+  private def goToVariableUsages(ident: Ast.Ident, from: Node[Ast.Positioned]): ArraySeq[Ast.Ident] =
+    from.walkDown
       .collect {
         // find all the selections matching the variable name.
         case Node(variable: Ast.Variable[_], _) if variable.id == ident =>
@@ -225,15 +211,13 @@ private object GoToIdent {
    * @return An Option containing the nearest function definition, if found.
    */
   private def goToNearestFuncDef(childNode: Node[Ast.Positioned]): Option[(Node[Ast.Positioned], Ast.FuncDef[_])] =
-    childNode
-      .data
-      .sourceIndex
+    childNode.data.sourceIndex
       .flatMap {
         childNodeIndex =>
-          childNode
-            .walkParents
+          childNode.walkParents
             .collectFirst {
-              case node @ Node(function: Ast.FuncDef[_], _) if function.sourceIndex.exists(_ contains childNodeIndex.index) =>
+              case node @ Node(function: Ast.FuncDef[_], _)
+                  if function.sourceIndex.exists(_ contains childNodeIndex.index) =>
                 (node, function)
             }
       }
@@ -244,15 +228,12 @@ private object GoToIdent {
    * @param childNode The node to traverse up in search of the function.
    * @param ident     The variable identifier to find arguments for.
    * @return An array sequence of [[Ast.Argument]]s matching the search result.
-   * */
-  private def goToNearestFunctionArguments(childNode: Node[Ast.Positioned],
-                                           ident: Ast.Ident): Iterator[Ast.Argument] =
-    goToNearestFuncDef(childNode)
-      .iterator
+   */
+  private def goToNearestFunctionArguments(childNode: Node[Ast.Positioned], ident: Ast.Ident): Iterator[Ast.Argument] =
+    goToNearestFuncDef(childNode).iterator
       .flatMap {
         case (_, funcDef) =>
-          funcDef
-            .args
+          funcDef.args
             .filter(_.ident == ident)
       }
 
@@ -262,9 +243,8 @@ private object GoToIdent {
    * @param source The source tree to search within.
    * @param ident  The variable identifier to find arguments for.
    * @return An array sequence of [[Ast.Argument]]s matching the search result.
-   * */
-  private def goToTemplateArguments(source: Tree.Source,
-                                    ident: Ast.Ident): Seq[Ast.Argument] = {
+   */
+  private def goToTemplateArguments(source: Tree.Source, ident: Ast.Ident): Seq[Ast.Argument] = {
     val arguments =
       source.ast match {
         case Left(contract) =>

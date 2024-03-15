@@ -74,16 +74,14 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
         val dependency =
           TestSourceCode
             .genCompiled(
-              fileURI =
-                fileURI,
-              code =
-                """
+              fileURI = fileURI,
+              code = """
                   |Contract ImportedContract(id: U256) {
                   |  pub fn getId() -> U256 {
                   |    return id
                   |  }
                   |}
-                  |""".stripMargin,
+                  |""".stripMargin
             )
             .map(_.asInstanceOf[SourceCodeState.Compiled]) // No errors. Successfully compiled.
             .sample
@@ -109,10 +107,12 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
 
         // type-check myCode and expect the dependency to be returned.
         val importedCode =
-          Importer.typeCheck(
-            sourceCode = ArraySeq(myCode),
-            dependency = Some(ArraySeq(dependency))
-          ).value
+          Importer
+            .typeCheck(
+              sourceCode = ArraySeq(myCode),
+              dependency = Some(ArraySeq(dependency))
+            )
+            .value
 
         // type check returns the dependency.
         importedCode should contain only dependency
@@ -147,10 +147,13 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
 
         // type-check myCode and expect error to be returned because the import does not exists.
         val actualError =
-          Importer.typeCheck(
-            sourceCode = ArraySeq(myCode),
-            dependency = None
-          ).left.value
+          Importer
+            .typeCheck(
+              sourceCode = ArraySeq(myCode),
+              dependency = None
+            )
+            .left
+            .value
 
         // The error must report the import's AST as UnknownImport
         val expectedAST = {
@@ -162,40 +165,38 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
           val fileURI = Some(myCode.fileURI)
 
           Tree.Import(
-            string =
-              Tree.StringLiteral(
-                value = my_package_file_quoted,
-                name =
-                  Tree.Name(
-                    value = my_package_file,
-                    index =
-                      SourceIndex(
-                        index = myCode.code.lastIndexOf(my_package_file),
-                        width = my_package_file.length,
-                        fileURI = fileURI
-                      )
-                  ),
-                index =
-                  SourceIndex(
-                    index = myCode.code.lastIndexOf(my_package_file_quoted),
-                    width = my_package_file_quoted.length,
-                    fileURI = fileURI
-                  )
-              ),
-            path =
-              Some(
-                Tree.ImportPath(
-                  folder = Tree.Name(my_package, SourceIndex(myCode.code.lastIndexOf(my_package), my_package.length, fileURI = fileURI)),
-                  file = Tree.Name(my_file, SourceIndex(myCode.code.lastIndexOf(my_file), my_file.length, fileURI = fileURI)),
-                  index = SourceIndex(myCode.code.lastIndexOf(my_package_file), my_package_file.length, fileURI = fileURI)
+            string = Tree.StringLiteral(
+              value = my_package_file_quoted,
+              name = Tree.Name(
+                value = my_package_file,
+                index = SourceIndex(
+                  index = myCode.code.lastIndexOf(my_package_file),
+                  width = my_package_file.length,
+                  fileURI = fileURI
                 )
               ),
-            index =
-              SourceIndex(
-                index = myCode.code.lastIndexOf(import_statement),
-                width = import_statement.length,
+              index = SourceIndex(
+                index = myCode.code.lastIndexOf(my_package_file_quoted),
+                width = my_package_file_quoted.length,
                 fileURI = fileURI
               )
+            ),
+            path = Some(
+              Tree.ImportPath(
+                folder =
+                  Tree.Name(my_package,
+                            SourceIndex(myCode.code.lastIndexOf(my_package), my_package.length, fileURI = fileURI)
+                           ),
+                file =
+                  Tree.Name(my_file, SourceIndex(myCode.code.lastIndexOf(my_file), my_file.length, fileURI = fileURI)),
+                index = SourceIndex(myCode.code.lastIndexOf(my_package_file), my_package_file.length, fileURI = fileURI)
+              )
+            ),
+            index = SourceIndex(
+              index = myCode.code.lastIndexOf(import_statement),
+              width = import_statement.length,
+              fileURI = fileURI
+            )
           )
         }
 
@@ -207,7 +208,7 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
             fileURI = myCode.fileURI,
             code = myCode.code,
             parsed = myCode,
-            errors = ArraySeq(expectedImportError),
+            errors = ArraySeq(expectedImportError)
           )
 
         actualError should contain only expectedError

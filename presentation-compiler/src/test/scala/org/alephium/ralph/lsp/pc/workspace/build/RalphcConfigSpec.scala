@@ -125,7 +125,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
           .compile(
             parsed = parsedBuild,
             currentBuild = None
-          ).asInstanceOf[BuildState.BuildCompiled]
+          )
+          .asInstanceOf[BuildState.BuildCompiled]
 
       compiledStd.dependency shouldBe defined
 

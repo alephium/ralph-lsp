@@ -18,4 +18,5 @@ case class ServerState(client: Option[RalphLangClient],
                        pcState: Option[PCState],
                        clientAllowsWatchedFilesDynamicRegistration: Boolean,
                        trace: Trace,
-                       shutdownReceived: Boolean)
+                       shutdownReceived: Boolean
+                      )

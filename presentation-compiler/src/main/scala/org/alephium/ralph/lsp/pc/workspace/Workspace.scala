@@ -41,9 +41,11 @@ object Workspace extends StrictImplicitLogging {
    * @param workspace The workspace to build.
    * @return A built workspace which is source and build aware.
    */
-  def build(workspace: WorkspaceState)(implicit file: FileAccess,
-                                       compiler: CompilerAccess,
-                                       logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
+  def build(workspace: WorkspaceState)(
+      implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger
+  ): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
     workspace match {
       case workspace: WorkspaceState.IsSourceAware =>
         Right(workspace) // already initialised
@@ -65,10 +67,11 @@ object Workspace extends StrictImplicitLogging {
    * @param code File that changed.
    * @return Returns diagnostics in-case were build errors, or-else returns an initialised workspace.
    */
-  def build(code: Option[WorkspaceFile],
-            workspace: WorkspaceState)(implicit file: FileAccess,
-                                       compiler: CompilerAccess,
-                                       logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
+  def build(code: Option[WorkspaceFile], workspace: WorkspaceState)(
+      implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger
+  ): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
     workspace match {
       case sourceAware: WorkspaceState.IsSourceAware =>
         // already built
@@ -107,9 +110,12 @@ object Workspace extends StrictImplicitLogging {
    */
   def build(newBuildCode: Option[String],
             currentBuild: BuildState.BuildCompiled,
-            sourceCode: ArraySeq[SourceCodeState])(implicit file: FileAccess,
-                                                   compiler: CompilerAccess,
-                                                   logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] = {
+            sourceCode: ArraySeq[SourceCodeState]
+           )(
+      implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger
+  ): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] = {
     val newBuild =
       Build.parseAndCompile(
         buildURI = currentBuild.buildURI,
@@ -174,7 +180,9 @@ object Workspace extends StrictImplicitLogging {
   }
 
   /** Creates an un-compiled workspace for a successful build file. */
-  def initialise(state: BuildState.IsCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+  def initialise(
+      state: BuildState.IsCompiled
+  )(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     state match {
       case compiled: BuildState.BuildCompiled =>
         // Build file changed. Update the workspace and request a full workspace build.
@@ -190,7 +198,9 @@ object Workspace extends StrictImplicitLogging {
    * @param state Current state of the workspace.
    * @return New workspace state which aware of all workspace source code files.
    */
-  def initialise(state: BuildState.BuildCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+  def initialise(
+      state: BuildState.BuildCompiled
+  )(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
     SourceCode.initialise(state.contractURI) match {
       case Left(error) =>
         val buildError =
@@ -220,8 +230,9 @@ object Workspace extends StrictImplicitLogging {
    * @return A new workspace state with errors if parse fails
    *         or [[WorkspaceState.Parsed]] is returned on successful parse.
    */
-  def parse(workspace: WorkspaceState.UnCompiled)(implicit file: FileAccess,
-                                                  compiler: CompilerAccess): WorkspaceState.IsParsed = {
+  def parse(
+      workspace: WorkspaceState.UnCompiled
+  )(implicit file: FileAccess, compiler: CompilerAccess): WorkspaceState.IsParsed = {
     // Parse all source code. TODO: Could be concurrent.
     val triedParsedStates =
       workspace.sourceCode map SourceCode.parse
@@ -249,8 +260,9 @@ object Workspace extends StrictImplicitLogging {
    * @param workspace Current workspace state
    * @return New workspace state with compilation results of all source files.
    */
-  def parseAndCompile(workspace: WorkspaceState.UnCompiled)(implicit file: FileAccess,
-                                                            compiler: CompilerAccess): WorkspaceState.IsParsedAndCompiled =
+  def parseAndCompile(
+      workspace: WorkspaceState.UnCompiled
+  )(implicit file: FileAccess, compiler: CompilerAccess): WorkspaceState.IsParsedAndCompiled =
     parse(workspace) match {
       case unCompiled: WorkspaceState.UnCompiled =>
         // Still un-compiled. There are errors.
@@ -287,11 +299,11 @@ object Workspace extends StrictImplicitLogging {
    * @param currentBuild Current build
    * @return New compiled workspace state.
    */
-  def compile(buildCode: Option[String],
-              sourceCode: ArraySeq[SourceCodeState],
-              currentBuild: BuildState.BuildCompiled)(implicit file: FileAccess,
-                                                      compiler: CompilerAccess,
-                                                      logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsParsedAndCompiled] =
+  def compile(buildCode: Option[String], sourceCode: ArraySeq[SourceCodeState], currentBuild: BuildState.BuildCompiled)(
+      implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger
+  ): Either[BuildState.BuildErrored, WorkspaceState.IsParsedAndCompiled] =
     // re-build the build file
     build(
       newBuildCode = buildCode,
@@ -305,11 +317,10 @@ object Workspace extends StrictImplicitLogging {
    * @param events  Events to process
    * @param pcState Current workspace and build state
    * @return Workspace change result
-   * */
+   */
   def deleteOrCreate(events: ArraySeq[WorkspaceFileEvent],
-                     pcState: PCState)(implicit file: FileAccess,
-                                       compiler: CompilerAccess,
-                                       logger: ClientLogger): PCState =
+                     pcState: PCState
+                    )(implicit file: FileAccess, compiler: CompilerAccess, logger: ClientLogger): PCState =
     Workspace.build(
       code = None,
       workspace = pcState.workspace
@@ -374,7 +385,8 @@ object Workspace extends StrictImplicitLogging {
    * @return Source-code with events applied
    */
   def applyEvents(events: ArraySeq[WorkspaceFileEvent],
-                  workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceCodeState] =
+                  workspace: WorkspaceState.IsSourceAware
+                 ): ArraySeq[SourceCodeState] =
     events.foldLeft(workspace.sourceCode) {
       case (newSourceCode, event) =>
         // process files & folders that belong to the configured contractPath
@@ -399,11 +411,11 @@ object Workspace extends StrictImplicitLogging {
     }
 
   /** Process source or build file change for a workspace that may or may not be source-aware ([[WorkspaceState.IsSourceAware]]) */
-  def changed(fileURI: URI,
-              code: Option[String],
-              pcState: PCState)(implicit file: FileAccess,
-                                compiler: CompilerAccess,
-                                logger: ClientLogger): Either[ErrorUnknownFileType, Option[PCState]] =
+  def changed(fileURI: URI, code: Option[String], pcState: PCState)(
+      implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger
+  ): Either[ErrorUnknownFileType, Option[PCState]] =
     Workspace.build(
       code = Some(WorkspaceFile(fileURI, code)),
       workspace = pcState.workspace
@@ -471,12 +483,14 @@ object Workspace extends StrictImplicitLogging {
    * @param buildURI Location of the build file.
    * @param code     Build file's content.
    */
-  def buildChanged(buildURI: URI,
-                   code: Option[String],
-                   workspace: WorkspaceState.IsSourceAware)(implicit file: FileAccess,
-                                                            compiler: CompilerAccess,
-                                                            logger: ClientLogger): Option[Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware]] =
-    if (workspace.buildURI.resolve(buildURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
+  def buildChanged(buildURI: URI, code: Option[String], workspace: WorkspaceState.IsSourceAware)(
+      implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger
+  ): Option[Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware]] =
+    if (
+      workspace.buildURI.resolve(buildURI) == workspace.buildURI
+    ) // Check: Is this fileURI an updated version of the current workspace build
       Build.parseAndCompile(
         buildURI = buildURI,
         code = code,
@@ -533,11 +547,11 @@ object Workspace extends StrictImplicitLogging {
    * @param fileURI     Location of the source file.
    * @param updatedCode Source changes
    */
-  def sourceCodeChanged(fileURI: URI,
-                        updatedCode: Option[String],
-                        workspace: WorkspaceState)(implicit file: FileAccess,
-                                                   compiler: CompilerAccess,
-                                                   logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
+  def sourceCodeChanged(fileURI: URI, updatedCode: Option[String], workspace: WorkspaceState)(
+      implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger
+  ): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
     build(workspace) map {
       workspace =>
         if (URIUtil.contains(workspace.build.contractURI, fileURI)) {
@@ -564,7 +578,6 @@ object Workspace extends StrictImplicitLogging {
         }
     }
 
-
   /**
    * Find a parsed state [[SourceCodeState.Parsed]] for the given file URI.
    *
@@ -575,9 +588,14 @@ object Workspace extends StrictImplicitLogging {
    *         - Left: If the source-code is in one of the non-parsed states.
    */
   def findParsed(fileURI: URI,
-                 workspace: WorkspaceState.IsSourceAware): Option[Either[CompilerMessage.Error, SourceCodeState.Parsed]] =
+                 workspace: WorkspaceState.IsSourceAware
+                ): Option[Either[CompilerMessage.Error, SourceCodeState.Parsed]] =
     // file must belong to the workspace contractURI and must be a ralph source file
-    if (URIUtil.contains(workspace.build.contractURI, fileURI) && URIUtil.getFileExtension(fileURI) == CompilerAccess.RALPH_FILE_EXTENSION) {
+    if (
+      URIUtil.contains(workspace.build.contractURI, fileURI) && URIUtil.getFileExtension(
+        fileURI
+      ) == CompilerAccess.RALPH_FILE_EXTENSION
+    ) {
       val parsedOrError =
         SourceCode.findParsed(
           fileURI = fileURI,

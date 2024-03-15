@@ -16,8 +16,7 @@ import scala.collection.immutable.ArraySeq
 object Dependency {
 
   def defaultPath(): Option[Path] =
-    FileAccess
-      .USER_HOME
+    FileAccess.USER_HOME
       .map(_.resolve(".ralph-lsp").resolve("dependencies"))
 
   /**
@@ -28,9 +27,8 @@ object Dependency {
    * @return
    */
   def compile(parsed: BuildState.BuildParsed,
-              currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
-                                                           compiler: CompilerAccess,
-                                                           logger: ClientLogger): BuildState.IsCompiled = {
+              currentBuild: Option[BuildState.IsCompiled]
+             )(implicit file: FileAccess, compiler: CompilerAccess, logger: ClientLogger): BuildState.IsCompiled = {
     val absoluteDependenciesPath =
       Build
         .getAbsoluteDependenciesPath(parsed)
@@ -84,10 +82,10 @@ object Dependency {
    *         the parent workspace. If there are errors, they will be in
    *         the field [[BuildState.BuildErrored.dependency]] as a regular workspace errors.
    */
-  private def downloadAndCompileStd(parsed: BuildState.BuildParsed,
-                                    absoluteDependenciesPath: Path)(implicit file: FileAccess,
-                                                                    compiler: CompilerAccess,
-                                                                    logger: ClientLogger): BuildState.IsCompiled =
+  private def downloadAndCompileStd(
+      parsed: BuildState.BuildParsed,
+      absoluteDependenciesPath: Path
+  )(implicit file: FileAccess, compiler: CompilerAccess, logger: ClientLogger): BuildState.IsCompiled =
     DependencyDownloader.downloadStd(
       dependencyPath = absoluteDependenciesPath,
       errorIndex = SourceIndexExtra.zero(parsed.buildURI)
@@ -124,7 +122,8 @@ object Dependency {
    */
   private def toBuildState(parentWorkspaceBuild: BuildState.BuildParsed,
                            dependencyResult: WorkspaceState.IsParsedAndCompiled,
-                           absoluteDependenciesPath: Path): BuildState.IsCompiled =
+                           absoluteDependenciesPath: Path
+                          ): BuildState.IsCompiled =
     dependencyResult match {
       case compiledStd: WorkspaceState.Compiled => // Dependency compiled OK. Convert the build state to compiled.
         val (absoluteContractPath, absoluteArtifactPath) =

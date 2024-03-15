@@ -23,9 +23,7 @@ object SourceIndexExtra {
    *
    * @see Issue <a href="https://github.com/alephium/ralph-lsp/issues/17">#17</a>.
    */
-  def ensurePositive(index: Int,
-                     width: Int,
-                     fileURI: URI): SourceIndex =
+  def ensurePositive(index: Int, width: Int, fileURI: URI): SourceIndex =
     if (index < 0)
       zero(fileURI)
     else
@@ -53,14 +51,15 @@ object SourceIndexExtra {
     def +(right: Int): SourceIndex =
       sourceIndex.copy(index = from + right)
 
-    def linePosition(lineNumberLookup: Seq[Int], index:Int): LinePosition = {
+    def linePosition(lineNumberLookup: Seq[Int], index: Int): LinePosition = {
       val line = lineNumberLookup.indexWhere(_ > index) match {
         case -1 => lineNumberLookup.length - 1
-        case n => math.max(0, n - 1)
+        case n  => math.max(0, n - 1)
       }
       val col = index - lineNumberLookup(line)
       LinePosition(line, col)
     }
+
     /** Convert [[SourceIndex]] that contains index information to [[LineRange]] that contains line and character information */
     def toLineRange(code: String): LineRange = {
       /*
@@ -71,7 +70,7 @@ object SourceIndexExtra {
       val separatorLength = lineSeparatorLength(code)
       val lineNumberLookup =
         codeLines(code)
-         .foldLeft(Seq(0))((acc, line) => acc :+ (acc.last + line.size + separatorLength))
+          .foldLeft(Seq(0))((acc, line) => acc :+ (acc.last + line.size + separatorLength))
 
       val start = linePosition(lineNumberLookup, sourceIndex.from)
       val end = linePosition(lineNumberLookup, sourceIndex.to)

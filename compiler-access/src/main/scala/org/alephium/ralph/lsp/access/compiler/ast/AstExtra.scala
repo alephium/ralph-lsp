@@ -13,10 +13,8 @@ object AstExtra {
    * @param ident  The identifier of the variable to search for.
    * @return True if the variable definition contains a named variable with the given identifier, false otherwise.
    */
-  def containsNamedVar[A <: StatelessContext](varDef: Ast.VarDef[A],
-                                              ident: Ast.Ident): Boolean =
-    varDef
-      .vars
+  def containsNamedVar[A <: StatelessContext](varDef: Ast.VarDef[A], ident: Ast.Ident): Boolean =
+    varDef.vars
       .exists {
         case varType: Ast.NamedVar =>
           varType.ident == ident

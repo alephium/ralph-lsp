@@ -26,16 +26,16 @@ object BuildState {
   }
 
   /** Build is successfully parsed */
-  case class BuildParsed(buildURI: URI,
-                         code: String,
-                         config: RalphcParsedConfig) extends BuildState.IsParsed
+  case class BuildParsed(buildURI: URI, code: String, config: RalphcParsedConfig) extends BuildState.IsParsed
 
   /** Build is successfully compiled */
   case class BuildCompiled(buildURI: URI,
                            code: String,
                            dependency: Option[WorkspaceState.Compiled],
                            dependencyPath: Path,
-                           config: RalphcCompiledConfig) extends BuildState.IsCompiled {
+                           config: RalphcCompiledConfig
+                          )
+      extends BuildState.IsCompiled {
     def contractURI: URI =
       config.contractPath.toUri
 
@@ -61,6 +61,9 @@ object BuildState {
                           code: Option[String],
                           errors: ArraySeq[CompilerMessage.AnyError],
                           dependency: Option[WorkspaceState.IsParsedAndCompiled],
-                          activateWorkspace: Option[WorkspaceState.IsSourceAware]) extends BuildState.IsParsed with BuildState.IsCompiled
+                          activateWorkspace: Option[WorkspaceState.IsSourceAware]
+                         )
+      extends BuildState.IsParsed
+      with BuildState.IsCompiled
 
 }
