@@ -4,11 +4,11 @@ import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LinePosition, LineRange}
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
-import org.alephium.ralph.lsp.pc.util.StringUtil
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
 import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, Workspace, WorkspaceState}
 import org.scalacheck.Gen
@@ -87,9 +87,6 @@ object TestCodeProvider {
     val goToStart = lines.filter(_._1.contains(">>"))
     val goToEnd = lines.filter(_._1.contains("<<"))
 
-    /**
-     * FIXME: Simplify this function.
-     */
     val expectedLineRanges =
       if (goToStart.length != goToEnd.length)
         fail(s"Matching GoTo location indicators '<< and >>' not provided")
@@ -98,29 +95,11 @@ object TestCodeProvider {
           .zip(goToEnd)
           .map {
             case ((startLine, startLineIndex), (endLine, endLineIndex)) =>
-              if (startLine != endLine) { // start line is not the same as end line
-                // Create a LineRange such that `from` and `to` both have the same `startLine`.
-                val from =
-                  LinePosition(startLineIndex, startLine.indexOf(">>"))
-
-                // adjust the `endLineIndex` such that its range starts from `startLineIndex`
-                val adjustedEndLineIndex =
-                  startLineIndex +
-                    (startLine.length - 1 - from.character) + // add text length after the `>>` symbol
-                    endLine.indexOf("<<") // add the text length upto the `<<` symbol
-
-                LineRange(
-                  from = from,
-                  // `to` can now have the `startLineIndex`
-                  to = LinePosition(startLineIndex, adjustedEndLineIndex)
-                )
-              } else {
-                // Code range should be where << and >> are located
-                LineRange(
-                  from = LinePosition(startLineIndex, startLine.indexOf(">>")),
-                  to = LinePosition(endLineIndex, endLine.replaceFirst(">>", "").indexOf("<<"))
-                )
-              }
+              // Code range should be where << and >> are located
+              LineRange(
+                from = LinePosition(startLineIndex, startLine.indexOf(">>")),
+                to = LinePosition(endLineIndex, endLine.replaceFirst(">>", "").indexOf("<<"))
+              )
           }
 
     // remove << and >>

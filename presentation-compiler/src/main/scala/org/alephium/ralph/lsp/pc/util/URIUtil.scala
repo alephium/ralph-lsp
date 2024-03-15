@@ -6,6 +6,16 @@ import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 object URIUtil {
 
+  /**
+   * Build URI and clean it from escaped characters. Happen on Windows
+   */
+  def uri(string: String): URI =
+    if (scala.util.Properties.isWin) {
+      new URI(java.net.URLDecoder.decode(string, "UTF-8"))
+    } else {
+      new URI(string)
+    }
+
   def getFileName(uri: URI): String =
     Paths.get(uri).toFile.getName
 

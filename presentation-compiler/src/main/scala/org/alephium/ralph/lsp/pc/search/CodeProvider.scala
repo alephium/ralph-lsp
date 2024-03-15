@@ -1,12 +1,12 @@
 package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.{CodeCompletionProvider, Suggestion}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefinitionProvider
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
-import org.alephium.ralph.lsp.pc.util.StringUtil
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 
 import java.net.URI
@@ -67,7 +67,7 @@ object CodeProvider {
             // fetch the requested index from line number and character number.
             val cursorIndex =
               StringUtil.computeIndex(
-                lines = parsed.codeLines,
+                code = parsed.code,
                 line = line,
                 character = character
               )

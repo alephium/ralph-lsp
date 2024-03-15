@@ -4,7 +4,8 @@ import org.alephium.ralph.lsp.access.compiler.RalphParserExtension
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.warning.StringWarning
-import org.alephium.ralph.lsp.pc.util.{StringUtil, URIUtil}
+import org.alephium.ralph.lsp.access.util.StringUtil
+import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.{CompiledContract, CompiledScript}
 
 import java.net.URI
@@ -43,10 +44,6 @@ object SourceCodeState {
   /** Represents: States where the code text is known */
   sealed trait IsCodeAware extends SourceCodeState {
     def code: String
-
-    /** Lazily executed. Can have concurrent access or no access at all. Used by code completion. */
-    lazy val codeLines: Array[String] =
-      StringUtil.codeLines(code)
   }
 
   /** Represents: Code that is parsed. */
