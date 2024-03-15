@@ -52,21 +52,29 @@ object SourceIndexExtra {
     def +(right: Int): SourceIndex =
       sourceIndex.copy(index = from + right)
 
+    def linePosition(lineNumberLookup: Seq[Int], index:Int): LinePosition = {
+      val line = lineNumberLookup.indexWhere(_ > index) match {
+        case -1 => lineNumberLookup.length - 1
+        case n => math.max(0, n - 1)
+      }
+      val col = index - lineNumberLookup(line)
+      LinePosition(line, col)
+    }
     /** Convert [[SourceIndex]] that contains index information to [[LineRange]] that contains line and character information */
     def toLineRange(code: String): LineRange = {
-      val parserInput = IndexedParserInput(code)
+      /*
+       * Our current fastparse version is having issue with return lines on Windows.
+       * The following workaround is inspired by fastparse ParserInput.prettyIndex
+       */
+      val lineNumberLookup =
+        code
+         .split(System.lineSeparator())
+         .foldLeft(Seq(0))((acc, line) => acc :+ (acc.last +line.size + System.lineSeparator().length))
 
-      // Build the 'from' line position information
-      val fromLineNumber = parserInput.prettyIndex(sourceIndex.from)
-      val fromSourcePosition = SourcePosition.parse(fromLineNumber)
-      val from = LinePosition(fromSourcePosition.rowIndex, fromSourcePosition.colIndex)
+      val start = linePosition(lineNumberLookup, sourceIndex.from)
+      val end = linePosition(lineNumberLookup, sourceIndex.to)
 
-      // Build the 'to' line position information
-      val toLineNumber = parserInput.prettyIndex(sourceIndex.to)
-      val toSourcePosition = SourcePosition.parse(toLineNumber)
-      val to = LinePosition(toSourcePosition.rowIndex, toSourcePosition.colIndex)
-
-      LineRange(from, to)
+      LineRange(start, end)
     }
   }
 }
