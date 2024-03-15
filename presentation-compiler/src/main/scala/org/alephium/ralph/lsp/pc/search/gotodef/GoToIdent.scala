@@ -1,8 +1,8 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.Ast
-import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
+import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 
 import scala.collection.immutable.ArraySeq
@@ -24,7 +24,7 @@ private object GoToIdent {
       .parent // take one step up to check the type of ident node.
       .to(ArraySeq)
       .collect {
-        case Node(variable: Ast.Variable[_], _) if variable.id == ident => // Is it a variable?
+        case variableNode @ Node(variable: Ast.Variable[_], _) if variable.id == ident => // Is it a variable?
           // The user clicked on a variable. Take 'em there!
           val arguments =
             goToArguments(
@@ -39,7 +39,13 @@ private object GoToIdent {
               ident = ident
             )
 
-          arguments ++ constants
+          val localVariables =
+            goToLocalVariables(
+              childNode = variableNode,
+              ident = ident
+            )
+
+          arguments ++ constants ++ localVariables
 
         case Node(fieldSelector: Ast.EnumFieldSelector[_], _) if fieldSelector.field == ident =>
           // The user clicked on an enum field. Take 'em there!
@@ -120,6 +126,27 @@ private object GoToIdent {
       }
 
   /**
+   * Navigate to the local variable definitions within the function in scope.
+   *
+   * @param childNode The node within a function where the search starts.
+   * @param ident     The identifier of the named variable to search for.
+   * @return Variable definitions containing the named variable.
+   */
+  private def goToLocalVariables(childNode: Node[Ast.Positioned],
+                                 ident: Ast.Ident): Iterator[Ast.VarDef[_]] =
+    goToNearestFuncDef(childNode)
+      .iterator
+      .flatMap {
+        case (functionNode, _) =>
+          functionNode
+            .walkDown
+            .collect {
+              case Node(varDef: Ast.VarDef[_], _) if AstExtra.containsNamedVar(varDef, ident) =>
+                varDef
+            }
+      }
+
+  /**
    * Navigate to the enum field(s) for the given selected enum field.
    *
    * @param fieldSelector The selected enum field to find.
@@ -185,7 +212,7 @@ private object GoToIdent {
    * @param childNode The node to traverse up from.
    * @return An Option containing the nearest function definition, if found.
    */
-  private def goToNearestFuncDef(childNode: Node[Ast.Positioned]): Option[Ast.FuncDef[_]] =
+  private def goToNearestFuncDef(childNode: Node[Ast.Positioned]): Option[(Node[Ast.Positioned], Ast.FuncDef[_])] =
     childNode
       .data
       .sourceIndex
@@ -194,8 +221,8 @@ private object GoToIdent {
           childNode
             .walkParents
             .collectFirst {
-              case Node(function: Ast.FuncDef[_], _) if function.sourceIndex.exists(_ contains childNodeIndex.index) =>
-                function
+              case node @ Node(function: Ast.FuncDef[_], _) if function.sourceIndex.exists(_ contains childNodeIndex.index) =>
+                (node, function)
             }
       }
 
@@ -210,7 +237,12 @@ private object GoToIdent {
                                            ident: Ast.Ident): Iterator[Ast.Argument] =
     goToNearestFuncDef(childNode)
       .iterator
-      .flatMap(_.args.filter(_.ident == ident))
+      .flatMap {
+        case (_, funcDef) =>
+          funcDef
+            .args
+            .filter(_.ident == ident)
+      }
 
   /**
    * Navigate to the template argument(s) for the given identifier.
