@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.access.compiler.message
 
 import fastparse.IndexedParserInput
 import org.alephium.ralph.{SourceIndex, SourcePosition}
+import org.alephium.ralph.lsp.access.util.StringUtil._
 
 import java.net.URI
 
@@ -66,10 +67,11 @@ object SourceIndexExtra {
        * Our current fastparse version is having issue with return lines on Windows.
        * The following workaround is inspired by fastparse ParserInput.prettyIndex
        */
+
+      val separatorLength = lineSeparatorLength(code)
       val lineNumberLookup =
-        code
-         .split(System.lineSeparator())
-         .foldLeft(Seq(0))((acc, line) => acc :+ (acc.last +line.size + System.lineSeparator().length))
+        codeLines(code)
+         .foldLeft(Seq(0))((acc, line) => acc :+ (acc.last + line.size + separatorLength))
 
       val start = linePosition(lineNumberLookup, sourceIndex.from)
       val end = linePosition(lineNumberLookup, sourceIndex.to)
