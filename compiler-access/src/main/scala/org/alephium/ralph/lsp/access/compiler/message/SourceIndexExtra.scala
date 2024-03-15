@@ -54,12 +54,19 @@ object SourceIndexExtra {
 
     /** Convert [[SourceIndex]] that contains index information to [[LineRange]] that contains line and character information */
     def toLineRange(code: String): LineRange = {
-      val fastParseLineNumber = IndexedParserInput(code).prettyIndex(sourceIndex.from)
-      val sourcePosition = SourcePosition.parse(fastParseLineNumber)
+      val parserInput = IndexedParserInput(code)
 
-      val start = LinePosition(sourcePosition.rowIndex, sourcePosition.colIndex)
-      val end = LinePosition(sourcePosition.rowIndex, sourcePosition.colIndex + sourceIndex.width)
-      LineRange(start, end)
+      // Build the 'from' line position information
+      val fromLineNumber = parserInput.prettyIndex(sourceIndex.from)
+      val fromSourcePosition = SourcePosition.parse(fromLineNumber)
+      val from = LinePosition(fromSourcePosition.rowIndex, fromSourcePosition.colIndex)
+
+      // Build the 'to' line position information
+      val toLineNumber = parserInput.prettyIndex(sourceIndex.to)
+      val toSourcePosition = SourcePosition.parse(toLineNumber)
+      val to = LinePosition(toSourcePosition.rowIndex, toSourcePosition.colIndex)
+
+      LineRange(from, to)
     }
   }
 }

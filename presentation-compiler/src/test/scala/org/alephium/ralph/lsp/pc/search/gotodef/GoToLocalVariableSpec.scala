@@ -48,7 +48,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
           |    >>let varA = 123
           |    <<let varB = var@@A
           |    >>let varA = ABC
-          |<<  }
+          |  <<}
           |
           |}
           |""".stripMargin
