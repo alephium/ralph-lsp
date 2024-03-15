@@ -87,6 +87,9 @@ object TestCodeProvider {
     val goToStart = lines.filter(_._1.contains(">>"))
     val goToEnd = lines.filter(_._1.contains("<<"))
 
+    /**
+     * FIXME: Simplify this function.
+     */
     val expectedLineRanges =
       if (goToStart.length != goToEnd.length)
         fail(s"Matching GoTo location indicators '<< and >>' not provided")
@@ -95,11 +98,29 @@ object TestCodeProvider {
           .zip(goToEnd)
           .map {
             case ((startLine, startLineIndex), (endLine, endLineIndex)) =>
-              // Code range should be where << and >> are located
-              LineRange(
-                LinePosition(startLineIndex, startLine.indexOf(">>")),
-                LinePosition(endLineIndex, endLine.replaceFirst(">>", "").indexOf("<<"))
-              )
+              if (startLine != endLine) { // start line is not the same as end line
+                // Create a LineRange such that `from` and `to` both have the same `startLine`.
+                val from =
+                  LinePosition(startLineIndex, startLine.indexOf(">>"))
+
+                // adjust the `endLineIndex` such that its range starts from `startLineIndex`
+                val adjustedEndLineIndex =
+                  startLineIndex +
+                    (startLine.length - 1 - from.character) + // add text length after the `>>` symbol
+                    endLine.indexOf("<<") // add the text length upto the `<<` symbol
+
+                LineRange(
+                  from = from,
+                  // `to` can now have the `startLineIndex`
+                  to = LinePosition(startLineIndex, adjustedEndLineIndex)
+                )
+              } else {
+                // Code range should be where << and >> are located
+                LineRange(
+                  from = LinePosition(startLineIndex, startLine.indexOf(">>")),
+                  to = LinePosition(endLineIndex, endLine.replaceFirst(">>", "").indexOf("<<"))
+                )
+              }
           }
 
     // remove << and >>
