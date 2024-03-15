@@ -197,10 +197,12 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       logger.debug("Client doesn't support dynamic registration for watched files")
     }
 
+    def uri(string: String): URI = new URI(java.net.URLDecoder.decode(string, "UTF-8"))
+
   /** @inheritdoc */
   override def didOpen(params: DidOpenTextDocumentParams): Unit =
     runSync {
-      val fileURI = new URI(params.getTextDocument.getUri)
+      val fileURI = uri(params.getTextDocument.getUri)
       val code = Option(params.getTextDocument.getText)
 
       logger.debug(s"didOpen. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
@@ -214,7 +216,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   /** @inheritdoc */
   override def didChange(params: DidChangeTextDocumentParams): Unit =
     runSync {
-      val fileURI = new URI(params.getTextDocument.getUri)
+      val fileURI = uri(params.getTextDocument.getUri)
       val code = Option(params.getContentChanges.get(0).getText)
 
       logger.debug(s"didChange. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
@@ -228,7 +230,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   /** @inheritdoc */
   override def didClose(params: DidCloseTextDocumentParams): Unit =
     runSync {
-      val fileURI = new URI(params.getTextDocument.getUri)
+      val fileURI = uri(params.getTextDocument.getUri)
 
       logger.debug(s"didClose. fileURI: $fileURI")
 
@@ -241,7 +243,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   /** @inheritdoc */
   override def didSave(params: DidSaveTextDocumentParams): Unit =
     runSync {
-      val fileURI = new URI(params.getTextDocument.getUri)
+      val fileURI = uri(params.getTextDocument.getUri)
       val code = Option(params.getText)
 
       logger.debug(s"didSave. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
@@ -266,10 +268,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           .map(event => (event.getType, event))
           .collect {
             case (FileChangeType.Deleted, event) =>
-              WorkspaceFileEvent.Deleted(new URI(event.getUri))
+              WorkspaceFileEvent.Deleted(uri(event.getUri))
 
             case (FileChangeType.Created, event) =>
-              WorkspaceFileEvent.Created(new URI(event.getUri))
+              WorkspaceFileEvent.Created(uri(event.getUri))
           }
 
       if (events.nonEmpty) {
@@ -298,7 +300,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
     runAsync {
       cancelChecker =>
-        val fileURI = new URI(params.getTextDocument.getUri)
+        val fileURI = uri(params.getTextDocument.getUri)
         val line = params.getPosition.getLine
         val character = params.getPosition.getCharacter
 
@@ -349,7 +351,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def definition(params: DefinitionParams): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =
     runAsync {
       cancelChecker =>
-        val fileURI = new URI(params.getTextDocument.getUri)
+        val fileURI = uri(params.getTextDocument.getUri)
         val line = params.getPosition.getLine
         val character = params.getPosition.getCharacter
 

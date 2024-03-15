@@ -198,4 +198,16 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
       server.registerClientCapabilities() shouldBe (())
     }
   }
+
+  "Uri decoding" should {
+    "work" in {
+      import java.net.URI
+      val uri = "file:///c%3A/Users/thoma/Desktop/ralph-test/ralph.json"
+      val uri2 = "file:///c:/Users/thoma/Desktop/ralph-test/ralph.json"
+val decodedURI = java.net.URLDecoder.decode(uri, "UTF-8")
+val decodedURI2 = java.net.URLDecoder.decode(uri2, "UTF-8")
+
+      new URI(decodedURI).equals(new URI(decodedURI2)) shouldBe true
+    }
+  }
 }
