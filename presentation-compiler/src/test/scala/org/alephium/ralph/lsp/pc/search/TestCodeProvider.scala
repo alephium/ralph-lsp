@@ -36,7 +36,7 @@ object TestCodeProvider {
    */
   def apply[A](code: String)(implicit provider: CodeProvider[A]): (ArraySeq[A], SourceCodeState.IsCodeAware) = {
     val lines =
-      StringUtil.codeLines(code)
+      StringUtil.codeLines(code).map(_._1)
 
     // find the line where @@ is located
     lines.zipWithIndex.find(_._1.contains(SEARCH_INDICATOR)) match {
@@ -81,7 +81,7 @@ object TestCodeProvider {
   def goTo(code: String): Unit = {
     val lines =
       StringUtil
-        .codeLines(code)
+        .codeLines(code).map(_._1)
         .zipWithIndex
 
     val goToStart = lines.filter(_._1.contains(">>"))

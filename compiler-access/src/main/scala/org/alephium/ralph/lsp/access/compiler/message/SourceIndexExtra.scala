@@ -68,10 +68,9 @@ object SourceIndexExtra {
        * The following workaround is inspired by fastparse ParserInput.prettyIndex
        */
 
-      val separatorLength = lineSeparatorLength(code)
       val lineNumberLookup =
         codeLines(code)
-         .foldLeft(Seq(0))((acc, line) => acc :+ (acc.last + line.size + separatorLength))
+          .foldLeft(Seq(0)){ case (acc, (line,sepLength)) => acc :+ (acc.last + line.size + sepLength)}
 
       val start = linePosition(lineNumberLookup, sourceIndex.from)
       val end = linePosition(lineNumberLookup, sourceIndex.to)
