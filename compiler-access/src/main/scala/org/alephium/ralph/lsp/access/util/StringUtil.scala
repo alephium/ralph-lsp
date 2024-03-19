@@ -1,10 +1,18 @@
 package org.alephium.ralph.lsp.access.util
 
+import scala.collection.mutable.ArrayBuffer
+import org.alephium.ralph.lsp.access.compiler.message._
+
 object StringUtil {
 
   /**
    * This method calculates the index of a character in the source code
    * given its line number and position within that line.
+   * There are three types of line endings: \n, \r, \r\n as based on the
+   * LSP specification.
+   * See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocuments
+   *
+   * The function stop as soon as the index is found.
    *
    * @param code      The source code
    * @param line      The line number of the character
@@ -15,24 +23,30 @@ object StringUtil {
                    line: Int,
                    character: Int): Int = {
 
-    val separatorLength = lineSeparatorLength(code)
-    val lines = codeLines(code)
-    var index = 0
+      var lineNumber = 0
+      var index = 0
+      var prev: Character = null
 
-    var i = 0
-    while (i < line && i < lines.length) {
-      index += lines(i).length + separatorLength
-      i += 1
-    }
+      while (lineNumber < line && index < code.length) {
+        val char = code(index)
+        if (char == '\r') {
+          if(prev == '\r') {
+            lineNumber += 1
+          }
+          index += 1
+        } else if (char == '\n') {
+          lineNumber += 1
+          index += 1
+        } else {
+          if(prev == '\r') {
+            lineNumber += 1
+          } else {
+            index += 1
+          }
+        }
+        prev = char
+      }
 
-    index += character
-    index
+      index + character
   }
-
-  def codeLines(code: String): Array[String] =
-    code.split("\r\n|\r|\n")
-
-  def lineSeparatorLength(code: String): Int =
-    if(code.contains("\r\n")) 2 else 1
 }
-
