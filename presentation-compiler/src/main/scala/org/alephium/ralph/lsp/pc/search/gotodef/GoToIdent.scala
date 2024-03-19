@@ -24,38 +24,31 @@ private object GoToIdent {
       .parent // take one step up to check the type of ident node.
       .to(ArraySeq)
       .collect {
-        case variableNode @ Node(variable: Ast.Variable[_], _) if variable.id == ident => // Is it a variable?
-          // The user clicked on a variable. Take 'em there!
-          val arguments =
-            goToArguments(
-              variableNode = identNode,
-              variable = variable,
-              source = source
-            )
+        case variableNode @ Node(variable: Ast.Variable[_], _) if variable.id == ident =>
+          // They selected a variable. Take 'em there!
+          goToScopeDefinitions(
+            identNode = variableNode,
+            ident = variable.id,
+            source = source
+          )
 
-          val constants =
-            goToConstants(
-              source = source,
-              ident = ident
-            )
-
-          val localVariables =
-            goToLocalVariables(
-              childNode = variableNode,
-              ident = ident
-            )
-
-          arguments ++ constants ++ localVariables
+        case assignmentNode @ Node(assignment: Ast.AssignmentSimpleTarget[_], _) if assignment.ident == ident =>
+          // They selected an assignment. Take 'em there!
+          goToScopeDefinitions(
+            identNode = assignmentNode,
+            ident = assignment.ident,
+            source = source
+          )
 
         case Node(fieldSelector: Ast.EnumFieldSelector[_], _) if fieldSelector.field == ident =>
-          // The user clicked on an enum field. Take 'em there!
+          // They selected an enum field. Take 'em there!
           goToEnumField(
             fieldSelector = fieldSelector,
             source = source
           )
 
         case node @ Node(field: Ast.EnumField, _) if field.ident == ident =>
-          // The user clicked on an enum field.
+          // They selected an enum field.
           // Check the parent to find the enum type.
           node
             .parent
@@ -73,7 +66,7 @@ private object GoToIdent {
             .flatten
 
         case Node(constantDef: Ast.ConstantVarDef, _) if constantDef.ident == ident =>
-          // The user clicked on an constant definition. Take 'em there!
+          // They selected a constant definition. Take 'em there!
           goToVariableUsages(
             ident = constantDef.ident,
             from = source.rootNode
@@ -81,39 +74,74 @@ private object GoToIdent {
 
         case node @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == ident =>
           // User selected a named variable. Find its usages.
-          goToNearestFuncDef(node)
+          goToNearestBlockInScope(node, source)
             .iterator
             .flatMap {
-              case (functionNode, _) =>
+              fromNode =>
                 goToVariableUsages(
                   ident = namedVar.ident,
-                  from = functionNode
+                  from = fromNode
                 )
             }
       }
       .flatten
 
+
+  /**
+   * Navigate to arguments, constants and variables for the given identity ([[Ast.Ident]]).
+   *
+   * @param identNode The node representing the identity.
+   * @param ident     The identity data ([[Ast.Ident]]) within the node.
+   * @param source    The source tree to search within.
+   * @return An array sequence of arguments, constants and variables with the input identity.
+   */
+  private def goToScopeDefinitions(identNode: Node[Ast.Positioned],
+                                   ident: Ast.Ident,
+                                   source: Tree.Source): Iterator[Ast.Positioned] = {
+    val arguments =
+      goToArguments(
+        variableNode = identNode,
+        variableId = ident,
+        source = source
+      )
+
+    val constants =
+      goToConstants(
+        source = source,
+        ident = ident
+      )
+
+    val localVariables =
+      goToInScopeVariables(
+        childNode = identNode,
+        ident = ident,
+        source = source
+      )
+
+    arguments ++ constants ++ localVariables
+  }
+
   /**
    * Navigate to the argument(s) for the given variable.
    *
    * @param variableNode The node representing the variable.
-   * @param variable     The variable to find the argument for.
+   * @param variableId   The variable to find the argument for.
    * @param source       The source tree to search within.
    * @return An array sequence of [[Ast.Argument]]s matching the search result.
    * */
   private def goToArguments(variableNode: Node[Ast.Positioned],
-                            variable: Ast.Variable[_],
+                            variableId: Ast.Ident,
                             source: Tree.Source): Iterator[Ast.Argument] = {
     val functionArguments =
       goToNearestFunctionArguments(
         childNode = variableNode,
-        ident = variable.id
+        ident = variableId
       )
 
     val templateArguments =
       goToTemplateArguments(
         source = source,
-        ident = variable.id
+        ident = variableId
       )
 
     functionArguments ++ templateArguments
@@ -138,19 +166,20 @@ private object GoToIdent {
       }
 
   /**
-   * Navigate to the local variable definitions within the function in scope.
+   * Navigate to the variable definitions within its scope.
    *
    * @param childNode The node within a function where the search starts.
    * @param ident     The identifier of the named variable to search for.
    * @return Variable definitions containing the named variable.
    */
-  private def goToLocalVariables(childNode: Node[Ast.Positioned],
-                                 ident: Ast.Ident): Iterator[Ast.VarDef[_]] =
-    goToNearestFuncDef(childNode)
+  private def goToInScopeVariables(childNode: Node[Ast.Positioned],
+                                   ident: Ast.Ident,
+                                   source: Tree.Source): Iterator[Ast.VarDef[_]] =
+    goToNearestBlockInScope(childNode, source)
       .iterator
       .flatMap {
-        case (functionNode, _) =>
-          functionNode
+        block =>
+          block
             .walkDown
             .collect {
               case Node(varDef: Ast.VarDef[_], _) if AstExtra.containsNamedVar(varDef, ident) =>
@@ -217,6 +246,25 @@ private object GoToIdent {
           variable.id
       }
       .to(ArraySeq)
+
+  /**
+   * Navigate to the nearest code block for which the given child node is in scope.
+   *
+   * @param childNode The node within the scoped block.
+   * @return An Option containing the nearest parent block, if found.
+   */
+  private def goToNearestBlockInScope(childNode: Node[Ast.Positioned],
+                                      source: Tree.Source): Option[Node[Ast.Positioned]] =
+    source.ast match {
+      case Left(_: Ast.Contract | _: Ast.ContractInterface | _: Ast.TxScript) =>
+        // Find the nearest function definition or use the template body as the scope.
+        goToNearestFuncDef(childNode)
+          .map(_._1)
+          .orElse(Some(source.rootNode))
+
+      case Right(_: Ast.Struct) =>
+        None
+    }
 
   /**
    * Navigate to the nearest function definition for which the given child node is in scope.
