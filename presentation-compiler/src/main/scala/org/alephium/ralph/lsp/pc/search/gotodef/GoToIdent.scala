@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 
 import scala.collection.immutable.ArraySeq
 
@@ -65,27 +65,52 @@ private object GoToIdent {
             }
             .flatten
 
-        case Node(constantDef: Ast.ConstantVarDef, _) if constantDef.ident == ident =>
+        case constantDefNode @ Node(constantDef: Ast.ConstantVarDef, _) if constantDef.ident == ident =>
           // They selected a constant definition. Take 'em there!
-          goToVariableUsages(
-            ident = constantDef.ident,
-            from = source.rootNode
+          goToIdentUsage(
+            fromNode = constantDefNode,
+            fromNodeIdent = constantDef.ident,
+            source = source
           )
 
-        case node @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == ident =>
+        case namedVarNode @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == ident =>
           // User selected a named variable. Find its usages.
-          goToNearestBlockInScope(node, source)
-            .iterator
-            .flatMap {
-              fromNode =>
-                goToVariableUsages(
-                  ident = namedVar.ident,
-                  from = fromNode
-                )
-            }
+          goToIdentUsage(
+            fromNode = namedVarNode,
+            fromNodeIdent = namedVar.ident,
+            source = source
+          )
+
+        case argumentNode @ Node(argument: Ast.Argument, _) if argument.ident == ident =>
+          // They selected an argument. Take 'em there!
+          goToIdentUsage(
+            fromNode = argumentNode,
+            fromNodeIdent = argument.ident,
+            source = source
+          )
       }
       .flatten
 
+  /**
+   * Navigate to variable usages of the given identity.
+   *
+   * @param fromNode      The node representing the parent of the selected identity.
+   * @param fromNodeIdent The identity for which usages are to be found.
+   * @param source        The source tree to search within.
+   * @return An iterator containing identities representing the usage locations of input identity.
+   */
+  private def goToIdentUsage(fromNode: Node[Ast.Positioned],
+                             fromNodeIdent: Ast.Ident,
+                             source: Tree.Source): Iterator[Ast.Ident] =
+    goToNearestBlockInScope(fromNode, source)
+      .iterator
+      .flatMap {
+        from =>
+          goToVariableUsages(
+            ident = fromNodeIdent,
+            from = from
+          )
+      }
 
   /**
    * Navigate to arguments, constants and variables for the given identity ([[Ast.Ident]]).
