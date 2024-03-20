@@ -1,5 +1,6 @@
 package org.alephium.ralph.lsp.access.util
 
+import org.scalatest.Assertion
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.alephium.ralph.lsp.access.compiler.message._
@@ -7,7 +8,7 @@ import org.alephium.ralph.lsp.access.util.StringUtil._
 
 class StringUtilSpec extends AnyWordSpec with Matchers {
 
-  def computeIndex(code: String): Unit = {
+  def computeIndex(code: String): Assertion = {
     val (linePosition, index, codeWithoutSymbol) = TestCodeUtil.indicatorPosition(code)
     StringUtil.computeIndex(codeWithoutSymbol, linePosition.line, linePosition.character) shouldBe index
   }
@@ -28,7 +29,7 @@ class StringUtilSpec extends AnyWordSpec with Matchers {
     }
   }
 
-  def testLineRange(code: String): Unit = {
+  def testLineRange(code: String): Assertion = {
 
     val (expectedLineRanges, codeWithoutSymbol, from, to) = TestCodeUtil.lineRanges(code)
 

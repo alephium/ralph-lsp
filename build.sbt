@@ -76,6 +76,7 @@ lazy val `presentation-compiler` =
       commonSettings,
       libraryDependencies ++=
         Seq(
+          Dependencies.ralphc,
           Dependencies.scalaTest,
           Dependencies.scalaCheck,
           Dependencies.scalaMock,
