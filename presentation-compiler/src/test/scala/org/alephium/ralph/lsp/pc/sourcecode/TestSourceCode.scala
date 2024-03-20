@@ -20,7 +20,7 @@ import scala.collection.immutable.ArraySeq
 object TestSourceCode {
 
   def genOnDisk(fileURI: Gen[URI] = genFileURI()): Gen[SourceCodeState.OnDisk] =
-    fileURI map SourceCodeState.OnDisk
+    fileURI map SourceCodeState.OnDisk.apply
 
   /** Generate a source code file on-disk */
   def genOnDiskAndPersist(fileURI: Gen[URI] = genFileURI(),

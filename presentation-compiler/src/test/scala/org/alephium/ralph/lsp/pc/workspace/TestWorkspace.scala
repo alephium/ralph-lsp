@@ -12,7 +12,7 @@ import java.net.URI
 object TestWorkspace {
 
   def genCreated(directory: Gen[URI] = TestFile.genFolderURI()): Gen[WorkspaceState.Created] =
-    directory map WorkspaceState.Created
+    directory map WorkspaceState.Created.apply
 
   /**
    * Generate a [[org.alephium.ralph.lsp.pc.workspace.WorkspaceState.Created]] workspace with OnDisk source code.

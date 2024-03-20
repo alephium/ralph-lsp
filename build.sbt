@@ -1,10 +1,65 @@
 val JAR_NAME =
   "ralph-lsp.jar"
 
+val inliningOptions =
+  Seq(
+    "-opt-warnings",
+    "-opt:l:inline",
+    "-opt-inline-from:org.alephium.explorer.**"
+    // Uncomment to debug inlining
+    /*
+    "-Yopt-log-inline",
+    "_"
+     */
+  )
+
+val commonSettings =
+  Seq(
+    name := "ralph-lsp",
+    organization := "org.alephium",
+    scalaVersion := Version.scala213,
+    scalacOptions ++=
+      Seq(
+        "-deprecation",
+        "-encoding",
+        "utf-8",
+        "-explaintypes",
+        "-feature",
+        "-unchecked",
+        // "-Xsource:3.1",
+        "-Xfatal-warnings",
+        "-Xlint:adapted-args",
+        "-Xlint:constant",
+        "-Xlint:delayedinit-select",
+        "-Xlint:doc-detached",
+        "-Xlint:inaccessible",
+        "-Xlint:infer-any",
+        "-Xlint:missing-interpolator",
+        "-Xlint:nullary-unit",
+        "-Xlint:option-implicit",
+        "-Xlint:package-object-classes",
+        "-Xlint:poly-implicit-overload",
+        "-Xlint:private-shadow",
+        "-Xlint:stars-align",
+        "-Xlint:type-parameter-shadow",
+        "-Xlint:nonlocal-return",
+        "-Ywarn-dead-code",
+        "-Ywarn-extra-implicit",
+        "-Ywarn-numeric-widen",
+        "-Ywarn-unused:implicits",
+        "-Ywarn-unused:imports",
+        "-Ywarn-unused:locals",
+        "-Ywarn-unused:params",
+        "-Ywarn-unused:patvars",
+        "-Ywarn-unused:privates",
+        "-Ywarn-value-discard"
+      ) ++ inliningOptions
+  )
+
 lazy val `compiler-access` =
   project
     .settings(
-      scalaVersion := Version.scala213,
+      commonSettings,
       libraryDependencies ++=
         Seq(
           Dependencies.ralphc,
@@ -18,7 +73,7 @@ lazy val `compiler-access` =
 lazy val `presentation-compiler` =
   project
     .settings(
-      scalaVersion := Version.scala213,
+      commonSettings,
       libraryDependencies ++=
         Seq(
           Dependencies.scalaTest,
@@ -36,8 +91,8 @@ lazy val copyJARToVSCode =
 lazy val `lsp-server` =
   project
     .settings(
-      scalaVersion := Version.scala213,
-      scalacOptions += "-Xmixin-force-forwarders:false", //Duplicate RPC method initialized.
+      commonSettings,
+      scalacOptions += "-Xmixin-force-forwarders:false", // duplicate RPC method initialized.
       assembly / mainClass := Some("org.alephium.ralph.lsp.Main"),
       assembly / assemblyJarName := JAR_NAME,
       assemblyMergeStrategy := {

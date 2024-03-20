@@ -45,7 +45,7 @@ object StdInterface extends StrictImplicitLogging {
       val interfaceFiles = use(Files.list(stdPath)).iterator().asScala.toList
 
       interfaceFiles.map { file =>
-        val code = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines.mkString("\n")
+        val code = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines().mkString("\n")
         val filePath = dependencyPath.resolve(Paths.get(stdFolder).resolve(file.getFileName.toString))
         SourceCodeState.UnCompiled(
           fileURI = filePath.toUri,

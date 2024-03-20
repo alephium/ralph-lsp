@@ -23,6 +23,7 @@ import java.net.URI
 import java.nio.file.Paths
 import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
+import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.IterableHasAsScala
 
@@ -59,6 +60,7 @@ object RalphLangServer {
       )
     )
 
+  @nowarn("cat=deprecation")
   def getRootUri(params: InitializeParams): Option[URI] =
     Option(params.getRootUri)
       .orElse(Option(params.getRootPath))
@@ -90,7 +92,7 @@ object RalphLangServer {
 
   /** Checks if the client all dynamic registeration of watched file */
   def getAllowsWatchedFilesDynamicRegistration(params: InitializeParams): Boolean = {
-    val allows =
+    val allows: Option[Boolean] =
       for {
         capabilities <- Option(params.getCapabilities())
         workspace <- Option(capabilities.getWorkspace())
@@ -194,6 +196,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
             if (error != null)
               logger.error("Failed to register watched files", error)
         }
+      ()
     } else {
       logger.debug("Client doesn't support dynamic registration for watched files")
     }
@@ -466,6 +469,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   private def setPCState(pcState: PCState): Unit =
     runSync {
       thisServer.state = thisServer.state.copy(pcState = Some(pcState))
+      ()
     }
 
   private def setClientAllowsWatchedFilesDynamicRegistration(allows: Boolean): Unit =
@@ -483,6 +487,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         case Right(trace) =>
           thisServer.state = thisServer.state.copy(trace = trace)
       }
+      ()
     }
 
   /**

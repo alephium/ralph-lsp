@@ -4,7 +4,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.net.URI
-import java.net.URLDecoder.decode
 
 class URIUtilSpec extends AnyWordSpec with Matchers {
 

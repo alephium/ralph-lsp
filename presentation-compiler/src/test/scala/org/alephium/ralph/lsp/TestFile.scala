@@ -115,11 +115,11 @@ object TestFile {
     Files.delete(Paths.get(uri))
 
   /** Recursive delete all files in this folder */
-  def deleteAll(uri: URI): Unit =
+  def deleteAll(uri: URI): Boolean =
     deleteAll(new File(uri))
 
   /** Recursive delete all files in this folder */
-  private def deleteAll(file: File): Unit = {
+  private def deleteAll(file: File): Boolean = {
     Option(file.listFiles()).foreach(_.foreach(deleteAll))
     file.delete()
   }

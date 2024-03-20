@@ -84,7 +84,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
             .value
             .map(_.asInstanceOf[SourceCodeState.Compiled])
 
-        result should have size source.size
+        result should have size source.size.toLong
 
         /** First: MyContract */
         result.head.fileURI shouldBe source.head.fileURI

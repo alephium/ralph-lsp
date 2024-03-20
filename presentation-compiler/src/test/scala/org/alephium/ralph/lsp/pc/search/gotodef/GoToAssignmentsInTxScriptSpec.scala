@@ -19,7 +19,7 @@ class GoToAssignmentsInTxScriptSpec extends AnyWordSpec with Matchers {
   }
 
   "return non-empty" when {
-    "assigned variables exist" when {
+    "assigned variables exist" in {
       goTo(
         """
           |TxScript GoToAssignment(>>counter: U256<<) {
