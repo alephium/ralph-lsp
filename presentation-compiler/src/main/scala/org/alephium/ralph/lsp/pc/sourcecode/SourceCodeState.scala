@@ -4,7 +4,6 @@ import org.alephium.ralph.lsp.access.compiler.RalphParserExtension
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.warning.StringWarning
-import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.{CompiledContract, CompiledScript}
 

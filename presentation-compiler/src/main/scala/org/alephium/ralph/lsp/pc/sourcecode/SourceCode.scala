@@ -23,7 +23,7 @@ private[pc] object SourceCode {
   def initialise(sourceDirectory: URI)(implicit file: FileAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.OnDisk]] =
     file
       .list(sourceDirectory)
-      .map(_.map(SourceCodeState.OnDisk).to(ArraySeq))
+      .map(_.map(SourceCodeState.OnDisk(_)).to(ArraySeq))
 
   /**
    * Synchronise source files with files on disk.
@@ -70,7 +70,7 @@ private[pc] object SourceCode {
             SourceCodeState.ErrorParser(
               fileURI = fileURI,
               code = code,
-              errors = Array(error)
+              errors = Seq(error)
             )
 
           case Right(parsedCode) =>

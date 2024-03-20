@@ -1,7 +1,6 @@
 package org.alephium.ralph.lsp.access.compiler.message
 
-import fastparse.IndexedParserInput
-import org.alephium.ralph.{SourceIndex, SourcePosition}
+import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.util.StringUtil._
 
 import java.net.URI

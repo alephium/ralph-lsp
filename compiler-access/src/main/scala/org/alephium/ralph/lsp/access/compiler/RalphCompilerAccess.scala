@@ -1,16 +1,13 @@
 package org.alephium.ralph.lsp.access.compiler
 
 import fastparse.Parsed
-import org.alephium.api.model.CompileProjectResult
 import org.alephium.ralph._
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error._
 import org.alephium.ralph.lsp.access.util.TryUtil
-import org.alephium.ralphc.{Config, MetaInfo, Compiler => RalphC}
 
 import java.net.URI
-import scala.collection.mutable
 
 /**
  * Implements ralph parsing and compilation functions accessing the `ralphc`.
@@ -55,48 +52,5 @@ private object RalphCompilerAccess extends CompilerAccess {
 
       Right((statefulContracts.toArray, statefulScripts.toArray))
     } catch TryUtil.catchAllThrows(workspaceErrorURI)
-
-  /** @inheritdoc */
-  override def compileForDeployment(workspaceURI: URI,
-                                    config: Config): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
-    try {
-      val ralphc = RalphC(config)
-      ralphc.compileProject() match {
-        case Left(error) =>
-          Left(StringError(error, workspaceURI))
-
-        case Right(result) =>
-          Right(buildSuccessfulCompilation(result, ralphc.metaInfos))
-      }
-    } catch TryUtil.catchAllThrows(workspaceURI)
-
-  private def buildSuccessfulCompilation(result: CompileProjectResult,
-                                         metaInfos: mutable.Map[String, MetaInfo]): (Array[CompiledContract], Array[CompiledScript]) = {
-    val scripts: Array[CompiledScript] = ???
-    //      result.scripts map {
-    //        script =>
-    //          val metaInfo = metaInfos(script.name)
-    //          val fileURI = getFileURI(metaInfo)
-    //          ???
-    //      }
-
-    val contracts: Array[CompiledContract] = ???
-    //      result.contracts map {
-    //        contract =>
-    //          val metaInfo = metaInfos(contract.name)
-    //          val fileURI = getFileURI(metaInfo)
-    //          ???
-    //      }
-
-    (contracts, scripts)
-  }
-
-  /** Given the MetaInfo, fetch the file URI */
-  private def getFileURI(metaInfo: MetaInfo): URI =
-    metaInfo
-      .artifactPath
-      .getParent
-      .resolve(s"${metaInfo.name}.ral")
-      .toUri
 
 }
