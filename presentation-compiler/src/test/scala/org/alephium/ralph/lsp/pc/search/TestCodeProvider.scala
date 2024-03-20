@@ -4,7 +4,7 @@ import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LinePosition, LineRange}
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.access.util.{StringUtil, TestStringUtil}
+import org.alephium.ralph.lsp.access.util.{StringUtil, TestCodeUtil}
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
@@ -31,7 +31,7 @@ object TestCodeProvider {
    * }}}
    */
   def apply[A](code: String)(implicit provider: CodeProvider[A]): (ArraySeq[A], SourceCodeState.IsCodeAware) = {
-    val (linePosition,_ , codeWithoutAtSymbol) = TestStringUtil.indicatorPosition(code)
+    val (linePosition,_ , codeWithoutAtSymbol) = TestCodeUtil.indicatorPosition(code)
 
     // run completion at that line and character
     val (searchResult, workspace) =
@@ -61,7 +61,7 @@ object TestCodeProvider {
    */
   def goTo(code: String): Unit = {
     val (expectedLineRanges, codeWithoutGoToSymbols, _, _) =
-        TestStringUtil.lineRanges(code)
+        TestCodeUtil.lineRanges(code)
 
     // Execute go-to definition.
     val (searchResult, sourceCode) =

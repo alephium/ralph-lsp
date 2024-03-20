@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.access.util
 import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange}
 import org.scalatest.Assertions.fail
 
-object TestStringUtil {
+object TestCodeUtil {
 
   /** Use this in your test-case for */
   private val SEARCH_INDICATOR =

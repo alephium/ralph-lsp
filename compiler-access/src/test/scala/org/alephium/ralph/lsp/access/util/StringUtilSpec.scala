@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.access.util.StringUtil._
 class StringUtilSpec extends AnyWordSpec with Matchers {
 
   def computeIndex(code: String): Unit = {
-    val (linePosition, index, codeWithoutSymbol) = TestStringUtil.indicatorPosition(code)
+    val (linePosition, index, codeWithoutSymbol) = TestCodeUtil.indicatorPosition(code)
     StringUtil.computeIndex(codeWithoutSymbol, linePosition.line, linePosition.character) shouldBe index
   }
 
@@ -30,7 +30,7 @@ class StringUtilSpec extends AnyWordSpec with Matchers {
 
   def testLineRange(code: String): Unit = {
 
-    val (expectedLineRanges, codeWithoutSymbol, from, to) = TestStringUtil.lineRanges(code)
+    val (expectedLineRanges, codeWithoutSymbol, from, to) = TestCodeUtil.lineRanges(code)
 
     buildLineRange(codeWithoutSymbol, from, to) shouldBe expectedLineRanges.head
   }
