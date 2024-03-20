@@ -3,7 +3,6 @@ package org.alephium.ralph.lsp.access.compiler
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.{Ast, CompiledContract, CompiledScript, CompilerOptions}
-import org.alephium.ralphc.Config
 
 import java.net.URI
 
@@ -40,13 +39,5 @@ trait CompilerAccess {
                        structs: Seq[Ast.Struct],
                        options: CompilerOptions,
                        workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]
-
-  /**
-   * Compile the entire workspace from disk and prepare for deployment.
-   *
-   * Prerequisite: All files are flushed to disk
-   */
-  def compileForDeployment(workspaceURI: URI,
-                           config: Config): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]
 
 }

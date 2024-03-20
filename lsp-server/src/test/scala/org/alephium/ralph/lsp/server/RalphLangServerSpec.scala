@@ -13,9 +13,11 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.nio.file.Paths
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
+import scala.annotation.nowarn
 import scala.concurrent.Promise
 import scala.jdk.FutureConverters._
 
+@nowarn("cat=deprecation")
 class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory with ScalaFutures {
 
   "initialize" should {

@@ -1,6 +1,5 @@
 package org.alephium.ralph.lsp.access.util
 
-import scala.collection.mutable.ArrayBuffer
 import org.alephium.ralph.lsp.access.compiler.message._
 
 object StringUtil {
@@ -81,13 +80,13 @@ object StringUtil {
       var start: LinePosition = null
       var end: LinePosition = null
 
-      @inline def newLine = {
+      @inline def newLine() = {
         line += 1
         col = 0
         index+=1
         char = next
       }
-      @inline def nextChar = {
+      @inline def nextChar() = {
         col += 1
         index+=1
         char = next
@@ -106,13 +105,13 @@ object StringUtil {
           // We look one char forward to differentiate `\r\n` and `\r` line endings
           next = code(index + 1)
           if (char == '\r' && next == '\n') {
-            nextChar
+            nextChar()
           } else if (char == '\r' && next != '\n') {
-            newLine
+            newLine()
           } else if (char == '\n') {
-            newLine
+            newLine()
           } else {
-            nextChar
+            nextChar()
           }
         }
       }

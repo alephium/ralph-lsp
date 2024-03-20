@@ -79,6 +79,7 @@ object TestCodeProvider {
 
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
     searchResult should contain theSameElementsAs expectedGoToLocations
+    ()
   }
 
   /**
