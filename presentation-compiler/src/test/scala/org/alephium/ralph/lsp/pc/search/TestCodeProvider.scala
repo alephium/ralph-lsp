@@ -4,7 +4,7 @@ import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LinePosition, LineRange}
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.access.util.StringUtil
+import org.alephium.ralph.lsp.access.util.{StringUtil, TestStringUtil}
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
@@ -35,8 +35,8 @@ object TestCodeProvider {
    * }}}
    */
   def apply[A](code: String)(implicit provider: CodeProvider[A]): (ArraySeq[A], SourceCodeState.IsCodeAware) = {
-    val lines =
-        code.split("\n|\r\n|\r")
+    val lines = TestStringUtil.codeLines(code)
+
 
     // find the line where @@ is located
     lines.zipWithIndex.find(_._1.contains(SEARCH_INDICATOR)) match {
@@ -80,7 +80,7 @@ object TestCodeProvider {
    */
   def goTo(code: String): Unit = {
     val lines =
-        code.split("\n|\r\n|\r")
+        TestStringUtil.codeLines(code)
         .zipWithIndex
 
     val goToStart = lines.filter(_._1.contains(">>"))

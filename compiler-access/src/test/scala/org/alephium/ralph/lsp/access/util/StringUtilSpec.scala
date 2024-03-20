@@ -9,7 +9,7 @@ class StringUtilSpec extends AnyWordSpec with Matchers {
 
   def computeIndex(code: String): Unit = {
     val index = code.indexOf("@")
-    val lines = code.split("\n|\r\n|\r").zipWithIndex
+    val lines = TestStringUtil.codeLines(code).zipWithIndex
     val (line, lineIndex) = lines.find(_._1.contains("@")).get
     val col = line.indexOf("@")
     StringUtil.computeIndex(code.replace("@",""), lineIndex, col) shouldBe index
@@ -32,7 +32,7 @@ class StringUtilSpec extends AnyWordSpec with Matchers {
   }
 
   def testLineRange(code: String): Unit = {
-    val lines = code.split("\n|\r\n|\r").zipWithIndex
+    val lines = TestStringUtil.codeLines(code).zipWithIndex
 
     val start = lines.filter(_._1.contains(">>"))
     val end = lines.filter(_._1.contains("<<"))
