@@ -32,41 +32,22 @@ class StringUtilSpec extends AnyWordSpec with Matchers {
   }
 
   def testLineRange(code: String): Unit = {
-    val lines = TestStringUtil.codeLines(code).zipWithIndex
 
-    val start = lines.filter(_._1.contains(">>"))
-    val end = lines.filter(_._1.contains("<<"))
+    val (expectedLineRanges, codeWithoutSymbol, from, to) = TestStringUtil.lineRanges(code)
 
-    val from = code.indexOf(">>")
-    val to = code.indexOf("<<") - 3
-
-    val expectedLineRange =
-      start
-        .zip(end)
-        .map {
-          case ((startLine, startLineIndex), (endLine, endLineIndex)) =>
-            LineRange(
-              from = LinePosition(startLineIndex, startLine.indexOf(">>")),
-              to = LinePosition(endLineIndex, endLine.replaceFirst(">>", "").indexOf("<<") - 1)
-            )
-        }.head
-
-    val codeWithoutSymbol =
-      code.replaceAll(">>|<<", "")
-
-    buildLineRange(codeWithoutSymbol,from, to) shouldBe expectedLineRange
+    buildLineRange(codeWithoutSymbol, from, to) shouldBe expectedLineRanges.head
   }
 
   "SourceIndexExtra" should {
     "build line range" in {
-      testLineRange(">>l<<ine1\nline2\r\nline3\rline4")
-      testLineRange(">>line1<<\nline2\r\nline3\rline4")
-      testLineRange("line1\nli>>n<<e2\r\nline3\rline4")
-      testLineRange("line1\nline2\r\nline3\r>>line4<<")
-      testLineRange(">>line1\nline2\r\nli<<ne3\rline4")
-      testLineRange(">>line1\nline2\r\nline3\rline4<<")
-      testLineRange("line1\n>>line2\r\nline3\rline4<<")
-      testLineRange("line1\nline2\r\n>>line3\rline4<<")
+      testLineRange(">>l<<ine1\nline2\r\nline3\rline4\n")
+      testLineRange(">>line1<<\nline2\r\nline3\rline4\n")
+      testLineRange("line1\nli>>n<<e2\r\nline3\rline4\n")
+      testLineRange("line1\nline2\r\nline3\r>>line4<<\n")
+      testLineRange(">>line1\nline2\r\nli<<ne3\rline4\n")
+      testLineRange(">>line1\nline2\r\nline3\rline4<<\n")
+      testLineRange("line1\n>>line2\r\nline3\rline4<<\n")
+      testLineRange("line1\nline2\r\n>>line3\rline4<<\n")
     }
 
     "fail to build time range with invalid arguments" in {

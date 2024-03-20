@@ -72,38 +72,15 @@ object TestCodeProvider {
   /**
    * Runs GoTo definition where `@@` is located
    * and expects the go-to location to be the text
-   * between the symbols `<<...>>`.
+   * between the symbols `>>...<<`.
    *
    * If the go-to symbols are not provided, then it expects empty result.
    *
-   * @param code The containing `@@` and `<<...>>` symbols.
+   * @param code The containing `@@` and `>>...<<` symbols.
    */
   def goTo(code: String): Unit = {
-    val lines =
-        TestStringUtil.codeLines(code)
-        .zipWithIndex
-
-    val goToStart = lines.filter(_._1.contains(">>"))
-    val goToEnd = lines.filter(_._1.contains("<<"))
-
-    val expectedLineRanges =
-      if (goToStart.length != goToEnd.length)
-        fail(s"Matching GoTo location indicators '<< and >>' not provided")
-      else
-        goToStart
-          .zip(goToEnd)
-          .map {
-            case ((startLine, startLineIndex), (endLine, endLineIndex)) =>
-              // Code range should be where << and >> are located
-              LineRange(
-                from = LinePosition(startLineIndex, startLine.indexOf(">>")),
-                to = LinePosition(endLineIndex, endLine.replaceFirst(">>", "").indexOf("<<"))
-              )
-          }
-
-    // remove << and >>
-    val codeWithoutGoToSymbols =
-      code.replaceAll(">>|<<", "")
+    val (expectedLineRanges, codeWithoutGoToSymbols, _, _) =
+        TestStringUtil.lineRanges(code)
 
     // Execute go-to definition.
     val (searchResult, sourceCode) =
