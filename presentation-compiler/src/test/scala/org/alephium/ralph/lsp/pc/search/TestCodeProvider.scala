@@ -22,10 +22,6 @@ import scala.collection.immutable.ArraySeq
 
 object TestCodeProvider {
 
-  /** Use this in your test-case for */
-  private val SEARCH_INDICATOR =
-    "@@"
-
   /**
    * Runs completion where `@@` is.
    *
@@ -35,38 +31,23 @@ object TestCodeProvider {
    * }}}
    */
   def apply[A](code: String)(implicit provider: CodeProvider[A]): (ArraySeq[A], SourceCodeState.IsCodeAware) = {
-    val lines = TestStringUtil.codeLines(code)
+    val (linePosition,_ , codeWithoutAtSymbol) = TestStringUtil.indicatorPosition(code)
 
+    // run completion at that line and character
+    val (searchResult, workspace) =
+      TestCodeProvider(
+        line = linePosition.line,
+        character = linePosition.character,
+        code = codeWithoutAtSymbol
+      )
 
-    // find the line where @@ is located
-    lines.zipWithIndex.find(_._1.contains(SEARCH_INDICATOR)) match {
-      case Some((line, lineIndex)) =>
-        // find the character where @@ is located
-        val character =
-          line.indexOf(SEARCH_INDICATOR)
+    workspace.sourceCode should have size 1
 
-        // remove @@
-        val codeWithoutAtSymbol =
-          code.replaceFirst(SEARCH_INDICATOR, "")
+    // delete the workspace
+    TestWorkspace delete workspace
 
-        // run completion at that line and character
-        val (searchResult, workspace) =
-          TestCodeProvider(
-            line = lineIndex,
-            character = character,
-            code = codeWithoutAtSymbol
-          )
+    (searchResult.value, workspace.sourceCode.head.asInstanceOf[SourceCodeState.IsCodeAware])
 
-        workspace.sourceCode should have size 1
-
-        // delete the workspace
-        TestWorkspace delete workspace
-
-        (searchResult.value, workspace.sourceCode.head.asInstanceOf[SourceCodeState.IsCodeAware])
-
-      case None =>
-        fail(s"Completion location indicator '$SEARCH_INDICATOR' not provided")
-    }
   }
 
   /**

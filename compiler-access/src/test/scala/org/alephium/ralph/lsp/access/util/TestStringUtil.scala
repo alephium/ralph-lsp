@@ -4,6 +4,11 @@ import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange}
 import org.scalatest.Assertions.fail
 
 object TestStringUtil {
+
+  /** Use this in your test-case for */
+  private val SEARCH_INDICATOR =
+    "@@"
+
  def codeLines(code: String): Array[String] =
     code.split("\r\n|\r|\n")
 
@@ -44,5 +49,32 @@ object TestStringUtil {
       code.replaceAll(">>|<<", "")
 
     (expectedLineRanges, codeWithoutGoToSymbols, start, end)
+  }
+
+ /**
+  *  Extracts the 'LinePosition', as well as the index from the code provided where `@@` is located.
+  */
+ def indicatorPosition(code:String) : (LinePosition, Int, String) = {
+    val lines = codeLines(code)
+
+    // find the line where @@ is located
+    lines.zipWithIndex.find(_._1.contains(SEARCH_INDICATOR)) match {
+      case Some((line, lineIndex)) =>
+        val index = code.indexOf(SEARCH_INDICATOR)
+        // find the character where @@ is located
+        val character =
+          line.indexOf(SEARCH_INDICATOR)
+
+        // remove @@
+        val codeWithoutAtSymbol =
+          code.replaceFirst(SEARCH_INDICATOR, "")
+
+        val linePosition = LinePosition(lineIndex, character)
+
+        (linePosition, index, codeWithoutAtSymbol)
+
+      case None =>
+        fail(s"Location indicator '$SEARCH_INDICATOR' not provided")
+    }
   }
 }
