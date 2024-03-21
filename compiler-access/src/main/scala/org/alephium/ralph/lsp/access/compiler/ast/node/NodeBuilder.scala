@@ -81,9 +81,19 @@ object NodeBuilder extends StrictLogging {
       val children = buildOne(positioned)
       List(Node(positioned, children))
 
+    case (left: Positioned, right: Positioned) =>
+      val leftChildren = buildOne(left)
+      val rightChildren = buildOne(right)
+      List(
+        Node(left, leftChildren),
+        Node(right, rightChildren)
+      )
+
     case Some(positioned: Positioned) =>
-      val children = buildOne(positioned)
-      List(Node(positioned, children))
+      positionedProducts(positioned)
+
+    case Some(tuple @ (_: Positioned, _: Positioned)) =>
+      positionedProducts(tuple)
 
     case positions: Seq[_] =>
       buildMany(positions)

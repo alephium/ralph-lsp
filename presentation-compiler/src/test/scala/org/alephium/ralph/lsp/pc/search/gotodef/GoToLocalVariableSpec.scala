@@ -71,6 +71,21 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "variable is in an ApproveAsset expression" in {
+      goTo(
+        """
+          |Contract GoToTest() {
+          |
+          |  pub fn function() -> () {
+          |    >>let varA = 123
+          |    <<obj.fun{builtIn!() -> ALPH: varA@@}(somethingElse)
+          |  }
+          |
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
 }
