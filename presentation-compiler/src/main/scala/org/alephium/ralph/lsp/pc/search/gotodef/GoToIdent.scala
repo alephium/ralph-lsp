@@ -73,7 +73,7 @@ private object GoToIdent {
             .map(_.data)
             .to(ArraySeq)
             .collect {
-              // Check: Parent is an enum definition which contains the enum field.
+              // Check: Parent is an event definition which contains the event field.
               case eventDef: Ast.EventDef if eventDef.fields.exists(_.ident == field.ident) =>
                 goToEventFieldUsage(
                   eventDefId = eventDef.id,

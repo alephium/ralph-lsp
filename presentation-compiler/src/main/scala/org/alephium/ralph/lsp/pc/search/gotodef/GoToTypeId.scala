@@ -33,7 +33,7 @@ private object GoToTypeId {
           )
 
         case enumDef: Ast.EnumDef if enumDef.id == typeId =>
-          // They selected an enum definition. Take 'em there!
+          // They selected an enum definition. Find enum usages.
           goToEnumTypeUsage(
             enumDef = enumDef,
             source = source
@@ -47,7 +47,7 @@ private object GoToTypeId {
           )
 
         case eventDef: Ast.EventDef if eventDef.id == typeId =>
-          // They selected an enum definition. Take 'em there!
+          // They selected an event definition. Find event usages.
           goToEventDefUsage(
             eventDef = eventDef,
             source = source
