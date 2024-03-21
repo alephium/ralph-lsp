@@ -5,8 +5,6 @@ import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 
-import scala.collection.immutable.ArraySeq
-
 private object GoToIdent {
 
   /**
@@ -19,10 +17,10 @@ private object GoToIdent {
    * */
   def goTo(identNode: Node[Ast.Positioned],
            ident: Ast.Ident,
-           source: Tree.Source): ArraySeq[Ast.Positioned] =
+           source: Tree.Source): Iterator[Ast.Positioned] =
     identNode
       .parent // take one step up to check the type of ident node.
-      .to(ArraySeq)
+      .iterator
       .collect {
         case variableNode @ Node(variable: Ast.Variable[_], _) if variable.id == ident =>
           // They selected a variable. Take 'em there!
@@ -53,7 +51,7 @@ private object GoToIdent {
           node
             .parent
             .map(_.data)
-            .to(ArraySeq)
+            .iterator
             .collect {
               // Check: Parent is an enum definition which contains the enum field.
               case enumDef: Ast.EnumDef if enumDef.fields.exists(_.ident == field.ident) =>
@@ -71,7 +69,7 @@ private object GoToIdent {
           node
             .parent
             .map(_.data)
-            .to(ArraySeq)
+            .iterator
             .collect {
               // Check: Parent is an event definition which contains the event field.
               case eventDef: Ast.EventDef if eventDef.fields.exists(_.ident == field.ident) =>
@@ -238,17 +236,16 @@ private object GoToIdent {
    * @return An array sequence of [[Ast.EnumField]]s matching the search result.
    * */
   private def goToEnumField(fieldSelector: Ast.EnumFieldSelector[_],
-                            source: Tree.Source): ArraySeq[Ast.EnumField] =
+                            source: Tree.Source): Seq[Ast.EnumField] =
     source.ast match {
       case Left(contract: Ast.Contract) =>
         contract
           .enums
           .filter(_.id == fieldSelector.enumId)
           .flatMap(_.fields.find(_.ident == fieldSelector.field))
-          .to(ArraySeq)
 
       case Left(_: Ast.ContractInterface | _: Ast.TxScript) | Right(_: Ast.Struct) =>
-        ArraySeq.empty
+        Seq.empty
     }
 
   /**
@@ -299,7 +296,7 @@ private object GoToIdent {
    * @return An array sequence of variable usage IDs.
    */
   private def goToVariableUsages(ident: Ast.Ident,
-                                 from: Node[Ast.Positioned]): ArraySeq[Ast.Ident] =
+                                 from: Node[Ast.Positioned]): Iterator[Ast.Ident] =
     from
       .walkDown
       .collect {
@@ -307,7 +304,6 @@ private object GoToIdent {
         case Node(variable: Ast.Variable[_], _) if variable.id == ident =>
           variable.id
       }
-      .to(ArraySeq)
 
   /**
    * Navigate to the nearest code block for which the given child node is in scope.
