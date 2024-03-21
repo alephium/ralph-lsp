@@ -6,7 +6,6 @@ import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 
 import scala.collection.immutable.ArraySeq
-import scala.util.Try
 
 private object GoToIdent {
 
@@ -77,7 +76,7 @@ private object GoToIdent {
               // Check: Parent is an enum definition which contains the enum field.
               case eventDef: Ast.EventDef if eventDef.fields.exists(_.ident == field.ident) =>
                 goToEventFieldUsage(
-                  eventTypeId = eventDef.id,
+                  eventDefId = eventDef.id,
                   eventFieldIndex = eventDef.fields.indexWhere(_.ident == field.ident),
                   source = source
                 )
@@ -273,25 +272,24 @@ private object GoToIdent {
       }
 
   /**
-   * Navigate to all event usages for the given event type ID and the index of the event field.
+   * Navigate to all event field usages for an event at the index of the event field.
    *
-   * @param eventTypeId     The event type ID to find.
+   * @param eventDefId      The event definition ID to find.
    * @param eventFieldIndex The index of the event field.
    * @param source          The source tree to search within.
    * @return An iterator over expressions defined in position of the event field.
    */
-  private def goToEventFieldUsage(eventTypeId: Ast.TypeId,
+  private def goToEventFieldUsage(eventDefId: Ast.TypeId,
                                   eventFieldIndex: Int,
                                   source: Tree.Source): Iterator[Ast.Expr[_]] =
     source
       .rootNode
       .walkDown
       .collect {
-        // find all the selections matching the enum and the enum's field type.
-        case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == eventTypeId =>
-          Try(emitEvent.args(eventFieldIndex)).toOption
+        // find all the event fields usages at given eventFieldIndex.
+        case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == eventDefId && eventFieldIndex < emitEvent.args.length =>
+          emitEvent.args(eventFieldIndex)
       }
-      .flatten
 
   /**
    * Navigate to all variable usages for the given variable identifier.
