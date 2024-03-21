@@ -58,7 +58,7 @@ private object GoToIdent {
             .collect {
               // Check: Parent is an enum definition which contains the enum field.
               case enumDef: Ast.EnumDef if enumDef.fields.exists(_.ident == field.ident) =>
-                goToEnumFieldCalls(
+                goToEnumFieldUsage(
                   enumType = enumDef.id,
                   enumField = field,
                   source = source
@@ -253,16 +253,16 @@ private object GoToIdent {
     }
 
   /**
-   * Navigate to all enum calls for the given enum type and field.
+   * Navigate to all enum usages for the given enum type and field.
    *
    * @param enumType  The enum type to find.
    * @param enumField The enum field to find.
    * @param source    The source tree to search within.
-   * @return An array sequence of enum field identities matching the search result.
+   * @return An iterator over used/accessed enum field identities.
    * */
-  private def goToEnumFieldCalls(enumType: Ast.TypeId,
+  private def goToEnumFieldUsage(enumType: Ast.TypeId,
                                  enumField: Ast.EnumField,
-                                 source: Tree.Source): ArraySeq[Ast.Ident] =
+                                 source: Tree.Source): Iterator[Ast.Ident] =
     source
       .rootNode
       .walkDown
@@ -271,8 +271,6 @@ private object GoToIdent {
         case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumType && selector.field == enumField.ident =>
           selector.field
       }
-      .to(ArraySeq)
-
 
   /**
    * Navigate to all event usages for the given event type ID and the index of the event field.
