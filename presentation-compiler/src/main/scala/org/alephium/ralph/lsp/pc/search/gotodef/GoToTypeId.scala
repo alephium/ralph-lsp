@@ -5,8 +5,6 @@ import org.alephium.ralph.Ast.Positioned
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 
-import scala.collection.immutable.ArraySeq
-
 private object GoToTypeId {
 
   /**
@@ -19,23 +17,37 @@ private object GoToTypeId {
    * */
   def goTo(identNode: Node[Positioned],
            typeId: Ast.TypeId,
-           source: Tree.Source): ArraySeq[Ast.Positioned] =
+           source: Tree.Source): Iterator[Ast.Positioned] =
     identNode
       .parent // take one step up to check the type of TypeId node.
       .map(_.data)
-      .to(ArraySeq)
+      .iterator
       .collect {
         case enumFieldSelector: Ast.EnumFieldSelector[_] if enumFieldSelector.enumId == typeId =>
-          // The user clicked on an enum type. Take 'em there!
+          // They selected an enum type. Take 'em there!
           goToEnumType(
             enumSelector = enumFieldSelector,
             source = source
           )
 
         case enumDef: Ast.EnumDef if enumDef.id == typeId =>
-          // The user clicked on an enum definition. Take 'em there!
-          goToEnumTypeCalls(
+          // They selected an enum definition. Find enum usages.
+          goToEnumTypeUsage(
             enumDef = enumDef,
+            source = source
+          )
+
+        case emitEvent: Ast.EmitEvent[_] if emitEvent.id == typeId =>
+          // They selected an event emit. Take 'em there!
+          goToEventDef(
+            emitEvent,
+            source = source
+          )
+
+        case eventDef: Ast.EventDef if eventDef.id == typeId =>
+          // They selected an event definition. Find event usages.
+          goToEventDefUsage(
+            eventDef = eventDef,
             source = source
           )
       }
@@ -48,27 +60,26 @@ private object GoToTypeId {
    * @return An array sequence of enum [[Ast.TypeId]]s matching the search result.
    * */
   private def goToEnumType(enumSelector: Ast.EnumFieldSelector[_],
-                           source: Tree.Source): ArraySeq[Ast.TypeId] =
+                           source: Tree.Source): Seq[Ast.TypeId] =
     source.ast match {
       case Left(contract: Ast.Contract) =>
         contract
           .enums
           .filter(_.id == enumSelector.enumId)
           .map(_.id)
-          .to(ArraySeq)
 
       case Left(_: Ast.ContractInterface | _: Ast.TxScript) | Right(_: Ast.Struct) =>
-        ArraySeq.empty
+        Seq.empty
     }
 
-  /** Navigate to the enum type name calls.
+  /** Navigate to the enum type name usage.
    *
-   * @param enumDef The enum definition contain the enum type identifier to find calls for.
+   * @param enumDef The enum definition containing the enum type identifier to find calls for.
    * @param source  The source tree to search within.
    * @return An array sequence of enum type [[Ast.TypeId]]s matching the search result.
    * */
-  private def goToEnumTypeCalls(enumDef: Ast.EnumDef,
-                                source: Tree.Source): ArraySeq[Ast.TypeId] =
+  private def goToEnumTypeUsage(enumDef: Ast.EnumDef,
+                                source: Tree.Source): Iterator[Ast.TypeId] =
     source
       .rootNode
       .walkDown
@@ -76,6 +87,38 @@ private object GoToTypeId {
         case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumDef.id =>
           selector.enumId
       }
-      .to(ArraySeq)
+
+  /**
+   * Navigate to the event definition.
+   *
+   * @param emitEvent The event definition contain the event type identifier to find calls for.
+   * @param source    The source tree to search within.
+   * @return An array sequence of event definitions [[Ast.EventDef]]s matching the search result.
+   */
+  private def goToEventDef(emitEvent: Ast.EmitEvent[_],
+                           source: Tree.Source): Iterator[Ast.EventDef] =
+    source
+      .rootNode
+      .walkDown
+      .collect {
+        case Node(eventDef: Ast.EventDef, _) if eventDef.id == emitEvent.id =>
+          eventDef
+      }
+
+  /** Navigate to the event type name usages.
+   *
+   * @param eventDef The event definition containing the enum type identifier to find calls for.
+   * @param source   The source tree to search within.
+   * @return An array sequence of enum type [[Ast.TypeId]]s matching the search result.
+   * */
+  private def goToEventDefUsage(eventDef: Ast.EventDef,
+                                source: Tree.Source): Iterator[Ast.TypeId] =
+    source
+      .rootNode
+      .walkDown
+      .collect {
+        case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == eventDef.id =>
+          emitEvent.id
+      }
 
 }

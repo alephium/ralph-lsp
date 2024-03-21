@@ -5,8 +5,6 @@ import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 
-import scala.collection.immutable.ArraySeq
-
 private object GoToIdent {
 
   /**
@@ -19,10 +17,10 @@ private object GoToIdent {
    * */
   def goTo(identNode: Node[Ast.Positioned],
            ident: Ast.Ident,
-           source: Tree.Source): ArraySeq[Ast.Positioned] =
+           source: Tree.Source): Iterator[Ast.Positioned] =
     identNode
       .parent // take one step up to check the type of ident node.
-      .to(ArraySeq)
+      .iterator
       .collect {
         case variableNode @ Node(variable: Ast.Variable[_], _) if variable.id == ident =>
           // They selected a variable. Take 'em there!
@@ -53,13 +51,31 @@ private object GoToIdent {
           node
             .parent
             .map(_.data)
-            .to(ArraySeq)
+            .iterator
             .collect {
               // Check: Parent is an enum definition which contains the enum field.
               case enumDef: Ast.EnumDef if enumDef.fields.exists(_.ident == field.ident) =>
-                goToEnumFieldCalls(
+                goToEnumFieldUsage(
                   enumType = enumDef.id,
                   enumField = field,
+                  source = source
+                )
+            }
+            .flatten
+
+        case node @ Node(field: Ast.EventField, _) if field.ident == ident =>
+          // They selected an event field.
+          // Check the parent to find the event definition.
+          node
+            .parent
+            .map(_.data)
+            .iterator
+            .collect {
+              // Check: Parent is an event definition which contains the event field.
+              case eventDef: Ast.EventDef if eventDef.fields.exists(_.ident == field.ident) =>
+                goToEventFieldUsage(
+                  eventDefId = eventDef.id,
+                  eventFieldIndex = eventDef.fields.indexWhere(_.ident == field.ident),
                   source = source
                 )
             }
@@ -220,30 +236,29 @@ private object GoToIdent {
    * @return An array sequence of [[Ast.EnumField]]s matching the search result.
    * */
   private def goToEnumField(fieldSelector: Ast.EnumFieldSelector[_],
-                            source: Tree.Source): ArraySeq[Ast.EnumField] =
+                            source: Tree.Source): Seq[Ast.EnumField] =
     source.ast match {
       case Left(contract: Ast.Contract) =>
         contract
           .enums
           .filter(_.id == fieldSelector.enumId)
           .flatMap(_.fields.find(_.ident == fieldSelector.field))
-          .to(ArraySeq)
 
       case Left(_: Ast.ContractInterface | _: Ast.TxScript) | Right(_: Ast.Struct) =>
-        ArraySeq.empty
+        Seq.empty
     }
 
   /**
-   * Navigate to all enum calls for the given enum type and field.
+   * Navigate to all enum usages for the given enum type and field.
    *
    * @param enumType  The enum type to find.
    * @param enumField The enum field to find.
    * @param source    The source tree to search within.
-   * @return An array sequence of enum field identities matching the search result.
+   * @return An iterator over used/accessed enum field identities.
    * */
-  private def goToEnumFieldCalls(enumType: Ast.TypeId,
+  private def goToEnumFieldUsage(enumType: Ast.TypeId,
                                  enumField: Ast.EnumField,
-                                 source: Tree.Source): ArraySeq[Ast.Ident] =
+                                 source: Tree.Source): Iterator[Ast.Ident] =
     source
       .rootNode
       .walkDown
@@ -252,7 +267,26 @@ private object GoToIdent {
         case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumType && selector.field == enumField.ident =>
           selector.field
       }
-      .to(ArraySeq)
+
+  /**
+   * Navigate to all event field usages for an event at the index of the event field.
+   *
+   * @param eventDefId      The event definition ID to find.
+   * @param eventFieldIndex The index of the event field.
+   * @param source          The source tree to search within.
+   * @return An iterator over expressions defined in position of the event field.
+   */
+  private def goToEventFieldUsage(eventDefId: Ast.TypeId,
+                                  eventFieldIndex: Int,
+                                  source: Tree.Source): Iterator[Ast.Expr[_]] =
+    source
+      .rootNode
+      .walkDown
+      .collect {
+        // find all the event fields usages at given eventFieldIndex.
+        case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == eventDefId && eventFieldIndex < emitEvent.args.length =>
+          emitEvent.args(eventFieldIndex)
+      }
 
   /**
    * Navigate to all variable usages for the given variable identifier.
@@ -262,7 +296,7 @@ private object GoToIdent {
    * @return An array sequence of variable usage IDs.
    */
   private def goToVariableUsages(ident: Ast.Ident,
-                                 from: Node[Ast.Positioned]): ArraySeq[Ast.Ident] =
+                                 from: Node[Ast.Positioned]): Iterator[Ast.Ident] =
     from
       .walkDown
       .collect {
@@ -270,7 +304,6 @@ private object GoToIdent {
         case Node(variable: Ast.Variable[_], _) if variable.id == ident =>
           variable.id
       }
-      .to(ArraySeq)
 
   /**
    * Navigate to the nearest code block for which the given child node is in scope.
