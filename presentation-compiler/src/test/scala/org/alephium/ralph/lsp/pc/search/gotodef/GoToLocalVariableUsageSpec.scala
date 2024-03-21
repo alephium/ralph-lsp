@@ -48,6 +48,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
           |    let varA = >>varB<<
           |    let varB@@ = varA
           |    let varC = >>varB<<
+          |    obj.fun{builtIn!() -> ALPH: >>varB<<}(somethingElse)
           |  }
           |
           |}
@@ -67,6 +68,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
           |         index <= 4;
           |         index = >>varB<< + 1) {
           |       function(>>varB<<)
+          |       obj.fun{builtIn!() -> ALPH: >>varB<<}(somethingElse)
           |    }
           |  }
           |}
