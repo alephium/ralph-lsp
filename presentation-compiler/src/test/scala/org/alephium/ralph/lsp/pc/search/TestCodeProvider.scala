@@ -2,9 +2,9 @@ package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LinePosition, LineRange}
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.access.util.StringUtil
+import org.alephium.ralph.lsp.access.util.TestCodeUtil
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
@@ -12,7 +12,6 @@ import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
 import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, Workspace, WorkspaceState}
 import org.scalacheck.Gen
-import org.scalatest.Assertions.fail
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers._
@@ -21,10 +20,6 @@ import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
 object TestCodeProvider {
-
-  /** Use this in your test-case for */
-  private val SEARCH_INDICATOR =
-    "@@"
 
   /**
    * Runs completion where `@@` is.
@@ -35,76 +30,37 @@ object TestCodeProvider {
    * }}}
    */
   def apply[A](code: String)(implicit provider: CodeProvider[A]): (ArraySeq[A], SourceCodeState.IsCodeAware) = {
-    val lines =
-      StringUtil.codeLines(code)
+    val (linePosition,_ , codeWithoutAtSymbol) = TestCodeUtil.indicatorPosition(code)
 
-    // find the line where @@ is located
-    lines.zipWithIndex.find(_._1.contains(SEARCH_INDICATOR)) match {
-      case Some((line, lineIndex)) =>
-        // find the character where @@ is located
-        val character =
-          line.indexOf(SEARCH_INDICATOR)
+    // run completion at that line and character
+    val (searchResult, workspace) =
+      TestCodeProvider(
+        line = linePosition.line,
+        character = linePosition.character,
+        code = codeWithoutAtSymbol
+      )
 
-        // remove @@
-        val codeWithoutAtSymbol =
-          code.replaceFirst(SEARCH_INDICATOR, "")
+    workspace.sourceCode should have size 1
 
-        // run completion at that line and character
-        val (searchResult, workspace) =
-          TestCodeProvider(
-            line = lineIndex,
-            character = character,
-            code = codeWithoutAtSymbol
-          )
+    // delete the workspace
+    TestWorkspace delete workspace
 
-        workspace.sourceCode should have size 1
+    (searchResult.value, workspace.sourceCode.head.asInstanceOf[SourceCodeState.IsCodeAware])
 
-        // delete the workspace
-        TestWorkspace delete workspace
-
-        (searchResult.value, workspace.sourceCode.head.asInstanceOf[SourceCodeState.IsCodeAware])
-
-      case None =>
-        fail(s"Completion location indicator '$SEARCH_INDICATOR' not provided")
-    }
   }
 
   /**
    * Runs GoTo definition where `@@` is located
    * and expects the go-to location to be the text
-   * between the symbols `<<...>>`.
+   * between the symbols `>>...<<`.
    *
    * If the go-to symbols are not provided, then it expects empty result.
    *
-   * @param code The containing `@@` and `<<...>>` symbols.
+   * @param code The containing `@@` and `>>...<<` symbols.
    */
   def goTo(code: String): Unit = {
-    val lines =
-      StringUtil
-        .codeLines(code)
-        .zipWithIndex
-
-    val goToStart = lines.filter(_._1.contains(">>"))
-    val goToEnd = lines.filter(_._1.contains("<<"))
-
-    val expectedLineRanges =
-      if (goToStart.length != goToEnd.length)
-        fail(s"Matching GoTo location indicators '<< and >>' not provided")
-      else
-        goToStart
-          .zip(goToEnd)
-          .map {
-            case ((startLine, startLineIndex), (endLine, endLineIndex)) =>
-              // Code range should be where << and >> are located
-              LineRange(
-                from = LinePosition(startLineIndex, startLine.indexOf(">>")),
-                to = LinePosition(endLineIndex, endLine.replaceFirst(">>", "").indexOf("<<"))
-              )
-          }
-
-    // remove << and >>
-    val codeWithoutGoToSymbols =
-      code.replaceAll(">>|<<", "")
+    val (expectedLineRanges, codeWithoutGoToSymbols, _, _) =
+        TestCodeUtil.lineRanges(code)
 
     // Execute go-to definition.
     val (searchResult, sourceCode) =
