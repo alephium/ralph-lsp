@@ -34,7 +34,7 @@ private object GoToTypeId {
 
         case enumDef: Ast.EnumDef if enumDef.id == typeId =>
           // They selected an enum definition. Take 'em there!
-          goToEnumTypeCalls(
+          goToEnumTypeUsage(
             enumDef = enumDef,
             source = source
           )
@@ -75,13 +75,13 @@ private object GoToTypeId {
         ArraySeq.empty
     }
 
-  /** Navigate to the enum type name calls.
+  /** Navigate to the enum type name usage.
    *
    * @param enumDef The enum definition containing the enum type identifier to find calls for.
    * @param source  The source tree to search within.
    * @return An array sequence of enum type [[Ast.TypeId]]s matching the search result.
    * */
-  private def goToEnumTypeCalls(enumDef: Ast.EnumDef,
+  private def goToEnumTypeUsage(enumDef: Ast.EnumDef,
                                 source: Tree.Source): ArraySeq[Ast.TypeId] =
     source
       .rootNode
@@ -122,8 +122,8 @@ private object GoToTypeId {
       .rootNode
       .walkDown
       .collect {
-        case Node(selector: Ast.EmitEvent[_], _) if selector.id == eventDef.id =>
-          selector.id
+        case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == eventDef.id =>
+          emitEvent.id
       }
       .to(ArraySeq)
 
