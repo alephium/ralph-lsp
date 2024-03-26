@@ -38,7 +38,7 @@ object TestDependency {
       ).asInstanceOf[BuildState.BuildCompiled]
 
     // dependency should exists in the build
-    dependencyBuild.dependency shouldBe defined
+    dependencyBuild.dependencies should have size 2
 
     // return the build (the build contains the std workspace)
     dependencyBuild

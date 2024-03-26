@@ -3,50 +3,76 @@ package org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorEmptyErrorsOnDownload
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, RalphcConfig}
 import org.alephium.ralph.{CompilerOptions, SourceIndex}
 
 import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 
-object DependencyDownloader extends StrictImplicitLogging {
+/**
+ * A dependency downloader, responsible for downloading code dependencies into an un-compiled workspace.
+ */
+trait DependencyDownloader extends StrictImplicitLogging { self =>
 
   /**
-   * Download the Std package and return an un-compiled workspace for compilation.
+   * Downloads dependency code to an un-compiled workspace.
    *
-   * @param errorIndex Use this index to report any errors processing the download.
+   * @param dependencyPath The configured dependency directory.
+   * @param errorIndex     Index to report downloading errors.
+   * @return Either an array of downloading errors or an un-compiled workspace on successful download.
    */
-  def downloadStd(dependencyPath: Path,
-                  errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
-    StdInterfaceDownloader.stdInterfaces(
+  protected def _download(dependencyPath: Path,
+                          errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled]
+
+  /**
+   * Invokes the function [[_download]], checking that errors are non-empty.
+   *
+   * @param dependencyPath The configured dependency directory.
+   * @param errorIndex     Index to report downloading errors.
+   * @return Either an array of downloading errors or an un-compiled workspace on successful download.
+   */
+  final def download(dependencyPath: Path,
+                     errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
+    _download(
       dependencyPath = dependencyPath,
       errorIndex = errorIndex
     ) match {
-      case Right(source) =>
-        // a default build file.
-        val build =
-          defaultBuildForStd(dependencyPath)
+      case left @ Left(errors) =>
+        // Log when the downloader results in empty errors.
+        // This is to detect scenarios where compilation stalls due to a bug, leading to no error reported to the editor.
+        // This log should help in tracing that bug.
+        if (errors.isEmpty) {
+          val error = ErrorEmptyErrorsOnDownload(self, errorIndex)
+          logger.error(error.message)
+          Left(ArraySeq(error))
+        } else {
+          left
+        }
 
-        val state =
-          WorkspaceState.UnCompiled(
-            build = build,
-            sourceCode = source.to(ArraySeq)
-          )
-
-        Right(state)
-
-      case Left(error) =>
-        Left(ArraySeq(error))
+      case right @ Right(_) =>
+        right
     }
+
+}
+
+object DependencyDownloader {
+
+  /** All dependency downloaders */
+  def all(): ArraySeq[DependencyDownloader] =
+    ArraySeq(
+      StdInterfaceDownloader,
+      BuiltInFunctionDownloader
+    )
 
   /**
    * Currently dependencies do not contain a `ralph.json` file.
-   * This function create a default one for the `std` package.
+   * This function create a default file.
+   *
+   * @param workspaceDir The directory of the workspace for which this build file is being created.
+   * @return Compiled build state representing the default `ralph.json`.
    */
-  private def defaultBuildForStd(dependencyPath: Path): BuildState.BuildCompiled = {
-    val workspaceDir =
-      dependencyPath resolve StdInterfaceDownloader.stdFolder
-
+  def defaultBuild(workspaceDir: Path): BuildState.BuildCompiled = {
     val buildDir =
       workspaceDir resolve Build.BUILD_FILE_NAME
 
@@ -63,7 +89,7 @@ object DependencyDownloader extends StrictImplicitLogging {
     BuildState.BuildCompiled(
       buildURI = buildDir.toUri,
       code = json,
-      dependency = None,
+      dependencies = ArraySeq.empty,
       dependencyPath = workspaceDir,
       config = compiledConfig
     )

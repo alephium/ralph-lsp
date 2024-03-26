@@ -9,6 +9,7 @@ import org.alephium.ralph.lsp.pc.state.{PCState, PCStateUpdater}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 
@@ -138,9 +139,9 @@ object Workspace extends StrictImplicitLogging {
             val buildErrored =
               BuildState.BuildErrored(
                 buildURI = newBuild.buildURI,
-                code = Some(newBuild.code),
+                codeOption = Some(newBuild.code),
                 errors = ArraySeq(error),
-                dependency = currentBuild.dependency,
+                dependencies = currentBuild.dependencies,
                 activateWorkspace = Some(activateWorkspace)
               )
 
@@ -196,9 +197,9 @@ object Workspace extends StrictImplicitLogging {
         val buildError =
           BuildState.BuildErrored(
             buildURI = state.buildURI,
-            code = Some(state.code),
+            codeOption = Some(state.code),
             errors = ArraySeq(error),
-            dependency = state.dependency,
+            dependencies = state.dependencies,
             activateWorkspace = None
           )
 
@@ -268,7 +269,7 @@ object Workspace extends StrictImplicitLogging {
     val compilationResult =
       SourceCode.compile(
         sourceCode = workspace.sourceCode,
-        dependency = workspace.build.dependency.map(_.sourceCode),
+        dependency = workspace.build.findDependency(DependencyID.Std).to(ArraySeq).flatMap(_.sourceCode),
         compilerOptions = workspace.build.config.compilerOptions,
         workspaceErrorURI = workspace.workspaceURI
       )
@@ -339,7 +340,7 @@ object Workspace extends StrictImplicitLogging {
             pcState.buildErrors match {
               case Some(errored) =>
                 // use the code from the previous build's compilation run
-                errored.code
+                errored.codeOption
 
               case None =>
                 // previous build was good, use the compiled build code

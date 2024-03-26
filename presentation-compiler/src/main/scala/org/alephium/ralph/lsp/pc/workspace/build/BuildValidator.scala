@@ -82,9 +82,9 @@ object BuildValidator {
       Some(
         BuildErrored( // report errors
           buildURI = parsed.buildURI,
-          code = Some(parsed.code),
+          codeOption = Some(parsed.code),
           errors = ArraySeq.from(errors),
-          dependency = None,
+          dependencies = ArraySeq.empty,
           activateWorkspace = None
         )
       )
@@ -146,9 +146,9 @@ object BuildValidator {
           val errorState =
             BuildErrored( // report errors
               buildURI = parsed.buildURI,
-              code = Some(parsed.code),
+              codeOption = Some(parsed.code),
               errors = ArraySeq.from(errors),
-              dependency = None,
+              dependencies = ArraySeq.empty,
               activateWorkspace = None
             )
 
@@ -160,9 +160,9 @@ object BuildValidator {
         val errors =
           BuildErrored(
             buildURI = parsed.buildURI,
-            code = Some(parsed.code),
+            codeOption = Some(parsed.code),
             errors = ArraySeq(error),
-            dependency = None,
+            dependencies = ArraySeq.empty,
             activateWorkspace = None
           )
 

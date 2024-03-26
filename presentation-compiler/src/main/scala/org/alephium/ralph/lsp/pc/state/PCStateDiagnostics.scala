@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.pc.diagnostic.{CodeDiagnostic, CodeDiagnosticSever
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 import java.net.URI
 import scala.collection.mutable.ListBuffer
@@ -49,14 +50,14 @@ object PCStateDiagnostics {
         val buildDiagnostics =
           toFileDiagnostics(
             fileURI = build.buildURI,
-            code = build.code,
+            code = build.codeOption,
             errors = List.empty, // clear old errors
             severity = CodeDiagnosticSeverity.Error
           )
 
         // build diagnostics for the dependency
         val dependencyDiagnostics =
-          build.dependency.to(Array) flatMap toFileDiagnostics
+          build.dependencies.to(Array) flatMap toFileDiagnostics
 
         // collect all diagnostics
         dependencyDiagnostics :+ buildDiagnostics
@@ -66,14 +67,14 @@ object PCStateDiagnostics {
         val buildDiagnostics =
           toFileDiagnostics(
             fileURI = build.buildURI,
-            code = build.code,
+            code = build.codeOption,
             errors = build.errors.to(List),
             severity = CodeDiagnosticSeverity.Error
           )
 
         // build diagnostics for the dependency
         val dependencyDiagnostics =
-          build.dependency.to(Array) flatMap toFileDiagnostics
+          build.dependencies.to(Array) flatMap toFileDiagnostics
 
         dependencyDiagnostics :+ buildDiagnostics
 
@@ -82,19 +83,25 @@ object PCStateDiagnostics {
         val buildDiagnostics =
           toFileDiagnostics(
             fileURI = newBuild.buildURI,
-            code = newBuild.code,
+            code = newBuild.codeOption,
             errors = newBuild.errors.to(List),
             severity = CodeDiagnosticSeverity.Error
           )
 
-        // Build dependency diagnostics given previous dependency diagnostics.
         val dependencyDiagnostics =
-          toFileDiagnosticsForWorkspace(
-            currentWorkspace = oldBuild.dependency,
-            newWorkspace = newBuild.dependency
-          )
+          DependencyID
+            .all()
+            .flatMap {
+              dependencyID =>
+                // Build dependency diagnostics given previous dependency diagnostics.
+                toFileDiagnosticsForWorkspace(
+                  currentWorkspace = oldBuild.findDependency(dependencyID),
+                  newWorkspace = newBuild.findDependency(dependencyID)
+                )
+            }
 
-        dependencyDiagnostics.to(Array) :+ buildDiagnostics
+
+        dependencyDiagnostics ++ Iterable(buildDiagnostics)
 
       case (None, None) =>
         // No state change occurred. Nothing to diagnose.

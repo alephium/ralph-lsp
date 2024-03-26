@@ -43,7 +43,7 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
         val importedCode =
           Importer.typeCheck(
             sourceCode = ArraySeq(parsed),
-            dependency = None
+            dependency = ArraySeq.empty
           )
 
         // there are no imports
@@ -111,7 +111,7 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
         val importedCode =
           Importer.typeCheck(
             sourceCode = ArraySeq(myCode),
-            dependency = Some(ArraySeq(dependency))
+            dependency = ArraySeq(dependency)
           ).value
 
         // type check returns the dependency.
@@ -149,7 +149,7 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
         val actualError =
           Importer.typeCheck(
             sourceCode = ArraySeq(myCode),
-            dependency = None
+            dependency = ArraySeq.empty
           ).left.value
 
         // The error must report the import's AST as UnknownImport

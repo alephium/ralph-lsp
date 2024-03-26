@@ -1,19 +1,52 @@
 package org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader
 
 import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDownloadingDependency
 
 import java.net.URI
 import java.nio.file.{FileSystems, Files, Path, Paths}
+import scala.collection.immutable.ArraySeq
 import scala.io.Source
 import scala.jdk.CollectionConverters.{IteratorHasAsScala, MapHasAsJava}
 import scala.util.{Failure, Success, Using}
 
-object StdInterfaceDownloader extends StrictImplicitLogging {
+private object StdInterfaceDownloader extends DependencyDownloader with StrictImplicitLogging {
 
-  val stdFolder = "std"
+  /**
+   * Download the Std package and return an un-compiled workspace for compilation.
+   *
+   * @param errorIndex Use this index to report any errors processing the download.
+   */
+  protected def _download(dependencyPath: Path,
+                          errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
+    build(
+      dependencyPath = dependencyPath,
+      errorIndex = errorIndex
+    ) match {
+      case Right(interfacesSource) =>
+        val workspaceDir =
+          dependencyPath resolve DependencyID.Std.dirName
+
+        // a default build file.
+        val build =
+          DependencyDownloader.defaultBuild(workspaceDir)
+
+        val state =
+          WorkspaceState.UnCompiled(
+            build = build,
+            sourceCode = interfacesSource.to(ArraySeq)
+          )
+
+        Right(state)
+
+      case Left(error) =>
+        Left(ArraySeq(error))
+    }
 
   /*
    * Get std interfaces, when using sbt it reads it from disk, when using with the jar
@@ -29,10 +62,10 @@ object StdInterfaceDownloader extends StrictImplicitLogging {
    * We rely here on `Using` https://www.scala-lang.org/api/2.13.6/scala/util/Using$.html
    * to handle resources.
    */
-  def stdInterfaces(dependencyPath: Path,
+  private def build(dependencyPath: Path,
                     errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ErrorDownloadingDependency, List[SourceCodeState.UnCompiled]] =
     Using.Manager { use =>
-      val stdURL = getClass.getResource(s"/$stdFolder")
+      val stdURL = getClass.getResource(s"/${DependencyID.Std.dirName}")
 
       val stdPath = if (stdURL.getProtocol == "file") {
         Paths.get(stdURL.toURI)
@@ -46,7 +79,7 @@ object StdInterfaceDownloader extends StrictImplicitLogging {
 
       interfaceFiles.map { file =>
         val code = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines().mkString("\n")
-        val filePath = dependencyPath.resolve(Paths.get(stdFolder).resolve(file.getFileName.toString))
+        val filePath = dependencyPath.resolve(Paths.get(DependencyID.Std.dirName).resolve(file.getFileName.toString))
         SourceCodeState.UnCompiled(
           fileURI = filePath.toUri,
           code = code
@@ -59,7 +92,7 @@ object StdInterfaceDownloader extends StrictImplicitLogging {
       case Failure(throwable) =>
         val error =
           ErrorDownloadingDependency(
-            dependencyID = StdInterfaceDownloader.stdFolder,
+            dependencyID = DependencyID.Std.dirName,
             throwable = throwable,
             index = errorIndex
           )

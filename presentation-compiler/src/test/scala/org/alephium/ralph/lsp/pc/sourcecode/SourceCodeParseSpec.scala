@@ -77,7 +77,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
               SourceCode
                 .compile(
                   sourceCode = ArraySeq(parsed),
-                  dependency = None,
+                  dependency = ArraySeq.empty,
                   compilerOptions = compilerOptions,
                   workspaceErrorURI = parsed.fileURI
                 )

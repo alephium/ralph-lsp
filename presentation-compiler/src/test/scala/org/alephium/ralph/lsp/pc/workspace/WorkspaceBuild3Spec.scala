@@ -58,7 +58,7 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
         val expectedBuildError =
           BuildState.BuildErrored(
             buildURI = buildCompiled.buildURI,
-            code = Some("blah"), // the invalid build code is carried forward
+            codeOption = Some("blah"), // the invalid build code is carried forward
             errors =
               ArraySeq(
                 ErrorInvalidBuildSyntax( /// the syntax error
@@ -67,7 +67,7 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
                   message = """expected json value got "b""""
                 )
               ),
-            dependency = buildCompiled.dependency, // dependency is carried forward
+            dependencies = buildCompiled.dependencies, // dependency is carried forward
             activateWorkspace = // new workspace is activated with input source-code
               Some(
                 WorkspaceState.UnCompiled(

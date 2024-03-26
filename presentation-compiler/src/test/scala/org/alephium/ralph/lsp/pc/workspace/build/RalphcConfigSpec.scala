@@ -127,7 +127,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
             currentBuild = None
           ).asInstanceOf[BuildState.BuildCompiled]
 
-      compiledStd.dependency shouldBe defined
+      compiledStd.dependencies should have size 2
 
       val expectedDependenciesPath =
         config.dependencyPath match {
@@ -142,7 +142,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         BuildState.BuildCompiled(
           buildURI = expectedBuildPath.toUri,
           code = expectedCode,
-          dependency = compiledStd.dependency,
+          dependencies = compiledStd.dependencies,
           dependencyPath = expectedDependenciesPath,
           config = expectedCompiledConfig
         )

@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 /**
  * Implements [[CodeProvider]] that provides code completion results of type [[Suggestion]].
@@ -25,7 +26,7 @@ private[search] object CodeCompletionProvider extends CodeProvider[Suggestion] w
             // request is for import statement completion
             ImportCompleter.complete(
               cursorIndex = cursorIndex,
-              dependency = workspace.build.dependency,
+              dependency = workspace.build.findDependency(DependencyID.Std),
               imported = importStatement
             ).iterator
 

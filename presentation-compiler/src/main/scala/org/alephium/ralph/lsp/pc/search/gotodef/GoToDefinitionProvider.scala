@@ -7,6 +7,7 @@ import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 /**
  * Implements [[CodeProvider]] that provides go-to definition results of type [[GoToLocation]].
@@ -26,7 +27,7 @@ private[search] object GoToDefinitionProvider extends CodeProvider[GoToLocation]
             // request is for import go-to definition
             GoToImport.goTo(
               cursorIndex = cursorIndex,
-              dependency = workspace.build.dependency,
+              dependency = workspace.build.findDependency(DependencyID.Std),
               importStatement = importStatement
             ).iterator
 

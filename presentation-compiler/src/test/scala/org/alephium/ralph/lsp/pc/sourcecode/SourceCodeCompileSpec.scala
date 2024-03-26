@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.TestDependency
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.alephium.ralph.{CompiledContract, CompiledScript, CompilerOptions}
 import org.scalatest.EitherValues._
@@ -25,7 +25,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
         val result =
           SourceCode.compile(
             sourceCode = ArraySeq.empty,
-            dependency = None,
+            dependency = ArraySeq.empty,
             compilerOptions = CompilerOptions.Default,
             workspaceErrorURI = TestFile.genFolderURI().sample.value
           ).value
@@ -43,7 +43,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
         val result =
           SourceCode.compile(
             sourceCode = ArraySeq.empty,
-            dependency = dependencyBuild.dependency.map(_.sourceCode),
+            dependency = dependencyBuild.findDependency(DependencyID.Std).value.sourceCode,
             compilerOptions = CompilerOptions.Default,
             workspaceErrorURI = TestFile.genFolderURI().sample.value
           ).value
@@ -77,7 +77,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
           SourceCode
             .compile(
               sourceCode = source,
-              dependency = None,
+              dependency = ArraySeq.empty,
               compilerOptions = CompilerOptions.Default,
               workspaceErrorURI = Paths.get(source.head.fileURI).getParent.toUri // workspace URI
             )

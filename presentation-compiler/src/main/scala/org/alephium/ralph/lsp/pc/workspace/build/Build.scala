@@ -36,9 +36,9 @@ object Build {
       case Left(error) =>
         BuildErrored(
           buildURI = buildURI,
-          code = Some(json),
+          codeOption = Some(json),
           errors = ArraySeq(error),
-          dependency = None,
+          dependencies = ArraySeq.empty,
           activateWorkspace = None
         )
 
@@ -56,9 +56,9 @@ object Build {
       case Left(error) =>
         BuildErrored(
           buildURI = buildURI,
-          code = None,
+          codeOption = None,
           errors = ArraySeq(error),
-          dependency = None,
+          dependencies = ArraySeq.empty,
           activateWorkspace = None
         )
 
@@ -80,7 +80,7 @@ object Build {
         currentBuild match {
           case Some(currentBuild) =>
             // carry the dependency for existing build forward.
-            errored.copy(dependency = currentBuild.dependency)
+            errored.copy(dependencies = currentBuild.dependencies)
 
           case None =>
             errored
@@ -114,9 +114,9 @@ object Build {
       case Left(error) =>
         BuildErrored(
           buildURI = buildURI,
-          code = None,
+          codeOption = None,
           errors = ArraySeq(error),
-          dependency = currentBuild.flatMap(_.dependency),
+          dependencies = currentBuild.to(ArraySeq).flatMap(_.dependencies),
           activateWorkspace = None
         )
 
@@ -129,9 +129,9 @@ object Build {
         else
           BuildErrored(
             buildURI = buildURI,
-            code = None,
+            codeOption = None,
             errors = ArraySeq(ErrorBuildFileNotFound(buildURI)),
-            dependency = currentBuild.flatMap(_.dependency),
+            dependencies = currentBuild.to(ArraySeq).flatMap(_.dependencies),
             activateWorkspace = None
           )
     }
@@ -192,9 +192,9 @@ object Build {
         val buildError =
           BuildState.BuildErrored(
             buildURI = buildURI,
-            code = code,
+            codeOption = code,
             errors = ArraySeq(error),
-            dependency = currentBuild.dependency,
+            dependencies = currentBuild.dependencies,
             activateWorkspace = None
           )
 

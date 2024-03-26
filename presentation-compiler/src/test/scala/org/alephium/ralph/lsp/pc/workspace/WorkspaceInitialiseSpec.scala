@@ -68,11 +68,11 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
               // randomly set dependency to None or Some
               val dependencyRandom =
                 Gen
-                  .oneOf(None, compiled.dependency)
+                  .oneOf(ArraySeq.empty, compiled.dependencies)
                   .sample
                   .get
 
-              compiled.copy(dependency = dependencyRandom)
+              compiled.copy(dependencies = dependencyRandom)
           }
 
       forAll(generator) {
@@ -96,9 +96,9 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
           val expectedError =
             BuildState.BuildErrored(
               buildURI = initialBuild.buildURI,
-              code = Some(initialBuild.code),
+              codeOption = Some(initialBuild.code),
               errors = ArraySeq(errorIO), // the error is reported
-              dependency = initialBuild.dependency, // dependency is carried forward
+              dependencies = initialBuild.dependencies, // dependency is carried forward
               activateWorkspace = None // continue with existing workspace
             )
 

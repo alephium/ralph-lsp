@@ -3,6 +3,7 @@ package org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
+import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers
@@ -17,10 +18,10 @@ class StdInterfaceDownloaderSpec extends AnyWordSpec with Matchers {
 
   "stdInterfaces" should {
     val stdInterfaces =
-      StdInterfaceDownloader.stdInterfaces(
+      StdInterfaceDownloader.download(
         dependencyPath = Paths.get("my_workspace"),
         errorIndex = SourceIndexExtra.zero(TestFile.genFolderURI().sample.value)
-      ).value
+      ).value.sourceCode.map(_.asInstanceOf[SourceCodeState.UnCompiled])
 
     "be defined" in {
       //Will fail if web3 wasn't download correctly
