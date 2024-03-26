@@ -9,11 +9,12 @@ import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
+import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
-import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, Workspace, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace, Workspace}
 import org.scalacheck.Gen
+import org.scalatest.Assertion
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers._
@@ -60,7 +61,7 @@ object TestCodeProvider {
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
-  def goTo(code: String): Unit = {
+  def goTo(code: String): Assertion = {
     val (expectedLineRanges, codeWithoutGoToSymbols, _, _) =
         TestCodeUtil.lineRanges(code)
 
@@ -80,7 +81,6 @@ object TestCodeProvider {
 
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
     searchResult.toList should contain theSameElementsAs expectedGoToLocations
-    ()
   }
 
   /**
@@ -91,7 +91,7 @@ object TestCodeProvider {
    * @param expected Expected resulting built-in function.
    */
   def goToBuiltIn(code: String,
-                  expected: Option[String]): Unit = {
+                  expected: Option[String]): Assertion = {
     val (_, codeWithoutGoToSymbols, _, _) =
       TestCodeUtil.lineRanges(code)
 
@@ -131,11 +131,9 @@ object TestCodeProvider {
 
         // assert that the go-to definition jumps to all text between the go-to symbols << and >>
         searchResult.toList should contain theSameElementsAs expectedResults
-        ()
 
       case None =>
         searchResult shouldBe empty
-        ()
     }
   }
 

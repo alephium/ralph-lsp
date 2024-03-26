@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
+import org.scalatest.Assertion
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -25,7 +26,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "constant has multiple usages" when {
-      def doTest(contractName: String): Unit =
+      def doTest(contractName: String): Assertion =
         goTo(
           s"""
              |Contract $contractName() {
