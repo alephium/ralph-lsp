@@ -2,8 +2,8 @@ package org.alephium.ralph.lsp.pc.workspace.build.dependency
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
-import org.alephium.ralph.lsp.pc.sourcecode.imports.StdInterface
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.StdInterfaceDownloader
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, RalphcConfig}
 import org.alephium.ralph.{CompilerOptions, SourceIndex}
 
@@ -19,7 +19,7 @@ object DependencyDownloader extends StrictImplicitLogging {
    */
   def downloadStd(dependencyPath: Path,
                   errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
-    StdInterface.stdInterfaces(
+    StdInterfaceDownloader.stdInterfaces(
       dependencyPath = dependencyPath,
       errorIndex = errorIndex
     ) match {
@@ -46,7 +46,7 @@ object DependencyDownloader extends StrictImplicitLogging {
    */
   private def defaultBuildForStd(dependencyPath: Path): BuildState.BuildCompiled = {
     val workspaceDir =
-      dependencyPath resolve StdInterface.stdFolder
+      dependencyPath resolve StdInterfaceDownloader.stdFolder
 
     val buildDir =
       workspaceDir resolve Build.BUILD_FILE_NAME

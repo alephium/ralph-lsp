@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.sourcecode.imports
+package org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader
 
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
@@ -11,7 +11,7 @@ import scala.io.Source
 import scala.jdk.CollectionConverters.{IteratorHasAsScala, MapHasAsJava}
 import scala.util.{Failure, Success, Using}
 
-object StdInterface extends StrictImplicitLogging {
+object StdInterfaceDownloader extends StrictImplicitLogging {
 
   val stdFolder = "std"
 
@@ -59,7 +59,7 @@ object StdInterface extends StrictImplicitLogging {
       case Failure(throwable) =>
         val error =
           ErrorDownloadingDependency(
-            dependencyID = StdInterface.stdFolder,
+            dependencyID = StdInterfaceDownloader.stdFolder,
             throwable = throwable,
             index = errorIndex
           )
