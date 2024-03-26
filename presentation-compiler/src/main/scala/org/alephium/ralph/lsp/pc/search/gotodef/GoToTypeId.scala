@@ -4,20 +4,24 @@ import org.alephium.ralph.Ast
 import org.alephium.ralph.Ast.Positioned
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
+import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
+import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 
 private object GoToTypeId {
 
   /**
    * Navigate to the positioned ASTs for the given type identifier.
    *
-   * @param identNode The node representing the type identifier in the AST.
-   * @param typeId    The type identifier for which the [[Ast.TypeId]] is sought.
-   * @param source    The source tree to search within.
+   * @param identNode  The node representing the type identifier in the AST.
+   * @param typeId     The type identifier for which the [[Ast.TypeId]] is sought.
+   * @param source     The source tree to search within.
+   * @param sourceCode The parsed state of the source-code where the search is executed.
    * @return An array sequence of positioned ASTs matching the search result.
    * */
   def goTo(identNode: Node[Positioned],
            typeId: Ast.TypeId,
-           source: Tree.Source): Iterator[Ast.Positioned] =
+           source: Tree.Source,
+           sourceCode: SourceCodeState.Parsed): Iterator[GoToLocation] =
     identNode.parent match { // take one step up to check the type of TypeId node.
       case Some(parent) =>
         parent match {
@@ -26,28 +30,28 @@ private object GoToTypeId {
             goToEnumType(
               enumSelector = enumFieldSelector,
               source = source
-            )
+            ).flatMap(GoToLocation(_, sourceCode))
 
           case Node(enumDef: Ast.EnumDef, _) if enumDef.id == typeId =>
             // They selected an enum definition. Find enum usages.
             goToEnumTypeUsage(
               enumDef = enumDef,
               source = source
-            )
+            ).flatMap(GoToLocation(_, sourceCode))
 
           case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == typeId =>
             // They selected an event emit. Take 'em there!
             goToEventDef(
               emitEvent,
               source = source
-            )
+            ).flatMap(GoToLocation(_, sourceCode))
 
           case Node(eventDef: Ast.EventDef, _) if eventDef.id == typeId =>
             // They selected an event definition. Find event usages.
             goToEventDefUsage(
               eventDef = eventDef,
               source = source
-            )
+            ).flatMap(GoToLocation(_, sourceCode))
 
           case _ =>
             Iterator.empty

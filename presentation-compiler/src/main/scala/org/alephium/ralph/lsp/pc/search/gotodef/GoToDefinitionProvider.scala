@@ -37,7 +37,8 @@ private[search] object GoToDefinitionProvider extends CodeProvider[GoToLocation]
             GoToSource.goTo(
               cursorIndex = cursorIndex,
               sourceCode = sourceCode,
-              sourceAST = source
+              sourceAST = source,
+              dependencyBuiltIn = workspace.build.findDependency(DependencyID.BuiltIn)
             )
         }
 
