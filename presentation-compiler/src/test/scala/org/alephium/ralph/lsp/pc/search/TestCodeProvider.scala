@@ -7,6 +7,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.access.util.TestCodeUtil
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
@@ -80,6 +81,17 @@ object TestCodeProvider {
     searchResult should contain theSameElementsAs expectedGoToLocations
     ()
   }
+
+  /**
+   * Runs code completion where `@@` is positioned.
+   *
+   * @param code The code to run code completion on.
+   * @return A list of code completion suggestions.
+   */
+  def suggest(code: String): List[Suggestion] =
+    TestCodeProvider[Suggestion](code)
+      ._1
+      .toList
 
   /**
    * Run test completion.
