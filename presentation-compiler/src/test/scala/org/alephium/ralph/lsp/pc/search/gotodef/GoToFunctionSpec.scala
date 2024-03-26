@@ -57,5 +57,31 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "function is an interface function" should {
+      "highlight the entire function signature" in {
+        goTo(
+          """
+            |Abstract Contract Test() {
+            |
+            |  >>fn function() -> ()<<
+            |
+            |  >>fn function(address: Address) -> ()<<
+            |
+            |  // this function has a body so only the function ID is highlighted.
+            |  fn >>function<<() -> () {
+            |     assert!()
+            |  }
+            |
+            |  fn main() -> () {
+            |    function@@()
+            |  }
+            |
+            |}
+            |""".stripMargin
+        )
+
+      }
+    }
   }
 }

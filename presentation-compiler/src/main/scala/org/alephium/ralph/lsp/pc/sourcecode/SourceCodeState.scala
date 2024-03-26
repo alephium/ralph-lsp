@@ -17,7 +17,9 @@ sealed trait SourceCodeState {
    *
    * Can be concurrently accessed or not accessed at all.
    *
-   * @see [[URIUtil.importIdentifier]] */
+   * @return An AST representing this source file's import string literal.
+   * @see [[URIUtil.importIdentifier]]
+   */
   lazy val importIdentifier: Option[Tree.Import] =
     URIUtil
       .importIdentifier(fileURI)

@@ -17,17 +17,14 @@ object Importer {
    *         - Right: The imported code.
    */
   def typeCheck(sourceCode: ArraySeq[SourceCodeState.Parsed],
-                dependency: Option[ArraySeq[SourceCodeState.Compiled]]): Either[ArraySeq[SourceCodeState.ErrorCompilation], ArraySeq[SourceCodeState.Compiled]] = {
-    val dependencyOrEmpty =
-      dependency getOrElse ArraySeq.empty
-
+                dependency: ArraySeq[SourceCodeState.Compiled]): Either[ArraySeq[SourceCodeState.ErrorCompilation], ArraySeq[SourceCodeState.Compiled]] = {
     // run import type check on every source file
     val imported =
       sourceCode map {
         sourceCode =>
           typeCheck(
             sourceCode = sourceCode,
-            dependency = dependencyOrEmpty
+            dependency = dependency
           )
       }
 

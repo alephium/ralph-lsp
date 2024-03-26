@@ -151,7 +151,7 @@ object TestSourceCode {
     val result =
       SourceCode.compile(
         sourceCode = ArraySeq(parsed),
-        dependency = None,
+        dependency = ArraySeq.empty,
         compilerOptions = CompilerOptions.Default,
         workspaceErrorURI = parsed.fileURI
       )

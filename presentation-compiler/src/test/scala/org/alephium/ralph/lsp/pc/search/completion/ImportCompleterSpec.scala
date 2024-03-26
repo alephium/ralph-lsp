@@ -4,7 +4,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.search.TestCodeProvider
+import org.alephium.ralph.lsp.pc.search.TestCodeProvider.suggest
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -16,18 +16,18 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "cursor is before the quotes" in {
-      TestCodeProvider[Suggestion]("""import @@"std" """)._1 shouldBe empty
-      TestCodeProvider[Suggestion]("""import @@"std/" """)._1 shouldBe empty
+      suggest("""import @@"std" """) shouldBe empty
+      suggest("""import @@"std/" """) shouldBe empty
     }
 
     "cursor is after the quotes" in {
-      TestCodeProvider[Suggestion]("""import "std"@@ """)._1 shouldBe empty
-      TestCodeProvider[Suggestion]("""import "std/"@@ """)._1 shouldBe empty
+      suggest("""import "std"@@ """) shouldBe empty
+      suggest("""import "std/"@@ """) shouldBe empty
     }
 
     "cursor is right after the import statement" in {
-      TestCodeProvider[Suggestion]("""import@@ "std" """)._1 shouldBe empty
-      TestCodeProvider[Suggestion]("""import@@ "std/" """)._1 shouldBe empty
+      suggest("""import@@ "std" """) shouldBe empty
+      suggest("""import@@ "std/" """) shouldBe empty
     }
   }
 
@@ -50,17 +50,17 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
       }
 
     "cursor is between the quotes" in {
-      TestCodeProvider[Suggestion]("""import "@@" """)._1 should contain theSameElementsAs expected
-      TestCodeProvider[Suggestion]("""import "s@@" """)._1 should contain theSameElementsAs expected
-      TestCodeProvider[Suggestion]("""import "st@@" """)._1 should contain theSameElementsAs expected
-      TestCodeProvider[Suggestion]("""import "std@@" """)._1 should contain theSameElementsAs expected
+      suggest("""import "@@" """) should contain theSameElementsAs expected
+      suggest("""import "s@@" """) should contain theSameElementsAs expected
+      suggest("""import "st@@" """) should contain theSameElementsAs expected
+      suggest("""import "std@@" """) should contain theSameElementsAs expected
     }
 
     "cursor is before the forward slash" in {
-      TestCodeProvider[Suggestion]("""import "@@std/" """)._1 should contain theSameElementsAs expected
-      TestCodeProvider[Suggestion]("""import "s@@td/" """)._1 should contain theSameElementsAs expected
-      TestCodeProvider[Suggestion]("""import "st@@d/" """)._1 should contain theSameElementsAs expected
-      TestCodeProvider[Suggestion]("""import "std@@/" """)._1 should contain theSameElementsAs expected
+      suggest("""import "@@std/" """) should contain theSameElementsAs expected
+      suggest("""import "s@@td/" """) should contain theSameElementsAs expected
+      suggest("""import "st@@d/" """) should contain theSameElementsAs expected
+      suggest("""import "std@@/" """) should contain theSameElementsAs expected
     }
   }
 
@@ -83,11 +83,11 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
       }
 
     "cursor is after the forward slash" in {
-      TestCodeProvider[Suggestion]("""import "std/@@" """)._1 should contain theSameElementsAs expected
-      TestCodeProvider[Suggestion]("""import "std/fungible@@" """)._1 should contain theSameElementsAs expected
-      TestCodeProvider[Suggestion]("""import "std/fungible_@@" """)._1 should contain theSameElementsAs expected
-      TestCodeProvider[Suggestion]("""import "std/nft@@" """)._1 should contain theSameElementsAs expected
-      TestCodeProvider[Suggestion]("""import "std/nft_@@" """)._1 should contain theSameElementsAs expected
+      suggest("""import "std/@@" """) should contain theSameElementsAs expected
+      suggest("""import "std/fungible@@" """) should contain theSameElementsAs expected
+      suggest("""import "std/fungible_@@" """) should contain theSameElementsAs expected
+      suggest("""import "std/nft@@" """) should contain theSameElementsAs expected
+      suggest("""import "std/nft_@@" """) should contain theSameElementsAs expected
     }
   }
 }

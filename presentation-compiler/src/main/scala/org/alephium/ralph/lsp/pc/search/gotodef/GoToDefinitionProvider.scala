@@ -7,8 +7,7 @@ import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-
-import scala.collection.immutable.ArraySeq
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 /**
  * Implements [[CodeProvider]] that provides go-to definition results of type [[GoToLocation]].
@@ -17,9 +16,10 @@ import scala.collection.immutable.ArraySeq
  */
 private[search] object GoToDefinitionProvider extends CodeProvider[GoToLocation] with StrictImplicitLogging {
 
+  /** @inheritdoc */
   override def search(cursorIndex: Int,
                       sourceCode: SourceCodeState.Parsed,
-                      workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): ArraySeq[GoToLocation] =
+                      workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): Iterator[GoToLocation] =
     // find the statement where this cursorIndex sits.
     sourceCode.ast.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>
@@ -28,20 +28,21 @@ private[search] object GoToDefinitionProvider extends CodeProvider[GoToLocation]
             // request is for import go-to definition
             GoToImport.goTo(
               cursorIndex = cursorIndex,
-              dependency = workspace.build.dependency,
+              dependency = workspace.build.findDependency(DependencyID.Std),
               importStatement = importStatement
-            )
+            ).iterator
 
           case source: Tree.Source =>
             // request is for source-code go-to definition
             GoToSource.goTo(
               cursorIndex = cursorIndex,
               sourceCode = sourceCode,
-              sourceAST = source
+              sourceAST = source,
+              dependencyBuiltIn = workspace.build.findDependency(DependencyID.BuiltIn)
             )
         }
 
       case None =>
-        ArraySeq.empty
+        Iterator.empty
     }
 }

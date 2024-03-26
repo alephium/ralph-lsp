@@ -66,9 +66,9 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
                   Some(
                     BuildState.BuildErrored(
                       buildURI = build.buildURI,
-                      code = None, // because workspace is in created state
+                      codeOption = None, // because workspace is in created state
                       errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
-                      dependency = None, // because workspace is in created state
+                      dependencies = ArraySeq.empty, // because workspace is in created state
                       activateWorkspace = None
                     )
                   )
@@ -131,9 +131,9 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
                   Some(
                     BuildState.BuildErrored(
                       buildURI = build.buildURI,
-                      code = None, // no code is stored because the build is deleted
+                      codeOption = None, // no code is stored because the build is deleted
                       errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
-                      dependency = build.dependency, // dependency from previous build is carried
+                      dependencies = build.dependencies, // dependency from previous build is carried
                       activateWorkspace = Some(workspace) // the same workspace with inside-code and outside-code is stored.
                     )
                   )

@@ -1,8 +1,22 @@
 package org.alephium.ralph.lsp.pc.util
 
+import java.util
 import scala.collection.immutable.ArraySeq
 
 object CollectionUtil {
+
+  /**
+   * Converts an iterator to a Java ArrayList.
+   *
+   * @param iterator The iterator to convert.
+   * @tparam A The type of elements.
+   * @return A Java ArrayList containing the elements from the iterator.
+   */
+  def toJavaList[A](iterator: Iterator[A]): util.ArrayList[A] = {
+    val javaList = new util.ArrayList[A]()
+    iterator.foreach(javaList.add)
+    javaList
+  }
 
   implicit class CollectionUtilImplicits[+A](val collection: ArraySeq[A]) extends AnyVal {
 

@@ -7,11 +7,14 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.access.util.TestCodeUtil
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
+import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
-import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, Workspace, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace, Workspace}
 import org.scalacheck.Gen
+import org.scalatest.Assertion
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers._
@@ -29,7 +32,7 @@ object TestCodeProvider {
    *   TestCompleter(""" import "@@" """)
    * }}}
    */
-  def apply[A](code: String)(implicit provider: CodeProvider[A]): (ArraySeq[A], SourceCodeState.IsCodeAware) = {
+  private def apply[A](code: String)(implicit provider: CodeProvider[A]): (Iterator[A], SourceCodeState.IsCodeAware, WorkspaceState.IsParsedAndCompiled) = {
     val (linePosition,_ , codeWithoutAtSymbol) = TestCodeUtil.indicatorPosition(code)
 
     // run completion at that line and character
@@ -45,7 +48,7 @@ object TestCodeProvider {
     // delete the workspace
     TestWorkspace delete workspace
 
-    (searchResult.value, workspace.sourceCode.head.asInstanceOf[SourceCodeState.IsCodeAware])
+    (searchResult.value, workspace.sourceCode.head.asInstanceOf[SourceCodeState.IsCodeAware], workspace)
 
   }
 
@@ -58,12 +61,12 @@ object TestCodeProvider {
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
-  def goTo(code: String): Unit = {
+  def goTo(code: String): Assertion = {
     val (expectedLineRanges, codeWithoutGoToSymbols, _, _) =
         TestCodeUtil.lineRanges(code)
 
     // Execute go-to definition.
-    val (searchResult, sourceCode) =
+    val (searchResult, sourceCode, _) =
       TestCodeProvider[GoToLocation](codeWithoutGoToSymbols)
 
     // Expect GoToLocations to also contain the fileURI
@@ -77,9 +80,73 @@ object TestCodeProvider {
       }
 
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-    searchResult should contain theSameElementsAs expectedGoToLocations
-    ()
+    searchResult.toList should contain theSameElementsAs expectedGoToLocations
   }
+
+  /**
+   * Runs go-to definition where `@@` is positioned, expecting
+   * the resulting go-to definition to be a built-in function.
+   *
+   * @param code     The code with the search indicator '@@'.
+   * @param expected Expected resulting built-in function.
+   */
+  def goToBuiltIn(code: String,
+                  expected: Option[String]): Assertion = {
+    val (_, codeWithoutGoToSymbols, _, _) =
+      TestCodeUtil.lineRanges(code)
+
+    // Execute go-to definition.
+    val (searchResult, _, workspace) =
+      TestCodeProvider[GoToLocation](codeWithoutGoToSymbols)
+
+    expected match {
+      case Some(expectedFunction) =>
+        val expectedResults =
+          workspace
+            .build
+            .findDependency(DependencyID.BuiltIn)
+            .to(ArraySeq)
+            .flatMap(_.sourceCode)
+            .filter(_.code.contains(expectedFunction)) // filter built-in workspace's source-files that contain this built-in function.
+            .flatMap {
+              builtInFile =>
+                // insert symbol >>..<<
+                val codeWithRangeSymbols =
+                  builtInFile
+                    .code
+                    .replace(expectedFunction, s">>$expectedFunction<<")
+
+                // compute the line range
+                TestCodeUtil
+                  .lineRanges(codeWithRangeSymbols)
+                  ._1
+                  .map {
+                    lineRange =>
+                      GoToLocation(
+                        uri = builtInFile.fileURI,
+                        lineRange = lineRange
+                      )
+                  }
+            }
+
+        // assert that the go-to definition jumps to all text between the go-to symbols << and >>
+        searchResult.toList should contain theSameElementsAs expectedResults
+
+      case None =>
+        searchResult shouldBe empty
+    }
+  }
+
+  /**
+   * Runs code completion where `@@` is positioned.
+   *
+   * @param code The code to run code completion on.
+   * @return A list of code completion suggestions.
+   */
+  def suggest(code: String): List[Suggestion] =
+    TestCodeProvider[Suggestion](code)
+      ._1
+      .toList
 
   /**
    * Run test completion.
@@ -91,7 +158,7 @@ object TestCodeProvider {
    */
   private def apply[A](line: Int,
                        character: Int,
-                       code: Gen[String])(implicit provider: CodeProvider[A]): (Either[CompilerMessage.Error, ArraySeq[A]], WorkspaceState.IsParsedAndCompiled) = {
+                       code: Gen[String])(implicit provider: CodeProvider[A]): (Either[CompilerMessage.Error, Iterator[A]], WorkspaceState.IsParsedAndCompiled) = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess = FileAccess.disk
     implicit val compiler: CompilerAccess = CompilerAccess.ralphc

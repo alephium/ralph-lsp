@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 /** Test for go to function */
-class GoToFunctionCallsSpec extends AnyWordSpec with Matchers {
+class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "function calls do not exist" in {

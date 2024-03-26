@@ -212,7 +212,7 @@ private[pc] object SourceCode {
    * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
    */
   def compile(sourceCode: ArraySeq[SourceCodeState.Parsed],
-              dependency: Option[ArraySeq[SourceCodeState.Compiled]],
+              dependency: ArraySeq[SourceCodeState.Compiled],
               compilerOptions: CompilerOptions,
               workspaceErrorURI: URI)(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
     Importer.typeCheck(

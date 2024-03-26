@@ -8,6 +8,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 
 import java.nio.file.{Path, Paths}
+import scala.collection.immutable.ArraySeq
 
 object DependencyDB extends StrictImplicitLogging {
 
@@ -17,50 +18,33 @@ object DependencyDB extends StrictImplicitLogging {
    * @param parentBuild Build of the parent workspace.
    * @return Compiled compiled or build errors.
    */
+
   def persist(parentBuild: BuildState.IsCompiled,
               index: SourceIndex)(implicit file: FileAccess,
-                                  logger: ClientLogger): BuildState.IsCompiled =
-    parentBuild match {
-      case build: BuildState.BuildCompiled =>
-        persistCompiled(
-          build = build,
-          index = index
-        )
+                                  logger: ClientLogger): BuildState.IsCompiled = {
+    val (errors, _) =
+      parentBuild
+        .dependencies
+        .flatMap(_.sourceCode)
+        .collect {
+          case source: SourceCodeState.IsCodeAware =>
+            persistSource(source, index)
+        }
+        .partitionMap(identity)
 
-      case errored: BuildState.BuildErrored =>
-        errored
-    }
-
-  private def persistCompiled(build: BuildState.BuildCompiled,
-                              index: SourceIndex)(implicit file: FileAccess,
-                                                  logger: ClientLogger): BuildState.IsCompiled = {
-    val result =
-      build
-        .dependency
-        .map(_.sourceCode.map(persistSource(_, index)))
-
-    result match {
-      case Some(result) =>
-        val (errors, _) =
-          result partitionMap identity
-
-        if (errors.nonEmpty)
-          BuildState.BuildErrored(
-            buildURI = build.buildURI,
-            code = Some(build.code),
-            errors = errors,
-            dependency = None,
-            activateWorkspace = None
-          )
-        else
-          build
-
-      case None =>
-        build
-    }
+    if (errors.nonEmpty)
+      BuildState.BuildErrored(
+        buildURI = parentBuild.buildURI,
+        codeOption = parentBuild.codeOption,
+        errors = errors,
+        dependencies = ArraySeq.empty,
+        activateWorkspace = None
+      )
+    else
+      parentBuild
   }
 
-  private def persistSource(source: SourceCodeState.Compiled,
+  private def persistSource(source: SourceCodeState.IsCodeAware,
                             index: SourceIndex)(implicit file: FileAccess,
                                                 logger: ClientLogger): Either[CompilerMessage.AnyError, Path] =
     file.exists(
