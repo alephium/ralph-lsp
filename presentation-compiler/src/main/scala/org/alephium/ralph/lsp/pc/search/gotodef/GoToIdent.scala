@@ -103,6 +103,9 @@ private object GoToIdent {
               fromNodeIdent = argument.ident,
               source = source
             )
+
+          case _ =>
+            Iterator.empty
         }
 
       case None =>

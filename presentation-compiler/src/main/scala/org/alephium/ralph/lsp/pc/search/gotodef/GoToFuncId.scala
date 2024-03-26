@@ -18,35 +18,38 @@ private object GoToFuncId {
   def goTo(funcIdNode: Node[Positioned],
            funcId: Ast.FuncId,
            source: Tree.Source): Iterator[Ast.Positioned] =
-    funcIdNode
-      .parent // take one step up to check the type of function call.
-      .map(_.data)
-      .iterator
-      .collect {
-        case callExpr: Ast.CallExpr[_] if callExpr.id == funcId =>
-          // The user clicked on a local function. Take 'em there!
-          goToLocalFunction(
-            funcId = funcId,
-            source = source
-          )
+    funcIdNode.parent match { // take one step up to check the type of function call.
+      case Some(parent) =>
+        parent match {
+          case Node(callExpr: Ast.CallExpr[_], _) if callExpr.id == funcId =>
+            // The user clicked on a local function. Take 'em there!
+            goToLocalFunction(
+              funcId = funcId,
+              source = source
+            )
 
-        case funcCall: Ast.FuncCall[_] if funcCall.id == funcId =>
-          goToLocalFunction(
-            funcId = funcCall.id,
-            source = source
-          )
+          case Node(funcCall: Ast.FuncCall[_], _) if funcCall.id == funcId =>
+            goToLocalFunction(
+              funcId = funcCall.id,
+              source = source
+            )
 
-        case funcDef: Ast.FuncDef[_] if funcDef.id == funcId =>
-          goToFunctionCalls(
-            funcId = funcDef.id,
-            source = source
-          )
+          case Node(funcDef: Ast.FuncDef[_], _) if funcDef.id == funcId =>
+            goToFunctionCalls(
+              funcId = funcDef.id,
+              source = source
+            )
 
-        case callExpr: Ast.ContractCallExpr if callExpr.callId == funcId =>
-          // TODO: The user clicked on a external function call. Take 'em there!
-          Iterator.empty
-      }
-      .flatten
+          case Node(callExpr: Ast.ContractCallExpr, _) if callExpr.callId == funcId =>
+            // TODO: The user clicked on a external function call. Take 'em there!
+            Iterator.empty
+
+          case _ =>
+            Iterator.empty
+        }
+      case None =>
+        Iterator.empty
+    }
 
   /**
    * Navigate to the local function within the source code for the given [[Ast.FuncId]].
@@ -56,17 +59,18 @@ private object GoToFuncId {
    * @return An array sequence containing all the local function definitions.
    * */
   private def goToLocalFunction(funcId: Ast.FuncId,
-                                source: Tree.Source): Seq[Ast.FuncId] =
+                                source: Tree.Source): Iterator[Ast.FuncId] =
     // TODO: Improve selection by checking function argument count and types.
     source.ast match {
       case Left(ast) =>
         ast
           .funcs
+          .iterator
           .filter(_.id == funcId)
           .map(_.id)
 
       case Right(_) =>
-        Seq.empty
+        Iterator.empty
     }
 
   /**
