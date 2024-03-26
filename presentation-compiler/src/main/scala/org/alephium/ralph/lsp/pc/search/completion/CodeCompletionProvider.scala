@@ -15,6 +15,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
  */
 private[search] object CodeCompletionProvider extends CodeProvider[Suggestion] with StrictImplicitLogging {
 
+  /** @inheritdoc */
   override def search(cursorIndex: Int,
                       sourceCode: SourceCodeState.Parsed,
                       workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): Iterator[Suggestion] =
