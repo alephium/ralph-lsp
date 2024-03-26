@@ -18,40 +18,44 @@ private object GoToTypeId {
   def goTo(identNode: Node[Positioned],
            typeId: Ast.TypeId,
            source: Tree.Source): Iterator[Ast.Positioned] =
-    identNode
-      .parent // take one step up to check the type of TypeId node.
-      .map(_.data)
-      .iterator
-      .collect {
-        case enumFieldSelector: Ast.EnumFieldSelector[_] if enumFieldSelector.enumId == typeId =>
-          // They selected an enum type. Take 'em there!
-          goToEnumType(
-            enumSelector = enumFieldSelector,
-            source = source
-          )
+    identNode.parent match { // take one step up to check the type of TypeId node.
+      case Some(parent) =>
+        parent match {
+          case Node(enumFieldSelector: Ast.EnumFieldSelector[_], _) if enumFieldSelector.enumId == typeId =>
+            // They selected an enum type. Take 'em there!
+            goToEnumType(
+              enumSelector = enumFieldSelector,
+              source = source
+            )
 
-        case enumDef: Ast.EnumDef if enumDef.id == typeId =>
-          // They selected an enum definition. Find enum usages.
-          goToEnumTypeUsage(
-            enumDef = enumDef,
-            source = source
-          )
+          case Node(enumDef: Ast.EnumDef, _) if enumDef.id == typeId =>
+            // They selected an enum definition. Find enum usages.
+            goToEnumTypeUsage(
+              enumDef = enumDef,
+              source = source
+            )
 
-        case emitEvent: Ast.EmitEvent[_] if emitEvent.id == typeId =>
-          // They selected an event emit. Take 'em there!
-          goToEventDef(
-            emitEvent,
-            source = source
-          )
+          case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == typeId =>
+            // They selected an event emit. Take 'em there!
+            goToEventDef(
+              emitEvent,
+              source = source
+            )
 
-        case eventDef: Ast.EventDef if eventDef.id == typeId =>
-          // They selected an event definition. Find event usages.
-          goToEventDefUsage(
-            eventDef = eventDef,
-            source = source
-          )
-      }
-      .flatten
+          case Node(eventDef: Ast.EventDef, _) if eventDef.id == typeId =>
+            // They selected an event definition. Find event usages.
+            goToEventDefUsage(
+              eventDef = eventDef,
+              source = source
+            )
+
+          case _ =>
+            Iterator.empty
+        }
+
+      case None =>
+        Iterator.empty
+    }
 
   /** Navigate to the enum types for the given enum field selector.
    *
@@ -60,16 +64,17 @@ private object GoToTypeId {
    * @return An array sequence of enum [[Ast.TypeId]]s matching the search result.
    * */
   private def goToEnumType(enumSelector: Ast.EnumFieldSelector[_],
-                           source: Tree.Source): Seq[Ast.TypeId] =
+                           source: Tree.Source): Iterator[Ast.TypeId] =
     source.ast match {
       case Left(contract: Ast.Contract) =>
         contract
           .enums
+          .iterator
           .filter(_.id == enumSelector.enumId)
           .map(_.id)
 
       case Left(_: Ast.ContractInterface | _: Ast.TxScript) | Right(_: Ast.Struct) =>
-        Seq.empty
+        Iterator.empty
     }
 
   /** Navigate to the enum type name usage.
