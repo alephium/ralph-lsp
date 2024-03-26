@@ -13,7 +13,7 @@ object DependencyID {
   }
 
   case object BuiltIn extends DependencyID {
-    override def dirName: String = "built_in"
+    override def dirName: String = "builtin"
   }
 
   def all(): ArraySeq[DependencyID] =
