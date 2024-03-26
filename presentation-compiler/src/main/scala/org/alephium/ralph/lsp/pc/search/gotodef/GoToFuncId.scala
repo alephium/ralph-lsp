@@ -59,7 +59,7 @@ private object GoToFuncId {
    * @return An array sequence containing all the local function definitions.
    * */
   private def goToLocalFunction(funcId: Ast.FuncId,
-                                source: Tree.Source): Iterator[Ast.FuncId] =
+                                source: Tree.Source): Iterator[Ast.Positioned] =
     // TODO: Improve selection by checking function argument count and types.
     source.ast match {
       case Left(ast) =>
@@ -67,7 +67,16 @@ private object GoToFuncId {
           .funcs
           .iterator
           .filter(_.id == funcId)
-          .map(_.id)
+          .map {
+            funcDef =>
+              if (funcDef.bodyOpt.isEmpty)
+                funcDef // we show the entire function definition to display the function signature.
+              else
+                // The function contains a body so return just the function id.
+                // FIXME: There is still a need to display just the function signature.
+                //        At the moment there is no AST type that provides just the function signature.
+                funcDef.id
+          }
 
       case Right(_) =>
         Iterator.empty
