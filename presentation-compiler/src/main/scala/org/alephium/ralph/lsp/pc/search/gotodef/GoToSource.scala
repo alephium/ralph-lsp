@@ -7,8 +7,6 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceInd
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 
-import scala.collection.immutable.ArraySeq
-
 private object GoToSource {
 
   /**
@@ -21,7 +19,7 @@ private object GoToSource {
    */
   def goTo(cursorIndex: Int,
            sourceCode: SourceCodeState.Parsed,
-           sourceAST: Tree.Source): ArraySeq[GoToLocation] = {
+           sourceAST: Tree.Source): Iterator[GoToLocation] = {
     val goToResult =
       goTo(
         cursorIndex = cursorIndex,
@@ -31,7 +29,7 @@ private object GoToSource {
     // covert go-to node to GoToLocation
     GoToLocation(
       sourceCode = sourceCode,
-      ast = goToResult.to(ArraySeq)
+      asts = goToResult
     )
   }
 

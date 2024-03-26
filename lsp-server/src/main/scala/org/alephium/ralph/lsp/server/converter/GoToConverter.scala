@@ -7,6 +7,10 @@ import org.eclipse.lsp4j
 /** Converts Go-to definition types to LSP4J types */
 object GoToConverter {
 
+  /** Convert [[GoToLocation]]s to LSP4J types [[lsp4j.Location]] */
+  def toLocations(goTos: Iterator[GoToLocation]): Iterator[lsp4j.Location] =
+    goTos map toLocation
+
   /** Convert [[GoToLocation]] to LSP4J type [[lsp4j.Location]] */
   def toLocation(goTo: GoToLocation): lsp4j.Location =
     new lsp4j.Location(

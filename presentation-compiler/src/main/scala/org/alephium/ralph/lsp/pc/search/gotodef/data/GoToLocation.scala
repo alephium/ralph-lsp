@@ -6,7 +6,6 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceInd
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 
 import java.net.URI
-import scala.collection.immutable.ArraySeq
 
 object GoToLocation {
 
@@ -14,12 +13,12 @@ object GoToLocation {
    * Converts the given data to a [[GoToLocation]].
    *
    * @param sourceCode The source file to navigate to.
-   * @param ast        The positions within the source file to navigate to.
-   * @return A list of [[GoToLocation]]s representing the navigation destinations.
+   * @param asts       The positions within the source file to navigate to.
+   * @return A Iterator over [[GoToLocation]]s representing the navigation destinations.
    */
   def apply(sourceCode: SourceCodeState.Parsed,
-            ast: ArraySeq[Ast.Positioned]): ArraySeq[GoToLocation] =
-    ast.flatMap(GoToLocation(_, sourceCode))
+            asts: Iterator[Ast.Positioned]): Iterator[GoToLocation] =
+    asts.flatMap(GoToLocation(_, sourceCode))
 
   /**
    * Converts the given data to a [[GoToLocation]].

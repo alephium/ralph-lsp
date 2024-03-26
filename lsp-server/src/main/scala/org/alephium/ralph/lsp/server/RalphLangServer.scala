@@ -7,6 +7,7 @@ import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.state.{PCState, PCStateDiagnostics}
+import org.alephium.ralph.lsp.pc.util.CollectionUtil
 import org.alephium.ralph.lsp.pc.util.URIUtil.uri
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
@@ -327,11 +328,11 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
                 case Some(Left(error)) =>
                   // Completion failed: Log the error message
                   logger.error("Code completion failed: " + error.message)
-                  ArraySeq.empty[Suggestion]
+                  Iterator.empty[Suggestion]
 
                 case None =>
                   // Not a ralph file or it does not belong to the workspace's contract-uri directory.
-                  ArraySeq.empty[Suggestion]
+                  Iterator.empty[Suggestion]
               }
 
             val completionList =
@@ -374,21 +375,21 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
               goToResult match {
                 case Some(Right(goToLocations)) =>
                   // successful
-                  goToLocations map GoToConverter.toLocation
+                  GoToConverter.toLocations(goToLocations)
 
                 case Some(Left(error)) =>
                   // Go-to definition failed: Log the error message
                   logger.error("Go-to definition failed: " + error.message)
-                  ArraySeq.empty[Location]
+                  Iterator.empty[Location]
 
                 case None =>
                   // Not a ralph file or it does not belong to the workspace's contract-uri directory.
-                  ArraySeq.empty[Location]
+                  Iterator.empty[Location]
               }
 
             cancelChecker.checkCanceled()
 
-            messages.Either.forLeft(util.Arrays.asList(locations: _*))
+            messages.Either.forLeft(CollectionUtil.toJavaList(locations))
 
           case _: WorkspaceState.Created =>
             // Workspace must be compiled at least once to enable GoTo definition.

@@ -30,7 +30,7 @@ object TestCodeProvider {
    *   TestCompleter(""" import "@@" """)
    * }}}
    */
-  def apply[A](code: String)(implicit provider: CodeProvider[A]): (ArraySeq[A], SourceCodeState.IsCodeAware) = {
+  def apply[A](code: String)(implicit provider: CodeProvider[A]): (Iterator[A], SourceCodeState.IsCodeAware) = {
     val (linePosition,_ , codeWithoutAtSymbol) = TestCodeUtil.indicatorPosition(code)
 
     // run completion at that line and character
@@ -78,7 +78,7 @@ object TestCodeProvider {
       }
 
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-    searchResult should contain theSameElementsAs expectedGoToLocations
+    searchResult.toList should contain theSameElementsAs expectedGoToLocations
     ()
   }
 
@@ -103,7 +103,7 @@ object TestCodeProvider {
    */
   private def apply[A](line: Int,
                        character: Int,
-                       code: Gen[String])(implicit provider: CodeProvider[A]): (Either[CompilerMessage.Error, ArraySeq[A]], WorkspaceState.IsParsedAndCompiled) = {
+                       code: Gen[String])(implicit provider: CodeProvider[A]): (Either[CompilerMessage.Error, Iterator[A]], WorkspaceState.IsParsedAndCompiled) = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess = FileAccess.disk
     implicit val compiler: CompilerAccess = CompilerAccess.ralphc

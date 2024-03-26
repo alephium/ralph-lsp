@@ -7,8 +7,6 @@ import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
-import scala.collection.immutable.ArraySeq
-
 /**
  * Implements [[CodeProvider]] that provides code completion results of type [[Suggestion]].
  *
@@ -18,7 +16,7 @@ private[search] object CodeCompletionProvider extends CodeProvider[Suggestion] w
 
   override def search(cursorIndex: Int,
                       sourceCode: SourceCodeState.Parsed,
-                      workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): ArraySeq[Suggestion] =
+                      workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): Iterator[Suggestion] =
     // find the statement where this cursorIndex sits.
     sourceCode.ast.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>
@@ -29,14 +27,14 @@ private[search] object CodeCompletionProvider extends CodeProvider[Suggestion] w
               cursorIndex = cursorIndex,
               dependency = workspace.build.dependency,
               imported = importStatement
-            )
+            ).iterator
 
           case _: Tree.Source =>
-            ArraySeq.empty // TODO: Provide source level completion.
+            Iterator.empty // TODO: Provide source level completion.
         }
 
       case None =>
         // TODO: Provide top level completion.
-        ArraySeq.empty
+        Iterator.empty
     }
 }

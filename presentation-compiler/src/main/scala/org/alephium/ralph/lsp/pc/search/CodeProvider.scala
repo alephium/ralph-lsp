@@ -10,7 +10,6 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
 
 import java.net.URI
-import scala.collection.immutable.ArraySeq
 
 /**
  * A trait representing a code provider, which performs search operations
@@ -30,7 +29,7 @@ trait CodeProvider[A] {
    */
   def search(cursorIndex: Int,
              sourceCode: SourceCodeState.Parsed,
-             workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): ArraySeq[A]
+             workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): Iterator[A]
 }
 
 object CodeProvider {
@@ -56,7 +55,7 @@ object CodeProvider {
                 character: Int,
                 fileURI: URI,
                 workspace: WorkspaceState.IsSourceAware)(implicit provider: CodeProvider[A],
-                                                         logger: ClientLogger): Option[Either[CompilerMessage.Error, ArraySeq[A]]] =
+                                                         logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[A]]] =
     Workspace.findParsed( // find the parsed file where this search was executed.
       fileURI = fileURI,
       workspace = workspace

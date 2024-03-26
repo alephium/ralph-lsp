@@ -8,8 +8,6 @@ import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
-import scala.collection.immutable.ArraySeq
-
 /**
  * Implements [[CodeProvider]] that provides go-to definition results of type [[GoToLocation]].
  *
@@ -19,7 +17,7 @@ private[search] object GoToDefinitionProvider extends CodeProvider[GoToLocation]
 
   override def search(cursorIndex: Int,
                       sourceCode: SourceCodeState.Parsed,
-                      workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): ArraySeq[GoToLocation] =
+                      workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): Iterator[GoToLocation] =
     // find the statement where this cursorIndex sits.
     sourceCode.ast.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>
@@ -30,7 +28,7 @@ private[search] object GoToDefinitionProvider extends CodeProvider[GoToLocation]
               cursorIndex = cursorIndex,
               dependency = workspace.build.dependency,
               importStatement = importStatement
-            )
+            ).iterator
 
           case source: Tree.Source =>
             // request is for source-code go-to definition
@@ -42,6 +40,6 @@ private[search] object GoToDefinitionProvider extends CodeProvider[GoToLocation]
         }
 
       case None =>
-        ArraySeq.empty
+        Iterator.empty
     }
 }
