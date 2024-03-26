@@ -87,7 +87,7 @@ object Build {
         }
 
       case parsed: BuildParsed =>
-        def compileDependency() =
+        def compileDependencies() =
           Dependency.compile(
             parsed = parsed,
             currentBuild = currentBuild
@@ -97,7 +97,7 @@ object Build {
         val compilationResult =
           BuildValidator
             .validate(parsed)
-            .getOrElse(compileDependency())
+            .getOrElse(compileDependencies())
 
         DependencyDB.persist(
           parentBuild = compilationResult,
