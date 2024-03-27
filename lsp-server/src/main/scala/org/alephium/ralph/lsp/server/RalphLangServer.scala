@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
+import org.alephium.ralph.lsp.pc.semantic.SemanticTokensProvider
 import org.alephium.ralph.lsp.pc.state.{PCState, PCStateDiagnostics}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil
 import org.alephium.ralph.lsp.pc.util.URIUtil.uri
@@ -14,7 +15,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.alephium.ralph.lsp.server.RalphLangServer._
-import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter, GoToConverter}
+import org.alephium.ralph.lsp.server.converter._
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{CancelChecker, CompletableFutures, messages}
@@ -26,7 +27,7 @@ import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
-import scala.jdk.CollectionConverters.IterableHasAsScala
+import scala.jdk.CollectionConverters.{SeqHasAsJava, IterableHasAsScala}
 
 object RalphLangServer {
 
@@ -80,6 +81,17 @@ object RalphLangServer {
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
     capabilities.setCompletionProvider(new CompletionOptions(false, util.Arrays.asList(".")))
     capabilities.setDefinitionProvider(true)
+
+        val semanticTokenOptions = new SemanticTokensWithRegistrationOptions()
+        semanticTokenOptions.setFull(true)
+        semanticTokenOptions.setRange(false)
+        semanticTokenOptions.setLegend(
+          new SemanticTokensLegend(
+            SemanticConverter.TokenTypes.asJava,
+            SemanticConverter.TokenModifiers.asJava
+          )
+        )
+        capabilities.setSemanticTokensProvider(semanticTokenOptions)
 
     capabilities
   }
@@ -398,6 +410,36 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
             messages.Either.forLeft(util.Arrays.asList())
         }
     }
+
+  override def semanticTokensFull(
+      params: SemanticTokensParams
+  ): CompletableFuture[SemanticTokens] = {
+    logger.error(params.toString)
+    runAsync {
+      cancelChecker =>
+        val fileURI = uri(params.getTextDocument.getUri)
+        logger.error(fileURI.toString)
+        cancelChecker.checkCanceled()
+
+        val semanticTokens = getPCState().workspace match {
+          case sourceAware: WorkspaceState.IsSourceAware =>
+              SemanticTokensProvider.provide(
+                fileURI = fileURI,
+                workspace = sourceAware
+              )
+
+          case _: WorkspaceState.Created =>
+            // Workspace must be compiled at least once to enable semantic definition
+            // The server must've invoked the initial compilation in the boot-up initialize function.
+            logger.info("Semantic unsuccessful: Workspace is not compiled")
+            Iterator.empty
+        }
+
+        new SemanticTokens(CollectionUtil.toJavaList(semanticTokens.map(Int.box)))
+    }
+
+  }
+
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
     ()
