@@ -27,7 +27,6 @@ val commonSettings =
         "-feature",
         "-unchecked",
         // "-Xsource:3.1",
-        "-Xfatal-warnings",
         "-Xlint:adapted-args",
         "-Xlint:constant",
         "-Xlint:delayedinit-select",
@@ -93,14 +92,8 @@ lazy val `lsp-server` =
   project
     .settings(
       commonSettings,
+      Compile / mainClass := Some("org.alephium.ralph.lsp.Main"),
       scalacOptions += "-Xmixin-force-forwarders:false", // duplicate RPC method initialized.
-      assembly / mainClass := Some("org.alephium.ralph.lsp.Main"),
-      assembly / assemblyJarName := JAR_NAME,
-      assemblyMergeStrategy := {
-        case PathList("module-info.class") => MergeStrategy.discard
-        case x if x.endsWith("module-info.class") => MergeStrategy.discard
-        case other => assemblyMergeStrategy.value(other)
-      },
       copyJARToVSCode :=
         IO.copyFile(
           sourceFile = (Compile / target).value / s"scala-${scalaBinaryVersion.value}" / JAR_NAME,
@@ -116,7 +109,8 @@ lazy val `lsp-server` =
           Dependencies.logback,
           Dependencies.scalaLogging
         )
-    ).dependsOn(`presentation-compiler`)
+    ).enablePlugins(JavaAppPackaging)
+    .dependsOn(`presentation-compiler`)
 
 lazy val downloadWeb3AndInstallStd = taskKey[Unit]("Download alephium-web3 source code and copy std interface to the correct resource folder")
 
@@ -134,3 +128,7 @@ downloadWeb3AndInstallStd := {
 
 //Download and install of web3 will always be performed before compilation
 Compile / compile := ((Compile / compile) dependsOn downloadWeb3AndInstallStd).value
+
+
+// https://github.com/muuki88/sbt-native-packager-examples/tree/master/assembly-one-jar
+//https://github.com/muuki88/sbt-native-packager-examples/blob/master/multi-module-build/build.sbt
