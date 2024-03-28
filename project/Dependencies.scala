@@ -2,7 +2,7 @@ import sbt._
 
 object Version {
   val scala213 = "2.13.13"
-  val web3 = "0.36.1"
+  val web3 = "0.37.0"
 }
 
 object Dependencies {
