@@ -77,7 +77,6 @@ object SourceCodeState {
                     code: String,
                     ast: Tree.Root) extends IsParsed
 
-
   /** Represents: Error during the parser phase. */
   case class ErrorParser(fileURI: URI,
                          code: String,
@@ -103,6 +102,5 @@ object SourceCodeState {
                               code: String,
                               errors: Seq[CompilerMessage.AnyError],
                               parsed: SourceCodeState.Parsed) extends IsParserOrCompilationError with IsCompiled
-
 
 }

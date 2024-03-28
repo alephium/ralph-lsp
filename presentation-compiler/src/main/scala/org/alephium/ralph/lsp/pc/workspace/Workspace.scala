@@ -28,7 +28,6 @@ import scala.collection.immutable.ArraySeq
  *  - [[Workspace.parse]] - Parses an initialised workspace.
  *  - [[Workspace.compile]] - Compiles a parsed workspace.
  */
-
 object Workspace extends StrictImplicitLogging {
 
   /** First stage of a workspace where just the root workspace folder is known */
@@ -409,10 +408,10 @@ object Workspace extends StrictImplicitLogging {
       code = Some(WorkspaceFile(fileURI, code)),
       workspace = pcState.workspace
     ) match {
-      case Left(error) =>
+      case error @ Left(_) =>
         val newPCState =
           PCStateUpdater.buildChanged(
-            buildChangeResult = Left(error),
+            buildChangeResult = error,
             pcState = pcState
           )
 
@@ -564,7 +563,6 @@ object Workspace extends StrictImplicitLogging {
           workspace
         }
     }
-
 
   /**
    * Find a parsed state [[SourceCodeState.Parsed]] for the given file URI.
