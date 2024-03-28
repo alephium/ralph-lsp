@@ -165,7 +165,6 @@ private[pc] object SourceCode {
         }
     }
 
-
   /**
    * Find the parsed state ([[SourceCodeState.Parsed]]) for the given file URI.
    *
