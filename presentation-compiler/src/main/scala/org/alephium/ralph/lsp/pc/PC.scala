@@ -13,6 +13,18 @@ import scala.collection.immutable.ArraySeq
 
 object PC {
 
+  /**
+   * Initialises a new presentation compiler.
+   *
+   * @param workspaceURI The [[URI]] of the directory where the workspace is initialised.
+   * @return A new [[PCState]] instance representing the compiler state with no compilation.
+   */
+  def initialise(workspaceURI: URI): PCState =
+    PCState(
+      workspace = Workspace.create(workspaceURI),
+      buildErrors = None
+    )
+
   /** Process source or build file change for a workspace that may or may not be source-aware ([[WorkspaceState.IsSourceAware]]) */
   def changed(fileURI: URI,
               code: Option[String],

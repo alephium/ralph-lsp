@@ -156,10 +156,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
           rootURI getOrElse notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
 
         val pcState =
-          PCState(
-            workspace = Workspace.create(workspaceURI),
-            buildErrors = None
-          )
+          PC.initialise(workspaceURI)
 
         setPCState(pcState)
 
