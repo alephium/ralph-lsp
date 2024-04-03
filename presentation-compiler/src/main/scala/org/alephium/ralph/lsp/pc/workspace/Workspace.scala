@@ -26,7 +26,7 @@ import scala.collection.immutable.ArraySeq
  *  - [[Workspace.parse]] - Parses an initialised workspace.
  *  - [[Workspace.compile]] - Compiles a parsed workspace.
  */
-object Workspace extends StrictImplicitLogging {
+private[pc] object Workspace extends StrictImplicitLogging {
 
   /** First stage of a workspace where just the root workspace folder is known */
   def create(workspaceURI: URI): WorkspaceState.Created =
