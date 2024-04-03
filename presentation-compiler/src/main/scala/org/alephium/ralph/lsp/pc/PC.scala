@@ -1,9 +1,9 @@
-package org.alephium.ralph.lsp.pc.state
+package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 
-object PCStateUpdater {
+object PC {
 
   /** Apply build change to the [[PCState]] */
   def buildChanged(buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState],

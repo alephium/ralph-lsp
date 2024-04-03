@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.state
+package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
@@ -99,7 +99,6 @@ object PCStateDiagnostics {
                   newWorkspace = newBuild.findDependency(dependencyID)
                 )
             }
-
 
         dependencyDiagnostics ++ Iterable(buildDiagnostics)
 

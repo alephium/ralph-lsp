@@ -5,13 +5,13 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
-import org.alephium.ralph.lsp.pc.state.{PCState, PCStateUpdater}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
+import org.alephium.ralph.lsp.pc.{PC, PCState}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -315,7 +315,7 @@ object Workspace extends StrictImplicitLogging {
       workspace = pcState.workspace
     ) match {
       case Left(error) =>
-        PCStateUpdater.buildChanged(
+        PC.buildChanged(
           buildChangeResult = Left(error),
           pcState = pcState
         )
@@ -360,7 +360,7 @@ object Workspace extends StrictImplicitLogging {
             currentBuild = workspace.build
           )
 
-        PCStateUpdater.buildChanged(
+        PC.buildChanged(
           buildChangeResult = result,
           pcState = pcState
         )
@@ -410,7 +410,7 @@ object Workspace extends StrictImplicitLogging {
     ) match {
       case error @ Left(_) =>
         val newPCState =
-          PCStateUpdater.buildChanged(
+          PC.buildChanged(
             buildChangeResult = error,
             pcState = pcState
           )
@@ -433,7 +433,7 @@ object Workspace extends StrictImplicitLogging {
           val newPCState =
             buildResult map {
               buildResult =>
-                PCStateUpdater.buildChanged(
+                PC.buildChanged(
                   buildChangeResult = buildResult,
                   pcState = pcState
                 )
@@ -451,7 +451,7 @@ object Workspace extends StrictImplicitLogging {
             )
 
           val newPCState =
-            PCStateUpdater.sourceCodeChanged(
+            PC.sourceCodeChanged(
               sourceChangeResult = sourceResult,
               pcState = pcState
             )
