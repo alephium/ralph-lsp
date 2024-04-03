@@ -15,9 +15,11 @@ object PCStateDiagnostics {
 
   /**
    * Given the current [[PCState]] and the next [[PCState]],
-   * return new diagnostics to publish.
+   * returns new diagnostics to publish.
    *
-   * @return Diagnostics clearing resolved diagnostics dispatched in previous state.
+   * @param currentState The current presentation compiler state.
+   * @param newState     The next presentation compiler state.
+   * @return An iterator over resolved diagnostics dispatched in the previous state and new diagnostics.
    */
   def toFileDiagnostics(currentState: PCState,
                         newState: PCState): Iterable[FileDiagnostic] = {
