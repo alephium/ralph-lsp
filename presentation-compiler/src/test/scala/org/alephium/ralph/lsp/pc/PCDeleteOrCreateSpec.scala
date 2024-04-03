@@ -1,13 +1,13 @@
-package org.alephium.ralph.lsp.pc.workspace
+package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.PCState
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
+import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, WorkspaceFileEvent, WorkspaceState}
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
@@ -18,9 +18,9 @@ import scala.collection.immutable.ArraySeq
 import scala.util.Random
 
 /**
- * Test cases for [[Workspace.deleteOrCreate]] function.
+ * Test cases for [[PC.deleteOrCreate]] function.
  */
-class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
+class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
   implicit val clientLogger: ClientLogger =
     TestClientLogger
@@ -54,7 +54,7 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
 
             // invoke delete
             val actualPCState =
-              Workspace.deleteOrCreate(
+              PC.deleteOrCreate(
                 events = ArraySeq(event),
                 pcState = currentPCState
               )
@@ -118,7 +118,7 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
 
             // invoke build event
             val actualPCState =
-              Workspace.deleteOrCreate(
+              PC.deleteOrCreate(
                 events = ArraySeq(event),
                 pcState = currentPCState
               )
@@ -150,7 +150,7 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
 
             // invoke the same event
             val actualPCStateOK =
-              Workspace.deleteOrCreate(
+              PC.deleteOrCreate(
                 events = ArraySeq(event),
                 pcState = currentPCState
               )
@@ -209,7 +209,7 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
 
           // invoke the event
           val actualPCState =
-            Workspace.deleteOrCreate(
+            PC.deleteOrCreate(
               events = ArraySeq(event),
               pcState = currentPCState
             )
@@ -254,7 +254,7 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
 
           // Add the all code to the workspace
           val compiledPCState =
-            Workspace.deleteOrCreate(
+            PC.deleteOrCreate(
               events = allCode.to(ArraySeq).map { code =>
                 WorkspaceFileEvent.Created(code.fileURI)
               },
@@ -269,7 +269,7 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
           // Delete the abstract contract
           TestSourceCode delete extension
           val erroredState =
-            Workspace.deleteOrCreate(
+            PC.deleteOrCreate(
               events = ArraySeq(WorkspaceFileEvent.Deleted(extension.fileURI)),
               pcState = compiledPCState
             )
@@ -282,7 +282,7 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
 
           // The error is in the contract file, as the abstract contract is missing
           erroredWorkspace.sourceCode.size shouldBe 1
-          val sourceState  = erroredWorkspace.sourceCode.head.asInstanceOf[SourceCodeState.ErrorCompilation]
+          val sourceState = erroredWorkspace.sourceCode.head.asInstanceOf[SourceCodeState.ErrorCompilation]
           sourceState.fileURI shouldBe contract.fileURI
           val messages = sourceState.errors.map(_.message)
           messages.size shouldBe 1
@@ -292,7 +292,7 @@ class WorkspaceDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCh
           TestSourceCode persist (extension, code = Gen.const(extensionCode))
 
           val recompiledPCState =
-            Workspace.deleteOrCreate(
+            PC.deleteOrCreate(
               events = ArraySeq(
                 WorkspaceFileEvent.Created(extension.fileURI),
               ),

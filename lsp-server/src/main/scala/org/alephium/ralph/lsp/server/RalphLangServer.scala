@@ -10,7 +10,7 @@ import org.alephium.ralph.lsp.pc.util.CollectionUtil
 import org.alephium.ralph.lsp.pc.util.URIUtil.uri
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
-import org.alephium.ralph.lsp.pc.{PCState, PCStateDiagnostics}
+import org.alephium.ralph.lsp.pc.{PC, PCState, PCStateDiagnostics}
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.alephium.ralph.lsp.server.RalphLangServer._
@@ -283,7 +283,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
         // Build OK! process delete or create
         val newPCState =
-          Workspace.deleteOrCreate(
+          PC.deleteOrCreate(
             events = events,
             pcState = currentPCState
           )
@@ -440,7 +440,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
         getPCState()
 
       val newPCState =
-        Workspace.changed(
+        PC.changed(
           fileURI = fileURI,
           code = code,
           pcState = currentPCState

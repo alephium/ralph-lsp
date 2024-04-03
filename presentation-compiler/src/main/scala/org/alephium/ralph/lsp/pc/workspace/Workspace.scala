@@ -9,9 +9,7 @@ import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
-import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
-import org.alephium.ralph.lsp.pc.{PC, PCState}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -300,73 +298,6 @@ object Workspace extends StrictImplicitLogging {
     ) map parseAndCompile
 
   /**
-   * Delete or create a file within the workspace that may or may not be source-aware ([[WorkspaceState.IsSourceAware]])
-   *
-   * @param events  Events to process
-   * @param pcState Current workspace and build state
-   * @return Workspace change result
-   * */
-  def deleteOrCreate(events: ArraySeq[WorkspaceFileEvent],
-                     pcState: PCState)(implicit file: FileAccess,
-                                       compiler: CompilerAccess,
-                                       logger: ClientLogger): PCState =
-    Workspace.build(
-      code = None,
-      workspace = pcState.workspace
-    ) match {
-      case Left(error) =>
-        PC.buildChanged(
-          buildChangeResult = Left(error),
-          pcState = pcState
-        )
-
-      case Right(workspace) =>
-        // collect events that belong to this workspace
-        val workspaceEvents =
-          events filter {
-            event =>
-              URIUtil.contains(workspace.workspaceURI, event.uri)
-          }
-
-        // is the build deleted?
-        val isBuildDeleted =
-          workspaceEvents contains WorkspaceFileEvent.Deleted(workspace.buildURI)
-
-        val buildCode =
-          if (isBuildDeleted) // if build is deleted, compile from disk
-            None
-          else // build exists, process from memory
-            pcState.buildErrors match {
-              case Some(errored) =>
-                // use the code from the previous build's compilation run
-                errored.codeOption
-
-              case None =>
-                // previous build was good, use the compiled build code
-                Some(workspace.build.code)
-            }
-
-        // apply events to the workspace
-        val newSourceCode =
-          Workspace.applyEvents(
-            events = workspaceEvents,
-            workspace = workspace
-          )
-
-        val result =
-          Workspace.compile(
-            buildCode = buildCode,
-            sourceCode = newSourceCode,
-            currentBuild = workspace.build
-          )
-
-        PC.buildChanged(
-          buildChangeResult = result,
-          pcState = pcState
-        )
-    }
-
-  /**
    * Apply events to workspace source-code.
    *
    * @param events    Events to process
@@ -396,70 +327,6 @@ object Workspace extends StrictImplicitLogging {
           }
         else
           newSourceCode // ignore - not a Ralph source event
-    }
-
-  /** Process source or build file change for a workspace that may or may not be source-aware ([[WorkspaceState.IsSourceAware]]) */
-  def changed(fileURI: URI,
-              code: Option[String],
-              pcState: PCState)(implicit file: FileAccess,
-                                compiler: CompilerAccess,
-                                logger: ClientLogger): Either[ErrorUnknownFileType, Option[PCState]] =
-    Workspace.build(
-      code = Some(WorkspaceFile(fileURI, code)),
-      workspace = pcState.workspace
-    ) match {
-      case error @ Left(_) =>
-        val newPCState =
-          PC.buildChanged(
-            buildChangeResult = error,
-            pcState = pcState
-          )
-
-        Right(Some(newPCState))
-
-      case Right(aware) =>
-        val fileExtension =
-          URIUtil.getFileExtension(fileURI)
-
-        if (fileExtension == Build.BUILD_FILE_EXTENSION) {
-          // process build change
-          val buildResult =
-            Workspace.buildChanged(
-              buildURI = fileURI,
-              code = code,
-              workspace = aware
-            )
-
-          val newPCState =
-            buildResult map {
-              buildResult =>
-                PC.buildChanged(
-                  buildChangeResult = buildResult,
-                  pcState = pcState
-                )
-            }
-
-          Right(newPCState)
-
-        } else if (fileExtension == CompilerAccess.RALPH_FILE_EXTENSION) {
-          // process source code change
-          val sourceResult =
-            Workspace.sourceCodeChanged(
-              fileURI = fileURI,
-              updatedCode = code,
-              workspace = aware
-            )
-
-          val newPCState =
-            PC.sourceCodeChanged(
-              sourceChangeResult = sourceResult,
-              pcState = pcState
-            )
-
-          Right(Some(newPCState))
-        } else {
-          Left(ErrorUnknownFileType(fileURI))
-        }
     }
 
   /**
