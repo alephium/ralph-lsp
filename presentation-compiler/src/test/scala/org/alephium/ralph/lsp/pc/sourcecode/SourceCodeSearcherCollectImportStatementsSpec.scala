@@ -12,80 +12,78 @@ class SourceCodeSearcherCollectImportStatementsSpec extends AnyWordSpec with Mat
   implicit val file: FileAccess = FileAccess.disk
   implicit val compiler: CompilerAccess = CompilerAccess.ralphc
 
-  "collectParsed" should {
-    "return empty" when {
-      "input is empty" in {
-        SourceCodeSearcher.collectImportStatements(ArraySeq.empty) shouldBe empty
-      }
+  "return empty" when {
+    "input is empty" in {
+      SourceCodeSearcher.collectImportStatements(ArraySeq.empty) shouldBe empty
     }
+  }
 
-    "collect distinct import statements" in {
-      val goodCodeParsed =
-        TestSourceCode.genParsed(
+  "collect distinct import statements" in {
+    val goodCodeParsed =
+      TestSourceCode.genParsed(
+        """
+          |import "blah/blah"
+          |import "blah/blah"
+          |import "std/fungible_token_interface"
+          |import "std/fungible_token_interface"
+          |
+          |Contract MyContract() {
+          |  fn function1() -> () {}
+          |}
+          |""".stripMargin
+      ).sample.get.asInstanceOf[SourceCodeState.Parsed]
+
+    val goodCodeCompiled =
+      TestSourceCode.genCompiled(
+        """
+          |import "std/nft_collection_interface"
+          |import "std/nft_collection_interface"
+          |import "std/fungible_token_interface"
+          |import "std/fungible_token_unimplemented"
+          |
+          |Abstract Contract AbstractContract() { }
+          |
+          |Contract MyContract() extends AbstractContract() {
+          |  fn function1() -> () {}
+          |}
+          |""".stripMargin
+      ).sample.get.asInstanceOf[SourceCodeState.Compiled].parsed
+
+    val errorCompilation =
+      TestSourceCode
+        .genCompiled(
           """
-            |import "blah/blah"
-            |import "blah/blah"
-            |import "std/fungible_token_interface"
-            |import "std/fungible_token_interface"
+            |import "std/nft_collection_with_royalty_interface"
+            |import "std/nft_collection_with_royalty_interface"
+            |import "std/nft_collection_interface"
+            |import "std/nft_collection_interface"
             |
-            |Contract MyContract() {
+            |Contract MyContract() extends DoesNotExist() {
             |  fn function1() -> () {}
             |}
             |""".stripMargin
-        ).sample.get.asInstanceOf[SourceCodeState.Parsed]
+        ).sample.get.asInstanceOf[SourceCodeState.ErrorCompilation].parsed
 
-      val goodCodeCompiled =
-        TestSourceCode.genCompiled(
-          """
-            |import "std/nft_collection_interface"
-            |import "std/nft_collection_interface"
-            |import "std/fungible_token_interface"
-            |import "std/fungible_token_unimplemented"
-            |
-            |Abstract Contract AbstractContract() { }
-            |
-            |Contract MyContract() extends AbstractContract() {
-            |  fn function1() -> () {}
-            |}
-            |""".stripMargin
-        ).sample.get.asInstanceOf[SourceCodeState.Compiled].parsed
+    val allCode =
+      ArraySeq(goodCodeParsed, goodCodeCompiled, errorCompilation)
 
-      val errorCompilation =
-        TestSourceCode
-          .genCompiled(
-            """
-              |import "std/nft_collection_with_royalty_interface"
-              |import "std/nft_collection_with_royalty_interface"
-              |import "std/nft_collection_interface"
-              |import "std/nft_collection_interface"
-              |
-              |Contract MyContract() extends DoesNotExist() {
-              |  fn function1() -> () {}
-              |}
-              |""".stripMargin
-          ).sample.get.asInstanceOf[SourceCodeState.ErrorCompilation].parsed
+    val actual =
+      SourceCodeSearcher
+        .collectImportStatements(allCode)
+        .map(_.string.value)
 
-      val sourceCode =
-        ArraySeq(goodCodeParsed, goodCodeCompiled, errorCompilation)
+    val expected =
+      Array(
+        "\"blah/blah\"",
+        "\"std/fungible_token_interface\"",
+        "\"std/fungible_token_unimplemented\"",
+        "\"std/nft_collection_interface\"",
+        "\"std/nft_collection_with_royalty_interface\""
+      )
 
-      val actual =
-        SourceCodeSearcher
-          .collectImportStatements(sourceCode)
-          .map(_.string.value)
+    actual should contain theSameElementsAs expected
 
-      val expected =
-        Array(
-          "\"blah/blah\"",
-          "\"std/fungible_token_interface\"",
-          "\"std/fungible_token_unimplemented\"",
-          "\"std/nft_collection_interface\"",
-          "\"std/nft_collection_with_royalty_interface\""
-        )
-
-      actual should contain theSameElementsAs expected
-
-      TestSourceCode deleteAllIfExists sourceCode
-    }
+    TestSourceCode deleteAllIfExists allCode
   }
 
 }

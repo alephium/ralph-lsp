@@ -12,69 +12,67 @@ class SourceCodeSearcherCollectParsedSpec extends AnyWordSpec with Matchers {
   implicit val file: FileAccess = FileAccess.disk
   implicit val compiler: CompilerAccess = CompilerAccess.ralphc
 
-  "collectParsed" should {
-    "return empty" when {
-      "input is empty" in {
-        SourceCodeSearcher.collectParsed(ArraySeq.empty) shouldBe empty
-      }
+  "return empty" when {
+    "input is empty" in {
+      SourceCodeSearcher.collectParsed(ArraySeq.empty) shouldBe empty
     }
+  }
 
-    "collect parsed source code even if it contains compiler errors" in {
-      val onDisk =
-        TestSourceCode.genOnDisk().sample.get
+  "collect parsed source code even if it contains compiler errors" in {
+    val onDisk =
+      TestSourceCode.genOnDisk().sample.get
 
-      val unCompiled =
-        TestSourceCode.genUnCompiled().sample.get
+    val unCompiled =
+      TestSourceCode.genUnCompiled().sample.get
 
-      val errorParser =
-        TestSourceCode.genParsed(
+    val errorParser =
+      TestSourceCode.genParsed(
+        """
+          |Contract MyContract() {
+          |  blah
+          |}
+          |""".stripMargin
+      ).sample.get.asInstanceOf[SourceCodeState.ErrorParser]
+
+    val goodCodeParsed =
+      TestSourceCode.genParsed(
+        """
+          |Contract MyContract() {
+          |  fn function1() -> () {}
+          |}
+          |""".stripMargin
+      ).sample.get.asInstanceOf[SourceCodeState.Parsed]
+
+    val goodCodeCompiled =
+      TestSourceCode.genCompiled(
+        """
+          |Abstract Contract AbstractContract() { }
+          |
+          |Contract MyContract() extends AbstractContract() {
+          |  fn function1() -> () {}
+          |}
+          |""".stripMargin
+      ).sample.get.asInstanceOf[SourceCodeState.Compiled]
+
+    val errorCompilation =
+      TestSourceCode
+        .genCompiled(
           """
-            |Contract MyContract() {
-            |  blah
-            |}
-            |""".stripMargin
-        ).sample.get.asInstanceOf[SourceCodeState.ErrorParser]
-
-      val goodCodeParsed =
-        TestSourceCode.genParsed(
-          """
-            |Contract MyContract() {
+            |Contract MyContract() extends DoesNotExist() {
             |  fn function1() -> () {}
             |}
             |""".stripMargin
-        ).sample.get.asInstanceOf[SourceCodeState.Parsed]
+        ).sample.get.asInstanceOf[SourceCodeState.ErrorCompilation]
 
-      val goodCodeCompiled =
-        TestSourceCode.genCompiled(
-          """
-            |Abstract Contract AbstractContract() { }
-            |
-            |Contract MyContract() extends AbstractContract() {
-            |  fn function1() -> () {}
-            |}
-            |""".stripMargin
-        ).sample.get.asInstanceOf[SourceCodeState.Compiled]
+    val allCode =
+      ArraySeq(onDisk, unCompiled, errorParser, goodCodeParsed, goodCodeCompiled, errorCompilation)
 
-      val errorCompilation =
-        TestSourceCode
-          .genCompiled(
-            """
-              |Contract MyContract() extends DoesNotExist() {
-              |  fn function1() -> () {}
-              |}
-              |""".stripMargin
-          ).sample.get.asInstanceOf[SourceCodeState.ErrorCompilation]
+    val result =
+      SourceCodeSearcher.collectParsed(allCode)
 
-      val allCode =
-        ArraySeq(onDisk, unCompiled, errorParser, goodCodeParsed, goodCodeCompiled, errorCompilation)
+    result should contain only(goodCodeParsed, goodCodeCompiled.parsed, errorCompilation.parsed)
 
-      val result =
-        SourceCodeSearcher.collectParsed(allCode)
-
-      result should contain only(goodCodeParsed, goodCodeCompiled.parsed, errorCompilation.parsed)
-
-      TestSourceCode deleteAllIfExists allCode
-    }
+    TestSourceCode deleteAllIfExists allCode
   }
 
 }
