@@ -65,13 +65,15 @@ class SourceCodeSearcherCollectParsedSpec extends AnyWordSpec with Matchers {
               |""".stripMargin
           ).sample.get.asInstanceOf[SourceCodeState.ErrorCompilation]
 
-      val sourceCode =
+      val allCode =
         ArraySeq(onDisk, unCompiled, errorParser, goodCodeParsed, goodCodeCompiled, errorCompilation)
 
       val result =
-        SourceCodeSearcher.collectParsed(sourceCode)
+        SourceCodeSearcher.collectParsed(allCode)
 
       result should contain only(goodCodeParsed, goodCodeCompiled.parsed, errorCompilation.parsed)
+
+      TestSourceCode deleteAllIfExists allCode
     }
   }
 
