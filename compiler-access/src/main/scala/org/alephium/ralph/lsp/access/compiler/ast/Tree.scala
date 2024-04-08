@@ -62,6 +62,15 @@ object Tree {
 
           case _ =>
         }
+
+    def typeId(): Ast.TypeId =
+      ast match {
+        case Left(contract) =>
+          contract.ident
+
+        case Right(struct) =>
+          struct.id
+      }
   }
 
   sealed trait Literal extends Tree

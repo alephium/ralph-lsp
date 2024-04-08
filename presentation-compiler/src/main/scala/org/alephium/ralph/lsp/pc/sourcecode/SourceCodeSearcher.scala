@@ -1,8 +1,10 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
+import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 
 import scala.collection.immutable.ArraySeq
+import scala.collection.mutable.ListBuffer
 
 /**
  * Search functions related to [[SourceCodeState]]
@@ -43,5 +45,69 @@ object SourceCodeSearcher {
           }
       }
       .distinctBy(_.string.value)
+
+  /**
+   * Collects all parent source implementations inherited by the given
+   * source tree within the provided source code files.
+   *
+   * @param source    The source tree to search for parent implementations.
+   * @param allSource The source code files containing the parent implementations.
+   * @return All parent source implementations found.
+   */
+  def collectInheritanceInScope(source: Tree.Source,
+                                allSource: ArraySeq[SourceCodeState.Parsed]): Seq[SourceTreeInScope] =
+    source.ast match {
+      case Left(contract) =>
+        collectParentsInherited(
+          inheritances = contract.inheritances,
+          allSource = allSource,
+          processedTrees = ListBuffer(source)
+        )
+
+      case Right(_) =>
+        Seq.empty
+    }
+
+  /**
+   * Collects all source-trees representing implementations of the provided inheritances.
+   *
+   * @param inheritances   The inheritances to search for.
+   * @param allSource      The source code files containing the inheritance implementations.
+   * @param processedTrees Note: This is a mutable collection so this function must be private.
+   *                       A buffer to store processed source trees to avoid duplicate processing.
+   * @return All inheritance implementations along with their corresponding source files.
+   */
+  private def collectParentsInherited(inheritances: Seq[Ast.Inheritance],
+                                      allSource: ArraySeq[SourceCodeState.Parsed],
+                                      processedTrees: ListBuffer[Tree.Source]): Seq[SourceTreeInScope] =
+    if (inheritances.isEmpty) // Early check: Do not traverse workspace source-code if inheritances are empty.
+      Seq.empty
+    else
+      allSource flatMap {
+        parsed =>
+          parsed.ast.statements flatMap {
+            case source: Tree.Source if inheritances.exists(_.parentId == source.typeId()) && !processedTrees.contains(source) =>
+              processedTrees addOne source
+
+              source.ast match {
+                case Left(contract) =>
+                  // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
+                  val parents =
+                    collectParentsInherited(
+                      inheritances = contract.inheritances,
+                      allSource = allSource,
+                      processedTrees = processedTrees
+                    )
+
+                  parents :+ SourceTreeInScope(source, parsed)
+
+                case Right(_) =>
+                  Seq(SourceTreeInScope(source, parsed))
+              }
+
+            case _ =>
+              Seq.empty
+          }
+      }
 
 }
