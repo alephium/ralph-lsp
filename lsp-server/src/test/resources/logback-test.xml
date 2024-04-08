@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Using same pattern as the main one -->
+    <property name="consolePattern"
+              value="%-63(%date{ISO8601} [%.13thread]) %-5level %-50(%logger{20}) - %msg%n"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${consolePattern}</pattern>
+        </encoder>
+    </appender>
+
+    <root level="${RALPH_LSP_LOG_LEVEL:-TRACE}">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
