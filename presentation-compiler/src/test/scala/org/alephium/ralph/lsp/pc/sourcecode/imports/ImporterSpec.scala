@@ -28,7 +28,7 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
 
         val parsed =
           TestSourceCode
-            .genParsed(
+            .genParsedOK(
               """
                 |Contract MyContract(id:U256){
                 |  pub fn getId() -> U256 {
@@ -92,7 +92,7 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
         // parse myCode with the above dependant code imported
         val myCode =
           TestSourceCode
-            .genParsed(
+            .genParsedOK(
               s"""
                  |// import the above code
                  |import "my_package/my_file"
@@ -130,7 +130,7 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
 
         val myCode =
           TestSourceCode
-            .genParsed(
+            .genParsedOK(
               s"""
                  |// this import does not exist
                  |import "my_package/my_file"

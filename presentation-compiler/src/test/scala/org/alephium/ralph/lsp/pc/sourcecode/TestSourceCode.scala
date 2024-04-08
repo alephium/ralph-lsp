@@ -114,9 +114,17 @@ object TestSourceCode {
       genUnCompiled(code, fileURI)
     )
 
+  def genParsedOK(code: Gen[String] = TestCode.genGoodCode(),
+                  fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
+                                                    compiler: CompilerAccess): Gen[SourceCodeState.Parsed] =
+    genParsed(
+      code = code,
+      fileURI = fileURI
+    ).map(_.asInstanceOf[SourceCodeState.Parsed])
+
   def genParsed(code: Gen[String] = TestCode.genGoodCode(),
                 fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
-                                                  compiler: CompilerAccess): Gen[SourceCodeState.Parsed] = {
+                                                  compiler: CompilerAccess): Gen[SourceCodeState] = {
     val unCompiled =
       genUnCompiled(
         code = code,
@@ -127,16 +135,14 @@ object TestSourceCode {
   }
 
   def genParsed(unCompiled: Gen[SourceCodeState.UnCompiled])(implicit file: FileAccess,
-                                                             compiler: CompilerAccess): Gen[SourceCodeState.Parsed] =
-    unCompiled
-      .map(SourceCode.parse)
-      .map(_.asInstanceOf[SourceCodeState.Parsed])
+                                                             compiler: CompilerAccess): Gen[SourceCodeState] =
+    unCompiled map SourceCode.parse
 
   def genCompiled(code: Gen[String] = TestCode.genGoodCode(),
                   fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
                                                     compiler: CompilerAccess): Gen[SourceCodeState.IsParsed] = {
     val parsed =
-      genParsed(
+      genParsedOK(
         code = code,
         fileURI = fileURI
       )

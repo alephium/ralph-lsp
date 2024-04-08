@@ -69,7 +69,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
             TestCode.genInterface("MyInterface"), // An Interface
             TestCode.genScript("MyScript") // A Script
           )
-            .map(TestSourceCode.genParsed(_))
+            .map(TestSourceCode.genParsedOK(_))
             .map(_.sample.get)
 
         // Expected that all source files have a SourceCodeState.Compiled entry
