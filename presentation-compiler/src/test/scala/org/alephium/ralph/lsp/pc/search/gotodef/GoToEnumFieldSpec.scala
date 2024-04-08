@@ -162,7 +162,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
         )
       }
 
-      "an enum field is selected in an parent" in {
+      "an enum field is selected that's implemented within a parent" in {
         goTo(
           """
             |Abstract Contract Parent2() {

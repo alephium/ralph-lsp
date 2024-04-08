@@ -73,8 +73,8 @@ object SourceCodeSearcher {
    *
    * @param inheritances   The inheritances to search for.
    * @param allSource      The source code files containing the inheritance implementations.
-   * @param processedTrees Note: This is a mutable collection so this function must be private.
-   *                       A buffer to store processed source trees to avoid duplicate processing.
+   * @param processedTrees A buffer to store processed source trees to avoid duplicate processing.
+   *                       This is a mutable collection so this function must be private.
    * @return All inheritance implementations along with their corresponding source files.
    */
   private def collectParentsInherited(inheritances: Seq[Ast.Inheritance],
@@ -86,6 +86,7 @@ object SourceCodeSearcher {
       allSource flatMap {
         parsed =>
           parsed.ast.statements flatMap {
+            // collect the trees that belong to one of the inheritances and the ones that are not already processed
             case source: Tree.Source if inheritances.exists(_.parentId == source.typeId()) && !processedTrees.contains(source) =>
               processedTrees addOne source
 
