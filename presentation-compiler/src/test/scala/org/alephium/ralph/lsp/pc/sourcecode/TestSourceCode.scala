@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.error.TestError
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.util.URIUtil
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.TestDependency
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.scalacheck.Gen
@@ -157,7 +158,7 @@ object TestSourceCode {
     val result =
       SourceCode.compile(
         sourceCode = ArraySeq(parsed),
-        dependency = ArraySeq.empty,
+        dependency = TestDependency.buildStd().dependencies.flatMap(_.sourceCode),
         compilerOptions = CompilerOptions.Default,
         workspaceErrorURI = parsed.fileURI
       )
@@ -187,6 +188,12 @@ object TestSourceCode {
   def delete(sourceCode: SourceCodeState): Unit =
     TestFile.delete(sourceCode.fileURI)
 
+  def deleteIfExists(sourceCode: SourceCodeState): Boolean =
+    TestFile.deleteIfExists(sourceCode.fileURI)
+
   def deleteAll(sourceCode: Iterable[SourceCodeState]): Unit =
     sourceCode foreach delete
+
+  def deleteAllIfExists(sourceCode: Iterable[SourceCodeState]): Unit =
+    sourceCode foreach deleteIfExists
 }
