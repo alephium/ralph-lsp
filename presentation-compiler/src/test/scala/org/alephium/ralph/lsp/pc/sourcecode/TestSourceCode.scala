@@ -139,6 +139,14 @@ object TestSourceCode {
                                                              compiler: CompilerAccess): Gen[SourceCodeState] =
     unCompiled map SourceCode.parse
 
+  def genCompiledOK(code: Gen[String] = TestCode.genGoodCode(),
+                    fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
+                                                      compiler: CompilerAccess): Gen[SourceCodeState.Compiled] =
+    genCompiled(
+      code = code,
+      fileURI = fileURI
+    ).map(_.asInstanceOf[SourceCodeState.Compiled])
+
   def genCompiled(code: Gen[String] = TestCode.genGoodCode(),
                   fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
                                                     compiler: CompilerAccess): Gen[SourceCodeState.IsParsed] = {
