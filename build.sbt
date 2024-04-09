@@ -5,7 +5,7 @@ val inliningOptions =
   Seq(
     "-opt-warnings",
     "-opt:l:inline",
-    "-opt-inline-from:org.alephium.explorer.**"
+    "-opt-inline-from:org.alephium.ralph.lsp.**"
     // Uncomment to debug inlining
     /*
     "-Yopt-log-inline",
