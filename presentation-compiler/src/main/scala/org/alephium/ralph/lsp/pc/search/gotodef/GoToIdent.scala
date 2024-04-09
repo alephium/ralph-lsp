@@ -178,11 +178,11 @@ private object GoToIdent {
   }
 
   /**
-   * Go-to global variable definitions in scope which are constants and template arguments.
+   * Navigate to constants and template arguments within the source tree.
    *
-   * @param ident The identity of the definition to search.
-   * @param tree  The source tree to search the identity within.
-   * @return An iterator over constants and arguments.
+   * @param ident The identity to search for.
+   * @param tree  The source tree to search within.
+   * @return An iterator over the found constants and arguments.
    */
   private def goToConstantsAndTemplateArguments(ident: Ast.Ident,
                                                 tree: Tree.Source): Iterator[Ast.Positioned] = {
