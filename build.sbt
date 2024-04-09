@@ -53,7 +53,10 @@ val commonSettings =
         "-Ywarn-unused:patvars",
         "-Ywarn-unused:privates",
         "-Ywarn-value-discard"
-      ) ++ inliningOptions
+      ) ++ inliningOptions,
+      Compile / doc / scalacOptions ++= Seq(
+        "-no-link-warnings"
+      )
   )
 
 lazy val `compiler-access` =
