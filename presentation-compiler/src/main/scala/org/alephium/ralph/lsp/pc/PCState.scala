@@ -1,4 +1,4 @@
-package org.alephium.ralph.lsp.pc.state
+package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState

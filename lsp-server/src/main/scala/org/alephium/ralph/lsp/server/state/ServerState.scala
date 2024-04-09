@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.server.state
 
-import org.alephium.ralph.lsp.pc.state.PCState
+import org.alephium.ralph.lsp.pc.PCState
 import org.alephium.ralph.lsp.server.RalphLangClient
 
 import java.util.concurrent.{Future => JFuture}
