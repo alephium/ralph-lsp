@@ -25,7 +25,11 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     "constant exists" in {
       goTo(
         """
-          |Contract GoToConstant() {
+          |Abstract Contract Parent() {
+          |  >>const MyConstant = 1<<
+          |}
+          |
+          |Contract Child() extends Parent() {
           |
           |  >>const MyConstant = 0<<
           |
@@ -40,7 +44,12 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     "duplicate constants exists" in {
       goTo(
         """
-          |Contract GoToConstant() {
+          |Abstract Contract Parent() {
+          |  >>const MyConstant = 2<<
+          |  >>const MyConstant = 3<<
+          |}
+          |
+          |Contract Child() extends Parent() {
           |
           |  >>const MyConstant = 0<<
           |  >>const MyConstant = 1<<
@@ -56,7 +65,13 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     "constant and the Contract have the same name" in {
       goTo(
         """
-          |Contract MyConstant() {
+          |Abstract Contract MyConstant() {
+          |
+          |  >>const MyConstant = 2<<
+          |  >>const MyConstant = 3<<
+          |}
+          |
+          |Contract MyConstant() extends MyConstant() {
           |
           |  >>const MyConstant = 0<<
           |  >>const MyConstant = 1<<
