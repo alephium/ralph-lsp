@@ -15,7 +15,6 @@ val inliningOptions =
 
 val commonSettings =
   Seq(
-    name := "ralph-lsp",
     organization := "org.alephium",
     scalaVersion := Version.scala213,
     scalacOptions ++=
@@ -95,6 +94,7 @@ lazy val copyJARToVSCode =
 lazy val `lsp-server` =
   project
     .settings(
+      name := "ralph-lsp",
       commonSettings,
       scalacOptions += "-Xmixin-force-forwarders:false", // duplicate RPC method initialized.
       assembly / mainClass := Some("org.alephium.ralph.lsp.Main"),
@@ -120,6 +120,7 @@ lazy val `lsp-server` =
           Dependencies.scalaLogging
         )
     ).dependsOn(`presentation-compiler`)
+    .enablePlugins(JavaAppPackaging)
 
 lazy val downloadWeb3AndInstallStd = taskKey[Unit]("Download alephium-web3 source code and copy std interface to the correct resource folder")
 
