@@ -161,6 +161,38 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
         )
       }
+
+      "an enum field is selected that's implemented within a parent" in {
+        goTo(
+          """
+            |Abstract Contract Parent2() {
+            |  enum EnumType {
+            |    >>Field0 = 00<<
+            |    Field3 = 3
+            |  }
+            |}
+            |
+            |Abstract Contract Parent1() extends Parent2() {
+            |  enum EnumType {
+            |    >>Field0 = 00<<
+            |    Field3 = 3
+            |  }
+            |}
+            |
+            |Contract MyContract() extends Parent1() {
+            |
+            |  enum EnumType {
+            |    >>Field0 = 0<<
+            |    Field1 = 1
+            |  }
+            |
+            |  pub fn function() -> () {
+            |    let field0 = EnumType.Field0@@
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
     }
   }
 }

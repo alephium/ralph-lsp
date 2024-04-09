@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.error.TestError
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.util.URIUtil
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.TestDependency
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.scalacheck.Gen
@@ -114,9 +115,17 @@ object TestSourceCode {
       genUnCompiled(code, fileURI)
     )
 
+  def genParsedOK(code: Gen[String] = TestCode.genGoodCode(),
+                  fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
+                                                    compiler: CompilerAccess): Gen[SourceCodeState.Parsed] =
+    genParsed(
+      code = code,
+      fileURI = fileURI
+    ).map(_.asInstanceOf[SourceCodeState.Parsed])
+
   def genParsed(code: Gen[String] = TestCode.genGoodCode(),
                 fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
-                                                  compiler: CompilerAccess): Gen[SourceCodeState.Parsed] = {
+                                                  compiler: CompilerAccess): Gen[SourceCodeState] = {
     val unCompiled =
       genUnCompiled(
         code = code,
@@ -127,16 +136,22 @@ object TestSourceCode {
   }
 
   def genParsed(unCompiled: Gen[SourceCodeState.UnCompiled])(implicit file: FileAccess,
-                                                             compiler: CompilerAccess): Gen[SourceCodeState.Parsed] =
-    unCompiled
-      .map(SourceCode.parse)
-      .map(_.asInstanceOf[SourceCodeState.Parsed])
+                                                             compiler: CompilerAccess): Gen[SourceCodeState] =
+    unCompiled map SourceCode.parse
+
+  def genCompiledOK(code: Gen[String] = TestCode.genGoodCode(),
+                    fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
+                                                      compiler: CompilerAccess): Gen[SourceCodeState.Compiled] =
+    genCompiled(
+      code = code,
+      fileURI = fileURI
+    ).map(_.asInstanceOf[SourceCodeState.Compiled])
 
   def genCompiled(code: Gen[String] = TestCode.genGoodCode(),
                   fileURI: Gen[URI] = genFileURI())(implicit file: FileAccess,
                                                     compiler: CompilerAccess): Gen[SourceCodeState.IsParsed] = {
     val parsed =
-      genParsed(
+      genParsedOK(
         code = code,
         fileURI = fileURI
       )
@@ -151,7 +166,7 @@ object TestSourceCode {
     val result =
       SourceCode.compile(
         sourceCode = ArraySeq(parsed),
-        dependency = ArraySeq.empty,
+        dependency = TestDependency.buildStd().dependencies.flatMap(_.sourceCode),
         compilerOptions = CompilerOptions.Default,
         workspaceErrorURI = parsed.fileURI
       )
@@ -181,6 +196,12 @@ object TestSourceCode {
   def delete(sourceCode: SourceCodeState): Unit =
     TestFile.delete(sourceCode.fileURI)
 
+  def deleteIfExists(sourceCode: SourceCodeState): Boolean =
+    TestFile.deleteIfExists(sourceCode.fileURI)
+
   def deleteAll(sourceCode: Iterable[SourceCodeState]): Unit =
     sourceCode foreach delete
+
+  def deleteAllIfExists(sourceCode: Iterable[SourceCodeState]): Unit =
+    sourceCode foreach deleteIfExists
 }

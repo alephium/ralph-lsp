@@ -114,6 +114,9 @@ object TestFile {
   def delete(uri: URI): Unit =
     Files.delete(Paths.get(uri))
 
+  def deleteIfExists(uri: URI): Boolean =
+    Files.deleteIfExists(Paths.get(uri))
+
   /** Recursive delete all files in this folder */
   def deleteAll(uri: URI): Boolean =
     deleteAll(new File(uri))

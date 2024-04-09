@@ -5,7 +5,8 @@ import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.sourcecode.SourceTreeInScope
+import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 private object GoToIdent {
 
@@ -14,14 +15,14 @@ private object GoToIdent {
    *
    * @param identNode  The node representing the identifier in the AST.
    * @param ident      The identifier for which the argument definition is sought.
-   * @param sourceAST  The source tree to search within.
+   * @param sourceCode The source tree in scope.
    * @param sourceCode The parsed state of the source-code where the search is executed.
    * @return An array sequence of positioned ASTs matching the search result.
    * */
   def goTo(identNode: Node[Ast.Positioned],
            ident: Ast.Ident,
-           sourceAST: Tree.Source,
-           sourceCode: SourceCodeState.Parsed): Iterator[GoToLocation] =
+           sourceCode: SourceTreeInScope,
+           workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     identNode.parent match { // take one step up to check the type of ident node.
       case Some(parent) =>
         parent match {
@@ -30,23 +31,24 @@ private object GoToIdent {
             goToScopeDefinitions(
               identNode = variableNode,
               ident = variable.id,
-              source = sourceAST
-            ).flatMap(GoToLocation(_, sourceCode))
+              source = sourceCode.tree
+            ).flatMap(GoToLocation(_, sourceCode.parsed))
 
           case assignmentNode @ Node(assignment: Ast.AssignmentSimpleTarget[_], _) if assignment.ident == ident =>
             // They selected an assignment. Take 'em there!
             goToScopeDefinitions(
               identNode = assignmentNode,
               ident = assignment.ident,
-              source = sourceAST
-            ).flatMap(GoToLocation(_, sourceCode))
+              source = sourceCode.tree
+            ).flatMap(GoToLocation(_, sourceCode.parsed))
 
           case Node(fieldSelector: Ast.EnumFieldSelector[_], _) if fieldSelector.field == ident =>
             // They selected an enum field. Take 'em there!
-            goToEnumField(
-              fieldSelector = fieldSelector,
-              source = sourceAST
-            ).flatMap(GoToLocation(_, sourceCode))
+            GoTo.inScope(
+              sourceCode = sourceCode,
+              workspace = workspace,
+              searcher = goToEnumField(fieldSelector, _)
+            )
 
           case node @ Node(field: Ast.EnumField, _) if field.ident == ident =>
             // They selected an enum field.
@@ -61,8 +63,8 @@ private object GoToIdent {
                   goToEnumFieldUsage(
                     enumType = enumDef.id,
                     enumField = field,
-                    source = sourceAST
-                  ).flatMap(GoToLocation(_, sourceCode))
+                    source = sourceCode.tree
+                  ).flatMap(GoToLocation(_, sourceCode.parsed))
               }
               .flatten
 
@@ -79,8 +81,8 @@ private object GoToIdent {
                   goToEventFieldUsage(
                     eventDefId = eventDef.id,
                     eventFieldIndex = eventDef.fields.indexWhere(_.ident == field.ident),
-                    source = sourceAST
-                  ).flatMap(GoToLocation(_, sourceCode))
+                    source = sourceCode.tree
+                  ).flatMap(GoToLocation(_, sourceCode.parsed))
               }
               .flatten
 
@@ -89,24 +91,24 @@ private object GoToIdent {
             goToIdentUsage(
               fromNode = constantDefNode,
               fromNodeIdent = constantDef.ident,
-              source = sourceAST
-            ).flatMap(GoToLocation(_, sourceCode))
+              source = sourceCode.tree
+            ).flatMap(GoToLocation(_, sourceCode.parsed))
 
           case namedVarNode @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == ident =>
             // User selected a named variable. Find its usages.
             goToIdentUsage(
               fromNode = namedVarNode,
               fromNodeIdent = namedVar.ident,
-              source = sourceAST
-            ).flatMap(GoToLocation(_, sourceCode))
+              source = sourceCode.tree
+            ).flatMap(GoToLocation(_, sourceCode.parsed))
 
           case argumentNode @ Node(argument: Ast.Argument, _) if argument.ident == ident =>
             // They selected an argument. Take 'em there!
             goToIdentUsage(
               fromNode = argumentNode,
               fromNodeIdent = argument.ident,
-              source = sourceAST
-            ).flatMap(GoToLocation(_, sourceCode))
+              source = sourceCode.tree
+            ).flatMap(GoToLocation(_, sourceCode.parsed))
 
           case _ =>
             Iterator.empty

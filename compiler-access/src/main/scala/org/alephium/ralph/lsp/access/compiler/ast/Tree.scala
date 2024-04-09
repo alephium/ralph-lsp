@@ -45,7 +45,7 @@ object Tree {
      * @note Lazily initialised as it can have concurrent access or no access at all.
      * */
     lazy val rootNode: Node[Ast.Positioned] =
-      NodeBuilder.buildRootNode(ast, index)
+      NodeBuilder.buildRootNode(ast)
 
     /**
      * Solution for issue <a href="https://github.com/alephium/ralph-lsp/issues/135">#135</a>.
@@ -62,6 +62,15 @@ object Tree {
 
           case _ =>
         }
+
+    def typeId(): Ast.TypeId =
+      ast match {
+        case Left(contract) =>
+          contract.ident
+
+        case Right(struct) =>
+          struct.id
+      }
   }
 
   sealed trait Literal extends Tree
