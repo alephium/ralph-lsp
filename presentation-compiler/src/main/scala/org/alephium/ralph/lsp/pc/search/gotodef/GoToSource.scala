@@ -6,7 +6,6 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceTreeInScope
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 private object GoToSource {
 
@@ -15,6 +14,7 @@ private object GoToSource {
    *
    * @param cursorIndex The index of the token clicked by the user.
    * @param sourceCode  The parsed state of the source-code where the search is executed.
+   * @param workspace   The workspace where this search was executed and where all the source trees exist.
    * @return An iterator over the target go-to location(s).
    */
   def goTo(cursorIndex: Int,
@@ -37,9 +37,8 @@ private object GoToSource {
             GoToFuncId.goTo(
               funcIdNode = funcIdNode,
               funcId = funcId,
-              source = sourceCode.tree,
-              sourceCode = sourceCode.parsed,
-              dependencyBuiltIn = workspace.build.findDependency(DependencyID.BuiltIn)
+              sourceCode = sourceCode,
+              workspace = workspace
             )
 
           case typIdNode @ Node(typeId: Ast.TypeId, _) =>

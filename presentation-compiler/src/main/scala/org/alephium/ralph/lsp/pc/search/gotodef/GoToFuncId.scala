@@ -5,8 +5,9 @@ import org.alephium.ralph.Ast.Positioned
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceTreeInScope}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 private object GoToFuncId {
 
@@ -15,14 +16,14 @@ private object GoToFuncId {
    *
    * @param funcIdNode The node representing the [[Ast.FuncId]] in the AST.
    * @param funcId     The [[Ast.FuncId]] of the function to find the definition for.
-   * @param source     The source tree to search within.
+   * @param sourceCode The source-tree and its parsed source-code state, where this search was executed.
+   * @param workspace  The workspace where this search was executed and where all the source trees exist.
    * @return An array sequence containing the positioned ASTs of the searched function.
    * */
   def goTo(funcIdNode: Node[Positioned],
            funcId: Ast.FuncId,
-           source: Tree.Source,
-           sourceCode: SourceCodeState.Parsed,
-           dependencyBuiltIn: Option[WorkspaceState.Compiled]): Iterator[GoToLocation] =
+           sourceCode: SourceTreeInScope,
+           workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     funcIdNode.parent match { // take one step up to check the type of function call.
       case Some(parent) =>
         parent match {
@@ -30,24 +31,22 @@ private object GoToFuncId {
             // The user clicked on a local function. Take 'em there!
             goToFunction(
               funcId = callExpr.id,
-              source = source,
               sourceCode = sourceCode,
-              dependencyBuiltIn = dependencyBuiltIn
+              workspace = workspace
             )
 
           case Node(funcCall: Ast.FuncCall[_], _) if funcCall.id == funcId =>
             goToFunction(
               funcId = funcCall.id,
-              source = source,
               sourceCode = sourceCode,
-              dependencyBuiltIn = dependencyBuiltIn
+              workspace = workspace
             )
 
           case Node(funcDef: Ast.FuncDef[_], _) if funcDef.id == funcId =>
             goToFunctionUsage(
               funcId = funcDef.id,
-              source = source
-            ).flatMap(GoToLocation(_, sourceCode))
+              source = sourceCode.tree
+            ).flatMap(GoToLocation(_, sourceCode.parsed))
 
           case Node(callExpr: Ast.ContractCallExpr, _) if callExpr.callId == funcId =>
             // TODO: The user clicked on a external function call. Take 'em there!
@@ -64,26 +63,25 @@ private object GoToFuncId {
   /**
    * Navigate to local or built-in functions within the source code for the specified [[Ast.FuncId]].
    *
-   * @param funcId            The [[Ast.FuncId]] of the function to locate.
-   * @param source            The source tree to search within.
-   * @param sourceCode        The source code corresponding to the source tree.
-   * @param dependencyBuiltIn The dependency workspace containing built-in functions.
+   * @param funcId     The [[Ast.FuncId]] of the function to locate.
+   * @param sourceCode The source tree to search.
+   * @param workspace  The workspace where this search was executed and where all the source trees exist.
    * @return An iterator over all searched function definitions.
    */
   private def goToFunction(funcId: Ast.FuncId,
-                           source: Tree.Source,
-                           sourceCode: SourceCodeState.Parsed,
-                           dependencyBuiltIn: Option[WorkspaceState.Compiled]): Iterator[GoToLocation] =
+                           sourceCode: SourceTreeInScope,
+                           workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     if (funcId.isBuiltIn)
       goToBuiltInFunction(
         funcId = funcId,
-        dependencyBuiltIn = dependencyBuiltIn
+        dependencyBuiltIn = workspace.build.findDependency(DependencyID.BuiltIn)
       )
     else
-      goToLocalFunction(
-        funcId = funcId,
-        source = source
-      ).flatMap(GoToLocation(_, sourceCode))
+      GoTo.inScope(
+        sourceCode = sourceCode,
+        workspace = workspace,
+        searcher = goToLocalFunction(funcId, _)
+      )
 
   /**
    * Navigate to the local function within the source code for the given [[Ast.FuncId]].
