@@ -43,10 +43,11 @@ private object GoToTypeId {
 
           case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == typeId =>
             // They selected an event emit. Take 'em there!
-            goToEventDef(
-              emitEvent = emitEvent,
-              source = sourceCode.tree
-            ).flatMap(GoToLocation(_, sourceCode.parsed))
+            GoTo.inScope(
+              sourceCode = sourceCode,
+              workspace = workspace,
+              searcher = goToEventDef(emitEvent, _)
+            )
 
           case Node(eventDef: Ast.EventDef, _) if eventDef.id == typeId =>
             // They selected an event definition. Find event usages.
