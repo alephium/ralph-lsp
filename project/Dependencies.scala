@@ -2,7 +2,7 @@ import sbt._
 
 object Version {
   val scala213 = "2.13.13"
-  val web3 = "0.37.0"
+  val web3 = "0.38.0"
 }
 
 object Dependencies {
@@ -10,10 +10,10 @@ object Dependencies {
   /** TEST */
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.18" % Test
   lazy val scalaCheck = "org.scalatestplus" %% "scalacheck-1-17" % "3.2.17.0" % Test
-  lazy val scalaMock = "org.scalamock" %% "scalamock" % "5.2.0" % Test
+  lazy val scalaMock = "org.scalamock" %% "scalamock" % "6.0.0" % Test
 
   /** Core */
-  lazy val ralphc = "org.alephium" %% "alephium-ralphc" % "2.11.1"
+  lazy val ralphc = "org.alephium" %% "alephium-ralphc" % "2.12.0"
   lazy val lsp4j = "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.22.0"
 
   /** Logging */
