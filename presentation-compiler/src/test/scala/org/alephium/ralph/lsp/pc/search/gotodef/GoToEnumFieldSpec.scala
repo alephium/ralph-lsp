@@ -64,8 +64,8 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           |Abstract Contract Parent() {
           |
           |  enum EnumType {
-          |    >>Field0 = 0<<
-          |    Field1 = 1
+          |    Field0 = 0
+          |    >>Field1 = 1<<
           |  }
           |}
           |
