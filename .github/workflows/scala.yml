@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: 17
-      - run: sbt "compile;test"
+      - run: sbt "compile;test;doc"
 
   test-windows:
     runs-on: windows-latest
@@ -24,4 +24,4 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: 17
-      - run: sbt "compile;test"
+      - run: sbt "compile;test;doc"
