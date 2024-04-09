@@ -46,8 +46,8 @@ private object GoToSource {
             GoToTypeId.goTo(
               identNode = typIdNode,
               typeId = typeId,
-              source = sourceCode.tree,
-              sourceCode = sourceCode.parsed
+              sourceCode = sourceCode,
+              workspace = workspace
             )
 
           case _ =>
