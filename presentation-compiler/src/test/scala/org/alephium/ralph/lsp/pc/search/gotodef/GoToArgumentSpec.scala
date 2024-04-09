@@ -94,6 +94,32 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "there are duplicate arguments within inheritance" in {
+      goTo(
+        """
+          |Abstract Contract Parent3(>>param: MyParam<<,
+          |                          >>param: MyParam<<) { }
+          |
+          |
+          |Abstract Contract Parent2(>>param: MyParam<<,
+          |                          >>param: MyParam<<) extends Parent3() { }
+          |
+          |Abstract Contract Parent1(>>param: MyParam<<) extends Parent2() {
+          |
+          |  // this function also has `interface` as parameter, but it is not in scope.
+          |  pub fn local_function(param: MyParam) -> () { }
+          |}
+          |
+          |Contract GoToField(>>param: MyParam<<) extends Parent1() {
+          |
+          |  pub fn local_function(>>param: MyParam<<) -> () {
+          |    let result = param@@.function()
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
 }

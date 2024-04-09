@@ -42,7 +42,17 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
     "function and argument have same names" in {
       goTo(
         """
-          |Contract MyContract(interface: MyInterface) {
+          |Abstract Contract Parent2() {
+          |
+          |  pub fn >>function_b<<(boolean: Bool) -> () { }
+          |}
+          |
+          |Abstract Contract Parent1() {
+          |
+          |  pub fn >>function_b<<(boolean: Bool) -> () { }
+          |}
+          |
+          |Contract MyContract(interface: MyInterface) extends Parent1(), Parent2() {
           |
           |  // function_b is also an input parameter, but it should still go to the target function.
           |  pub fn function_a(function_b: Bool) -> () {

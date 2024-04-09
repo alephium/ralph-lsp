@@ -24,7 +24,15 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     "user selects the enum type of the first field" in {
       goTo(
         """
-          |Contract MyContract() {
+          |Abstract Contract Parent() {
+          |
+          |  enum >>EnumType<< {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |}
+          |
+          |Contract MyContract() extends Parent() {
           |
           |  enum >>EnumType<< {
           |    Field0 = 0
@@ -43,7 +51,15 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     "user selects the enum type of the second field" in {
       goTo(
         """
-          |Contract MyContract() {
+          |Abstract Contract Parent() {
+          |
+          |  enum >>EnumType<< {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |}
+          |
+          |Contract MyContract() extends Parent() {
           |
           |  enum >>EnumType<< {
           |    Field0 = 0
@@ -62,7 +78,33 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     "there are multiple enum types with duplicate names" in {
       goTo(
         """
-          |Contract MyContract() {
+          |Abstract Contract Parent2() {
+          |
+          |  enum EnumTypeNotUsed {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |
+          |  enum >>EnumType<< {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |}
+          |
+          |Abstract Contract Parent1() extends Parent2() {
+          |
+          |  enum >>EnumType<< {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |
+          |  enum EnumTypeNotUsed {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |}
+          |
+          |Contract MyContract() extends Parent1() {
           |
           |  enum >>EnumType<< {
           |    Field0 = 0

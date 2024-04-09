@@ -66,7 +66,18 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
       "at multiple locations" in {
         goTo(
           """
-            |Contract GoToAssignment(>>mut counter: U256<<) {
+            |Abstract Contract Parent2(>>mut counter: U256<<) { }
+            |
+            |// This is not an Abstract, but Go-To definition should still work as expected.
+            |Contract Parent1(>>mut counter: U256<<,
+            |                 >>mut counter: U256<<) extends Parent2() {
+            |
+            |  // the counter parameter here is not in scope, so it should get added to search result.
+            |  fn function(mut counter: U256) -> () {}
+            |
+            |}
+            |
+            |Contract GoToAssignment(>>mut counter: U256<<) extends Parent1() {
             |
             |  pub fn function(>>mut counter: U256<<) -> () {
             |    >>let mut counter = 0

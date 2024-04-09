@@ -26,7 +26,15 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
     "an event exists" in {
       goTo(
         """
-          |Contract Test() {
+          |Abstract Contract Parent() {
+          |
+          |  event TransferNotUsed(to: Address, amount: U256)
+          |
+          |  >>event Transfer(to: Address, amount: U256)<<
+          |
+          |}
+          |
+          |Contract Test() extends Parent() {
           |
           |  >>event Transfer(to: Address, amount: U256)<<
           |
@@ -38,27 +46,19 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
       )
     }
 
-    "multiple events exist" in {
+    "duplicate events exist" in {
       goTo(
         """
-          |Contract Test() {
+          |Abstract Contract Parent() {
           |
-          |  >>event Transfer(to: Address, amount: U256)<<
           |  >>event Transfer(amount: U256)<<
+          |  >>event Transfer(to: Address, amount: U256)<<
+          |  event TransferNotUsed(to: Address, amount: U256)
           |  >>event Transfer(to: Address)<<
           |
-          |  pub fn function() -> () {
-          |    emit Transfe@@r(to, amount)
-          |  }
           |}
-          |""".stripMargin
-      )
-    }
-
-    "events exist with duplicate names" in {
-      goTo(
-        """
-          |Contract Transfer(transfer: Transfer) {
+          |
+          |Contract Test() extends Parent() {
           |
           |  >>event Transfer(to: Address, amount: U256)<<
           |  >>event Transfer(amount: U256)<<
