@@ -31,16 +31,18 @@ private object GoToIdent {
             goToScopeDefinitions(
               identNode = variableNode,
               ident = variable.id,
-              source = sourceCode.tree
-            ).flatMap(GoToLocation(_, sourceCode.parsed))
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case assignmentNode @ Node(assignment: Ast.AssignmentSimpleTarget[_], _) if assignment.ident == ident =>
             // They selected an assignment. Take 'em there!
             goToScopeDefinitions(
               identNode = assignmentNode,
               ident = assignment.ident,
-              source = sourceCode.tree
-            ).flatMap(GoToLocation(_, sourceCode.parsed))
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case Node(fieldSelector: Ast.EnumFieldSelector[_], _) if fieldSelector.field == ident =>
             // They selected an enum field. Take 'em there!
@@ -142,61 +144,61 @@ private object GoToIdent {
   /**
    * Navigate to arguments, constants and variables for the given identity ([[Ast.Ident]]).
    *
-   * @param identNode The node representing the identity.
-   * @param ident     The identity data ([[Ast.Ident]]) within the node.
-   * @param source    The source tree to search within.
+   * @param identNode  The node representing the identity.
+   * @param ident      The identity data ([[Ast.Ident]]) within the node.
+   * @param sourceCode The source tree containing the identity node.
+   * @param workspace  The workspace in scope, that may contain other dependant source-code.
    * @return An array sequence of arguments, constants and variables with the input identity.
    */
   private def goToScopeDefinitions(identNode: Node[Ast.Positioned],
                                    ident: Ast.Ident,
-                                   source: Tree.Source): Iterator[Ast.Positioned] = {
-    val arguments =
-      goToArguments(
-        variableNode = identNode,
-        variableId = ident,
-        source = source
+                                   sourceCode: SourceTreeInScope,
+                                   workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] = {
+    val argumentsAndConstants =
+      GoTo.inScope(
+        sourceCode = sourceCode,
+        workspace = workspace,
+        searcher = goToConstantsAndTemplateArguments(ident, _)
       )
 
-    val constants =
-      goToConstants(
-        source = source,
+    val functionArguments =
+      goToNearestFunctionArguments(
+        childNode = identNode,
         ident = ident
-      )
+      ).flatMap(GoToLocation(_, sourceCode.parsed))
 
     val localVariables =
       goToInScopeVariables(
         childNode = identNode,
         ident = ident,
-        source = source
-      )
+        source = sourceCode.tree
+      ).flatMap(GoToLocation(_, sourceCode.parsed))
 
-    arguments ++ constants ++ localVariables
+    argumentsAndConstants ++ functionArguments ++ localVariables
   }
 
   /**
-   * Navigate to the argument(s) for the given variable.
+   * Go-to global variable definitions in scope which are constants and template arguments.
    *
-   * @param variableNode The node representing the variable.
-   * @param variableId   The variable to find the argument for.
-   * @param source       The source tree to search within.
-   * @return An array sequence of [[Ast.Argument]]s matching the search result.
-   * */
-  private def goToArguments(variableNode: Node[Ast.Positioned],
-                            variableId: Ast.Ident,
-                            source: Tree.Source): Iterator[Ast.Argument] = {
-    val functionArguments =
-      goToNearestFunctionArguments(
-        childNode = variableNode,
-        ident = variableId
+   * @param ident The identity of the definition to search.
+   * @param tree  The source tree to search the identity within.
+   * @return An iterator over constants and arguments.
+   */
+  private def goToConstantsAndTemplateArguments(ident: Ast.Ident,
+                                                tree: Tree.Source): Iterator[Ast.Positioned] = {
+    val constants =
+      goToConstants(
+        ident = ident,
+        source = tree
       )
 
     val templateArguments =
       goToTemplateArguments(
-        source = source,
-        ident = variableId
+        source = tree,
+        ident = ident
       )
 
-    functionArguments ++ templateArguments
+    constants ++ templateArguments
   }
 
   /**
@@ -206,8 +208,8 @@ private object GoToIdent {
    * @param ident  The constant identification to find.
    * @return The constant definitions.
    */
-  private def goToConstants(source: Tree.Source,
-                            ident: Ast.Ident): Iterator[Ast.ConstantVarDef] =
+  private def goToConstants(ident: Ast.Ident,
+                            source: Tree.Source): Iterator[Ast.ConstantVarDef] =
     source
       .rootNode
       .walkDown
