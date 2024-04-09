@@ -15,8 +15,7 @@ private object GoToIdent {
    *
    * @param identNode  The node representing the identifier in the AST.
    * @param ident      The identifier for which the argument definition is sought.
-   * @param sourceCode The source tree in scope.
-   * @param sourceCode The parsed state of the source-code where the search is executed.
+   * @param sourceCode The source-tree where this search was executed and its parsed source-code state.
    * @return An array sequence of positioned ASTs matching the search result.
    * */
   def goTo(identNode: Node[Ast.Positioned],
