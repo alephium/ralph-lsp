@@ -8,7 +8,7 @@ on:
       - '**'
 
 jobs:
-  test-ubuntu:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
