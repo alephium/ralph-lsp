@@ -1,6 +1,9 @@
 val JAR_NAME =
   "ralph-lsp.jar"
 
+val MAIN_CLASS =
+  "org.alephium.ralph.lsp.Main"
+
 val inliningOptions =
   Seq(
     "-opt-warnings",
@@ -94,10 +97,9 @@ lazy val copyJARToVSCode =
 lazy val `lsp-server` =
   project
     .settings(
-      name := "ralph-lsp",
       commonSettings,
       scalacOptions += "-Xmixin-force-forwarders:false", // duplicate RPC method initialized.
-      assembly / mainClass := Some("org.alephium.ralph.lsp.Main"),
+      assembly / mainClass := Some(MAIN_CLASS),
       assembly / assemblyJarName := JAR_NAME,
       assemblyMergeStrategy := {
         case PathList("module-info.class") => MergeStrategy.discard
@@ -120,6 +122,14 @@ lazy val `lsp-server` =
           Dependencies.scalaLogging
         )
     ).dependsOn(`presentation-compiler`)
+
+lazy val `ralph-lsp` =
+  (project in file("."))
+    .settings(
+     commonSettings,
+     Compile / mainClass := Some(MAIN_CLASS),
+    ).dependsOn(`lsp-server`)
+    .aggregate(`compiler-access`, `presentation-compiler`, `lsp-server`)
     .enablePlugins(JavaAppPackaging)
 
 lazy val downloadWeb3AndInstallStd = taskKey[Unit]("Download alephium-web3 source code and copy std interface to the correct resource folder")
