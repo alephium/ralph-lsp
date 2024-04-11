@@ -5,7 +5,7 @@ import org.alephium.ralph.Ast.Positioned
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceTreeInScope}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceTreeInScope, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
@@ -19,11 +19,12 @@ private object GoToFuncId {
    * @param sourceCode The source-tree and its parsed source-code state, where this search was executed.
    * @param workspace  The workspace where this search was executed and where all the source trees exist.
    * @return An array sequence containing the positioned ASTs of the searched function.
-   * */
-  def goTo(funcIdNode: Node[Positioned],
-           funcId: Ast.FuncId,
-           sourceCode: SourceTreeInScope,
-           workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
+   */
+  def goTo(
+      funcIdNode: Node[Positioned],
+      funcId: Ast.FuncId,
+      sourceCode: SourceTreeInScope,
+      workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     funcIdNode.parent match { // take one step up to check the type of function call.
       case Some(parent) =>
         parent match {
@@ -68,9 +69,10 @@ private object GoToFuncId {
    * @param workspace  The workspace where this search was executed and where all the source trees exist.
    * @return An iterator over all searched function definitions.
    */
-  private def goToFunction(funcId: Ast.FuncId,
-                           sourceCode: SourceTreeInScope,
-                           workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
+  private def goToFunction(
+      funcId: Ast.FuncId,
+      sourceCode: SourceTreeInScope,
+      workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     if (funcId.isBuiltIn)
       goToBuiltInFunction(
         funcId = funcId,
@@ -89,9 +91,10 @@ private object GoToFuncId {
    * @param funcId The [[Ast.FuncId]] of the local function to locate.
    * @param source The source tree to search within.
    * @return An array sequence containing all the local function definitions.
-   * */
-  private def goToLocalFunction(funcId: Ast.FuncId,
-                                source: Tree.Source): Iterator[Ast.Positioned] =
+   */
+  private def goToLocalFunction(
+      funcId: Ast.FuncId,
+      source: Tree.Source): Iterator[Ast.Positioned] =
     // TODO: Improve selection by checking function argument count and types.
     source.ast match {
       case Left(ast) =>
@@ -121,8 +124,9 @@ private object GoToFuncId {
    * @param dependencyBuiltIn Dependant workspace containing built-in function source files.
    * @return A iterator over locations of the built-in functions within the compiled workspace.
    */
-  private def goToBuiltInFunction(funcId: Ast.FuncId,
-                                  dependencyBuiltIn: Option[WorkspaceState.Compiled]): Iterator[GoToLocation] =
+  private def goToBuiltInFunction(
+      funcId: Ast.FuncId,
+      dependencyBuiltIn: Option[WorkspaceState.Compiled]): Iterator[GoToLocation] =
     dependencyBuiltIn match {
       case Some(buildInWorkspace) =>
         buildInWorkspace
@@ -147,8 +151,9 @@ private object GoToFuncId {
    * @param builtInFunctions Compiled source file containing built-in functions.
    * @return A iterator over locations of the built-in functions within the compiled source file.
    */
-  private def goToBuiltInFunction(funcId: Ast.FuncId,
-                                  builtInFunctions: SourceCodeState.Compiled): Iterator[GoToLocation] =
+  private def goToBuiltInFunction(
+      funcId: Ast.FuncId,
+      builtInFunctions: SourceCodeState.Compiled): Iterator[GoToLocation] =
     builtInFunctions
       .parsed
       .ast
@@ -177,9 +182,10 @@ private object GoToFuncId {
    * @param funcId The [[Ast.FuncId]] of the [[Ast.FuncDef]] to locate calls for.
    * @param source The source tree to search within.
    * @return An iterator containing all the local function calls.
-   * */
-  private def goToFunctionUsage(funcId: Ast.FuncId,
-                                source: Tree.Source): Iterator[Ast.Positioned] =
+   */
+  private def goToFunctionUsage(
+      funcId: Ast.FuncId,
+      source: Tree.Source): Iterator[Ast.Positioned] =
     source
       .rootNode
       .walkDown
@@ -190,4 +196,5 @@ private object GoToFuncId {
         case Node(funcCall: Ast.FuncCall[_], _) if funcCall.id == funcId =>
           funcCall
       }
+
 }

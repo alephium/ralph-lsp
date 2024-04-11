@@ -4,7 +4,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, Build, BuildState}
 import org.scalatest.matchers.should.Matchers._
 
 import java.nio.file.Paths
@@ -32,10 +32,12 @@ object TestDependency {
 
     // build the std dependency
     val dependencyBuild =
-      Dependency.compile(
-        parsed = parsed,
-        currentBuild = None
-      ).asInstanceOf[BuildState.BuildCompiled]
+      Dependency
+        .compile(
+          parsed = parsed,
+          currentBuild = None
+        )
+        .asInstanceOf[BuildState.BuildCompiled]
 
     // dependency should exists in the build
     dependencyBuild.dependencies should have size 2

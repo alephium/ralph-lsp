@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.util
 
-import java.io.{PrintWriter, StringWriter}
+import java.io.{StringWriter, PrintWriter}
 
 object ExceptionUtil {
 
@@ -13,7 +13,9 @@ object ExceptionUtil {
   }
 
   /** Merge a message and exception into a String */
-  def mergeToString(message: String, cause: Throwable): String = {
+  def mergeToString(
+      message: String,
+      cause: Throwable): String = {
     val stringStackTrace = toStringStackTrace(cause)
 
     s"""$message

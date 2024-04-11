@@ -17,9 +17,10 @@ private object GoToSource {
    * @param workspace   The workspace where this search was executed and where all the source trees exist.
    * @return An iterator over the target go-to location(s).
    */
-  def goTo(cursorIndex: Int,
-           sourceCode: SourceTreeInScope,
-           workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
+  def goTo(
+      cursorIndex: Int,
+      sourceCode: SourceTreeInScope,
+      workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
       case Some(closest) =>
         closest match {

@@ -11,8 +11,8 @@ import org.scalatest.wordspec.AnyWordSpec
 class ImportCompleterSpec extends AnyWordSpec with Matchers {
 
   implicit val clientLogger: ClientLogger = TestClientLogger
-  implicit val file: FileAccess = FileAccess.disk
-  implicit val compiler: CompilerAccess = CompilerAccess.ralphc
+  implicit val file: FileAccess           = FileAccess.disk
+  implicit val compiler: CompilerAccess   = CompilerAccess.ralphc
 
   "return empty" when {
     "cursor is before the quotes" in {
@@ -38,7 +38,7 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
         "std/fungible_token_unimplemented",
         "std/nft_collection_interface",
         "std/nft_collection_with_royalty_interface",
-        "std/nft_interface",
+        "std/nft_interface"
       ) map {
         suggestion =>
           Suggestion.Field(
@@ -71,7 +71,7 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
         "fungible_token_unimplemented",
         "nft_collection_interface",
         "nft_collection_with_royalty_interface",
-        "nft_interface",
+        "nft_interface"
       ) map {
         suggestion =>
           Suggestion.Field(
@@ -90,4 +90,5 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
       suggest("""import "std/nft_@@" """) should contain theSameElementsAs expected
     }
   }
+
 }

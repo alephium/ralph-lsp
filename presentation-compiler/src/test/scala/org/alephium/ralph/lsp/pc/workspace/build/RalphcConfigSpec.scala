@@ -5,7 +5,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
-import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace}
 import org.alephium.ralphc.Config
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
@@ -14,7 +14,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.net.URI
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Paths, Files}
 
 class RalphcConfigSpec extends AnyWordSpec with Matchers {
 
@@ -41,7 +41,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
 
         val expected = RalphcConfig.defaultParsedConfig.copy(dependencyPath = Some("dependencies"))
-        val actual = RalphcConfig.parse(URI.create(""), build_ralph).value
+        val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
         actual shouldBe expected
       }
@@ -63,7 +63,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
 
         val expected = RalphcConfig.defaultParsedConfig.copy(dependencyPath = None)
-        val actual = RalphcConfig.parse(URI.create(""), build_ralph).value
+        val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
         actual shouldBe expected
       }
@@ -87,11 +87,16 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
       Files.createDirectory(workspacePath.resolve(config.artifactPath))
       // create only if the dependencyPath is provided by the user i.e. is in the parsed config
       // otherwise expect the dependency compiler to write to the default dependencyPath
-      config.dependencyPath.foreach(dependencyPath => Files.createDirectory(workspacePath.resolve(dependencyPath)))
+      config
+        .dependencyPath
+        .foreach {
+          dependencyPath =>
+            Files.createDirectory(workspacePath.resolve(dependencyPath))
+        }
 
       // Persist the default config to the workspace
       val expectedBuildPath = workspacePath.resolve(Build.BUILD_FILE_NAME)
-      val actualBuildPath = RalphcConfig.persist(workspacePath, config).success.value
+      val actualBuildPath   = RalphcConfig.persist(workspacePath, config).success.value
       actualBuildPath shouldBe expectedBuildPath
 
       // Parse and compile the config file on disk
@@ -125,7 +130,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
           .compile(
             parsed = parsedBuild,
             currentBuild = None
-          ).asInstanceOf[BuildState.BuildCompiled]
+          )
+          .asInstanceOf[BuildState.BuildCompiled]
 
       compiledStd.dependencies should have size 2
 
@@ -158,4 +164,5 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
       doTest(dependencyPath = Some("dependencies"))
     }
   }
+
 }

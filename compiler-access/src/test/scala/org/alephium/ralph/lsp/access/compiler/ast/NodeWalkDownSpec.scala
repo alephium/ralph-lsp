@@ -61,4 +61,5 @@ class NodeWalkDownSpec extends AnyWordSpec with Matchers {
         "1-4-2"
       )
   }
+
 }

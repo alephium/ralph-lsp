@@ -94,4 +94,5 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
       }
     }
   }
+
 }

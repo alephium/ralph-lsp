@@ -13,9 +13,10 @@ import java.util.concurrent.{Future => JFuture}
  * @param pcState  Presentation-compiler state
  * @param trace    Client configured setting. See also [[org.eclipse.lsp4j.TraceValue]].
  */
-case class ServerState(client: Option[RalphLangClient],
-                       listener: Option[JFuture[Void]],
-                       pcState: Option[PCState],
-                       clientAllowsWatchedFilesDynamicRegistration: Boolean,
-                       trace: Trace,
-                       shutdownReceived: Boolean)
+case class ServerState(
+    client: Option[RalphLangClient],
+    listener: Option[JFuture[Void]],
+    pcState: Option[PCState],
+    clientAllowsWatchedFilesDynamicRegistration: Boolean,
+    trace: Trace,
+    shutdownReceived: Boolean)

@@ -6,7 +6,7 @@ import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
-import org.alephium.ralph.{BuiltIn, SourceIndex}
+import org.alephium.ralph.{SourceIndex, BuiltIn}
 
 import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
@@ -19,8 +19,10 @@ private object BuiltInFunctionDownloader extends DependencyDownloader {
    * @param dependencyPath The directory where dependencies are located.
    * @return An iterable over the downloaded built-in source files.
    */
-  protected def _download(dependencyPath: Path,
-                          errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] = {
+  protected def _download(
+      dependencyPath: Path,
+      errorIndex: SourceIndex
+    )(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] = {
     val workspaceDir =
       dependencyPath resolve DependencyID.BuiltIn.dirName
 
@@ -50,8 +52,9 @@ private object BuiltInFunctionDownloader extends DependencyDownloader {
    * @param functions     The built-in function information.
    * @return An iterable over the converted [[SourceCodeState.UnCompiled]] objects.
    */
-  private def toSourceCodeState(workspacePath: Path,
-                                functions: Seq[BuiltInFunctionInfo]): Iterable[SourceCodeState.UnCompiled] =
+  private def toSourceCodeState(
+      workspacePath: Path,
+      functions: Seq[BuiltInFunctionInfo]): Iterable[SourceCodeState.UnCompiled] =
     functions
       .groupBy(_.category)
       .map {
@@ -78,8 +81,9 @@ private object BuiltInFunctionDownloader extends DependencyDownloader {
    * @param functions The built-in function information.
    * @return A string representing the generated interface.
    */
-  private def toInterface(category: BuiltIn.Category,
-                          functions: Seq[BuiltInFunctionInfo]): String = {
+  private def toInterface(
+      category: BuiltIn.Category,
+      functions: Seq[BuiltInFunctionInfo]): String = {
     val functionsCode =
       functions
         .sorted
@@ -89,7 +93,10 @@ private object BuiltInFunctionDownloader extends DependencyDownloader {
               if (function.params.nonEmpty)
                 function
                   .params
-                  .map(param => s"  // $param")
+                  .map {
+                    param =>
+                      s"  // $param"
+                  }
                   .mkString("\n", "\n", "")
               else
                 ""

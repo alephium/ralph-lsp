@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceCodeState, SourceTreeInScope}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceTreeInScope, SourceCodeState, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 import scala.collection.immutable.ArraySeq
@@ -15,8 +15,9 @@ object WorkspaceSearcher {
    * @param workspace  The workspace that may contain files within the scope.
    * @return The source trees within the scope.
    */
-  def collectInScope(sourceCode: SourceTreeInScope,
-                     workspace: WorkspaceState.IsSourceAware): Seq[SourceTreeInScope] = {
+  def collectInScope(
+      sourceCode: SourceTreeInScope,
+      workspace: WorkspaceState.IsSourceAware): Seq[SourceTreeInScope] = {
     val allInScopeCode =
       collectParsedInScope(workspace)
 

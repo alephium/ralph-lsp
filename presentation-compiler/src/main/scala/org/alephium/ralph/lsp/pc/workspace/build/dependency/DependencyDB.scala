@@ -19,9 +19,11 @@ object DependencyDB extends StrictImplicitLogging {
    * @return Compiled compiled or build errors.
    */
 
-  def persist(parentBuild: BuildState.IsCompiled,
-              index: SourceIndex)(implicit file: FileAccess,
-                                  logger: ClientLogger): BuildState.IsCompiled = {
+  def persist(
+      parentBuild: BuildState.IsCompiled,
+      index: SourceIndex
+    )(implicit file: FileAccess,
+      logger: ClientLogger): BuildState.IsCompiled = {
     val (errors, _) =
       parentBuild
         .dependencies
@@ -44,9 +46,11 @@ object DependencyDB extends StrictImplicitLogging {
       parentBuild
   }
 
-  private def persistSource(source: SourceCodeState.IsCodeAware,
-                            index: SourceIndex)(implicit file: FileAccess,
-                                                logger: ClientLogger): Either[CompilerMessage.AnyError, Path] =
+  private def persistSource(
+      source: SourceCodeState.IsCodeAware,
+      index: SourceIndex
+    )(implicit file: FileAccess,
+      logger: ClientLogger): Either[CompilerMessage.AnyError, Path] =
     file.exists(
       fileURI = source.fileURI,
       index = index

@@ -92,4 +92,5 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
       }
     }
   }
+
 }

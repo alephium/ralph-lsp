@@ -24,38 +24,44 @@ object URIUtil {
     getFileName(uri).dropWhile(_ != '.').drop(1)
 
   /** Is the child [[URI]] within the parent [[URI]] */
-  def contains(parent: URI,
-               child: URI): Boolean =
+  def contains(
+      parent: URI,
+      child: URI): Boolean =
     contains(
       parent = Paths.get(parent),
       child = Paths.get(child)
     )
 
   /** Is the child [[Path]] within the parent [[Path]] */
-  def contains(parent: Path,
-               child: Path): Boolean =
+  def contains(
+      parent: Path,
+      child: Path): Boolean =
     parent
       .resolve(child)
       .startsWith(parent)
 
-  def isFileName(fileURI: URI,
-                 fileName: String): Boolean =
+  def isFileName(
+      fileURI: URI,
+      fileName: String): Boolean =
     getFileName(fileURI) == fileName
 
-  def isFirstChild(parent: URI,
-                   child: URI): Boolean =
+  def isFirstChild(
+      parent: URI,
+      child: URI): Boolean =
     isFirstChild(
       parent = Paths.get(parent),
       child = Paths.get(child)
     )
 
-  def isFirstChild(parent: Path,
-                   child: Path): Boolean =
+  def isFirstChild(
+      parent: Path,
+      child: Path): Boolean =
     parent.resolve(child).getParent == parent
 
   /** Similar to [[List.takeRight]] fetch the last `n` nested paths */
-  def takeRight(uri: URI,
-                count: Int): Option[Path] = {
+  def takeRight(
+      uri: URI,
+      count: Int): Option[Path] = {
     val right =
       Paths
         .get(uri)
@@ -76,7 +82,7 @@ object URIUtil {
    *
    * @return If the file is named `std/my_code.ral`, the import statement returned
    *         is `import "std/my_code"`.
-   * */
+   */
   def importIdentifier(uri: URI): Option[String] =
     takeRight(
       uri = uri,
@@ -91,4 +97,5 @@ object URIUtil {
 
         string.substring(0, string.lastIndexOf("."))
     }
+
 }

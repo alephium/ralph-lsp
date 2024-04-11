@@ -33,4 +33,5 @@ class GoToAssignmentsInTxScriptSpec extends AnyWordSpec with Matchers {
       )
     }
   }
+
 }

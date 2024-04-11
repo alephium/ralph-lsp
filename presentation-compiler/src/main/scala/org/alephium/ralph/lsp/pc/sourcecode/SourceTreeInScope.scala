@@ -9,5 +9,6 @@ import org.alephium.ralph.lsp.access.compiler.ast.Tree
  * @param tree   The source tree within the parsed source file.
  * @param parsed The source file containing the source tree.
  */
-case class SourceTreeInScope(tree: Tree.Source,
-                             parsed: SourceCodeState.Parsed)
+case class SourceTreeInScope(
+    tree: Tree.Source,
+    parsed: SourceCodeState.Parsed)

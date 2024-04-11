@@ -3,11 +3,11 @@ package org.alephium.ralph.lsp.pc.search
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.search.completion.{CodeCompletionProvider, Suggestion}
+import org.alephium.ralph.lsp.pc.search.completion.{Suggestion, CodeCompletionProvider}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefinitionProvider
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
-import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, Workspace}
 
 import java.net.URI
 
@@ -27,9 +27,12 @@ trait CodeProvider[A] {
    * @param workspace   The workspace state where the source-code is located.
    * @return An [[ArraySeq]] of search results of type [[A]].
    */
-  def search(cursorIndex: Int,
-             sourceCode: SourceCodeState.Parsed,
-             workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): Iterator[A]
+  def search(
+      cursorIndex: Int,
+      sourceCode: SourceCodeState.Parsed,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[A]
+
 }
 
 object CodeProvider {
@@ -51,33 +54,37 @@ object CodeProvider {
    * @param workspace Current workspace state.
    * @tparam A The type to search.
    */
-  def search[A](line: Int,
-                character: Int,
-                fileURI: URI,
-                workspace: WorkspaceState.IsSourceAware)(implicit provider: CodeProvider[A],
-                                                         logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[A]]] =
-    Workspace.findParsed( // find the parsed file where this search was executed.
-      fileURI = fileURI,
-      workspace = workspace
-    ) map {
-      parsedOpt =>
-        parsedOpt map {
-          parsed =>
-            // fetch the requested index from line number and character number.
-            val cursorIndex =
-              StringUtil.computeIndex(
-                code = parsed.code,
-                line = line,
-                character = character
-              )
+  def search[A](
+      line: Int,
+      character: Int,
+      fileURI: URI,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit provider: CodeProvider[A],
+      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[A]]] =
+    Workspace
+      .findParsed( // find the parsed file where this search was executed.
+        fileURI = fileURI,
+        workspace = workspace
+      )
+      .map {
+        parsedOpt =>
+          parsedOpt map {
+            parsed =>
+              // fetch the requested index from line number and character number.
+              val cursorIndex =
+                StringUtil.computeIndex(
+                  code = parsed.code,
+                  line = line,
+                  character = character
+                )
 
-            // execute the search
-            provider.search(
-              cursorIndex = cursorIndex,
-              sourceCode = parsed,
-              workspace = workspace
-            )
-        }
-    }
+              // execute the search
+              provider.search(
+                cursorIndex = cursorIndex,
+                sourceCode = parsed,
+                workspace = workspace
+              )
+          }
+      }
 
 }

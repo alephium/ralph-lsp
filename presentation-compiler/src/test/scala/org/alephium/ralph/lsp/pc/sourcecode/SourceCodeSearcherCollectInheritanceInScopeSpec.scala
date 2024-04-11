@@ -11,19 +11,23 @@ import scala.collection.immutable.ArraySeq
 
 class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with Matchers {
 
-  implicit val file: FileAccess = FileAccess.disk
+  implicit val file: FileAccess         = FileAccess.disk
   implicit val compiler: CompilerAccess = CompilerAccess.ralphc
 
   "return empty" when {
     "input source-code is empty" in {
       val parsed =
-        TestSourceCode.genParsed(
-          """
+        TestSourceCode
+          .genParsed(
+            """
             |Contract MyContract() {
             |  fn function1() -> () {}
             |}
             |""".stripMargin
-        ).sample.get.asInstanceOf[SourceCodeState.Parsed]
+          )
+          .sample
+          .get
+          .asInstanceOf[SourceCodeState.Parsed]
 
       val tree =
         parsed.ast.statements.head.asInstanceOf[Tree.Source]
@@ -199,7 +203,7 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
       // Double check: Also assert the names of the parents.
       val parentNames = actual.map(_.tree.ast.left.value.name)
       // Note: Parent3 and Child are not included.
-      parentNames should contain only("Parent1", "Parent2", "Parent4", "Parent5", "Parent6")
+      parentNames should contain only ("Parent1", "Parent2", "Parent4", "Parent5", "Parent6")
 
       TestSourceCode deleteAllIfExists Array(file1, file2)
     }

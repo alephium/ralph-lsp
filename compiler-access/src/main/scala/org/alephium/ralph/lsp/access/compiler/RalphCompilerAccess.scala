@@ -19,7 +19,9 @@ import java.net.URI
 private object RalphCompilerAccess extends CompilerAccess {
 
   /** @inheritdoc */
-  def parseContracts(fileURI: URI, code: String): Either[CompilerMessage.AnyError, Tree.Root] =
+  def parseContracts(
+      fileURI: URI,
+      code: String): Either[CompilerMessage.AnyError, Tree.Root] =
     try
       fastparse.parse(code, RalphParserExtension.multiContract(fileURI)(_)) match {
         case Parsed.Success(source: Tree.Root, _) =>
@@ -31,10 +33,11 @@ private object RalphCompilerAccess extends CompilerAccess {
     catch TryUtil.catchAllThrows(fileURI)
 
   /** @inheritdoc */
-  def compileContracts(contracts: Seq[Ast.ContractWithState],
-                       structs: Seq[Ast.Struct],
-                       options: CompilerOptions,
-                       workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
+  def compileContracts(
+      contracts: Seq[Ast.ContractWithState],
+      structs: Seq[Ast.Struct],
+      options: CompilerOptions,
+      workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
       val multiContract =
         Ast.MultiContract(contracts, structs, None)

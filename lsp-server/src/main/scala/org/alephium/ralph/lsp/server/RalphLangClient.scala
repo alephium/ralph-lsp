@@ -21,7 +21,9 @@ case class RalphLangClient(private val client: LanguageClient) {
   def error(message: String): Unit =
     client.logMessage(new MessageParams(MessageType.Error, message))
 
-  def error(message: String, cause: Throwable): Unit = {
+  def error(
+      message: String,
+      cause: Throwable): Unit = {
     val clientMessage =
       ExceptionUtil.mergeToString(
         message = message,
@@ -54,4 +56,5 @@ case class RalphLangClient(private val client: LanguageClient) {
    */
   def publish(diagnostics: Iterable[PublishDiagnosticsParams]): Unit =
     diagnostics foreach client.publishDiagnostics
+
 }

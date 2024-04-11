@@ -40,7 +40,7 @@ object CollectionUtil {
     /**
      * Merge elements from new collection into existing collection favouring
      * duplicates from new collection.
-     * */
+     */
     def merge[B >: A](newCollection: ArraySeq[B])(implicit ordering: Ordering[B]): ArraySeq[B] = {
       val oldCollection = // old collection with new-items removed.
         collection filterNot { // filter items that do not exist in the new collection
@@ -53,5 +53,7 @@ object CollectionUtil {
 
       oldCollection ++ newCollection
     }
+
   }
+
 }

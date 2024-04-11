@@ -22,9 +22,10 @@ object SourceIndexExtra {
    *
    * @see Issue <a href="https://github.com/alephium/ralph-lsp/issues/17">#17</a>.
    */
-  def ensurePositive(index: Int,
-                     width: Int,
-                     fileURI: URI): SourceIndex =
+  def ensurePositive(
+      index: Int,
+      width: Int,
+      fileURI: URI): SourceIndex =
     if (index < 0)
       zero(fileURI)
     else
@@ -35,6 +36,7 @@ object SourceIndexExtra {
       )
 
   implicit class SourceIndexExtension(val sourceIndex: SourceIndex) extends AnyVal {
+
     def from: Int =
       sourceIndex.index
 
@@ -53,8 +55,9 @@ object SourceIndexExtra {
       sourceIndex.copy(index = from + right)
 
     /** Convert [[SourceIndex]] that contains index information to [[LineRange]] that contains line and character information */
-    def toLineRange(code: String): LineRange = {
+    def toLineRange(code: String): LineRange =
       StringUtil.buildLineRange(code, sourceIndex.from, sourceIndex.to)
-    }
+
   }
+
 }

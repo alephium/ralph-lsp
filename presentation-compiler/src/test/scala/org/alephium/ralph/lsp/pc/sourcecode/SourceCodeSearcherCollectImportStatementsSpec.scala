@@ -9,7 +9,7 @@ import scala.collection.immutable.ArraySeq
 
 class SourceCodeSearcherCollectImportStatementsSpec extends AnyWordSpec with Matchers {
 
-  implicit val file: FileAccess = FileAccess.disk
+  implicit val file: FileAccess         = FileAccess.disk
   implicit val compiler: CompilerAccess = CompilerAccess.ralphc
 
   "return empty" when {
@@ -20,8 +20,9 @@ class SourceCodeSearcherCollectImportStatementsSpec extends AnyWordSpec with Mat
 
   "collect distinct import statements" in {
     val goodCodeParsed =
-      TestSourceCode.genParsed(
-        """
+      TestSourceCode
+        .genParsed(
+          """
           |import "blah/blah"
           |import "blah/blah"
           |import "std/fungible_token_interface"
@@ -31,11 +32,15 @@ class SourceCodeSearcherCollectImportStatementsSpec extends AnyWordSpec with Mat
           |  fn function1() -> () {}
           |}
           |""".stripMargin
-      ).sample.get.asInstanceOf[SourceCodeState.Parsed]
+        )
+        .sample
+        .get
+        .asInstanceOf[SourceCodeState.Parsed]
 
     val goodCodeCompiled =
-      TestSourceCode.genCompiled(
-        """
+      TestSourceCode
+        .genCompiled(
+          """
           |import "std/nft_collection_interface"
           |import "std/nft_collection_interface"
           |import "std/fungible_token_interface"
@@ -47,7 +52,11 @@ class SourceCodeSearcherCollectImportStatementsSpec extends AnyWordSpec with Mat
           |  fn function1() -> () {}
           |}
           |""".stripMargin
-      ).sample.get.asInstanceOf[SourceCodeState.Compiled].parsed
+        )
+        .sample
+        .get
+        .asInstanceOf[SourceCodeState.Compiled]
+        .parsed
 
     val errorCompilation =
       TestSourceCode
@@ -62,7 +71,11 @@ class SourceCodeSearcherCollectImportStatementsSpec extends AnyWordSpec with Mat
             |  fn function1() -> () {}
             |}
             |""".stripMargin
-        ).sample.get.asInstanceOf[SourceCodeState.ErrorCompilation].parsed
+        )
+        .sample
+        .get
+        .asInstanceOf[SourceCodeState.ErrorCompilation]
+        .parsed
 
     val allCode =
       ArraySeq(goodCodeParsed, goodCodeCompiled, errorCompilation)

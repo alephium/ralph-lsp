@@ -81,4 +81,5 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
       }
     }
   }
+
 }

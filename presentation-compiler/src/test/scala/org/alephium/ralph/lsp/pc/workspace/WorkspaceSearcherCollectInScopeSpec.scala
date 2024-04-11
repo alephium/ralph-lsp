@@ -15,9 +15,9 @@ import scala.collection.immutable.ArraySeq
 
 class WorkspaceSearcherCollectInScopeSpec extends AnyWordSpec with Matchers {
 
-  implicit val file: FileAccess = FileAccess.disk
+  implicit val file: FileAccess         = FileAccess.disk
   implicit val compiler: CompilerAccess = CompilerAccess.ralphc
-  implicit val logger: ClientLogger = TestClientLogger
+  implicit val logger: ClientLogger     = TestClientLogger
 
   "contain all source-code in scope" in {
     // Generate a build file
@@ -26,9 +26,9 @@ class WorkspaceSearcherCollectInScopeSpec extends AnyWordSpec with Matchers {
 
     // Generate a source file which contains the contract Child1
     val sourceFile1 =
-      TestSourceCode.genParsedOK(
-        code =
-          """
+      TestSourceCode
+        .genParsedOK(
+          code = """
             |import "std/nft_interface"
             |import "std/nft_collection_interface"
             |
@@ -39,25 +39,27 @@ class WorkspaceSearcherCollectInScopeSpec extends AnyWordSpec with Matchers {
             |  fn function() -> () {}
             |}
             |""".stripMargin,
-        fileURI =
-          build.contractURI.resolve("file1.ral")
-      ).sample.value
+          fileURI = build.contractURI.resolve("file1.ral")
+        )
+        .sample
+        .value
 
     TestSourceCode persist sourceFile1
 
     // Generate a source file which contains some of the parent inheritances
     val sourceFile2 =
-      TestSourceCode.genParsedOK(
-        code =
-          """
+      TestSourceCode
+        .genParsedOK(
+          code = """
             |import "std/nft_collection_with_royalty_interface"
             |
             |// Note: INFTCollectionWithRoyalty is implemented
             |Abstract Contract Parent2() implements INFTCollectionWithRoyalty { }
             |""".stripMargin,
-        fileURI =
-          build.contractURI.resolve("file2.ral")
-      ).sample.value
+          fileURI = build.contractURI.resolve("file2.ral")
+        )
+        .sample
+        .value
 
     TestSourceCode persist sourceFile2
 
@@ -104,7 +106,7 @@ class WorkspaceSearcherCollectInScopeSpec extends AnyWordSpec with Matchers {
       Array(
         "\"std/nft_interface\"",
         "\"std/nft_collection_interface\"",
-        "\"std/nft_collection_with_royalty_interface\"",
+        "\"std/nft_collection_with_royalty_interface\""
       )
 
     // find the source files with the above imports
@@ -133,11 +135,10 @@ class WorkspaceSearcherCollectInScopeSpec extends AnyWordSpec with Matchers {
     // execute the function
     val actual =
       WorkspaceSearcher.collectInScope(
-        sourceCode =
-          SourceTreeInScope(
-            tree = childTree.tree,
-            parsed = sourceFile1
-          ),
+        sourceCode = SourceTreeInScope(
+          tree = childTree.tree,
+          parsed = sourceFile1
+        ),
         workspace = workspace
       )
 

@@ -26,10 +26,12 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
     TestClientLogger
 
   "Build function 1: build WorkspaceState" when {
+
     /**
      * TEST CASES: When current state is [[WorkspaceState.Created]]
      */
     "current WorkspaceState is Created" should {
+
       /**
        * FAIL TEST CASES
        */
@@ -115,14 +117,13 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
                 BuildState.BuildErrored(
                   buildURI = workspace.buildURI,
                   codeOption = Some(buildCode),
-                  errors =
-                    ArraySeq(
-                      ErrorInvalidBuildSyntax(
-                        fileURI = build.buildURI,
-                        index = SourceIndex(0, 1, Some(build.buildURI)),
-                        message = """expected json value got "b""""
-                      )
-                    ),
+                  errors = ArraySeq(
+                    ErrorInvalidBuildSyntax(
+                      fileURI = build.buildURI,
+                      index = SourceIndex(0, 1, Some(build.buildURI)),
+                      message = """expected json value got "b""""
+                    )
+                  ),
                   dependencies = ArraySeq.empty,
                   activateWorkspace = None
                 )
@@ -176,10 +177,12 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
               // expect the build to be compiled
               val expectedBuild =
-                Build.compile(
-                  parsed = build,
-                  currentBuild = None
-                ).asInstanceOf[BuildState.BuildCompiled]
+                Build
+                  .compile(
+                    parsed = build,
+                    currentBuild = None
+                  )
+                  .asInstanceOf[BuildState.BuildCompiled]
 
               // expect the workspace to be in un-compiled state, containing all source-code
               val expectedWorkspace =
@@ -203,7 +206,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
     "current workspace state is SourceAware" should {
       "always return the current workspace" in {
         // no file access should occur since workspace is already initialised
-        implicit val file: FileAccess = null
+        implicit val file: FileAccess         = null
         implicit val compiler: CompilerAccess = null
 
         // no source or build is touched since workspace is already initialised
@@ -221,4 +224,5 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
     }
 
   }
+
 }

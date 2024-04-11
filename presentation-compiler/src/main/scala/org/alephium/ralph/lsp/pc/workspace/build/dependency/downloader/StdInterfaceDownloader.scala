@@ -9,11 +9,11 @@ import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDownloadingDependency
 
 import java.net.URI
-import java.nio.file.{FileSystems, Files, Path, Paths}
+import java.nio.file.{Path, FileSystems, Paths, Files}
 import scala.collection.immutable.ArraySeq
 import scala.io.Source
 import scala.jdk.CollectionConverters.{IteratorHasAsScala, MapHasAsJava}
-import scala.util.{Failure, Success, Using}
+import scala.util.{Using, Success, Failure}
 
 private object StdInterfaceDownloader extends DependencyDownloader with StrictImplicitLogging {
 
@@ -22,8 +22,10 @@ private object StdInterfaceDownloader extends DependencyDownloader with StrictIm
    *
    * @param errorIndex Use this index to report any errors processing the download.
    */
-  protected def _download(dependencyPath: Path,
-                          errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
+  protected def _download(
+      dependencyPath: Path,
+      errorIndex: SourceIndex
+    )(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
     build(
       dependencyPath = dependencyPath,
       errorIndex = errorIndex
@@ -101,4 +103,5 @@ private object StdInterfaceDownloader extends DependencyDownloader with StrictIm
 
         Left(error)
     }
+
 }

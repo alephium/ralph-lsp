@@ -1,17 +1,21 @@
 package org.alephium.ralph.lsp.access.compiler.ast.node
 
 object Node {
+
   /** Create a [[Node]] with no children */
   @inline def apply[A](data: A): Node[A] =
     new Node(data, List.empty)
 
   /** Create a [[Node]] with children */
-  @inline def apply[A](data: A, children: Seq[Node[A]]): Node[A] = {
+  @inline def apply[A](
+      data: A,
+      children: Seq[Node[A]]): Node[A] = {
     val parent = new Node(data, children)
     // set the parent for each child node to allow traversing up.
     children foreach (_._parent = Some(parent))
     parent
   }
+
 }
 
 /**
@@ -24,8 +28,10 @@ object Node {
  * @param children This node's child nodes.
  * @tparam A Data type.
  */
-case class Node[A] private(data: A,
-                           children: Seq[Node[A]]) { self =>
+case class Node[A] private (
+    data: A,
+    children: Seq[Node[A]]) { self =>
+
   private var _parent: Option[Node[A]] =
     None
 
@@ -44,6 +50,7 @@ case class Node[A] private(data: A,
   /** Walk down from current node reaching all it's children and grand-children */
   def walkDown: Iterator[Node[A]] =
     new Iterator[Node[A]] {
+
       private val iter =
         Iterator(self) ++
           children
@@ -55,10 +62,12 @@ case class Node[A] private(data: A,
 
       override def next(): Node[A] =
         iter.next()
+
     }
 
   def walkParents: Iterator[Node[A]] =
     new Iterator[Node[A]] {
+
       private val iter =
         self
           .parent
@@ -74,13 +83,14 @@ case class Node[A] private(data: A,
 
       override def next(): Node[A] =
         iter.next()
+
     }
 
   /**
    * Find the last node for which this predicate is true.
    *
    * This function is useful for find the closest node that contains a source-index.
-   * */
+   */
   def findLast(f: A => Boolean): Option[Node[A]] =
     self
       .walkDown
@@ -91,4 +101,5 @@ case class Node[A] private(data: A,
           else
             closest
       }
+
 }

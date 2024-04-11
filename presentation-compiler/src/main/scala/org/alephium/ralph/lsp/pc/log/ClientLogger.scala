@@ -11,7 +11,10 @@ trait ClientLogger {
 
   def error(message: String)(implicit logger: Logger): Unit
 
-  def error(message: String, cause: Throwable)(implicit logger: Logger): Unit
+  def error(
+      message: String,
+      cause: Throwable
+    )(implicit logger: Logger): Unit
 
   def debug(message: String)(implicit logger: Logger): Unit
 

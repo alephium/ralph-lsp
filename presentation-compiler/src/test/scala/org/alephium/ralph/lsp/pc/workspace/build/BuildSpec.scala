@@ -52,11 +52,13 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
 
             // invoke build
             val actualWorkspace =
-              Build.parseAndCompile(
-                buildURI = outsideBuild.buildURI,
-                code = buildCode,
-                currentBuild = insideBuild
-              ).value
+              Build
+                .parseAndCompile(
+                  buildURI = outsideBuild.buildURI,
+                  code = buildCode,
+                  currentBuild = insideBuild
+                )
+                .value
 
             // expected error should target the created file
             val expectedError =
@@ -105,7 +107,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
         forAll(generator) {
           case (build, currentBuild) =>
             // build is within a nested folder
-            val buildParentFolder = Paths.get(build.buildURI).getParent
+            val buildParentFolder     = Paths.get(build.buildURI).getParent
             val workspaceNestedFolder = Paths.get(currentBuild.workspaceURI.resolve("nested_folder"))
             buildParentFolder shouldBe workspaceNestedFolder
 
@@ -122,11 +124,13 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
 
             // invoke build
             val actualWorkspace =
-              Build.parseAndCompile(
-                buildURI = build.buildURI,
-                code = buildCode,
-                currentBuild = currentBuild
-              ).value
+              Build
+                .parseAndCompile(
+                  buildURI = build.buildURI,
+                  code = buildCode,
+                  currentBuild = currentBuild
+                )
+                .value
 
             // expected error should target the created file
             val expectedError =

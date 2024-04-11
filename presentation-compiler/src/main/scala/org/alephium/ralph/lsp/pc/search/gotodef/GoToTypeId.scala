@@ -18,11 +18,12 @@ private object GoToTypeId {
    * @param sourceCode The parsed state of the source-code where the search was executed.
    * @param workspace  The workspace where this search was executed and where all the source trees exist.
    * @return An array sequence of positioned ASTs matching the search result.
-   * */
-  def goTo(identNode: Node[Positioned],
-           typeId: Ast.TypeId,
-           sourceCode: SourceTreeInScope,
-           workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
+   */
+  def goTo(
+      identNode: Node[Positioned],
+      typeId: Ast.TypeId,
+      sourceCode: SourceTreeInScope,
+      workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     identNode.parent match { // take one step up to check the type of TypeId node.
       case Some(parent) =>
         parent match {
@@ -64,14 +65,16 @@ private object GoToTypeId {
         Iterator.empty
     }
 
-  /** Navigate to the enum types for the given enum field selector.
+  /**
+   * Navigate to the enum types for the given enum field selector.
    *
    * @param enumSelector The enum type to find.
    * @param source       The source tree to search within.
    * @return An array sequence of enum [[Ast.TypeId]]s matching the search result.
-   * */
-  private def goToEnumType(enumSelector: Ast.EnumFieldSelector[_],
-                           source: Tree.Source): Iterator[Ast.TypeId] =
+   */
+  private def goToEnumType(
+      enumSelector: Ast.EnumFieldSelector[_],
+      source: Tree.Source): Iterator[Ast.TypeId] =
     source.ast match {
       case Left(contract: Ast.Contract) =>
         contract
@@ -84,14 +87,16 @@ private object GoToTypeId {
         Iterator.empty
     }
 
-  /** Navigate to the enum type name usage.
+  /**
+   * Navigate to the enum type name usage.
    *
    * @param enumDef The enum definition containing the enum type identifier to find calls for.
    * @param source  The source tree to search within.
    * @return An array sequence of enum type [[Ast.TypeId]]s matching the search result.
-   * */
-  private def goToEnumTypeUsage(enumDef: Ast.EnumDef,
-                                source: Tree.Source): Iterator[Ast.TypeId] =
+   */
+  private def goToEnumTypeUsage(
+      enumDef: Ast.EnumDef,
+      source: Tree.Source): Iterator[Ast.TypeId] =
     source
       .rootNode
       .walkDown
@@ -107,8 +112,9 @@ private object GoToTypeId {
    * @param source    The source tree to search within.
    * @return An array sequence of event definitions [[Ast.EventDef]]s matching the search result.
    */
-  private def goToEventDef(emitEvent: Ast.EmitEvent[_],
-                           source: Tree.Source): Iterator[Ast.EventDef] =
+  private def goToEventDef(
+      emitEvent: Ast.EmitEvent[_],
+      source: Tree.Source): Iterator[Ast.EventDef] =
     source
       .rootNode
       .walkDown
@@ -117,14 +123,16 @@ private object GoToTypeId {
           eventDef
       }
 
-  /** Navigate to the event type name usages.
+  /**
+   * Navigate to the event type name usages.
    *
    * @param eventDef The event definition containing the enum type identifier to find calls for.
    * @param source   The source tree to search within.
    * @return An array sequence of enum type [[Ast.TypeId]]s matching the search result.
-   * */
-  private def goToEventDefUsage(eventDef: Ast.EventDef,
-                                source: Tree.Source): Iterator[Ast.TypeId] =
+   */
+  private def goToEventDefUsage(
+      eventDef: Ast.EventDef,
+      source: Tree.Source): Iterator[Ast.TypeId] =
     source
       .rootNode
       .walkDown

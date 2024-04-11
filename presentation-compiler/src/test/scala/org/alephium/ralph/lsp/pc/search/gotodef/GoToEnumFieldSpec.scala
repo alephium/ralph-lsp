@@ -233,4 +233,5 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
       }
     }
   }
+
 }

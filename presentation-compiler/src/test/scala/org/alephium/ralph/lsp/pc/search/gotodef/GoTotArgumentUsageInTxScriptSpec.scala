@@ -42,4 +42,5 @@ class GoTotArgumentUsageInTxScriptSpec extends AnyWordSpec with Matchers {
       )
     }
   }
+
 }

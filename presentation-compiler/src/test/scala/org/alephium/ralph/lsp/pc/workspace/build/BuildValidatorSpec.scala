@@ -15,10 +15,13 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
   "validate" should {
     "normalize path" in {
-      val config1 = RalphcConfig.defaultParsedConfig.copy(
-        contractPath = "contracts",
-        artifactPath = "artifacts"
-      )
+      val config1 =
+        RalphcConfig
+          .defaultParsedConfig
+          .copy(
+            contractPath = "contracts",
+            artifactPath = "artifacts"
+          )
 
       val config2 = config1.copy(
         contractPath = "./contracts",
@@ -30,7 +33,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
       Files.createDirectory(workspacePath.resolve(config1.contractPath))
       Files.createDirectory(workspacePath.resolve(config1.artifactPath))
 
-      val buildPath = workspacePath.resolve(Build.BUILD_FILE_NAME)
+      val buildPath       = workspacePath.resolve(Build.BUILD_FILE_NAME)
       val actualBuildPath = RalphcConfig.persist(workspacePath, config1).success.value
 
       actualBuildPath shouldBe buildPath
@@ -82,33 +85,39 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       "they are identical" in {
         val config =
-          RalphcConfig.defaultParsedConfig.copy(
-            contractPath = "contracts",
-            artifactPath = "artifacts",
-            dependencyPath = Some("contracts")
-          )
+          RalphcConfig
+            .defaultParsedConfig
+            .copy(
+              contractPath = "contracts",
+              artifactPath = "artifacts",
+              dependencyPath = Some("contracts")
+            )
 
         doTest(config)
       }
 
       "contractPath is within dependencyPath" in {
         val config =
-          RalphcConfig.defaultParsedConfig.copy(
-            contractPath = "dependencies/contracts",
-            artifactPath = "artifacts",
-            dependencyPath = Some("dependencies")
-          )
+          RalphcConfig
+            .defaultParsedConfig
+            .copy(
+              contractPath = "dependencies/contracts",
+              artifactPath = "artifacts",
+              dependencyPath = Some("dependencies")
+            )
 
         doTest(config)
       }
 
       "dependencyPath is within contractPath" in {
         val config =
-          RalphcConfig.defaultParsedConfig.copy(
-            contractPath = "contracts",
-            artifactPath = "artifacts",
-            dependencyPath = Some("contracts/dependencies")
-          )
+          RalphcConfig
+            .defaultParsedConfig
+            .copy(
+              contractPath = "contracts",
+              artifactPath = "artifacts",
+              dependencyPath = Some("contracts/dependencies")
+            )
 
         doTest(config)
       }
@@ -139,25 +148,30 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       "they are distinct" in {
         val config =
-          RalphcConfig.defaultParsedConfig.copy(
-            contractPath = "contracts",
-            artifactPath = "artifacts",
-            dependencyPath = Some("dependencies")
-          )
+          RalphcConfig
+            .defaultParsedConfig
+            .copy(
+              contractPath = "contracts",
+              artifactPath = "artifacts",
+              dependencyPath = Some("dependencies")
+            )
 
         doTest(config)
       }
 
       "they are distinct within a root folder" in {
         val config =
-          RalphcConfig.defaultParsedConfig.copy(
-            contractPath = "my_code/contracts",
-            artifactPath = "artifacts",
-            dependencyPath = Some("my_code/dependencies")
-          )
+          RalphcConfig
+            .defaultParsedConfig
+            .copy(
+              contractPath = "my_code/contracts",
+              artifactPath = "artifacts",
+              dependencyPath = Some("my_code/dependencies")
+            )
 
         doTest(config)
       }
     }
   }
+
 }

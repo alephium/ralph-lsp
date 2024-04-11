@@ -84,4 +84,5 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
       )
     }
   }
+
 }

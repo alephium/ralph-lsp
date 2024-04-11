@@ -59,16 +59,16 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
           BuildState.BuildErrored(
             buildURI = buildCompiled.buildURI,
             codeOption = Some("blah"), // the invalid build code is carried forward
-            errors =
+            errors =                   // the syntax error
               ArraySeq(
-                ErrorInvalidBuildSyntax( /// the syntax error
+                ErrorInvalidBuildSyntax(
                   fileURI = buildCompiled.buildURI,
                   index = SourceIndex(0, 1, Some(buildCompiled.buildURI)),
                   message = """expected json value got "b""""
                 )
               ),
             dependencies = buildCompiled.dependencies, // dependency is carried forward
-            activateWorkspace = // new workspace is activated with input source-code
+            activateWorkspace =                        // new workspace is activated with input source-code
               Some(
                 WorkspaceState.UnCompiled(
                   build = buildCompiled,
@@ -97,11 +97,13 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
             // run the build with the new build code as the current compiled build
             val actualWorkspace =
-              Workspace.build(
-                newBuildCode = Some(buildCompiled.code), //new build code is the same as existing compiled build.
-                currentBuild = buildCompiled,
-                sourceCode = allSourceCode.to(ArraySeq) // build with all source-code
-              ).value
+              Workspace
+                .build(
+                  newBuildCode = Some(buildCompiled.code), // new build code is the same as existing compiled build.
+                  currentBuild = buildCompiled,
+                  sourceCode = allSourceCode.to(ArraySeq) // build with all source-code
+                )
+                .value
 
             // sort the source-files
             val actualSortedWorkspace =
@@ -127,4 +129,5 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
       }
     }
   }
+
 }

@@ -4,7 +4,7 @@ import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
-import org.alephium.ralph.{Ast, CompiledContract, CompiledScript}
+import org.alephium.ralph.{CompiledScript, Ast, CompiledContract}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -21,9 +21,10 @@ private object SourceCodeStateBuilder {
    * @param compilationResult The compilation result to process.
    * @return Workspace-level error if no source-code association was found, or else the next source-code state for each source URI.
    */
-  def toSourceCodeState(parsedCode: ArraySeq[SourceCodeState.Parsed],
-                        workspaceErrorURI: URI,
-                        compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
+  def toSourceCodeState(
+      parsedCode: ArraySeq[SourceCodeState.Parsed],
+      workspaceErrorURI: URI,
+      compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
     compilationResult match {
       case Left(error) =>
         // update the error to SourceCodeState
@@ -60,8 +61,9 @@ private object SourceCodeStateBuilder {
    * @return An [[ArraySeq]] of [[SourceCodeState]]s if the `fileURI` is defined in the
    *         error's [[org.alephium.ralph.SourceIndex]], otherwise, [[None]].
    */
-  private def toCompilationError(parsedCode: ArraySeq[SourceCodeState.Parsed],
-                                 error: CompilerMessage.AnyError): Option[ArraySeq[SourceCodeState.IsParsed]] =
+  private def toCompilationError(
+      parsedCode: ArraySeq[SourceCodeState.Parsed],
+      error: CompilerMessage.AnyError): Option[ArraySeq[SourceCodeState.IsParsed]] =
     error
       .index
       .fileURI
@@ -96,10 +98,11 @@ private object SourceCodeStateBuilder {
    * @return Compiled source-code state that might contain source-code level
    *         errors if a compiled source-code instance was not found its parsed state.
    */
-  private def buildCompiledSourceCodeState(parsedCode: ArraySeq[SourceCodeState.Parsed],
-                                           compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript],
-                                           workspaceErrorURI: URI): ArraySeq[SourceCodeState.IsCompiled] =
+  private def buildCompiledSourceCodeState(
+      parsedCode: ArraySeq[SourceCodeState.Parsed],
+      compiledContracts: Array[CompiledContract],
+      compiledScripts: Array[CompiledScript],
+      workspaceErrorURI: URI): ArraySeq[SourceCodeState.IsCompiled] =
     parsedCode map {
       sourceCodeState =>
         val parsedContracts =
@@ -146,10 +149,11 @@ private object SourceCodeStateBuilder {
           )
     }
 
-  private def findMatchingContractOrScript(parsedContracts: Seq[ContractWithState],
-                                           compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript],
-                                           workspaceErrorURI: URI): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
+  private def findMatchingContractOrScript(
+      parsedContracts: Seq[ContractWithState],
+      compiledContracts: Array[CompiledContract],
+      compiledScripts: Array[CompiledScript],
+      workspaceErrorURI: URI): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
     parsedContracts map {
       contract =>
         findMatchingContractOrScript(
@@ -160,12 +164,13 @@ private object SourceCodeStateBuilder {
         )
     }
 
-  private def findMatchingContractOrScript(contract: Ast.ContractWithState,
-                                           compiledContracts: Array[CompiledContract],
-                                           compiledScripts: Array[CompiledScript],
-                                           workspaceErrorURI: URI): Either[StringError, Either[CompiledContract, CompiledScript]] = {
+  private def findMatchingContractOrScript(
+      contract: Ast.ContractWithState,
+      compiledContracts: Array[CompiledContract],
+      compiledScripts: Array[CompiledScript],
+      workspaceErrorURI: URI): Either[StringError, Either[CompiledContract, CompiledScript]] = {
     val matchingContract = findMatchingContract(contract, compiledContracts)
-    val matchingScript = findMatchingScript(contract, compiledScripts)
+    val matchingScript   = findMatchingScript(contract, compiledScripts)
 
     (matchingContract, matchingScript) match {
       case (Some(contract), Some(_)) =>
@@ -198,12 +203,14 @@ private object SourceCodeStateBuilder {
     }
   }
 
-  private def findMatchingContract(contractsToCompile: Ast.ContractWithState,
-                                   compiledContracts: Array[CompiledContract]): Option[CompiledContract] =
+  private def findMatchingContract(
+      contractsToCompile: Ast.ContractWithState,
+      compiledContracts: Array[CompiledContract]): Option[CompiledContract] =
     compiledContracts.find(_.ast.name == contractsToCompile.name)
 
-  private def findMatchingScript(contractsToCompile: Ast.ContractWithState,
-                                 compiledScripts: Array[CompiledScript]): Option[CompiledScript] =
+  private def findMatchingScript(
+      contractsToCompile: Ast.ContractWithState,
+      compiledScripts: Array[CompiledScript]): Option[CompiledScript] =
     compiledScripts.find(_.ast.name == contractsToCompile.name)
 
 }

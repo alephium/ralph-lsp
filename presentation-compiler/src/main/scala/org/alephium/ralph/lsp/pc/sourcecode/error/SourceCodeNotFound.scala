@@ -6,9 +6,11 @@ import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIn
 import java.net.URI
 
 case class SourceCodeNotFound(uri: URI) extends CompilerMessage.Error {
+
   override def message: String =
     s"Source code not found. URI: $uri"
 
   override def index: SourceIndex =
     SourceIndexExtra.zero(uri)
+
 }

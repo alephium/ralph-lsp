@@ -16,20 +16,24 @@ import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 private[search] object CodeCompletionProvider extends CodeProvider[Suggestion] with StrictImplicitLogging {
 
   /** @inheritdoc */
-  override def search(cursorIndex: Int,
-                      sourceCode: SourceCodeState.Parsed,
-                      workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): Iterator[Suggestion] =
+  override def search(
+      cursorIndex: Int,
+      sourceCode: SourceCodeState.Parsed,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[Suggestion] =
     // find the statement where this cursorIndex sits.
     sourceCode.ast.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>
         statement match {
           case importStatement: Tree.Import =>
             // request is for import statement completion
-            ImportCompleter.complete(
-              cursorIndex = cursorIndex,
-              dependency = workspace.build.findDependency(DependencyID.Std),
-              imported = importStatement
-            ).iterator
+            ImportCompleter
+              .complete(
+                cursorIndex = cursorIndex,
+                dependency = workspace.build.findDependency(DependencyID.Std),
+                imported = importStatement
+              )
+              .iterator
 
           case _: Tree.Source =>
             Iterator.empty // TODO: Provide source level completion.
@@ -39,4 +43,5 @@ private[search] object CodeCompletionProvider extends CodeProvider[Suggestion] w
         // TODO: Provide top level completion.
         Iterator.empty
     }
+
 }

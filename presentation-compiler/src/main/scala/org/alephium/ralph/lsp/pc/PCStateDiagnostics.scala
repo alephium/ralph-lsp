@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
-import org.alephium.ralph.lsp.pc.diagnostic.{CodeDiagnostic, CodeDiagnosticSeverity, FileDiagnostic}
+import org.alephium.ralph.lsp.pc.diagnostic.{CodeDiagnosticSeverity, CodeDiagnostic, FileDiagnostic}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
@@ -21,8 +21,9 @@ object PCStateDiagnostics {
    * @param newState     The next presentation compiler state.
    * @return An iterator over resolved diagnostics dispatched in the previous state and new diagnostics.
    */
-  def toFileDiagnostics(currentState: PCState,
-                        newState: PCState): Iterable[FileDiagnostic] = {
+  def toFileDiagnostics(
+      currentState: PCState,
+      newState: PCState): Iterable[FileDiagnostic] = {
     // fetch diagnostics to publish for the build file
     val buildDiagnostics =
       toFileDiagnosticsForBuild(
@@ -43,9 +44,10 @@ object PCStateDiagnostics {
   /**
    * Given the current build-errors and the next, return diagnostics to publish
    * for the current compilation request.
-   * */
-  def toFileDiagnosticsForBuild(currentBuildErrors: Option[BuildState.BuildErrored],
-                                newBuildErrors: Option[BuildState.BuildErrored]): Iterable[FileDiagnostic] =
+   */
+  def toFileDiagnosticsForBuild(
+      currentBuildErrors: Option[BuildState.BuildErrored],
+      newBuildErrors: Option[BuildState.BuildErrored]): Iterable[FileDiagnostic] =
     (currentBuildErrors, newBuildErrors) match {
       case (Some(build), None) =>
         // build errors were fixed. Clear old errors
@@ -112,9 +114,10 @@ object PCStateDiagnostics {
   /**
    * Given the current workspace and the next,
    * return diagnostics to publish to the client.
-   * */
-  def toFileDiagnosticsForWorkspace(currentWorkspace: Option[WorkspaceState],
-                                    newWorkspace: Option[WorkspaceState]): Iterable[FileDiagnostic] =
+   */
+  def toFileDiagnosticsForWorkspace(
+      currentWorkspace: Option[WorkspaceState],
+      newWorkspace: Option[WorkspaceState]): Iterable[FileDiagnostic] =
     (currentWorkspace, newWorkspace) match {
       case (Some(current), None) =>
         toFileDiagnostics(current)
@@ -148,9 +151,10 @@ object PCStateDiagnostics {
 
   /**
    * Given the current workspace and the next, fetch diagnostics to dispatch, clearing resolved diagnostics.
-   * */
-  def toFileDiagnostics(currentWorkspace: WorkspaceState,
-                        newWorkspace: WorkspaceState): Iterable[FileDiagnostic] =
+   */
+  def toFileDiagnostics(
+      currentWorkspace: WorkspaceState,
+      newWorkspace: WorkspaceState): Iterable[FileDiagnostic] =
     (currentWorkspace, newWorkspace) match {
       case (_: WorkspaceState.Created, newWorkspace: WorkspaceState.IsSourceAware) =>
         // publish first compilation result i.e. previous workspace had no compilation run.
@@ -179,8 +183,9 @@ object PCStateDiagnostics {
    *                               Set to [[None]] if previousState is the only state.
    * @return Diagnostics to publish for the current state.
    */
-  def toFileDiagnostics(previousOrCurrentState: WorkspaceState.IsSourceAware,
-                        nextState: Option[WorkspaceState]): Iterable[FileDiagnostic] = {
+  def toFileDiagnostics(
+      previousOrCurrentState: WorkspaceState.IsSourceAware,
+      nextState: Option[WorkspaceState]): Iterable[FileDiagnostic] = {
     // build diagnostics sent for previous state, or the current state if this is the first run.
     val previousOrCurrentDiagnotics =
       toFileDiagnostics(previousOrCurrentState)
@@ -215,9 +220,10 @@ object PCStateDiagnostics {
   }
 
   /** Convert Ralph's FormattableError to lsp4j's CodeDiagnostic */
-  def toDiagnostic(code: Option[String],
-                   message: CompilerMessage,
-                   severity: CodeDiagnosticSeverity): CodeDiagnostic = {
+  def toDiagnostic(
+      code: Option[String],
+      message: CompilerMessage,
+      severity: CodeDiagnosticSeverity): CodeDiagnostic = {
     val range =
       code match {
         case Some(code) =>
@@ -304,15 +310,16 @@ object PCStateDiagnostics {
   /** Fetch all diagnostics for this workspace */
   def toFileDiagnostics(workspace: WorkspaceState.IsSourceAware): Iterable[FileDiagnostic] = {
     val sourceCodeDiagnostics = toSourceCodeDiagnostics(workspace)
-    val workspaceDiagnostics = toWorkspaceDiagnostics(workspace)
+    val workspaceDiagnostics  = toWorkspaceDiagnostics(workspace)
     sourceCodeDiagnostics ++ Seq(workspaceDiagnostics)
   }
 
   /** Build a diagnostic instance give the error and file information */
-  def toFileDiagnostics(fileURI: URI,
-                        code: Option[String],
-                        errors: List[CompilerMessage.AnyError],
-                        severity: CodeDiagnosticSeverity): FileDiagnostic = {
+  def toFileDiagnostics(
+      fileURI: URI,
+      code: Option[String],
+      errors: List[CompilerMessage.AnyError],
+      severity: CodeDiagnosticSeverity): FileDiagnostic = {
     val diagnostics =
       errors map {
         error =>

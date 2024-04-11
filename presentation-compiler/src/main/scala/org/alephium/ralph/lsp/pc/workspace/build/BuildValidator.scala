@@ -22,8 +22,9 @@ object BuildValidator {
       .orElse(validatePathsExists(parsed))
 
   /** Checks that buildURI is in the project's root directory */
-  def validateBuildURI(buildURI: URI,
-                       workspaceURI: URI): Either[CompilerMessage.Error, URI] =
+  def validateBuildURI(
+      buildURI: URI,
+      workspaceURI: URI): Either[CompilerMessage.Error, URI] =
     if (!URIUtil.isFileName(buildURI, Build.BUILD_FILE_NAME))
       Left(ErrorBuildFileNotFound(buildURI))
     else if (!URIUtil.isFirstChild(workspaceURI, buildURI)) // Build file must be in the root workspace directory.
@@ -102,8 +103,8 @@ object BuildValidator {
     // do these paths exists with the workspace directory?
     val compileResult =
       for {
-        contractExists <- file.exists(absoluteContractPath.toUri, contractPathIndex)
-        artifactsExists <- file.exists(absoluteArtifactPath.toUri, artifactPathIndex)
+        contractExists     <- file.exists(absoluteContractPath.toUri, contractPathIndex)
+        artifactsExists    <- file.exists(absoluteArtifactPath.toUri, artifactPathIndex)
         dependenciesExists <- dependencyPathExists(absoluteDependenciesPath, dependencyPathIndex)
       } yield (contractExists, artifactsExists, dependenciesExists)
 
@@ -177,8 +178,10 @@ object BuildValidator {
    * @param dependencyPathIndex      The index in the source for reporting errors.
    * @return `true` if the `dependencyPath` exists or if it's the default value ([[Dependency.defaultPath]]), otherwise `false`.
    */
-  private def dependencyPathExists(absoluteDependenciesPath: Option[Path],
-                                   dependencyPathIndex: SourceIndex)(implicit file: FileAccess): Either[CompilerMessage.AnyError, Boolean] =
+  private def dependencyPathExists(
+      absoluteDependenciesPath: Option[Path],
+      dependencyPathIndex: SourceIndex
+    )(implicit file: FileAccess): Either[CompilerMessage.AnyError, Boolean] =
     absoluteDependenciesPath match {
       case Some(absoluteDependenciesPath) =>
         file
@@ -203,4 +206,5 @@ object BuildValidator {
         // Mark it as exists here, which defers the dependencies being written to the default dependencyPath via the dependency compiler.
         Right(true)
     }
+
 }

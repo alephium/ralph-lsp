@@ -15,7 +15,7 @@ object TestNode {
               "1-1-1",
               Seq(
                 Node("1-1-1-1"),
-                Node("1-1-1-2"),
+                Node("1-1-1-2")
               )
             )
           )
@@ -24,7 +24,7 @@ object TestNode {
           "1-2",
           Seq(
             Node("1-2-1"),
-            Node("1-2-2"),
+            Node("1-2-2")
           )
         ),
         Node(
@@ -43,9 +43,9 @@ object TestNode {
                   "1-3-2-2",
                   Seq(
                     Node("1-3-2-2-1"),
-                    Node("1-3-2-2-2"),
+                    Node("1-3-2-2-2")
                   )
-                ),
+                )
               )
             )
           )
@@ -54,9 +54,10 @@ object TestNode {
           "1-4",
           Seq(
             Node("1-4-1"),
-            Node("1-4-2"),
+            Node("1-4-2")
           )
         )
       )
     )
+
 }

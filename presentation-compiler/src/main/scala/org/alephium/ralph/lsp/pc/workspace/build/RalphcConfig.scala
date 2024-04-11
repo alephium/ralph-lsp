@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
 
 import java.net.URI
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path}
+import java.nio.file.{Path, Files}
 import scala.util.Try
 
 object RalphcConfig {
@@ -21,14 +21,15 @@ object RalphcConfig {
    * [[org.alephium.ralphc.Config]] is not used during parsing because string input for
    * fields such as `contractPath` and `artifactPath` lose the original user's input String
    * value after converting it to `Path` type, which in-case of errors displays incorrect error highlighting.
-   * */
+   */
   type RalphcCompiledConfig =
     org.alephium.ralphc.Config
 
-  case class RalphcParsedConfig(compilerOptions: CompilerOptions,
-                                contractPath: String,
-                                artifactPath: String,
-                                dependencyPath: Option[String] = None)
+  case class RalphcParsedConfig(
+      compilerOptions: CompilerOptions,
+      contractPath: String,
+      artifactPath: String,
+      dependencyPath: Option[String] = None)
 
   /** Default parsed config */
   val defaultParsedConfig: RalphcParsedConfig =
@@ -39,8 +40,9 @@ object RalphcConfig {
       dependencyPath = None
     )
 
-  def parse(buildURI: URI,
-            json: String): Either[CompilerMessage.AnyError, RalphcParsedConfig] =
+  def parse(
+      buildURI: URI,
+      json: String): Either[CompilerMessage.AnyError, RalphcParsedConfig] =
     try
       Right(upickle.default.read[RalphcParsedConfig](json))
     catch {
@@ -95,10 +97,11 @@ object RalphcConfig {
    * @param config        Config to persist
    * @return Created file-path
    */
-  def persist(workspacePath: Path,
-              config: RalphcParsedConfig): Try[Path] =
+  def persist(
+      workspacePath: Path,
+      config: RalphcParsedConfig): Try[Path] =
     Try {
-      val bytes = RalphcConfig.write(config).getBytes(StandardCharsets.UTF_8)
+      val bytes         = RalphcConfig.write(config).getBytes(StandardCharsets.UTF_8)
       val buildFilePath = toBuildPath(workspacePath)
       Files.write(buildFilePath, bytes)
     }

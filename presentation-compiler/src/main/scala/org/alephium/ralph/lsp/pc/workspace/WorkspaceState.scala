@@ -9,16 +9,19 @@ import java.net.URI
 import scala.collection.immutable.ArraySeq
 
 sealed trait WorkspaceState {
+
   def workspaceURI: URI
 
   def buildURI: URI =
     Build.toBuildURI(workspaceURI)
+
 }
 
 object WorkspaceState {
 
   /** Workspace state where the source-code is known and can be parsed and compiled */
   sealed trait IsSourceAware extends WorkspaceState {
+
     def build: BuildCompiled
 
     def workspaceURI: URI =
@@ -26,6 +29,7 @@ object WorkspaceState {
 
     /** A workspace contains multiple source files */
     def sourceCode: ArraySeq[SourceCodeState]
+
   }
 
   /** Represents the results of a parser run */
@@ -36,19 +40,26 @@ object WorkspaceState {
 
   /** State: Represents a parse and compilation run result */
   sealed trait IsCompiled extends IsParsedAndCompiled {
+
     def parsed: WorkspaceState.Parsed
+
   }
 
   /** State: IDE is initialised but no source compilation has occurred yet */
   case class Created(workspaceURI: URI) extends WorkspaceState
 
   /** State: Source files might be un-compiled, parsed or compiled. This state can be parsed and compiled. */
-  case class UnCompiled(build: BuildCompiled,
-                        sourceCode: ArraySeq[SourceCodeState]) extends IsParsed with IsParsedAndCompiled
+  case class UnCompiled(
+      build: BuildCompiled,
+      sourceCode: ArraySeq[SourceCodeState])
+    extends IsParsed
+       with IsParsedAndCompiled
 
   /** State: All source files are parsed, therefore this workspace can be compiled */
-  case class Parsed(build: BuildCompiled,
-                    sourceCode: ArraySeq[SourceCodeState.Parsed]) extends IsParsed
+  case class Parsed(
+      build: BuildCompiled,
+      sourceCode: ArraySeq[SourceCodeState.Parsed])
+    extends IsParsed
 
   /**
    * Result of an errored compiler run.
@@ -57,11 +68,15 @@ object WorkspaceState {
    * @param workspaceErrors Project/workspace level errors
    * @param parsed          Previous valid parsed state (used for code completion in-case the file has error)
    */
-  case class Errored(sourceCode: ArraySeq[SourceCodeState.IsParsed],
-                     workspaceErrors: ArraySeq[CompilerMessage.AnyError],
-                     parsed: WorkspaceState.Parsed) extends IsCompiled {
+  case class Errored(
+      sourceCode: ArraySeq[SourceCodeState.IsParsed],
+      workspaceErrors: ArraySeq[CompilerMessage.AnyError],
+      parsed: WorkspaceState.Parsed)
+    extends IsCompiled {
+
     def build: BuildCompiled =
       parsed.build
+
   }
 
   /**
@@ -70,10 +85,14 @@ object WorkspaceState {
    * @param sourceCode New valid source code states.
    * @param parsed     Current parser run for this compiled code.
    */
-  case class Compiled(sourceCode: ArraySeq[SourceCodeState.Compiled],
-                      parsed: WorkspaceState.Parsed) extends IsCompiled {
+  case class Compiled(
+      sourceCode: ArraySeq[SourceCodeState.Compiled],
+      parsed: WorkspaceState.Parsed)
+    extends IsCompiled {
+
     def build: BuildCompiled =
       parsed.build
+
   }
 
 }

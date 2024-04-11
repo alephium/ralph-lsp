@@ -1,7 +1,7 @@
 package org.alephium.ralph.lsp.server.converter
 
 import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange}
-import org.alephium.ralph.lsp.pc.diagnostic.{CodeDiagnostic, CodeDiagnosticSeverity, FileDiagnostic}
+import org.alephium.ralph.lsp.pc.diagnostic.{CodeDiagnosticSeverity, CodeDiagnostic, FileDiagnostic}
 import org.eclipse.lsp4j._
 
 import scala.jdk.CollectionConverters.SeqHasAsJava

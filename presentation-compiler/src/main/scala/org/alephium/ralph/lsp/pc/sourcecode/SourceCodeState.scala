@@ -5,11 +5,12 @@ import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.warning.StringWarning
 import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.{CompiledContract, CompiledScript}
+import org.alephium.ralph.{CompiledScript, CompiledContract}
 
 import java.net.URI
 
 sealed trait SourceCodeState {
+
   def fileURI: URI
 
   /**
@@ -24,6 +25,7 @@ sealed trait SourceCodeState {
     URIUtil
       .importIdentifier(fileURI)
       .flatMap(RalphParserExtension.lazyParseImportIdentifier(_, fileURI))
+
 }
 
 object SourceCodeState {
@@ -39,12 +41,14 @@ object SourceCodeState {
    *
    * [[OnDisk]] state is no longer achievable from this state unless the file gets removed/dropped entirely
    * from its source-aware workspace [[org.alephium.ralph.lsp.pc.workspace.WorkspaceState.IsSourceAware]].
-   * */
+   */
   sealed trait IsAccessed extends SourceCodeState
 
   /** Represents: States where the code text is known */
   sealed trait IsCodeAware extends SourceCodeState {
+
     def code: String
+
   }
 
   /** Represents: Code that is parsed. */
@@ -58,35 +62,52 @@ object SourceCodeState {
 
   /** Represents: Code that errored during parsing or compilation. */
   sealed trait IsParserOrCompilationError extends IsError with IsCodeAware {
+
     def errors: Seq[CompilerMessage.AnyError]
+
   }
 
   /** The code is on disk */
   case class OnDisk(fileURI: URI) extends IsInitialised
 
   /** The code is in memory but not parsed or compiled */
-  case class UnCompiled(fileURI: URI,
-                        code: String) extends IsInitialised with IsAccessed with IsCodeAware
+  case class UnCompiled(
+      fileURI: URI,
+      code: String)
+    extends IsInitialised
+       with IsAccessed
+       with IsCodeAware
 
   /** Represents: Was unable to access code */
-  case class ErrorAccess(fileURI: URI,
-                         error: CompilerMessage.AnyError) extends IsError with IsAccessed
+  case class ErrorAccess(
+      fileURI: URI,
+      error: CompilerMessage.AnyError)
+    extends IsError
+       with IsAccessed
 
   /** Represents: Code is successfully parsed */
-  case class Parsed(fileURI: URI,
-                    code: String,
-                    ast: Tree.Root) extends IsParsed
+  case class Parsed(
+      fileURI: URI,
+      code: String,
+      ast: Tree.Root)
+    extends IsParsed
 
   /** Represents: Error during the parser phase. */
-  case class ErrorParser(fileURI: URI,
-                         code: String,
-                         errors: Seq[CompilerMessage.AnyError]) extends IsParserOrCompilationError with IsParsed
+  case class ErrorParser(
+      fileURI: URI,
+      code: String,
+      errors: Seq[CompilerMessage.AnyError])
+    extends IsParserOrCompilationError
+       with IsParsed
 
   /** Represents: Code is successfully compiled */
-  case class Compiled(fileURI: URI,
-                      code: String,
-                      compiledCode: Seq[Either[CompiledContract, CompiledScript]],
-                      parsed: SourceCodeState.Parsed) extends IsCompiled {
+  case class Compiled(
+      fileURI: URI,
+      code: String,
+      compiledCode: Seq[Either[CompiledContract, CompiledScript]],
+      parsed: SourceCodeState.Parsed)
+    extends IsCompiled {
+
     def warnings: Seq[StringWarning] =
       compiledCode flatMap {
         case Left(value) =>
@@ -95,12 +116,16 @@ object SourceCodeState {
         case Right(value) =>
           value.warnings map (StringWarning(_, fileURI))
       }
+
   }
 
   /** Represents: Error during the compilation phase. */
-  case class ErrorCompilation(fileURI: URI,
-                              code: String,
-                              errors: Seq[CompilerMessage.AnyError],
-                              parsed: SourceCodeState.Parsed) extends IsParserOrCompilationError with IsCompiled
+  case class ErrorCompilation(
+      fileURI: URI,
+      code: String,
+      errors: Seq[CompilerMessage.AnyError],
+      parsed: SourceCodeState.Parsed)
+    extends IsParserOrCompilationError
+       with IsCompiled
 
 }

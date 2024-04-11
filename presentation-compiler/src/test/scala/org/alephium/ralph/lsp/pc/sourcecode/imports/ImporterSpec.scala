@@ -6,7 +6,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.error.ImportError
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
+import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
 import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -74,16 +74,14 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
         val dependency =
           TestSourceCode
             .genCompiled(
-              fileURI =
-                fileURI,
-              code =
-                """
+              fileURI = fileURI,
+              code = """
                   |Contract ImportedContract(id: U256) {
                   |  pub fn getId() -> U256 {
                   |    return id
                   |  }
                   |}
-                  |""".stripMargin,
+                  |""".stripMargin
             )
             .map(_.asInstanceOf[SourceCodeState.Compiled]) // No errors. Successfully compiled.
             .sample
@@ -109,10 +107,12 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
 
         // type-check myCode and expect the dependency to be returned.
         val importedCode =
-          Importer.typeCheck(
-            sourceCode = ArraySeq(myCode),
-            dependency = ArraySeq(dependency)
-          ).value
+          Importer
+            .typeCheck(
+              sourceCode = ArraySeq(myCode),
+              dependency = ArraySeq(dependency)
+            )
+            .value
 
         // type check returns the dependency.
         importedCode should contain only dependency
@@ -147,55 +147,52 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
 
         // type-check myCode and expect error to be returned because the import does not exists.
         val actualError =
-          Importer.typeCheck(
-            sourceCode = ArraySeq(myCode),
-            dependency = ArraySeq.empty
-          ).left.value
+          Importer
+            .typeCheck(
+              sourceCode = ArraySeq(myCode),
+              dependency = ArraySeq.empty
+            )
+            .left
+            .value
 
         // The error must report the import's AST as UnknownImport
         val expectedAST = {
-          val my_package = "my_package"
-          val my_file = "my_file"
-          val my_package_file = s"$my_package/$my_file"
+          val my_package             = "my_package"
+          val my_file                = "my_file"
+          val my_package_file        = s"$my_package/$my_file"
           val my_package_file_quoted = s""""$my_package_file""""
-          val import_statement = s"""import $my_package_file_quoted"""
-          val fileURI = Some(myCode.fileURI)
+          val import_statement       = s"""import $my_package_file_quoted"""
+          val fileURI                = Some(myCode.fileURI)
 
           Tree.Import(
-            string =
-              Tree.StringLiteral(
-                value = my_package_file_quoted,
-                name =
-                  Tree.Name(
-                    value = my_package_file,
-                    index =
-                      SourceIndex(
-                        index = myCode.code.lastIndexOf(my_package_file),
-                        width = my_package_file.length,
-                        fileURI = fileURI
-                      )
-                  ),
-                index =
-                  SourceIndex(
-                    index = myCode.code.lastIndexOf(my_package_file_quoted),
-                    width = my_package_file_quoted.length,
-                    fileURI = fileURI
-                  )
-              ),
-            path =
-              Some(
-                Tree.ImportPath(
-                  folder = Tree.Name(my_package, SourceIndex(myCode.code.lastIndexOf(my_package), my_package.length, fileURI = fileURI)),
-                  file = Tree.Name(my_file, SourceIndex(myCode.code.lastIndexOf(my_file), my_file.length, fileURI = fileURI)),
-                  index = SourceIndex(myCode.code.lastIndexOf(my_package_file), my_package_file.length, fileURI = fileURI)
+            string = Tree.StringLiteral(
+              value = my_package_file_quoted,
+              name = Tree.Name(
+                value = my_package_file,
+                index = SourceIndex(
+                  index = myCode.code.lastIndexOf(my_package_file),
+                  width = my_package_file.length,
+                  fileURI = fileURI
                 )
               ),
-            index =
-              SourceIndex(
-                index = myCode.code.lastIndexOf(import_statement),
-                width = import_statement.length,
+              index = SourceIndex(
+                index = myCode.code.lastIndexOf(my_package_file_quoted),
+                width = my_package_file_quoted.length,
                 fileURI = fileURI
               )
+            ),
+            path = Some(
+              Tree.ImportPath(
+                folder = Tree.Name(my_package, SourceIndex(myCode.code.lastIndexOf(my_package), my_package.length, fileURI = fileURI)),
+                file = Tree.Name(my_file, SourceIndex(myCode.code.lastIndexOf(my_file), my_file.length, fileURI = fileURI)),
+                index = SourceIndex(myCode.code.lastIndexOf(my_package_file), my_package_file.length, fileURI = fileURI)
+              )
+            ),
+            index = SourceIndex(
+              index = myCode.code.lastIndexOf(import_statement),
+              width = import_statement.length,
+              fileURI = fileURI
+            )
           )
         }
 
@@ -207,11 +204,12 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
             fileURI = myCode.fileURI,
             code = myCode.code,
             parsed = myCode,
-            errors = ArraySeq(expectedImportError),
+            errors = ArraySeq(expectedImportError)
           )
 
         actualError should contain only expectedError
       }
     }
   }
+
 }

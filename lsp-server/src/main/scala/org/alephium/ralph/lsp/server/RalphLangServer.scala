@@ -10,14 +10,14 @@ import org.alephium.ralph.lsp.pc.util.CollectionUtil
 import org.alephium.ralph.lsp.pc.util.URIUtil.uri
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
-import org.alephium.ralph.lsp.pc.{PC, PCState, PCStateDiagnostics}
+import org.alephium.ralph.lsp.pc.{PCState, PC, PCStateDiagnostics}
 import org.alephium.ralph.lsp.server
-import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
+import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES}
 import org.alephium.ralph.lsp.server.RalphLangServer._
-import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter, GoToConverter}
-import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
+import org.alephium.ralph.lsp.server.converter.{DiagnosticsConverter, GoToConverter, CompletionConverter}
+import org.alephium.ralph.lsp.server.state.{Trace, ServerState}
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.{CancelChecker, CompletableFutures, messages}
+import org.eclipse.lsp4j.jsonrpc.{CancelChecker, messages, CompletableFutures}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
@@ -31,10 +31,12 @@ import scala.jdk.CollectionConverters.IterableHasAsScala
 object RalphLangServer {
 
   /** Start server with pre-configured client */
-  def apply(client: RalphLangClient,
-            listener: JFuture[Void],
-            clientAllowsWatchedFilesDynamicRegistration: Boolean = false)(implicit compiler: CompilerAccess,
-                                                                          file: FileAccess): RalphLangServer = {
+  def apply(
+      client: RalphLangClient,
+      listener: JFuture[Void],
+      clientAllowsWatchedFilesDynamicRegistration: Boolean = false
+    )(implicit compiler: CompilerAccess,
+      file: FileAccess): RalphLangServer = {
     val initialState =
       ServerState(
         client = Some(client),
@@ -48,8 +50,9 @@ object RalphLangServer {
     new RalphLangServer(initialState)
   }
 
+  // format: off
   def apply()(implicit compiler: CompilerAccess,
-              file: FileAccess): RalphLangServer =
+              file: FileAccess): RalphLangServer = // format: on
     new RalphLangServer(
       ServerState(
         client = None,
@@ -66,7 +69,7 @@ object RalphLangServer {
     Option(params.getRootUri)
       .orElse(Option(params.getRootPath))
       .map(URI.create)
-      //Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
+      // Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
       .orElse {
         Option(System.getProperty("user.dir"))
           .map(Paths.get(_))
@@ -87,7 +90,7 @@ object RalphLangServer {
   /** Build capabilities needed by from the server */
   def clientCapabilities(): Registration = {
     val watchers = java.util.Arrays.asList(new FileSystemWatcher(messages.Either.forLeft("**/*")))
-    val options = new DidChangeWatchedFilesRegistrationOptions(watchers)
+    val options  = new DidChangeWatchedFilesRegistrationOptions(watchers)
     new Registration(WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES, options)
   }
 
@@ -95,14 +98,15 @@ object RalphLangServer {
   def getAllowsWatchedFilesDynamicRegistration(params: InitializeParams): Boolean = {
     val allows: Option[Boolean] =
       for {
-        capabilities <- Option(params.getCapabilities())
-        workspace <- Option(capabilities.getWorkspace())
+        capabilities          <- Option(params.getCapabilities())
+        workspace             <- Option(capabilities.getWorkspace())
         didChangeWatchedFiles <- Option(workspace.getDidChangeWatchedFiles())
-        dynamicRegistration <- Option(didChangeWatchedFiles.getDynamicRegistration())
+        dynamicRegistration   <- Option(didChangeWatchedFiles.getDynamicRegistration())
       } yield dynamicRegistration
 
     allows contains true
   }
+
 }
 
 /**
@@ -111,8 +115,14 @@ object RalphLangServer {
  * This class is the only one with mutable state in this repo.
  * All mutable state management occurs here.
  */
-class RalphLangServer private(@volatile private var state: ServerState)(implicit compiler: CompilerAccess,
-                                                                        file: FileAccess) extends LanguageServer with TextDocumentService with WorkspaceService with StrictImplicitLogging { thisServer =>
+class RalphLangServer private (
+    @volatile private var state: ServerState
+  )(implicit compiler: CompilerAccess,
+    file: FileAccess)
+  extends LanguageServer
+     with TextDocumentService
+     with WorkspaceService
+     with StrictImplicitLogging { thisServer =>
 
   def getState(): ServerState =
     thisServer.state
@@ -130,8 +140,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    *                 Client must be known before a connection is initialised.
    * @param listener LSP connection listener function.
    */
-  def setInitialState(client: LanguageClient,
-                      listener: () => JFuture[Void]): Unit =
+  def setInitialState(
+      client: LanguageClient,
+      listener: () => JFuture[Void]): Unit =
     runSync {
       require(state.client.isEmpty, "Client is already set")
       require(state.listener.isEmpty, "Listener is already set")
@@ -203,7 +214,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def didOpen(params: DidOpenTextDocumentParams): Unit =
     runSync {
       val fileURI = uri(params.getTextDocument.getUri)
-      val code = Option(params.getTextDocument.getText)
+      val code    = Option(params.getTextDocument.getText)
 
       logger.debug(s"didOpen. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
@@ -217,7 +228,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def didChange(params: DidChangeTextDocumentParams): Unit =
     runSync {
       val fileURI = uri(params.getTextDocument.getUri)
-      val code = Option(params.getContentChanges.get(0).getText)
+      val code    = Option(params.getContentChanges.get(0).getText)
 
       logger.debug(s"didChange. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
@@ -244,7 +255,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def didSave(params: DidSaveTextDocumentParams): Unit =
     runSync {
       val fileURI = uri(params.getTextDocument.getUri)
-      val code = Option(params.getText)
+      val code    = Option(params.getText)
 
       logger.debug(s"didSave. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
@@ -265,7 +276,10 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
       // collect events
       val events =
         changes
-          .map(event => (event.getType, event))
+          .map {
+            event =>
+              (event.getType, event)
+          }
           .collect {
             case (FileChangeType.Deleted, event) =>
               WorkspaceFileEvent.Deleted(uri(event.getUri))
@@ -300,8 +314,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
     runAsync {
       cancelChecker =>
-        val fileURI = uri(params.getTextDocument.getUri)
-        val line = params.getPosition.getLine
+        val fileURI   = uri(params.getTextDocument.getUri)
+        val line      = params.getPosition.getLine
         val character = params.getPosition.getCharacter
 
         cancelChecker.checkCanceled()
@@ -351,8 +365,8 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
   override def definition(params: DefinitionParams): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =
     runAsync {
       cancelChecker =>
-        val fileURI = uri(params.getTextDocument.getUri)
-        val line = params.getPosition.getLine
+        val fileURI   = uri(params.getTextDocument.getUri)
+        val line      = params.getPosition.getLine
         val character = params.getPosition.getCharacter
 
         cancelChecker.checkCanceled()
@@ -411,8 +425,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @param fileURI File that changed
    * @param code    Source-code of the changed file.
    */
-  private def didChangeAndPublish(fileURI: URI,
-                                  code: Option[String]): Unit =
+  private def didChangeAndPublish(
+      fileURI: URI,
+      code: Option[String]): Unit =
     runSync {
       val diagnostics =
         didChangeAndSet(
@@ -430,8 +445,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @param code    Source-code of the changed file.
    * @return Diagnostics of the new workspace.
    */
-  private def didChangeAndSet(fileURI: URI,
-                              code: Option[String]): Iterable[PublishDiagnosticsParams] =
+  private def didChangeAndSet(
+      fileURI: URI,
+      code: Option[String]): Iterable[PublishDiagnosticsParams] =
     runSync {
       val currentPCState =
         getPCState()
@@ -458,7 +474,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   private def getClient(): RalphLangClient =
     state.client getOrElse {
-      val error = ResponseError.ClientNotConfigured
+      val error     = ResponseError.ClientNotConfigured
       val exception = error.toResponseErrorException
       logger.error(error.getMessage, exception)
       throw exception
@@ -494,8 +510,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    * @param newPCState Compilation result returned by presentation-compiler.
    * @return Diagnostics for current workspace.
    */
-  private def setPCStateAndBuildDiagnostics(currentPCState: PCState,
-                                            newPCState: Either[ErrorUnknownFileType, Option[PCState]]): Iterable[PublishDiagnosticsParams] =
+  private def setPCStateAndBuildDiagnostics(
+      currentPCState: PCState,
+      newPCState: Either[ErrorUnknownFileType, Option[PCState]]): Iterable[PublishDiagnosticsParams] =
     runSync {
       newPCState match {
         case Right(Some(newPCState)) =>
@@ -524,8 +541,9 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
    *                       [[None]] indicates that the file-type does not belong to us.
    * @return Diagnostics for current workspace.
    */
-  private def setPCStateAndBuildDiagnostics(currentPCState: PCState,
-                                            newPCState: PCState): Iterable[PublishDiagnosticsParams] =
+  private def setPCStateAndBuildDiagnostics(
+      currentPCState: PCState,
+      newPCState: PCState): Iterable[PublishDiagnosticsParams] =
     runSync {
       setPCState(newPCState)
 
@@ -542,7 +560,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   /** Write to log file, notify the client and throw to exit this request */
   private def notifyAndThrow(error: server.ResponseError): Nothing = {
-    val client = getClient()
+    val client    = getClient()
     val exception = client.show(error).toResponseErrorException
     logger.error(error.getMessage, exception)
     throw exception
@@ -558,7 +576,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   /**
    * Run within a synchronised block and ensure all unexpected abrupt internal errors are logged.
-   * */
+   */
   private def runSync[A](f: => A): A =
     try
       thisServer.synchronized {
@@ -584,7 +602,7 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
     CompletableFutures
       .computeAsync(f(_))
       .whenComplete {
-        (_, error) =>
+        case (_, error) =>
           if (error != null)
             logger.error("Async request failed", error)
       }
@@ -625,4 +643,5 @@ class RalphLangServer private(@volatile private var state: ServerState)(implicit
 
   override def exit(): Unit =
     System.exit(exitWithCode())
+
 }

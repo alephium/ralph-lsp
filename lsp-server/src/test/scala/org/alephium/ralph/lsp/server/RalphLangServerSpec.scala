@@ -4,7 +4,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.PCState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
+import org.alephium.ralph.lsp.server.state.{Trace, ServerState}
 import org.eclipse.lsp4j._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -29,11 +29,12 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
         FileAccess.disk
 
       val client = mock[RalphLangClient]
-      val listener = CompletableFuture.runAsync(() => ())
-      val server = RalphLangServer(client, listener)
+      // format: off
+      val listener = CompletableFuture.runAsync(() => ()) // format: on
+      val server   = RalphLangServer(client, listener)
 
       // this is the initial message received from LSP client.
-      val initialise = new InitializeParams()
+      val initialise   = new InitializeParams()
       val workspaceURI = Paths.get("test").toUri
       initialise.setRootUri(workspaceURI.toString)
 
@@ -48,13 +49,12 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
         ServerState(
           client = Some(client),
           listener = Some(listener),
-          pcState =
-            Some(
-              PCState(
-                workspace = WorkspaceState.Created(workspaceURI),
-                buildErrors = None
-              )
-            ),
+          pcState = Some(
+            PCState(
+              workspace = WorkspaceState.Created(workspaceURI),
+              buildErrors = None
+            )
+          ),
           clientAllowsWatchedFilesDynamicRegistration = false,
           trace = Trace.Off,
           shutdownReceived = false
@@ -65,7 +65,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
   "getRootUri" should {
     "Create valide URI with scheme when no RootUri or RootPath exists" in {
       val initialise = new InitializeParams()
-      val uri = RalphLangServer.getRootUri(initialise)
+      val uri        = RalphLangServer.getRootUri(initialise)
 
       uri.get.getScheme() shouldBe "file"
     }
@@ -73,8 +73,10 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
 
   "shutdown" should {
     implicit val compiler: CompilerAccess = null
-    implicit val file: FileAccess = null
+    implicit val file: FileAccess         = null
+    // format: off
     val listener = CompletableFuture.runAsync(() => ())
+    // format: on
 
     "return true, set `shutdownReceived` to true, but not cancel the listener" in {
       val client = mock[RalphLangClient]
@@ -105,19 +107,20 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
       server.shutdown().asScala.futureValue shouldBe true
 
       // shutdown error message is logged to the client once
-      (client.error(_: String, _: Throwable))
+      (client
+        .error(_: String, _: Throwable))
         .expects(ResponseError.ShutdownRequested.getMessage, *)
         .once()
 
-      //Testing messages as the two java classes aren't consider equal
+      // Testing messages as the two java classes aren't consider equal
       server.shutdown().asScala.failed.futureValue.getMessage shouldBe ResponseError.ShutdownRequested.toResponseErrorException.getMessage
     }
   }
 
   "exit" should {
     implicit val compiler: CompilerAccess = CompilerAccess.ralphc
-    implicit val file: FileAccess = FileAccess.disk
-    //We use a Promise to have a non-completed future
+    implicit val file: FileAccess         = FileAccess.disk
+    // We use a Promise to have a non-completed future
     val listener = Promise[Void]().future.asJava.asInstanceOf[JFuture[Void]]
 
     "cancel listener and exit successfully if shutdown was triggered" in {
@@ -155,14 +158,15 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
   "registerClientCapabilities" should {
     "register watched files if dynamic registration is true" in {
       implicit val compiler: CompilerAccess = null // compile is never accessed
-      implicit val file: FileAccess = null // file/disk IO is never accessed
+      implicit val file: FileAccess         = null // file/disk IO is never accessed
 
       val client = mock[RalphLangClient]
 
       val server =
         RalphLangServer(
           client = client,
-          listener = CompletableFuture.runAsync(() => ()),
+          // format: off
+          listener = CompletableFuture.runAsync(() => ()), // format: on
           clientAllowsWatchedFilesDynamicRegistration = true
         )
 
@@ -174,19 +178,20 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
         .returning(new CompletableFuture[Void]())
         .once()
 
-      server.registerClientCapabilities() shouldBe (())
+      server.registerClientCapabilities() shouldBe ()
     }
 
     "not register watched files if dynamic registration is false" in {
       implicit val compiler: CompilerAccess = null // compile is never accessed
-      implicit val file: FileAccess = null // file/disk IO is never accessed
+      implicit val file: FileAccess         = null // file/disk IO is never accessed
 
       val client = mock[RalphLangClient]
 
       val server =
         RalphLangServer(
           client = client,
-          listener = CompletableFuture.runAsync(() => ()),
+          // format: off
+          listener = CompletableFuture.runAsync(() => ()), // format: on
           clientAllowsWatchedFilesDynamicRegistration = false
         )
 
@@ -197,7 +202,8 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
         .expects(*)
         .never()
 
-      server.registerClientCapabilities() shouldBe (())
+      server.registerClientCapabilities() shouldBe ()
     }
   }
+
 }

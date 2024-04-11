@@ -5,7 +5,7 @@ import org.alephium.ralph.lsp.TestFile.genFolderURI
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
+import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcParsedConfig
 import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc.genRalphcParsedConfig
 import org.alephium.ralph.lsp.{TestCode, TestFile}
@@ -17,13 +17,14 @@ import java.net.URI
 /** Build specific generators */
 object TestBuild {
 
-  def genParsed(workspaceURI: Gen[URI] = genFolderURI(),
-                config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()): Gen[BuildState.BuildParsed] =
+  def genParsed(
+      workspaceURI: Gen[URI] = genFolderURI(),
+      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()): Gen[BuildState.BuildParsed] =
     for {
       workspaceURI <- workspaceURI
       parsedConfig <- config
     } yield {
-      val buildURI = workspaceURI.resolve(Build.BUILD_FILE_NAME)
+      val buildURI  = workspaceURI.resolve(Build.BUILD_FILE_NAME)
       val buildJSON = RalphcConfig.write(parsedConfig)
       //      FileIO.write(buildJSON, buildURI).toUri shouldBe buildURI
       // run either one of the two parse functions
@@ -38,19 +39,23 @@ object TestBuild {
     }
 
   /** Generate a successfully compiled BuildState */
-  def genCompiledOK(workspaceURI: Gen[URI] = genFolderURI(),
-                    config: Gen[RalphcParsedConfig] = genRalphcParsedConfig())(implicit file: FileAccess,
-                                                                               compiler: CompilerAccess,
-                                                                               logger: ClientLogger): Gen[BuildState.BuildCompiled] =
+  def genCompiledOK(
+      workspaceURI: Gen[URI] = genFolderURI(),
+      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): Gen[BuildState.BuildCompiled] =
     genCompiled(
       workspaceURI = workspaceURI,
       config = config
     ).map(_.asInstanceOf[BuildState.BuildCompiled])
 
-  def genCompiled(workspaceURI: Gen[URI] = genFolderURI(),
-                  config: Gen[RalphcParsedConfig] = genRalphcParsedConfig())(implicit file: FileAccess,
-                                                                             compiler: CompilerAccess,
-                                                                             logger: ClientLogger): Gen[BuildState.IsCompiled] =
+  def genCompiled(
+      workspaceURI: Gen[URI] = genFolderURI(),
+      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): Gen[BuildState.IsCompiled] =
     genParsed(
       workspaceURI = workspaceURI,
       config = config
@@ -63,38 +68,59 @@ object TestBuild {
     }
 
   /** Generate a successfully compiled build file with source-code inside and also outside the workspace */
-  def genCompiledWithSourceCodeInAndOut(workspaceURI: Gen[URI] = genFolderURI(),
-                                        code: Gen[String] = TestCode.genGoodCode(),
-                                        minSourceCount: Int = 0,
-                                        maxSourceCount: Int = 10)(implicit file: FileAccess,
-                                                                  compiler: CompilerAccess,
-                                                                  logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk], List[SourceCodeState.OnDisk])] =
+  def genCompiledWithSourceCodeInAndOut(
+      workspaceURI: Gen[URI] = genFolderURI(),
+      code: Gen[String] = TestCode.genGoodCode(),
+      minSourceCount: Int = 0,
+      maxSourceCount: Int = 10
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk], List[SourceCodeState.OnDisk])] =
     for {
       // a compiled OK build file.
-      (buildCompiled, workspaceSourceCode) <- genCompiledWithSourceCode(workspaceURI = workspaceURI, minSourceCount = minSourceCount, maxSourceCount = maxSourceCount)
+      (buildCompiled, workspaceSourceCode) <-
+        genCompiledWithSourceCode(
+          workspaceURI = workspaceURI,
+          minSourceCount = minSourceCount,
+          maxSourceCount = maxSourceCount
+        )
       // write source-code files that are not in the workspace (expect these to get filtered out)
-      outsideSourceCode <- Gen.listOfRange(minSourceCount, maxSourceCount)(TestSourceCode.genOnDisk()).map(TestSourceCode.persistAll(_, code))
+      outsideSourceCode <-
+        Gen
+          .listOfRange(minSourceCount, maxSourceCount)(TestSourceCode.genOnDisk())
+          .map(TestSourceCode.persistAll(_, code))
     } yield (buildCompiled, workspaceSourceCode, outsideSourceCode)
 
   /** Generate a successfully compiled build file with source-code inside the workspace */
-  def genCompiledWithSourceCode(workspaceURI: Gen[URI] = genFolderURI(),
-                                code: Gen[String] = TestCode.genGoodCode(),
-                                minSourceCount: Int = 0,
-                                maxSourceCount: Int = 10)(implicit file: FileAccess,
-                                                          compiler: CompilerAccess,
-                                                          logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk])] =
+  def genCompiledWithSourceCode(
+      workspaceURI: Gen[URI] = genFolderURI(),
+      code: Gen[String] = TestCode.genGoodCode(),
+      minSourceCount: Int = 0,
+      maxSourceCount: Int = 10
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk])] =
     for {
       // a compiled OK build file.
       buildCompiled <- TestBuild.genCompiledOK(workspaceURI = workspaceURI)
       // write source-code files to build's contract path
-      workspaceSourceCode <- Gen.listOfRange(minSourceCount, maxSourceCount)(TestSourceCode.genOnDiskForRoot(buildCompiled.contractURI)).map(TestSourceCode.persistAll(_, code))
+      workspaceSourceCode <-
+        Gen
+          .listOfRange(minSourceCount, maxSourceCount)(TestSourceCode.genOnDiskForRoot(buildCompiled.contractURI))
+          .map(TestSourceCode.persistAll(_, code))
     } yield (buildCompiled, workspaceSourceCode)
 
   def persist(parsed: BuildState.BuildParsed): BuildState.BuildParsed = {
     TestFile.write(parsed.buildURI, parsed.code)
     TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.contractPath))
     TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.artifactPath))
-    parsed.config.dependencyPath foreach (path => TestFile.createDirectories(parsed.workspaceURI.resolve(path)))
+    parsed
+      .config
+      .dependencyPath
+      .foreach {
+        path =>
+          TestFile.createDirectories(parsed.workspaceURI.resolve(path))
+      }
     parsed
   }
 
@@ -106,16 +132,17 @@ object TestBuild {
     compiled
   }
 
-  def genExtendedContract()(implicit file: FileAccess,
-                            compiler: CompilerAccess,
-                            logger: ClientLogger) : Gen[(BuildState.BuildCompiled, SourceCodeState.OnDisk, SourceCodeState.OnDisk, String, String)] =
+  def genExtendedContract(
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): Gen[(BuildState.BuildCompiled, SourceCodeState.OnDisk, SourceCodeState.OnDisk, String, String)] =
     for {
-      build <- TestBuild.genCompiledOK()
+      build                                <- TestBuild.genCompiledOK()
       (contract, extension, extensionName) <- TestCode.genExtendedContract()
-      contractFile <- TestSourceCode.genOnDiskForRoot(rootURI = Gen.const(build.contractURI))
-      extensionFile <- TestSourceCode.genOnDiskForRoot(rootURI = Gen.const(build.contractURI))
+      contractFile                         <- TestSourceCode.genOnDiskForRoot(rootURI = Gen.const(build.contractURI))
+      extensionFile                        <- TestSourceCode.genOnDiskForRoot(rootURI = Gen.const(build.contractURI))
     } yield {
-      val contractOnDisk = TestSourceCode.persist(contractFile, code = Gen.const(contract))
+      val contractOnDisk  = TestSourceCode.persist(contractFile, code = Gen.const(contract))
       val extensionOnDisk = TestSourceCode.persist(extensionFile, code = Gen.const(extension))
 
       (build, contractOnDisk, extensionOnDisk, extension, extensionName)
@@ -123,4 +150,5 @@ object TestBuild {
 
   def delete(build: BuildState): Unit =
     TestFile delete build.buildURI
+
 }

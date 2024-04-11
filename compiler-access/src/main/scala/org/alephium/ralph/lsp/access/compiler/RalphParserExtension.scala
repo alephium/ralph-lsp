@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.access.compiler
 import fastparse._
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.{Ast, SourceIndex, StatefulParser}
+import org.alephium.ralph.{SourceIndex, Ast, StatefulParser}
 
 import java.net.URI
 
@@ -33,7 +33,9 @@ object RalphParserExtension {
     }
 
   /** Parse an import identifier ignoring errors */
-  def lazyParseImportIdentifier(identifier: String, fileURI: URI): Option[Tree.Import] =
+  def lazyParseImportIdentifier(
+      identifier: String,
+      fileURI: URI): Option[Tree.Import] =
     fastparse.parse(s"import \"$identifier\"", importStatement(fileURI)(_)) match {
       case Parsed.Success(tree, _) =>
         Some(tree)
@@ -77,7 +79,9 @@ object RalphParserExtension {
    *
    * @param name The String value to parse.
    */
-  private def parsePath(name: Tree.Name, fileURI: URI): Option[Tree.ImportPath] =
+  private def parsePath(
+      name: Tree.Name,
+      fileURI: URI): Option[Tree.ImportPath] =
     fastparse.parse(name.value, importPaths(fileURI)(_)) match {
       case Parsed.Success((packagePath, filePath), _) =>
         // the above parse occurs on a string value, add the offset such
@@ -131,14 +135,12 @@ object RalphParserExtension {
         (packagePath, filePath)
     }
 
-
   /**
-   *
    * Parse a ralphc contract.
    *
    * This function is a clone of [[org.alephium.ralph.StatefulParser.multiContract]]
    * but without the requirement that it be the start of the file, so imports are allowed.
-   * */
+   */
   private def sourceStatement[Unknown: P](fileURI: URI): P[Tree.Source] = {
     val ralphParser =
       new StatefulParser(Some(fileURI))
@@ -169,7 +171,7 @@ object RalphParserExtension {
           case _: Ast.AssetScript =>
             // parser functions from ralphc also result in the `Ast.AssetScript` type.
             // For whatever reason, if `AssetScript` is returned, report it as a parser failure since it is unexpected.
-            val ctx = implicitly[P[_]]
+            val ctx  = implicitly[P[_]]
             val fail = ctx.freshFailure()
             ctx.setMsg(fromIndex, () => "TxScript, Contract, Interface or Struct. Found AssetScript.")
             fail
@@ -184,7 +186,7 @@ object RalphParserExtension {
    * {{{
    *   import "package_name/file"
    * }}}
-   * */
+   */
   private def stringLiteral[Unknown: P](fileURI: URI): P[Tree.StringLiteral] =
     P(Index ~~ "\"" ~~ Index ~~ CharsWhile(_ != '"').!.? ~~ Index ~~ "\"" ~~ Index) map { // TODO: See if negative look ahead with AnyChar.rep would work instead of `CharsWhile`
       case (fromIndex, nameFromIndex, string, nameToIndex, toIndex) =>
@@ -214,4 +216,5 @@ object RalphParserExtension {
           index = index
         )
     }
+
 }
