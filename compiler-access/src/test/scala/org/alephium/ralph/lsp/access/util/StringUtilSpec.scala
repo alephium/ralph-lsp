@@ -15,17 +15,17 @@ class StringUtilSpec extends AnyWordSpec with Matchers {
 
   "StringUtil" should {
     "compute index" in {
-        computeIndex("line1\n@@line2")
-        computeIndex("\n@@line1\nline2")
-        computeIndex("\r@@line1\rline2")
-        computeIndex("line1\r@@line2")
-        computeIndex("line1\rli@@ne2")
-        computeIndex("line1\nline2\nline3\nlin@@e4")
-        computeIndex("line1\rline2\rline3\rline4@@")
-        computeIndex("line1\r\nline2\r\nline3\r\nline4@@")
-        computeIndex("line1\nline2\rline3\r\nline4@@")
-        computeIndex("line1\nline2\rline3\r\n@@line4")
-        computeIndex("line1\n\r\r\n\r@@line2")
+      computeIndex("line1\n@@line2")
+      computeIndex("\n@@line1\nline2")
+      computeIndex("\r@@line1\rline2")
+      computeIndex("line1\r@@line2")
+      computeIndex("line1\rli@@ne2")
+      computeIndex("line1\nline2\nline3\nlin@@e4")
+      computeIndex("line1\rline2\rline3\rline4@@")
+      computeIndex("line1\r\nline2\r\nline3\r\nline4@@")
+      computeIndex("line1\nline2\rline3\r\nline4@@")
+      computeIndex("line1\nline2\rline3\r\n@@line4")
+      computeIndex("line1\n\r\r\n\r@@line2")
     }
   }
 
@@ -49,13 +49,14 @@ class StringUtilSpec extends AnyWordSpec with Matchers {
     }
 
     "fail to build time range with invalid arguments" in {
-      val code  = "line1\nline2\r\nline3\rline4"
+      val code = "line1\nline2\r\nline3\rline4"
       buildLineRange(code, 0, code.length) shouldBe LineRange.zero
       buildLineRange(code, 1, 0) shouldBe LineRange.zero
       buildLineRange(code, -1, 1) shouldBe LineRange.zero
       buildLineRange(code, 1, -1) shouldBe LineRange.zero
       buildLineRange(code, code.length, code.length) shouldBe LineRange.zero
-      buildLineRange(code, code.length+1, code.length+1) shouldBe LineRange.zero
+      buildLineRange(code, code.length + 1, code.length + 1) shouldBe LineRange.zero
     }
   }
+
 }

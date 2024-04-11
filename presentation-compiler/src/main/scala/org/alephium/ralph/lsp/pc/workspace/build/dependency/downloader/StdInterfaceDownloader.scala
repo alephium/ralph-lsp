@@ -64,29 +64,33 @@ private object StdInterfaceDownloader extends DependencyDownloader with StrictIm
    * We rely here on `Using` https://www.scala-lang.org/api/2.13.6/scala/util/Using$.html
    * to handle resources.
    */
-  private def build(dependencyPath: Path,
-                    errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ErrorDownloadingDependency, List[SourceCodeState.UnCompiled]] =
-    Using.Manager { use =>
-      val stdURL = getClass.getResource(s"/${DependencyID.Std.dirName}")
+  private def build(
+      dependencyPath: Path,
+      errorIndex: SourceIndex
+    )(implicit logger: ClientLogger): Either[ErrorDownloadingDependency, List[SourceCodeState.UnCompiled]] =
+    Using.Manager {
+      use =>
+        val stdURL = getClass.getResource(s"/${DependencyID.Std.dirName}")
 
-      val stdPath = if (stdURL.getProtocol == "file") {
-        Paths.get(stdURL.toURI)
-      } else {
-        // When using file from jar, the file as a special path
-        val Array(jar, folder) = stdURL.toString.split("!")
-        use(FileSystems.newFileSystem(URI.create(jar), Map[String, String]().asJava)).getPath(folder)
-      }
+        val stdPath = if (stdURL.getProtocol == "file") {
+          Paths.get(stdURL.toURI)
+        } else {
+          // When using file from jar, the file as a special path
+          val Array(jar, folder) = stdURL.toString.split("!")
+          use(FileSystems.newFileSystem(URI.create(jar), Map[String, String]().asJava)).getPath(folder)
+        }
 
-      val interfaceFiles = use(Files.list(stdPath)).iterator().asScala.toList
+        val interfaceFiles = use(Files.list(stdPath)).iterator().asScala.toList
 
-      interfaceFiles.map { file =>
-        val code = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines().mkString("\n")
-        val filePath = dependencyPath.resolve(Paths.get(DependencyID.Std.dirName).resolve(file.getFileName.toString))
-        SourceCodeState.UnCompiled(
-          fileURI = filePath.toUri,
-          code = code
-        )
-      }
+        interfaceFiles.map {
+          file =>
+            val code     = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines().mkString("\n")
+            val filePath = dependencyPath.resolve(Paths.get(DependencyID.Std.dirName).resolve(file.getFileName.toString))
+            SourceCodeState.UnCompiled(
+              fileURI = filePath.toUri,
+              code = code
+            )
+        }
     } match {
       case Success(map) =>
         Right(map)

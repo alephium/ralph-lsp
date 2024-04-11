@@ -226,14 +226,14 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
     }
 
     "abstract contract is deleted then created" in {
-        implicit val file: FileAccess =
-          FileAccess.disk
+      implicit val file: FileAccess =
+        FileAccess.disk
 
-        implicit val compiler: CompilerAccess =
-          CompilerAccess.ralphc
+      implicit val compiler: CompilerAccess =
+        CompilerAccess.ralphc
 
-        forAll(TestBuild.genExtendedContract()) {
-          case (build, contract, extension, extensionCode, extensionName) =>
+      forAll(TestBuild.genExtendedContract()) {
+        case (build, contract, extension, extensionCode, extensionName) =>
           val allCode = ArraySeq(contract, extension)
 
           // Create an empty uncompiled workspace
@@ -252,8 +252,9 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
           // Add the all code to the workspace
           val compiledPCState =
             PC.deleteOrCreate(
-              events = allCode.to(ArraySeq).map { code =>
-                WorkspaceFileEvent.Created(code.fileURI)
+              events = allCode.to(ArraySeq).map {
+                code =>
+                  WorkspaceFileEvent.Created(code.fileURI)
               },
               pcState = initialPCState
             )
@@ -290,9 +291,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
           val recompiledPCState =
             PC.deleteOrCreate(
-              events = ArraySeq(
-                WorkspaceFileEvent.Created(extension.fileURI),
-              ),
+              events = ArraySeq(WorkspaceFileEvent.Created(extension.fileURI)),
               pcState = erroredState
             )
 

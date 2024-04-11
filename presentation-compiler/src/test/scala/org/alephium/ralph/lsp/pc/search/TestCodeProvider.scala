@@ -33,7 +33,7 @@ object TestCodeProvider {
    * }}}
    */
   private def apply[A](code: String)(implicit provider: CodeProvider[A]): (Iterator[A], SourceCodeState.IsCodeAware, WorkspaceState.IsParsedAndCompiled) = {
-    val (linePosition,_ , codeWithoutAtSymbol) = TestCodeUtil.indicatorPosition(code)
+    val (linePosition, _, codeWithoutAtSymbol) = TestCodeUtil.indicatorPosition(code)
 
     // run completion at that line and character
     val (searchResult, workspace) =
