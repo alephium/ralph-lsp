@@ -154,7 +154,6 @@ class RalphLangServer private (
       thisServer.state = state.copy(listener = Some(listener()))
     }
 
-  /** @inheritdoc */
   override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] =
     runAsync {
       cancelChecker =>
@@ -182,7 +181,6 @@ class RalphLangServer private (
         new InitializeResult(serverCapabilities())
     }
 
-  /** @inheritdoc */
   override def initialized(params: InitializedParams): Unit =
     runSync {
       logger.debug("Client initialized")
@@ -210,7 +208,6 @@ class RalphLangServer private (
       logger.debug("Client doesn't support dynamic registration for watched files")
     }
 
-  /** @inheritdoc */
   override def didOpen(params: DidOpenTextDocumentParams): Unit =
     runSync {
       val fileURI = uri(params.getTextDocument.getUri)
@@ -224,7 +221,6 @@ class RalphLangServer private (
       )
     }
 
-  /** @inheritdoc */
   override def didChange(params: DidChangeTextDocumentParams): Unit =
     runSync {
       val fileURI = uri(params.getTextDocument.getUri)
@@ -238,7 +234,6 @@ class RalphLangServer private (
       )
     }
 
-  /** @inheritdoc */
   override def didClose(params: DidCloseTextDocumentParams): Unit =
     runSync {
       val fileURI = uri(params.getTextDocument.getUri)
@@ -251,7 +246,6 @@ class RalphLangServer private (
       )
     }
 
-  /** @inheritdoc */
   override def didSave(params: DidSaveTextDocumentParams): Unit =
     runSync {
       val fileURI = uri(params.getTextDocument.getUri)
@@ -265,7 +259,6 @@ class RalphLangServer private (
       )
     }
 
-  /** @inheritdoc */
   override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
     runSync {
       val changes =
@@ -310,7 +303,6 @@ class RalphLangServer private (
       }
     }
 
-  /** @inheritdoc */
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
     runAsync {
       cancelChecker =>
@@ -361,7 +353,6 @@ class RalphLangServer private (
         }
     }
 
-  /** @inheritdoc */
   override def definition(params: DefinitionParams): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =
     runAsync {
       cancelChecker =>
@@ -607,7 +598,6 @@ class RalphLangServer private (
             logger.error("Async request failed", error)
       }
 
-  /** @inheritdoc */
   override def setTrace(params: SetTraceParams): Unit =
     setTraceSetting(params.getValue)
 
