@@ -1,4 +1,4 @@
-import {ExtensionContext, workspace} from 'vscode';
+import {ExtensionContext} from 'vscode';
 
 import {LanguageClient, LanguageClientOptions, ServerOptions} from 'vscode-languageclient/node';
 import * as path from "node:path";
