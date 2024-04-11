@@ -24,7 +24,7 @@ jobs:
           version=$(echo ${GITHUB_REF/refs\/tags\//} | cut -c 2-)
           echo "VERSION=$version" >> $GITHUB_OUTPUT
         shell: bash
-      - run: sbt "compile; lsp-server/assembly"
+      - run: sbt "compile; lsp-server/assembly; universal:packageBin"
 
       - name: Install jq
         run: sudo apt-get install jq
@@ -54,7 +54,7 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
+      - name: Upload Release Asset (Jar)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,6 +63,15 @@ jobs:
           asset_path: lsp-server/target/scala-2.13/ralph-lsp.jar
           asset_name: ralph-lsp-${{ steps.get_version.outputs.VERSION }}.jar
           asset_content_type: application/java-archive
+
+      - name: Upload Release Asset (Universal zip)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: target/universal/ralph-lsp-0.1.0-SNAPSHOT.zip
+          asset_name: ralph-lsp-${{ steps.get_version.outputs.VERSION }}.zip
 
       - name: Upload Release Asset (VSCode Extension)
         uses: actions/upload-release-asset@v1
