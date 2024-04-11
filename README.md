@@ -4,15 +4,41 @@ Language server for Ralph.
 
 Currently supports text document level events and diagnostics.
 
+# Installation
+
+Go to the [latest release](https://github.com/alephium/ralph-lsp/releases/latest)
+
+There is currently two ways to install the LSP server, as an executable or as a jar file.
+
+Please note that the server is meant to be run from a client (like an IDE) and not directly.
+
+1. Executable
+
+    Download `ralph-lsp.zip`, extract it and add `ralph-lsp/bin` to your `PATH` environment variable.
+    You can run the server with `ralph-lsp` command.
+
+2. Jar
+
+    Download `ralph-lsp.jar` and run it with `java -jar ralph-lsp.jar`
+
 # Install VSCode plugin
 
 Follow these steps:
 
-1. Download: Get the `.vsix` plugin file from the [latest release](https://github.com/alephium/ralph-lsp/releases).
+1. Download: Get the `.vsix` plugin file from the [latest release](https://github.com/alephium/ralph-lsp/releases/latest).
 2. Install:
     - Open Visual Studio Code.
     - Go to Extensions > Views and More Actions > Install from VSIX...
     - Select the downloaded `.vsix` file and click "Install".
+
+# Install Neovim plugin
+
+Install [plugin-nvim](/plugin-nvim) with your favorite plugin manager, for example with [vim-plug](https://github.com/junegunn/vim-plug)
+```vim
+  Plug 'alephium/ralph-lsp', {'rtp': 'plugin-nvim'}
+```
+
+The plugin adds file type detection, syntax highlighting and start the LSP server, make sure you have `ralph-lsp` available in your `PATH`
 
 # Build the JAR
 
@@ -21,6 +47,20 @@ sbt "compile; lsp-server/assembly"
 ```
 
 Look in `target` folder: `.../ralph-lsp/lsp-server/target/scala-2.13/ralph-lsp.jar`
+
+# Build the executable
+
+```shell
+sbt universal:packageBin
+```
+zip file will be generated in `target/universal/ralph-lsp.zip`
+
+For local development, you can run
+```shell
+sbt stage
+```
+
+This creates the `target/universal/stage/bin/ralph-lsp` executable
 
 # Build the JAR for VSCode
 
@@ -40,40 +80,6 @@ code .
 ```
 
 Run the plugin by selecting the menu option `Run -> Run Without Debugging` or `Run -> Start Debugging`.
-
-# Run LSP in neovim
-
-Install the [ralph.vim](https://github.com/tdroxler/ralph.vim) plugin with your favorite plugin manager, for file type
-detection, highlighting, etc.
-
-## [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
-
-Add the following to your lua configuration
-
-```lua
-local function ralph_init()
-
-  local capabilities = vim.lsp.protocol.make_client_capabilities()
-
-  capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = true
-
-  local root_dir = vim.fs.dirname(vim.fs.find({'ralph.json', 'contracts', 'artifacts'}, { upward = true })[1])
-  if root_dir == nil then root_dir = vim.fn.getcwd() end
-
-   vim.lsp.start({
-     name = 'ralph-lsp',
-     cmd = {'java', '-jar', '-DRALPH_LSP_LOG_HOME=<path-to-your-log-folder>', '<path-to-your-jar>/ralph-lsp.jar'},
-     root_dir = root_dir,
-     capabilities = capabilities
-   })
-
-end
-
-vim.api.nvim_create_autocmd('FileType', {
-    pattern = { 'ralph' },
-    callback = function() ralph_init() end
-})
-```
 
 # Configuration
 
