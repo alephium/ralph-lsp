@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode._
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
+import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.scalacheck.Gen
 
@@ -20,10 +20,11 @@ object TestWorkspace {
    * @param directory The workspace directory
    * @param persist   When true, persist workspace directory and source code.
    */
-  def genCreatedWithSourceCode(directory: Gen[URI] = TestFile.genFolderURI(),
-                               persist: Boolean = false): Gen[(WorkspaceState.Created, List[SourceCodeState.OnDisk])] =
+  def genCreatedWithSourceCode(
+      directory: Gen[URI] = TestFile.genFolderURI(),
+      persist: Boolean = false): Gen[(WorkspaceState.Created, List[SourceCodeState.OnDisk])] =
     for {
-      workspace <- TestWorkspace.genCreated(directory)
+      workspace  <- TestWorkspace.genCreated(directory)
       sourceCode <- Gen.listOfMax()(TestSourceCode.genOnDiskForRoot(workspace.workspaceURI))
     } yield
       if (persist)
@@ -31,8 +32,9 @@ object TestWorkspace {
       else
         (workspace, sourceCode)
 
-  def persist[W <: WorkspaceState.IsSourceAware](workspace: W,
-                                                 code: Gen[String] = TestCode.genGoodCode()): W = {
+  def persist[W <: WorkspaceState.IsSourceAware](
+      workspace: W,
+      code: Gen[String] = TestCode.genGoodCode()): W = {
     TestFile.createDirectories(workspace.workspaceURI)
     persistAll(
       sourceCode = workspace.sourceCode,
@@ -51,4 +53,5 @@ object TestWorkspace {
     TestFile.deleteAll(workspace.workspaceURI)
     workspace
   }
+
 }

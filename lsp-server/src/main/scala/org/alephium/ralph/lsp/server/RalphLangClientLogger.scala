@@ -10,8 +10,10 @@ import org.alephium.ralph.lsp.server.state.Trace
  * @param client The remote client proxy.
  * @param trace  Current trace setting configured by the LSP client.
  */
-case class RalphLangClientLogger(client: RalphLangClient,
-                                 trace: Trace) extends ClientLogger {
+case class RalphLangClientLogger(
+    client: RalphLangClient,
+    trace: Trace)
+  extends ClientLogger {
 
   override def info(message: String)(implicit logger: Logger): Unit = {
     logger.info(message)
@@ -28,7 +30,10 @@ case class RalphLangClientLogger(client: RalphLangClient,
     client.error(message)
   }
 
-  override def error(message: String, cause: Throwable)(implicit logger: Logger): Unit = {
+  override def error(
+      message: String,
+      cause: Throwable
+    )(implicit logger: Logger): Unit = {
     logger.error(message, cause)
     client.error(message, cause)
   }
@@ -44,4 +49,5 @@ case class RalphLangClientLogger(client: RalphLangClient,
     if (trace == Trace.Verbose)
       client.trace(message)
   }
+
 }

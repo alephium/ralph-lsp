@@ -71,4 +71,5 @@ class GoTotArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
       )
     }
   }
+
 }

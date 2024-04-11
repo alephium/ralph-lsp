@@ -50,11 +50,13 @@ object TestCode {
            |""".stripMargin
     }
 
-  def genExtendedContract(name: Gen[String] = genCamelCase, extensionName: Gen[String] = genCamelCase): Gen[(String,String, String)] =
+  def genExtendedContract(
+      name: Gen[String] = genCamelCase,
+      extensionName: Gen[String] = genCamelCase): Gen[(String, String, String)] =
     for {
-      name <- name
+      name          <- name
       extensionName <- extensionName
-      extension <- genAbstract(Gen.const(extensionName))
+      extension     <- genAbstract(Gen.const(extensionName))
     } yield {
       val contract = s"""
          |Contract $name(id:U256) extends $extensionName() {
@@ -73,7 +75,7 @@ object TestCode {
       genContract(genCamelCase),
       genAbstract(genCamelCase),
       genInterface(genCamelCase),
-      genScript(genCamelCase),
+      genScript(genCamelCase)
     )
 
   def genBadCode(): Gen[String] =
@@ -81,7 +83,7 @@ object TestCode {
       genContract(genCamelCase.map(_.toLowerCase)),
       genAbstract(genCamelCase.map(_.toLowerCase)),
       genInterface(genCamelCase.map(_.toLowerCase)),
-      genScript(genCamelCase.map(_.toLowerCase)),
+      genScript(genCamelCase.map(_.toLowerCase))
     )
 
   def genGoodOrBad(): Gen[String] =
@@ -93,8 +95,7 @@ object TestCode {
   def genAtLeastOneBadCode(): Gen[List[String]] =
     for {
       goodAndBad <- Gen.listOf(genGoodOrBad())
-      bad <- genBadCode()
-    } yield
-      Random.shuffle(goodAndBad :+ bad)
+      bad        <- genBadCode()
+    } yield Random.shuffle(goodAndBad :+ bad)
 
 }

@@ -97,9 +97,9 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
             BuildState.BuildErrored(
               buildURI = initialBuild.buildURI,
               codeOption = Some(initialBuild.code),
-              errors = ArraySeq(errorIO), // the error is reported
+              errors = ArraySeq(errorIO),               // the error is reported
               dependencies = initialBuild.dependencies, // dependency is carried forward
-              activateWorkspace = None // continue with existing workspace
+              activateWorkspace = None                  // continue with existing workspace
             )
 
           actualError.left.value shouldBe expectedError
@@ -133,4 +133,5 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
       }
     }
   }
+
 }

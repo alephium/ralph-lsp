@@ -109,4 +109,5 @@ class WorkspaceParseSpec extends AnyWordSpec with Matchers with ScalaCheckDriven
       }
     }
   }
+
 }

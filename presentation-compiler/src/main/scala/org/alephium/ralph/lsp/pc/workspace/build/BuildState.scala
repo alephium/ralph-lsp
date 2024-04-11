@@ -11,12 +11,14 @@ import java.nio.file.{Path, Paths}
 import scala.collection.immutable.ArraySeq
 
 sealed trait BuildState {
+
   def codeOption: Option[String]
 
   def buildURI: URI
 
   def workspaceURI: URI =
     Paths.get(buildURI).getParent.toUri
+
 }
 
 object BuildState {
@@ -26,26 +28,35 @@ object BuildState {
 
   /** Compiled states */
   sealed trait IsCompiled extends BuildState {
+
     def dependencies: ArraySeq[WorkspaceState.IsParsedAndCompiled]
 
     def findDependency(id: DependencyID): Option[WorkspaceState.IsParsedAndCompiled] =
       BuildState.findDependency(dependencies, id)
+
   }
 
   /** Build is successfully parsed */
-  case class BuildParsed(buildURI: URI,
-                         code: String,
-                         config: RalphcParsedConfig) extends BuildState.IsParsed {
+  case class BuildParsed(
+      buildURI: URI,
+      code: String,
+      config: RalphcParsedConfig)
+    extends BuildState.IsParsed {
+
     override def codeOption: Option[String] =
       Some(code)
+
   }
 
   /** Build is successfully compiled */
-  case class BuildCompiled(buildURI: URI,
-                           code: String,
-                           dependencies: ArraySeq[WorkspaceState.Compiled],
-                           dependencyPath: Path,
-                           config: RalphcCompiledConfig) extends BuildState.IsCompiled {
+  case class BuildCompiled(
+      buildURI: URI,
+      code: String,
+      dependencies: ArraySeq[WorkspaceState.Compiled],
+      dependencyPath: Path,
+      config: RalphcCompiledConfig)
+    extends BuildState.IsCompiled {
+
     def contractURI: URI =
       config.contractPath.toUri
 
@@ -57,6 +68,7 @@ object BuildState {
 
     override def codeOption: Option[String] =
       Some(code)
+
   }
 
   /**
@@ -73,11 +85,14 @@ object BuildState {
    *                          - [[None]] to continue with existing workspace
    *                          - Some [[WorkspaceState.IsSourceAware]] to replace existing workspace.
    */
-  case class BuildErrored(buildURI: URI,
-                          codeOption: Option[String],
-                          errors: ArraySeq[CompilerMessage.AnyError],
-                          dependencies: ArraySeq[WorkspaceState.IsParsedAndCompiled],
-                          activateWorkspace: Option[WorkspaceState.IsSourceAware]) extends BuildState.IsParsed with BuildState.IsCompiled
+  case class BuildErrored(
+      buildURI: URI,
+      codeOption: Option[String],
+      errors: ArraySeq[CompilerMessage.AnyError],
+      dependencies: ArraySeq[WorkspaceState.IsParsedAndCompiled],
+      activateWorkspace: Option[WorkspaceState.IsSourceAware])
+    extends BuildState.IsParsed
+       with BuildState.IsCompiled
 
   /**
    * Finds a dependency with the specified ID in the given array of dependencies.
@@ -86,8 +101,9 @@ object BuildState {
    * @param id           The ID of the dependency to find.
    * @return An option containing the found dependency, or None if not found.
    */
-  @inline private def findDependency[T <: WorkspaceState.IsParsedAndCompiled](dependencies: ArraySeq[T],
-                                                                              id: DependencyID): Option[T] =
+  @inline private def findDependency[T <: WorkspaceState.IsParsedAndCompiled](
+      dependencies: ArraySeq[T],
+      id: DependencyID): Option[T] =
     dependencies find {
       dependency =>
         URIUtil.getFileName(dependency.workspaceURI) == id.dirName

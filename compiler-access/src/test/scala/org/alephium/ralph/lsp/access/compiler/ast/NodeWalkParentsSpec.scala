@@ -79,4 +79,5 @@ class NodeWalkParentsSpec extends AnyWordSpec with Matchers {
         )
     }
   }
+
 }

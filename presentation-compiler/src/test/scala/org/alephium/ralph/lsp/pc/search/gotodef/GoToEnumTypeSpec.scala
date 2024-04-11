@@ -124,4 +124,5 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
       )
     }
   }
+
 }

@@ -15,7 +15,10 @@ object TestClientLogger extends ClientLogger {
   override def error(message: String)(implicit logger: Logger): Unit =
     logger.error(message)
 
-  override def error(message: String, cause: Throwable)(implicit logger: Logger): Unit =
+  override def error(
+      message: String,
+      cause: Throwable
+    )(implicit logger: Logger): Unit =
     logger.error(message, cause)
 
   override def debug(message: String)(implicit logger: Logger): Unit =
@@ -23,4 +26,5 @@ object TestClientLogger extends ClientLogger {
 
   override def trace(message: String)(implicit logger: Logger): Unit =
     logger.trace(message)
+
 }

@@ -53,4 +53,5 @@ class GoToEnumTypeUsageSpec extends AnyWordSpec with Matchers {
       )
     }
   }
+
 }

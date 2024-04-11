@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers._
 import java.io.File
 import java.net.URI
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Path, Paths, Files}
 import scala.io.Source
 import scala.util.Using
 
@@ -18,15 +18,17 @@ import scala.util.Using
  *
  * No effect handling required for test-cases.
  * Exceptions are OK for test-cases.
- * */
+ */
 object TestFile {
 
-  /** ********************
+  /**
+   * ********************
    * Generators for Files
-   * ********************* */
+   * *********************
+   */
 
   /** Generate ralph code */
-  def genFolderPath(underTempDir: Boolean): Gen[Path] = {
+  def genFolderPath(underTempDir: Boolean): Gen[Path] =
     Gen.choose(2, 6) flatMap {
       maxNested =>
         val folders =
@@ -51,14 +53,18 @@ object TestFile {
             Paths.get(folders.head, folders.tail: _*)
         }
     }
-  }
 
   /** Generates a file name with the extension. Optionally creates a nested folder path. */
-  def genFilePath(ext: String = RALPH_FILE_EXTENSION,
-                  rootFolder: Gen[Path] = genFolderPath(underTempDir = true),
-                  fileFolder: Gen[Option[Path]] = Gen.option(genFolderPath(underTempDir = false))): Gen[Path] =
+  def genFilePath(
+      ext: String = RALPH_FILE_EXTENSION,
+      rootFolder: Gen[Path] = genFolderPath(underTempDir = true),
+      fileFolder: Gen[Option[Path]] = Gen.option(genFolderPath(underTempDir = false))): Gen[Path] =
     for {
-      fileName <- genName.map(fileName => s"$fileName.$ext")
+      fileName <-
+        genName map {
+          fileName =>
+            s"$fileName.$ext"
+        }
       rootFolder <- rootFolder
       fileFolder <- fileFolder
     } yield {
@@ -68,9 +74,10 @@ object TestFile {
       rootFolder.resolve(filePath)
     }
 
-  def genFileURI(ext: String = RALPH_FILE_EXTENSION,
-                 rootFolder: Gen[Path] = genFolderPath(underTempDir = true),
-                 fileFolder: Gen[Option[Path]] = Gen.option(genFolderPath(underTempDir = false))): Gen[URI] =
+  def genFileURI(
+      ext: String = RALPH_FILE_EXTENSION,
+      rootFolder: Gen[Path] = genFolderPath(underTempDir = true),
+      fileFolder: Gen[Option[Path]] = Gen.option(genFolderPath(underTempDir = false))): Gen[URI] =
     genFilePath(
       ext = ext,
       rootFolder = rootFolder,
@@ -80,23 +87,27 @@ object TestFile {
   def genFolderURI(underTempDir: Boolean = true): Gen[URI] =
     genFolderPath(underTempDir = underTempDir).map(_.toUri)
 
-  /** *************************
+  /**
+   * *************************
    * File IO related functions
-   * ************************* */
+   * *************************
+   */
 
   /** Write bytes to the URI */
-  def writeBytes(uri: URI,
-                 bytes: Array[Byte]): Path = {
-    //convert URI to Path
+  def writeBytes(
+      uri: URI,
+      bytes: Array[Byte]): Path = {
+    // convert URI to Path
     val filePath = Paths.get(uri)
     // ensure directories exists
     createDirectories(filePath.getParent)
-    //write to file
+    // write to file
     Files.write(filePath, bytes)
   }
 
-  def write(uri: URI,
-            string: String): Path =
+  def write(
+      uri: URI,
+      string: String): Path =
     writeBytes(
       uri = uri,
       bytes = string.getBytes(StandardCharsets.UTF_8)
@@ -137,4 +148,5 @@ object TestFile {
     Using(Source.fromFile(uri))(_.mkString)
       .success
       .value
+
 }

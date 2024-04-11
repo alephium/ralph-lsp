@@ -8,7 +8,7 @@ import scala.collection.mutable.ListBuffer
 
 /**
  * Search functions related to [[SourceCodeState]]
- * */
+ */
 object SourceCodeSearcher {
 
   /**
@@ -54,8 +54,9 @@ object SourceCodeSearcher {
    * @param allSource The source code files containing the parent implementations.
    * @return All parent source implementations found.
    */
-  def collectInheritanceInScope(source: Tree.Source,
-                                allSource: ArraySeq[SourceCodeState.Parsed]): Seq[SourceTreeInScope] =
+  def collectInheritanceInScope(
+      source: Tree.Source,
+      allSource: ArraySeq[SourceCodeState.Parsed]): Seq[SourceTreeInScope] =
     source.ast match {
       case Left(contract) =>
         collectParentsInherited(
@@ -77,9 +78,10 @@ object SourceCodeSearcher {
    *                       This is a mutable collection so this function must be private.
    * @return All inheritance implementations along with their corresponding source files.
    */
-  private def collectParentsInherited(inheritances: Seq[Ast.Inheritance],
-                                      allSource: ArraySeq[SourceCodeState.Parsed],
-                                      processedTrees: ListBuffer[Tree.Source]): Seq[SourceTreeInScope] =
+  private def collectParentsInherited(
+      inheritances: Seq[Ast.Inheritance],
+      allSource: ArraySeq[SourceCodeState.Parsed],
+      processedTrees: ListBuffer[Tree.Source]): Seq[SourceTreeInScope] =
     if (inheritances.isEmpty) // Early check: Do not traverse workspace source-code if inheritances are empty.
       Seq.empty
     else

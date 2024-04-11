@@ -8,6 +8,7 @@ import java.net.URI
 import java.nio.file.{Path, Paths}
 
 object FileAccess {
+
   // disk file-io
   def disk: FileAccess =
     DiskFileAccess
@@ -15,6 +16,7 @@ object FileAccess {
   def USER_HOME: Option[Path] =
     Option(System.getProperty("user.home"))
       .map(Paths.get(_))
+
 }
 
 /**
@@ -27,8 +29,9 @@ trait FileAccess {
    *
    * @param fileURI source-file location
    */
-  def exists(fileURI: URI,
-             index: SourceIndex): Either[CompilerMessage.AnyError, Boolean]
+  def exists(
+      fileURI: URI,
+      index: SourceIndex): Either[CompilerMessage.AnyError, Boolean]
 
   /**
    * Fetch all workspace source file locations.
@@ -45,8 +48,9 @@ trait FileAccess {
   def read(fileURI: URI): Either[CompilerMessage.AnyError, String]
 
   /** Write string to the given file URI. */
-  def write(fileURI: URI,
-            string: String,
-            index: SourceIndex): Either[ThrowableError, Path]
+  def write(
+      fileURI: URI,
+      string: String,
+      index: SourceIndex): Either[ThrowableError, Path]
 
 }

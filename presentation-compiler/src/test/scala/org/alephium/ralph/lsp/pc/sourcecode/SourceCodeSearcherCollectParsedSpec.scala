@@ -9,7 +9,7 @@ import scala.collection.immutable.ArraySeq
 
 class SourceCodeSearcherCollectParsedSpec extends AnyWordSpec with Matchers {
 
-  implicit val file: FileAccess = FileAccess.disk
+  implicit val file: FileAccess         = FileAccess.disk
   implicit val compiler: CompilerAccess = CompilerAccess.ralphc
 
   "return empty" when {
@@ -26,33 +26,45 @@ class SourceCodeSearcherCollectParsedSpec extends AnyWordSpec with Matchers {
       TestSourceCode.genUnCompiled().sample.get
 
     val errorParser =
-      TestSourceCode.genParsed(
-        """
+      TestSourceCode
+        .genParsed(
+          """
           |Contract MyContract() {
           |  blah
           |}
           |""".stripMargin
-      ).sample.get.asInstanceOf[SourceCodeState.ErrorParser]
+        )
+        .sample
+        .get
+        .asInstanceOf[SourceCodeState.ErrorParser]
 
     val goodCodeParsed =
-      TestSourceCode.genParsed(
-        """
+      TestSourceCode
+        .genParsed(
+          """
           |Contract MyContract() {
           |  fn function1() -> () {}
           |}
           |""".stripMargin
-      ).sample.get.asInstanceOf[SourceCodeState.Parsed]
+        )
+        .sample
+        .get
+        .asInstanceOf[SourceCodeState.Parsed]
 
     val goodCodeCompiled =
-      TestSourceCode.genCompiled(
-        """
+      TestSourceCode
+        .genCompiled(
+          """
           |Abstract Contract AbstractContract() { }
           |
           |Contract MyContract() extends AbstractContract() {
           |  fn function1() -> () {}
           |}
           |""".stripMargin
-      ).sample.get.asInstanceOf[SourceCodeState.Compiled]
+        )
+        .sample
+        .get
+        .asInstanceOf[SourceCodeState.Compiled]
 
     val errorCompilation =
       TestSourceCode
@@ -62,7 +74,10 @@ class SourceCodeSearcherCollectParsedSpec extends AnyWordSpec with Matchers {
             |  fn function1() -> () {}
             |}
             |""".stripMargin
-        ).sample.get.asInstanceOf[SourceCodeState.ErrorCompilation]
+        )
+        .sample
+        .get
+        .asInstanceOf[SourceCodeState.ErrorCompilation]
 
     val allCode =
       ArraySeq(onDisk, unCompiled, errorParser, goodCodeParsed, goodCodeCompiled, errorCompilation)
@@ -70,7 +85,7 @@ class SourceCodeSearcherCollectParsedSpec extends AnyWordSpec with Matchers {
     val result =
       SourceCodeSearcher.collectParsed(allCode)
 
-    result should contain only(goodCodeParsed, goodCodeCompiled.parsed, errorCompilation.parsed)
+    result should contain only (goodCodeParsed, goodCodeCompiled.parsed, errorCompilation.parsed)
 
     TestSourceCode deleteAllIfExists allCode
   }

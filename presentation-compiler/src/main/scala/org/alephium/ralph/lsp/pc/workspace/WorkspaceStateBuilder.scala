@@ -8,16 +8,17 @@ import scala.collection.immutable.ArraySeq
 private object WorkspaceStateBuilder {
 
   /** @see [[org.alephium.ralph.lsp.pc.sourcecode.SourceCodeStateBuilder.toSourceCodeState]] */
-  def toWorkspaceState(currentState: WorkspaceState.Parsed,
-                       compilationResult: Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]]): WorkspaceState.IsCompiled =
+  def toWorkspaceState(
+      currentState: WorkspaceState.Parsed,
+      compilationResult: Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]]): WorkspaceState.IsCompiled =
     compilationResult match {
       case Left(workspaceError) =>
         // File or sourcePosition position information is not available for this error,
         // report it at project error.
         WorkspaceState.Errored(
-          sourceCode = currentState.sourceCode, // SourceCode remains the same as existing state
+          sourceCode = currentState.sourceCode,       // SourceCode remains the same as existing state
           workspaceErrors = ArraySeq(workspaceError), // errors to report
-          parsed = currentState,
+          parsed = currentState
         )
 
       case Right(compiledSource) =>
@@ -36,9 +37,9 @@ private object WorkspaceStateBuilder {
 
         if (errors.nonEmpty)
           WorkspaceState.Errored(
-            sourceCode = compiledSource, // SourceCode remains the same as existing state
+            sourceCode = compiledSource,      // SourceCode remains the same as existing state
             workspaceErrors = ArraySeq.empty, // errors to report
-            parsed = currentState,
+            parsed = currentState
           )
         else
           WorkspaceState.Compiled(
@@ -46,4 +47,5 @@ private object WorkspaceStateBuilder {
             parsed = currentState
           )
     }
+
 }

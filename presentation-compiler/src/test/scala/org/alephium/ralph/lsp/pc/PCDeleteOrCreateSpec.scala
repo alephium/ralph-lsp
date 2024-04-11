@@ -4,10 +4,10 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
+import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
-import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, WorkspaceFileEvent, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace, WorkspaceFileEvent}
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
@@ -62,16 +62,15 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
             val expectedPCState =
               PCState(
                 workspace = workspace,
-                buildErrors =
-                  Some(
-                    BuildState.BuildErrored(
-                      buildURI = build.buildURI,
-                      codeOption = None, // because workspace is in created state
-                      errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
-                      dependencies = ArraySeq.empty, // because workspace is in created state
-                      activateWorkspace = None
-                    )
+                buildErrors = Some(
+                  BuildState.BuildErrored(
+                    buildURI = build.buildURI,
+                    codeOption = None,                                         // because workspace is in created state
+                    errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
+                    dependencies = ArraySeq.empty,                             // because workspace is in created state
+                    activateWorkspace = None
                   )
+                )
               )
 
             actualPCState shouldBe expectedPCState
@@ -89,7 +88,6 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
         forAll(TestBuild.genCompiledWithSourceCodeInAndOut()) {
           case (build, sourceCodeIn, sourceCodeOut) =>
-
             /**
              * FAIL SCENARIO
              */
@@ -127,16 +125,15 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
             val expectedPCState =
               PCState(
                 workspace = workspace,
-                buildErrors =
-                  Some(
-                    BuildState.BuildErrored(
-                      buildURI = build.buildURI,
-                      codeOption = None, // no code is stored because the build is deleted
-                      errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
-                      dependencies = build.dependencies, // dependency from previous build is carried
-                      activateWorkspace = Some(workspace) // the same workspace with inside-code and outside-code is stored.
-                    )
+                buildErrors = Some(
+                  BuildState.BuildErrored(
+                    buildURI = build.buildURI,
+                    codeOption = None,                                         // no code is stored because the build is deleted
+                    errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
+                    dependencies = build.dependencies,                         // dependency from previous build is carried
+                    activateWorkspace = Some(workspace)                        // the same workspace with inside-code and outside-code is stored.
                   )
+                )
               )
 
             actualPCState shouldBe expectedPCState
@@ -229,14 +226,14 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
     }
 
     "abstract contract is deleted then created" in {
-        implicit val file: FileAccess =
-          FileAccess.disk
+      implicit val file: FileAccess =
+        FileAccess.disk
 
-        implicit val compiler: CompilerAccess =
-          CompilerAccess.ralphc
+      implicit val compiler: CompilerAccess =
+        CompilerAccess.ralphc
 
-        forAll(TestBuild.genExtendedContract()) {
-          case (build, contract, extension, extensionCode, extensionName) =>
+      forAll(TestBuild.genExtendedContract()) {
+        case (build, contract, extension, extensionCode, extensionName) =>
           val allCode = ArraySeq(contract, extension)
 
           // Create an empty uncompiled workspace
@@ -255,8 +252,9 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
           // Add the all code to the workspace
           val compiledPCState =
             PC.deleteOrCreate(
-              events = allCode.to(ArraySeq).map { code =>
-                WorkspaceFileEvent.Created(code.fileURI)
+              events = allCode.to(ArraySeq).map {
+                code =>
+                  WorkspaceFileEvent.Created(code.fileURI)
               },
               pcState = initialPCState
             )
@@ -293,9 +291,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
           val recompiledPCState =
             PC.deleteOrCreate(
-              events = ArraySeq(
-                WorkspaceFileEvent.Created(extension.fileURI),
-              ),
+              events = ArraySeq(WorkspaceFileEvent.Created(extension.fileURI)),
               pcState = erroredState
             )
 
@@ -306,4 +302,5 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
       }
     }
   }
+
 }

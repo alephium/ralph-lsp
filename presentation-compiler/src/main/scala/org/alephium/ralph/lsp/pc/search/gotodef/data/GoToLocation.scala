@@ -16,8 +16,9 @@ object GoToLocation {
    * @param asts       The positions within the source file to navigate to.
    * @return A Iterator over [[GoToLocation]]s representing the navigation destinations.
    */
-  def apply(sourceCode: SourceCodeState.Parsed,
-            asts: Iterator[Ast.Positioned]): Iterator[GoToLocation] =
+  def apply(
+      sourceCode: SourceCodeState.Parsed,
+      asts: Iterator[Ast.Positioned]): Iterator[GoToLocation] =
     asts.flatMap(GoToLocation(_, sourceCode))
 
   /**
@@ -27,8 +28,9 @@ object GoToLocation {
    * @param ast        The position within the source file to navigate to.
    * @return A [[GoToLocation]] representing the navigation destination.
    */
-  def apply(ast: Ast.Positioned,
-            sourceCode: SourceCodeState.Parsed): Option[GoToLocation] =
+  def apply(
+      ast: Ast.Positioned,
+      sourceCode: SourceCodeState.Parsed): Option[GoToLocation] =
     ast
       .sourceIndex
       .map {
@@ -38,6 +40,7 @@ object GoToLocation {
             lineRange = sourceIndex.toLineRange(sourceCode.code)
           )
       }
+
 }
 
 /**
@@ -46,5 +49,6 @@ object GoToLocation {
  * @param uri       The URI of the source file.
  * @param lineRange The range of code within the source file.
  */
-case class GoToLocation(uri: URI,
-                        lineRange: LineRange)
+case class GoToLocation(
+    uri: URI,
+    lineRange: LineRange)

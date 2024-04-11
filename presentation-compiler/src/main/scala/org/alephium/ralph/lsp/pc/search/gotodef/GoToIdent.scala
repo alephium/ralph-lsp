@@ -18,11 +18,12 @@ private object GoToIdent {
    * @param sourceCode The source-tree and its parsed source-code state, where this search was executed.
    * @param workspace  The workspace where this search was executed and where all the source trees exist.
    * @return An array sequence of positioned ASTs matching the search result.
-   * */
-  def goTo(identNode: Node[Ast.Positioned],
-           ident: Ast.Ident,
-           sourceCode: SourceTreeInScope,
-           workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
+   */
+  def goTo(
+      identNode: Node[Ast.Positioned],
+      ident: Ast.Ident,
+      sourceCode: SourceTreeInScope,
+      workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     identNode.parent match { // take one step up to check the type of ident node.
       case Some(parent) =>
         parent match {
@@ -128,9 +129,10 @@ private object GoToIdent {
    * @param source        The source tree to search within.
    * @return An iterator containing identities representing the usage locations of input identity.
    */
-  private def goToIdentUsage(fromNode: Node[Ast.Positioned],
-                             fromNodeIdent: Ast.Ident,
-                             source: Tree.Source): Iterator[Ast.Ident] =
+  private def goToIdentUsage(
+      fromNode: Node[Ast.Positioned],
+      fromNodeIdent: Ast.Ident,
+      source: Tree.Source): Iterator[Ast.Ident] =
     goToNearestBlockInScope(fromNode, source)
       .iterator
       .flatMap {
@@ -150,10 +152,11 @@ private object GoToIdent {
    * @param workspace  The workspace in scope, that may contain other dependant source-code.
    * @return An array sequence of arguments, constants and variables with the input identity.
    */
-  private def goToScopeDefinitions(identNode: Node[Ast.Positioned],
-                                   ident: Ast.Ident,
-                                   sourceCode: SourceTreeInScope,
-                                   workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] = {
+  private def goToScopeDefinitions(
+      identNode: Node[Ast.Positioned],
+      ident: Ast.Ident,
+      sourceCode: SourceTreeInScope,
+      workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] = {
     val argumentsAndConstants =
       GoTo.inScope(
         sourceCode = sourceCode,
@@ -184,8 +187,9 @@ private object GoToIdent {
    * @param tree  The source tree to search within.
    * @return An iterator over the found constants and arguments.
    */
-  private def goToConstantsAndTemplateArguments(ident: Ast.Ident,
-                                                tree: Tree.Source): Iterator[Ast.Positioned] = {
+  private def goToConstantsAndTemplateArguments(
+      ident: Ast.Ident,
+      tree: Tree.Source): Iterator[Ast.Positioned] = {
     val constants =
       goToConstants(
         ident = ident,
@@ -208,8 +212,9 @@ private object GoToIdent {
    * @param ident  The constant identification to find.
    * @return The constant definitions.
    */
-  private def goToConstants(ident: Ast.Ident,
-                            source: Tree.Source): Iterator[Ast.ConstantVarDef] =
+  private def goToConstants(
+      ident: Ast.Ident,
+      source: Tree.Source): Iterator[Ast.ConstantVarDef] =
     source
       .rootNode
       .walkDown
@@ -226,9 +231,10 @@ private object GoToIdent {
    * @param ident     The identifier of the named variable to search for.
    * @return Variable definitions containing the named variable.
    */
-  private def goToInScopeVariables(childNode: Node[Ast.Positioned],
-                                   ident: Ast.Ident,
-                                   source: Tree.Source): Iterator[Ast.VarDef[_]] =
+  private def goToInScopeVariables(
+      childNode: Node[Ast.Positioned],
+      ident: Ast.Ident,
+      source: Tree.Source): Iterator[Ast.VarDef[_]] =
     goToNearestBlockInScope(childNode, source)
       .iterator
       .flatMap {
@@ -247,9 +253,10 @@ private object GoToIdent {
    * @param fieldSelector The selected enum field to find.
    * @param source        The source tree to search within.
    * @return An array sequence of [[Ast.EnumField]]s matching the search result.
-   * */
-  private def goToEnumField(fieldSelector: Ast.EnumFieldSelector[_],
-                            source: Tree.Source): Iterator[Ast.EnumField] =
+   */
+  private def goToEnumField(
+      fieldSelector: Ast.EnumFieldSelector[_],
+      source: Tree.Source): Iterator[Ast.EnumField] =
     source.ast match {
       case Left(contract: Ast.Contract) =>
         contract
@@ -269,10 +276,11 @@ private object GoToIdent {
    * @param enumField The enum field to find.
    * @param source    The source tree to search within.
    * @return An iterator over used/accessed enum field identities.
-   * */
-  private def goToEnumFieldUsage(enumType: Ast.TypeId,
-                                 enumField: Ast.EnumField,
-                                 source: Tree.Source): Iterator[Ast.Ident] =
+   */
+  private def goToEnumFieldUsage(
+      enumType: Ast.TypeId,
+      enumField: Ast.EnumField,
+      source: Tree.Source): Iterator[Ast.Ident] =
     source
       .rootNode
       .walkDown
@@ -290,9 +298,10 @@ private object GoToIdent {
    * @param source          The source tree to search within.
    * @return An iterator over expressions defined in position of the event field.
    */
-  private def goToEventFieldUsage(eventDefId: Ast.TypeId,
-                                  eventFieldIndex: Int,
-                                  source: Tree.Source): Iterator[Ast.Expr[_]] =
+  private def goToEventFieldUsage(
+      eventDefId: Ast.TypeId,
+      eventFieldIndex: Int,
+      source: Tree.Source): Iterator[Ast.Expr[_]] =
     source
       .rootNode
       .walkDown
@@ -309,8 +318,9 @@ private object GoToIdent {
    * @param from  The node to search within, walking downwards.
    * @return An array sequence of variable usage IDs.
    */
-  private def goToVariableUsages(ident: Ast.Ident,
-                                 from: Node[Ast.Positioned]): Iterator[Ast.Ident] =
+  private def goToVariableUsages(
+      ident: Ast.Ident,
+      from: Node[Ast.Positioned]): Iterator[Ast.Ident] =
     from
       .walkDown
       .collect {
@@ -325,8 +335,9 @@ private object GoToIdent {
    * @param childNode The node within the scoped block.
    * @return An Option containing the nearest parent block, if found.
    */
-  private def goToNearestBlockInScope(childNode: Node[Ast.Positioned],
-                                      source: Tree.Source): Option[Node[Ast.Positioned]] =
+  private def goToNearestBlockInScope(
+      childNode: Node[Ast.Positioned],
+      source: Tree.Source): Option[Node[Ast.Positioned]] =
     source.ast match {
       case Left(_: Ast.Contract | _: Ast.ContractInterface | _: Ast.TxScript) =>
         // Find the nearest function definition or use the template body as the scope.
@@ -364,9 +375,10 @@ private object GoToIdent {
    * @param childNode The node to traverse up in search of the function.
    * @param ident     The variable identifier to find arguments for.
    * @return An array sequence of [[Ast.Argument]]s matching the search result.
-   * */
-  private def goToNearestFunctionArguments(childNode: Node[Ast.Positioned],
-                                           ident: Ast.Ident): Iterator[Ast.Argument] =
+   */
+  private def goToNearestFunctionArguments(
+      childNode: Node[Ast.Positioned],
+      ident: Ast.Ident): Iterator[Ast.Argument] =
     goToNearestFuncDef(childNode)
       .iterator
       .flatMap {
@@ -382,9 +394,10 @@ private object GoToIdent {
    * @param source The source tree to search within.
    * @param ident  The variable identifier to find arguments for.
    * @return An array sequence of [[Ast.Argument]]s matching the search result.
-   * */
-  private def goToTemplateArguments(source: Tree.Source,
-                                    ident: Ast.Ident): Seq[Ast.Argument] = {
+   */
+  private def goToTemplateArguments(
+      source: Tree.Source,
+      ident: Ast.Ident): Seq[Ast.Argument] = {
     val arguments =
       source.ast match {
         case Left(contract) =>

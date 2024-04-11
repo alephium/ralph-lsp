@@ -46,6 +46,7 @@ object BuiltInFunctionInfo {
             returns = function.returns
           )
       }
+
 }
 
 /**
@@ -58,9 +59,10 @@ object BuiltInFunctionInfo {
  * @param params    The parameters of the built-in function.
  * @param returns   The return type of the built-in function.
  */
-final case class BuiltInFunctionInfo(name: String,
-                                     category: Category,
-                                     signature: String,
-                                     doc: String,
-                                     params: Seq[String],
-                                     returns: String)
+final case class BuiltInFunctionInfo(
+    name: String,
+    category: Category,
+    signature: String,
+    doc: String,
+    params: Seq[String],
+    returns: String)

@@ -9,25 +9,23 @@ object TestCodeUtil {
   private val SEARCH_INDICATOR =
     "@@"
 
- def codeLines(code: String): Array[String] =
+  def codeLines(code: String): Array[String] =
     code.split("\r\n|\r|\n")
 
- /**
+  /**
    * Extracts line ranges from the code provided between the symbols `>>...<<`.
    *
    * @param code The code containing `>>...<<` symbols.
    * @return The line ranges, the code without the `>>...<<` symbols and the start/end indexes
-   *
    */
- def lineRanges(code: String): (Array[LineRange], String, Int, Int) = {
-    val lines = codeLines(code)
-        .zipWithIndex
+  def lineRanges(code: String): (Array[LineRange], String, Int, Int) = {
+    val lines = codeLines(code).zipWithIndex
 
     val goToStart = lines.filter(_._1.contains(">>"))
-    val goToEnd = lines.filter(_._1.contains("<<"))
+    val goToEnd   = lines.filter(_._1.contains("<<"))
 
     val start = code.indexOf(">>")
-    val end = code.replace(">>","").indexOf("<<")
+    val end   = code.replace(">>", "").indexOf("<<")
 
     val expectedLineRanges =
       if (goToStart.length != goToEnd.length)
@@ -51,10 +49,10 @@ object TestCodeUtil {
     (expectedLineRanges, codeWithoutGoToSymbols, start, end)
   }
 
- /**
-  *  Extracts the 'LinePosition', as well as the index from the code provided where `@@` is located.
-  */
- def indicatorPosition(code:String) : (LinePosition, Int, String) = {
+  /**
+   *  Extracts the 'LinePosition', as well as the index from the code provided where `@@` is located.
+   */
+  def indicatorPosition(code: String): (LinePosition, Int, String) = {
     val lines = codeLines(code)
 
     // find the line where @@ is located
@@ -77,4 +75,5 @@ object TestCodeUtil {
         fail(s"Location indicator '$SEARCH_INDICATOR' not provided")
     }
   }
+
 }

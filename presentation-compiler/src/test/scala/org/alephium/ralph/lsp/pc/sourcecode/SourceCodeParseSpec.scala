@@ -20,7 +20,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
       // compiler should not get accessed
       def testNoCompilerAccess(currentState: SourceCodeState) = {
         implicit val compiler: CompilerAccess = null
-        implicit val file: FileAccess = null
+        implicit val file: FileAccess         = null
 
         // execute parse
         val newState = SourceCode.parse(currentState)
@@ -71,7 +71,6 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
         forAll(parsed, TestRalphc.genCompilerOptions()) {
           case (parsed, compilerOptions) =>
-
             // compile the source-code
             val compiledResult =
               SourceCode
@@ -110,13 +109,12 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
       "source-code in state OnDisk, UnCompiled and ErrorAccess" in {
         forAll(TestSourceCode.genOnDiskAndPersist(), TestError.genError()) {
           case ((onDisk, goodCode), error) =>
-
             /**
              * Generate an [[SourceCodeState.UnCompiled]] and [[SourceCodeState.ErrorAccess]] for this onDisk state.
              *
              * The end result should be the same, the code should still successfully parse for all these states
              * because the code on-disk is "Good Code".
-             * */
+             */
 
             val unCompiled =
               SourceCodeState.UnCompiled(
@@ -164,7 +162,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
       "source-code already in ErrorSource state" in {
         // compiler and disk should not be accessed
         implicit val compiler: CompilerAccess = null
-        implicit val file: FileAccess = null
+        implicit val file: FileAccess         = null
 
         // ErrorSource state means the source-code has already been parsed and it previously errored.
         // Re-parsing will not yield a different result so expect no disk-IO or compiler-IO
@@ -199,4 +197,5 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
       }
     }
   }
+
 }

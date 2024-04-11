@@ -18,13 +18,17 @@ class StdInterfaceDownloaderSpec extends AnyWordSpec with Matchers {
 
   "stdInterfaces" should {
     val stdInterfaces =
-      StdInterfaceDownloader.download(
-        dependencyPath = Paths.get("my_workspace"),
-        errorIndex = SourceIndexExtra.zero(TestFile.genFolderURI().sample.value)
-      ).value.sourceCode.map(_.asInstanceOf[SourceCodeState.UnCompiled])
+      StdInterfaceDownloader
+        .download(
+          dependencyPath = Paths.get("my_workspace"),
+          errorIndex = SourceIndexExtra.zero(TestFile.genFolderURI().sample.value)
+        )
+        .value
+        .sourceCode
+        .map(_.asInstanceOf[SourceCodeState.UnCompiled])
 
     "be defined" in {
-      //Will fail if web3 wasn't download correctly
+      // Will fail if web3 wasn't download correctly
       stdInterfaces.nonEmpty shouldBe true
     }
 
@@ -42,4 +46,5 @@ class StdInterfaceDownloaderSpec extends AnyWordSpec with Matchers {
       }
     }
   }
+
 }

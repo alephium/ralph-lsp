@@ -17,7 +17,9 @@ object Main extends StrictLogging {
     logger.info("Ralph-LSP started!")
   }
 
-  def start(in: InputStream, out: OutputStream): Unit = {
+  def start(
+      in: InputStream,
+      out: OutputStream): Unit = {
     implicit val compiler: CompilerAccess =
       CompilerAccess.ralphc
 
@@ -40,4 +42,5 @@ object Main extends StrictLogging {
       listener = launcher.startListening
     )
   }
+
 }

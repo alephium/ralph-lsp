@@ -38,10 +38,12 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
             .get
 
         val compiledBuild =
-          Build.compile(
-            parsed = build,
-            currentBuild = None
-          ).asInstanceOf[BuildState.BuildCompiled]
+          Build
+            .compile(
+              parsed = build,
+              currentBuild = None
+            )
+            .asInstanceOf[BuildState.BuildCompiled]
 
         val workspace =
           WorkspaceState.Created(build.workspaceURI)
@@ -128,10 +130,12 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
             .get
 
         val compiledBuild =
-          Build.compile(
-            parsed = build,
-            currentBuild = None
-          ).asInstanceOf[BuildState.BuildCompiled]
+          Build
+            .compile(
+              parsed = build,
+              currentBuild = None
+            )
+            .asInstanceOf[BuildState.BuildCompiled]
 
         val workspace =
           WorkspaceState.Created(build.workspaceURI)
@@ -172,4 +176,5 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
       }
     }
   }
+
 }

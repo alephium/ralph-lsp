@@ -8,9 +8,9 @@ import org.alephium.ralph.lsp.access.util.TryUtil
 import org.alephium.ralphc.{Compiler => RalphC}
 
 import java.net.URI
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Path, Paths, Files}
 import scala.io.Source
-import scala.util.{Failure, Success, Using}
+import scala.util.{Using, Success, Failure}
 
 /**
  * Implements functions accessing on-disk file IO.
@@ -22,8 +22,9 @@ import scala.util.{Failure, Success, Using}
 private object DiskFileAccess extends FileAccess {
 
   /** @inheritdoc */
-  override def exists(fileURI: URI,
-                      index: SourceIndex): Either[ThrowableError, Boolean] =
+  override def exists(
+      fileURI: URI,
+      index: SourceIndex): Either[ThrowableError, Boolean] =
     try
       Right(Files.exists(Paths.get(fileURI)))
     catch {
@@ -46,7 +47,8 @@ private object DiskFileAccess extends FileAccess {
           .getSourceFiles(
             path = Paths.get(workspaceURI),
             ext = s".${CompilerAccess.RALPH_FILE_EXTENSION}"
-          ).map(_.toUri)
+          )
+          .map(_.toUri)
 
       Right(uris)
     } catch TryUtil.catchAllThrows(workspaceURI)
@@ -61,11 +63,12 @@ private object DiskFileAccess extends FileAccess {
         Right(code)
     }
 
-  override def write(fileURI: URI,
-                     string: String,
-                     index: SourceIndex): Either[ThrowableError, Path] =
+  override def write(
+      fileURI: URI,
+      string: String,
+      index: SourceIndex): Either[ThrowableError, Path] =
     try {
-      //convert URI to Path
+      // convert URI to Path
       val filePath = Paths.get(fileURI)
       // ensure directories exists
       Files.createDirectories(filePath.getParent)

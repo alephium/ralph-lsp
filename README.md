@@ -43,7 +43,8 @@ Run the plugin by selecting the menu option `Run -> Run Without Debugging` or `R
 
 # Run LSP in neovim
 
-Install the [ralph.vim](https://github.com/tdroxler/ralph.vim) plugin with your favorite plugin manager, for file type detection, highlighting, etc.
+Install the [ralph.vim](https://github.com/tdroxler/ralph.vim) plugin with your favorite plugin manager, for file type
+detection, highlighting, etc.
 
 ## [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
 
@@ -81,16 +82,16 @@ You can use the following sample as reference:
 
 ```json
 {
-   "compilerOptions": {
-      "ignoreUnusedConstantsWarnings": false,
-      "ignoreUnusedVariablesWarnings": false,
-      "ignoreUnusedFieldsWarnings": false,
-      "ignoreUnusedPrivateFunctionsWarnings": false,
-      "ignoreUpdateFieldsCheckWarnings": false,
-      "ignoreCheckExternalCallerWarnings": false
-   },
-   "contractPath": "contracts",
-   "artifactPath": "artifacts"
+  "compilerOptions": {
+    "ignoreUnusedConstantsWarnings": false,
+    "ignoreUnusedVariablesWarnings": false,
+    "ignoreUnusedFieldsWarnings": false,
+    "ignoreUnusedPrivateFunctionsWarnings": false,
+    "ignoreUpdateFieldsCheckWarnings": false,
+    "ignoreCheckExternalCallerWarnings": false
+  },
+  "contractPath": "contracts",
+  "artifactPath": "artifacts"
 }
 ```
 

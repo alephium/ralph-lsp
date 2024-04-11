@@ -6,7 +6,7 @@ import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
-import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceFile, WorkspaceFileEvent, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceFile, WorkspaceFileEvent, Workspace}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -42,11 +42,13 @@ object PC {
    * @return Either an [[ErrorUnknownFileType]] if the file type is unknown,
    *         or an optional new [[PCState]] instance representing the updated compiler state.
    */
-  def changed(fileURI: URI,
-              code: Option[String],
-              pcState: PCState)(implicit file: FileAccess,
-                                compiler: CompilerAccess,
-                                logger: ClientLogger): Either[ErrorUnknownFileType, Option[PCState]] =
+  def changed(
+      fileURI: URI,
+      code: Option[String],
+      pcState: PCState
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): Either[ErrorUnknownFileType, Option[PCState]] =
     Workspace.build(
       code = Some(WorkspaceFile(fileURI, code)),
       workspace = pcState.workspace
@@ -112,10 +114,12 @@ object PC {
    * @param pcState Current presentation compiler state.
    * @return The updated presentation compiler state containing the compilation result.
    */
-  def deleteOrCreate(events: ArraySeq[WorkspaceFileEvent],
-                     pcState: PCState)(implicit file: FileAccess,
-                                       compiler: CompilerAccess,
-                                       logger: ClientLogger): PCState =
+  def deleteOrCreate(
+      events: ArraySeq[WorkspaceFileEvent],
+      pcState: PCState
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): PCState =
     Workspace.build(
       code = None,
       workspace = pcState.workspace
@@ -179,8 +183,9 @@ object PC {
    * @param pcState           The current presentation compiler state.
    * @return The updated presentation compiler state.
    */
-  private def buildChanged(buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
-                           pcState: PCState): PCState =
+  private def buildChanged(
+      buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
+      pcState: PCState): PCState =
     buildChangeResult match {
       case Left(buildError) =>
         // fetch the activateWorkspace to replace existing workspace
@@ -208,8 +213,9 @@ object PC {
    * @param pcState            The current presentation compiler state.
    * @return The updated presentation compiler state.
    */
-  private def sourceCodeChanged(sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
-                                pcState: PCState): PCState =
+  private def sourceCodeChanged(
+      sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
+      pcState: PCState): PCState =
     sourceChangeResult match {
       case Left(buildError) =>
         pcState.copy(buildErrors = Some(buildError))
@@ -217,4 +223,5 @@ object PC {
       case Right(newWorkspace) =>
         pcState.copy(workspace = newWorkspace)
     }
+
 }

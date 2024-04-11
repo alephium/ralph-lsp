@@ -9,17 +9,14 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
   "return empty" when {
     "built-in does not exists" in {
       goToBuiltIn(
-        code =
-          """
+        code = """
             |Contract Test() {
             |  pub fn function() -> () {
             |    bla@@h!()
             |  }
             |}
             |""".stripMargin,
-
-        expected =
-          None
+        expected = None
       )
     }
   }
@@ -27,24 +24,20 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
   "return non-empty" when {
     "assert!" in {
       goToBuiltIn(
-        code =
-          """
+        code = """
             |Contract Test() {
             |  pub fn function() -> () {
             |    @@assert!()
             |  }
             |}
             |""".stripMargin,
-
-        expected =
-          Some("""fn assert!(condition:Bool, errorCode:U256) -> ()""")
+        expected = Some("""fn assert!(condition:Bool, errorCode:U256) -> ()""")
       )
     }
 
     "verifyAbsoluteLocktime!" in {
       goToBuiltIn(
-        code =
-          """
+        code = """
             |Contract Test() {
             |  pub fn function() -> () {
             |    for (let mut index = 0; index <= 4; index = index + 1) {
@@ -53,16 +46,13 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
             |  }
             |}
             |""".stripMargin,
-
-        expected =
-          Some("""fn verifyAbsoluteLocktime!(lockUntil:U256) -> ()""")
+        expected = Some("""fn verifyAbsoluteLocktime!(lockUntil:U256) -> ()""")
       )
     }
 
     "there are duplicate local and built-in function names" in {
       goToBuiltIn(
-        code =
-          """
+        code = """
             |Contract Test() {
             |
             |  // this function should not get selected.
@@ -75,9 +65,7 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
             |  }
             |}
             |""".stripMargin,
-
-        expected =
-          Some("""fn assert!(condition:Bool, errorCode:U256) -> ()""")
+        expected = Some("""fn assert!(condition:Bool, errorCode:U256) -> ()""")
       )
     }
   }

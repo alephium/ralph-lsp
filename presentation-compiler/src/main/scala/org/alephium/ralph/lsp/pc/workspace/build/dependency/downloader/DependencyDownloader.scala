@@ -4,8 +4,8 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorEmptyErrorsOnDownload
-import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, RalphcConfig}
-import org.alephium.ralph.{CompilerOptions, SourceIndex}
+import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, Build, BuildState}
+import org.alephium.ralph.{SourceIndex, CompilerOptions}
 
 import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
@@ -22,8 +22,10 @@ trait DependencyDownloader extends StrictImplicitLogging { self =>
    * @param errorIndex     Index to report downloading errors.
    * @return Either an array of downloading errors or an un-compiled workspace on successful download.
    */
-  protected def _download(dependencyPath: Path,
-                          errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled]
+  protected def _download(
+      dependencyPath: Path,
+      errorIndex: SourceIndex
+    )(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled]
 
   /**
    * Invokes the function [[_download]], checking that errors are non-empty.
@@ -32,8 +34,10 @@ trait DependencyDownloader extends StrictImplicitLogging { self =>
    * @param errorIndex     Index to report downloading errors.
    * @return Either an array of downloading errors or an un-compiled workspace on successful download.
    */
-  final def download(dependencyPath: Path,
-                     errorIndex: SourceIndex)(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
+  final def download(
+      dependencyPath: Path,
+      errorIndex: SourceIndex
+    )(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] =
     _download(
       dependencyPath = dependencyPath,
       errorIndex = errorIndex
@@ -77,11 +81,14 @@ object DependencyDownloader {
       workspaceDir resolve Build.BUILD_FILE_NAME
 
     val compiledConfig =
-      org.alephium.ralphc.Config(
-        compilerOptions = CompilerOptions.Default,
-        contractPath = workspaceDir,
-        artifactPath = workspaceDir
-      )
+      org
+        .alephium
+        .ralphc
+        .Config(
+          compilerOptions = CompilerOptions.Default,
+          contractPath = workspaceDir,
+          artifactPath = workspaceDir
+        )
 
     val json =
       RalphcConfig.write(compiledConfig)
@@ -94,4 +101,5 @@ object DependencyDownloader {
       config = compiledConfig
     )
   }
+
 }

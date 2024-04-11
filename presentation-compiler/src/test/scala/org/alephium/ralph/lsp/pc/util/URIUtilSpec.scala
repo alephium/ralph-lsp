@@ -11,12 +11,13 @@ class URIUtilSpec extends AnyWordSpec with Matchers {
     "build and clean uri" when {
       "Windows uri contains escaped characters" in {
         if (scala.util.Properties.isWin) {
-          val uri = "file:///c%3A/Users/user/test.ral"
+          val uri      = "file:///c%3A/Users/user/test.ral"
           val expected = "file:///c:/Users/user/test.ral"
 
-          URIUtil.uri(uri) shouldBe new URI(expected )
+          URIUtil.uri(uri) shouldBe new URI(expected)
         }
       }
     }
   }
+
 }

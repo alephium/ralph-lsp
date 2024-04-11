@@ -33,7 +33,7 @@ object TestCodeProvider {
    * }}}
    */
   private def apply[A](code: String)(implicit provider: CodeProvider[A]): (Iterator[A], SourceCodeState.IsCodeAware, WorkspaceState.IsParsedAndCompiled) = {
-    val (linePosition,_ , codeWithoutAtSymbol) = TestCodeUtil.indicatorPosition(code)
+    val (linePosition, _, codeWithoutAtSymbol) = TestCodeUtil.indicatorPosition(code)
 
     // run completion at that line and character
     val (searchResult, workspace) =
@@ -63,7 +63,7 @@ object TestCodeProvider {
    */
   def goTo(code: String): Assertion = {
     val (expectedLineRanges, codeWithoutGoToSymbols, _, _) =
-        TestCodeUtil.lineRanges(code)
+      TestCodeUtil.lineRanges(code)
 
     // Execute go-to definition.
     val (searchResult, sourceCode, _) =
@@ -90,8 +90,9 @@ object TestCodeProvider {
    * @param code     The code with the search indicator '@@'.
    * @param expected Expected resulting built-in function.
    */
-  def goToBuiltIn(code: String,
-                  expected: Option[String]): Assertion = {
+  def goToBuiltIn(
+      code: String,
+      expected: Option[String]): Assertion = {
     val (_, codeWithoutGoToSymbols, _, _) =
       TestCodeUtil.lineRanges(code)
 
@@ -156,12 +157,14 @@ object TestCodeProvider {
    * @param code      The code to run completion on.
    * @return Suggestions and the created workspace.
    */
-  private def apply[A](line: Int,
-                       character: Int,
-                       code: Gen[String])(implicit provider: CodeProvider[A]): (Either[CompilerMessage.Error, Iterator[A]], WorkspaceState.IsParsedAndCompiled) = {
+  private def apply[A](
+      line: Int,
+      character: Int,
+      code: Gen[String]
+    )(implicit provider: CodeProvider[A]): (Either[CompilerMessage.Error, Iterator[A]], WorkspaceState.IsParsedAndCompiled) = {
     implicit val clientLogger: ClientLogger = TestClientLogger
-    implicit val file: FileAccess = FileAccess.disk
-    implicit val compiler: CompilerAccess = CompilerAccess.ralphc
+    implicit val file: FileAccess           = FileAccess.disk
+    implicit val compiler: CompilerAccess   = CompilerAccess.ralphc
 
     // create a build file
     val build =
@@ -179,10 +182,13 @@ object TestCodeProvider {
 
     // write the source code
     val (sourceCode, _) =
-      TestSourceCode.genOnDiskAndPersist(
-        fileURI = sourceFile,
-        code = code.sample.get
-      ).sample.get
+      TestSourceCode
+        .genOnDiskAndPersist(
+          fileURI = sourceFile,
+          code = code.sample.get
+        )
+        .sample
+        .get
 
     // create a workspace for the build file
     val workspace =
@@ -206,4 +212,5 @@ object TestCodeProvider {
 
     (completionResult.value, compiledWorkspace)
   }
+
 }

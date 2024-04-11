@@ -8,8 +8,9 @@ import java.net.URI
 object ThrowableError {
 
   /** Without title */
-  def apply(throwable: Throwable,
-            fileURI: URI): ThrowableError =
+  def apply(
+      throwable: Throwable,
+      fileURI: URI): ThrowableError =
     new ThrowableError(
       title = "",
       throwable = throwable,
@@ -23,12 +24,16 @@ object ThrowableError {
  *
  * Stores the stacktrace for future error report improvements.
  */
-case class ThrowableError(title: String,
-                          throwable: Throwable,
-                          index: SourceIndex) extends CompilerMessage.Error {
+case class ThrowableError(
+    title: String,
+    throwable: Throwable,
+    index: SourceIndex)
+  extends CompilerMessage.Error {
+
   override def message: String =
     if (title.isBlank)
       throwable.getMessage
     else
       title + ": " + throwable.getMessage
+
 }

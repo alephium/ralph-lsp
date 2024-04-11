@@ -4,7 +4,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
 import org.alephium.ralph.lsp.{TestCode, TestFile}
-import org.alephium.ralph.{CompiledContract, CompiledScript, CompilerOptions}
+import org.alephium.ralph.{CompiledScript, CompilerOptions, CompiledContract}
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers
@@ -23,12 +23,14 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
           CompilerAccess.ralphc
 
         val result =
-          SourceCode.compile(
-            sourceCode = ArraySeq.empty,
-            dependency = ArraySeq.empty,
-            compilerOptions = CompilerOptions.Default,
-            workspaceErrorURI = TestFile.genFolderURI().sample.value
-          ).value
+          SourceCode
+            .compile(
+              sourceCode = ArraySeq.empty,
+              dependency = ArraySeq.empty,
+              compilerOptions = CompilerOptions.Default,
+              workspaceErrorURI = TestFile.genFolderURI().sample.value
+            )
+            .value
 
         result shouldBe empty
       }
@@ -41,12 +43,14 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
           TestDependency.buildStd()
 
         val result =
-          SourceCode.compile(
-            sourceCode = ArraySeq.empty,
-            dependency = dependencyBuild.findDependency(DependencyID.Std).value.sourceCode,
-            compilerOptions = CompilerOptions.Default,
-            workspaceErrorURI = TestFile.genFolderURI().sample.value
-          ).value
+          SourceCode
+            .compile(
+              sourceCode = ArraySeq.empty,
+              dependency = dependencyBuild.findDependency(DependencyID.Std).value.sourceCode,
+              compilerOptions = CompilerOptions.Default,
+              workspaceErrorURI = TestFile.genFolderURI().sample.value
+            )
+            .value
 
         result shouldBe empty
       }
@@ -64,10 +68,10 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
         // all source types
         val source =
           ArraySeq(
-            TestCode.genContract("MyContract"), // A Contract
-            TestCode.genAbstract("MyAbstract"), // An Abstract
+            TestCode.genContract("MyContract"),   // A Contract
+            TestCode.genAbstract("MyAbstract"),   // An Abstract
             TestCode.genInterface("MyInterface"), // An Interface
-            TestCode.genScript("MyScript") // A Script
+            TestCode.genScript("MyScript")        // A Script
           )
             .map(TestSourceCode.genParsedOK(_))
             .map(_.sample.get)
@@ -114,4 +118,5 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
       }
     }
   }
+
 }

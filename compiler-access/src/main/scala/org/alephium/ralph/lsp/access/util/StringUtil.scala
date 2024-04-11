@@ -18,37 +18,37 @@ object StringUtil {
    * @param character The position of the character within the line
    * @return The index of the character in the source code
    */
-  def computeIndex(code: String,
-                   line: Int,
-                   character: Int): Int = {
+  def computeIndex(
+      code: String,
+      line: Int,
+      character: Int): Int = {
 
-      var lineNumber = 0
-      var index = 0
-      var prev: Character = null
+    var lineNumber      = 0
+    var index           = 0
+    var prev: Character = null
 
-      while (lineNumber < line && index < code.length) {
-        val char = code(index)
-        if (char == '\r') {
-          if(prev == '\r') {
-            lineNumber += 1
-          }
-          index += 1
-        } else if (char == '\n') {
+    while (lineNumber < line && index < code.length) {
+      val char = code(index)
+      if (char == '\r') {
+        if (prev == '\r') {
           lineNumber += 1
-          index += 1
-        } else {
-          if(prev == '\r') {
-            lineNumber += 1
-          } else {
-            index += 1
-          }
         }
-        prev = char
+        index += 1
+      } else if (char == '\n') {
+        lineNumber += 1
+        index += 1
+      } else {
+        if (prev == '\r') {
+          lineNumber += 1
+        } else {
+          index += 1
+        }
       }
+      prev = char
+    }
 
-      index + character
+    index + character
   }
-
 
   /**
    * Constructs a line range from the provided source code, using the specified start and end indexes.
@@ -67,28 +67,31 @@ object StringUtil {
    * @param to       The end index
    */
 
-  def buildLineRange(code: String, from: Int, to: Int): LineRange = {
-    if(from < 0 || to < 0 || to < from || from >= code.length || to >= code.length || code.length <= 1) {
+  def buildLineRange(
+      code: String,
+      from: Int,
+      to: Int): LineRange =
+    if (from < 0 || to < 0 || to < from || from >= code.length || to >= code.length || code.length <= 1) {
       LineRange.zero
     } else {
-      var line = 0
-      var col = 0
-      var index = 0
+      var line            = 0
+      var col             = 0
+      var index           = 0
       var char: Character = null
       var next: Character = null
 
       var start: LinePosition = null
-      var end: LinePosition = null
+      var end: LinePosition   = null
 
       @inline def newLine() = {
         line += 1
         col = 0
-        index+=1
+        index += 1
         char = next
       }
       @inline def nextChar() = {
         col += 1
-        index+=1
+        index += 1
         char = next
       }
 
@@ -116,11 +119,11 @@ object StringUtil {
         }
       }
 
-      if(start == null || end == null){
+      if (start == null || end == null) {
         LineRange.zero
       } else {
         LineRange(start, end)
       }
     }
-  }
+
 }

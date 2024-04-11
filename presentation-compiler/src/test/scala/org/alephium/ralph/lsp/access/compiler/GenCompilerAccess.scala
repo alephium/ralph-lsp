@@ -4,8 +4,7 @@ import java.nio.file.Path
 
 object GenCompilerAccess {
 
-  def genSourceFiles(workspaceURI: Path) = {
+  def genSourceFiles(workspaceURI: Path) =
     ???
-  }
 
 }

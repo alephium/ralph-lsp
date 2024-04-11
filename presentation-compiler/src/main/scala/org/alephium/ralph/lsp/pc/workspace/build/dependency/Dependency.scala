@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDefaultDependencyDirectoryDoesNotExists
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
-import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, Workspace}
 import org.alephium.ralphc.Config
 
 import java.nio.file.Path
@@ -28,10 +28,12 @@ object Dependency {
    * @param currentBuild Current compiled build.
    * @return
    */
-  def compile(parsed: BuildState.BuildParsed,
-              currentBuild: Option[BuildState.IsCompiled])(implicit file: FileAccess,
-                                                           compiler: CompilerAccess,
-                                                           logger: ClientLogger): BuildState.IsCompiled = {
+  def compile(
+      parsed: BuildState.BuildParsed,
+      currentBuild: Option[BuildState.IsCompiled]
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): BuildState.IsCompiled = {
     val absoluteDependenciesPath =
       Build
         .getAbsoluteDependenciesPath(parsed)
@@ -87,11 +89,13 @@ object Dependency {
    *         the parent workspace. If there are errors, they will be in
    *         the field [[BuildState.BuildErrored.dependencies]] as a regular workspace errors.
    */
-  private def downloadAndCompileDependencies(parsed: BuildState.BuildParsed,
-                                             absoluteDependencyPath: Path,
-                                             dependencyDownloaders: ArraySeq[DependencyDownloader])(implicit file: FileAccess,
-                                                                                                    compiler: CompilerAccess,
-                                                                                                    logger: ClientLogger): BuildState.IsCompiled = {
+  private def downloadAndCompileDependencies(
+      parsed: BuildState.BuildParsed,
+      absoluteDependencyPath: Path,
+      dependencyDownloaders: ArraySeq[DependencyDownloader]
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): BuildState.IsCompiled = {
     val (errors, downloaded) =
       dependencyDownloaders
         .map {
@@ -132,9 +136,10 @@ object Dependency {
    * @param dependencyResult     Result of dependency compilation
    * @return A compiled result.
    */
-  private def toBuildState(parentWorkspaceBuild: BuildState.BuildParsed,
-                           dependencyResult: ArraySeq[WorkspaceState.IsParsedAndCompiled],
-                           absoluteDependencyPath: Path): BuildState.IsCompiled = {
+  private def toBuildState(
+      parentWorkspaceBuild: BuildState.BuildParsed,
+      dependencyResult: ArraySeq[WorkspaceState.IsParsedAndCompiled],
+      absoluteDependencyPath: Path): BuildState.IsCompiled = {
     val compiledResults =
       dependencyResult collect {
         case compiledDependency: WorkspaceState.Compiled =>
@@ -170,4 +175,5 @@ object Dependency {
       )
     }
   }
+
 }

@@ -58,4 +58,5 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
       )
     }
   }
+
 }

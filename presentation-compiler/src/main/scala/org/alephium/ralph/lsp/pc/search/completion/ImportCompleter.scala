@@ -18,9 +18,11 @@ private object ImportCompleter extends StrictImplicitLogging {
    * @param imported    The user imputed import statement.
    * @return Import suggestions
    */
-  def complete(cursorIndex: Int,
-               dependency: Option[WorkspaceState.Compiled],
-               imported: Tree.Import)(implicit logger: ClientLogger): ArraySeq[Suggestion.Field] =
+  def complete(
+      cursorIndex: Int,
+      dependency: Option[WorkspaceState.Compiled],
+      imported: Tree.Import
+    )(implicit logger: ClientLogger): ArraySeq[Suggestion.Field] =
     if (imported.string.name.index contains cursorIndex) // suggest if cursor is between the quoted String
       dependency match {
         case Some(dependency) =>
@@ -36,9 +38,11 @@ private object ImportCompleter extends StrictImplicitLogging {
     else
       ArraySeq.empty
 
-  private def complete(cursorIndex: Int,
-                       dependencySourceCode: ArraySeq[SourceCodeState.Compiled],
-                       imported: Tree.Import)(implicit logger: ClientLogger): ArraySeq[Suggestion.Field] =
+  private def complete(
+      cursorIndex: Int,
+      dependencySourceCode: ArraySeq[SourceCodeState.Compiled],
+      imported: Tree.Import
+    )(implicit logger: ClientLogger): ArraySeq[Suggestion.Field] =
     dependencySourceCode flatMap {
       compiled =>
         compiled.importIdentifier map {
@@ -56,7 +60,6 @@ private object ImportCompleter extends StrictImplicitLogging {
                         logger.error(s"Dependency's Import-identifier without path: ${dependencyIdentifier.string.value}")
                         dependencyIdentifier.string.name.value // path does not exist, suggest full importIdentifier
                     }
-
                   else
                     dependencyIdentifier.string.name.value // else suggest the package and file name e.g. `std/nft_interface`
 
@@ -72,4 +75,5 @@ private object ImportCompleter extends StrictImplicitLogging {
             )
         }
     }
+
 }
