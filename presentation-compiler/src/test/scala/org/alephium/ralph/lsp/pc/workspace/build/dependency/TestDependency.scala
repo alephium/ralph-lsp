@@ -12,7 +12,7 @@ import java.nio.file.Paths
 object TestDependency {
 
   /** Build the standard library */
-  def buildStd(): BuildState.BuildCompiled = {
+  def buildStd(): BuildState.Compiled = {
     implicit val logger: ClientLogger =
       TestClientLogger
 
@@ -24,7 +24,7 @@ object TestDependency {
 
     // create a default build file.
     val parsed =
-      BuildState.BuildParsed(
+      BuildState.Parsed(
         buildURI = Paths.get(Build.BUILD_FILE_NAME).toUri,
         code = RalphcConfig.write(RalphcConfig.defaultParsedConfig),
         config = RalphcConfig.defaultParsedConfig
@@ -37,7 +37,7 @@ object TestDependency {
           parsed = parsed,
           currentBuild = None
         )
-        .asInstanceOf[BuildState.BuildCompiled]
+        .asInstanceOf[BuildState.Compiled]
 
     // dependency should exists in the build
     dependencyBuild.dependencies should have size 2

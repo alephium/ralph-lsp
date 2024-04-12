@@ -29,7 +29,7 @@ object Dependency {
    * @return
    */
   def compile(
-      parsed: BuildState.BuildParsed,
+      parsed: BuildState.Parsed,
       currentBuild: Option[BuildState.IsCompiled]
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
@@ -43,7 +43,7 @@ object Dependency {
       case Some(absoluteDependenciesPath) =>
         currentBuild match {
           // Check: Does the existing build already has a compiled dependency and is the dependencyPath is unchanged.
-          case Some(currentBuild: BuildState.BuildCompiled) if currentBuild.dependencyPath == absoluteDependenciesPath =>
+          case Some(currentBuild: BuildState.Compiled) if currentBuild.dependencyPath == absoluteDependenciesPath =>
             // Check passed: Re-use the dependency.
             toBuildState(
               parentWorkspaceBuild = parsed,
@@ -71,7 +71,7 @@ object Dependency {
             )
           )
 
-        BuildState.BuildErrored(
+        BuildState.Errored(
           buildURI = parsed.buildURI,
           codeOption = Some(parsed.code),
           errors = ArraySeq(error),
@@ -82,15 +82,15 @@ object Dependency {
   }
 
   /**
-   * Download and compile dependencies for a parsed Build [[BuildState.BuildParsed]].
+   * Download and compile dependencies for a parsed Build [[BuildState.Parsed]].
    *
    * @param parsed Build of the parent workspace compiling the dependencies.
    * @return Compilation result contains in the [[BuildState.IsCompiled]] state for
    *         the parent workspace. If there are errors, they will be in
-   *         the field [[BuildState.BuildErrored.dependencies]] as a regular workspace errors.
+   *         the field [[BuildState.Errored.dependencies]] as a regular workspace errors.
    */
   private def downloadAndCompileDependencies(
-      parsed: BuildState.BuildParsed,
+      parsed: BuildState.Parsed,
       absoluteDependencyPath: Path,
       dependencyDownloaders: ArraySeq[DependencyDownloader]
     )(implicit file: FileAccess,
@@ -109,7 +109,7 @@ object Dependency {
 
     if (errors.nonEmpty) {
       // report all download errors at build file level.
-      BuildState.BuildErrored(
+      BuildState.Errored(
         buildURI = parsed.buildURI,
         codeOption = Some(parsed.code),
         errors = errors.flatten,
@@ -137,7 +137,7 @@ object Dependency {
    * @return A compiled result.
    */
   private def toBuildState(
-      parentWorkspaceBuild: BuildState.BuildParsed,
+      parentWorkspaceBuild: BuildState.Parsed,
       dependencyResult: ArraySeq[WorkspaceState.IsParsedAndCompiled],
       absoluteDependencyPath: Path): BuildState.IsCompiled = {
     val compiledResults =
@@ -158,7 +158,7 @@ object Dependency {
         )
 
       // Build OK. Promote build to compiled state.
-      BuildState.BuildCompiled(
+      BuildState.Compiled(
         buildURI = parentWorkspaceBuild.buildURI,
         code = parentWorkspaceBuild.code,
         dependencies = compiledResults, // store the compiled dependency in the build.
@@ -166,7 +166,7 @@ object Dependency {
         config = config
       )
     } else {
-      BuildState.BuildErrored(
+      BuildState.Errored(
         buildURI = parentWorkspaceBuild.buildURI,
         codeOption = Some(parentWorkspaceBuild.code),
         errors = ArraySeq.empty,

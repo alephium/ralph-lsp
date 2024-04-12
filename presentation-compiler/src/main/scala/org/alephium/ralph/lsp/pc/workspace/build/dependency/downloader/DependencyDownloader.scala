@@ -76,7 +76,7 @@ object DependencyDownloader {
    * @param workspaceDir The directory of the workspace for which this build file is being created.
    * @return Compiled build state representing the default `ralph.json`.
    */
-  def defaultBuild(workspaceDir: Path): BuildState.BuildCompiled = {
+  def defaultBuild(workspaceDir: Path): BuildState.Compiled = {
     val buildDir =
       workspaceDir resolve Build.BUILD_FILE_NAME
 
@@ -93,7 +93,7 @@ object DependencyDownloader {
     val json =
       RalphcConfig.write(compiledConfig)
 
-    BuildState.BuildCompiled(
+    BuildState.Compiled(
       buildURI = buildDir.toUri,
       code = json,
       dependencies = ArraySeq.empty,

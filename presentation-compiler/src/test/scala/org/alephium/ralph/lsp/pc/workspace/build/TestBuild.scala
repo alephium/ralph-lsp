@@ -19,7 +19,7 @@ object TestBuild {
 
   def genParsed(
       workspaceURI: Gen[URI] = genFolderURI(),
-      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()): Gen[BuildState.BuildParsed] =
+      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()): Gen[BuildState.Parsed] =
     for {
       workspaceURI <- workspaceURI
       parsedConfig <- config
@@ -29,11 +29,11 @@ object TestBuild {
       //      FileIO.write(buildJSON, buildURI).toUri shouldBe buildURI
       // run either one of the two parse functions
       Build.parse(buildURI, buildJSON) match {
-        case parsed: BuildState.BuildParsed =>
+        case parsed: BuildState.Parsed =>
           parsed
 
-        case errored: BuildState.BuildErrored =>
-          errored shouldBe a[BuildState.BuildParsed]
+        case errored: BuildState.Errored =>
+          errored shouldBe a[BuildState.Parsed]
           fail("Expected parse to be successful")
       }
     }
@@ -44,11 +44,11 @@ object TestBuild {
       config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Gen[BuildState.BuildCompiled] =
+      logger: ClientLogger): Gen[BuildState.Compiled] =
     genCompiled(
       workspaceURI = workspaceURI,
       config = config
-    ).map(_.asInstanceOf[BuildState.BuildCompiled])
+    ).map(_.asInstanceOf[BuildState.Compiled])
 
   def genCompiled(
       workspaceURI: Gen[URI] = genFolderURI(),
@@ -75,7 +75,7 @@ object TestBuild {
       maxSourceCount: Int = 10
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk], List[SourceCodeState.OnDisk])] =
+      logger: ClientLogger): Gen[(BuildState.Compiled, List[SourceCodeState.OnDisk], List[SourceCodeState.OnDisk])] =
     for {
       // a compiled OK build file.
       (buildCompiled, workspaceSourceCode) <-
@@ -99,7 +99,7 @@ object TestBuild {
       maxSourceCount: Int = 10
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Gen[(BuildState.BuildCompiled, List[SourceCodeState.OnDisk])] =
+      logger: ClientLogger): Gen[(BuildState.Compiled, List[SourceCodeState.OnDisk])] =
     for {
       // a compiled OK build file.
       buildCompiled <- TestBuild.genCompiledOK(workspaceURI = workspaceURI)
@@ -110,7 +110,7 @@ object TestBuild {
           .map(TestSourceCode.persistAll(_, code))
     } yield (buildCompiled, workspaceSourceCode)
 
-  def persist(parsed: BuildState.BuildParsed): BuildState.BuildParsed = {
+  def persist(parsed: BuildState.Parsed): BuildState.Parsed = {
     TestFile.write(parsed.buildURI, parsed.code)
     TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.contractPath))
     TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.artifactPath))
@@ -124,7 +124,7 @@ object TestBuild {
     parsed
   }
 
-  def persist(compiled: BuildState.BuildCompiled): BuildState.BuildCompiled = {
+  def persist(compiled: BuildState.Compiled): BuildState.Compiled = {
     TestFile.write(compiled.buildURI, compiled.code)
     TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.config.contractPath.toUri))
     TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.config.artifactPath.toUri))
@@ -135,7 +135,7 @@ object TestBuild {
   def genExtendedContract(
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Gen[(BuildState.BuildCompiled, SourceCodeState.OnDisk, SourceCodeState.OnDisk, String, String)] =
+      logger: ClientLogger): Gen[(BuildState.Compiled, SourceCodeState.OnDisk, SourceCodeState.OnDisk, String, String)] =
     for {
       build                                <- TestBuild.genCompiledOK()
       (contract, extension, extensionName) <- TestCode.genExtendedContract()

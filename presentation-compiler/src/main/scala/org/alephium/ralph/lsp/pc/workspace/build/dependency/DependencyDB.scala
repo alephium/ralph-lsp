@@ -35,7 +35,7 @@ object DependencyDB extends StrictImplicitLogging {
         .partitionMap(identity)
 
     if (errors.nonEmpty)
-      BuildState.BuildErrored(
+      BuildState.Errored(
         buildURI = parentBuild.buildURI,
         codeOption = parentBuild.codeOption,
         errors = errors,

@@ -37,7 +37,7 @@ object BuildState {
   }
 
   /** Build is successfully parsed */
-  case class BuildParsed(
+  case class Parsed(
       buildURI: URI,
       code: String,
       config: RalphcParsedConfig)
@@ -49,7 +49,7 @@ object BuildState {
   }
 
   /** Build is successfully compiled */
-  case class BuildCompiled(
+  case class Compiled(
       buildURI: URI,
       code: String,
       dependencies: ArraySeq[WorkspaceState.Compiled],
@@ -85,7 +85,7 @@ object BuildState {
    *                          - [[None]] to continue with existing workspace
    *                          - Some [[WorkspaceState.IsSourceAware]] to replace existing workspace.
    */
-  case class BuildErrored(
+  case class Errored(
       buildURI: URI,
       codeOption: Option[String],
       errors: ArraySeq[CompilerMessage.AnyError],

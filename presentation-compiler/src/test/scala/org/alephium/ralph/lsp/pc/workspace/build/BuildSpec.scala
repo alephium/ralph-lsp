@@ -35,7 +35,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
             .genParsed()
             .map(persist)
             .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
-            .map(_.asInstanceOf[BuildState.BuildCompiled])
+            .map(_.asInstanceOf[BuildState.Compiled])
 
         forAll(outSideBuildGen, insideBuildGen) {
           case (outsideBuild, insideBuild) =>
@@ -69,7 +69,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
 
             // build error should report the error
             val expectedWorkspace =
-              BuildState.BuildErrored(
+              BuildState.Errored(
                 buildURI = outsideBuild.buildURI, // must not be expected build-file location.
                 codeOption = buildCode,
                 errors = ArraySeq(expectedError),
@@ -88,7 +88,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
             .genParsed()
             .map(persist)
             .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
-            .map(_.asInstanceOf[BuildState.BuildCompiled])
+            .map(_.asInstanceOf[BuildState.Compiled])
 
         val generator =
           existingBuild flatMap {
@@ -141,7 +141,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
 
             // build error should report the expectedError
             val expectedWorkspace =
-              BuildState.BuildErrored(
+              BuildState.Errored(
                 buildURI = build.buildURI,
                 codeOption = buildCode,
                 errors = ArraySeq(expectedError),
@@ -178,7 +178,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
             )
 
           val expected =
-            BuildState.BuildErrored(
+            BuildState.Errored(
               buildURI = buildURI,
               codeOption = None,
               errors = ArraySeq(ErrorBuildFileNotFound(buildURI)),

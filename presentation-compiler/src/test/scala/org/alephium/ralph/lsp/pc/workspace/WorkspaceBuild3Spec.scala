@@ -18,7 +18,7 @@ import scala.collection.immutable.ArraySeq
 import scala.util.Random
 
 /**
- * Test cases for [[Workspace.build(Option[String], BuildState.BuildCompiled, ArraySeq[SourceCodeState])]] function.
+ * Test cases for [[Workspace.build(Option[String], BuildState.Compiled, ArraySeq[SourceCodeState])]] function.
  */
 class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
@@ -56,7 +56,7 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
         // expect this build error state
         val expectedBuildError =
-          BuildState.BuildErrored(
+          BuildState.Errored(
             buildURI = buildCompiled.buildURI,
             codeOption = Some("blah"), // the invalid build code is carried forward
             errors =                   // the syntax error

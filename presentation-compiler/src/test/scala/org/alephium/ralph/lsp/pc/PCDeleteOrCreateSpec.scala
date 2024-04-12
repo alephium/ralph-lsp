@@ -63,7 +63,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
               PCState(
                 workspace = workspace,
                 buildErrors = Some(
-                  BuildState.BuildErrored(
+                  BuildState.Errored(
                     buildURI = build.buildURI,
                     codeOption = None,                                         // because workspace is in created state
                     errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
@@ -126,7 +126,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
               PCState(
                 workspace = workspace,
                 buildErrors = Some(
-                  BuildState.BuildErrored(
+                  BuildState.Errored(
                     buildURI = build.buildURI,
                     codeOption = None,                                         // no code is stored because the build is deleted
                     errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
