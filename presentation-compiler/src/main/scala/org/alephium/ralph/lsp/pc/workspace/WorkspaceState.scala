@@ -43,6 +43,9 @@ object WorkspaceState {
 
     def parsed: WorkspaceState.Parsed
 
+    def build: BuildCompiled =
+      parsed.build
+
   }
 
   /** State: IDE is initialised but no source compilation has occurred yet */
@@ -72,12 +75,7 @@ object WorkspaceState {
       sourceCode: ArraySeq[SourceCodeState.IsParsed],
       workspaceErrors: ArraySeq[CompilerMessage.AnyError],
       parsed: WorkspaceState.Parsed)
-    extends IsCompiled {
-
-    def build: BuildCompiled =
-      parsed.build
-
-  }
+    extends IsCompiled
 
   /**
    * Result of a successful compiler run.
@@ -88,11 +86,6 @@ object WorkspaceState {
   case class Compiled(
       sourceCode: ArraySeq[SourceCodeState.Compiled],
       parsed: WorkspaceState.Parsed)
-    extends IsCompiled {
-
-    def build: BuildCompiled =
-      parsed.build
-
-  }
+    extends IsCompiled
 
 }
