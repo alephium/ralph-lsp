@@ -46,8 +46,8 @@ object PCStateDiagnostics {
    * for the current compilation request.
    */
   def toFileDiagnosticsForBuild(
-                                 currentBuildErrors: Option[BuildState.Errored],
-                                 newBuildErrors: Option[BuildState.Errored]): Iterable[FileDiagnostic] =
+      currentBuildErrors: Option[BuildState.Errored],
+      newBuildErrors: Option[BuildState.Errored]): Iterable[FileDiagnostic] =
     (currentBuildErrors, newBuildErrors) match {
       case (Some(build), None) =>
         // build errors were fixed. Clear old errors

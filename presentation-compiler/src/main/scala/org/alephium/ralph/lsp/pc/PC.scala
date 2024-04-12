@@ -184,8 +184,8 @@ object PC {
    * @return The updated presentation compiler state.
    */
   private def buildChanged(
-                            buildChangeResult: Either[BuildState.Errored, WorkspaceState],
-                            pcState: PCState): PCState =
+      buildChangeResult: Either[BuildState.Errored, WorkspaceState],
+      pcState: PCState): PCState =
     buildChangeResult match {
       case Left(buildError) =>
         // fetch the activateWorkspace to replace existing workspace
@@ -214,8 +214,8 @@ object PC {
    * @return The updated presentation compiler state.
    */
   private def sourceCodeChanged(
-                                 sourceChangeResult: Either[BuildState.Errored, WorkspaceState],
-                                 pcState: PCState): PCState =
+      sourceChangeResult: Either[BuildState.Errored, WorkspaceState],
+      pcState: PCState): PCState =
     sourceChangeResult match {
       case Left(buildError) =>
         pcState.copy(buildErrors = Some(buildError))
