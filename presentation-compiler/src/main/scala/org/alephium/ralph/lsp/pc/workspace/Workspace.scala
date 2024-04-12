@@ -4,7 +4,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
@@ -462,7 +462,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
     // file must belong to the workspace contractURI and must be a ralph source file
     if (URIUtil.contains(workspace.build.contractURI, fileURI) && URIUtil.getFileExtension(fileURI) == CompilerAccess.RALPH_FILE_EXTENSION) {
       val parsedOrError =
-        SourceCode.findParsed(
+        SourceCodeSearcher.findParsed(
           fileURI = fileURI,
           sourceCode = workspace.sourceCode
         )
