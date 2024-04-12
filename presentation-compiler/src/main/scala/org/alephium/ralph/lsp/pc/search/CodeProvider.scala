@@ -7,7 +7,7 @@ import org.alephium.ralph.lsp.pc.search.completion.{Suggestion, CodeCompletionPr
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefinitionProvider
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, Workspace}
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 import java.net.URI
 
@@ -61,7 +61,7 @@ object CodeProvider {
       workspace: WorkspaceState.IsSourceAware
     )(implicit provider: CodeProvider[A],
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[A]]] =
-    Workspace
+    WorkspaceSearcher
       .findParsed( // find the parsed file where this search was executed.
         fileURI = fileURI,
         workspace = workspace

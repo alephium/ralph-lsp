@@ -18,7 +18,7 @@ import scala.collection.immutable.ArraySeq
 /**
  * Test cases for [[Workspace.parse]] function.
  */
-class WorkspaceFindParsedSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
+class WorkspaceSearcherFindParsedSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
   implicit val clientLogger: ClientLogger =
     TestClientLogger
@@ -44,25 +44,25 @@ class WorkspaceFindParsedSpec extends AnyWordSpec with Matchers with ScalaCheckD
             )
 
           // file is not in the workspace
-          Workspace.findParsed(
+          WorkspaceSearcher.findParsed(
             fileURI = Paths.get("blah.ral").toUri,
             workspace = workspace
           ) shouldBe None
 
           // not a .ral file
-          Workspace.findParsed(
+          WorkspaceSearcher.findParsed(
             fileURI = build.buildURI,
             workspace = workspace
           ) shouldBe None
 
           // file is in the root workspace directory and not in contract-uri
-          Workspace.findParsed(
+          WorkspaceSearcher.findParsed(
             fileURI = build.workspaceURI.resolve("blah.ral"),
             workspace = workspace
           ) shouldBe None
 
           // file is in the artifact directory
-          Workspace.findParsed(
+          WorkspaceSearcher.findParsed(
             fileURI = build.artifactURI.resolve("blah.ral"),
             workspace = workspace
           ) shouldBe None
@@ -100,7 +100,7 @@ class WorkspaceFindParsedSpec extends AnyWordSpec with Matchers with ScalaCheckD
           sourceCode foreach {
             sourceCode =>
               val parsedSource =
-                Workspace
+                WorkspaceSearcher
                   .findParsed(
                     fileURI = sourceCode.fileURI,
                     workspace = compiledWorkspace

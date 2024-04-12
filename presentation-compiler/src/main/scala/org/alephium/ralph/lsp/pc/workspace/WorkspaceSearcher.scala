@@ -1,12 +1,41 @@
 package org.alephium.ralph.lsp.pc.workspace
 
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceTreeInScope, SourceCodeState, SourceCodeSearcher}
+import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
+import java.net.URI
 import scala.collection.immutable.ArraySeq
 
 /** Implements search functions that run on [[WorkspaceState.IsSourceAware]] */
 object WorkspaceSearcher {
+
+  /**
+   * Find a parsed state [[SourceCodeState.Parsed]] for the given file URI.
+   *
+   * @param fileURI   The file URI of the parsed source-code.
+   * @param workspace Current workspace.
+   * @return - None: If this file does not support completion.
+   *         - Right: If a parsed state was found.
+   *         - Left: If the source-code is in one of the non-parsed states.
+   */
+  def findParsed(
+      fileURI: URI,
+      workspace: WorkspaceState.IsSourceAware): Option[Either[CompilerMessage.Error, SourceCodeState.Parsed]] =
+    // file must belong to the workspace contractURI and must be a ralph source file
+    if (URIUtil.contains(workspace.build.contractURI, fileURI) && URIUtil.getFileExtension(fileURI) == CompilerAccess.RALPH_FILE_EXTENSION) {
+      val parsedOrError =
+        SourceCodeSearcher.findParsed(
+          fileURI = fileURI,
+          sourceCode = workspace.sourceCode
+        )
+
+      Some(parsedOrError)
+    } else {
+      None
+    }
 
   /**
    * Collects all source trees within the scope of the provided source code.
