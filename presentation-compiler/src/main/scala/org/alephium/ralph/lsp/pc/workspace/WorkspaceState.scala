@@ -11,7 +11,7 @@ sealed trait WorkspaceState {
 
   def workspaceURI: URI
 
-  def buildURI: URI =
+  final def buildURI: URI =
     Build.toBuildURI(workspaceURI)
 
 }
@@ -23,11 +23,11 @@ object WorkspaceState {
 
     def build: BuildState.Compiled
 
-    def workspaceURI: URI =
-      build.workspaceURI
-
     /** A workspace contains multiple source files */
     def sourceCode: ArraySeq[SourceCodeState]
+
+    final def workspaceURI: URI =
+      build.workspaceURI
 
   }
 
@@ -42,7 +42,7 @@ object WorkspaceState {
 
     def parsed: WorkspaceState.Parsed
 
-    def build: BuildState.Compiled =
+    final def build: BuildState.Compiled =
       parsed.build
 
   }
