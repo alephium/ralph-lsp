@@ -4,23 +4,6 @@ Language server for Ralph.
 
 Currently supports text document level events and diagnostics.
 
-# Installation
-
-Go to the [latest release](https://github.com/alephium/ralph-lsp/releases/latest)
-
-There is currently two ways to install the LSP server, as an executable or as a jar file.
-
-Please note that the server is meant to be run from a client (like an IDE) and not directly.
-
-1. Executable
-
-    Download `ralph-lsp.zip`, extract it and add `ralph-lsp/bin` to your `PATH` environment variable.
-    You can run the server with `ralph-lsp` command.
-
-2. Jar
-
-    Download `ralph-lsp.jar` and run it with `java -jar ralph-lsp.jar`
-
 # Install VSCode plugin
 
 Follow these steps:
@@ -32,6 +15,10 @@ Follow these steps:
     - Select the downloaded `.vsix` file and click "Install".
 
 # Install Neovim plugin
+
+Go to the [latest release](https://github.com/alephium/ralph-lsp/releases/latest)
+
+Download `ralph-lsp.zip`, extract it and add `ralph-lsp/bin` to your `PATH` environment variable.
 
 Install [plugin-nvim](/plugin-nvim) with your favorite plugin manager, for example with [vim-plug](https://github.com/junegunn/vim-plug)
 ```vim
