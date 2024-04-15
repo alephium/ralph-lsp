@@ -57,7 +57,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
                 )(FileAccess.disk, compiler, clientLogger)
 
               // errored because contractsURI is not a persisted folder
-              errored.asInstanceOf[BuildState.BuildErrored]
+              errored.asInstanceOf[BuildState.Errored]
           }
 
       forAll(generator) {
@@ -110,7 +110,7 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
             Workspace.initialise(initialBuild: BuildState.IsCompiled)
 
           val expectedError =
-            BuildState.BuildErrored(
+            BuildState.Errored(
               buildURI = initialBuild.buildURI,
               codeOption = Some(initialBuild.code),
               errors = ArraySeq(errorIO),               // the error is reported

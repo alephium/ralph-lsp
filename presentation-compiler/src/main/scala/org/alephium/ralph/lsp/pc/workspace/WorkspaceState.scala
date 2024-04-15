@@ -18,8 +18,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
-import org.alephium.ralph.lsp.pc.workspace.build.Build
-import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -28,7 +27,7 @@ sealed trait WorkspaceState {
 
   def workspaceURI: URI
 
-  def buildURI: URI =
+  final def buildURI: URI =
     Build.toBuildURI(workspaceURI)
 
 }
@@ -38,13 +37,13 @@ object WorkspaceState {
   /** Workspace state where the source-code is known and can be parsed and compiled */
   sealed trait IsSourceAware extends WorkspaceState {
 
-    def build: BuildCompiled
-
-    def workspaceURI: URI =
-      build.workspaceURI
+    def build: BuildState.Compiled
 
     /** A workspace contains multiple source files */
     def sourceCode: ArraySeq[SourceCodeState]
+
+    final def workspaceURI: URI =
+      build.workspaceURI
 
   }
 
@@ -59,6 +58,9 @@ object WorkspaceState {
 
     def parsed: WorkspaceState.Parsed
 
+    final def build: BuildState.Compiled =
+      parsed.build
+
   }
 
   /** State: IDE is initialised but no source compilation has occurred yet */
@@ -66,14 +68,14 @@ object WorkspaceState {
 
   /** State: Source files might be un-compiled, parsed or compiled. This state can be parsed and compiled. */
   case class UnCompiled(
-      build: BuildCompiled,
+      build: BuildState.Compiled,
       sourceCode: ArraySeq[SourceCodeState])
     extends IsParsed
        with IsParsedAndCompiled
 
   /** State: All source files are parsed, therefore this workspace can be compiled */
   case class Parsed(
-      build: BuildCompiled,
+      build: BuildState.Compiled,
       sourceCode: ArraySeq[SourceCodeState.Parsed])
     extends IsParsed
 
@@ -88,12 +90,7 @@ object WorkspaceState {
       sourceCode: ArraySeq[SourceCodeState.IsParsed],
       workspaceErrors: ArraySeq[CompilerMessage.AnyError],
       parsed: WorkspaceState.Parsed)
-    extends IsCompiled {
-
-    def build: BuildCompiled =
-      parsed.build
-
-  }
+    extends IsCompiled
 
   /**
    * Result of a successful compiler run.
@@ -104,11 +101,6 @@ object WorkspaceState {
   case class Compiled(
       sourceCode: ArraySeq[SourceCodeState.Compiled],
       parsed: WorkspaceState.Parsed)
-    extends IsCompiled {
-
-    def build: BuildCompiled =
-      parsed.build
-
-  }
+    extends IsCompiled
 
 }

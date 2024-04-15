@@ -64,7 +64,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
               val result = Workspace.build(workspace).left.value
 
               result shouldBe
-                BuildState.BuildErrored(
+                BuildState.Errored(
                   buildURI = workspace.buildURI,
                   codeOption = None,
                   errors = ArraySeq(ErrorBuildFileNotFound(workspace.buildURI)),
@@ -90,7 +90,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
               val result = Workspace.build(workspace).left.value
 
               result shouldBe
-                BuildState.BuildErrored(
+                BuildState.Errored(
                   buildURI = workspace.buildURI,
                   codeOption = None,
                   errors = ArraySeq(ErrorBuildFileNotFound(workspace.buildURI)),
@@ -130,7 +130,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
               // the workspace should contain error targeting the build-file
               result shouldBe
-                BuildState.BuildErrored(
+                BuildState.Errored(
                   buildURI = workspace.buildURI,
                   codeOption = Some(buildCode),
                   errors = ArraySeq(
@@ -198,7 +198,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
                     parsed = build,
                     currentBuild = None
                   )
-                  .asInstanceOf[BuildState.BuildCompiled]
+                  .asInstanceOf[BuildState.Compiled]
 
               // expect the workspace to be in un-compiled state, containing all source-code
               val expectedWorkspace =

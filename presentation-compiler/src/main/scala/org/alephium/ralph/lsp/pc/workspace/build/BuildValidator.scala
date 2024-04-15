@@ -20,7 +20,6 @@ import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 
@@ -33,7 +32,7 @@ import scala.collection.mutable.ListBuffer
 object BuildValidator {
 
   /** Validate and promotes a parsed build-file to compiled */
-  def validate(parsed: BuildParsed)(implicit file: FileAccess): Option[BuildState.BuildErrored] =
+  def validate(parsed: BuildState.Parsed)(implicit file: FileAccess): Option[BuildState.Errored] =
     validatePathsInWorkspace(parsed) // Run validation checks
       .orElse(validatePathsExists(parsed))
 
@@ -54,7 +53,7 @@ object BuildValidator {
       Right(buildURI)
 
   /** Validate that the configured paths are within the workspace directory */
-  private def validatePathsInWorkspace(parsed: BuildParsed): Option[BuildState.BuildErrored] = {
+  private def validatePathsInWorkspace(parsed: BuildState.Parsed): Option[BuildState.Errored] = {
     // absolute source paths
     val (workspacePath, absoluteContractPath, absoluteArtifactPath, absoluteDependencyPath) =
       Build.getAbsolutePaths(parsed)
@@ -97,7 +96,7 @@ object BuildValidator {
       None
     else
       Some(
-        BuildErrored( // report errors
+        BuildState.Errored( // report errors
           buildURI = parsed.buildURI,
           codeOption = Some(parsed.code),
           errors = ArraySeq.from(errors),
@@ -108,7 +107,7 @@ object BuildValidator {
   }
 
   /** Validate that the configured paths exist within the workspace directory */
-  private def validatePathsExists(parsed: BuildParsed)(implicit file: FileAccess): Option[BuildState.BuildErrored] = {
+  private def validatePathsExists(parsed: BuildState.Parsed)(implicit file: FileAccess): Option[BuildState.Errored] = {
     // absolute source paths
     val (_, absoluteContractPath, absoluteArtifactPath, absoluteDependenciesPath) =
       Build.getAbsolutePaths(parsed)
@@ -161,7 +160,7 @@ object BuildValidator {
           None // No errors!
         } else {
           val errorState =
-            BuildErrored( // report errors
+            BuildState.Errored( // report errors
               buildURI = parsed.buildURI,
               codeOption = Some(parsed.code),
               errors = ArraySeq.from(errors),
@@ -175,7 +174,7 @@ object BuildValidator {
       case Left(error) =>
         // exception occurred performing IO.
         val errors =
-          BuildErrored(
+          BuildState.Errored(
             buildURI = parsed.buildURI,
             codeOption = Some(parsed.code),
             errors = ArraySeq(error),

@@ -135,7 +135,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         )
 
       val parsedBuild =
-        BuildState.BuildParsed(
+        BuildState.Parsed(
           buildURI = expectedBuildPath.toUri,
           code = RalphcConfig.write(config),
           config = config
@@ -147,7 +147,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
             parsed = parsedBuild,
             currentBuild = None
           )
-          .asInstanceOf[BuildState.BuildCompiled]
+          .asInstanceOf[BuildState.Compiled]
 
       compiledStd.dependencies should have size 2
 
@@ -161,7 +161,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         }
 
       readConfig shouldBe
-        BuildState.BuildCompiled(
+        BuildState.Compiled(
           buildURI = expectedBuildPath.toUri,
           code = expectedCode,
           dependencies = compiledStd.dependencies,

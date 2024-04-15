@@ -200,7 +200,7 @@ object PC {
    * @return The updated presentation compiler state.
    */
   private def buildChanged(
-      buildChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
+      buildChangeResult: Either[BuildState.Errored, WorkspaceState],
       pcState: PCState): PCState =
     buildChangeResult match {
       case Left(buildError) =>
@@ -230,7 +230,7 @@ object PC {
    * @return The updated presentation compiler state.
    */
   private def sourceCodeChanged(
-      sourceChangeResult: Either[BuildState.BuildErrored, WorkspaceState],
+      sourceChangeResult: Either[BuildState.Errored, WorkspaceState],
       pcState: PCState): PCState =
     sourceChangeResult match {
       case Left(buildError) =>

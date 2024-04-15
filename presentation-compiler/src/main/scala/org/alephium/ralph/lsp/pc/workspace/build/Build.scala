@@ -21,7 +21,6 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.BuildState._
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyDB, Dependency}
 import org.alephium.ralph.lsp.pc.workspace.build.error._
 
@@ -51,7 +50,7 @@ object Build {
       json = json
     ) match {
       case Left(error) =>
-        BuildErrored(
+        BuildState.Errored(
           buildURI = buildURI,
           codeOption = Some(json),
           errors = ArraySeq(error),
@@ -60,7 +59,7 @@ object Build {
         )
 
       case Right(config) =>
-        BuildParsed(
+        BuildState.Parsed(
           buildURI = buildURI,
           code = json,
           config = config
@@ -71,7 +70,7 @@ object Build {
   def parse(buildURI: URI)(implicit file: FileAccess): BuildState.IsParsed =
     file.read(buildURI) match {
       case Left(error) =>
-        BuildErrored(
+        BuildState.Errored(
           buildURI = buildURI,
           codeOption = None,
           errors = ArraySeq(error),
@@ -94,7 +93,7 @@ object Build {
       compiler: CompilerAccess,
       logger: ClientLogger): BuildState.IsCompiled =
     parsed match {
-      case errored: BuildErrored =>
+      case errored: BuildState.Errored =>
         // there are parsing errors
         currentBuild match {
           case Some(currentBuild) =>
@@ -105,7 +104,7 @@ object Build {
             errored
         }
 
-      case parsed: BuildParsed =>
+      case parsed: BuildState.Parsed =>
         def compileDependencies() =
           Dependency.compile(
             parsed = parsed,
@@ -133,7 +132,7 @@ object Build {
       logger: ClientLogger): BuildState.IsCompiled =
     file.exists(buildURI, SourceIndexExtra.zero(buildURI)) match {
       case Left(error) =>
-        BuildErrored(
+        BuildState.Errored(
           buildURI = buildURI,
           codeOption = None,
           errors = ArraySeq(error),
@@ -148,7 +147,7 @@ object Build {
             currentBuild = currentBuild
           )
         else
-          BuildErrored(
+          BuildState.Errored(
             buildURI = buildURI,
             codeOption = None,
             errors = ArraySeq(ErrorBuildFileNotFound(buildURI)),
@@ -207,7 +206,7 @@ object Build {
   def parseAndCompile(
       buildURI: URI,
       code: Option[String],
-      currentBuild: BuildState.BuildCompiled
+      currentBuild: BuildState.Compiled
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Option[BuildState.IsCompiled] =
@@ -217,7 +216,7 @@ object Build {
     ) match {
       case Left(error) =>
         val buildError =
-          BuildState.BuildErrored(
+          BuildState.Errored(
             buildURI = buildURI,
             codeOption = code,
             errors = ArraySeq(error),
@@ -233,7 +232,7 @@ object Build {
           code = code,
           currentBuild = Some(currentBuild)
         ) match {
-          case newBuild: BuildState.BuildCompiled =>
+          case newBuild: BuildState.Compiled =>
             // if the new build-file is the same as current build-file, return it as
             // no-state-changed, so that a new build does not unnecessarily gets triggered.
             if (currentBuild == newBuild)
@@ -241,7 +240,7 @@ object Build {
             else // else the build file has changed, return the new build.
               Some(newBuild)
 
-          case errored: BuildState.BuildErrored =>
+          case errored: BuildState.Errored =>
             Some(errored)
         }
     }
@@ -251,7 +250,7 @@ object Build {
    *
    * @return A 4-tuple `(workspacePath, absoluteContractPath, absoluteArtifactPath, dependencyPath)`
    */
-  def getAbsolutePaths(parsed: BuildParsed): (Path, Path, Path, Option[Path]) = {
+  def getAbsolutePaths(parsed: BuildState.Parsed): (Path, Path, Path, Option[Path]) = {
     val workspacePath            = Paths.get(parsed.workspaceURI)
     val absoluteContractPath     = workspacePath.resolve(Paths.get(parsed.config.contractPath).normalize)
     val absoluteArtifactPath     = workspacePath.resolve(Paths.get(parsed.config.artifactPath).normalize)
@@ -261,7 +260,7 @@ object Build {
   }
 
   /** Absolute paths of contract and artifacts settings in the build file. */
-  def getAbsoluteContractArtifactPaths(parsed: BuildParsed): (Path, Path) = {
+  def getAbsoluteContractArtifactPaths(parsed: BuildState.Parsed): (Path, Path) = {
     val workspacePath        = Paths.get(parsed.workspaceURI)
     val absoluteContractPath = workspacePath.resolve(Paths.get(parsed.config.contractPath).normalize)
     val absoluteArtifactPath = workspacePath.resolve(Paths.get(parsed.config.artifactPath).normalize)
@@ -270,7 +269,7 @@ object Build {
   }
 
   /** Absolute paths of dependencyPath settings in the build file. */
-  def getAbsoluteDependenciesPath(parsed: BuildParsed): Option[Path] =
+  def getAbsoluteDependenciesPath(parsed: BuildState.Parsed): Option[Path] =
     parsed.config.dependencyPath map {
       dependencyPath =>
         Paths.get(parsed.workspaceURI).resolve(Paths.get(dependencyPath).normalize)
@@ -281,7 +280,7 @@ object Build {
    *
    * TODO: This will function will be removed when an AST is available for the JSON.
    */
-  def getPathIndexes(parsed: BuildParsed): (SourceIndex, SourceIndex, SourceIndex) = {
+  def getPathIndexes(parsed: BuildState.Parsed): (SourceIndex, SourceIndex, SourceIndex) = {
     val contractPath = parsed.config.contractPath
     val artifactPath = parsed.config.artifactPath
 
@@ -306,7 +305,7 @@ object Build {
   }
 
   /** @return Index of the `dependencyPath` if configured, or-else the index of the last closing brace. */
-  def getDependantPathIndex(parsed: BuildParsed): SourceIndex = {
+  def getDependantPathIndex(parsed: BuildState.Parsed): SourceIndex = {
     // if dependencyPath is None use the index of the last closing brace "}" to report errors
     val errorIndexToken =
       parsed.config.dependencyPath getOrElse "}"

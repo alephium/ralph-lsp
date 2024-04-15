@@ -21,7 +21,6 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.sourcecode.error._
 import org.alephium.ralph.lsp.pc.sourcecode.imports.Importer
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
@@ -185,43 +184,6 @@ private[pc] object SourceCode {
               sourceCode.filter(_.fileURI != fileURI)
             }
         }
-    }
-
-  /**
-   * Find the parsed state ([[SourceCodeState.Parsed]]) for the given file URI.
-   *
-   * @param fileURI    The file URI of the parsed source-code.
-   * @param sourceCode The source code files to search.
-   * @return - Right: If the parsed state was found.
-   *         - Left: An error, if the source-code is not in a parsed state.
-   */
-  def findParsed(
-      fileURI: URI,
-      sourceCode: ArraySeq[SourceCodeState]): Either[CompilerMessage.Error, SourceCodeState.Parsed] =
-    sourceCode.find(_.fileURI == fileURI) match {
-      case Some(source) =>
-        source match {
-          case _: SourceCodeState.OnDisk | _: SourceCodeState.UnCompiled =>
-            Left(SourceCodeIsNotCompiled(fileURI))
-
-          case _: SourceCodeState.ErrorAccess =>
-            Left(SourceCodeAccessFailed(fileURI))
-
-          case parsed: SourceCodeState.Parsed =>
-            Right(parsed)
-
-          case compiled: SourceCodeState.Compiled =>
-            Right(compiled.parsed)
-
-          case _: SourceCodeState.ErrorParser =>
-            Left(SourceCodeHasCompilationErrors(fileURI))
-
-          case errored: SourceCodeState.ErrorCompilation =>
-            Right(errored.parsed)
-        }
-
-      case None =>
-        Left(SourceCodeNotFound(fileURI))
     }
 
   /**

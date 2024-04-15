@@ -17,13 +17,11 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.build.BuildState.BuildCompiled
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 
@@ -59,7 +57,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
       workspace: WorkspaceState
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
+      logger: ClientLogger): Either[BuildState.Errored, WorkspaceState.IsSourceAware] =
     workspace match {
       case workspace: WorkspaceState.IsSourceAware =>
         Right(workspace) // already initialised
@@ -86,7 +84,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
       workspace: WorkspaceState
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
+      logger: ClientLogger): Either[BuildState.Errored, WorkspaceState.IsSourceAware] =
     workspace match {
       case sourceAware: WorkspaceState.IsSourceAware =>
         // already built
@@ -125,11 +123,11 @@ private[pc] object Workspace extends StrictImplicitLogging {
    */
   def build(
       newBuildCode: Option[String],
-      currentBuild: BuildState.BuildCompiled,
+      currentBuild: BuildState.Compiled,
       sourceCode: ArraySeq[SourceCodeState]
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] = {
+      logger: ClientLogger): Either[BuildState.Errored, WorkspaceState.UnCompiled] = {
     val newBuild =
       Build.parseAndCompile(
         buildURI = currentBuild.buildURI,
@@ -138,7 +136,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
       ) getOrElse currentBuild // if the build code is the same and existing build, then compile using existing build.
 
     newBuild match {
-      case newBuild: BuildCompiled =>
+      case newBuild: BuildState.Compiled =>
         // Build compiled OK! Compile new source-files with this new build file
         val syncedCode =
           SourceCode.synchronise(
@@ -156,7 +154,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
               )
 
             val buildErrored =
-              BuildState.BuildErrored(
+              BuildState.Errored(
                 buildURI = newBuild.buildURI,
                 codeOption = Some(newBuild.code),
                 errors = ArraySeq(error),
@@ -176,7 +174,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
             Right(newWorkspace)
         }
 
-      case errored: BuildState.BuildErrored =>
+      case errored: BuildState.Errored =>
         // Build not OK!
         val newWorkspace =
           WorkspaceState.UnCompiled(
@@ -194,13 +192,13 @@ private[pc] object Workspace extends StrictImplicitLogging {
   }
 
   /** Creates an un-compiled workspace for a successful build file. */
-  def initialise(state: BuildState.IsCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+  def initialise(state: BuildState.IsCompiled)(implicit file: FileAccess): Either[BuildState.Errored, WorkspaceState.UnCompiled] =
     state match {
-      case compiled: BuildState.BuildCompiled =>
+      case compiled: BuildState.Compiled =>
         // Build file changed. Update the workspace and request a full workspace build.
         initialise(compiled)
 
-      case errored: BuildState.BuildErrored =>
+      case errored: BuildState.Errored =>
         Left(errored)
     }
 
@@ -210,11 +208,11 @@ private[pc] object Workspace extends StrictImplicitLogging {
    * @param state Current state of the workspace.
    * @return New workspace state which aware of all workspace source code files.
    */
-  def initialise(state: BuildState.BuildCompiled)(implicit file: FileAccess): Either[BuildState.BuildErrored, WorkspaceState.UnCompiled] =
+  def initialise(state: BuildState.Compiled)(implicit file: FileAccess): Either[BuildState.Errored, WorkspaceState.UnCompiled] =
     SourceCode.initialise(state.contractURI) match {
       case Left(error) =>
         val buildError =
-          BuildState.BuildErrored(
+          BuildState.Errored(
             buildURI = state.buildURI,
             codeOption = Some(state.code),
             errors = ArraySeq(error),
@@ -314,10 +312,10 @@ private[pc] object Workspace extends StrictImplicitLogging {
   def compile(
       buildCode: Option[String],
       sourceCode: ArraySeq[SourceCodeState],
-      currentBuild: BuildState.BuildCompiled
+      currentBuild: BuildState.Compiled
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsParsedAndCompiled] =
+      logger: ClientLogger): Either[BuildState.Errored, WorkspaceState.IsParsedAndCompiled] =
     // re-build the build file
     build(
       newBuildCode = buildCode,
@@ -373,7 +371,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
       workspace: WorkspaceState.IsSourceAware
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Option[Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware]] =
+      logger: ClientLogger): Option[Either[BuildState.Errored, WorkspaceState.IsSourceAware]] =
     if (workspace.buildURI.resolve(buildURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
       Build.parseAndCompile(
         buildURI = buildURI,
@@ -382,7 +380,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
       ) match {
         case Some(newBuild) =>
           newBuild match {
-            case build: BuildState.BuildCompiled =>
+            case build: BuildState.Compiled =>
               if (workspace.build.contractURI == build.contractURI) {
                 // source directory is the same, compile using existing source-code
                 val newWorkspace =
@@ -403,7 +401,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
                 Some(result)
               }
 
-            case errored: BuildState.BuildErrored =>
+            case errored: BuildState.Errored =>
               Some(Left(errored))
           }
 
@@ -437,7 +435,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
       workspace: WorkspaceState
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Either[BuildState.BuildErrored, WorkspaceState.IsSourceAware] =
+      logger: ClientLogger): Either[BuildState.Errored, WorkspaceState.IsSourceAware] =
     build(workspace) map {
       workspace =>
         if (URIUtil.contains(workspace.build.contractURI, fileURI)) {
@@ -462,31 +460,6 @@ private[pc] object Workspace extends StrictImplicitLogging {
           // file does not belong to this workspace, do not compile it and return the current workspace.
           workspace
         }
-    }
-
-  /**
-   * Find a parsed state [[SourceCodeState.Parsed]] for the given file URI.
-   *
-   * @param fileURI   The file URI of the parsed source-code.
-   * @param workspace Current workspace.
-   * @return - None: If this file does not support completion.
-   *         - Right: If a parsed state was found.
-   *         - Left: If the source-code is in one of the non-parsed states.
-   */
-  def findParsed(
-      fileURI: URI,
-      workspace: WorkspaceState.IsSourceAware): Option[Either[CompilerMessage.Error, SourceCodeState.Parsed]] =
-    // file must belong to the workspace contractURI and must be a ralph source file
-    if (URIUtil.contains(workspace.build.contractURI, fileURI) && URIUtil.getFileExtension(fileURI) == CompilerAccess.RALPH_FILE_EXTENSION) {
-      val parsedOrError =
-        SourceCode.findParsed(
-          fileURI = fileURI,
-          sourceCode = workspace.sourceCode
-        )
-
-      Some(parsedOrError)
-    } else {
-      None
     }
 
 }

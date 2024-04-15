@@ -30,4 +30,4 @@ import org.alephium.ralph.lsp.pc.workspace.build.BuildState
  */
 case class PCState(
     workspace: WorkspaceState,
-    buildErrors: Option[BuildState.BuildErrored])
+    buildErrors: Option[BuildState.Errored])

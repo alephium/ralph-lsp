@@ -54,7 +54,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       actualBuildPath shouldBe buildPath
 
-      val parsed1 = BuildState.BuildParsed(
+      val parsed1 = BuildState.Parsed(
         buildURI = buildPath.toUri,
         code = "",
         config = config1
