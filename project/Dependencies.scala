@@ -11,7 +11,7 @@ object Dependencies {
 
   /** TEST */
   lazy val scalaTest  = "org.scalatest"     %% "scalatest"       % "3.2.18"   % Test
-  lazy val scalaCheck = "org.scalatestplus" %% "scalacheck-1-17" % "3.2.17.0" % Test
+  lazy val scalaCheck = "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test
   lazy val scalaMock  = "org.scalamock"     %% "scalamock"       % "6.0.0"    % Test
 
   /** Core */
