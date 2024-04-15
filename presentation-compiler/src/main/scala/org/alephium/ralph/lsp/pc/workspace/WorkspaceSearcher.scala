@@ -66,7 +66,7 @@ object WorkspaceSearcher {
    * @param workspace The workspace with dependencies.
    * @return Parsed source files in scope.
    */
-  private def collectParsedInScope(workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceCodeState.Parsed] = {
+  def collectParsedInScope(workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceCodeState.Parsed] = {
     // fetch the `std` dependency
     val stdSourceParsedCode =
       workspace
