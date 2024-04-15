@@ -22,7 +22,7 @@ import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceTreeInScope
-import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 private object GoToTypeId {
 
@@ -74,7 +74,11 @@ private object GoToTypeId {
             ).flatMap(GoToLocation(_, sourceCode.parsed))
 
           case _ =>
-            Iterator.empty
+            // For everything else find Contracts, Interfaces, or TxScripts with the given type ID.
+            goToCodeId(
+              typeId = typeId,
+              workspace = workspace
+            )
         }
 
       case None =>
@@ -155,6 +159,35 @@ private object GoToTypeId {
       .collect {
         case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == eventDef.id =>
           emitEvent.id
+      }
+
+  /**
+   * Navigate to Contracts, Interfaces, or TxScripts by their type ID.
+   *
+   * @param typeId    The type ID to locate.
+   * @param workspace The Workspace where the implementation of the type ID may exist.
+   * @return An iterator over search result locations.
+   */
+  private def goToCodeId(
+      typeId: Ast.TypeId,
+      workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
+    WorkspaceSearcher
+      .collectParsedInScope(workspace)
+      .iterator
+      .flatMap {
+        parsed =>
+          parsed
+            .ast
+            .statements
+            .iterator
+            .collect {
+              case source: Tree.Source if source.typeId() == typeId =>
+                GoToLocation(
+                  ast = source.typeId(),
+                  sourceCode = parsed
+                )
+            }
+            .flatten
       }
 
 }
