@@ -69,7 +69,7 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: target/universal/ralph-lsp-0.1.0-SNAPSHOT.zip
           asset_name: ralph-lsp-${{ steps.get_version.outputs.VERSION }}.zip
-         asset_content_type: application/zip
+          asset_content_type: application/zip
 
       - name: Upload Release Asset (VSCode Extension)
         uses: actions/upload-release-asset@v1
