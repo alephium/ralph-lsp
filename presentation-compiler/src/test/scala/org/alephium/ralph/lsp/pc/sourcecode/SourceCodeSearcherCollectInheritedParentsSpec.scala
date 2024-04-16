@@ -25,7 +25,7 @@ import org.scalatest.EitherValues._
 
 import scala.collection.immutable.ArraySeq
 
-class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with Matchers {
+class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matchers {
 
   implicit val file: FileAccess         = FileAccess.disk
   implicit val compiler: CompilerAccess = CompilerAccess.ralphc
