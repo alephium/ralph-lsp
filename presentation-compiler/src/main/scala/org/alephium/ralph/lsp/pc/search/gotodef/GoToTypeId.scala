@@ -69,10 +69,11 @@ private object GoToTypeId {
 
           case Node(eventDef: Ast.EventDef, _) if eventDef.id == typeId =>
             // They selected an event definition. Find event usages.
-            goToEventDefUsage(
-              eventDef = eventDef,
-              source = sourceCode.tree
-            ).flatMap(GoToLocation(_, sourceCode.parsed))
+            GoTo.implementingChildren(
+              sourceCode = sourceCode,
+              workspace = workspace,
+              searcher = goToEventDefUsage(eventDef, _)
+            )
 
           case _ =>
             // For everything else find Contracts, Interfaces, or TxScripts with the given type ID.

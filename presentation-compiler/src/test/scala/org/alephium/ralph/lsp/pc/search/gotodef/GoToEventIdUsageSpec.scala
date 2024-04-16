@@ -74,6 +74,35 @@ class GoToEventIdUsageSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "there is inheritance" in {
+      goTo(
+        """
+          |Abstract Contract Parent() {
+          |
+          |  event Transfe@@r(to: Address, amount: U256)
+          |
+          |  fn function0() -> () {
+          |    emit >>Transfer<<(to, amount)
+          |  }
+          |}
+          |
+          |Contract Parent1() extends Parent() {
+          |
+          |  pub fn function1() -> () {
+          |    emit >>Transfer<<(to, amount)
+          |  }
+          |}
+          |
+          |Contract Child() extends Parent1() {
+          |
+          |  pub fn function2() -> () {
+          |    emit >>Transfer<<(to, amount)
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
 }
