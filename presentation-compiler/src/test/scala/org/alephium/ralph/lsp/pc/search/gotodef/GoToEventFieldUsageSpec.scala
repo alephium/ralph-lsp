@@ -90,6 +90,35 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "there is inheritance" in {
+      goTo(
+        """
+          |Abstract Contract Parent() {
+          |
+          |  event Transfer(to: Address, a@@mount: U256)
+          |
+          |  fn function0() -> () {
+          |    emit Transfer(to, >>amount1<<)
+          |  }
+          |}
+          |
+          |Contract Parent1() extends Parent() {
+          |
+          |  pub fn function1() -> () {
+          |    emit Transfer(to, >>amount1<<)
+          |  }
+          |}
+          |
+          |Contract Child() extends Parent1() {
+          |
+          |  pub fn function2() -> () {
+          |    emit Transfer(to, >>amount1<<)
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
 }

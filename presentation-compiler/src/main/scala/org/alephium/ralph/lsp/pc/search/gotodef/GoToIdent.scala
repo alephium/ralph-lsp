@@ -102,11 +102,16 @@ private object GoToIdent {
               .collect {
                 // Check: Parent is an event definition which contains the event field.
                 case eventDef: Ast.EventDef if eventDef.fields.exists(_.ident == field.ident) =>
-                  goToEventFieldUsage(
-                    eventDefId = eventDef.id,
-                    eventFieldIndex = eventDef.fields.indexWhere(_.ident == field.ident),
-                    source = sourceCode.tree
-                  ).flatMap(GoToLocation(_, sourceCode.parsed))
+                  GoTo.implementingChildren(
+                    sourceCode = sourceCode,
+                    workspace = workspace,
+                    searcher = // search for usages
+                      goToEventFieldUsage(
+                        eventDefId = eventDef.id,
+                        eventFieldIndex = eventDef.fields.indexWhere(_.ident == field.ident),
+                        _
+                      )
+                  )
               }
               .flatten
 
