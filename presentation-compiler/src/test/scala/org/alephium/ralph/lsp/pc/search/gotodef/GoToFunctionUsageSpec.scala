@@ -24,12 +24,12 @@ import org.scalatest.wordspec.AnyWordSpec
 class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
-    "function calls do not exist" in {
+    "function usage do not exist" in {
       goTo(
         """
           |Contract MyContract(interface: MyInterface) {
           |
-          |  // function_a has no local calls
+          |  // function_a has no local usage
           |  pub fn @@function_a(boolean: Bool) -> () {
           |
           |  }
@@ -44,7 +44,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
   }
 
   "return non-empty" when {
-    "function calls exist" in {
+    "function usage exist" in {
       goTo(
         """
           |Contract MyContract(interface: MyInterface) {
