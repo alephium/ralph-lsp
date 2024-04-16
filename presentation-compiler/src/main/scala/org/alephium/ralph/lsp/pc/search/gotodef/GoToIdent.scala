@@ -130,7 +130,7 @@ private object GoToIdent {
 
           case namedVarNode @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == ident =>
             // User selected a named variable. Find its usages.
-            goToIdentUsage(
+            goToLocalVariableUsage(
               fromNode = namedVarNode,
               fromNodeIdent = namedVar.ident,
               source = sourceCode.tree
@@ -138,11 +138,12 @@ private object GoToIdent {
 
           case argumentNode @ Node(argument: Ast.Argument, _) if argument.ident == ident =>
             // They selected an argument. Take 'em there!
-            goToIdentUsage(
-              fromNode = argumentNode,
-              fromNodeIdent = argument.ident,
-              source = sourceCode.tree
-            ).flatMap(GoToLocation(_, sourceCode.parsed))
+            goToArgumentUsage(
+              argumentNode = argumentNode,
+              ident = ident,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case _ =>
             Iterator.empty
@@ -160,7 +161,7 @@ private object GoToIdent {
    * @param source        The source tree to search within.
    * @return An iterator containing identities representing the usage locations of input identity.
    */
-  private def goToIdentUsage(
+  private def goToLocalVariableUsage(
       fromNode: Node[Ast.Positioned],
       fromNodeIdent: Ast.Ident,
       source: Tree.Source): Iterator[Ast.Ident] =
@@ -173,6 +174,42 @@ private object GoToIdent {
             from = from
           )
       }
+
+  /**
+   * Navigate to argument usages.
+   *
+   * @param argumentNode The node representing the selected argument.
+   * @param ident        The identity of the argument.
+   * @param sourceCode   The source where this argument exists.
+   * @param workspace    The workspace that may contain other dependant source-code.
+   * @return An iterator containing identities representing the usage locations of the argument.
+   */
+  private def goToArgumentUsage(
+      argumentNode: Node[Ast.Positioned],
+      ident: Ast.Ident,
+      sourceCode: SourceTreeInScope,
+      workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
+    goToNearestFuncDef(argumentNode) match {
+      case Some((functionNode, _)) =>
+        // It's a function argument, search within this function's body.
+        goToVariableUsages(
+          ident = ident,
+          from = functionNode
+        ).flatMap(GoToLocation(_, sourceCode.parsed))
+
+      case None =>
+        // It's a template argument, search within the source-tree and within all dependant code.
+        GoTo.implementingChildren(
+          sourceCode = sourceCode,
+          workspace = workspace,
+          searcher = // search for usages
+            tree =>
+              goToVariableUsages(
+                ident = ident,
+                from = tree.rootNode
+              )
+        )
+    }
 
   /**
    * Navigate to arguments, constants and variables for the given identity ([[Ast.Ident]]).
