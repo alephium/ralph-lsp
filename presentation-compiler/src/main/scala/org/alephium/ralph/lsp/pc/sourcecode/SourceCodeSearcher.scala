@@ -110,12 +110,12 @@ object SourceCodeSearcher {
    * @param allSource The source code files containing the parent implementations.
    * @return All parent source implementations found.
    */
-  def collectInheritanceInScope(
+  def collectInheritedParents(
       source: Tree.Source,
       allSource: ArraySeq[SourceCodeState.Parsed]): Seq[SourceTreeInScope] =
     source.ast match {
       case Left(contract) =>
-        collectParentsInherited(
+        collectInheritedParents(
           inheritances = contract.inheritances,
           allSource = allSource,
           processedTrees = ListBuffer(source)
@@ -131,10 +131,10 @@ object SourceCodeSearcher {
    * @param inheritances   The inheritances to search for.
    * @param allSource      The source code files containing the inheritance implementations.
    * @param processedTrees A buffer to store processed source trees to avoid duplicate processing.
-   *                       This is a mutable collection so this function must be private.
+   *                       This is a mutable collection, so this function must be private.
    * @return All inheritance implementations along with their corresponding source files.
    */
-  private def collectParentsInherited(
+  private def collectInheritedParents(
       inheritances: Seq[Ast.Inheritance],
       allSource: ArraySeq[SourceCodeState.Parsed],
       processedTrees: ListBuffer[Tree.Source]): Seq[SourceTreeInScope] =
@@ -152,7 +152,7 @@ object SourceCodeSearcher {
                 case Left(contract) =>
                   // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
                   val parents =
-                    collectParentsInherited(
+                    collectInheritedParents(
                       inheritances = contract.inheritances,
                       allSource = allSource,
                       processedTrees = processedTrees

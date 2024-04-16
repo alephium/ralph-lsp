@@ -48,7 +48,7 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
       val tree =
         parsed.ast.statements.head.asInstanceOf[Tree.Source]
 
-      SourceCodeSearcher.collectInheritanceInScope(
+      SourceCodeSearcher.collectInheritedParents(
         source = tree,
         allSource = ArraySeq.empty
       ) shouldBe empty
@@ -82,7 +82,7 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
         )
 
       val actual =
-        SourceCodeSearcher.collectInheritanceInScope(
+        SourceCodeSearcher.collectInheritedParents(
           source = child,
           allSource = ArraySeq(parsed)
         )
@@ -209,7 +209,7 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
 
       // actual trees returned
       val actual =
-        SourceCodeSearcher.collectInheritanceInScope(
+        SourceCodeSearcher.collectInheritedParents(
           source = child,
           allSource = ArraySeq(file1, file2)
         )

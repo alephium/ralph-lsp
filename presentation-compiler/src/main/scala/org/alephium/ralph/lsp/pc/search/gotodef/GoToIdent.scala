@@ -63,7 +63,7 @@ private object GoToIdent {
 
           case Node(fieldSelector: Ast.EnumFieldSelector[_], _) if fieldSelector.field == ident =>
             // They selected an enum field. Take 'em there!
-            GoTo.inScope(
+            GoTo.inheritedParents(
               sourceCode = sourceCode,
               workspace = workspace,
               searcher = goToEnumField(fieldSelector, _)
@@ -174,7 +174,7 @@ private object GoToIdent {
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] = {
     val argumentsAndConstants =
-      GoTo.inScope(
+      GoTo.inheritedParents(
         sourceCode = sourceCode,
         workspace = workspace,
         searcher = goToConstantsAndTemplateArguments(ident, _)

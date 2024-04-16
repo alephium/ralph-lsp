@@ -33,12 +33,12 @@ object GoTo {
    * @param searcher   The search function to execute.
    * @return Go-to definition search results.
    */
-  def inScope(
+  def inheritedParents(
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware,
       searcher: Tree.Source => Iterator[Ast.Positioned]): Iterator[GoToLocation] =
     WorkspaceSearcher
-      .collectInScope(sourceCode, workspace) // collect all source-files/source-trees in scope
+      .collectInheritedParents(sourceCode, workspace) // collect all source-files/source-trees in scope
       .iterator
       .flatMap {
         treeInScope =>

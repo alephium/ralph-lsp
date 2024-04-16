@@ -45,7 +45,7 @@ private object GoToTypeId {
         parent match {
           case Node(enumFieldSelector: Ast.EnumFieldSelector[_], _) if enumFieldSelector.enumId == typeId =>
             // They selected an enum type. Take 'em there!
-            GoTo.inScope(
+            GoTo.inheritedParents(
               sourceCode = sourceCode,
               workspace = workspace,
               searcher = goToEnumType(enumFieldSelector, _)
@@ -60,7 +60,7 @@ private object GoToTypeId {
 
           case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == typeId =>
             // They selected an event emit. Take 'em there!
-            GoTo.inScope(
+            GoTo.inheritedParents(
               sourceCode = sourceCode,
               workspace = workspace,
               searcher = goToEventDef(emitEvent, _)
@@ -172,7 +172,7 @@ private object GoToTypeId {
       typeId: Ast.TypeId,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     WorkspaceSearcher
-      .collectParsedInScope(workspace)
+      .collectParsed(workspace)
       .iterator
       .flatMap {
         parsed =>

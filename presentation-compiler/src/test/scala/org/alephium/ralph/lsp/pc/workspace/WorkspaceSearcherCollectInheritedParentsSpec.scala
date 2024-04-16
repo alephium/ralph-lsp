@@ -29,7 +29,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import scala.collection.immutable.ArraySeq
 
-class WorkspaceSearcherCollectInScopeSpec extends AnyWordSpec with Matchers {
+class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matchers {
 
   implicit val file: FileAccess         = FileAccess.disk
   implicit val compiler: CompilerAccess = CompilerAccess.ralphc
@@ -150,7 +150,7 @@ class WorkspaceSearcherCollectInScopeSpec extends AnyWordSpec with Matchers {
 
     // execute the function
     val actual =
-      WorkspaceSearcher.collectInScope(
+      WorkspaceSearcher.collectInheritedParents(
         sourceCode = SourceTreeInScope(
           tree = childTree.tree,
           parsed = sourceFile1
