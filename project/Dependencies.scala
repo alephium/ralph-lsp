@@ -15,7 +15,7 @@ object Dependencies {
   lazy val scalaMock  = "org.scalamock"     %% "scalamock"       % "6.0.0"    % Test
 
   /** Core */
-  lazy val ralphc = "org.alephium"     %% "alephium-ralphc"   % "2.12.0"
+  lazy val ralphc = "org.alephium"     %% "alephium-ralphc"   % "2.12.0+0-9f1f4f5b+20240416-1132-SNAPSHOT"
   lazy val lsp4j  = "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.22.0"
 
   /** Logging */
