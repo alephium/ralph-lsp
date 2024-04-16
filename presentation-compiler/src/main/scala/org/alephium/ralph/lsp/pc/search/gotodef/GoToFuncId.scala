@@ -60,10 +60,15 @@ private object GoToFuncId {
             )
 
           case Node(funcDef: Ast.FuncDef[_], _) if funcDef.id == funcId =>
-            goToFunctionUsage(
-              funcId = funcDef.id,
-              source = sourceCode.tree
-            ).flatMap(GoToLocation(_, sourceCode.parsed))
+            GoTo.implementingChildren(
+              sourceCode = sourceCode,
+              workspace = workspace,
+              searcher = // search for function usages
+                goToFunctionUsage(
+                  funcId = funcDef.id,
+                  _
+                )
+            )
 
           case Node(callExpr: Ast.ContractCallExpr, _) if callExpr.callId == funcId =>
             // TODO: The user clicked on a external function call. Take 'em there!

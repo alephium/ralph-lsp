@@ -73,6 +73,28 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "function usage exist within inheritance" in {
+      goTo(
+        """
+          |Abstract Contract Parent() {
+          |
+          |  pub fn @@function_a(boolean: Bool) -> () {
+          |    let call1 = >>function_a(true)<<
+          |    >>function_a(false)<<
+          |  }
+          |}
+          |
+          |Contract Child() extends Parent() {
+          |
+          |  pub fn function_b(boolean: Bool) -> () {
+          |    let call1 = >>function_a(true)<<
+          |    >>function_a(false)<<
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
 }
