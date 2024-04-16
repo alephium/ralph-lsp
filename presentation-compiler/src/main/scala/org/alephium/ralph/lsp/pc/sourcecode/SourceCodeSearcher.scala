@@ -126,6 +126,29 @@ object SourceCodeSearcher {
     }
 
   /**
+   * Collects all children implementing or extending the given
+   * source tree within the provided source code files.
+   *
+   * @param source    The source tree to search for child implementations.
+   * @param allSource The source code files containing the child implementations.
+   * @return All child trees along with their corresponding source files.
+   */
+  def collectImplementingChildren(
+      source: Tree.Source,
+      allSource: ArraySeq[SourceCodeState.Parsed]): Seq[SourceTreeInScope] =
+    source.ast match {
+      case Left(contract) =>
+        collectImplementingChildren(
+          contract = contract,
+          allSource = allSource,
+          processedTrees = ListBuffer(source)
+        )
+
+      case Right(_) =>
+        Seq.empty
+    }
+
+  /**
    * Collects all source-trees representing implementations of the provided inheritances.
    *
    * @param inheritances   The inheritances to search for.
@@ -168,5 +191,46 @@ object SourceCodeSearcher {
               Seq.empty
           }
       }
+
+  /**
+   * Collects all source-trees representing children that implement or extend the given contract.
+   *
+   * @param contract       The contract for which its children are being searched.
+   * @param allSource      The source code files containing the inheritances.
+   * @param processedTrees A buffer to store processed source trees to avoid duplicate processing.
+   *                       This is a mutable collection, so this function must be private.
+   * @return All child trees along with their corresponding source files.
+   */
+  private def collectImplementingChildren(
+      contract: Ast.ContractWithState,
+      allSource: ArraySeq[SourceCodeState.Parsed],
+      processedTrees: ListBuffer[Tree.Source]): Seq[SourceTreeInScope] =
+    allSource flatMap {
+      parsed =>
+        parsed.ast.statements flatMap {
+          // collect the trees that belong to one of the inheritances and the ones that are not already processed
+          case source: Tree.Source if source.ast.left.exists(_.inheritances.exists(_.parentId == contract.ident)) && !processedTrees.contains(source) =>
+            processedTrees addOne source
+
+            source.ast match {
+              case Left(contract) =>
+                // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
+                val children =
+                  collectImplementingChildren(
+                    contract = contract,
+                    allSource = allSource,
+                    processedTrees = processedTrees
+                  )
+
+                children :+ SourceTreeInScope(source, parsed)
+
+              case Right(_) =>
+                Seq.empty
+            }
+
+          case _ =>
+            Seq.empty
+        }
+    }
 
 }
