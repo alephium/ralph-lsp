@@ -95,6 +95,41 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
         )
       }
+
+      "there is inheritance" in {
+        goTo(
+          """
+            |Abstract Contract Parent() {
+            |
+            |  enum EnumType {
+            |    Field0 = 0
+            |    Fie@@ld1 = 1
+            |  }
+            |
+            |  fn function0() -> () {
+            |    let field0 = EnumType.Field0
+            |    let field1 = EnumType.>>Field1<<
+            |  }
+            |}
+            |
+            |Contract Parent1() extends Parent() {
+            |
+            |  pub fn function1() -> () {
+            |    let field1 = EnumType.>>Field1<<
+            |    let field0 = EnumType.Field0
+            |  }
+            |}
+            |
+            |Contract Child() extends Parent1() {
+            |
+            |  pub fn function2() -> () {
+            |    let field1 = EnumType.>>Field1<<
+            |    let field0 = EnumType.Field0
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
     }
   }
 

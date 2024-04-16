@@ -79,11 +79,16 @@ private object GoToIdent {
               .collect {
                 // Check: Parent is an enum definition which contains the enum field.
                 case enumDef: Ast.EnumDef if enumDef.fields.exists(_.ident == field.ident) =>
-                  goToEnumFieldUsage(
-                    enumType = enumDef.id,
-                    enumField = field,
-                    source = sourceCode.tree
-                  ).flatMap(GoToLocation(_, sourceCode.parsed))
+                  GoTo.implementingChildren(
+                    sourceCode = sourceCode,
+                    workspace = workspace,
+                    searcher = // search for usages
+                      goToEnumFieldUsage(
+                        enumType = enumDef.id,
+                        enumField = field,
+                        _
+                      )
+                  )
               }
               .flatten
 
