@@ -53,10 +53,11 @@ private object GoToTypeId {
 
           case Node(enumDef: Ast.EnumDef, _) if enumDef.id == typeId =>
             // They selected an enum definition. Find enum usages.
-            goToEnumTypeUsage(
-              enumDef = enumDef,
-              source = sourceCode.tree
-            ).flatMap(GoToLocation(_, sourceCode.parsed))
+            GoTo.implementingChildren(
+              sourceCode = sourceCode,
+              workspace = workspace,
+              searcher = goToEnumTypeUsage(enumDef, _)
+            )
 
           case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == typeId =>
             // They selected an event emit. Take 'em there!
