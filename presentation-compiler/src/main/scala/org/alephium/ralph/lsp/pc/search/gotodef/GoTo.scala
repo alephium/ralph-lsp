@@ -38,7 +38,35 @@ object GoTo {
       workspace: WorkspaceState.IsSourceAware,
       searcher: Tree.Source => Iterator[Ast.Positioned]): Iterator[GoToLocation] =
     WorkspaceSearcher
-      .collectInheritedParents(sourceCode, workspace) // collect all source-files/source-trees in scope
+      .collectInheritedParents(sourceCode, workspace)
+      .iterator
+      .flatMap {
+        treeInScope =>
+          // execute the searcher function on each tree
+          val searchResult =
+            searcher(treeInScope.tree)
+
+          GoToLocation(
+            sourceCode = treeInScope.parsed,
+            asts = searchResult
+          )
+      }
+
+  /**
+   * Executes the `searcher` function on all children implementing
+   * the given source-tree.
+   *
+   * @param sourceCode The source code for which implementing children are being searched.
+   * @param workspace  The workspace to which this source-tree and all its implementing children belong.
+   * @param searcher   The search function to execute.
+   * @return Go-to definition search results.
+   */
+  def implementingChildren(
+      sourceCode: SourceTreeInScope,
+      workspace: WorkspaceState.IsSourceAware,
+      searcher: Tree.Source => Iterator[Ast.Positioned]): Iterator[GoToLocation] =
+    WorkspaceSearcher
+      .collectImplementingChildren(sourceCode, workspace)
       .iterator
       .flatMap {
         treeInScope =>
