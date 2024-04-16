@@ -31,7 +31,7 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
   implicit val compiler: CompilerAccess = CompilerAccess.ralphc
 
   "return empty" when {
-    "input source-code is empty" in {
+    "source-code has no inheritance" in {
       val parsed =
         TestSourceCode
           .genParsed(
