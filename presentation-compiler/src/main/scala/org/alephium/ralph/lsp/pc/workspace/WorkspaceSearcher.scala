@@ -76,6 +76,29 @@ object WorkspaceSearcher {
   }
 
   /**
+   * Collects all children implementing or extending the given
+   * source tree and public contracts/structs.
+   *
+   * @param sourceCode The source code for which in-scope files are being searched.
+   * @param workspace  The workspace that may contain files within the scope.
+   * @return The source trees within the scope.
+   */
+  def collectImplementingChildren(
+      sourceCode: SourceTreeInScope,
+      workspace: WorkspaceState.IsSourceAware): Seq[SourceTreeInScope] = {
+    val allInScopeCode =
+      collectParsed(workspace)
+
+    val inheritancesInScope =
+      SourceCodeSearcher.collectImplementingChildren(
+        source = sourceCode.tree,
+        allSource = allInScopeCode
+      )
+
+    inheritancesInScope :+ sourceCode
+  }
+
+  /**
    * Collects all parsed source files, excluding `std` dependency source files
    * that are not imported.
    *
