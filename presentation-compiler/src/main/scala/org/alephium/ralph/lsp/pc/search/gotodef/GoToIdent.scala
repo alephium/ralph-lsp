@@ -115,13 +115,18 @@ private object GoToIdent {
               }
               .flatten
 
-          case constantDefNode @ Node(constantDef: Ast.ConstantVarDef, _) if constantDef.ident == ident =>
+          case Node(constantDef: Ast.ConstantVarDef, _) if constantDef.ident == ident =>
             // They selected a constant definition. Take 'em there!
-            goToIdentUsage(
-              fromNode = constantDefNode,
-              fromNodeIdent = constantDef.ident,
-              source = sourceCode.tree
-            ).flatMap(GoToLocation(_, sourceCode.parsed))
+            GoTo.implementingChildren(
+              sourceCode = sourceCode,
+              workspace = workspace,
+              searcher = // search for usages
+                tree =>
+                  goToVariableUsages(
+                    ident = constantDef.ident,
+                    from = tree.rootNode
+                  )
+            )
 
           case namedVarNode @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == ident =>
             // User selected a named variable. Find its usages.
