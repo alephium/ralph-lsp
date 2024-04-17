@@ -86,6 +86,92 @@ class GoTotArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "arguments are inherited" when {
+      "from a function" in {
+        goTo(
+          """
+            |// Nothing from parent gets used
+            |Abstract Contract Parent() {
+            |
+            |  pub fn function(param1: ParamType, param2: ParamType) -> () {
+            |    let result = param1.someFunction()
+            |  }
+            |
+            |}
+            |
+            |Contract Child() extends Parent() {
+            |
+            |  // its a function argument so parents should not output search results
+            |  // search should occur locally within this function
+            |  pub fn function(param1@@: ParamType, param2: ParamType) -> () {
+            |    let result = >>param1<<.someFunction()
+            |  }
+            |
+            |  pub fn function2(param1: ParamType, param2: ParamType) -> () {
+            |    let result = param1.someFunction()
+            |  }
+            |
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "from the template" when {
+        "there are no duplicate names" in {
+          goTo(
+            """
+              |Abstract Contract Parent(param1@@: ParamType) {
+              |
+              |  pub fn function(param1: ParamType, param2: ParamType) -> () {
+              |    let result = >>param1<<.someFunction()
+              |  }
+              |
+              |}
+              |
+              |Contract Child() extends Parent() {
+              |
+              |  pub fn function(param2: ParamType) -> () {
+              |    let result = >>param1<<.someFunction()
+              |  }
+              |
+              |  pub fn function2(param1: ParamType, param2: ParamType) -> () {
+              |    let result = >>param1<<.someFunction()
+              |  }
+              |
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "there are duplicate names" in {
+          goTo(
+            """
+              |Abstract Contract Parent(param1@@: ParamType) {
+              |
+              |  pub fn function(param1: ParamType, param2: ParamType) -> () {
+              |    let result = >>param1<<.someFunction()
+              |  }
+              |
+              |}
+              |
+              |Contract Child(param1: ParamType) extends Parent(param1) {
+              |
+              |  pub fn function(param2: ParamType) -> () {
+              |    let result = >>param1<<.someFunction()
+              |  }
+              |
+              |  pub fn function2(param1: ParamType, param2: ParamType) -> () {
+              |    let result = >>param1<<.someFunction()
+              |  }
+              |
+              |}
+              |""".stripMargin
+          )
+        }
+      }
+
+    }
   }
 
 }

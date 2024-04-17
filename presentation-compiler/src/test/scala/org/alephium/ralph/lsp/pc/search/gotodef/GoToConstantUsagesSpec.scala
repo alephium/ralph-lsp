@@ -73,6 +73,38 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
       }
 
     }
+
+    "there is inheritance" in {
+      goTo(
+        """
+          |Abstract Contract Parent() {
+          |
+          |  const MyCons@@tant = 0
+          |
+          |  fn function0() -> () {
+          |    let my_constant2 = >>MyConstant<<
+          |    let my_constant3 = MyConstant_B
+          |  }
+          |}
+          |
+          |Contract Parent1() extends Parent() {
+          |
+          |  pub fn function1() -> () {
+          |    let my_constant2 = >>MyConstant<<
+          |    let my_constant3 = MyConstant_B
+          |  }
+          |}
+          |
+          |Contract Child() extends Parent1() {
+          |
+          |  pub fn function2() -> () {
+          |    let my_constant2 = >>MyConstant<<
+          |    let my_constant3 = MyConstant_B
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
 }
