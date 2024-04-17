@@ -25,13 +25,13 @@ import org.scalatest.EitherValues._
 
 import scala.collection.immutable.ArraySeq
 
-class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with Matchers {
+class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with Matchers {
 
   implicit val file: FileAccess         = FileAccess.disk
   implicit val compiler: CompilerAccess = CompilerAccess.ralphc
 
   "return empty" when {
-    "input source-code is empty" in {
+    "input source-code has no inheritance" in {
       val parsed =
         TestSourceCode
           .genParsed(
@@ -48,7 +48,7 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
       val tree =
         parsed.ast.statements.head.asInstanceOf[Tree.Source]
 
-      SourceCodeSearcher.collectInheritanceInScope(
+      SourceCodeSearcher.collectImplementingChildren(
         source = tree,
         allSource = ArraySeq.empty
       ) shouldBe empty
@@ -57,7 +57,7 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
     }
   }
 
-  "collect single parent implementations" when {
+  "collect single child implementation" when {
     def doTest(code: String) = {
       val parsed =
         TestSourceCode
@@ -77,13 +77,13 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
       // expect parent to be returned
       val expected =
         SourceTreeInScope(
-          tree = parent,
+          tree = child,
           parsed = parsed
         )
 
       val actual =
-        SourceCodeSearcher.collectInheritanceInScope(
-          source = child,
+        SourceCodeSearcher.collectImplementingChildren(
+          source = parent,
           allSource = ArraySeq(parsed)
         )
 
@@ -123,10 +123,10 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
 
   "collect deep inheritance" when {
     "it also contains cyclic and duplicate inheritance" in {
-      // file1 contains the Child() contract for which the parents are collected.
+
       val file1 =
         TestSourceCode
-          .genParsed(
+          .genParsedOK(
             """
               |Abstract Contract Parent2() extends Parent4(), Parent6() implements Parent1 { }
               |
@@ -136,10 +136,9 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
               |}
               |
               |// Parent3 is not extends by Child(), it should not be in the result
-              |Abstract Contract Parent3() extends Parent4(), Parent4() { }
+              |Abstract Contract Parent3() extends Parent1(), Parent1() { }
               |
-              |// The child parents to collect
-              |Contract Child() extends Parent2(), Child() implements Parent1 {
+              |Contract Child() extends Parent2(), Child(), Parent5() implements Parent1 {
               |  pub fn parent() -> U256 {
               |    return 1
               |  }
@@ -148,13 +147,13 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
           )
           .sample
           .get
-          .asInstanceOf[SourceCodeState.Parsed]
 
-      // file2 contains all other abstract contracts
+      // file2 contains the Parent6() contract for which the children are collected.
       val file2 =
         TestSourceCode
-          .genParsed(
+          .genParsedOK(
             """
+              |// Parent6's children are being collect in this test
               |Abstract Contract Parent6() extends Parent4() { }
               |
               |Abstract Contract Parent5() extends Parent4(), Parent5() { }
@@ -164,41 +163,44 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
           )
           .sample
           .get
-          .asInstanceOf[SourceCodeState.Parsed]
 
-      // collect all tree from file1
+      // collect all trees from file1
       val treesFromFile1 =
         file1.ast.statements.map(_.asInstanceOf[Tree.Source])
 
-      // collect all tree from file2
+      // collect all trees from file2
       val treesFromFile2 =
         file2.ast.statements.map(_.asInstanceOf[Tree.Source])
 
-      // the last statement in file1 is Child()
-      val child = treesFromFile1.last
-      child.ast.merge.name shouldBe "Child"
+      // the first statement in file2 is Parent6()
+      val parent = treesFromFile2.head
+      parent.ast.merge.name shouldBe "Parent6"
 
-      // expect parents to be returned excluding Parent3() and Child()
+      // expect children to be returned excluding Parent1() and Parent3()
       val expectedTreesFromFile1 =
         treesFromFile1
           .filterNot {
             tree =>
-              tree.ast.merge.name == "Parent3" || tree.ast.merge.name == "Child"
+              tree.ast.merge.name == "Parent1" || tree.ast.merge.name == "Parent3"
           }
           .map {
-            parent =>
+            child =>
               SourceTreeInScope(
-                tree = parent,
+                tree = child,
                 parsed = file1 // file1 is in scope
               )
           }
 
       val expectedTreesFromFile2 =
         treesFromFile2
+          .filterNot {
+            tree =>
+              tree.ast.merge.name == "Parent6"
+          }
           .map {
-            parent =>
+            child =>
               SourceTreeInScope(
-                tree = parent,
+                tree = child,
                 parsed = file2 // file2 is in scope
               )
           }
@@ -209,8 +211,8 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
 
       // actual trees returned
       val actual =
-        SourceCodeSearcher.collectInheritanceInScope(
-          source = child,
+        SourceCodeSearcher.collectImplementingChildren(
+          source = parent,
           allSource = ArraySeq(file1, file2)
         )
 
@@ -219,7 +221,7 @@ class SourceCodeSearcherCollectInheritanceInScopeSpec extends AnyWordSpec with M
       // Double check: Also assert the names of the parents.
       val parentNames = actual.map(_.tree.ast.left.value.name)
       // Note: Parent3 and Child are not included.
-      parentNames should contain only ("Parent1", "Parent2", "Parent4", "Parent5", "Parent6")
+      parentNames should contain only ("Parent4", "Parent2", "Parent5", "Child")
 
       TestSourceCode deleteAllIfExists Array(file1, file2)
     }

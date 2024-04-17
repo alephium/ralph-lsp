@@ -54,20 +54,43 @@ object WorkspaceSearcher {
     }
 
   /**
-   * Collects all source trees within the scope of the provided source code.
+   * Collects all parent source implementations inherited by the given source tree.
    *
    * @param sourceCode The source code for which in-scope files are being searched.
    * @param workspace  The workspace that may contain files within the scope.
    * @return The source trees within the scope.
    */
-  def collectInScope(
+  def collectInheritedParents(
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware): Seq[SourceTreeInScope] = {
     val allInScopeCode =
-      collectParsedInScope(workspace)
+      collectParsed(workspace)
 
     val inheritancesInScope =
-      SourceCodeSearcher.collectInheritanceInScope(
+      SourceCodeSearcher.collectInheritedParents(
+        source = sourceCode.tree,
+        allSource = allInScopeCode
+      )
+
+    inheritancesInScope :+ sourceCode
+  }
+
+  /**
+   * Collects all children implementing or extending the given
+   * source tree and public contracts/structs.
+   *
+   * @param sourceCode The source code for which in-scope files are being searched.
+   * @param workspace  The workspace that may contain files within the scope.
+   * @return The source trees within the scope.
+   */
+  def collectImplementingChildren(
+      sourceCode: SourceTreeInScope,
+      workspace: WorkspaceState.IsSourceAware): Seq[SourceTreeInScope] = {
+    val allInScopeCode =
+      collectParsed(workspace)
+
+    val inheritancesInScope =
+      SourceCodeSearcher.collectImplementingChildren(
         source = sourceCode.tree,
         allSource = allInScopeCode
       )
@@ -82,7 +105,7 @@ object WorkspaceSearcher {
    * @param workspace The workspace with dependencies.
    * @return Parsed source files in scope.
    */
-  def collectParsedInScope(workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceCodeState.Parsed] = {
+  def collectParsed(workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceCodeState.Parsed] = {
     // fetch the `std` dependency
     val stdSourceParsedCode =
       workspace

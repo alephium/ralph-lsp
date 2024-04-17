@@ -95,7 +95,7 @@ private object GoToFuncId {
         dependencyBuiltIn = workspace.build.findDependency(DependencyID.BuiltIn)
       )
     else
-      GoTo.inScope(
+      GoTo.inheritedParents(
         sourceCode = sourceCode,
         workspace = workspace,
         searcher = goToLocalFunction(funcId, _)
