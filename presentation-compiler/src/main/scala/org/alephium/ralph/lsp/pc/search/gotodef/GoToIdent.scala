@@ -137,8 +137,7 @@ private object GoToIdent {
           case argumentNode @ Node(argument: Ast.Argument, _) if argument.ident == identNode.data =>
             // They selected an argument. Take 'em there!
             goToArgumentUsage(
-              argumentNode = argumentNode,
-              ident = identNode.data,
+              argumentNode = argumentNode.upcast(argument),
               sourceCode = sourceCode,
               workspace = workspace
             )
@@ -177,21 +176,19 @@ private object GoToIdent {
    * Navigate to argument usages.
    *
    * @param argumentNode The node representing the selected argument.
-   * @param ident        The identity of the argument.
    * @param sourceCode   The source where this argument exists.
    * @param workspace    The workspace that may contain other dependant source-code.
    * @return An iterator containing identities representing the usage locations of the argument.
    */
   private def goToArgumentUsage(
-      argumentNode: Node[Ast.Positioned, Ast.Positioned],
-      ident: Ast.Ident,
+      argumentNode: Node[Ast.Argument, Ast.Positioned],
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     goToNearestFuncDef(argumentNode) match {
       case Some((functionNode, _)) =>
         // It's a function argument, search within this function's body.
         goToVariableUsages(
-          ident = ident,
+          ident = argumentNode.data.ident,
           from = functionNode
         ).flatMap(GoToLocation(_, sourceCode.parsed))
 
@@ -203,7 +200,7 @@ private object GoToIdent {
           searcher = // search for usages
             tree =>
               goToVariableUsages(
-                ident = ident,
+                ident = argumentNode.data.ident,
                 from = tree.rootNode
               )
         )
