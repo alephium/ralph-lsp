@@ -43,8 +43,7 @@ private object GoToSource {
           case identNode @ Node(ident: Ast.Ident, _) =>
             // the clicked/closest node is an ident
             GoToIdent.goTo(
-              identNode = identNode,
-              ident = ident,
+              identNode = identNode.upcast(ident),
               sourceCode = sourceCode,
               workspace = workspace
             )

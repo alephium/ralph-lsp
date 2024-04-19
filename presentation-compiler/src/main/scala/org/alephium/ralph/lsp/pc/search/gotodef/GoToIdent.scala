@@ -36,14 +36,13 @@ private object GoToIdent {
    * @return An array sequence of positioned ASTs matching the search result.
    */
   def goTo(
-      identNode: Node[Ast.Positioned, Ast.Positioned],
-      ident: Ast.Ident,
+      identNode: Node[Ast.Ident, Ast.Positioned],
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     identNode.parent match { // take one step up to check the type of ident node.
       case Some(parent) =>
         parent match {
-          case variableNode @ Node(variable: Ast.Variable[_], _) if variable.id == ident =>
+          case variableNode @ Node(variable: Ast.Variable[_], _) if variable.id == identNode.data =>
             // They selected a variable. Take 'em there!
             goToScopeDefinitions(
               identNode = variableNode,
@@ -52,7 +51,7 @@ private object GoToIdent {
               workspace = workspace
             )
 
-          case assignmentNode @ Node(assignment: Ast.AssignmentSimpleTarget[_], _) if assignment.ident == ident =>
+          case assignmentNode @ Node(assignment: Ast.AssignmentSimpleTarget[_], _) if assignment.ident == identNode.data =>
             // They selected an assignment. Take 'em there!
             goToScopeDefinitions(
               identNode = assignmentNode,
@@ -61,7 +60,7 @@ private object GoToIdent {
               workspace = workspace
             )
 
-          case Node(fieldSelector: Ast.EnumFieldSelector[_], _) if fieldSelector.field == ident =>
+          case Node(fieldSelector: Ast.EnumFieldSelector[_], _) if fieldSelector.field == identNode.data =>
             // They selected an enum field. Take 'em there!
             GoTo.inheritedParents(
               sourceCode = sourceCode,
@@ -69,7 +68,7 @@ private object GoToIdent {
               searcher = goToEnumField(fieldSelector, _)
             )
 
-          case node @ Node(field: Ast.EnumField, _) if field.ident == ident =>
+          case node @ Node(field: Ast.EnumField, _) if field.ident == identNode.data =>
             // They selected an enum field.
             // Check the parent to find the enum type.
             node
@@ -92,7 +91,7 @@ private object GoToIdent {
               }
               .flatten
 
-          case node @ Node(field: Ast.EventField, _) if field.ident == ident =>
+          case node @ Node(field: Ast.EventField, _) if field.ident == identNode.data =>
             // They selected an event field.
             // Check the parent to find the event definition.
             node
@@ -115,7 +114,7 @@ private object GoToIdent {
               }
               .flatten
 
-          case Node(constantDef: Ast.ConstantVarDef, _) if constantDef.ident == ident =>
+          case Node(constantDef: Ast.ConstantVarDef, _) if constantDef.ident == identNode.data =>
             // They selected a constant definition. Take 'em there!
             GoTo.implementingChildren(
               sourceCode = sourceCode,
@@ -128,7 +127,7 @@ private object GoToIdent {
                   )
             )
 
-          case namedVarNode @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == ident =>
+          case namedVarNode @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == identNode.data =>
             // User selected a named variable. Find its usages.
             goToLocalVariableUsage(
               fromNode = namedVarNode,
@@ -136,11 +135,11 @@ private object GoToIdent {
               source = sourceCode.tree
             ).flatMap(GoToLocation(_, sourceCode.parsed))
 
-          case argumentNode @ Node(argument: Ast.Argument, _) if argument.ident == ident =>
+          case argumentNode @ Node(argument: Ast.Argument, _) if argument.ident == identNode.data =>
             // They selected an argument. Take 'em there!
             goToArgumentUsage(
               argumentNode = argumentNode,
-              ident = ident,
+              ident = identNode.data,
               sourceCode = sourceCode,
               workspace = workspace
             )
