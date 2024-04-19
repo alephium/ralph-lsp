@@ -129,8 +129,7 @@ private object GoToIdent {
           case namedVarNode @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == identNode.data =>
             // User selected a named variable. Find its usages.
             goToLocalVariableUsage(
-              fromNode = namedVarNode,
-              fromNodeIdent = namedVar.ident,
+              fromNode = namedVarNode.upcast(namedVar),
               source = sourceCode.tree
             ).flatMap(GoToLocation(_, sourceCode.parsed))
 
@@ -153,21 +152,19 @@ private object GoToIdent {
   /**
    * Navigate to variable usages of the given identity.
    *
-   * @param fromNode      The node representing the parent of the selected identity.
-   * @param fromNodeIdent The identity for which usages are to be found.
+   * @param fromNode      The node representing the identity being searched.
    * @param source        The source tree to search within.
    * @return An iterator containing identities representing the usage locations of input identity.
    */
   private def goToLocalVariableUsage(
-      fromNode: Node[Ast.Positioned, Ast.Positioned],
-      fromNodeIdent: Ast.Ident,
+      fromNode: Node[Ast.NamedVar, Ast.Positioned],
       source: Tree.Source): Iterator[Ast.Ident] =
     goToNearestBlockInScope(fromNode, source)
       .iterator
       .flatMap {
         from =>
           goToVariableUsages(
-            ident = fromNodeIdent,
+            ident = fromNode.data.ident,
             from = from
           )
       }
