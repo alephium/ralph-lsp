@@ -17,7 +17,6 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.Ast
-import org.alephium.ralph.Ast.Positioned
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
@@ -37,7 +36,7 @@ private object GoToFuncId {
    * @return An array sequence containing the positioned ASTs of the searched function.
    */
   def goTo(
-      funcIdNode: Node[Positioned],
+      funcIdNode: Node[Ast.Positioned, Ast.Positioned],
       funcId: Ast.FuncId,
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =

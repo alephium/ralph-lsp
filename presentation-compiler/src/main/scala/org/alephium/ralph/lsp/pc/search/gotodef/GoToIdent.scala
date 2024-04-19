@@ -36,7 +36,7 @@ private object GoToIdent {
    * @return An array sequence of positioned ASTs matching the search result.
    */
   def goTo(
-      identNode: Node[Ast.Positioned],
+      identNode: Node[Ast.Positioned, Ast.Positioned],
       ident: Ast.Ident,
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
@@ -162,7 +162,7 @@ private object GoToIdent {
    * @return An iterator containing identities representing the usage locations of input identity.
    */
   private def goToLocalVariableUsage(
-      fromNode: Node[Ast.Positioned],
+      fromNode: Node[Ast.Positioned, Ast.Positioned],
       fromNodeIdent: Ast.Ident,
       source: Tree.Source): Iterator[Ast.Ident] =
     goToNearestBlockInScope(fromNode, source)
@@ -185,7 +185,7 @@ private object GoToIdent {
    * @return An iterator containing identities representing the usage locations of the argument.
    */
   private def goToArgumentUsage(
-      argumentNode: Node[Ast.Positioned],
+      argumentNode: Node[Ast.Positioned, Ast.Positioned],
       ident: Ast.Ident,
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
@@ -221,7 +221,7 @@ private object GoToIdent {
    * @return An array sequence of arguments, constants and variables with the input identity.
    */
   private def goToScopeDefinitions(
-      identNode: Node[Ast.Positioned],
+      identNode: Node[Ast.Positioned, Ast.Positioned],
       ident: Ast.Ident,
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] = {
@@ -300,7 +300,7 @@ private object GoToIdent {
    * @return Variable definitions containing the named variable.
    */
   private def goToInScopeVariables(
-      childNode: Node[Ast.Positioned],
+      childNode: Node[Ast.Positioned, Ast.Positioned],
       ident: Ast.Ident,
       source: Tree.Source): Iterator[Ast.VarDef[_]] =
     goToNearestBlockInScope(childNode, source)
@@ -388,7 +388,7 @@ private object GoToIdent {
    */
   private def goToVariableUsages(
       ident: Ast.Ident,
-      from: Node[Ast.Positioned]): Iterator[Ast.Ident] =
+      from: Node[Ast.Positioned, Ast.Positioned]): Iterator[Ast.Ident] =
     from
       .walkDown
       .collect {
@@ -404,8 +404,8 @@ private object GoToIdent {
    * @return An Option containing the nearest parent block, if found.
    */
   private def goToNearestBlockInScope(
-      childNode: Node[Ast.Positioned],
-      source: Tree.Source): Option[Node[Ast.Positioned]] =
+      childNode: Node[Ast.Positioned, Ast.Positioned],
+      source: Tree.Source): Option[Node[Ast.Positioned, Ast.Positioned]] =
     source.ast match {
       case Left(_: Ast.Contract | _: Ast.ContractInterface | _: Ast.TxScript) =>
         // Find the nearest function definition or use the template body as the scope.
@@ -423,7 +423,7 @@ private object GoToIdent {
    * @param childNode The node to traverse up from.
    * @return An Option containing the nearest function definition, if found.
    */
-  private def goToNearestFuncDef(childNode: Node[Ast.Positioned]): Option[(Node[Ast.Positioned], Ast.FuncDef[_])] =
+  private def goToNearestFuncDef(childNode: Node[Ast.Positioned, Ast.Positioned]): Option[(Node[Ast.Positioned, Ast.Positioned], Ast.FuncDef[_])] =
     childNode
       .data
       .sourceIndex
@@ -445,7 +445,7 @@ private object GoToIdent {
    * @return An array sequence of [[Ast.Argument]]s matching the search result.
    */
   private def goToNearestFunctionArguments(
-      childNode: Node[Ast.Positioned],
+      childNode: Node[Ast.Positioned, Ast.Positioned],
       ident: Ast.Ident): Iterator[Ast.Argument] =
     goToNearestFuncDef(childNode)
       .iterator
