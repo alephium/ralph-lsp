@@ -30,7 +30,6 @@ private object GoToFuncId {
    * Navigate to the definition of a function for the given [[Ast.FuncId]].
    *
    * @param funcIdNode The node representing the [[Ast.FuncId]] in the AST.
-   * @param funcId     The [[Ast.FuncId]] of the function to find the definition for.
    * @param sourceCode The source-tree and its parsed source-code state, where this search was executed.
    * @param workspace  The workspace where this search was executed and where all the source trees exist.
    * @return An array sequence containing the positioned ASTs of the searched function.

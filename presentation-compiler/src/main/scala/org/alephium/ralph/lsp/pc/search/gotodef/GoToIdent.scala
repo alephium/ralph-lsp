@@ -30,7 +30,6 @@ private object GoToIdent {
    * Navigate to the argument(s) for the given identifier.
    *
    * @param identNode  The node representing the identifier in the AST.
-   * @param ident      The identifier for which the argument definition is sought.
    * @param sourceCode The source-tree and its parsed source-code state, where this search was executed.
    * @param workspace  The workspace where this search was executed and where all the source trees exist.
    * @return An array sequence of positioned ASTs matching the search result.
