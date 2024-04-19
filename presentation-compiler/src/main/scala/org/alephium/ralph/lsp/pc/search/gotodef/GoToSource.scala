@@ -59,7 +59,7 @@ private object GoToSource {
           case typIdNode @ Node(typeId: Ast.TypeId, _) =>
             // the clicked/closest node is TypeId
             GoToTypeId.goTo(
-              identNode = typIdNode.upcast(typeId),
+              typeIdNode = typIdNode.upcast(typeId),
               sourceCode = sourceCode,
               workspace = workspace
             )
