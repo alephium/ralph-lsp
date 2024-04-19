@@ -70,7 +70,7 @@ object Tree {
      *
      * @note Lazily initialised as it can have concurrent access or no access at all.
      */
-    lazy val rootNode: Node[Ast.Positioned, Ast.Positioned] =
+    lazy val rootNode: Node[Ast.UniqueDef, Ast.Positioned] =
       NodeBuilder.buildRootNode(ast)
 
     /**
