@@ -41,20 +41,18 @@ private object GoToIdent {
     identNode.parent match { // take one step up to check the type of ident node.
       case Some(parent) =>
         parent match {
-          case variableNode @ Node(variable: Ast.Variable[_], _) if variable.id == identNode.data =>
+          case Node(variable: Ast.Variable[_], _) if variable.id == identNode.data =>
             // They selected a variable. Take 'em there!
             goToScopeDefinitions(
-              identNode = variableNode,
-              ident = variable.id,
+              identNode = identNode,
               sourceCode = sourceCode,
               workspace = workspace
             )
 
-          case assignmentNode @ Node(assignment: Ast.AssignmentSimpleTarget[_], _) if assignment.ident == identNode.data =>
+          case Node(assignment: Ast.AssignmentSimpleTarget[_], _) if assignment.ident == identNode.data =>
             // They selected an assignment. Take 'em there!
             goToScopeDefinitions(
-              identNode = assignmentNode,
-              ident = assignment.ident,
+              identNode = identNode,
               sourceCode = sourceCode,
               workspace = workspace
             )
@@ -182,7 +180,7 @@ private object GoToIdent {
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     goToNearestFuncDef(argumentNode) match {
-      case Some((functionNode, _)) =>
+      case Some(functionNode) =>
         // It's a function argument, search within this function's body.
         goToVariableUsages(
           ident = argumentNode.data.ident,
@@ -207,33 +205,28 @@ private object GoToIdent {
    * Navigate to arguments, constants and variables for the given identity ([[Ast.Ident]]).
    *
    * @param identNode  The node representing the identity.
-   * @param ident      The identity data ([[Ast.Ident]]) within the node.
    * @param sourceCode The source tree containing the identity node.
    * @param workspace  The workspace in scope, that may contain other dependant source-code.
    * @return An array sequence of arguments, constants and variables with the input identity.
    */
   private def goToScopeDefinitions(
-      identNode: Node[Ast.Positioned, Ast.Positioned],
-      ident: Ast.Ident,
+      identNode: Node[Ast.Ident, Ast.Positioned],
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] = {
     val argumentsAndConstants =
       GoTo.inheritedParents(
         sourceCode = sourceCode,
         workspace = workspace,
-        searcher = goToConstantsAndTemplateArguments(ident, _)
+        searcher = goToConstantsAndTemplateArguments(identNode.data, _)
       )
 
     val functionArguments =
-      goToNearestFunctionArguments(
-        childNode = identNode,
-        ident = ident
-      ).flatMap(GoToLocation(_, sourceCode.parsed))
+      goToNearestFunctionArguments(identNode)
+        .flatMap(GoToLocation(_, sourceCode.parsed))
 
     val localVariables =
       goToInScopeVariables(
-        childNode = identNode,
-        ident = ident,
+        identNode = identNode,
         source = sourceCode.tree
       ).flatMap(GoToLocation(_, sourceCode.parsed))
 
@@ -287,22 +280,20 @@ private object GoToIdent {
   /**
    * Navigate to the variable definitions within its scope.
    *
-   * @param childNode The node within a function where the search starts.
-   * @param ident     The identifier of the named variable to search for.
+   * @param identNode The node within a function where the search starts.
    * @return Variable definitions containing the named variable.
    */
   private def goToInScopeVariables(
-      childNode: Node[Ast.Positioned, Ast.Positioned],
-      ident: Ast.Ident,
+      identNode: Node[Ast.Ident, Ast.Positioned],
       source: Tree.Source): Iterator[Ast.VarDef[_]] =
-    goToNearestBlockInScope(childNode, source)
+    goToNearestBlockInScope(identNode, source)
       .iterator
       .flatMap {
         block =>
           block
             .walkDown
             .collect {
-              case Node(varDef: Ast.VarDef[_], _) if AstExtra.containsNamedVar(varDef, ident) =>
+              case Node(varDef: Ast.VarDef[_], _) if AstExtra.containsNamedVar(varDef, identNode.data) =>
                 varDef
             }
       }
@@ -401,9 +392,7 @@ private object GoToIdent {
     source.ast match {
       case Left(_: Ast.Contract | _: Ast.ContractInterface | _: Ast.TxScript) =>
         // Find the nearest function definition or use the template body as the scope.
-        goToNearestFuncDef(childNode)
-          .map(_._1)
-          .orElse(Some(source.rootNode))
+        goToNearestFuncDef(childNode).orElse(Some(source.rootNode))
 
       case Right(_: Ast.Struct) =>
         None
@@ -415,7 +404,7 @@ private object GoToIdent {
    * @param childNode The node to traverse up from.
    * @return An Option containing the nearest function definition, if found.
    */
-  private def goToNearestFuncDef(childNode: Node[Ast.Positioned, Ast.Positioned]): Option[(Node[Ast.Positioned, Ast.Positioned], Ast.FuncDef[_])] =
+  private def goToNearestFuncDef(childNode: Node[Ast.Positioned, Ast.Positioned]): Option[Node[Ast.FuncDef[_], Ast.Positioned]] =
     childNode
       .data
       .sourceIndex
@@ -425,27 +414,25 @@ private object GoToIdent {
             .walkParents
             .collectFirst {
               case node @ Node(function: Ast.FuncDef[_], _) if function.sourceIndex.exists(_ contains childNodeIndex.index) =>
-                (node, function)
+                node.upcast(function)
             }
       }
 
   /**
    * Navigate to the argument(s) of the nearest function to this node.
    *
-   * @param childNode The node to traverse up in search of the function.
-   * @param ident     The variable identifier to find arguments for.
+   * @param identNode The node to traverse up in search of the function.
    * @return An array sequence of [[Ast.Argument]]s matching the search result.
    */
-  private def goToNearestFunctionArguments(
-      childNode: Node[Ast.Positioned, Ast.Positioned],
-      ident: Ast.Ident): Iterator[Ast.Argument] =
-    goToNearestFuncDef(childNode)
+  private def goToNearestFunctionArguments(identNode: Node[Ast.Ident, Ast.Positioned]): Iterator[Ast.Argument] =
+    goToNearestFuncDef(identNode)
       .iterator
       .flatMap {
-        case (_, funcDef) =>
-          funcDef
+        functionNode =>
+          functionNode
+            .data
             .args
-            .filter(_.ident == ident)
+            .filter(_.ident == identNode.data)
       }
 
   /**
