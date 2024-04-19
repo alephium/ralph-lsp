@@ -35,14 +35,13 @@ private object GoToTypeId {
    * @return An array sequence of positioned ASTs matching the search result.
    */
   def goTo(
-      identNode: Node[Ast.Positioned, Ast.Positioned],
-      typeId: Ast.TypeId,
+      identNode: Node[Ast.TypeId, Ast.Positioned],
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     identNode.parent match { // take one step up to check the type of TypeId node.
       case Some(parent) =>
         parent match {
-          case Node(enumFieldSelector: Ast.EnumFieldSelector[_], _) if enumFieldSelector.enumId == typeId =>
+          case Node(enumFieldSelector: Ast.EnumFieldSelector[_], _) if enumFieldSelector.enumId == identNode.data =>
             // They selected an enum type. Take 'em there!
             GoTo.inheritedParents(
               sourceCode = sourceCode,
@@ -50,7 +49,7 @@ private object GoToTypeId {
               searcher = goToEnumType(enumFieldSelector, _)
             )
 
-          case Node(enumDef: Ast.EnumDef, _) if enumDef.id == typeId =>
+          case Node(enumDef: Ast.EnumDef, _) if enumDef.id == identNode.data =>
             // They selected an enum definition. Find enum usages.
             GoTo.implementingChildren(
               sourceCode = sourceCode,
@@ -58,7 +57,7 @@ private object GoToTypeId {
               searcher = goToEnumTypeUsage(enumDef, _)
             )
 
-          case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == typeId =>
+          case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == identNode.data =>
             // They selected an event emit. Take 'em there!
             GoTo.inheritedParents(
               sourceCode = sourceCode,
@@ -66,7 +65,7 @@ private object GoToTypeId {
               searcher = goToEventDef(emitEvent, _)
             )
 
-          case Node(eventDef: Ast.EventDef, _) if eventDef.id == typeId =>
+          case Node(eventDef: Ast.EventDef, _) if eventDef.id == identNode.data =>
             // They selected an event definition. Find event usages.
             GoTo.implementingChildren(
               sourceCode = sourceCode,
@@ -77,7 +76,7 @@ private object GoToTypeId {
           case _ =>
             // For everything else find Contracts, Interfaces, or TxScripts with the given type ID.
             goToCodeId(
-              typeId = typeId,
+              typeId = identNode.data,
               workspace = workspace
             )
         }
