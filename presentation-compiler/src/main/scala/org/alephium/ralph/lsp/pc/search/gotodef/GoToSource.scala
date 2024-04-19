@@ -51,8 +51,7 @@ private object GoToSource {
           case funcIdNode @ Node(funcId: Ast.FuncId, _) =>
             // the clicked/closest node is functionId
             GoToFuncId.goTo(
-              funcIdNode = funcIdNode,
-              funcId = funcId,
+              funcIdNode = funcIdNode.upcast(funcId),
               sourceCode = sourceCode,
               workspace = workspace
             )

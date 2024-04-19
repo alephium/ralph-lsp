@@ -36,14 +36,13 @@ private object GoToFuncId {
    * @return An array sequence containing the positioned ASTs of the searched function.
    */
   def goTo(
-      funcIdNode: Node[Ast.Positioned, Ast.Positioned],
-      funcId: Ast.FuncId,
+      funcIdNode: Node[Ast.FuncId, Ast.Positioned],
       sourceCode: SourceTreeInScope,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     funcIdNode.parent match { // take one step up to check the type of function call.
       case Some(parent) =>
         parent match {
-          case Node(callExpr: Ast.CallExpr[_], _) if callExpr.id == funcId =>
+          case Node(callExpr: Ast.CallExpr[_], _) if callExpr.id == funcIdNode.data =>
             // The user clicked on a local function. Take 'em there!
             goToFunction(
               funcId = callExpr.id,
@@ -51,14 +50,14 @@ private object GoToFuncId {
               workspace = workspace
             )
 
-          case Node(funcCall: Ast.FuncCall[_], _) if funcCall.id == funcId =>
+          case Node(funcCall: Ast.FuncCall[_], _) if funcCall.id == funcIdNode.data =>
             goToFunction(
               funcId = funcCall.id,
               sourceCode = sourceCode,
               workspace = workspace
             )
 
-          case Node(funcDef: Ast.FuncDef[_], _) if funcDef.id == funcId =>
+          case Node(funcDef: Ast.FuncDef[_], _) if funcDef.id == funcIdNode.data =>
             GoTo.implementingChildren(
               sourceCode = sourceCode,
               workspace = workspace,
@@ -69,7 +68,7 @@ private object GoToFuncId {
                 )
             )
 
-          case Node(callExpr: Ast.ContractCallExpr, _) if callExpr.callId == funcId =>
+          case Node(callExpr: Ast.ContractCallExpr, _) if callExpr.callId == funcIdNode.data =>
             // TODO: The user clicked on a external function call. Take 'em there!
             Iterator.empty
 
