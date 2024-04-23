@@ -16,11 +16,73 @@
 
 package org.alephium.ralph.lsp.pc.sourcecode
 
+import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
+import org.alephium.ralph.lsp.access.compiler.message.LineRange
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
+import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 
-sealed trait SourceLocation
+/** Represents a position within a source-file in parsed state. */
+sealed trait SourceLocation {
+
+  def parsed: SourceCodeState.Parsed
+
+}
 
 object SourceLocation {
+
+  /**
+   * Result types for GoTo location search results.
+   */
+  sealed trait GoTo extends SourceLocation {
+
+    def toLineRange(): Option[LineRange]
+
+    def toGoToLocation(): Option[GoToLocation] =
+      toLineRange() map {
+        lineRange =>
+          GoToLocation(
+            uri = parsed.fileURI,
+            lineRange = lineRange
+          )
+      }
+
+  }
+
+  /**
+   * Represents a source file ([[SourceCodeState.Parsed]]) without
+   * a target position. For eg: Used to provide jump definition for imported files.
+   *
+   * @param parsed   The source file containing the positioned node.
+   */
+  case class File(parsed: SourceCodeState.Parsed) extends GoTo {
+
+    override def toLineRange(): Option[LineRange] =
+      Some(LineRange.zero)
+
+  }
+
+  /**
+   * Represents a single positioned AST ([[org.alephium.ralph.Ast.Positioned]])
+   * within a source file ([[SourceCodeState.Parsed]]),
+   *
+   * @param ast    The positioned node within the parsed source file.
+   * @param source The source tree containing the positioned node.
+   */
+  case class Node[+A <: Ast.Positioned](
+      ast: A,
+      source: SourceLocation.Code)
+    extends GoTo {
+
+    def toLineRange(): Option[LineRange] =
+      ast
+        .sourceIndex
+        .map(_.toLineRange(source.parsed.code))
+
+    override def parsed: SourceCodeState.Parsed =
+      source.parsed
+
+  }
 
   /**
    * Represents a single source tree ([[Tree.Source]]) within a source file ([[SourceCodeState.Parsed]]),
