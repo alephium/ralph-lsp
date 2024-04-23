@@ -19,7 +19,6 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
-import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
@@ -36,41 +35,37 @@ private object GoToTypeId {
   def goTo(
       typeIdNode: Node[Ast.TypeId, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
     typeIdNode.parent match { // take one step up to check the type of TypeId node.
       case Some(parent) =>
         parent match {
           case Node(enumFieldSelector: Ast.EnumFieldSelector[_], _) if enumFieldSelector.enumId == typeIdNode.data =>
             // They selected an enum type. Take 'em there!
-            GoTo.inheritedParents(
-              sourceCode = sourceCode,
-              workspace = workspace,
-              searcher = goToEnumType(enumFieldSelector, _)
-            )
+            WorkspaceSearcher
+              .collectInheritedParents(sourceCode, workspace)
+              .iterator
+              .flatMap(goToEnumType(enumFieldSelector, _))
 
           case Node(enumDef: Ast.EnumDef, _) if enumDef.id == typeIdNode.data =>
             // They selected an enum definition. Find enum usages.
-            GoTo.implementingChildren(
-              sourceCode = sourceCode,
-              workspace = workspace,
-              searcher = goToEnumTypeUsage(enumDef, _)
-            )
+            WorkspaceSearcher
+              .collectImplementingChildren(sourceCode, workspace)
+              .iterator
+              .flatMap(goToEnumTypeUsage(enumDef, _))
 
           case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == typeIdNode.data =>
             // They selected an event emit. Take 'em there!
-            GoTo.inheritedParents(
-              sourceCode = sourceCode,
-              workspace = workspace,
-              searcher = goToEventDef(emitEvent, _)
-            )
+            WorkspaceSearcher
+              .collectInheritedParents(sourceCode, workspace)
+              .iterator
+              .flatMap(goToEventDef(emitEvent, _))
 
           case Node(eventDef: Ast.EventDef, _) if eventDef.id == typeIdNode.data =>
             // They selected an event definition. Find event usages.
-            GoTo.implementingChildren(
-              sourceCode = sourceCode,
-              workspace = workspace,
-              searcher = goToEventDefUsage(eventDef, _)
-            )
+            WorkspaceSearcher
+              .collectImplementingChildren(sourceCode, workspace)
+              .iterator
+              .flatMap(goToEventDefUsage(eventDef, _))
 
           case _ =>
             // For everything else find Contracts, Interfaces, or TxScripts with the given type ID.
@@ -93,14 +88,17 @@ private object GoToTypeId {
    */
   private def goToEnumType(
       enumSelector: Ast.EnumFieldSelector[_],
-      source: Tree.Source): Iterator[Ast.TypeId] =
-    source.ast match {
+      source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
+    source.tree.ast match {
       case Left(contract: Ast.Contract) =>
         contract
           .enums
           .iterator
           .filter(_.id == enumSelector.enumId)
-          .map(_.id)
+          .map {
+            enumDef =>
+              SourceLocation.Node(enumDef.id, source)
+          }
 
       case Left(_: Ast.ContractInterface | _: Ast.TxScript) | Right(_: Ast.Struct) =>
         Iterator.empty
@@ -115,13 +113,14 @@ private object GoToTypeId {
    */
   private def goToEnumTypeUsage(
       enumDef: Ast.EnumDef,
-      source: Tree.Source): Iterator[Ast.TypeId] =
+      source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
     source
+      .tree
       .rootNode
       .walkDown
       .collect {
         case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumDef.id =>
-          selector.enumId
+          SourceLocation.Node(selector.enumId, source)
       }
 
   /**
@@ -133,13 +132,14 @@ private object GoToTypeId {
    */
   private def goToEventDef(
       emitEvent: Ast.EmitEvent[_],
-      source: Tree.Source): Iterator[Ast.EventDef] =
+      source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.EventDef]] =
     source
+      .tree
       .rootNode
       .walkDown
       .collect {
         case Node(eventDef: Ast.EventDef, _) if eventDef.id == emitEvent.id =>
-          eventDef
+          SourceLocation.Node(eventDef, source)
       }
 
   /**
@@ -151,13 +151,14 @@ private object GoToTypeId {
    */
   private def goToEventDefUsage(
       eventDef: Ast.EventDef,
-      source: Tree.Source): Iterator[Ast.TypeId] =
+      source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
     source
+      .tree
       .rootNode
       .walkDown
       .collect {
         case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == eventDef.id =>
-          emitEvent.id
+          SourceLocation.Node(emitEvent.id, source)
       }
 
   /**
@@ -169,7 +170,7 @@ private object GoToTypeId {
    */
   private def goToCodeId(
       typeId: Ast.TypeId,
-      workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] =
     WorkspaceSearcher
       .collectParsed(workspace)
       .iterator
@@ -180,13 +181,15 @@ private object GoToTypeId {
             .statements
             .iterator
             .collect {
-              case source: Tree.Source if source.typeId() == typeId =>
-                GoToLocation(
-                  ast = source.typeId(),
-                  sourceCode = parsed
+              case tree: Tree.Source if tree.typeId() == typeId =>
+                SourceLocation.Node(
+                  ast = tree.typeId(),
+                  SourceLocation.Code(
+                    tree = tree,
+                    parsed = parsed
+                  )
                 )
             }
-            .flatten
       }
 
 }

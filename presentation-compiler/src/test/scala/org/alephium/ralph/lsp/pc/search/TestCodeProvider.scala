@@ -25,7 +25,7 @@ import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace, Workspace}
@@ -83,7 +83,7 @@ object TestCodeProvider {
 
     // Execute go-to definition.
     val (searchResult, sourceCode, _) =
-      TestCodeProvider[GoToLocation](codeWithoutGoToSymbols)
+      TestCodeProvider[SourceLocation.GoTo](codeWithoutGoToSymbols)
 
     // Expect GoToLocations to also contain the fileURI
     val expectedGoToLocations =
@@ -96,7 +96,7 @@ object TestCodeProvider {
       }
 
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-    searchResult.toList should contain theSameElementsAs expectedGoToLocations
+    searchResult.flatMap(_.toGoToLocation()).toList should contain theSameElementsAs expectedGoToLocations
   }
 
   /**
@@ -114,7 +114,7 @@ object TestCodeProvider {
 
     // Execute go-to definition.
     val (searchResult, _, workspace) =
-      TestCodeProvider[GoToLocation](codeWithoutGoToSymbols)
+      TestCodeProvider[SourceLocation.GoTo](codeWithoutGoToSymbols)
 
     expected match {
       case Some(expectedFunction) =>
@@ -147,7 +147,7 @@ object TestCodeProvider {
             }
 
         // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-        searchResult.toList should contain theSameElementsAs expectedResults
+        searchResult.flatMap(_.toGoToLocation()).toList should contain theSameElementsAs expectedResults
 
       case None =>
         searchResult shouldBe empty

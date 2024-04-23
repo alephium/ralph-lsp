@@ -20,24 +20,23 @@ import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
-import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 /**
- * Implements [[CodeProvider]] that provides go-to definition results of type [[GoToLocation]].
+ * Implements [[CodeProvider]] that provides go-to definition results of type [[SourceLocation.GoTo]].
  *
- * To execution this function invoke [[CodeProvider.search]] with [[GoToLocation]] as type parameter.
+ * To execution this function invoke [[CodeProvider.search]] with [[SourceLocation.GoTo]] as type parameter.
  */
-private[search] object GoToDefinitionProvider extends CodeProvider[GoToLocation] with StrictImplicitLogging {
+private[search] object GoToDefinitionProvider extends CodeProvider[SourceLocation.GoTo] with StrictImplicitLogging {
 
   /** @inheritdoc */
   override def search(
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterator[GoToLocation] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoTo] =
     // find the statement where this cursorIndex sits.
     sourceCode.ast.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>

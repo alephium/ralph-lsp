@@ -19,7 +19,6 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
@@ -36,7 +35,7 @@ private object GoToSource {
   def goTo(
       cursorIndex: Int,
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
     sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
       case Some(closest) =>
         closest match {

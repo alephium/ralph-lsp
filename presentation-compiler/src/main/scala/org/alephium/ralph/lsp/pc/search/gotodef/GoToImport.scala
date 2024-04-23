@@ -17,10 +17,8 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
-import org.alephium.ralph.lsp.access.compiler.message.LineRange
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 import scala.collection.immutable.ArraySeq
@@ -30,7 +28,7 @@ private object GoToImport {
   def goTo(
       cursorIndex: Int,
       dependency: Option[WorkspaceState.Compiled],
-      importStatement: Tree.Import): ArraySeq[GoToLocation] =
+      importStatement: Tree.Import): ArraySeq[SourceLocation.GoTo] =
     dependency match {
       case Some(dependency) =>
         goTo(
@@ -39,10 +37,7 @@ private object GoToImport {
           importStatement = importStatement
         ) map {
           code =>
-            GoToLocation(
-              uri = code.fileURI,
-              lineRange = LineRange.zero
-            )
+            SourceLocation.File(code.parsed)
         }
 
       case None =>

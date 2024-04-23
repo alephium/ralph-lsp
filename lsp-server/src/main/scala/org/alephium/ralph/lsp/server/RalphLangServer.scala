@@ -21,7 +21,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
-import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.util.CollectionUtil
 import org.alephium.ralph.lsp.pc.util.URIUtil.uri
 import org.alephium.ralph.lsp.pc.workspace._
@@ -382,7 +382,7 @@ class RalphLangServer private (
           case sourceAware: WorkspaceState.IsSourceAware =>
             // Can provide GoTo definition.
             val goToResult =
-              CodeProvider.search[GoToLocation](
+              CodeProvider.search[SourceLocation.GoTo](
                 line = line,
                 character = character,
                 fileURI = fileURI,
