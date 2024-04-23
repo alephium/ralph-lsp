@@ -51,11 +51,11 @@ private[search] object GoToDefinitionProvider extends CodeProvider[SourceLocatio
               )
               .iterator
 
-          case source: Tree.Source =>
+          case tree: Tree.Source =>
             // request is for source-code go-to definition
             GoToSource.goTo(
               cursorIndex = cursorIndex,
-              sourceCode = SourceLocation.Code(source, sourceCode),
+              sourceCode = SourceLocation.Code(tree, sourceCode),
               workspace = workspace
             )
         }
