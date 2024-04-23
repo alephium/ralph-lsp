@@ -20,7 +20,6 @@ import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.LineRange
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
-import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
 
 /** Represents a position within a source-file in parsed state. */
 sealed trait SourceLocation {
@@ -37,15 +36,6 @@ object SourceLocation {
   sealed trait GoTo extends SourceLocation {
 
     def toLineRange(): Option[LineRange]
-
-    def toGoToLocation(): Option[GoToLocation] =
-      toLineRange() map {
-        lineRange =>
-          GoToLocation(
-            uri = parsed.fileURI,
-            lineRange = lineRange
-          )
-      }
 
   }
 
