@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.SourceTreeInScope
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 /** Common Go-to functions */
@@ -34,7 +34,7 @@ object GoTo {
    * @return Go-to definition search results.
    */
   def inheritedParents(
-      sourceCode: SourceTreeInScope,
+      sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware,
       searcher: Tree.Source => Iterator[Ast.Positioned]): Iterator[GoToLocation] =
     WorkspaceSearcher
@@ -62,7 +62,7 @@ object GoTo {
    * @return Go-to definition search results.
    */
   def implementingChildren(
-      sourceCode: SourceTreeInScope,
+      sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware,
       searcher: Tree.Source => Iterator[Ast.Positioned]): Iterator[GoToLocation] =
     WorkspaceSearcher

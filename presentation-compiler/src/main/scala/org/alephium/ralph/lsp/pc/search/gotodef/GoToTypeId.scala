@@ -20,7 +20,7 @@ import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.SourceTreeInScope
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 private object GoToTypeId {
@@ -35,7 +35,7 @@ private object GoToTypeId {
    */
   def goTo(
       typeIdNode: Node[Ast.TypeId, Ast.Positioned],
-      sourceCode: SourceTreeInScope,
+      sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     typeIdNode.parent match { // take one step up to check the type of TypeId node.
       case Some(parent) =>

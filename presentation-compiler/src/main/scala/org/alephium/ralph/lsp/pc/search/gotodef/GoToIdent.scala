@@ -21,7 +21,7 @@ import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.SourceTreeInScope
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 private object GoToIdent {
@@ -36,23 +36,25 @@ private object GoToIdent {
    */
   def goTo(
       identNode: Node[Ast.Ident, Ast.Positioned],
-      sourceCode: SourceTreeInScope,
+      sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     identNode.parent match { // take one step up to check the type of ident node.
       case Some(parent) =>
         parent match {
-          case Node(variable: Ast.Variable[_], _) if variable.id == identNode.data =>
+          case variableNode @ Node(variable: Ast.Variable[_], _) if variable.id == identNode.data =>
             // They selected a variable. Take 'em there!
             goToScopeDefinitions(
-              identNode = identNode,
+              identNode = variableNode,
+              ident = variable.id,
               sourceCode = sourceCode,
               workspace = workspace
             )
 
-          case Node(assignment: Ast.AssignmentSimpleTarget[_], _) if assignment.ident == identNode.data =>
+          case assignmentNode @ Node(assignment: Ast.AssignmentSimpleTarget[_], _) if assignment.ident == identNode.data =>
             // They selected an assignment. Take 'em there!
             goToScopeDefinitions(
-              identNode = identNode,
+              identNode = assignmentNode,
+              ident = assignment.ident,
               sourceCode = sourceCode,
               workspace = workspace
             )
@@ -177,7 +179,7 @@ private object GoToIdent {
    */
   private def goToArgumentUsage(
       argumentNode: Node[Ast.Argument, Ast.Positioned],
-      sourceCode: SourceTreeInScope,
+      sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     goToNearestFuncDef(argumentNode) match {
       case Some(functionNode) =>
@@ -205,28 +207,33 @@ private object GoToIdent {
    * Navigate to arguments, constants and variables for the given identity ([[Ast.Ident]]).
    *
    * @param identNode  The node representing the identity.
+   * @param ident      The identity data ([[Ast.Ident]]) within the node.
    * @param sourceCode The source tree containing the identity node.
    * @param workspace  The workspace in scope, that may contain other dependant source-code.
    * @return An array sequence of arguments, constants and variables with the input identity.
    */
   private def goToScopeDefinitions(
-      identNode: Node[Ast.Ident, Ast.Positioned],
-      sourceCode: SourceTreeInScope,
+      identNode: Node[Ast.Positioned, Ast.Positioned],
+      ident: Ast.Ident,
+      sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] = {
     val argumentsAndConstants =
       GoTo.inheritedParents(
         sourceCode = sourceCode,
         workspace = workspace,
-        searcher = goToConstantsAndTemplateArguments(identNode.data, _)
+        searcher = goToConstantsAndTemplateArguments(ident, _)
       )
 
     val functionArguments =
-      goToNearestFunctionArguments(identNode)
-        .flatMap(GoToLocation(_, sourceCode.parsed))
+      goToNearestFunctionArguments(
+        childNode = identNode,
+        ident = ident
+      ).flatMap(GoToLocation(_, sourceCode.parsed))
 
     val localVariables =
       goToInScopeVariables(
-        identNode = identNode,
+        childNode = identNode,
+        ident = ident,
         source = sourceCode.tree
       ).flatMap(GoToLocation(_, sourceCode.parsed))
 
@@ -280,20 +287,22 @@ private object GoToIdent {
   /**
    * Navigate to the variable definitions within its scope.
    *
-   * @param identNode The node within a function where the search starts.
+   * @param childNode The node within a function where the search starts.
+   * @param ident     The identifier of the named variable to search for.
    * @return Variable definitions containing the named variable.
    */
   private def goToInScopeVariables(
-      identNode: Node[Ast.Ident, Ast.Positioned],
+      childNode: Node[Ast.Positioned, Ast.Positioned],
+      ident: Ast.Ident,
       source: Tree.Source): Iterator[Ast.VarDef[_]] =
-    goToNearestBlockInScope(identNode, source)
+    goToNearestBlockInScope(childNode, source)
       .iterator
       .flatMap {
         block =>
           block
             .walkDown
             .collect {
-              case Node(varDef: Ast.VarDef[_], _) if AstExtra.containsNamedVar(varDef, identNode.data) =>
+              case Node(varDef: Ast.VarDef[_], _) if AstExtra.containsNamedVar(varDef, ident) =>
                 varDef
             }
       }
@@ -421,18 +430,21 @@ private object GoToIdent {
   /**
    * Navigate to the argument(s) of the nearest function to this node.
    *
-   * @param identNode The node to traverse up in search of the function.
+   * @param childNode The node to traverse up in search of the function.
+   * @param ident     The variable identifier to find arguments for.
    * @return An array sequence of [[Ast.Argument]]s matching the search result.
    */
-  private def goToNearestFunctionArguments(identNode: Node[Ast.Ident, Ast.Positioned]): Iterator[Ast.Argument] =
-    goToNearestFuncDef(identNode)
+  private def goToNearestFunctionArguments(
+      childNode: Node[Ast.Positioned, Ast.Positioned],
+      ident: Ast.Ident): Iterator[Ast.Argument] =
+    goToNearestFuncDef(childNode)
       .iterator
       .flatMap {
         functionNode =>
           functionNode
             .data
             .args
-            .filter(_.ident == identNode.data)
+            .filter(_.ident == ident)
       }
 
   /**

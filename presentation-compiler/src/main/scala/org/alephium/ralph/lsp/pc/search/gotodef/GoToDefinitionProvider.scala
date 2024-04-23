@@ -21,7 +21,7 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceTreeInScope, SourceCodeState}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
@@ -56,7 +56,7 @@ private[search] object GoToDefinitionProvider extends CodeProvider[GoToLocation]
             // request is for source-code go-to definition
             GoToSource.goTo(
               cursorIndex = cursorIndex,
-              sourceCode = SourceTreeInScope(source, sourceCode),
+              sourceCode = SourceLocation.Code(source, sourceCode),
               workspace = workspace
             )
         }

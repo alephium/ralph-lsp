@@ -76,7 +76,7 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
 
       // expect parent to be returned
       val expected =
-        SourceTreeInScope(
+        SourceLocation.Code(
           tree = child,
           parsed = parsed
         )
@@ -185,7 +185,7 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
           }
           .map {
             child =>
-              SourceTreeInScope(
+              SourceLocation.Code(
                 tree = child,
                 parsed = file1 // file1 is in scope
               )
@@ -199,7 +199,7 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
           }
           .map {
             child =>
-              SourceTreeInScope(
+              SourceLocation.Code(
                 tree = child,
                 parsed = file2 // file2 is in scope
               )

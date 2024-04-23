@@ -20,7 +20,7 @@ import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceTreeInScope, SourceCodeState}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
@@ -36,7 +36,7 @@ private object GoToFuncId {
    */
   def goTo(
       funcIdNode: Node[Ast.FuncId, Ast.Positioned],
-      sourceCode: SourceTreeInScope,
+      sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     funcIdNode.parent match { // take one step up to check the type of function call.
       case Some(parent) =>
@@ -89,7 +89,7 @@ private object GoToFuncId {
    */
   private def goToFunction(
       funcId: Ast.FuncId,
-      sourceCode: SourceTreeInScope,
+      sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
     if (funcId.isBuiltIn)
       goToBuiltInFunction(
