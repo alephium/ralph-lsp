@@ -21,8 +21,7 @@ import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.{Suggestion, CodeCompletionProvider}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefinitionProvider
-import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 import java.net.URI
@@ -41,7 +40,7 @@ trait CodeProvider[A] {
    * @param cursorIndex The index location where the search operation is performed.
    * @param sourceCode  The parsed state of the source-code where the search is executed.
    * @param workspace   The workspace state where the source-code is located.
-   * @return An [[ArraySeq]] of search results of type [[A]].
+   * @return An iterator over search results of type [[A]].
    */
   def search(
       cursorIndex: Int,
@@ -58,7 +57,7 @@ object CodeProvider {
     CodeCompletionProvider
 
   /** The go-to definition implementation of [[CodeProvider]]. */
-  implicit val goToDefinition: CodeProvider[GoToLocation] =
+  implicit val goToDefinition: CodeProvider[SourceLocation.GoTo] =
     GoToDefinitionProvider
 
   /**

@@ -16,17 +16,38 @@
 
 package org.alephium.ralph.lsp.access.compiler.ast.node
 
+import scala.annotation.unchecked.uncheckedVariance
+
 object Node {
 
-  /** Create a [[Node]] with no children */
-  @inline def apply[A](data: A): Node[A] =
+  /**
+   * Constructs a new `Node` with the given data and no children.
+   *
+   * @param data The data to be stored in the new node.
+   * @tparam A The data type of the new node.
+   * @tparam B The data type of the child nodes, which must be a super type of `A`.
+   * @return A new `Node` instance with the specified data and no children.
+   */
+  @inline def apply[A, B >: A](data: A): Node[A, B] =
     new Node(data, List.empty)
 
-  /** Create a [[Node]] with children */
-  @inline def apply[A](
+  /**
+   * Constructs a new `Node` for the provided data and children.
+   *
+   * @param data     The data to be stored in the new node.
+   * @param children The child nodes of the new node.
+   * @tparam A The data type of the new node.
+   * @tparam B The data type of the child nodes, which must be a super type of `A`.
+   * @return A new `Node` instance with the specified data and children.
+   */
+  @inline def apply[A, B >: A](
       data: A,
-      children: Seq[Node[A]]): Node[A] = {
-    val parent = new Node(data, children)
+      children: Seq[Node[B, B]]): Node[A, B] = {
+    val parent =
+      new Node[A, B](
+        data = data,
+        children = children
+      )
     // set the parent for each child node to allow traversing up.
     children foreach (_._parent = Some(parent))
     parent
@@ -42,33 +63,34 @@ object Node {
  *
  * @param data     The data stored in this node.
  * @param children This node's child nodes.
- * @tparam A Data type.
+ * @tparam A Data type of the current node.
+ * @tparam B Data type of every other node, which is a super type of [[A]].
  */
-case class Node[A] private (
+case class Node[+A, B] private (
     data: A,
-    children: Seq[Node[A]]) { self =>
+    children: Seq[Node[B, B]]) { self =>
 
-  private var _parent: Option[Node[A]] =
+  private var _parent: Option[Node[B, B]] =
     None
 
-  def parent: Option[Node[A]] =
+  def parent: Option[Node[B, B]] =
     _parent
 
-  def headOption: Option[Node[A]] =
+  def headOption: Option[Node[B, B]] =
     parent
       .iterator
       .flatMap(_.walkParents)
-      .foldLeft(Option.empty[Node[A]]) {
+      .foldLeft(Option.empty[Node[B, B]]) {
         case (_, next) =>
           Some(next)
       }
 
   /** Walk down from current node reaching all it's children and grand-children */
-  def walkDown: Iterator[Node[A]] =
-    new Iterator[Node[A]] {
+  def walkDown: Iterator[Node[B, B]] =
+    new Iterator[Node[B, B]] {
 
       private val iter =
-        Iterator(self) ++
+        Iterator(self.asInstanceOf[Node[B, B]]) ++
           children
             .iterator
             .flatMap(_.walkDown)
@@ -76,13 +98,13 @@ case class Node[A] private (
       override def hasNext: Boolean =
         iter.hasNext
 
-      override def next(): Node[A] =
+      override def next(): Node[B, B] =
         iter.next()
 
     }
 
-  def walkParents: Iterator[Node[A]] =
-    new Iterator[Node[A]] {
+  def walkParents: Iterator[Node[B, B]] =
+    new Iterator[Node[B, B]] {
 
       private val iter =
         self
@@ -97,7 +119,7 @@ case class Node[A] private (
       override def hasNext: Boolean =
         iter.hasNext
 
-      override def next(): Node[A] =
+      override def next(): Node[B, B] =
         iter.next()
 
     }
@@ -107,15 +129,32 @@ case class Node[A] private (
    *
    * This function is useful for find the closest node that contains a source-index.
    */
-  def findLast(f: A => Boolean): Option[Node[A]] =
+  def findLast(f: B => Boolean): Option[Node[B, B]] =
     self
       .walkDown
-      .foldLeft(Option.empty[Node[A]]) {
+      .foldLeft(Option.empty[Node[B, B]]) {
         case (closest, nextNode) =>
           if (f(nextNode.data))
             Some(nextNode)
           else
             closest
       }
+
+  /**
+   * Upcasts this node's data type [[A]] to a narrower type.
+   *
+   * @param data The data of the current node with a narrower type.
+   * @tparam C The type to upcast to.
+   * @return This node with the data type upcasted.
+   */
+  def upcast[C <: A @uncheckedVariance](data: C): Node[C, B] =
+    // upcasting should not break tree hierarchy. The data should match the existing data in this node.
+    if (self.data != data)
+      // FIXME: Throwing an Exception here is not very nice, but currently necessary.
+      //        Pattern matching on the Node type does not return narrower types, requiring this solution until a better
+      //        solution using the type-system is implemented.
+      throw new IllegalArgumentException(s"Invalid upcast. ${data.getClass.getSimpleName} cannot be casted to ${self.data.getClass.getSimpleName}.")
+    else
+      self.asInstanceOf[Node[C, B]]
 
 }

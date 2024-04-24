@@ -18,7 +18,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceTreeInScope, SourceCodeState, SourceCodeSearcher}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
@@ -61,8 +61,8 @@ object WorkspaceSearcher {
    * @return The source trees within the scope.
    */
   def collectInheritedParents(
-      sourceCode: SourceTreeInScope,
-      workspace: WorkspaceState.IsSourceAware): Seq[SourceTreeInScope] = {
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Seq[SourceLocation.Code] = {
     val allInScopeCode =
       collectParsed(workspace)
 
@@ -84,8 +84,8 @@ object WorkspaceSearcher {
    * @return The source trees within the scope.
    */
   def collectImplementingChildren(
-      sourceCode: SourceTreeInScope,
-      workspace: WorkspaceState.IsSourceAware): Seq[SourceTreeInScope] = {
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Seq[SourceLocation.Code] = {
     val allInScopeCode =
       collectParsed(workspace)
 

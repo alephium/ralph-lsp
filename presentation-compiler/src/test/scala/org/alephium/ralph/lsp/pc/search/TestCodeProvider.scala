@@ -24,8 +24,7 @@ import org.alephium.ralph.lsp.access.util.TestCodeUtil
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
-import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace, Workspace}
@@ -83,20 +82,26 @@ object TestCodeProvider {
 
     // Execute go-to definition.
     val (searchResult, sourceCode, _) =
-      TestCodeProvider[GoToLocation](codeWithoutGoToSymbols)
+      TestCodeProvider[SourceLocation.GoTo](codeWithoutGoToSymbols)
 
     // Expect GoToLocations to also contain the fileURI
     val expectedGoToLocations =
       expectedLineRanges map {
         lineRange =>
-          GoToLocation(
-            uri = sourceCode.fileURI,
-            lineRange = lineRange
-          )
+          (sourceCode.fileURI, lineRange)
       }
 
+    // For actual search result assert only the fileURI and line-ranges
+    val actual =
+      searchResult
+        .toList
+        .map {
+          result =>
+            (result.parsed.fileURI, result.toLineRange().value)
+        }
+
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-    searchResult.toList should contain theSameElementsAs expectedGoToLocations
+    actual should contain theSameElementsAs expectedGoToLocations
   }
 
   /**
@@ -114,7 +119,7 @@ object TestCodeProvider {
 
     // Execute go-to definition.
     val (searchResult, _, workspace) =
-      TestCodeProvider[GoToLocation](codeWithoutGoToSymbols)
+      TestCodeProvider[SourceLocation.GoTo](codeWithoutGoToSymbols)
 
     expected match {
       case Some(expectedFunction) =>
@@ -139,15 +144,21 @@ object TestCodeProvider {
                   ._1
                   .map {
                     lineRange =>
-                      GoToLocation(
-                        uri = builtInFile.fileURI,
-                        lineRange = lineRange
-                      )
+                      (builtInFile.fileURI, lineRange)
                   }
             }
 
+        // For actual search result assert only the fileURI and line-ranges
+        val actualResults =
+          searchResult
+            .toList
+            .map {
+              result =>
+                (result.parsed.fileURI, result.toLineRange().value)
+            }
+
         // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-        searchResult.toList should contain theSameElementsAs expectedResults
+        actualResults should contain theSameElementsAs expectedResults
 
       case None =>
         searchResult shouldBe empty

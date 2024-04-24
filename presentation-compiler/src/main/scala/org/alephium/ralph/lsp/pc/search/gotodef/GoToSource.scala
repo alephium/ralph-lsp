@@ -19,8 +19,7 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.lsp.pc.search.gotodef.data.GoToLocation
-import org.alephium.ralph.lsp.pc.sourcecode.SourceTreeInScope
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 private object GoToSource {
@@ -35,16 +34,15 @@ private object GoToSource {
    */
   def goTo(
       cursorIndex: Int,
-      sourceCode: SourceTreeInScope,
-      workspace: WorkspaceState.IsSourceAware): Iterator[GoToLocation] =
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
     sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
       case Some(closest) =>
         closest match {
           case identNode @ Node(ident: Ast.Ident, _) =>
             // the clicked/closest node is an ident
             GoToIdent.goTo(
-              identNode = identNode,
-              ident = ident,
+              identNode = identNode.upcast(ident),
               sourceCode = sourceCode,
               workspace = workspace
             )
@@ -52,8 +50,7 @@ private object GoToSource {
           case funcIdNode @ Node(funcId: Ast.FuncId, _) =>
             // the clicked/closest node is functionId
             GoToFuncId.goTo(
-              funcIdNode = funcIdNode,
-              funcId = funcId,
+              funcIdNode = funcIdNode.upcast(funcId),
               sourceCode = sourceCode,
               workspace = workspace
             )
@@ -61,8 +58,7 @@ private object GoToSource {
           case typIdNode @ Node(typeId: Ast.TypeId, _) =>
             // the clicked/closest node is TypeId
             GoToTypeId.goTo(
-              identNode = typIdNode,
-              typeId = typeId,
+              typeIdNode = typIdNode.upcast(typeId),
               sourceCode = sourceCode,
               workspace = workspace
             )

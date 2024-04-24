@@ -76,7 +76,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
 
       // expect parent to be returned
       val expected =
-        SourceTreeInScope(
+        SourceLocation.Code(
           tree = parent,
           parsed = parsed
         )
@@ -187,7 +187,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
           }
           .map {
             parent =>
-              SourceTreeInScope(
+              SourceLocation.Code(
                 tree = parent,
                 parsed = file1 // file1 is in scope
               )
@@ -197,7 +197,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
         treesFromFile2
           .map {
             parent =>
-              SourceTreeInScope(
+              SourceLocation.Code(
                 tree = parent,
                 parsed = file2 // file2 is in scope
               )

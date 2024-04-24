@@ -112,7 +112,7 @@ object SourceCodeSearcher {
    */
   def collectInheritedParents(
       source: Tree.Source,
-      allSource: ArraySeq[SourceCodeState.Parsed]): Seq[SourceTreeInScope] =
+      allSource: ArraySeq[SourceCodeState.Parsed]): Seq[SourceLocation.Code] =
     source.ast match {
       case Left(contract) =>
         collectInheritedParents(
@@ -135,7 +135,7 @@ object SourceCodeSearcher {
    */
   def collectImplementingChildren(
       source: Tree.Source,
-      allSource: ArraySeq[SourceCodeState.Parsed]): Seq[SourceTreeInScope] =
+      allSource: ArraySeq[SourceCodeState.Parsed]): Seq[SourceLocation.Code] =
     source.ast match {
       case Left(contract) =>
         collectImplementingChildren(
@@ -160,7 +160,7 @@ object SourceCodeSearcher {
   private def collectInheritedParents(
       inheritances: Seq[Ast.Inheritance],
       allSource: ArraySeq[SourceCodeState.Parsed],
-      processedTrees: ListBuffer[Tree.Source]): Seq[SourceTreeInScope] =
+      processedTrees: ListBuffer[Tree.Source]): Seq[SourceLocation.Code] =
     if (inheritances.isEmpty) // Early check: Do not traverse workspace source-code if inheritances are empty.
       Seq.empty
     else
@@ -181,10 +181,10 @@ object SourceCodeSearcher {
                       processedTrees = processedTrees
                     )
 
-                  parents :+ SourceTreeInScope(source, parsed)
+                  parents :+ SourceLocation.Code(source, parsed)
 
                 case Right(_) =>
-                  Seq(SourceTreeInScope(source, parsed))
+                  Seq(SourceLocation.Code(source, parsed))
               }
 
             case _ =>
@@ -204,7 +204,7 @@ object SourceCodeSearcher {
   private def collectImplementingChildren(
       contract: Ast.ContractWithState,
       allSource: ArraySeq[SourceCodeState.Parsed],
-      processedTrees: ListBuffer[Tree.Source]): Seq[SourceTreeInScope] =
+      processedTrees: ListBuffer[Tree.Source]): Seq[SourceLocation.Code] =
     allSource flatMap {
       parsed =>
         parsed.ast.statements flatMap {
@@ -222,7 +222,7 @@ object SourceCodeSearcher {
                     processedTrees = processedTrees
                   )
 
-                children :+ SourceTreeInScope(source, parsed)
+                children :+ SourceLocation.Code(source, parsed)
 
               case Right(_) =>
                 Seq.empty

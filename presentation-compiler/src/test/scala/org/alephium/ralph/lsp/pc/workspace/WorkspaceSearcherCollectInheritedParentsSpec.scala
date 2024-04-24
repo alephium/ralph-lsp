@@ -21,7 +21,7 @@ import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceTreeInScope, TestSourceCode}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, TestSourceCode}
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers
@@ -103,7 +103,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
     val file1Trees =
       sourceFile1.ast.statements.collect {
         case source: Tree.Source =>
-          SourceTreeInScope(source, sourceFile1)
+          SourceLocation.Code(source, sourceFile1)
       }
 
     // We need to test to find in-scope inheritance for the Child contract.
@@ -114,7 +114,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
     val file2Trees =
       sourceFile2.ast.statements.collect {
         case source: Tree.Source =>
-          SourceTreeInScope(source, sourceFile2)
+          SourceLocation.Code(source, sourceFile2)
       }
 
     // std interfaces with the following import identifiers should get included.
@@ -134,7 +134,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
           case source if expectedImports.contains(source.importIdentifier.value.string.value) =>
             source.parsed.ast.statements.collect {
               case tree: Tree.Source =>
-                SourceTreeInScope(
+                SourceLocation.Code(
                   tree = tree,
                   parsed = source.parsed
                 )
@@ -151,7 +151,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
     // execute the function
     val actual =
       WorkspaceSearcher.collectInheritedParents(
-        sourceCode = SourceTreeInScope(
+        sourceCode = SourceLocation.Code(
           tree = childTree.tree,
           parsed = sourceFile1
         ),
