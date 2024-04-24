@@ -184,7 +184,7 @@ private object GoToTypeId {
               case tree: Tree.Source if tree.typeId() == typeId =>
                 SourceLocation.Node(
                   ast = tree.typeId(),
-                  SourceLocation.Code(
+                  source = SourceLocation.Code(
                     tree = tree,
                     parsed = parsed
                   )

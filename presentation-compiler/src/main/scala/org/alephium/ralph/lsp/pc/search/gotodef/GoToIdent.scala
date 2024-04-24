@@ -120,8 +120,9 @@ private object GoToIdent {
                 sourceCode =>
                   goToVariableUsages(
                     ident = constantDef.ident,
-                    from = sourceCode.tree.rootNode
-                  ).map(SourceLocation.Node(_, sourceCode))
+                    from = sourceCode.tree.rootNode,
+                    sourceCode = sourceCode
+                  )
               }
 
           case namedVarNode @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == identNode.data =>
@@ -129,7 +130,7 @@ private object GoToIdent {
             goToLocalVariableUsage(
               fromNode = namedVarNode.upcast(namedVar),
               sourceCode = sourceCode
-            ).map(SourceLocation.Node(_, sourceCode))
+            )
 
           case argumentNode @ Node(argument: Ast.Argument, _) if argument.ident == identNode.data =>
             // They selected an argument. Take 'em there!
@@ -156,14 +157,15 @@ private object GoToIdent {
    */
   private def goToLocalVariableUsage(
       fromNode: Node[Ast.NamedVar, Ast.Positioned],
-      sourceCode: SourceLocation.Code): Iterator[Ast.Ident] =
+      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] =
     goToNearestBlockInScope(fromNode, sourceCode.tree)
       .iterator
       .flatMap {
         from =>
           goToVariableUsages(
             ident = fromNode.data.ident,
-            from = from
+            from = from,
+            sourceCode = sourceCode
           )
       }
 
@@ -184,8 +186,9 @@ private object GoToIdent {
         // It's a function argument, search within this function's body.
         goToVariableUsages(
           ident = argumentNode.data.ident,
-          from = functionNode
-        ).map(SourceLocation.Node(_, sourceCode))
+          from = functionNode,
+          sourceCode = sourceCode
+        )
 
       case None =>
         // It's a template argument, search within the source-tree and within all dependant code.
@@ -196,8 +199,9 @@ private object GoToIdent {
             sourceCode =>
               goToVariableUsages(
                 ident = argumentNode.data.ident,
-                from = sourceCode.tree.rootNode
-              ).map(SourceLocation.Node(_, sourceCode))
+                from = sourceCode.tree.rootNode,
+                sourceCode = sourceCode
+              )
           }
     }
 
@@ -375,13 +379,14 @@ private object GoToIdent {
    */
   private def goToVariableUsages(
       ident: Ast.Ident,
-      from: Node[Ast.Positioned, Ast.Positioned]): Iterator[Ast.Ident] =
+      from: Node[Ast.Positioned, Ast.Positioned],
+      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] =
     from
       .walkDown
       .collect {
         // find all the selections matching the variable name.
         case Node(variable: Ast.Variable[_], _) if variable.id == ident =>
-          variable.id
+          SourceLocation.Node(variable.id, sourceCode)
       }
 
   /**
