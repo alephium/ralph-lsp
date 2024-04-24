@@ -429,15 +429,17 @@ private object GoToIdent {
    * @return An array sequence of [[Ast.Argument]]s matching the search result.
    */
   private def goToNearestFunctionArguments(identNode: Node[Ast.Ident, Ast.Positioned]): Iterator[Ast.Argument] =
-    goToNearestFuncDef(identNode)
-      .iterator
-      .flatMap {
-        functionNode =>
-          functionNode
-            .data
-            .args
-            .filter(_.ident == identNode.data)
-      }
+    goToNearestFuncDef(identNode) match {
+      case Some(functionNode) =>
+        functionNode
+          .data
+          .args
+          .iterator
+          .filter(_.ident == identNode.data)
+
+      case None =>
+        Iterator.empty
+    }
 
   /**
    * Navigate to the template argument(s) for the given identifier.
