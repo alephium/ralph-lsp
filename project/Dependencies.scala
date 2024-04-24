@@ -15,8 +15,14 @@ object Dependencies {
   lazy val scalaMock  = "org.scalamock"     %% "scalamock"       % "6.0.0"    % Test
 
   /** Core */
-  lazy val ralphc = "org.alephium"     %% "alephium-ralphc"   % "2.12.0"
-  lazy val lsp4j  = "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.22.0"
+  lazy val ralphc = "org.alephium" %% "alephium-ralphc" % "2.12.0" excludeAll (
+    ExclusionRule(organization = "org.rocksdb"),
+    ExclusionRule(organization = "io.prometheus"),
+    ExclusionRule(organization = "org.alephium", name = "alephium-api_2.13"),
+    ExclusionRule(organization = "org.alephium", name = "alephium-io_2.13")
+  )
+
+  lazy val lsp4j = "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.22.0"
 
   /** Logging */
   lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging"   % "3.9.5"
