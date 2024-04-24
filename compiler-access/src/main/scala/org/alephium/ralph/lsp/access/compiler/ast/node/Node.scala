@@ -20,11 +20,26 @@ import scala.annotation.unchecked.uncheckedVariance
 
 object Node {
 
-  /** Create a [[Node]] with no children */
+  /**
+   * Constructs a new `Node` with the given data and no children.
+   *
+   * @param data The data to be stored in the new node.
+   * @tparam A The data type of the new node.
+   * @tparam B The data type of the child nodes, which must be a super type of `A`.
+   * @return A new `Node` instance with the specified data and no children.
+   */
   @inline def apply[A, B >: A](data: A): Node[A, B] =
     new Node(data, List.empty)
 
-  /** Create a [[Node]] with children */
+  /**
+   * Constructs a new `Node` for the provided data and children.
+   *
+   * @param data     The data to be stored in the new node.
+   * @param children The child nodes of the new node.
+   * @tparam A The data type of the new node.
+   * @tparam B The data type of the child nodes, which must be a super type of `A`.
+   * @return A new `Node` instance with the specified data and children.
+   */
   @inline def apply[A, B >: A](
       data: A,
       children: Seq[Node[B, B]]): Node[A, B] = {
@@ -48,7 +63,8 @@ object Node {
  *
  * @param data     The data stored in this node.
  * @param children This node's child nodes.
- * @tparam A Data type.
+ * @tparam A Data type of the current node.
+ * @tparam B Data type of every other node, which is a super type of [[A]].
  */
 case class Node[+A, B] private (
     data: A,
