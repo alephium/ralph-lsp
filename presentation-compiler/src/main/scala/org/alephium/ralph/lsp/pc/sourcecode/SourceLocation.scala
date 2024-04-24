@@ -43,7 +43,7 @@ object SourceLocation {
    * Represents a source file ([[SourceCodeState.Parsed]]) without
    * a target position. For eg: Used to provide jump definition for imported files.
    *
-   * @param parsed   The source file containing the positioned node.
+   * @param parsed The source file containing the positioned node.
    */
   case class File(parsed: SourceCodeState.Parsed) extends GoTo {
 
@@ -54,7 +54,7 @@ object SourceLocation {
 
   /**
    * Represents a single positioned AST ([[org.alephium.ralph.Ast.Positioned]])
-   * within a source file ([[SourceCodeState.Parsed]]),
+   * within a source tree ([[SourceLocation.Code]]),
    *
    * @param ast    The positioned node within the parsed source file.
    * @param source The source tree containing the positioned node.

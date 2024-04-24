@@ -55,7 +55,7 @@ case class Node[+A, B] private (
     children: Seq[Node[B, B]]) { self =>
 
   private var _parent: Option[Node[B, B]] =
-    Option.empty
+    None
 
   def parent: Option[Node[B, B]] =
     _parent
