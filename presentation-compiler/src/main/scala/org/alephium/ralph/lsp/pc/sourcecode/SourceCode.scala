@@ -100,18 +100,9 @@ private[pc] object SourceCode {
             )
         }
 
-      case onDisk: SourceCodeState.OnDisk =>
-        getSourceCode(onDisk.fileURI) match {
-          case errored: SourceCodeState.IsError =>
-            errored
-
-          case gotCode =>
-            parse(gotCode)
-        }
-
-      case accessError: SourceCodeState.ErrorAccess =>
+      case state @ (_: SourceCodeState.ErrorAccess | _: SourceCodeState.OnDisk) =>
         // access the code from disk and parse it.
-        getSourceCode(accessError.fileURI) match {
+        getSourceCode(state.fileURI) match {
           case state: SourceCodeState.UnCompiled =>
             // successfully accessed the code, now parse it.
             parse(state)
