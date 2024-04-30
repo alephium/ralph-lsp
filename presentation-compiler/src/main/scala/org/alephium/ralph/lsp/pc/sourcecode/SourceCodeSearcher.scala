@@ -103,6 +103,61 @@ object SourceCodeSearcher {
       .distinctBy(_.string.value)
 
   /**
+   * Collects unique inherited parents for all input parsed files and for each tree within a file.
+   *
+   * @param sourceCode The source code to find inherited parents for.
+   * @param workspace  The source code containing the parents.
+   * @return All inherited parent implementations and their source files.
+   */
+  def collectInheritedParentsForAll(
+      sourceCode: ArraySeq[SourceCodeState.Parsed],
+      workspace: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.Code] = {
+    val workspaceTrees = collectSourceTrees(workspace)
+
+    val parents =
+      sourceCode flatMap {
+        parsed =>
+          collectInheritedParentsForAll(
+            sourceCode = parsed,
+            workspace = workspaceTrees
+          )
+      }
+
+    // unique parents
+    parents.distinct
+  }
+
+  /**
+   * Collects unique inherited parents of each tree within a parsed file.
+   *
+   * @param sourceCode The source code to find inherited parents for.
+   * @param workspace  The source code containing the parents.
+   * @return All inherited parent implementations and their source files.
+   */
+  def collectInheritedParentsForAllTrees(
+      sourceCode: SourceCodeState.Parsed,
+      workspace: ArraySeq[SourceCodeState.Parsed]): Seq[SourceLocation.Code] =
+    collectInheritedParentsForAll(
+      sourceCode = sourceCode,
+      workspace = collectSourceTrees(workspace)
+    )
+
+  /**
+   * Collects unique inherited parents of each tree within a parsed file.
+   *
+   * @param sourceCode The source code to find inherited parents for.
+   * @param workspace  The source trees containing the parents.
+   * @return All inherited parent implementations and their source files.
+   */
+  def collectInheritedParentsForAll(
+      sourceCode: SourceCodeState.Parsed,
+      workspace: ArraySeq[SourceLocation.Code]): Seq[SourceLocation.Code] =
+    collectInheritedParents(
+      source = collectSourceTrees(sourceCode).to(ArraySeq),
+      allSource = workspace
+    ).distinct
+
+  /**
    * Collects all trees within each parsed source file.
    *
    * @param sourceCode The parsed source files to process.
@@ -127,6 +182,25 @@ object SourceCodeSearcher {
           parsed = sourceCode
         )
     }
+
+  /**
+   * Collects all parent source implementations inherited by the given
+   * source tree within the provided source code files.
+   *
+   * @param source    The source tree to search for parent implementations.
+   * @param allSource The source code files containing the parent implementations.
+   * @return All parent source implementations found.
+   */
+  def collectInheritedParents(
+      source: ArraySeq[SourceLocation.Code],
+      allSource: ArraySeq[SourceLocation.Code]): Seq[SourceLocation.Code] =
+    source.flatMap {
+      source =>
+        collectInheritedParents(
+          source = source,
+          allSource = allSource
+        )
+    }.distinct
 
   /**
    * Collects all parent source implementations inherited by the given
