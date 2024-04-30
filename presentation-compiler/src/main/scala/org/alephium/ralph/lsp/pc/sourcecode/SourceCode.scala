@@ -18,7 +18,6 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.imports.Importer
@@ -206,13 +205,19 @@ private[pc] object SourceCode {
         Right(newCode)
 
       case Right(importedCode) =>
-        // Imports compiled ok. Compile source-code.
-        val parsedImported =
-          importedCode.map(_.parsed)
+        // flatten the inheritance within dependency
+        val importedTrees =
+          flattenInheritance(
+            toFlatten = importedCode.map(_.parsed),
+            workspace = dependency.map(_.parsed)
+          )
+
+        val workspaceSourceTrees =
+          SourceCodeSearcher.collectSourceTrees(sourceCode)
 
         compileSource(
-          sourceCode = sourceCode,
-          importedCode = parsedImported,
+          sourceTrees = workspaceSourceTrees,
+          importedTrees = importedTrees,
           compilerOptions = compilerOptions,
           workspaceErrorURI = workspaceErrorURI
         )
@@ -224,35 +229,35 @@ private[pc] object SourceCode {
    * Pre-requisite: It is assumed that imports are already processed.
    * If not, use [[SourceCode.compile]] instead.
    *
-   * @param sourceCode        Source-code to compile
+   * @param sourceTrees       Source-code to compile.
+   * @param importedTrees     Imported source-code.
    * @param compilerOptions   Options to run for this compilation
    * @param workspaceErrorURI URI to report errors that contain no `fileURI`.
    * @param compiler          Target compiler
    * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
    */
   private def compileSource(
-      sourceCode: ArraySeq[SourceCodeState.Parsed],
-      importedCode: ArraySeq[SourceCodeState.Parsed],
+      sourceTrees: ArraySeq[SourceLocation.Code],
+      importedTrees: ArraySeq[SourceLocation.Code],
       compilerOptions: CompilerOptions,
       workspaceErrorURI: URI
     )(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] = {
+    val sourceTreesOnly =
+      sourceTrees.map(_.tree)
+
+    val importedTreesOnly =
+      importedTrees.map(_.tree)
+
     val allCode =
-      sourceCode ++ importedCode
+      sourceTreesOnly ++ importedTreesOnly
 
     // Compile only the source-code. Import statements are already expected to be processed and included in `importedCode` collection.
     val (contracts, structs) =
       allCode
-        .flatMap {
-          state =>
-            state
-              .ast
-              .statements
-              .collect {
-                // collect only the source-code ignoring all import statements.
-                case source: Tree.Source =>
-                  source.clearStructCache()
-                  source.ast
-              }
+        .map {
+          source =>
+            source.clearStructCache()
+            source.ast
         }
         .partitionMap(identity)
 
@@ -265,9 +270,12 @@ private[pc] object SourceCode {
         workspaceErrorURI = workspaceErrorURI
       )
 
+    val uniqueFiles =
+      sourceTrees.map(_.parsed).distinct
+
     // transform compilation result to SourceCodeState
     SourceCodeStateBuilder.toSourceCodeState(
-      parsedCode = sourceCode,
+      parsedCode = uniqueFiles,
       compilationResult = compilationResult,
       workspaceErrorURI = workspaceErrorURI
     )
@@ -280,6 +288,35 @@ private[pc] object SourceCode {
 
       case Right(sourceCode) =>
         SourceCodeState.UnCompiled(fileURI, sourceCode)
+    }
+
+  /**
+   * Flattens the inheritance hierarchy.
+   *
+   * @param toFlatten The source files to flatten hierarchy, which may contain inheritance.
+   * @param workspace The source files that contain implementations of all dependent code.
+   * @return An array sequence of unique flattened source locations.
+   */
+  def flattenInheritance(
+      toFlatten: ArraySeq[SourceCodeState.Parsed],
+      workspace: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.Code] =
+    if (toFlatten.isEmpty || workspace.isEmpty) {
+      ArraySeq.empty
+    } else {
+      // Imports compiled ok. Compile source-code.
+      val inheritedTrees =
+        SourceCodeSearcher.collectInheritedParentsForAll(
+          sourceCode = toFlatten,
+          workspace = workspace
+        )
+
+      val usedCodeTrees =
+        SourceCodeSearcher.collectSourceTrees(toFlatten)
+
+      val allTrees =
+        usedCodeTrees ++ inheritedTrees
+
+      allTrees.distinct
     }
 
 }

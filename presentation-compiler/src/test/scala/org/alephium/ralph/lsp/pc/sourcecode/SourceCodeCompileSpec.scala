@@ -133,4 +133,178 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
     }
   }
 
+  "importing dependent source files" when {
+    implicit val compiler: CompilerAccess = CompilerAccess.ralphc
+    // No file access should occur
+    implicit val file: FileAccess = null
+
+    /**
+     * Create the following two dependency files and test the input code.
+     *  - `Parent`
+     *  - `Child extends Parent`
+     *
+     * @param codeToTest Code to test
+     * @return Compilation result
+     */
+    def buildDependencyAndTest(codeToTest: String) = {
+      // generate a dependency directory
+      val dependencyWorkspaceDir =
+        TestFile
+          .genFolderPath(true)
+          .sample
+          .get
+
+      // This is where the source code is written to
+      val dependencyContractPath =
+        "dependency_dir"
+
+      // Generate a new file for the Parent
+      val dependantParent =
+        TestSourceCode
+          .genParsedOK(
+            code = """
+                |Interface Parent {
+                |  fn function1() -> ()
+                |}
+                |
+                |// This is not used by the dependency
+                |Interface ParentNotUsedByDependency {
+                |  fn function1() -> ()
+                |}
+                |""".stripMargin,
+            fileURI = // fileURI within the "contractPath"
+              dependencyWorkspaceDir
+                .resolve(dependencyContractPath)
+                .resolve("parent_interface.ral")
+                .toUri
+          )
+          .sample
+          .get
+
+      // Generate a new file for the Child which extends Parent
+      val dependantChild =
+        TestSourceCode
+          .genParsedOK(
+            code = """
+                |Interface Child extends Parent {
+                |  fn function2() -> ()
+                |}
+                |""".stripMargin,
+            fileURI = // fileURI within the "contractPath"
+              dependencyWorkspaceDir
+                .resolve(dependencyContractPath)
+                .resolve("child_interface.ral")
+                .toUri
+          )
+          .sample
+          .get
+
+      // Compile both dependency files
+      val dependencyCompilationResult =
+        SourceCode.compile(
+          sourceCode = ArraySeq(dependantParent, dependantChild),
+          dependency = ArraySeq.empty, // the dependency does not have any other dependencies
+          compilerOptions = CompilerOptions.Default,
+          workspaceErrorURI = dependencyWorkspaceDir.toUri
+        )
+
+      // They should compile ok
+      val compiledDependencyFiles =
+        dependencyCompilationResult.value.map(_.asInstanceOf[SourceCodeState.Compiled])
+
+      // Parsed the input source file
+      val usingCode =
+        TestSourceCode
+          .genParsedOK(codeToTest)
+          .sample
+          .get
+
+      // Now compile the parsed code being tested with the dependency source files.
+      SourceCode.compile(
+        sourceCode = ArraySeq(usingCode),
+        dependency = compiledDependencyFiles,
+        compilerOptions = CompilerOptions.Default,
+        workspaceErrorURI = dependencyWorkspaceDir.toUri
+      )
+    }
+
+    "child interface is imported" should {
+      "not require importing the Parent interface" when {
+        "Child implements Parent" in {
+          val code =
+            """
+              |import "dependency_dir/child_interface"
+              |
+              |Contract MyContract() implements Child {
+              |  fn function1() -> () {}
+              |
+              |  fn function2() -> () {}
+              |}
+              |""".stripMargin
+
+          val compilationResult =
+            buildDependencyAndTest(code).value
+
+          val actual =
+            compilationResult.map(_.asInstanceOf[SourceCodeState.Compiled])
+
+          actual should have size 1
+          actual.head.code shouldBe code
+        }
+      }
+
+      "require importing the parent interface" when {
+        "report error" when {
+          "ParentNotUsedByDependency is extended without importing" in {
+            val code =
+              """
+                |import "dependency_dir/child_interface"
+                |
+                |// the imported child_interface has no dependency on the interface ParentNotUsedByDependency, so this should report error
+                |Contract MyContract() implements ParentNotUsedByDependency {
+                |  fn function1() -> () {}
+                |
+                |  fn function2() -> () {}
+                |}
+                |""".stripMargin
+
+            val compilationResult =
+              buildDependencyAndTest(code).value
+
+            compilationResult should have size 1
+            val errorCompilation = compilationResult.head.asInstanceOf[SourceCodeState.ErrorCompilation]
+            errorCompilation.errors should have size 1
+            errorCompilation.code shouldBe code
+            val error = errorCompilation.errors.head
+            error.message shouldBe """Contract "ParentNotUsedByDependency" does not exist"""
+          }
+        }
+
+        "compile" when {
+          "ParentNotUsedByDependency is extended with import the parent interface" in {
+            // Child implements Parent so importing "parent_interface" is not needed
+            val code =
+              """
+                |// child_interface has no dependency on the interface ParentNotUsedByDependency
+                |import "dependency_dir/parent_interface"
+                |
+                |Contract MyContract() implements ParentNotUsedByDependency {
+                |  fn function1() -> () {}
+                |
+                |  fn function2() -> () {}
+                |}
+                |""".stripMargin
+
+            val compilationResult =
+              buildDependencyAndTest(code).value
+
+            compilationResult should have size 1
+            val compiled = compilationResult.head.asInstanceOf[SourceCodeState.Compiled]
+            compiled.code shouldBe code
+          }
+        }
+      }
+    }
+  }
+
 }
