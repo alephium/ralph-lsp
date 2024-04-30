@@ -68,7 +68,7 @@ object WorkspaceSearcher {
 
     val inheritancesInScope =
       SourceCodeSearcher.collectInheritedParents(
-        source = sourceCode.tree,
+        source = sourceCode,
         allSource = allInScopeCode
       )
 
@@ -91,7 +91,7 @@ object WorkspaceSearcher {
 
     val inheritancesInScope =
       SourceCodeSearcher.collectImplementingChildren(
-        source = sourceCode.tree,
+        source = sourceCode,
         allSource = allInScopeCode
       )
 
@@ -105,13 +105,13 @@ object WorkspaceSearcher {
    * @param workspace The workspace with dependencies.
    * @return Parsed source files in scope.
    */
-  def collectParsed(workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceCodeState.Parsed] = {
+  def collectParsed(workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.Code] = {
     // fetch the `std` dependency
     val stdSourceParsedCode =
       workspace
         .build
         .findDependency(DependencyID.Std)
-        .toSeq
+        .to(ArraySeq)
         .flatMap(_.sourceCode.map(_.parsed))
 
     // collect all parsed source-files
@@ -136,7 +136,13 @@ object WorkspaceSearcher {
             }
       }
 
-    workspaceCode ++ importedCode
+    val workspaceTrees =
+      SourceCodeSearcher.collectSourceTrees(workspaceCode)
+
+    val importedTrees =
+      SourceCodeSearcher.collectSourceTrees(importedCode)
+
+    workspaceTrees ++ importedTrees
   }
 
 }
