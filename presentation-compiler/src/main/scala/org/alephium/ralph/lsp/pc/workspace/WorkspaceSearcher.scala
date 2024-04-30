@@ -136,13 +136,22 @@ object WorkspaceSearcher {
             }
       }
 
+    // Pull in all inherited source-files for the used import statements.
+    val importedInheritedParentTrees =
+      SourceCodeSearcher.collectInheritedParentsForAll(
+        sourceCode = importedCode,
+        workspace = stdSourceParsedCode
+      )
+
+    // collect all imported code including the inherited code.
+    val allImportedCode =
+      (SourceCodeSearcher.collectSourceTrees(importedCode) ++ importedInheritedParentTrees).distinct
+
+    // The entire local local dev workspace source-code is available.
     val workspaceTrees =
       SourceCodeSearcher.collectSourceTrees(workspaceCode)
 
-    val importedTrees =
-      SourceCodeSearcher.collectSourceTrees(importedCode)
-
-    workspaceTrees ++ importedTrees
+    workspaceTrees ++ allImportedCode
   }
 
 }

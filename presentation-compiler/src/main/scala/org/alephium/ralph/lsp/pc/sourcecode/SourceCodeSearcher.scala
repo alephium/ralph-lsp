@@ -23,7 +23,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.error._
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
 
 /**
  * Search functions related to [[SourceCodeState]]
@@ -140,7 +140,7 @@ object SourceCodeSearcher {
     collectInheritedParentsForAll(
       sourceCode = sourceCode,
       workspace = collectSourceTrees(workspace)
-    )
+    ).distinct
 
   /**
    * Collects unique inherited parents of each tree within a parsed file.
@@ -218,7 +218,7 @@ object SourceCodeSearcher {
         collectInheritedParents(
           inheritances = contract.inheritances,
           allSource = allSource,
-          processedTrees = ListBuffer(source)
+          processedTrees = mutable.Set(source)
         )
 
       case Right(_) =>
@@ -241,7 +241,7 @@ object SourceCodeSearcher {
         collectImplementingChildren(
           contract = contract,
           allSource = allSource,
-          processedTrees = ListBuffer(source)
+          processedTrees = mutable.Set(source)
         )
 
       case Right(_) =>
@@ -260,36 +260,33 @@ object SourceCodeSearcher {
   private def collectInheritedParents(
       inheritances: Seq[Ast.Inheritance],
       allSource: ArraySeq[SourceLocation.Code],
-      processedTrees: ListBuffer[SourceLocation.Code]): Seq[SourceLocation.Code] =
-    if (inheritances.isEmpty) // Early check: Do not traverse workspace source-code if inheritances are empty.
-      Seq.empty
-    else
-      allSource flatMap {
-        source =>
-          // collect the trees that belong to one of the inheritances and the ones that are not already processed
-          if (inheritances.exists(_.parentId == source.tree.typeId()) && !processedTrees.contains(source)) {
-            processedTrees addOne source
+      processedTrees: mutable.Set[SourceLocation.Code]): Seq[SourceLocation.Code] =
+    allSource flatMap {
+      source =>
+        // collect the trees that belong to one of the inheritances and the ones that are not already processed
+        if (inheritances.exists(_.parentId == source.tree.typeId()) && !processedTrees.contains(source)) {
+          processedTrees addOne source
 
-            source.tree.ast match {
-              case Left(contract) =>
-                // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
-                val parents =
-                  collectInheritedParents(
-                    inheritances = contract.inheritances,
-                    allSource = allSource,
-                    processedTrees = processedTrees
-                  )
+          source.tree.ast match {
+            case Left(contract) =>
+              // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
+              val parents =
+                collectInheritedParents(
+                  inheritances = contract.inheritances,
+                  allSource = allSource,
+                  processedTrees = processedTrees
+                )
 
-                parents :+ source
+              parents :+ source
 
-              case Right(_) =>
-                Seq.empty
-            }
-
-          } else {
-            Seq.empty
+            case Right(_) =>
+              Seq.empty
           }
-      }
+
+        } else {
+          Seq.empty
+        }
+    }
 
   /**
    * Collects all source-trees representing children that implement or extend the given contract.
@@ -303,7 +300,7 @@ object SourceCodeSearcher {
   private def collectImplementingChildren(
       contract: Ast.ContractWithState,
       allSource: ArraySeq[SourceLocation.Code],
-      processedTrees: ListBuffer[SourceLocation.Code]): Seq[SourceLocation.Code] =
+      processedTrees: mutable.Set[SourceLocation.Code]): Seq[SourceLocation.Code] =
     allSource flatMap {
       source =>
         // collect the trees that belong to one of the inheritances and the ones that are not already processed
