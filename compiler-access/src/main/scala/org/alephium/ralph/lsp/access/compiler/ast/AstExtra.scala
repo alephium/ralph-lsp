@@ -42,4 +42,19 @@ object AstExtra {
           false
       }
 
+  /**
+   * Return the function signature for the given function definition.
+   *
+   * @param funcDef The function definition.
+   * @return The function signature.
+   */
+  def funcSignature[A <: StatelessContext](funcDef: Ast.FuncDef[A]): Ast.Positioned =
+    if (funcDef.bodyOpt.isEmpty)
+      funcDef // show the entire function definition to display the function signature.
+    else
+      // The function contains a body so return just the function id.
+      // FIXME: There is still a need to display just the function signature.
+      //        At the moment there is no AST type that provides just the function signature.
+      funcDef.id
+
 }
