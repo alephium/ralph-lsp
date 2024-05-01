@@ -49,7 +49,7 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
         parsed.ast.statements.head.asInstanceOf[Tree.Source]
 
       SourceCodeSearcher.collectImplementingChildren(
-        source = tree,
+        source = SourceLocation.Code(tree, parsed),
         allSource = ArraySeq.empty
       ) shouldBe empty
 
@@ -61,10 +61,14 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
     def doTest(code: String) = {
       val parsed =
         TestSourceCode
-          .genParsed(code)
+          .genParsedOK(code)
           .sample
           .get
-          .asInstanceOf[SourceCodeState.Parsed]
+
+      val parsedTrees =
+        SourceCodeSearcher
+          .collectSourceTrees(parsed)
+          .to(ArraySeq)
 
       // first statement is Parent()
       val parent = parsed.ast.statements.head.asInstanceOf[Tree.Source]
@@ -83,8 +87,8 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
 
       val actual =
         SourceCodeSearcher.collectImplementingChildren(
-          source = parent,
-          allSource = ArraySeq(parsed)
+          source = SourceLocation.Code(parent, parsed),
+          allSource = parsedTrees
         )
 
       actual should contain only expected
@@ -209,11 +213,14 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
       val expectedTrees =
         expectedTreesFromFile1 ++ expectedTreesFromFile2
 
+      val allTrees =
+        SourceCodeSearcher.collectSourceTrees(ArraySeq(file1, file2))
+
       // actual trees returned
       val actual =
         SourceCodeSearcher.collectImplementingChildren(
-          source = parent,
-          allSource = ArraySeq(file1, file2)
+          source = SourceLocation.Code(parent, file2),
+          allSource = allTrees
         )
 
       actual should contain theSameElementsAs expectedTrees

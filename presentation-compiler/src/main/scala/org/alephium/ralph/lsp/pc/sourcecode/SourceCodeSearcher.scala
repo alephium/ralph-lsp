@@ -23,7 +23,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.error._
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
 
 /**
  * Search functions related to [[SourceCodeState]]
@@ -103,6 +103,87 @@ object SourceCodeSearcher {
       .distinctBy(_.string.value)
 
   /**
+   * Collects unique inherited parents for all input parsed files and for each tree within a file.
+   *
+   * @param sourceCode The source code to find inherited parents for.
+   * @param workspace  The source code containing the parents.
+   * @return All inherited parent implementations and their source files.
+   */
+  def collectInheritedParentsForAll(
+      sourceCode: ArraySeq[SourceCodeState.Parsed],
+      workspace: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.Code] = {
+    val workspaceTrees = collectSourceTrees(workspace)
+
+    val parents =
+      sourceCode flatMap {
+        parsed =>
+          collectInheritedParentsForAll(
+            sourceCode = parsed,
+            workspace = workspaceTrees
+          )
+      }
+
+    // unique parents
+    parents.distinct
+  }
+
+  /**
+   * Collects unique inherited parents of each tree within a parsed file.
+   *
+   * @param sourceCode The source code to find inherited parents for.
+   * @param workspace  The source code containing the parents.
+   * @return All inherited parent implementations and their source files.
+   */
+  def collectInheritedParentsForAllTrees(
+      sourceCode: SourceCodeState.Parsed,
+      workspace: ArraySeq[SourceCodeState.Parsed]): Seq[SourceLocation.Code] =
+    collectInheritedParentsForAll(
+      sourceCode = sourceCode,
+      workspace = collectSourceTrees(workspace)
+    ).distinct
+
+  /**
+   * Collects unique inherited parents of each tree within a parsed file.
+   *
+   * @param sourceCode The source code to find inherited parents for.
+   * @param workspace  The source trees containing the parents.
+   * @return All inherited parent implementations and their source files.
+   */
+  def collectInheritedParentsForAll(
+      sourceCode: SourceCodeState.Parsed,
+      workspace: ArraySeq[SourceLocation.Code]): Seq[SourceLocation.Code] =
+    collectInheritedParents(
+      source = collectSourceTrees(sourceCode).to(ArraySeq),
+      allSource = workspace
+    ).distinct
+
+  /**
+   * Collects all trees within each parsed source file.
+   *
+   * @param sourceCode The parsed source files to process.
+   * @return An sequence of source-tree and its parsed source-file mappings.
+   */
+  def collectSourceTrees(
+      sourceCode: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.Code] =
+    sourceCode flatMap collectSourceTrees
+
+  /**
+   * Collects all trees within a parsed source file.
+   *
+   * @param sourceCode The parsed source file to process.
+   * @return An sequence of source-tree and the parsed source-file mappings.
+   */
+  def collectSourceTrees(
+      sourceCode: SourceCodeState.Parsed): Seq[SourceLocation.Code] =
+    sourceCode.ast.statements.collect {
+      case tree: Tree.Source =>
+        SourceLocation.Code(
+          tree = tree,
+          parsed = sourceCode
+        )
+    }
+
+  /**
    * Collects all parent source implementations inherited by the given
    * source tree within the provided source code files.
    *
@@ -111,14 +192,33 @@ object SourceCodeSearcher {
    * @return All parent source implementations found.
    */
   def collectInheritedParents(
-      source: Tree.Source,
-      allSource: ArraySeq[SourceCodeState.Parsed]): Seq[SourceLocation.Code] =
-    source.ast match {
+      source: ArraySeq[SourceLocation.Code],
+      allSource: ArraySeq[SourceLocation.Code]): Seq[SourceLocation.Code] =
+    source.flatMap {
+      source =>
+        collectInheritedParents(
+          source = source,
+          allSource = allSource
+        )
+    }.distinct
+
+  /**
+   * Collects all parent source implementations inherited by the given
+   * source tree within the provided source code files.
+   *
+   * @param source    The source tree to search for parent implementations.
+   * @param allSource The source code files containing the parent implementations.
+   * @return All parent source implementations found.
+   */
+  def collectInheritedParents(
+      source: SourceLocation.Code,
+      allSource: ArraySeq[SourceLocation.Code]): Seq[SourceLocation.Code] =
+    source.tree.ast match {
       case Left(contract) =>
         collectInheritedParents(
           inheritances = contract.inheritances,
           allSource = allSource,
-          processedTrees = ListBuffer(source)
+          processedTrees = mutable.Set(source)
         )
 
       case Right(_) =>
@@ -134,14 +234,14 @@ object SourceCodeSearcher {
    * @return All child trees along with their corresponding source files.
    */
   def collectImplementingChildren(
-      source: Tree.Source,
-      allSource: ArraySeq[SourceCodeState.Parsed]): Seq[SourceLocation.Code] =
-    source.ast match {
+      source: SourceLocation.Code,
+      allSource: ArraySeq[SourceLocation.Code]): Seq[SourceLocation.Code] =
+    source.tree.ast match {
       case Left(contract) =>
         collectImplementingChildren(
           contract = contract,
           allSource = allSource,
-          processedTrees = ListBuffer(source)
+          processedTrees = mutable.Set(source)
         )
 
       case Right(_) =>
@@ -159,38 +259,34 @@ object SourceCodeSearcher {
    */
   private def collectInheritedParents(
       inheritances: Seq[Ast.Inheritance],
-      allSource: ArraySeq[SourceCodeState.Parsed],
-      processedTrees: ListBuffer[Tree.Source]): Seq[SourceLocation.Code] =
-    if (inheritances.isEmpty) // Early check: Do not traverse workspace source-code if inheritances are empty.
-      Seq.empty
-    else
-      allSource flatMap {
-        parsed =>
-          parsed.ast.statements flatMap {
-            // collect the trees that belong to one of the inheritances and the ones that are not already processed
-            case source: Tree.Source if inheritances.exists(_.parentId == source.typeId()) && !processedTrees.contains(source) =>
-              processedTrees addOne source
+      allSource: ArraySeq[SourceLocation.Code],
+      processedTrees: mutable.Set[SourceLocation.Code]): Seq[SourceLocation.Code] =
+    allSource flatMap {
+      source =>
+        // collect the trees that belong to one of the inheritances and the ones that are not already processed
+        if (inheritances.exists(_.parentId == source.tree.typeId()) && !processedTrees.contains(source)) {
+          processedTrees addOne source
 
-              source.ast match {
-                case Left(contract) =>
-                  // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
-                  val parents =
-                    collectInheritedParents(
-                      inheritances = contract.inheritances,
-                      allSource = allSource,
-                      processedTrees = processedTrees
-                    )
+          source.tree.ast match {
+            case Left(contract) =>
+              // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
+              val parents =
+                collectInheritedParents(
+                  inheritances = contract.inheritances,
+                  allSource = allSource,
+                  processedTrees = processedTrees
+                )
 
-                  parents :+ SourceLocation.Code(source, parsed)
+              parents :+ source
 
-                case Right(_) =>
-                  Seq(SourceLocation.Code(source, parsed))
-              }
-
-            case _ =>
+            case Right(_) =>
               Seq.empty
           }
-      }
+
+        } else {
+          Seq.empty
+        }
+    }
 
   /**
    * Collects all source-trees representing children that implement or extend the given contract.
@@ -203,33 +299,31 @@ object SourceCodeSearcher {
    */
   private def collectImplementingChildren(
       contract: Ast.ContractWithState,
-      allSource: ArraySeq[SourceCodeState.Parsed],
-      processedTrees: ListBuffer[Tree.Source]): Seq[SourceLocation.Code] =
+      allSource: ArraySeq[SourceLocation.Code],
+      processedTrees: mutable.Set[SourceLocation.Code]): Seq[SourceLocation.Code] =
     allSource flatMap {
-      parsed =>
-        parsed.ast.statements flatMap {
-          // collect the trees that belong to one of the inheritances and the ones that are not already processed
-          case source: Tree.Source if source.ast.left.exists(_.inheritances.exists(_.parentId == contract.ident)) && !processedTrees.contains(source) =>
-            processedTrees addOne source
+      source =>
+        // collect the trees that belong to one of the inheritances and the ones that are not already processed
+        if (source.tree.ast.left.exists(_.inheritances.exists(_.parentId == contract.ident)) && !processedTrees.contains(source)) {
+          processedTrees addOne source
 
-            source.ast match {
-              case Left(contract) =>
-                // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
-                val children =
-                  collectImplementingChildren(
-                    contract = contract,
-                    allSource = allSource,
-                    processedTrees = processedTrees
-                  )
+          source.tree.ast match {
+            case Left(contract) =>
+              // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
+              val children =
+                collectImplementingChildren(
+                  contract = contract,
+                  allSource = allSource,
+                  processedTrees = processedTrees
+                )
 
-                children :+ SourceLocation.Code(source, parsed)
+              children :+ source
 
-              case Right(_) =>
-                Seq.empty
-            }
-
-          case _ =>
-            Seq.empty
+            case Right(_) =>
+              Seq.empty
+          }
+        } else {
+          Seq.empty
         }
     }
 

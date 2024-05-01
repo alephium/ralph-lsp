@@ -94,6 +94,33 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
            |""".stripMargin
       )
     }
+
+    "implemented interfaces is indirectly imported" in {
+      goToStd(
+        """
+          |// This import does not contain the implemented INFTCollection interface,
+          |// but it has INFTCollectionWithRoyalty that implements it.
+          |import "std/nft_collection_with_royalty_interface"
+          |
+          |Abstract Contract TheContract() implements INFTCollection@@ { }
+          |
+          |""".stripMargin,
+        Some(("Interface INFTCollection {", "INFTCollection"))
+      )
+    }
+
+    "implemented interfaces is directly imported" in {
+      goToStd(
+        """
+          |// An obvious import.
+          |import "std/nft_collection_with_royalty_interface"
+          |
+          |Abstract Contract TheContract() implements INFTCollectionWithRoyalty@@ { }
+          |
+          |""".stripMargin,
+        Some(("Interface INFTCollectionWithRoyalty extends INFTCollection {", "INFTCollectionWithRoyalty"))
+      )
+    }
   }
 
 }

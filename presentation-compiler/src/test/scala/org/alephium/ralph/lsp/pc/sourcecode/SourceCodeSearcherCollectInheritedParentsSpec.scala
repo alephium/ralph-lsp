@@ -34,7 +34,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
     "source-code has no inheritance" in {
       val parsed =
         TestSourceCode
-          .genParsed(
+          .genParsedOK(
             """
             |Contract MyContract() {
             |  fn function1() -> () {}
@@ -43,13 +43,12 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
           )
           .sample
           .get
-          .asInstanceOf[SourceCodeState.Parsed]
 
       val tree =
         parsed.ast.statements.head.asInstanceOf[Tree.Source]
 
       SourceCodeSearcher.collectInheritedParents(
-        source = tree,
+        source = SourceLocation.Code(tree, parsed),
         allSource = ArraySeq.empty
       ) shouldBe empty
 
@@ -61,10 +60,9 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
     def doTest(code: String) = {
       val parsed =
         TestSourceCode
-          .genParsed(code)
+          .genParsedOK(code)
           .sample
           .get
-          .asInstanceOf[SourceCodeState.Parsed]
 
       // first statement is Parent()
       val parent = parsed.ast.statements.head.asInstanceOf[Tree.Source]
@@ -81,10 +79,16 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
           parsed = parsed
         )
 
+      // Collect all trees in the parser source file
+      val allTrees =
+        SourceCodeSearcher
+          .collectSourceTrees(parsed)
+          .to(ArraySeq)
+
       val actual =
         SourceCodeSearcher.collectInheritedParents(
-          source = child,
-          allSource = ArraySeq(parsed)
+          source = SourceLocation.Code(child, parsed),
+          allSource = allTrees
         )
 
       actual should contain only expected
@@ -126,7 +130,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
       // file1 contains the Child() contract for which the parents are collected.
       val file1 =
         TestSourceCode
-          .genParsed(
+          .genParsedOK(
             """
               |Abstract Contract Parent2() extends Parent4(), Parent6() implements Parent1 { }
               |
@@ -148,12 +152,11 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
           )
           .sample
           .get
-          .asInstanceOf[SourceCodeState.Parsed]
 
       // file2 contains all other abstract contracts
       val file2 =
         TestSourceCode
-          .genParsed(
+          .genParsedOK(
             """
               |Abstract Contract Parent6() extends Parent4() { }
               |
@@ -164,7 +167,6 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
           )
           .sample
           .get
-          .asInstanceOf[SourceCodeState.Parsed]
 
       // collect all tree from file1
       val treesFromFile1 =
@@ -207,11 +209,15 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
       val expectedTrees =
         expectedTreesFromFile1 ++ expectedTreesFromFile2
 
+      // Collect all trees
+      val allTrees =
+        SourceCodeSearcher.collectSourceTrees(ArraySeq(file1, file2))
+
       // actual trees returned
       val actual =
         SourceCodeSearcher.collectInheritedParents(
-          source = child,
-          allSource = ArraySeq(file1, file2)
+          source = SourceLocation.Code(child, file1),
+          allSource = allTrees
         )
 
       actual should contain theSameElementsAs expectedTrees

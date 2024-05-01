@@ -113,7 +113,46 @@ object TestCodeProvider {
    */
   def goToBuiltIn(
       code: String,
-      expected: Option[String]): Assertion = {
+      expected: Option[String]): Assertion =
+    goToDependency(
+      code = code,
+      expected = expected.map {
+        string =>
+          (string, string)
+      },
+      dependencyId = DependencyID.BuiltIn
+    )
+
+  /**
+   * Runs go-to definition where `@@` is positioned, expecting
+   * the resulting go-to definition to be in a std file.
+   *
+   * @param code         The code with the search indicator '@@'.
+   * @param expected     An optional tuple where the first element is the expected line and the second
+   *                     is the highlighted token in that line.
+   */
+  def goToStd(
+      code: String,
+      expected: Option[(String, String)]): Assertion =
+    goToDependency(
+      code = code,
+      expected = expected,
+      dependencyId = DependencyID.Std
+    )
+
+  /**
+   * Runs go-to definition where @@ is positioned, expecting
+   * the resulting go-to definition to be within a dependency workspace.
+   *
+   * @param code         The code with the search indicator '@@'.
+   * @param expected     An optional tuple where the first element is the expected line and the second
+   *                     is the highlighted token in that line.
+   * @param dependencyId The dependency ID to test on.
+   */
+  private def goToDependency(
+      code: String,
+      expected: Option[(String, String)],
+      dependencyId: DependencyID): Assertion = {
     val (_, codeWithoutGoToSymbols, _, _) =
       TestCodeUtil.lineRanges(code)
 
@@ -122,21 +161,24 @@ object TestCodeProvider {
       TestCodeProvider[SourceLocation.GoTo](codeWithoutGoToSymbols)
 
     expected match {
-      case Some(expectedFunction) =>
+      case Some((expectedLine, expectedHighlightedToken)) =>
         val expectedResults =
           workspace
             .build
-            .findDependency(DependencyID.BuiltIn)
+            .findDependency(dependencyId)
             .to(ArraySeq)
             .flatMap(_.sourceCode)
-            .filter(_.code.contains(expectedFunction)) // filter built-in workspace's source-files that contain this built-in function.
+            .filter(_.code.contains(expectedLine)) // filter source-files that contain this code function.
             .flatMap {
               builtInFile =>
                 // insert symbol >>..<<
                 val codeWithRangeSymbols =
                   builtInFile
                     .code
-                    .replace(expectedFunction, s">>$expectedFunction<<")
+                    .replace(expectedHighlightedToken, s">>$expectedHighlightedToken<<")
+
+                if (builtInFile.code == codeWithRangeSymbols)
+                  fail(s"Could not find the expected highlighted token '$expectedHighlightedToken' in line '$expectedLine'.")
 
                 // compute the line range
                 TestCodeUtil
@@ -147,6 +189,9 @@ object TestCodeProvider {
                       (builtInFile.fileURI, lineRange)
                   }
             }
+
+        if (expectedResults.isEmpty)
+          fail(s"Could not find the expected line '$expectedLine'.")
 
         // For actual search result assert only the fileURI and line-ranges
         val actualResults =

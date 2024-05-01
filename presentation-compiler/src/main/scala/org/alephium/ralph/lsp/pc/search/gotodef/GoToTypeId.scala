@@ -17,7 +17,6 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.Ast
-import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
@@ -174,22 +173,12 @@ private object GoToTypeId {
     WorkspaceSearcher
       .collectParsed(workspace)
       .iterator
-      .flatMap {
-        parsed =>
-          parsed
-            .ast
-            .statements
-            .iterator
-            .collect {
-              case tree: Tree.Source if tree.typeId() == typeId =>
-                SourceLocation.Node(
-                  ast = tree.typeId(),
-                  source = SourceLocation.Code(
-                    tree = tree,
-                    parsed = parsed
-                  )
-                )
-            }
+      .collect {
+        case source if source.tree.typeId() == typeId =>
+          SourceLocation.Node(
+            ast = source.tree.typeId(),
+            source = source
+          )
       }
 
 }
