@@ -16,12 +16,14 @@
 
 package org.alephium.ralph.lsp.pc.search.gotodef
 
-import org.alephium.ralph.Ast
-import org.alephium.ralph.lsp.access.compiler.ast.Tree
+import org.alephium.ralph.{Type, Ast}
+import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+
+import scala.collection.immutable.ArraySeq
 
 private object GoToFuncId {
 
@@ -67,9 +69,19 @@ private object GoToFuncId {
                   )
               }
 
-          case Node(callExpr: Ast.ContractCallExpr, _) if callExpr.callId == funcIdNode.data =>
-            // TODO: The user clicked on a external function call. Take 'em there!
-            Iterator.empty
+          case Node(call: Ast.ContractCall, _) if call.callId == funcIdNode.data =>
+            goToFunctionImplementation(
+              functionId = funcIdNode.data,
+              typeExpr = call.obj,
+              workspace = workspace
+            )
+
+          case Node(call: Ast.ContractCallExpr, _) if call.callId == funcIdNode.data =>
+            goToFunctionImplementation(
+              functionId = funcIdNode.data,
+              typeExpr = call.obj,
+              workspace = workspace
+            )
 
           case _ =>
             Iterator.empty
@@ -121,13 +133,10 @@ private object GoToFuncId {
           .filter(_.id == funcId)
           .map {
             funcDef =>
-              if (funcDef.bodyOpt.isEmpty)
-                SourceLocation.Node(funcDef, sourceCode) // we show the entire function definition to display the function signature.
-              else
-                // The function contains a body so return just the function id.
-                // FIXME: There is still a need to display just the function signature.
-                //        At the moment there is no AST type that provides just the function signature.
-                SourceLocation.Node(funcDef.id, sourceCode)
+              SourceLocation.Node(
+                ast = AstExtra.funcSignature(funcDef),
+                source = sourceCode
+              )
           }
 
       case Right(_) =>
@@ -207,6 +216,136 @@ private object GoToFuncId {
 
         case Node(funcCall: Ast.FuncCall[_], _) if funcCall.id == funcId =>
           SourceLocation.Node(funcCall, sourceCode)
+      }
+
+  /**
+   * Navigate to all function implementations for the given function ID.
+   *
+   * @param functionId The function ID to search.
+   * @param typeExpr   The expression containing the type information on which this function is invoked.
+   * @param workspace  The workspace containing all source code.
+   * @return An iterator containing all function implementations.
+   */
+  private def goToFunctionImplementation(
+      functionId: Ast.FuncId,
+      typeExpr: Ast.Expr[_],
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
+    typeExpr.tpe match {
+      case Some(types) =>
+        goToFunctionImplementation(
+          functionId = functionId,
+          types = types,
+          workspace = workspace
+        )
+
+      case None =>
+        Iterator.empty
+    }
+
+  /**
+   * Navigate to all function implementations for the given function ID.
+   *
+   * @param functionId The function ID to search.
+   * @param types      The types on which this function is invoked.
+   * @param workspace  The workspace containing all source code.
+   * @return An iterator containing all function implementations.
+   */
+  private def goToFunctionImplementation(
+      functionId: Ast.FuncId,
+      types: Seq[Type],
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] = {
+    val workspaceSource =
+      WorkspaceSearcher.collectParsed(workspace)
+
+    goToFunctionImplementation(
+      functionId = functionId,
+      types = types,
+      workspaceSource = workspaceSource
+    )
+  }
+
+  /**
+   * Navigate to all function implementations for the given function ID.
+   *
+   * @param functionId      The function ID to search.
+   * @param types           The types on which this function is invoked.
+   * @param workspaceSource All workspace trees.
+   * @return An iterator containing all function implementations.
+   */
+  private def goToFunctionImplementation(
+      functionId: Ast.FuncId,
+      types: Seq[Type],
+      workspaceSource: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.Positioned]] = {
+    // collect all trees with matching types
+    val treesOfMatchingTypes =
+      workspaceSource flatMap {
+        code =>
+          types collect {
+            case Type.NamedType(id) if code.tree.typeId() == id =>
+              code
+
+            case Type.Struct(id) if code.tree.typeId() == id =>
+              code
+
+            case Type.Contract(id) if code.tree.typeId() == id =>
+              code
+          }
+      }
+
+    // perform search on only the matching types
+    goToFunctionImplementation(
+      functionId = functionId,
+      forTrees = treesOfMatchingTypes,
+      workspaceSource = workspaceSource
+    )
+  }
+
+  /**
+   * Navigate to all function implementations for the given function ID.
+   *
+   * @param functionId      The function ID to search.
+   * @param forTrees        The trees to search within.
+   * @param workspaceSource All workspace trees.
+   * @return An iterator containing all function implementations.
+   */
+  private def goToFunctionImplementation(
+      functionId: Ast.FuncId,
+      forTrees: ArraySeq[SourceLocation.Code],
+      workspaceSource: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.Positioned]] =
+    forTrees
+      .iterator
+      .flatMap {
+        code =>
+          // the function could be within a nested parent, collect all parents.
+          val parents =
+            SourceCodeSearcher.collectInheritedParents(
+              source = code,
+              allSource = workspaceSource
+            )
+
+          // all code to search, include the current code and its parents.
+          val allCode = code +: parents
+
+          // Search for function IDs that match.
+          allCode flatMap {
+            code =>
+              code.tree.ast match {
+                case Left(contract) =>
+                  contract
+                    .funcs
+                    .filter(_.id == functionId)
+                    .map {
+                      funcDef =>
+                        SourceLocation.Node(
+                          ast = AstExtra.funcSignature(funcDef),
+                          source = code
+                        )
+                    }
+
+                case Right(_) =>
+                  Iterator.empty
+              }
+          }
       }
 
 }
