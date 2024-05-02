@@ -45,7 +45,7 @@ private object GoToTypeId {
               .iterator
               .flatMap(goToEnumType(enumFieldSelector, _))
 
-          case Node(enumDef: Ast.EnumDef, _) if enumDef.id == typeIdNode.data =>
+          case Node(enumDef: Ast.EnumDef[_], _) if enumDef.id == typeIdNode.data =>
             // They selected an enum definition. Find enum usages.
             WorkspaceSearcher
               .collectImplementingChildren(sourceCode, workspace)
@@ -111,7 +111,7 @@ private object GoToTypeId {
    * @return An array sequence of enum type [[Ast.TypeId]]s matching the search result.
    */
   private def goToEnumTypeUsage(
-      enumDef: Ast.EnumDef,
+      enumDef: Ast.EnumDef[_],
       source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
     source
       .tree
