@@ -259,7 +259,7 @@ private object GoToFuncId extends StrictImplicitLogging {
       types: Seq[Type],
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] = {
     val workspaceSource =
-      WorkspaceSearcher.collectParsed(workspace)
+      WorkspaceSearcher.collectTrees(workspace)
 
     goToFunctionImplementation(
       functionId = functionId,
