@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc
+package org.alephium.ralph.lsp.pc.diagnostic
 
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
-import org.alephium.ralph.lsp.pc.diagnostic.{CodeDiagnosticSeverity, CodeDiagnostic, FileDiagnostic}
+import org.alephium.ralph.lsp.pc.PCState
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
@@ -27,7 +27,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import java.net.URI
 import scala.collection.mutable.ListBuffer
 
-object PCStateDiagnostics {
+object Diagnostics {
 
   /**
    * Given the current [[PCState]] and the next [[PCState]],

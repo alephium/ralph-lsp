@@ -63,7 +63,7 @@ private object GoToIdent {
               .iterator
               .flatMap(goToEnumField(fieldSelector, _))
 
-          case node @ Node(field: Ast.EnumField, _) if field.ident == identNode.data =>
+          case node @ Node(field: Ast.EnumField[_], _) if field.ident == identNode.data =>
             // They selected an enum field.
             // Check the parent to find the enum type.
             node
@@ -72,7 +72,7 @@ private object GoToIdent {
               .iterator
               .collect {
                 // Check: Parent is an enum definition which contains the enum field.
-                case enumDef: Ast.EnumDef if enumDef.fields.exists(_.ident == field.ident) =>
+                case enumDef: Ast.EnumDef[_] if enumDef.fields.exists(_.ident == field.ident) =>
                   WorkspaceSearcher
                     .collectImplementingChildren(sourceCode, workspace)
                     .iterator
@@ -111,7 +111,7 @@ private object GoToIdent {
               }
               .flatten
 
-          case Node(constantDef: Ast.ConstantVarDef, _) if constantDef.ident == identNode.data =>
+          case Node(constantDef: Ast.ConstantVarDef[_], _) if constantDef.ident == identNode.data =>
             // They selected a constant definition. Take 'em there!
             WorkspaceSearcher
               .collectImplementingChildren(sourceCode, workspace)
@@ -270,14 +270,14 @@ private object GoToIdent {
    */
   private def goToConstants(
       ident: Ast.Ident,
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.ConstantVarDef]] =
+      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.ConstantVarDef[_]]] =
     sourceCode
       .tree
       .rootNode
       .walkDown
       .map(_.data)
       .collect {
-        case constant: Ast.ConstantVarDef if constant.ident == ident =>
+        case constant: Ast.ConstantVarDef[_] if constant.ident == ident =>
           SourceLocation.Node(constant, sourceCode)
       }
 
@@ -312,7 +312,7 @@ private object GoToIdent {
    */
   private def goToEnumField(
       fieldSelector: Ast.EnumFieldSelector[_],
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.EnumField]] =
+      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.EnumField[_]]] =
     sourceCode.tree.ast match {
       case Left(contract: Ast.Contract) =>
         contract
@@ -336,7 +336,7 @@ private object GoToIdent {
    */
   private def goToEnumFieldUsage(
       enumType: Ast.TypeId,
-      enumField: Ast.EnumField,
+      enumField: Ast.EnumField[_],
       sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] =
     sourceCode
       .tree

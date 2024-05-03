@@ -39,8 +39,8 @@ class GoToAssignmentsInTxScriptSpec extends AnyWordSpec with Matchers {
       goTo(
         """
           |TxScript GoToAssignment(>>counter: U256<<) {
-          |  >>let mut counter = 0
-          |  <<counte@@r = counter + 1
+          |  >>let mut counter = 0<<
+          |  counte@@r = counter + 1
           |  for (>>let mut counter = 0<<; counter <= 4; counter = counter + 1) {
           |    counter = counter + 1
           |  }

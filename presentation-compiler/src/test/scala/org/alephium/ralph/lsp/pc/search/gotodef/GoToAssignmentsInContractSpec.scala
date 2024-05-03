@@ -45,8 +45,8 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
             |Contract GoToAssignment() {
             |
             |  pub fn function() -> () {
-            |    >>let counter = 0
-            |    <<counte@@r = counter + 1
+            |    >>let counter = 0<<
+            |    counte@@r = counter + 1
             |  }
             |}
             |""".stripMargin
@@ -96,8 +96,8 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
             |Contract GoToAssignment(>>mut counter: U256<<) extends Parent1() {
             |
             |  pub fn function(>>mut counter: U256<<) -> () {
-            |    >>let mut counter = 0
-            |    <<counte@@r = counter + 1
+            |    >>let mut counter = 0<<
+            |    counte@@r = counter + 1
             |    for (>>let mut counter = 0<<; counter <= 4; counter = counter + 1) {
             |      counter = counter + 1
             |    }

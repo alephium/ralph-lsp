@@ -19,13 +19,14 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.{Type, Ast}
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 import scala.collection.immutable.ArraySeq
 
-private object GoToFuncId {
+private object GoToFuncId extends StrictImplicitLogging {
 
   /**
    * Navigate to the definition of a function for the given [[Ast.FuncId]].
@@ -38,7 +39,8 @@ private object GoToFuncId {
   def goTo(
       funcIdNode: Node[Ast.FuncId, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
     funcIdNode.parent match { // take one step up to check the type of function call.
       case Some(parent) =>
         parent match {
@@ -229,7 +231,8 @@ private object GoToFuncId {
   private def goToFunctionImplementation(
       functionId: Ast.FuncId,
       typeExpr: Ast.Expr[_],
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
     typeExpr.tpe match {
       case Some(types) =>
         goToFunctionImplementation(
@@ -239,6 +242,7 @@ private object GoToFuncId {
         )
 
       case None =>
+        logger.info(s"Go-to definition unsuccessful: Type inference unresolved for function '${functionId.name}'. Check for syntax or compilation errors.")
         Iterator.empty
     }
 
@@ -255,7 +259,7 @@ private object GoToFuncId {
       types: Seq[Type],
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] = {
     val workspaceSource =
-      WorkspaceSearcher.collectParsed(workspace)
+      WorkspaceSearcher.collectTrees(workspace)
 
     goToFunctionImplementation(
       functionId = functionId,

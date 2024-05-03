@@ -2,7 +2,7 @@ import sbt._
 
 object Version {
 
-  val scala213 = "2.13.13"
+  val scala213 = "2.13.14"
   val web3     = "0.38.0"
 
 }
@@ -15,7 +15,7 @@ object Dependencies {
   lazy val scalaMock  = "org.scalamock"     %% "scalamock"       % "6.0.0"    % Test
 
   /** Core */
-  lazy val ralphc = "org.alephium" %% "alephium-ralphc" % "2.12.0" excludeAll (
+  lazy val ralphc = "org.alephium" %% "alephium-ralphc" % "2.13.0" excludeAll (
     ExclusionRule(organization = "org.rocksdb"),
     ExclusionRule(organization = "io.prometheus"),
     ExclusionRule(organization = "org.alephium", name = "alephium-api_2.13"),
@@ -26,6 +26,6 @@ object Dependencies {
 
   /** Logging */
   lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging"   % "3.9.5"
-  lazy val logback      = "ch.qos.logback"              % "logback-classic" % "1.5.3"
+  lazy val logback      = "ch.qos.logback"              % "logback-classic" % "1.5.6"
 
 }

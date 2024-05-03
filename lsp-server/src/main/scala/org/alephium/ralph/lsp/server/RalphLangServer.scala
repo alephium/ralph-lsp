@@ -18,6 +18,7 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
@@ -26,7 +27,7 @@ import org.alephium.ralph.lsp.pc.util.CollectionUtil
 import org.alephium.ralph.lsp.pc.util.URIUtil.uri
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
-import org.alephium.ralph.lsp.pc.{PCState, PC, PCStateDiagnostics}
+import org.alephium.ralph.lsp.pc.{PCState, PC}
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES}
 import org.alephium.ralph.lsp.server.RalphLangServer._
@@ -556,7 +557,7 @@ class RalphLangServer private (
 
       // build diagnostics for this PCState change
       val pcDiagnostics =
-        PCStateDiagnostics.toFileDiagnostics(
+        Diagnostics.toFileDiagnostics(
           currentState = currentPCState,
           newState = newPCState
         )
