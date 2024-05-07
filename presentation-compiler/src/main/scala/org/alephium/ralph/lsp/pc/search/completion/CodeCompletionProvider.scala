@@ -56,8 +56,9 @@ private[search] object CodeCompletionProvider extends CodeProvider[Suggestion] w
         }
 
       case None =>
-        // TODO: Provide top level completion.
-        Iterator.empty
+        TopLevelCompleter
+          .suggest()
+          .iterator
     }
 
 }
