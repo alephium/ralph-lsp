@@ -16,39 +16,38 @@
 
 package org.alephium.ralph.lsp.pc.search.completion
 
-sealed trait Suggestion extends Product {
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 
-  def label: String
+class TopLevelCompleterSpec extends AnyWordSpec with Matchers {
 
-  def insert: String
+  "suggest top level statements" when {
+    "requested for the first line" in {
+      val suggestions =
+        suggest {
+          """
+            |@@
+            |
+            |Abstract Contract Dummy() { }
+            |""".stripMargin
+        }
 
-  def detail: String
+      suggestions shouldBe TopLevelCompleter.suggest()
+    }
 
-  def documentation: String
+    "requested for the second line" in {
+      val suggestions =
+        suggest {
+          """
+            |Abstract Contract Dummy() { }
+            |
+            |@@
+            |""".stripMargin
+        }
 
-}
-
-object Suggestion {
-
-  case class Function(
-      label: String,
-      insert: String,
-      detail: String,
-      documentation: String)
-    extends Suggestion
-
-  case class Field(
-      label: String,
-      insert: String,
-      detail: String,
-      documentation: String)
-    extends Suggestion
-
-  case class Keyword(
-      label: String,
-      insert: String,
-      detail: String,
-      documentation: String)
-    extends Suggestion
+      suggestions shouldBe TopLevelCompleter.suggest()
+    }
+  }
 
 }
