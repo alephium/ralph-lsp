@@ -32,7 +32,8 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
             |  event TransferNotUsed(to: Address, amount: U256)
             |
             |  const MyConstant = 1
-            |            |  enum EnumType {
+            |
+            |  enum EnumType {
             |    Field0 = 0
             |    Field1 = 1
             |  }
