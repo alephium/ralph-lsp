@@ -55,7 +55,8 @@ private[search] object CodeCompletionProvider extends CodeProvider[Suggestion] w
             // request is within a contract source-code
             SourceCodeCompleter.complete(
               cursorIndex = cursorIndex,
-              sourceCode = SourceLocation.Code(tree, sourceCode)
+              sourceCode = SourceLocation.Code(tree, sourceCode),
+              workspace = workspace
             )
         }
 

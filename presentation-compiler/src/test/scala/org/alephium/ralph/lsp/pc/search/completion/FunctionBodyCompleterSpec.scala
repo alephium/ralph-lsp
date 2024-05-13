@@ -41,17 +41,33 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
   }
 
   "return non-empty" when {
-    "arguments exist" in {
+    "suggestions exist locally to the function" in {
       val suggestions =
         suggest {
           """
-              |Contract Test() {
+              |Contract Test(templateBool: Bool) {
+              |
+              |  event TransferNotUsed(to: Address, amount: U256)
+              |
+              |  const MyConstant = 1
+              |
+              |  enum EnumType {
+              |    Field0 = 0
+              |    Field1 = 1
+              |  }
+              |
               |  fn function(bool: Bool,
               |              int: U256) -> () {
               |    let variable = true
+              |    for (let mut index = 0; index <= 4; index = index + 1) {
+              |      let enumField = EnumType.Field1
+              |    }
               |    @@
-              |    // this should not get suggested since it's after the completion request
+              |    // the following should not get suggested since it's after the completion request
               |    let variable_after = false
+              |    for (let mut index_after = 0; index_after <= 4; index_after = index_after + 1) {
+              |      let enumField_after = EnumType.Field1
+              |    }
               |  }
               |}
               |
@@ -60,12 +76,37 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
 
       val expected =
         Seq(
-          Completion.Field(
+          Completion.Property( // Property because it's a template argument
+            label = "templateBool: Bool",
+            insert = "templateBool",
+            detail = ""
+          ),
+          Completion.Event(
+            label = "TransferNotUsed",
+            insert = "TransferNotUsed",
+            detail = "event TransferNotUsed(to: Address, amount: U256)"
+          ),
+          Completion.Constant(
+            label = "MyConstant",
+            insert = "MyConstant",
+            detail = ""
+          ),
+          Completion.Enum(
+            label = "EnumType",
+            insert = "EnumType",
+            detail = ""
+          ),
+          Completion.Function(
+            label = "function(bool: Bool, int: U256) -> ()",
+            insert = "function()",
+            detail = ""
+          ),
+          Completion.Field( // Field because it's a function argument
             label = "bool: Bool",
             insert = "bool",
             detail = ""
           ),
-          Completion.Field(
+          Completion.Field( // Field because it's a function argument
             label = "int: U256",
             insert = "int",
             detail = ""
@@ -75,13 +116,23 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
             label = "variable",
             insert = "variable",
             detail = ""
+          ),
+          Completion.Variable(
+            label = "mut index",
+            insert = "index",
+            detail = ""
+          ),
+          Completion.Variable(
+            label = "enumField",
+            insert = "enumField",
+            detail = ""
           )
         )
 
       val actual =
         suggestions.flatMap(_.toCompletion())
 
-      expected shouldBe actual
+      actual.sortBy(_.label) shouldBe expected.sortBy(_.label)
     }
   }
 

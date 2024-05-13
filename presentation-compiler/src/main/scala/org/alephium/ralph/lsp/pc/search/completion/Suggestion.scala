@@ -19,6 +19,7 @@ package org.alephium.ralph.lsp.pc.search.completion
 import org.alephium.ralph
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 sealed trait Suggestion {
 
@@ -28,6 +29,16 @@ sealed trait Suggestion {
 }
 
 object Suggestion {
+
+  /** A suggestion that points to a node within a tree */
+  sealed trait NodeAPI extends Suggestion {
+
+    def node: SourceLocation.Node[Ast.Positioned]
+
+  }
+
+  /** A suggestion available due to inheritance */
+  sealed trait InheritedAPI extends NodeAPI
 
   /**
    * Represents a suggestion for a file name.
@@ -81,7 +92,7 @@ object Suggestion {
   case class Argument private (
       node: SourceLocation.Node[Ast.Argument],
       isTemplateArgument: Boolean)
-    extends Suggestion {
+    extends Suggestion.InheritedAPI {
 
     override def toCompletion(): Seq[Completion] = {
       val typeSig =
@@ -111,7 +122,7 @@ object Suggestion {
    *
    * @param node The node representing the location where the variable was created.
    */
-  case class VarDef(node: SourceLocation.Node[Ast.VarDef[_]]) extends Suggestion {
+  case class VarDef(node: SourceLocation.Node[Ast.VarDef[_]]) extends NodeAPI {
 
     override def toCompletion(): Seq[Completion.Variable] =
       node.ast.vars flatMap {
@@ -131,6 +142,90 @@ object Suggestion {
         case Ast.AnonymousVar =>
           None
       }
+
+  }
+
+  case class Function(node: SourceLocation.Node[Ast.FuncDef[_]]) extends Suggestion.InheritedAPI {
+
+    override def toCompletion(): Seq[Completion.Function] = {
+      val paramTypes =
+        node
+          .ast
+          .args
+          .map {
+            argument =>
+              s"""${argument.ident.name}: ${argument.tpe.signature}"""
+          }
+          .mkString("(", ", ", ")")
+
+      val builtIn =
+        if (DependencyID.BuiltIn contains node.parsed.fileURI)
+          "!"
+        else
+          ""
+
+      val returnTypes =
+        if (node.ast.rtypes.size == 1)
+          node
+            .ast
+            .rtypes
+            .head
+            .signature
+        else
+          node
+            .ast
+            .rtypes
+            .map(_.signature.replaceAll("(,)", "$1 "))
+            .mkString("(", ", ", ")")
+
+      val suggestion =
+        Completion.Function(
+          label = s"${node.ast.id.name}$builtIn$paramTypes -> $returnTypes",
+          insert = s"${node.ast.id.name}$builtIn()",
+          detail = ""
+        )
+
+      Seq(suggestion)
+    }
+
+  }
+
+  case class EventDef(node: SourceLocation.Node[Ast.EventDef]) extends Suggestion.InheritedAPI {
+
+    override def toCompletion(): Seq[Completion.Event] =
+      Seq(
+        Completion.Event(
+          label = node.ast.id.name,
+          insert = node.ast.id.name,
+          detail = node.ast.signature.replaceAll("([:,])", "$1 ")
+        )
+      )
+
+  }
+
+  case class EnumDef(node: SourceLocation.Node[Ast.EnumDef[_]]) extends Suggestion.InheritedAPI {
+
+    override def toCompletion(): Seq[Completion.Enum] =
+      Seq(
+        Completion.Enum(
+          label = node.ast.id.name,
+          insert = node.ast.id.name,
+          detail = ""
+        )
+      )
+
+  }
+
+  case class ConstantVarDef(node: SourceLocation.Node[Ast.ConstantVarDef[_]]) extends Suggestion.InheritedAPI {
+
+    override def toCompletion(): Seq[Completion.Constant] =
+      Seq(
+        Completion.Constant(
+          label = node.ast.ident.name,
+          insert = node.ast.ident.name,
+          detail = ""
+        )
+      )
 
   }
 

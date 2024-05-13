@@ -16,6 +16,8 @@
 
 package org.alephium.ralph.lsp.pc.workspace.build.dependency
 
+import java.net.URI
+import java.nio.file.{Paths, Path}
 import scala.collection.immutable.ArraySeq
 
 sealed trait DependencyID extends Product {
@@ -27,8 +29,17 @@ sealed trait DependencyID extends Product {
 
 object DependencyID {
 
-  case object Std     extends DependencyID
-  case object BuiltIn extends DependencyID
+  case object Std extends DependencyID
+
+  case object BuiltIn extends DependencyID {
+
+    def contains(fileURI: URI): Boolean =
+      contains(Paths.get(fileURI))
+
+    def contains(filePath: Path): Boolean =
+      filePath.getParent.getFileName.toString == BuiltIn.dirName
+
+  }
 
   def all(): ArraySeq[DependencyID] =
     ArraySeq(

@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.pc.search.completion
 
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
@@ -28,11 +29,13 @@ object SourceCodeCompleter {
    *
    * @param cursorIndex The position where this request was executed.
    * @param sourceCode  The parsed state of the source-code where the search is executed.
+   * @param workspace   The workspace where this search was executed and where all the source trees exist.
    * @return An iterator over the target go-to location(s).
    */
   def complete(
       cursorIndex: Int,
-      sourceCode: SourceLocation.Code): Iterator[Suggestion] =
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion] =
     sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
       case Some(closest) =>
         closest match {
@@ -40,7 +43,8 @@ object SourceCodeCompleter {
             FunctionBodyCompleter.suggest(
               cursorIndex = cursorIndex,
               functionNode = functionNode.upcast(function),
-              sourceCode = sourceCode
+              sourceCode = sourceCode,
+              workspace = workspace
             )
 
           case _ =>
