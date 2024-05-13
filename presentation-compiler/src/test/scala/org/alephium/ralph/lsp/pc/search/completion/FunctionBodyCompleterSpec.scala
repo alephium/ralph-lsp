@@ -22,56 +22,37 @@ import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 
 class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
 
-  "return empty" when {
-    "local params do not exist" in {
+  "suggest non-empty" when {
+    "suggestions exist due to declarations local to the function" in {
       val suggestions =
         suggest {
           """
-            |Contract Test() {
-            |  fn function() -> () {
+            |Contract Test(templateBool: Bool) {
+            |
+            |  event TransferNotUsed(to: Address, amount: U256)
+            |
+            |  const MyConstant = 1
+            |
+            |  enum EnumType {
+            |    Field0 = 0
+            |    Field1 = 1
+            |  }
+            |
+            |  fn function(bool: Bool,
+            |              int: U256) -> () {
+            |    let variable = true
+            |    for (let mut index = 0; index <= 4; index = index + 1) {
+            |      let enumField = EnumType.Field1
+            |    }
             |    @@
+            |    // the following should not get suggested since it's after the completion request
+            |    let variable_after = false
+            |    for (let mut index_after = 0; index_after <= 4; index_after = index_after + 1) {
+            |      let enumField_after = EnumType.Field1
+            |    }
             |  }
             |}
-            |
             |""".stripMargin
-        }
-
-      suggestions shouldBe empty
-    }
-  }
-
-  "return non-empty" when {
-    "suggestions exist locally to the function" in {
-      val suggestions =
-        suggest {
-          """
-              |Contract Test(templateBool: Bool) {
-              |
-              |  event TransferNotUsed(to: Address, amount: U256)
-              |
-              |  const MyConstant = 1
-              |
-              |  enum EnumType {
-              |    Field0 = 0
-              |    Field1 = 1
-              |  }
-              |
-              |  fn function(bool: Bool,
-              |              int: U256) -> () {
-              |    let variable = true
-              |    for (let mut index = 0; index <= 4; index = index + 1) {
-              |      let enumField = EnumType.Field1
-              |    }
-              |    @@
-              |    // the following should not get suggested since it's after the completion request
-              |    let variable_after = false
-              |    for (let mut index_after = 0; index_after <= 4; index_after = index_after + 1) {
-              |      let enumField_after = EnumType.Field1
-              |    }
-              |  }
-              |}
-              |
-              |""".stripMargin
         }
 
       val expected =
@@ -125,6 +106,106 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
           Completion.Variable(
             label = "enumField",
             insert = "enumField",
+            detail = ""
+          )
+        )
+
+      val actual =
+        suggestions.flatMap(_.toCompletion())
+
+      actual.sortBy(_.label) shouldBe expected.sortBy(_.label)
+    }
+
+    "suggestions exist due to inheritance" in {
+      val suggestions =
+        suggest {
+          """
+            |Abstract Contract Parent(parentTemplateBool: Bool) {
+            |
+            |  event TransferNotUsed(to: Address, amount: U256)
+            |
+            |  const MyConstant = 1
+            |
+            |  enum EnumType {
+            |    Field0 = 0
+            |    Field1 = 1
+            |  }
+            |
+            |  fn function_parent(bool: Bool,
+            |                     int: U256) -> () {
+            |   let variable_parent = true
+            |   // these are not visible outside
+            |   for (let mut index = 0; index <= 4; index = index + 1) {
+            |      let enumField = EnumType.Field1
+            |    }
+            |  }
+            |}
+            |
+            |Contract Test(templateBool: Bool) extends Parent(templateBool) {
+            |
+            |  fn function(bool: Bool,
+            |              int: U256) -> () {
+            |    let variable = true
+            |    @@
+            |    // the following should not get suggested since it's after the completion request
+            |    let variable_after = false
+            |
+            |  }
+            |}
+            |""".stripMargin
+        }
+
+      val expected =
+        Seq(
+          Completion.Property( // Property because it's a template argument
+            label = "parentTemplateBool: Bool",
+            insert = "parentTemplateBool",
+            detail = ""
+          ),
+          Completion.Property( // Property because it's a template argument
+            label = "templateBool: Bool",
+            insert = "templateBool",
+            detail = ""
+          ),
+          Completion.Event(
+            label = "TransferNotUsed",
+            insert = "TransferNotUsed",
+            detail = "event TransferNotUsed(to: Address, amount: U256)"
+          ),
+          Completion.Constant(
+            label = "MyConstant",
+            insert = "MyConstant",
+            detail = ""
+          ),
+          Completion.Enum(
+            label = "EnumType",
+            insert = "EnumType",
+            detail = ""
+          ),
+          Completion.Function(
+            label = "function(bool: Bool, int: U256) -> ()",
+            insert = "function()",
+            detail = ""
+          ),
+          Completion.Function(
+            label = "function_parent(bool: Bool, int: U256) -> ()",
+            insert = "function_parent()",
+            detail = ""
+          ),
+          Completion.Field( // Field because it's a function argument
+            label = "bool: Bool",
+            insert = "bool",
+            detail = ""
+          ),
+          Completion.Field( // Field because it's a function argument
+            label = "int: U256",
+            insert = "int",
+            detail = ""
+          ),
+          // TODO: Also provide variables type information in suggestion.
+          Completion.Variable(
+            label = "variable",
+            insert = "variable",
             detail = ""
           )
         )
