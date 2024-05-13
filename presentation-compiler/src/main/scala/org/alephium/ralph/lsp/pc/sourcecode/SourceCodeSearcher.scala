@@ -57,7 +57,7 @@ object SourceCodeSearcher {
             Right(compiled.parsed)
 
           case _: SourceCodeState.ErrorParser =>
-            Left(SourceCodeHasCompilationErrors(fileURI))
+            Left(SourceCodeHasParserErrors(fileURI))
 
           case errored: SourceCodeState.ErrorCompilation =>
             Right(errored.parsed)
