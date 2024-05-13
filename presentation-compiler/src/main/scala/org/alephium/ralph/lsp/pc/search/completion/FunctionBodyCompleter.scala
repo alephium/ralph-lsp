@@ -25,6 +25,15 @@ import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 object FunctionBodyCompleter {
 
+  /**
+   * Provides suggestions available at the given position within the body of a function.
+   *
+   * @param cursorIndex  The position where this search was executed.
+   * @param functionNode The node representing the function where this search was executed.
+   * @param sourceCode   The source code containing the given function.
+   * @param workspace    The workspace containing the source code.
+   * @return An iterator over suggestions available before the cursor position within the function.
+   */
   def suggest(
       cursorIndex: Int,
       functionNode: Node[Ast.FuncDef[_], Ast.Positioned],
