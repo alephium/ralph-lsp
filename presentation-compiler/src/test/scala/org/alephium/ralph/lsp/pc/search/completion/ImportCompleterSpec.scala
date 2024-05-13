@@ -55,15 +55,7 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
         "std/nft_collection_interface",
         "std/nft_collection_with_royalty_interface",
         "std/nft_interface"
-      ) map {
-        suggestion =>
-          Suggestion.Field(
-            label = suggestion,
-            insert = suggestion,
-            detail = "",
-            documentation = ""
-          )
-      }
+      ) map Suggestion.File
 
     "cursor is between the quotes" in {
       suggest("""import "@@" """) should contain theSameElementsAs expected
@@ -88,15 +80,7 @@ class ImportCompleterSpec extends AnyWordSpec with Matchers {
         "nft_collection_interface",
         "nft_collection_with_royalty_interface",
         "nft_interface"
-      ) map {
-        suggestion =>
-          Suggestion.Field(
-            label = suggestion,
-            insert = suggestion,
-            detail = "",
-            documentation = ""
-          )
-      }
+      ) map Suggestion.File
 
     "cursor is after the forward slash" in {
       suggest("""import "std/@@" """) should contain theSameElementsAs expected

@@ -16,39 +16,55 @@
 
 package org.alephium.ralph.lsp.pc.search.completion
 
-sealed trait Suggestion extends Product {
+sealed trait Suggestion {
 
-  def label: String
-
-  def insert: String
-
-  def detail: String
-
-  def documentation: String
+  /** Transform this suggest to a String based LSP format */
+  def toCompletion(): Seq[Completion]
 
 }
 
 object Suggestion {
 
-  case class Function(
-      label: String,
-      insert: String,
-      detail: String,
-      documentation: String)
-    extends Suggestion
+  /**
+   * Represents a suggestion for a file name.
+   *
+   * @param name The name of the file.
+   */
+  case class File(name: String) extends Suggestion {
 
-  case class Field(
-      label: String,
-      insert: String,
-      detail: String,
-      documentation: String)
-    extends Suggestion
+    override def toCompletion(): Seq[Completion.File] =
+      Seq(
+        Completion.File(
+          label = name,
+          insert = name,
+          detail = ""
+        )
+      )
 
+  }
+
+  /**
+   * Represents a suggestion for a keyword.
+   *
+   * @param label The label or display text for the keyword suggestion.
+   * @param insert The text to insert when the keyword suggestion is selected.
+   * @param detail Additional details about the keyword suggestion.
+   */
   case class Keyword(
       label: String,
       insert: String,
-      detail: String,
-      documentation: String)
-    extends Suggestion
+      detail: String)
+    extends Suggestion {
+
+    override def toCompletion(): Seq[Completion.Keyword] =
+      Seq(
+        Completion.Keyword(
+          label = label,
+          insert = insert,
+          detail = detail
+        )
+      )
+
+  }
 
 }
