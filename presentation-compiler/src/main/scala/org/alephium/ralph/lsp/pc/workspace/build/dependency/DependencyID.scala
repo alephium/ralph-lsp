@@ -33,9 +33,21 @@ object DependencyID {
 
   case object BuiltIn extends DependencyID {
 
+    /**
+     * Checks if the built-in dependency contains the given file.
+     *
+     * @param fileURI The URI of the file to check.
+     * @return True if the file is contained in the built-in dependency, otherwise false.
+     */
     def contains(fileURI: URI): Boolean =
       contains(Paths.get(fileURI))
 
+    /**
+     * Checks if the built-in dependency contains the given file.
+     *
+     * @param filePath The Path of the file to check.
+     * @return True if the file is contained in the built-in dependency, otherwise false.
+     */
     def contains(filePath: Path): Boolean =
       filePath.getParent.getFileName.toString == BuiltIn.dirName
 

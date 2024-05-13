@@ -25,12 +25,12 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceInd
 object SourceCodeCompleter {
 
   /**
-   * Navigates to the definition of a token in the source code.
+   * Provides code completion suggestions at the given cursor index within the source code.
    *
-   * @param cursorIndex The position where this request was executed.
-   * @param sourceCode  The parsed state of the source-code where the search is executed.
-   * @param workspace   The workspace where this search was executed and where all the source trees exist.
-   * @return An iterator over the target go-to location(s).
+   * @param cursorIndex The index representing the cursor position in the source code.
+   * @param sourceCode  The source code where the completion is requested.
+   * @param workspace   The workspace state containing the source code.
+   * @return An iterator over code completion suggestions.
    */
   def complete(
       cursorIndex: Int,

@@ -297,7 +297,7 @@ private[pc] object SourceCode {
    * @param workspace The source files that contain implementations of all dependent code.
    * @return An array sequence of unique flattened source locations.
    */
-  def flattenInheritance(
+  private def flattenInheritance(
       toFlatten: ArraySeq[SourceCodeState.Parsed],
       workspace: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.Code] =
     if (toFlatten.isEmpty || workspace.isEmpty) {
