@@ -16,6 +16,10 @@
 
 package org.alephium.ralph.lsp.pc.search.completion
 
+import org.alephium.ralph
+import org.alephium.ralph.Ast
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+
 sealed trait Suggestion {
 
   /** Transform this suggest to a String based LSP format */
@@ -64,6 +68,69 @@ object Suggestion {
           detail = detail
         )
       )
+
+  }
+
+  /**
+   * Represents a suggested argument.
+   *
+   * @param node                The node representing the argument.
+   * @param isTemplateArgument  If true, this argument is suggested as a [[Completion.Property]],
+   *                            otherwise as a [[Completion.Field]].
+   */
+  case class Argument private (
+      node: SourceLocation.Node[Ast.Argument],
+      isTemplateArgument: Boolean)
+    extends Suggestion {
+
+    override def toCompletion(): Seq[Completion] = {
+      val typeSig =
+        node.ast.signature.replaceAll("(:)", "$1 ")
+
+      val suggestion =
+        if (isTemplateArgument)
+          Completion.Property(
+            label = typeSig,
+            insert = node.ast.ident.name,
+            detail = ""
+          )
+        else
+          Completion.Field(
+            label = typeSig,
+            insert = node.ast.ident.name,
+            detail = ""
+          )
+
+      Seq(suggestion)
+    }
+
+  }
+
+  /**
+   * Represents a suggested variable definition.
+   *
+   * @param node The node representing the location where the variable was created.
+   */
+  case class VarDef(node: SourceLocation.Node[Ast.VarDef[_]]) extends Suggestion {
+
+    override def toCompletion(): Seq[Completion.Variable] =
+      node.ast.vars flatMap {
+        case Ast.NamedVar(mutable, ident) =>
+          val mutOrNot = if (mutable) s"${ralph.Keyword.mut.name} " else ""
+          val typeSig  = s"$mutOrNot${ident.name}"
+
+          val suggestion =
+            Completion.Variable(
+              label = typeSig,
+              insert = ident.name,
+              detail = ""
+            )
+
+          Some(suggestion)
+
+        case Ast.AnonymousVar =>
+          None
+      }
 
   }
 
