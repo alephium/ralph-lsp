@@ -397,7 +397,7 @@ private object GoToIdent {
    */
   private def goToNearestBlockInScope(
       childNode: Node[Ast.Positioned, Ast.Positioned],
-      sourceTree: Tree.Source): Option[Node[Ast.Positioned, Ast.Positioned]] =
+      sourceTree: Tree.Source): Option[Node[Ast.UniqueDef, Ast.Positioned]] =
     sourceTree.ast match {
       case Left(_: Ast.Contract | _: Ast.ContractInterface | _: Ast.TxScript) =>
         // Find the nearest function definition or use the template body as the scope.
