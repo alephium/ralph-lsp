@@ -20,6 +20,7 @@ import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 object FunctionBodyCompleter {
@@ -44,8 +45,12 @@ object FunctionBodyCompleter {
         workspace = workspace
       )
 
+    val builtInFunctions =
+      suggestBuiltinFunctions(workspace)
+
     localFunctionSuggestions ++
-      inheritedSuggestions
+      inheritedSuggestions ++
+      builtInFunctions
   }
 
   /**
@@ -128,5 +133,50 @@ object FunctionBodyCompleter {
           // suggest constants
           Suggestion.ConstantVarDef(SourceLocation.Node(constantVarDef, sourceCode))
       }
+
+  /**
+   * Suggests built-in functions available to the workspace as a dependency.
+   *
+   * @param workspace The workspace that contains the built-in dependency.
+   * @return Iterator over built-in functions.
+   */
+  private def suggestBuiltinFunctions(workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.Function] =
+    workspace.build.findDependency(DependencyID.BuiltIn) match {
+      case Some(builtIn) =>
+        WorkspaceSearcher
+          .collectTrees(builtIn)
+          .iterator
+          .flatMap(suggestsFunctions)
+
+      case None =>
+        Iterator.empty
+    }
+
+  /**
+   * Suggests all functions available from this source code.
+   *
+   * @param source The source code that may contain functions.
+   * @return An iterator over suggested functions.
+   */
+  private def suggestsFunctions(source: SourceLocation.Code): Iterator[Suggestion.Function] =
+    source.tree.ast match {
+      case Left(contract) =>
+        contract
+          .funcs
+          .iterator
+          .map {
+            function =>
+              val node =
+                SourceLocation.Node(
+                  ast = function,
+                  source = source
+                )
+
+              Suggestion.Function(node)
+          }
+
+      case Right(_) =>
+        Iterator.empty
+    }
 
 }

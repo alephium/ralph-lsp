@@ -32,8 +32,7 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
             |  event TransferNotUsed(to: Address, amount: U256)
             |
             |  const MyConstant = 1
-            |
-            |  enum EnumType {
+            |            |  enum EnumType {
             |    Field0 = 0
             |    Field1 = 1
             |  }
@@ -113,7 +112,7 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
       val actual =
         suggestions.flatMap(_.toCompletion())
 
-      actual.sortBy(_.label) shouldBe expected.sortBy(_.label)
+      actual should contain allElementsOf expected
     }
 
     "suggestions exist due to inheritance" in {
@@ -213,7 +212,7 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
       val actual =
         suggestions.flatMap(_.toCompletion())
 
-      actual.sortBy(_.label) shouldBe expected.sortBy(_.label)
+      actual should contain allElementsOf expected
     }
   }
 
