@@ -147,7 +147,7 @@ object Suggestion {
 
   case class Function(node: SourceLocation.Node[Ast.FuncDef[_]]) extends Suggestion.InheritedAPI {
 
-    override def toCompletion(): Seq[Completion.Function] = {
+    override def toCompletion(): Seq[Completion] = {
       val paramTypes =
         node
           .ast
@@ -158,8 +158,11 @@ object Suggestion {
           }
           .mkString("(", ", ", ")")
 
-      val builtIn =
-        if (DependencyID.BuiltIn contains node.parsed.fileURI)
+      val isBuiltIn =
+        DependencyID.BuiltIn contains node.parsed.fileURI
+
+      val suffix =
+        if (isBuiltIn)
           "!"
         else
           ""
@@ -178,12 +181,25 @@ object Suggestion {
             .map(_.signature.replaceAll("(,)", "$1 "))
             .mkString("(", ", ", ")")
 
+      val label =
+        s"${node.ast.id.name}$suffix$paramTypes -> $returnTypes"
+
+      val insert =
+        s"${node.ast.id.name}$suffix()"
+
       val suggestion =
-        Completion.Function(
-          label = s"${node.ast.id.name}$builtIn$paramTypes -> $returnTypes",
-          insert = s"${node.ast.id.name}$builtIn()",
-          detail = ""
-        )
+        if (isBuiltIn)
+          Completion.Function(
+            label = label,
+            insert = insert,
+            detail = ""
+          )
+        else
+          Completion.Method(
+            label = label,
+            insert = insert,
+            detail = ""
+          )
 
       Seq(suggestion)
     }

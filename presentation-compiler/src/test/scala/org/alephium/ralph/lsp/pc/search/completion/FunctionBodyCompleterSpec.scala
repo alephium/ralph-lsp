@@ -77,7 +77,7 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
             insert = "EnumType",
             detail = ""
           ),
-          Completion.Function(
+          Completion.Method(
             label = "function(bool: Bool, int: U256) -> ()",
             insert = "function()",
             detail = ""
@@ -182,12 +182,12 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
             insert = "EnumType",
             detail = ""
           ),
-          Completion.Function(
+          Completion.Method(
             label = "function(bool: Bool, int: U256) -> ()",
             insert = "function()",
             detail = ""
           ),
-          Completion.Function(
+          Completion.Method(
             label = "function_parent(bool: Bool, int: U256) -> ()",
             insert = "function_parent()",
             detail = ""
