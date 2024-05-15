@@ -128,7 +128,10 @@ object FunctionBodyCompleter {
 
         case Node(function: Ast.FuncDef[_], _) =>
           // suggest function names
-          Suggestion.FuncDef(SourceLocation.Node(function, sourceCode))
+          Suggestion.FuncDef(
+            node = SourceLocation.Node(function, sourceCode),
+            isBuiltIn = false
+          )
 
         case Node(eventDef: Ast.EventDef, _) =>
           // suggest events
@@ -155,19 +158,28 @@ object FunctionBodyCompleter {
         WorkspaceSearcher
           .collectTrees(builtIn)
           .iterator
-          .flatMap(suggestsFunctions)
+          .flatMap {
+            source =>
+              suggestFunctions(
+                source = source,
+                isBuiltInSource = true
+              )
+          }
 
       case None =>
         Iterator.empty
     }
 
   /**
-   * Suggests all functions available from this source code.
+   * Suggests all functions available in the given source code.
    *
-   * @param source The source code that may contain functions.
-   * @return An iterator over suggested functions.
+   * @param source          The source code that may contain function definitions.
+   * @param isBuiltInSource True if the given source is from the built-in dependency, false otherwise.
+   * @return An iterator over the suggested functions.
    */
-  private def suggestsFunctions(source: SourceLocation.Code): Iterator[Suggestion.FuncDef] =
+  private def suggestFunctions(
+      source: SourceLocation.Code,
+      isBuiltInSource: Boolean): Iterator[Suggestion.FuncDef] =
     source.tree.ast match {
       case Left(contract) =>
         contract
@@ -181,7 +193,10 @@ object FunctionBodyCompleter {
                   source = source
                 )
 
-              Suggestion.FuncDef(node)
+              Suggestion.FuncDef(
+                node = node,
+                isBuiltIn = isBuiltInSource
+              )
           }
 
       case Right(_) =>
