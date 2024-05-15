@@ -19,7 +19,6 @@ package org.alephium.ralph.lsp.pc.search.completion
 import org.alephium.ralph
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 sealed trait Suggestion {
 
@@ -145,7 +144,10 @@ object Suggestion {
 
   }
 
-  case class Function(node: SourceLocation.Node[Ast.FuncDef[_]]) extends Suggestion.InheritedAPI {
+  case class FuncDef(
+      node: SourceLocation.Node[Ast.FuncDef[_]],
+      isBuiltIn: Boolean)
+    extends Suggestion.InheritedAPI {
 
     override def toCompletion(): Seq[Completion] = {
       val paramTypes =
@@ -157,9 +159,6 @@ object Suggestion {
               s"""${argument.ident.name}: ${argument.tpe.signature}"""
           }
           .mkString("(", ", ", ")")
-
-      val isBuiltIn =
-        DependencyID.BuiltIn contains node.parsed.fileURI
 
       val suffix =
         if (isBuiltIn)
