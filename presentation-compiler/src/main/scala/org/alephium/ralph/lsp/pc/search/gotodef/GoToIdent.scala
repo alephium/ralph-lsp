@@ -414,18 +414,26 @@ private object GoToIdent {
    * @return An Option containing the nearest function definition, if found.
    */
   private def goToNearestFuncDef(childNode: Node[Ast.Positioned, Ast.Positioned]): Option[Node[Ast.FuncDef[_], Ast.Positioned]] =
-    childNode
-      .data
-      .sourceIndex
-      .flatMap {
-        childNodeIndex =>
-          childNode
-            .walkParents
-            .collectFirst {
-              case node @ Node(function: Ast.FuncDef[_], _) if function.sourceIndex.exists(_ contains childNodeIndex.index) =>
-                node.upcast(function)
-            }
-      }
+    childNode.data match {
+      case function: Ast.FuncDef[_] =>
+        // Nested function definitions are not allowed in Ralph.
+        // If the input node is a function, return the node itself.
+        Some(childNode.upcast(function))
+
+      case _ =>
+        childNode
+          .data
+          .sourceIndex
+          .flatMap {
+            childNodeIndex =>
+              childNode
+                .walkParents
+                .collectFirst {
+                  case node @ Node(function: Ast.FuncDef[_], _) if function.sourceIndex.exists(_ contains childNodeIndex.index) =>
+                    node.upcast(function)
+                }
+          }
+    }
 
   /**
    * Navigate to the argument(s) of the nearest function to this node.
