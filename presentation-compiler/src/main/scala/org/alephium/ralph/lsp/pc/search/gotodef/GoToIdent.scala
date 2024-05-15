@@ -420,9 +420,9 @@ private[search] object GoToIdent {
         // If the input node is a function, return the node itself.
         Some(childNode.upcast(function))
 
-      case _ =>
-        childNode
-          .data
+      case ast: Ast.Positioned =>
+        // For everything else, find the nearest function.
+        ast
           .sourceIndex
           .flatMap {
             childNodeIndex =>
