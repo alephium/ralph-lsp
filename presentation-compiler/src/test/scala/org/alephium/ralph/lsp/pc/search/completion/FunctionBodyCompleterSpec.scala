@@ -215,6 +215,96 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
 
       actual should contain allElementsOf expected
     }
+
+    "after variable assignment" in {
+      val suggestions =
+        suggest {
+          """
+          |Contract Test() {
+          |
+          |  fn aFunction() -> () {
+          |    let aVariable = true
+          |    let copyVariable = a@@
+          |  }
+          |
+          |}
+          |""".stripMargin
+        }
+
+      val actual =
+        suggestions.flatMap(_.toCompletion())
+
+      val expected =
+        Array(
+          Completion.Method(
+            label = "aFunction() -> ()",
+            insert = "aFunction()",
+            detail = ""
+          ),
+          Completion.Variable(
+            label = "aVariable",
+            insert = "aVariable",
+            detail = ""
+          )
+        )
+
+      actual should contain allElementsOf expected
+    }
+
+    "within nested for loops" in {
+      val suggestions =
+        suggest {
+          """
+            |Contract Test() {
+            |
+            |  fn aFunction() -> () {
+            |    let mut counter = 1
+            |    for (let mut index1 = 0; index1 <= 4; index1 = index2 + 1) {
+            |      counter = counter + 1
+            |      for (let mut index2 = 0; index1 <= 4; index2 = i@@ + 1) {
+            |        counter = counter + 1
+            |      }
+            |    }
+            |  }
+            |
+            |}
+            |""".stripMargin
+        }
+
+      val actual =
+        suggestions.flatMap(_.toCompletion())
+
+      val expected =
+        Array(
+          Completion.Method(
+            label = "aFunction() -> ()",
+            insert = "aFunction()",
+            detail = ""
+          ),
+          Completion.Variable(
+            label = "mut counter",
+            insert = "counter",
+            detail = ""
+          ),
+          Completion.Variable(
+            label = "mut counter",
+            insert = "counter",
+            detail = ""
+          ),
+          Completion.Variable(
+            label = "mut index1",
+            insert = "index1",
+            detail = ""
+          ),
+          Completion.Variable(
+            label = "mut index2",
+            insert = "index2",
+            detail = ""
+          )
+        )
+
+      actual should contain allElementsOf expected
+    }
   }
 
 }

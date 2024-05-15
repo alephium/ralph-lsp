@@ -18,9 +18,8 @@ package org.alephium.ralph.lsp.pc.search.completion
 
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.Ast
-import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToIdent
 
 object SourceCodeCompleter {
 
@@ -38,16 +37,16 @@ object SourceCodeCompleter {
       workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion] =
     sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
       case Some(closest) =>
-        closest match {
-          case functionNode @ Node(function: Ast.FuncDef[_], _) =>
+        GoToIdent.goToNearestFuncDef(closest) match {
+          case Some(functionNode) =>
             FunctionBodyCompleter.suggest(
               cursorIndex = cursorIndex,
-              functionNode = functionNode.upcast(function),
+              functionNode = functionNode,
               sourceCode = sourceCode,
               workspace = workspace
             )
 
-          case _ =>
+          case None =>
             Iterator.empty
         }
 
