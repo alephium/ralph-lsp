@@ -145,7 +145,7 @@ object Suggestion {
 
   }
 
-  case class Function(node: SourceLocation.Node[Ast.FuncDef[_]]) extends Suggestion.InheritedAPI {
+  case class FuncDef(node: SourceLocation.Node[Ast.FuncDef[_]]) extends Suggestion.InheritedAPI {
 
     override def toCompletion(): Seq[Completion] = {
       val paramTypes =

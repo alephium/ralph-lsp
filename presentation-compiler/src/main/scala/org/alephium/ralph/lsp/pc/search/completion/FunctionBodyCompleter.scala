@@ -128,7 +128,7 @@ object FunctionBodyCompleter {
 
         case Node(function: Ast.FuncDef[_], _) =>
           // suggest function names
-          Suggestion.Function(SourceLocation.Node(function, sourceCode))
+          Suggestion.FuncDef(SourceLocation.Node(function, sourceCode))
 
         case Node(eventDef: Ast.EventDef, _) =>
           // suggest events
@@ -149,7 +149,7 @@ object FunctionBodyCompleter {
    * @param workspace The workspace that contains the built-in dependency.
    * @return Iterator over built-in functions.
    */
-  private def suggestBuiltinFunctions(workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.Function] =
+  private def suggestBuiltinFunctions(workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.FuncDef] =
     workspace.build.findDependency(DependencyID.BuiltIn) match {
       case Some(builtIn) =>
         WorkspaceSearcher
@@ -167,7 +167,7 @@ object FunctionBodyCompleter {
    * @param source The source code that may contain functions.
    * @return An iterator over suggested functions.
    */
-  private def suggestsFunctions(source: SourceLocation.Code): Iterator[Suggestion.Function] =
+  private def suggestsFunctions(source: SourceLocation.Code): Iterator[Suggestion.FuncDef] =
     source.tree.ast match {
       case Left(contract) =>
         contract
@@ -181,7 +181,7 @@ object FunctionBodyCompleter {
                   source = source
                 )
 
-              Suggestion.Function(node)
+              Suggestion.FuncDef(node)
           }
 
       case Right(_) =>
