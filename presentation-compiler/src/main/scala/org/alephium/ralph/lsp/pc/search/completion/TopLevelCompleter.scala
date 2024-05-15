@@ -16,6 +16,8 @@
 
 package org.alephium.ralph.lsp.pc.search.completion
 
+import org.alephium.ralph.Keyword
+
 import scala.collection.immutable.ArraySeq
 
 object TopLevelCompleter {
@@ -33,40 +35,43 @@ object TopLevelCompleter {
     Suggestion.Keyword(
       label = "import",
       insert = """import """"",
-      detail = "Import a dependency file to the project",
-      documentation = ""
+      detail = "Import a dependency file to the project"
     )
 
-  private def suggestContract(): Suggestion.Keyword =
+  private def suggestContract(): Suggestion.Keyword = {
+    val label = Keyword.Contract.name
     Suggestion.Keyword(
-      label = "Contract",
-      insert = "Contract ",
-      detail = "Similar to classes in object-oriented languages",
-      documentation = ""
+      label = label,
+      insert = s"$label ",
+      detail = "Similar to classes in object-oriented languages"
     )
+  }
 
-  private def suggestAbstractContract(): Suggestion.Keyword =
+  private def suggestAbstractContract(): Suggestion.Keyword = {
+    val label = s"${Keyword.Abstract.name} ${Keyword.Contract.name}"
     Suggestion.Keyword(
-      label = "Abstract Contract",
-      insert = "Abstract Contract ",
-      detail = "Similar to abstract classes in object-oriented languages",
-      documentation = ""
+      label = label,
+      insert = s"$label ",
+      detail = "Similar to abstract classes in object-oriented languages"
     )
+  }
 
-  private def suggestInterface(): Suggestion.Keyword =
+  private def suggestInterface(): Suggestion.Keyword = {
+    val label = Keyword.Interface.name
     Suggestion.Keyword(
-      label = "Interface",
-      insert = "Interface ",
-      detail = "Similar to interfaces in object-oriented languages",
-      documentation = ""
+      label = label,
+      insert = s"$label ",
+      detail = "Similar to interfaces in object-oriented languages"
     )
+  }
 
-  private def suggestTxScript(): Suggestion.Keyword =
+  private def suggestTxScript(): Suggestion.Keyword = {
+    val label = Keyword.TxScript.name
     Suggestion.Keyword(
-      label = "TxScript",
-      insert = "TxScript ",
-      detail = "Code to interact with contracts on the blockchain",
-      documentation = ""
+      label = label,
+      insert = s"$label ",
+      detail = "Code to interact with contracts on the blockchain"
     )
+  }
 
 }

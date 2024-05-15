@@ -347,7 +347,7 @@ class RalphLangServer private (
 
                 case Some(Left(error)) =>
                   // Completion failed: Log the error message
-                  logger.error("Code completion failed: " + error.message)
+                  logger.info("Code completion unsuccessful: " + error.message)
                   Iterator.empty[Suggestion]
 
                 case None =>
@@ -398,7 +398,7 @@ class RalphLangServer private (
 
                 case Some(Left(error)) =>
                   // Go-to definition failed: Log the error message
-                  logger.error("Go-to definition failed: " + error.message)
+                  logger.info("Go-to definition unsuccessful: " + error.message)
                   Iterator.empty[Location]
 
                 case None =>

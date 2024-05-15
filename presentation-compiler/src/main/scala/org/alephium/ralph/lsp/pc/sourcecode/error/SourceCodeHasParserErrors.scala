@@ -21,10 +21,10 @@ import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIn
 
 import java.net.URI
 
-case class SourceCodeHasCompilationErrors(uri: URI) extends CompilerMessage.Error {
+case class SourceCodeHasParserErrors(uri: URI) extends CompilerMessage.Error {
 
   override def message: String =
-    s"Source code has compilation error(s). URI: $uri"
+    s"Source code has parser error(s). URI: $uri"
 
   override def index: SourceIndex =
     SourceIndexExtra.zero(uri)

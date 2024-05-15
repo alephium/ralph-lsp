@@ -38,7 +38,7 @@ private object ImportCompleter extends StrictImplicitLogging {
       cursorIndex: Int,
       dependency: Option[WorkspaceState.Compiled],
       imported: Tree.Import
-    )(implicit logger: ClientLogger): ArraySeq[Suggestion.Field] =
+    )(implicit logger: ClientLogger): ArraySeq[Suggestion.File] =
     if (imported.string.name.index contains cursorIndex) // suggest if cursor is between the quoted String
       dependency match {
         case Some(dependency) =>
@@ -58,7 +58,7 @@ private object ImportCompleter extends StrictImplicitLogging {
       cursorIndex: Int,
       dependencySourceCode: ArraySeq[SourceCodeState.Compiled],
       imported: Tree.Import
-    )(implicit logger: ClientLogger): ArraySeq[Suggestion.Field] =
+    )(implicit logger: ClientLogger): ArraySeq[Suggestion.File] =
     dependencySourceCode flatMap {
       compiled =>
         compiled.importIdentifier map {
@@ -83,12 +83,7 @@ private object ImportCompleter extends StrictImplicitLogging {
                   dependencyIdentifier.string.name.value // suggest the package and file name e.g. `std/nft_interface`
               }
 
-            Suggestion.Field(
-              label = insert,
-              insert = insert,
-              detail = "",
-              documentation = ""
-            )
+            Suggestion.File(insert)
         }
     }
 
