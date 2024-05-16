@@ -248,4 +248,22 @@ object Suggestion {
 
   }
 
+  case class MapDef(node: SourceLocation.Node[Ast.MapDef]) extends Suggestion.InheritedAPI {
+
+    override def toCompletion(): Seq[Completion.Property] = {
+      val label =
+        s"""${node.ast.ident.name}: ${StringUtil.spaceBetweenCommaAndSemicolon(node.ast.tpe.signature)}"""
+
+      val property =
+        Completion.Property(
+          label = label,
+          insert = node.ast.ident.name,
+          detail = ""
+        )
+
+      Seq(property)
+    }
+
+  }
+
 }
