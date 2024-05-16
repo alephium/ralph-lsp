@@ -20,6 +20,10 @@ import org.alephium.ralph.lsp.access.compiler.message._
 
 object StringUtil {
 
+  /** Insert a single space between all commas and/or semicolons. */
+  def spaceBetweenCommaAndSemicolon(string: String): String =
+    string.replaceAll("([:,])", "$1 ")
+
   /**
    * This method calculates the index of a character in the source code
    * given its line number and position within that line.
