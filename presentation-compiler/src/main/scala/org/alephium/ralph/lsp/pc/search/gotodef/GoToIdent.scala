@@ -156,6 +156,14 @@ private[search] object GoToIdent {
               workspace = workspace
             )
 
+          case Node(mapFuncCall: Ast.MapDef, _) if mapFuncCall.ident == identNode.data =>
+            // Go-to MapDef usages.
+            goToMapDefUsages(
+              ident = identNode.data,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
+
           case _ =>
             Iterator.empty
         }
@@ -526,6 +534,39 @@ private[search] object GoToIdent {
           code.tree.rootNode.walkDown.collect {
             case Node(mapDef: Ast.MapDef, _) if mapDef.ident == ident =>
               SourceLocation.Node(mapDef, code)
+          }
+      }
+
+  /**
+   * Navigates to the usages of map definition(s) with the given identifier.
+   *
+   * @param ident      The identifier of the map definition to find usages for.
+   * @param sourceCode The source tree where this search is executed.
+   * @param workspace  The workspace where this search is executed and where all source trees exist.
+   * @return An iterator over [[Ast.Positioned]] representing the usage locations.
+   */
+  private def goToMapDefUsages(
+      ident: Ast.Ident,
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
+    // Go-to MapDef usages.
+    WorkspaceSearcher
+      .collectImplementingChildren(sourceCode, workspace)
+      .iterator
+      .flatMap {
+        code =>
+          code.tree.rootNode.walkDown.collect {
+            case Node(mapCall: Ast.MapFuncCall, _) if mapCall.ident == ident =>
+              SourceLocation.Node(mapCall, code)
+
+            case Node(mapCall: Ast.MapContains, _) if mapCall.ident == ident =>
+              SourceLocation.Node(mapCall, code)
+
+            case Node(selector @ Ast.LoadDataBySelectors(Ast.Variable(variableIdent), _), _) if variableIdent == ident =>
+              SourceLocation.Node(selector, code)
+
+            case Node(mapCall: Ast.AssignmentSelectedTarget[_], _) if mapCall.ident == ident =>
+              SourceLocation.Node(mapCall, code)
           }
       }
 
