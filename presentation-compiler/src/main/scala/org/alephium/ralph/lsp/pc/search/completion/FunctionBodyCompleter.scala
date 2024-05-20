@@ -144,6 +144,10 @@ object FunctionBodyCompleter {
         case Node(constantVarDef: Ast.ConstantVarDef[_], _) =>
           // suggest constants
           Suggestion.ConstantVarDef(SourceLocation.Node(constantVarDef, sourceCode))
+
+        case Node(mapDef: Ast.MapDef, _) =>
+          // suggest maps
+          Suggestion.MapDef(SourceLocation.Node(mapDef, sourceCode))
       }
 
   /**

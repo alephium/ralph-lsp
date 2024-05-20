@@ -305,6 +305,58 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
 
       actual should contain allElementsOf expected
     }
+
+    "map definitions exist" in {
+      val suggestions =
+        suggest {
+          """
+            |Abstract Contract Parent2() {
+            |  mapping[Address, Bool] mapParent2
+            |}
+            |
+            |Abstract Contract Parent1() extends Parent2() {
+            |  mapping[Address, ByteVec] mapParent1
+            |}
+            |
+            |Contract Child() extends Parent1() {
+            |  mapping[Address, U256] mapChild
+            |
+            |  fn function() -> () {
+            |    let mapReference = map@@
+            |  }
+            |
+            |}
+            |""".stripMargin
+        }
+
+      val actual =
+        suggestions
+          .collect {
+            case map: Suggestion.MapDef => map
+          }
+          .flatMap(_.toCompletion())
+
+      val expected =
+        List(
+          Completion.Property(
+            label = "mapParent2: Map[Address, Bool]",
+            insert = "mapParent2",
+            detail = ""
+          ),
+          Completion.Property(
+            label = "mapParent1: Map[Address, ByteVec]",
+            insert = "mapParent1",
+            detail = ""
+          ),
+          Completion.Property(
+            label = "mapChild: Map[Address, U256]",
+            insert = "mapChild",
+            detail = ""
+          )
+        )
+
+      actual.sortBy(_.label) shouldBe expected.sortBy(_.label)
+    }
   }
 
 }
