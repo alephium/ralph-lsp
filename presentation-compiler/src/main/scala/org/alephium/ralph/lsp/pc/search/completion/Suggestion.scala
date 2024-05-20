@@ -266,4 +266,23 @@ object Suggestion {
 
   }
 
+  /**
+   * Represents suggestions for all enum fields defined within the given enum definition.
+   *
+   * @param node The node containing the enum definition.
+   */
+  case class EnumFields(node: SourceLocation.Node[Ast.EnumDef[_]]) extends Suggestion.NodeAPI {
+
+    override def toCompletion(): Seq[Completion.EnumMember] =
+      node.ast.fields map {
+        field =>
+          Completion.EnumMember(
+            label = field.name,
+            insert = field.name,
+            detail = ""
+          )
+      }
+
+  }
+
 }

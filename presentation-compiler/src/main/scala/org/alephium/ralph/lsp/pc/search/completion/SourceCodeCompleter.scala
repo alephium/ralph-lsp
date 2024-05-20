@@ -40,8 +40,12 @@ object SourceCodeCompleter {
     sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
       case Some(closest) =>
         closest.parent match {
-          case Some(Node(_: Ast.EnumFieldSelector[_], _)) =>
-            Iterator.empty
+          case Some(Node(selector: Ast.EnumFieldSelector[_], _)) =>
+            EnumFieldCompleter.suggest(
+              enumId = selector.enumId,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case Some(Node(_: Ast.EnumField[_], _)) =>
             Iterator.empty
