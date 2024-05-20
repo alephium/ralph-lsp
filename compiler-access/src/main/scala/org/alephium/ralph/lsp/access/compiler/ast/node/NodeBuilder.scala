@@ -47,7 +47,8 @@ object NodeBuilder extends StrictLogging {
             buildMany(ast.events) ++
             buildMany(ast.constantVars) ++
             buildMany(ast.enums) ++
-            buildMany(ast.inheritances)
+            buildMany(ast.inheritances) ++
+            buildMany(ast.maps)
 
         case Left(ast: Ast.ContractInterface) =>
           buildOne(ast.stdId) ++

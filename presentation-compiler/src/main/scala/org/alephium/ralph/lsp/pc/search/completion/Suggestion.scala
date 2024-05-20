@@ -18,6 +18,7 @@ package org.alephium.ralph.lsp.pc.search.completion
 
 import org.alephium.ralph
 import org.alephium.ralph.Ast
+import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 
 sealed trait Suggestion {
@@ -95,7 +96,7 @@ object Suggestion {
 
     override def toCompletion(): Seq[Completion] = {
       val typeSig =
-        node.ast.signature.replaceAll("(:)", "$1 ")
+        StringUtil.spaceBetweenCommaAndSemicolon(node.ast.signature)
 
       val suggestion =
         if (isTemplateArgument)
@@ -177,7 +178,10 @@ object Suggestion {
           node
             .ast
             .rtypes
-            .map(_.signature.replaceAll("(,)", "$1 "))
+            .map {
+              tpe =>
+                StringUtil.spaceBetweenCommaAndSemicolon(tpe.signature)
+            }
             .mkString("(", ", ", ")")
 
       val label =
@@ -212,7 +216,7 @@ object Suggestion {
         Completion.Event(
           label = node.ast.id.name,
           insert = node.ast.id.name,
-          detail = node.ast.signature.replaceAll("([:,])", "$1 ")
+          detail = StringUtil.spaceBetweenCommaAndSemicolon(node.ast.signature)
         )
       )
 

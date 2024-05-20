@@ -48,7 +48,7 @@ private[search] object GoToIdent {
               workspace = workspace
             )
 
-          case Node(assignment: Ast.AssignmentSimpleTarget[_], _) if assignment.ident == identNode.data =>
+          case Node(assignment: Ast.AssignmentTarget[_], _) if assignment.ident == identNode.data =>
             // They selected an assignment. Take 'em there!
             goToScopeDefinitions(
               identNode = identNode,
@@ -62,6 +62,22 @@ private[search] object GoToIdent {
               .collectInheritedParents(sourceCode, workspace)
               .iterator
               .flatMap(goToEnumField(fieldSelector, _))
+
+          case Node(mapFuncCall: Ast.MapFuncCall, _) if mapFuncCall.ident == identNode.data =>
+            // They selected an map on a function call.
+            goToMapFunction(
+              ident = identNode.data,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
+
+          case Node(mapFuncCall: Ast.MapContains, _) if mapFuncCall.ident == identNode.data =>
+            // They selected an map on a function call.
+            goToMapFunction(
+              ident = identNode.data,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case node @ Node(field: Ast.EnumField[_], _) if field.ident == identNode.data =>
             // They selected an enum field.
@@ -221,7 +237,7 @@ private[search] object GoToIdent {
       WorkspaceSearcher
         .collectInheritedParents(sourceCode, workspace)
         .iterator
-        .flatMap(goToConstantsAndTemplateArguments(identNode.data, _))
+        .flatMap(goToTemplateDefinitionsAndArguments(identNode.data, _))
 
     val functionArguments =
       goToNearestFunctionArguments(identNode)
@@ -243,11 +259,11 @@ private[search] object GoToIdent {
    * @param sourceCode The source tree to search within.
    * @return An iterator over the found constants and arguments.
    */
-  private def goToConstantsAndTemplateArguments(
+  private def goToTemplateDefinitionsAndArguments(
       ident: Ast.Ident,
       sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Positioned]] = {
-    val constants =
-      goToConstants(
+    val constantsAndMaps =
+      goToTemplateLevelDefinitions(
         ident = ident,
         sourceCode = sourceCode
       )
@@ -258,7 +274,7 @@ private[search] object GoToIdent {
         sourceCode = sourceCode
       )
 
-    constants ++ templateArguments
+    constantsAndMaps ++ templateArguments
   }
 
   /**
@@ -268,9 +284,9 @@ private[search] object GoToIdent {
    * @param sourceCode The source tree to search within.
    * @return The constant definitions.
    */
-  private def goToConstants(
+  private def goToTemplateLevelDefinitions(
       ident: Ast.Ident,
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.ConstantVarDef[_]]] =
+      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Positioned]] =
     sourceCode
       .tree
       .rootNode
@@ -279,6 +295,9 @@ private[search] object GoToIdent {
       .collect {
         case constant: Ast.ConstantVarDef[_] if constant.ident == ident =>
           SourceLocation.Node(constant, sourceCode)
+
+        case mapDef: Ast.MapDef if mapDef.ident == ident =>
+          SourceLocation.Node(mapDef, sourceCode)
       }
 
   /**
@@ -486,5 +505,28 @@ private[search] object GoToIdent {
       .filter(_.ident == ident)
       .map(SourceLocation.Node(_, sourceCode))
   }
+
+  /**
+   * Navigates to the map definition(s) for the given identifier.
+   *
+   * @param ident      The identifier of the variable to find the map definition for.
+   * @param sourceCode The source tree where this search is executed.
+   * @param workspace  The workspace where this search is executed and where all source trees exist.
+   * @return An iterator over [[Ast.MapDef]] objects matching the search results.
+   */
+  private def goToMapFunction(
+      ident: Ast.Ident,
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.MapDef]] =
+    WorkspaceSearcher
+      .collectInheritedParents(sourceCode, workspace)
+      .iterator
+      .flatMap {
+        code =>
+          code.tree.rootNode.walkDown.collect {
+            case Node(mapDef: Ast.MapDef, _) if mapDef.ident == ident =>
+              SourceLocation.Node(mapDef, code)
+          }
+      }
 
 }
