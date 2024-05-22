@@ -175,4 +175,31 @@ object WorkspaceSearcher {
     )
   }
 
+  /**
+   * Collects all function definitions from the provided compiled workspace state.
+   *
+   * @param workspace The compiled workspace state from which to collect function definitions.
+   * @return An iterator containing all function implementations.
+   */
+  def collectFunctions(workspace: WorkspaceState.Parsed): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+    workspace
+      .sourceCode
+      .iterator // iterator over dependant source-code files
+      .flatMap(SourceCodeSearcher.collectFunctions)
+
+  /**
+   * Collects all function definitions, including inherited ones, from the provided source code.
+   *
+   * @param sourceCode The source code from which to collect function definitions.
+   * @param workspace  The workspace state that is source aware.
+   * @return An iterator containing all function implementations, including inherited ones.
+   */
+  def collectFunctionsIncludingInherited(
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+    WorkspaceSearcher
+      .collectInheritedParents(sourceCode, workspace)
+      .iterator
+      .flatMap(SourceCodeSearcher.collectFunctions)
+
 }

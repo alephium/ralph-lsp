@@ -310,6 +310,51 @@ object SourceCodeSearcher {
   }
 
   /**
+   * Collects all function definitions from the provided source code.
+   *
+   * @param sourceCode The source code from which to collect function definitions.
+   * @return           An iterator containing all function implementations.
+   */
+  def collectFunctions(sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+    // TODO: Improve selection by checking function argument count and types.
+    sourceCode.tree.ast match {
+      case Left(ast) =>
+        ast
+          .funcs
+          .iterator
+          .map {
+            funcDef =>
+              SourceLocation.Node(
+                ast = funcDef,
+                source = sourceCode
+              )
+          }
+
+      case Right(_) =>
+        Iterator.empty
+    }
+
+  /**
+   * Collects all function definitions from the provided parsed source code.
+   *
+   * @param source The parsed source code from which to collect function definitions.
+   * @return An iterator containing all function implementations.
+   */
+  def collectFunctions(source: SourceCodeState.Parsed): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+    source
+      .ast
+      .statements
+      .iterator
+      .flatMap {
+        case tree: Tree.Source =>
+          // search for the matching functionIds within the built-in source file.
+          SourceCodeSearcher.collectFunctions(SourceLocation.Code(tree, source))
+
+        case _: Tree.Import =>
+          Iterator.empty
+      }
+
+  /**
    * Collects all parent source implementations inherited by the given
    * source tree within the provided source code files.
    *

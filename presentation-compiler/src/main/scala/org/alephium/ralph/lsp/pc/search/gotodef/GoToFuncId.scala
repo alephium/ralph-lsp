@@ -16,11 +16,12 @@
 
 package org.alephium.ralph.lsp.pc.search.gotodef
 
+import org.alephium.protocol.vm.StatefulContext
 import org.alephium.ralph.Ast
-import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
+import org.alephium.ralph.lsp.access.compiler.ast.AstExtra
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
@@ -102,98 +103,27 @@ private object GoToFuncId extends StrictImplicitLogging {
   private def goToFunction(
       funcId: Ast.FuncId,
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
-    if (funcId.isBuiltIn)
-      goToBuiltInFunction(
-        funcId = funcId,
-        dependencyBuiltIn = workspace.build.findDependency(DependencyID.BuiltIn)
-      )
-    else
-      WorkspaceSearcher
-        .collectInheritedParents(sourceCode, workspace)
-        .iterator
-        .flatMap(goToLocalFunction(funcId, _))
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] = {
+    val functions: Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+      if (funcId.isBuiltIn)
+        workspace.build.findDependency(DependencyID.BuiltIn) match {
+          case Some(builtInWorkspace) =>
+            WorkspaceSearcher.collectFunctions(builtInWorkspace.parsed)
 
-  /**
-   * Navigate to the local function within the source code for the given [[Ast.FuncId]].
-   *
-   * @param funcId     The [[Ast.FuncId]] of the local function to locate.
-   * @param sourceCode The source tree to search within.
-   * @return An array sequence containing all the local function definitions.
-   */
-  private def goToLocalFunction(
-      funcId: Ast.FuncId,
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Positioned]] =
-    // TODO: Improve selection by checking function argument count and types.
-    sourceCode.tree.ast match {
-      case Left(ast) =>
-        ast
-          .funcs
-          .iterator
-          .filter(_.id == funcId)
-          .map {
-            funcDef =>
-              SourceLocation.Node(
-                ast = AstExtra.funcSignature(funcDef),
-                source = sourceCode
-              )
-          }
+          case None =>
+            Iterator.empty
+        }
+      else
+        WorkspaceSearcher.collectFunctionsIncludingInherited(
+          sourceCode = sourceCode,
+          workspace = workspace
+        )
 
-      case Right(_) =>
-        Iterator.empty
-    }
-
-  /**
-   * Navigate to built-in functions identified by the given [[Ast.FuncId]] within a the dependant workspace.
-   *
-   * @param funcId            The build-in function id to search.
-   * @param dependencyBuiltIn Dependant workspace containing built-in function source files.
-   * @return A iterator over locations of the built-in functions within the compiled workspace.
-   */
-  private def goToBuiltInFunction(
-      funcId: Ast.FuncId,
-      dependencyBuiltIn: Option[WorkspaceState.Compiled]): Iterator[SourceLocation.Node[Ast.Positioned]] =
-    dependencyBuiltIn match {
-      case Some(buildInWorkspace) =>
-        buildInWorkspace
-          .sourceCode
-          .iterator // iterator over dependant source-code files
-          .flatMap {
-            compiled =>
-              goToBuiltInFunction(
-                funcId = funcId,
-                builtInFile = compiled
-              )
-          }
-
-      case None =>
-        Iterator.empty
-    }
-
-  /**
-   * Navigate to built-in functions identified by the given [[Ast.FuncId]] within a source file.
-   *
-   * @param funcId      The build-in function id to search.
-   * @param builtInFile Compiled source file containing built-in functions.
-   * @return A iterator over locations of the built-in functions within the compiled source file.
-   */
-  private def goToBuiltInFunction(
-      funcId: Ast.FuncId,
-      builtInFile: SourceCodeState.Compiled): Iterator[SourceLocation.Node[Ast.Positioned]] =
-    builtInFile
-      .parsed
-      .ast
-      .statements
-      .iterator
-      .collect {
-        case tree: Tree.Source =>
-          // search for the matching functionIds within the built-in source file.
-          goToLocalFunction(
-            funcId = funcId,
-            sourceCode = SourceLocation.Code(tree, builtInFile.parsed)
-          )
-      }
-      .flatten
+    findFuncSignature(
+      funcId = funcId,
+      functions = functions
+    )
+  }
 
   /**
    * Navigate to all local function usage where the given function definition [[Ast.FuncDef]]
@@ -239,19 +169,34 @@ private object GoToFuncId extends StrictImplicitLogging {
             workspace = workspace
           )
 
-        allFunctions
-          .filter(_.ast.id == functionId)
-          .map {
-            funcDef =>
-              SourceLocation.Node(
-                ast = AstExtra.funcSignature(funcDef.ast),
-                source = funcDef.source
-              )
-          }
+        findFuncSignature(
+          funcId = functionId,
+          functions = allFunctions
+        )
 
       case None =>
         logger.info(s"Go-to definition unsuccessful: Type inference unresolved for function '${functionId.name}'. Check for syntax or compilation errors.")
         Iterator.empty
     }
+
+  /**
+   * Finds the function signatures with the given id, transforming the function definitions to function signatures.
+   *
+   * @param funcId    The function id to search.
+   * @param functions The functions to search within.
+   * @return The matching function signatures.
+   */
+  private def findFuncSignature(
+      funcId: Ast.FuncId,
+      functions: Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]]): Iterator[SourceLocation.Node[Ast.Positioned]] =
+    functions
+      .filter(_.ast.id == funcId)
+      .map {
+        funcDef =>
+          SourceLocation.Node(
+            ast = AstExtra.funcSignature(funcDef.ast),
+            source = funcDef.source
+          )
+      }
 
 }
