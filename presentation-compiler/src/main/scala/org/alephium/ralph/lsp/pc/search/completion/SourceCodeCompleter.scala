@@ -36,7 +36,7 @@ object SourceCodeCompleter {
   def complete(
       cursorIndex: Int,
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion] =
+      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.NodeAPI] =
     sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
       case Some(closest) =>
         closest.parent match {

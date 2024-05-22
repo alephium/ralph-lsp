@@ -38,7 +38,7 @@ object FunctionBodyCompleter {
       cursorIndex: Int,
       functionNode: Node[Ast.FuncDef[_], Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion] = {
+      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.NodeAPI] = {
     // fetch suggestions local to this function
     val localFunctionSuggestions =
       suggestLocalFunctionVariables(
@@ -74,7 +74,7 @@ object FunctionBodyCompleter {
   private def suggestLocalFunctionVariables(
       cursorIndex: Int,
       functionNode: Node[Ast.FuncDef[_], Ast.Positioned],
-      sourceCode: SourceLocation.Code): Iterator[Suggestion] =
+      sourceCode: SourceLocation.Code): Iterator[Suggestion.NodeAPI] =
     functionNode
       .walkDown
       .filter(_.data.sourceIndex.exists(_.from <= cursorIndex))
@@ -98,7 +98,7 @@ object FunctionBodyCompleter {
    */
   private def suggestInheritedAPIs(
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion] =
+      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.InheritedAPI] =
     WorkspaceSearcher
       .collectInheritedParents(
         sourceCode = sourceCode,
