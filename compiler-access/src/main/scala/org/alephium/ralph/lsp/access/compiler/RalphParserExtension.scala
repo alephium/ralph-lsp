@@ -26,7 +26,8 @@ import java.net.URI
 /** Functions that extend ralphc's default parser */
 object RalphParserExtension {
 
-  implicit val whitespace: P[_] => P[Unit] = new StatefulParser(None).whitespace
+  implicit val whitespace: fastparse.Whitespace =
+    new StatefulParser(None).RalphWhitespace
 
   /**
    * An extension to Ralphc's parse function [[org.alephium.ralph.StatefulParser.multiContract]]
@@ -187,10 +188,7 @@ object RalphParserExtension {
           case _: Ast.AssetScript =>
             // parser functions from ralphc also result in the `Ast.AssetScript` type.
             // For whatever reason, if `AssetScript` is returned, report it as a parser failure since it is unexpected.
-            val ctx  = implicitly[P[_]]
-            val fail = ctx.freshFailure()
-            ctx.setMsg(fromIndex, () => "TxScript, Contract, Interface or Struct. Found AssetScript.")
-            fail
+            Fail("TxScript, Contract, Interface or Struct. Found AssetScript.")
         }
     }
   }
