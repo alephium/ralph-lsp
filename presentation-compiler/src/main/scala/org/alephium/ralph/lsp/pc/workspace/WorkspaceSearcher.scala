@@ -16,6 +16,8 @@
 
 package org.alephium.ralph.lsp.pc.workspace
 
+import org.alephium.protocol.vm.StatefulContext
+import org.alephium.ralph.{Type, Ast}
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState, SourceCodeSearcher}
@@ -152,6 +154,25 @@ object WorkspaceSearcher {
       SourceCodeSearcher.collectSourceTrees(workspaceCode)
 
     workspaceTrees ++ allImportedCode
+  }
+
+  /**
+   * Collects all functions from trees with the given types.
+   *
+   * @param types     The types of trees from which to collect functions.
+   * @param workspace The workspace state containing all source code to search from.
+   * @return An iterator containing all function implementations.
+   */
+  def collectFunctions(
+      types: Seq[Type],
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] = {
+    val workspaceTrees =
+      collectTrees(workspace)
+
+    SourceCodeSearcher.collectFunctions(
+      types = types,
+      workspaceSource = workspaceTrees
+    )
   }
 
 }

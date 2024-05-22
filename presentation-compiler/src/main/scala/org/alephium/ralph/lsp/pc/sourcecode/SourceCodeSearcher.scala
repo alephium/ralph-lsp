@@ -16,7 +16,8 @@
 
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.Ast
+import org.alephium.protocol.vm.StatefulContext
+import org.alephium.ralph.{Type, Ast}
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.error._
@@ -182,6 +183,131 @@ object SourceCodeSearcher {
           parsed = sourceCode
         )
     }
+
+  /**
+   * Collects all source tree locations for the given types.
+   *
+   * @param types           The types of trees for which to collect source tree locations.
+   * @param workspaceSource All workspace trees.
+   * @return An array sequence containing all source tree locations.
+   */
+  def collectTypes(
+      types: Seq[Type],
+      workspaceSource: ArraySeq[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
+    workspaceSource flatMap {
+      code =>
+        collectTypes(
+          types = types,
+          code = code
+        )
+    }
+
+  /**
+   * Collects all source trees for the given types within the provided code.
+   *
+   * @param types The types for which to collect source trees.
+   * @param code  The source code to search within.
+   * @return A sequence containing all matching source trees.
+   */
+  def collectTypes(
+      types: Seq[Type],
+      code: SourceLocation.Code): Seq[SourceLocation.Code] =
+    // collect all trees with matching types
+    types collect {
+      case Type.NamedType(id) if code.tree.typeId() == id =>
+        code
+
+      case Type.Struct(id) if code.tree.typeId() == id =>
+        code
+
+      case Type.Contract(id) if code.tree.typeId() == id =>
+        code
+    }
+
+  /**
+   * Collects all functions from trees with the given types.
+   *
+   * @param types           The types of trees from which to collect functions.
+   * @param workspaceSource All workspace trees.
+   * @return An iterator containing all function implementations.
+   */
+  def collectFunctions(
+      types: Seq[Type],
+      workspaceSource: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] = {
+    // collect all trees with matching types
+    val treesOfMatchingTypes =
+      collectTypes(
+        types = types,
+        workspaceSource = workspaceSource
+      )
+
+    // perform search on only the matching types
+    collectFunctions(
+      trees = treesOfMatchingTypes,
+      workspaceSource = workspaceSource
+    )
+  }
+
+  /**
+   * Collects all functions within the given trees.
+   *
+   * @param trees           The trees from which to collect functions.
+   * @param workspaceSource All workspace trees.
+   * @return An iterator containing all function implementations.
+   */
+  def collectFunctions(
+      trees: ArraySeq[SourceLocation.Code],
+      workspaceSource: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+    trees
+      .iterator
+      .flatMap {
+        code =>
+          collectFunctions(
+            tree = code,
+            workspaceSource = workspaceSource
+          )
+      }
+
+  /**
+   * Collects all functions within the given tree.
+   *
+   * @param tree            The tree from which to collect functions.
+   * @param workspaceSource All workspace trees.
+   * @return An iterator containing all function implementations.
+   */
+  def collectFunctions(
+      tree: SourceLocation.Code,
+      workspaceSource: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] = {
+    // the function could be within a nested parent, collect all parents.
+    val parents =
+      SourceCodeSearcher.collectInheritedParents(
+        source = tree,
+        allSource = workspaceSource
+      )
+
+    // all code to search, include the current code and its parents.
+    val allCode = tree +: parents
+
+    // Search for function IDs that match.
+    allCode.iterator.flatMap {
+      code =>
+        code.tree.ast match {
+          case Left(contract) =>
+            contract
+              .funcs
+              .map {
+                funcDef =>
+                  SourceLocation.Node(
+                    ast = funcDef,
+                    source = code
+                  )
+              }
+
+          case Right(_) =>
+            Iterator.empty
+        }
+    }
+  }
 
   /**
    * Collects all parent source implementations inherited by the given
