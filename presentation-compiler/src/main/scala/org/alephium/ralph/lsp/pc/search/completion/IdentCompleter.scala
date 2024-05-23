@@ -20,6 +20,7 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 
 object IdentCompleter {
 
@@ -37,7 +38,8 @@ object IdentCompleter {
       cursorIndex: Int,
       ident: Node[Ast.Ident, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.NodeAPI] =
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[Suggestion.NodeAPI] =
     ident.parent match {
       case Some(Node(selector: Ast.EnumFieldSelector[_], _)) =>
         EnumFieldCompleter.suggest(
@@ -45,6 +47,18 @@ object IdentCompleter {
           sourceCode = sourceCode,
           workspace = workspace
         )
+
+      case Some(parent @ Node(_: Ast.IdentSelector, _)) =>
+        parent.parent match {
+          case Some(Node(selector: Ast.LoadDataBySelectors[_], _)) =>
+            ExprCompleter.suggest(
+              expr = selector.base,
+              workspace = workspace
+            )
+
+          case _ =>
+            Iterator.empty
+        }
 
       case _ =>
         FunctionBodyCompleter.suggest(

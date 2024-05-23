@@ -21,6 +21,7 @@ import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 
 object SourceCodeCompleter {
 
@@ -35,7 +36,8 @@ object SourceCodeCompleter {
   def complete(
       cursorIndex: Int,
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.NodeAPI] =
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[Suggestion.NodeAPI] =
     sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
       case Some(node @ Node(ident: Ast.Ident, _)) =>
         IdentCompleter.suggest(
