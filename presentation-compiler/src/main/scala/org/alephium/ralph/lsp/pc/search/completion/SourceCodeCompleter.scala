@@ -47,6 +47,14 @@ object SourceCodeCompleter {
           workspace = workspace
         )
 
+      case Some(node @ Node(funcId: Ast.FuncId, _)) =>
+        FuncIdCompleter.suggest(
+          cursorIndex = cursorIndex,
+          funcId = node.upcast(funcId),
+          sourceCode = sourceCode,
+          workspace = workspace
+        )
+
       case Some(closest) =>
         FunctionBodyCompleter.suggest(
           cursorIndex = cursorIndex,
