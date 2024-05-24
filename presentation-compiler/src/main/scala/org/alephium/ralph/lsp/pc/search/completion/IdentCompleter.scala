@@ -16,45 +16,43 @@
 
 package org.alephium.ralph.lsp.pc.search.completion
 
+import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
-import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 
-object SourceCodeCompleter {
+object IdentCompleter {
 
   /**
-   * Provides code completion suggestions at the given cursor index within the source code.
+   * Provides code completion suggestions for the given identity being the closest node
+   * to the cursor index.
    *
-   * @param cursorIndex The index representing the cursor position in the source code.
+   * @param cursorIndex The position where this search was executed.
+   * @param ident       The node closest to the cursor index.
    * @param sourceCode  The source code where the completion is requested.
-   * @param workspace   The workspace state containing the source code.
+   * @param workspace   The workspace containing the source code.
    * @return An iterator over code completion suggestions.
    */
-  def complete(
+  def suggest(
       cursorIndex: Int,
+      ident: Node[Ast.Ident, Ast.Positioned],
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.NodeAPI] =
-    sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
-      case Some(node @ Node(ident: Ast.Ident, _)) =>
-        IdentCompleter.suggest(
-          cursorIndex = cursorIndex,
-          ident = node.upcast(ident),
+    ident.parent match {
+      case Some(Node(selector: Ast.EnumFieldSelector[_], _)) =>
+        EnumFieldCompleter.suggest(
+          enumId = selector.enumId,
           sourceCode = sourceCode,
           workspace = workspace
         )
 
-      case Some(closest) =>
+      case _ =>
         FunctionBodyCompleter.suggest(
           cursorIndex = cursorIndex,
-          closestToCursor = closest,
+          closestToCursor = ident,
           sourceCode = sourceCode,
           workspace = workspace
         )
-
-      case None =>
-        Iterator.empty
     }
 
 }

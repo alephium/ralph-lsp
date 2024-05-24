@@ -20,13 +20,41 @@ import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToFuncId
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 object FunctionBodyCompleter {
 
   /**
-   * Provides suggestions available at the given position within the body of a function.
+   * Provides all code completion suggestions within the scope of a function for the given index.
+   *
+   * @param cursorIndex     The index representing the cursor position where the request was submitted.
+   * @param closestToCursor The node closest to the cursor index.
+   * @param sourceCode      The source code where the completion is requested.
+   * @param workspace       The workspace state containing the source code.
+   * @return An iterator over code completion suggestions.
+   */
+  def suggest(
+      cursorIndex: Int,
+      closestToCursor: Node[Ast.Positioned, Ast.Positioned],
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.NodeAPI] =
+    GoToFuncId.goToNearestFuncDef(closestToCursor) match {
+      case Some(functionNode) =>
+        suggestInFunctionBody(
+          cursorIndex = cursorIndex,
+          functionNode = functionNode,
+          sourceCode = sourceCode,
+          workspace = workspace
+        )
+
+      case None =>
+        Iterator.empty
+    }
+
+  /**
+   * Provides suggestions available within the body of a function at the given position.
    *
    * @param cursorIndex  The position where this search was executed.
    * @param functionNode The node representing the function where this search was executed.
@@ -34,11 +62,11 @@ object FunctionBodyCompleter {
    * @param workspace    The workspace containing the source code.
    * @return An iterator over suggestions available before the cursor position within the function.
    */
-  def suggest(
+  private def suggestInFunctionBody(
       cursorIndex: Int,
       functionNode: Node[Ast.FuncDef[_], Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion] = {
+      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.NodeAPI] = {
     // fetch suggestions local to this function
     val localFunctionSuggestions =
       suggestLocalFunctionVariables(
@@ -74,7 +102,7 @@ object FunctionBodyCompleter {
   private def suggestLocalFunctionVariables(
       cursorIndex: Int,
       functionNode: Node[Ast.FuncDef[_], Ast.Positioned],
-      sourceCode: SourceLocation.Code): Iterator[Suggestion] =
+      sourceCode: SourceLocation.Code): Iterator[Suggestion.NodeAPI] =
     functionNode
       .walkDown
       .filter(_.data.sourceIndex.exists(_.from <= cursorIndex))
@@ -98,7 +126,7 @@ object FunctionBodyCompleter {
    */
   private def suggestInheritedAPIs(
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion] =
+      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.InheritedAPI] =
     WorkspaceSearcher
       .collectInheritedParents(
         sourceCode = sourceCode,
