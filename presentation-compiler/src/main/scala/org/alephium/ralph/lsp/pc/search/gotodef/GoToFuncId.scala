@@ -143,7 +143,7 @@ private[search] object GoToFuncId extends StrictImplicitLogging {
             Iterator.empty
         }
       else
-        WorkspaceSearcher.collectFunctionsIncludingInherited(
+        WorkspaceSearcher.collectFunctions(
           sourceCode = sourceCode,
           workspace = workspace
         )
