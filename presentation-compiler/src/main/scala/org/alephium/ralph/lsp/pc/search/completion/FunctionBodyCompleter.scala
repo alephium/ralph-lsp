@@ -188,50 +188,16 @@ object FunctionBodyCompleter {
     workspace.build.findDependency(DependencyID.BuiltIn) match {
       case Some(builtIn) =>
         WorkspaceSearcher
-          .collectTrees(builtIn)
-          .iterator
-          .flatMap {
-            source =>
-              suggestFunctions(
-                source = source,
-                isBuiltInSource = true
+          .collectFunctions(builtIn.parsed)
+          .map {
+            node =>
+              Suggestion.FuncDef(
+                node = node,
+                isBuiltIn = true
               )
           }
 
       case None =>
-        Iterator.empty
-    }
-
-  /**
-   * Suggests all functions available in the given source code.
-   *
-   * @param source          The source code that may contain function definitions.
-   * @param isBuiltInSource True if the given source is from the built-in dependency, false otherwise.
-   * @return An iterator over the suggested functions.
-   */
-  private def suggestFunctions(
-      source: SourceLocation.Code,
-      isBuiltInSource: Boolean): Iterator[Suggestion.FuncDef] =
-    source.tree.ast match {
-      case Left(contract) =>
-        contract
-          .funcs
-          .iterator
-          .map {
-            function =>
-              val node =
-                SourceLocation.Node(
-                  ast = function,
-                  source = source
-                )
-
-              Suggestion.FuncDef(
-                node = node,
-                isBuiltIn = isBuiltInSource
-              )
-          }
-
-      case Right(_) =>
         Iterator.empty
     }
 
