@@ -176,10 +176,13 @@ object WorkspaceSearcher {
   }
 
   /**
-   * Collects all function definitions from the provided parsed workspace state.
+   * Collects ALL function definitions within the provided parsed workspace state.
    *
    * @param workspace The parsed workspace state from which to collect function definitions.
    * @return An iterator containing all function implementations.
+   * @note This function is mainly useful for the built-in library
+   *       because all built-in functions are available throughout the workspace.
+   *       Consider using other [[collectFunctions]] functions for more targeted collections.
    */
   def collectFunctions(workspace: WorkspaceState.Parsed): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
     collectTrees(workspace)

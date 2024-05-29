@@ -17,12 +17,18 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode._
 import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
+import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.scalacheck.Gen
 
 import java.net.URI
+import scala.collection.immutable.ArraySeq
+import org.scalatest.matchers.should.Matchers._
 
 /** [[Workspace]] related test functions */
 object TestWorkspace {
@@ -47,6 +53,81 @@ object TestWorkspace {
         (TestWorkspace.persist(workspace), TestSourceCode.persistAll(sourceCode))
       else
         (workspace, sourceCode)
+
+  /**
+   * Generates a parsed workspace from the provided source code.
+   *
+   * @param code The source code to parse.
+   * @return A parsed workspace.
+   */
+  def genParsedOK(
+      code: String*
+    )(implicit compiler: CompilerAccess,
+      file: FileAccess,
+      client: ClientLogger): Gen[WorkspaceState.Parsed] =
+    genParsed(code: _*).map(_.asInstanceOf[WorkspaceState.Parsed])
+
+  /**
+   * Generates a parsed or errored workspace from the provided source code.
+   *
+   * @param code The source code to parse.
+   * @return The workspace containing the parser result.
+   */
+  def genParsed(
+      code: String*
+    )(implicit compiler: CompilerAccess,
+      file: FileAccess,
+      client: ClientLogger): Gen[WorkspaceState.IsParsed] =
+    genUnCompiled(code: _*) map {
+      unCompiled =>
+        // try parsing the workspace
+        val workspace =
+          Workspace.parse(unCompiled)
+
+        // it should contains the all the source file
+        workspace.sourceCode.length shouldBe code.size
+
+        workspace
+    }
+
+  /**
+   * Generates an un-compiled workspace from the provided source code.
+   *
+   * @param code The source code to create an un-compiled workspace for.
+   * @return An un-compiled workspace.
+   */
+  def genUnCompiled(
+      code: String*
+    )(implicit compiler: CompilerAccess,
+      file: FileAccess,
+      client: ClientLogger): Gen[WorkspaceState.UnCompiled] =
+    // Generate a build file
+    TestBuild.genCompiledOK() map {
+      build =>
+        val sourceFiles =
+          code
+            .zipWithIndex
+            .map {
+              case (code, index) =>
+                SourceCodeState.UnCompiled(
+                  fileURI = build.contractURI.resolve(s"file$index.ral"),
+                  code = code
+                )
+            }
+            .to(ArraySeq)
+
+        // create a workspace for the source files above
+        val unCompiled =
+          WorkspaceState.UnCompiled(
+            build = build,
+            sourceCode = sourceFiles
+          )
+
+        // it should contains the all the source file
+        unCompiled.sourceCode.length shouldBe code.size
+
+        unCompiled
+    }
 
   def persist[W <: WorkspaceState.IsSourceAware](
       workspace: W,

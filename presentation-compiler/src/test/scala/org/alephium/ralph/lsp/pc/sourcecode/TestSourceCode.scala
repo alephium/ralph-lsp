@@ -27,6 +27,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.scalacheck.Gen
 import org.scalatest.EitherValues._
+import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers._
 
 import java.net.URI
@@ -132,6 +133,21 @@ object TestSourceCode {
       genOnDisk(fileURI),
       genUnCompiled(code, fileURI)
     )
+
+  def genParsedOK(
+      build: BuildState.Compiled,
+      code: String*
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess): Seq[SourceCodeState.Parsed] =
+    code
+      .zipWithIndex
+      .map {
+        case (code, index) =>
+          genParsedOK(
+            code = code,
+            fileURI = build.contractURI.resolve(s"file$index.ral")
+          ).sample.value
+      }
 
   def genParsedOK(
       code: Gen[String] = TestCode.genGoodCode(),
