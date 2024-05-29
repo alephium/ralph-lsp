@@ -176,15 +176,14 @@ object WorkspaceSearcher {
   }
 
   /**
-   * Collects all function definitions from the provided compiled workspace state.
+   * Collects all function definitions from the provided parsed workspace state.
    *
    * @param workspace The compiled workspace state from which to collect function definitions.
    * @return An iterator containing all function implementations.
    */
   def collectFunctions(workspace: WorkspaceState.Parsed): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
-    workspace
-      .sourceCode
-      .iterator // iterator over dependant source-code files
+    collectTrees(workspace)
+      .iterator
       .flatMap(SourceCodeSearcher.collectFunctions)
 
   /**
