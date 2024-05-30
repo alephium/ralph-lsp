@@ -280,7 +280,7 @@ object SourceCodeSearcher {
       workspaceSource: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] = {
     // the function could be within a nested parent, collect all parents.
     val parents =
-      SourceCodeSearcher.collectInheritedParents(
+      collectInheritedParents(
         source = tree,
         allSource = workspaceSource
       )
@@ -348,7 +348,7 @@ object SourceCodeSearcher {
       .flatMap {
         case tree: Tree.Source =>
           // search for the matching functionIds within the built-in source file.
-          SourceCodeSearcher.collectFunctions(SourceLocation.Code(tree, source))
+          collectFunctions(SourceLocation.Code(tree, source))
 
         case _: Tree.Import =>
           Iterator.empty
