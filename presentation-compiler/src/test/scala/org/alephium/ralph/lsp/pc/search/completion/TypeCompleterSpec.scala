@@ -33,7 +33,7 @@ class TypeCompleterSpec extends AnyWordSpec with Matchers {
       val expected =
         expectedTypes("Object", "Abstracted")
 
-      completion shouldBe expected
+      completion.sortBy(_.label) shouldBe expected.sortBy(_.label)
     }
 
     "types are requested for" when {
