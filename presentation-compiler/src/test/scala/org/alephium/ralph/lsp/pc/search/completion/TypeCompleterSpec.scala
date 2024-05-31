@@ -178,7 +178,7 @@ class TypeCompleterSpec extends AnyWordSpec with Matchers {
    * Returns a list of default types that are always included.
    *
    * @param customTypes Names of additional custom types, manually created in the workspace.
-   * @return A list of default types.
+   * @return A list of expected types.
    */
   private def expectedTypes(customTypes: String*): List[Completion.Class] = {
     val custom =
