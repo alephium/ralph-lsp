@@ -66,7 +66,7 @@ object WorkspaceSearcher {
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Seq[SourceLocation.Code] = {
     val allInScopeCode =
-      collectTrees(workspace)
+      collectTrees(workspace = workspace, includeNonImportedCode = false)
 
     val inheritancesInScope =
       SourceCodeSearcher.collectInheritedParents(
@@ -89,7 +89,7 @@ object WorkspaceSearcher {
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Seq[SourceLocation.Code] = {
     val allInScopeCode =
-      collectTrees(workspace)
+      collectTrees(workspace, includeNonImportedCode = false)
 
     val inheritancesInScope =
       SourceCodeSearcher.collectImplementingChildren(
@@ -111,7 +111,7 @@ object WorkspaceSearcher {
       types: Seq[Type],
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] = {
     val workspaceTrees =
-      collectTrees(workspace)
+      collectTrees(workspace, includeNonImportedCode = false)
 
     SourceCodeSearcher.collectFunctions(
       types = types,
@@ -129,7 +129,7 @@ object WorkspaceSearcher {
    *       Consider using other [[collectFunctions]] functions for more targeted collections.
    */
   def collectFunctions(workspace: WorkspaceState.Parsed): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
-    collectTrees(workspace)
+    collectTrees(workspace, includeNonImportedCode = false)
       .iterator
       .flatMap(SourceCodeSearcher.collectFunctions)
 
@@ -153,8 +153,10 @@ object WorkspaceSearcher {
    * @param workspace The workspace to search for types.
    * @return An iterator containing type identifiers.
    */
-  def collectTypes(workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] = {
-    val trees = collectTrees(workspace)
+  def collectTypes(
+      workspace: WorkspaceState.IsSourceAware,
+      includeNonImportedCode: Boolean): Iterator[SourceLocation.Node[Ast.TypeId]] = {
+    val trees = collectTrees(workspace, includeNonImportedCode)
     SourceCodeSearcher.collectTypes(trees.iterator)
   }
 
@@ -162,10 +164,14 @@ object WorkspaceSearcher {
    * Collects all parsed source files, excluding `std` dependency source files
    * that are not imported.
    *
-   * @param workspace The workspace with dependencies.
+   * @param workspace              The workspace with dependencies.
+   * @param includeNonImportedCode If true, includes dependency code that is not imported,
+   *                               otherwise, excludes non-imported dependency code.
    * @return Parsed source files in scope.
    */
-  private def collectTrees(workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.Code] = {
+  private def collectTrees(
+      workspace: WorkspaceState.IsSourceAware,
+      includeNonImportedCode: Boolean): ArraySeq[SourceLocation.Code] = {
     // fetch the `std` dependency
     val stdSourceParsedCode =
       workspace
@@ -178,22 +184,26 @@ object WorkspaceSearcher {
     val workspaceCode =
       SourceCodeSearcher.collectParsed(workspace.sourceCode)
 
-    // collect all import statements
-    val importStatements =
-      SourceCodeSearcher
-        .collectImportStatements(workspaceCode)
-        .map(_.string.value)
-
-    // filter out std files that are not imported
     val importedCode =
-      stdSourceParsedCode filter {
-        stdCode =>
-          stdCode
-            .importIdentifier
-            .exists {
-              stdImportIdentifier =>
-                importStatements contains stdImportIdentifier.string.value
-            }
+      if (includeNonImportedCode) {
+        stdSourceParsedCode
+      } else {
+        // collect all import statements
+        val importStatements =
+          SourceCodeSearcher
+            .collectImportStatements(workspaceCode)
+            .map(_.string.value)
+
+        // filter out std files that are not imported
+        stdSourceParsedCode filter {
+          stdCode =>
+            stdCode
+              .importIdentifier
+              .exists {
+                stdImportIdentifier =>
+                  importStatements contains stdImportIdentifier.string.value
+              }
+        }
       }
 
     // Pull in all inherited source-files for the used import statements.
