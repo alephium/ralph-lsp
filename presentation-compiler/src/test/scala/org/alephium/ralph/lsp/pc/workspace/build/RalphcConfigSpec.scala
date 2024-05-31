@@ -21,6 +21,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
+import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorEmptyBuildFile
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace}
 import org.alephium.ralphc.Config
 import org.scalatest.EitherValues._
@@ -82,6 +83,20 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
         actual shouldBe expected
+      }
+    }
+
+    "fail" when {
+      "build file is empty" in {
+        val build_ralph =
+          """
+            |
+            |""".stripMargin
+
+        val fileURI = URI.create(Build.BUILD_FILE_NAME)
+        val actual  = RalphcConfig.parse(fileURI, build_ralph).left.value
+
+        actual shouldBe ErrorEmptyBuildFile(fileURI)
       }
     }
   }

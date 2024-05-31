@@ -20,7 +20,7 @@ import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
 import org.alephium.ralph.lsp.pc.workspace.build.Build.toBuildPath
-import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
+import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorInvalidBuildSyntax, ErrorEmptyBuildFile}
 
 import java.net.URI
 import java.nio.charset.StandardCharsets
@@ -59,41 +59,44 @@ object RalphcConfig {
   def parse(
       buildURI: URI,
       json: String): Either[CompilerMessage.AnyError, RalphcParsedConfig] =
-    try
-      Right(upickle.default.read[RalphcParsedConfig](json))
-    catch {
-      case abortError: upickle.core.AbortException =>
-        // Exact location of the error is known so build a FormattableError
-        val error =
-          ErrorInvalidBuildSyntax(
-            buildURI = buildURI,
-            error = abortError
-          )
+    if (json.isBlank)
+      Left(ErrorEmptyBuildFile(buildURI))
+    else
+      try
+        Right(upickle.default.read[RalphcParsedConfig](json))
+      catch {
+        case abortError: upickle.core.AbortException =>
+          // Exact location of the error is known so build a FormattableError
+          val error =
+            ErrorInvalidBuildSyntax(
+              buildURI = buildURI,
+              error = abortError
+            )
 
-        Left(error)
+          Left(error)
 
-      case parseError: ujson.ParseException =>
-        // Exact location of the error is known so build a FormattableError
-        val error =
-          ErrorInvalidBuildSyntax(
-            buildURI = buildURI,
-            error = parseError
-          )
+        case parseError: ujson.ParseException =>
+          // Exact location of the error is known so build a FormattableError
+          val error =
+            ErrorInvalidBuildSyntax(
+              buildURI = buildURI,
+              error = parseError
+            )
 
-        Left(error)
+          Left(error)
 
-      case throwable: Throwable =>
-        // The location of the error is unknown, report it
-        // at the first character within the build file.
-        val error =
-          ErrorInvalidBuildSyntax(
-            fileURI = buildURI,
-            index = SourceIndexExtra.zero(buildURI),
-            message = throwable.getMessage
-          )
+        case throwable: Throwable =>
+          // The location of the error is unknown, report it
+          // at the first character within the build file.
+          val error =
+            ErrorInvalidBuildSyntax(
+              fileURI = buildURI,
+              index = SourceIndexExtra.zero(buildURI),
+              message = throwable.getMessage
+            )
 
-        Left(error)
-    }
+          Left(error)
+      }
 
   /** Write a parsed config */
   def write(config: RalphcParsedConfig): String =
