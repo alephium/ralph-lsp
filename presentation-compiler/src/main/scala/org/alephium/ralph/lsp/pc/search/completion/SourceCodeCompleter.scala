@@ -37,7 +37,7 @@ object SourceCodeCompleter {
       cursorIndex: Int,
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterator[Suggestion.NodeAPI] =
+    )(implicit logger: ClientLogger): Iterator[Suggestion] =
     sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
       case Some(node @ Node(ident: Ast.Ident, _)) =>
         IdentCompleter.suggest(
@@ -54,6 +54,9 @@ object SourceCodeCompleter {
           sourceCode = sourceCode,
           workspace = workspace
         )
+
+      case Some(Node(_: Ast.TypeId | _: Ast.Argument | _: Ast.MapDef, _)) =>
+        TypeCompleter.suggest(workspace)
 
       case Some(closest) =>
         FunctionBodyCompleter.suggest(

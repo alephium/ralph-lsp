@@ -171,7 +171,7 @@ private object GoToTypeId {
       typeId: Ast.TypeId,
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] =
     WorkspaceSearcher
-      .collectTypes(workspace)
+      .collectTypes(workspace, includeNonImportedCode = false)
       .filter(_.ast == typeId)
 
 }

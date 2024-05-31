@@ -41,6 +41,11 @@ object Suggestion {
   sealed trait InheritedAPI extends NodeAPI
 
   /**
+   * Provides created/named type and primitive type info.
+   */
+  sealed trait Type extends Suggestion
+
+  /**
    * Represents a suggestion for a file name.
    *
    * @param name The name of the file.
@@ -282,6 +287,45 @@ object Suggestion {
             detail = ""
           )
       }
+
+  }
+
+  /**
+   * Represents types that are created in the workspace.
+   *
+   * @param node The node containing the type identifier.
+   */
+  case class CreatedType(node: SourceLocation.Node[Ast.TypeId]) extends Type {
+
+    override def toCompletion(): Seq[Completion.Class] =
+      Seq(
+        Completion.Class(
+          label = node.ast.name,
+          insert = node.ast.name,
+          detail = ""
+        )
+      )
+
+  }
+
+  /**
+   * Represents a Ralph primitive type.
+   *
+   * @param tpe The primitive type.
+   */
+  case class PrimitiveType(tpe: ralph.Type) extends Type {
+
+    override def toCompletion(): Seq[Completion.Class] = {
+      val signature = tpe.signature
+
+      Seq(
+        Completion.Class(
+          label = signature,
+          insert = signature,
+          detail = ""
+        )
+      )
+    }
 
   }
 
