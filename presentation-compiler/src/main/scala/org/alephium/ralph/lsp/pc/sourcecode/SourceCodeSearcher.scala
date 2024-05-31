@@ -185,6 +185,21 @@ object SourceCodeSearcher {
     }
 
   /**
+   * Collects all types available in the provided source code.
+   *
+   * @param workspaceSource The source code to search for types.
+   * @return An iterator containing type identifiers.
+   */
+  def collectTypes(workspaceSource: Iterator[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.TypeId]] =
+    workspaceSource map {
+      code =>
+        SourceLocation.Node(
+          ast = code.tree.typeId(),
+          source = code
+        )
+    }
+
+  /**
    * Collects all source tree locations for the given types.
    *
    * @param types           The types of trees for which to collect source tree locations.
