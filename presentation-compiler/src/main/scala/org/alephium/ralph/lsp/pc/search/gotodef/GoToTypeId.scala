@@ -171,14 +171,7 @@ private object GoToTypeId {
       typeId: Ast.TypeId,
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] =
     WorkspaceSearcher
-      .collectTrees(workspace)
-      .iterator
-      .collect {
-        case source if source.tree.typeId() == typeId =>
-          SourceLocation.Node(
-            ast = source.tree.typeId(),
-            source = source
-          )
-      }
+      .collectTypes(workspace)
+      .filter(_.ast == typeId)
 
 }
