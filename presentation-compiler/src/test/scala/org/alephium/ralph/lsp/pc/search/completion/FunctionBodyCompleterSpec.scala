@@ -107,6 +107,11 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
             label = "enumField",
             insert = "enumField",
             detail = ""
+          ),
+          Completion.Keyword(
+            label = "let",
+            insert = "let ",
+            detail = ""
           )
         )
 
@@ -224,6 +229,11 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
             label = "INFT",
             insert = "INFT",
             detail = ""
+          ),
+          Completion.Keyword(
+            label = "let",
+            insert = "let ",
+            detail = ""
           )
         )
 
@@ -261,6 +271,11 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
           Completion.Variable(
             label = "aVariable",
             insert = "aVariable",
+            detail = ""
+          ),
+          Completion.Keyword(
+            label = "let",
+            insert = "let ",
             detail = ""
           )
         )
@@ -328,6 +343,11 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
           Completion.Class(
             label = "INFT",
             insert = "INFT",
+            detail = ""
+          ),
+          Completion.Keyword(
+            label = "let",
+            insert = "let ",
             detail = ""
           )
         )
