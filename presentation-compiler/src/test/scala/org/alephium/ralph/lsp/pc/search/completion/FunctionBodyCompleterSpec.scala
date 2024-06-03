@@ -207,6 +207,23 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
             label = "variable",
             insert = "variable",
             detail = ""
+          ),
+          // Also provide type information
+          Completion.Class(
+            label = "Test",
+            insert = "Test",
+            detail = ""
+          ),
+          Completion.Class(
+            label = "Parent",
+            insert = "Parent",
+            detail = ""
+          ),
+          // Test for one type information from dependency
+          Completion.Class(
+            label = "INFT",
+            insert = "INFT",
+            detail = ""
           )
         )
 
@@ -299,6 +316,18 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
           Completion.Variable(
             label = "mut index2",
             insert = "index2",
+            detail = ""
+          ),
+          // Also provide type information
+          Completion.Class(
+            label = "Test",
+            insert = "Test",
+            detail = ""
+          ),
+          // Test for one type information from dependency
+          Completion.Class(
+            label = "INFT",
+            insert = "INFT",
             detail = ""
           )
         )

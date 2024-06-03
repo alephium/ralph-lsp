@@ -39,7 +39,7 @@ object FunctionBodyCompleter {
       cursorIndex: Int,
       closestToCursor: Node[Ast.Positioned, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.NodeAPI] =
+      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion] =
     GoToFuncId.goToNearestFuncDef(closestToCursor) match {
       case Some(functionNode) =>
         suggestInFunctionBody(
@@ -66,7 +66,7 @@ object FunctionBodyCompleter {
       cursorIndex: Int,
       functionNode: Node[Ast.FuncDef[_], Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.NodeAPI] = {
+      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion] = {
     // fetch suggestions local to this function
     val localFunctionSuggestions =
       suggestLocalFunctionVariables(
@@ -85,9 +85,13 @@ object FunctionBodyCompleter {
     val builtInFunctions =
       suggestBuiltinFunctions(workspace)
 
+    val types =
+      TypeCompleter.suggest(workspace)
+
     localFunctionSuggestions ++
       inheritedSuggestions ++
-      builtInFunctions
+      builtInFunctions ++
+      types
   }
 
   /**
