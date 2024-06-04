@@ -39,7 +39,7 @@ object IdentCompleter {
       ident: Node[Ast.Ident, Ast.Positioned],
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterator[Suggestion.NodeAPI] =
+    )(implicit logger: ClientLogger): Iterator[Suggestion] =
     ident.parent match {
       case Some(Node(selector: Ast.EnumFieldSelector[_], _)) =>
         EnumFieldCompleter.suggest(

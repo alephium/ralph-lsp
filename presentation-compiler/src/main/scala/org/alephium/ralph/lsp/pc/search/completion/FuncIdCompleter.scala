@@ -29,7 +29,7 @@ object FuncIdCompleter {
       funcId: Node[Ast.FuncId, Ast.Positioned],
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterator[Suggestion.NodeAPI] =
+    )(implicit logger: ClientLogger): Iterator[Suggestion] =
     funcId.parent match {
       case Some(Node(call: Ast.ContractCallBase, _)) =>
         ExprCompleter.suggest(
