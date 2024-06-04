@@ -18,11 +18,13 @@ package org.alephium.ralph.lsp.pc.search.completion
 
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
-import org.alephium.ralph.Ast
+import org.alephium.ralph.{Ast, Keyword}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToFuncId
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
+
+import scala.collection.immutable.ArraySeq
 
 object FunctionBodyCompleter {
 
@@ -88,10 +90,14 @@ object FunctionBodyCompleter {
     val types =
       TypeCompleter.suggest(workspace)
 
+    val keywords =
+      suggestKeywords()
+
     localFunctionSuggestions ++
       inheritedSuggestions ++
       builtInFunctions ++
-      types
+      types ++
+      keywords
   }
 
   /**
@@ -204,5 +210,31 @@ object FunctionBodyCompleter {
       case None =>
         Iterator.empty
     }
+
+  /**
+   * Suggests keywords relevant to a function's body.
+   */
+  private def suggestKeywords(): ArraySeq[Suggestion.Keyword] =
+    ArraySeq(
+      Suggestion.Keyword.expression(Keyword.let),
+      suggestLetMut(),
+      Suggestion.Keyword.expression(Keyword.emit),
+      Suggestion.Keyword.expression(Keyword.`return`),
+      Suggestion.Keyword.expression(Keyword.`if`),
+      Suggestion.Keyword.expression(Keyword.`while`),
+      Suggestion.Keyword.value(Keyword.`true`),
+      Suggestion.Keyword.value(Keyword.`false`),
+      Suggestion.Keyword.value(Keyword.alph),
+      Suggestion.Keyword.value(Keyword.ALPH_CAPS)
+    )
+
+  private def suggestLetMut(): Suggestion.Keyword = {
+    val label = s"${Keyword.let.name} ${Keyword.mut.name}"
+    Suggestion.Keyword(
+      label = label,
+      insert = s"$label ",
+      detail = ""
+    )
+  }
 
 }

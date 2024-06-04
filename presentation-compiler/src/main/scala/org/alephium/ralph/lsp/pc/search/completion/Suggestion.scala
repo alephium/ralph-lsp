@@ -63,6 +63,24 @@ object Suggestion {
 
   }
 
+  object Keyword {
+
+    def expression(keyword: ralph.Keyword): Suggestion.Keyword =
+      new Keyword(
+        label = keyword.name,
+        insert = s"${keyword.name} ",
+        detail = ""
+      )
+
+    def value(keyword: ralph.Keyword): Suggestion.Keyword =
+      new Keyword(
+        label = keyword.name,
+        insert = keyword.name,
+        detail = ""
+      )
+
+  }
+
   /**
    * Represents a suggestion for a keyword.
    *
