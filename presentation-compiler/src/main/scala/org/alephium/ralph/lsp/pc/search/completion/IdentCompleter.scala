@@ -60,6 +60,12 @@ object IdentCompleter {
             Iterator.empty
         }
 
+      case Some(Node(_: Ast.Annotation[_], _)) =>
+        AnnotationCompleter.suggestAnnotationNames()
+
+      case Some(Node(_: Ast.AnnotationField[_], _)) =>
+        AnnotationCompleter.suggestAnnotationKeys()
+
       case _ =>
         FunctionBodyCompleter.suggest(
           cursorIndex = cursorIndex,

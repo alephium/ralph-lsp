@@ -106,6 +106,30 @@ object Suggestion {
   }
 
   /**
+   * Represents a suggestion for an annotation field.
+   *
+   * @param label The label or display text for the annotation field suggestion.
+   * @param insert The text to insert when the annotation field suggestion is selected.
+   * @param detail Additional details about the annotation field suggestion.
+   */
+  case class AnnotationField(
+      label: String,
+      insert: String,
+      detail: String)
+    extends Suggestion {
+
+    override def toCompletion(): Seq[Completion.Field] =
+      Seq(
+        Completion.Field(
+          label = label,
+          insert = insert,
+          detail = detail
+        )
+      )
+
+  }
+
+  /**
    * Represents a suggested argument.
    *
    * @param node                The node representing the argument.

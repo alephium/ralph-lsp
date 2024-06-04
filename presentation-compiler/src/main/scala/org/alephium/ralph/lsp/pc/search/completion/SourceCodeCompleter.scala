@@ -58,6 +58,10 @@ object SourceCodeCompleter {
       case Some(Node(_: Ast.TypeId | _: Ast.Argument | _: Ast.MapDef, _)) =>
         TypeCompleter.suggest(workspace)
 
+      case Some(node @ Node(_: Ast.Const[_], _)) if node.parent.exists(_.data.isInstanceOf[Ast.AnnotationField[_]]) =>
+        // Request is for an annotation value. Eg: `@using(updateFields = tr@@ue)`
+        AnnotationCompleter.suggestAnnotationValues()
+
       case Some(closest) =>
         FunctionBodyCompleter.suggest(
           cursorIndex = cursorIndex,
