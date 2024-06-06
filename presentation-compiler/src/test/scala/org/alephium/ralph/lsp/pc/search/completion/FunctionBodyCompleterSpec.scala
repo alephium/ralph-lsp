@@ -99,9 +99,9 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
             detail = ""
           ),
           Completion.Variable(
-            label = "mut index",
+            label = "index",
             insert = "index",
-            detail = ""
+            detail = "mut index"
           ),
           Completion.Variable(
             label = "enumField",
@@ -314,24 +314,24 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
             detail = ""
           ),
           Completion.Variable(
-            label = "mut counter",
+            label = "counter",
             insert = "counter",
-            detail = ""
+            detail = "mut counter"
           ),
           Completion.Variable(
-            label = "mut counter",
+            label = "counter",
             insert = "counter",
-            detail = ""
+            detail = "mut counter"
           ),
           Completion.Variable(
-            label = "mut index1",
+            label = "index1",
             insert = "index1",
-            detail = ""
+            detail = "mut index1"
           ),
           Completion.Variable(
-            label = "mut index2",
+            label = "index2",
             insert = "index2",
-            detail = ""
+            detail = "mut index2"
           ),
           // Also provide type information
           Completion.Class(
