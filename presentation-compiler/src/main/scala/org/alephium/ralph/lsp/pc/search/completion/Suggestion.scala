@@ -174,14 +174,17 @@ object Suggestion {
     override def toCompletion(): Seq[Completion.Variable] =
       node.ast.vars flatMap {
         case Ast.NamedVar(mutable, ident) =>
-          val mutOrNot = if (mutable) s"${ralph.Keyword.mut.name} " else ""
-          val typeSig  = s"$mutOrNot${ident.name}"
+          val details =
+            if (mutable)
+              s"${ralph.Keyword.mut.name} ${ident.name}"
+            else
+              ""
 
           val suggestion =
             Completion.Variable(
-              label = typeSig,
+              label = ident.name,
               insert = ident.name,
-              detail = ""
+              detail = details
             )
 
           Some(suggestion)
