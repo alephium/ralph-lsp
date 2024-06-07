@@ -408,4 +408,45 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "TxScript" should {
+    "enable code completion within the main function" in {
+      val suggestions =
+        suggest {
+          """
+            |TxScript MyScript {
+            |  let mut counterMain = 0
+            |  counterMain = cou@@nterMain + 1
+            |}
+            |""".stripMargin
+        }
+
+      val actual =
+        suggestions.flatMap(_.toCompletion())
+
+      val expected =
+        List(
+          // Selected a random type from dependency
+          Completion.Class(
+            label = "INFT",
+            insert = "INFT",
+            detail = ""
+          ),
+          // Selected a random keyword
+          Completion.Keyword(
+            label = "let",
+            insert = "let ",
+            detail = ""
+          ),
+          // Local variables are suggested
+          Completion.Variable(
+            label = "counterMain",
+            insert = "counterMain",
+            detail = "mut counterMain"
+          )
+        )
+
+      actual should contain allElementsOf expected
+    }
+  }
+
 }

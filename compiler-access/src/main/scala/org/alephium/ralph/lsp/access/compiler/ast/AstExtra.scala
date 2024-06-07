@@ -22,6 +22,11 @@ import org.alephium.ralph.Ast
 object AstExtra {
 
   /**
+   * The name of the function created by [[Ast.FuncDef.main]].
+   */
+  final val TX_SCRIPT_MAIN_FUNCTION_NAME = "main"
+
+  /**
    * Checks if the variable definition [[Ast.VarDef]]
    * contains a named variable with the given identifier [[Ast.Ident]].
    *
