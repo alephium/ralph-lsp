@@ -64,7 +64,8 @@ object SourceCodeCompleter {
 
       case Some(Node(_: Ast.ContractWithState, _)) =>
         // FIXME: At the moment there is no AST that represents the code immediately after the contract definition and before the contract body.
-        //        Therefore, all keywords all `pub`, `fn`, `extends`, `implements` etc are suggested in both cases,
+        //        Therefore, all keywords all `pub`, `fn`, `extends`, `implements` etc are suggested in both cases.
+        //        See PR: https://github.com/alephium/ralph-lsp/pull/221.
         ContractBodyCompleter.suggest()
 
       case Some(closest) =>
