@@ -142,21 +142,30 @@ object Suggestion {
     extends Suggestion.InheritedAPI {
 
     override def toCompletion(): Seq[Completion] = {
-      val typeSig =
-        StringUtil.spaceBetweenCommaAndSemicolon(node.ast.signature)
+      val typeSignature =
+        StringUtil.spaceBetweenCommaAndSemicolon(node.ast.tpe.signature)
+
+      val label =
+        s"${node.ast.ident.name}: $typeSignature"
+
+      val details =
+        if (node.ast.isMutable)
+          s"${ralph.Keyword.mut.name} ${node.ast.ident.name}: $typeSignature"
+        else
+          ""
 
       val suggestion =
         if (isTemplateArgument)
           Completion.Property(
-            label = typeSig,
+            label = label,
             insert = node.ast.ident.name,
-            detail = ""
+            detail = details
           )
         else
           Completion.Field(
-            label = typeSig,
+            label = label,
             insert = node.ast.ident.name,
-            detail = ""
+            detail = details
           )
 
       Seq(suggestion)
