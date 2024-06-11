@@ -20,7 +20,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 
-class FuncIdCompleter extends AnyWordSpec with Matchers {
+class FuncIdCompleterSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "requested for functions on a local interface" in {

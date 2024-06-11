@@ -17,8 +17,9 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.protocol.vm.StatefulContext
+import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.{Type, Ast}
-import org.alephium.ralph.lsp.access.compiler.ast.Tree
+import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.error._
 
@@ -368,6 +369,24 @@ object SourceCodeSearcher {
         case _: Tree.Import =>
           Iterator.empty
       }
+
+  /**
+   * Finds a function named `main` if the given source tree is a transaction script [[Ast.TxScript]].
+   *
+   * @param sourceCode The transaction script that may contain a `main` function.
+   * @return Node representing the `main` function of the transaction script, if found, else None.
+   */
+  def findTxScriptMainFunction(sourceCode: SourceLocation.Code): Option[Node[Ast.FuncDef[_], Ast.Positioned]] =
+    sourceCode.tree.ast match {
+      case Left(_: Ast.TxScript) =>
+        sourceCode.tree.rootNode.walkDown.collectFirst {
+          case functionNode @ Node(funcDef: Ast.FuncDef[_], _) if funcDef.name == AstExtra.TX_SCRIPT_MAIN_FUNCTION_NAME =>
+            functionNode.upcast(funcDef)
+        }
+
+      case _ =>
+        None
+    }
 
   /**
    * Collects all parent source implementations inherited by the given

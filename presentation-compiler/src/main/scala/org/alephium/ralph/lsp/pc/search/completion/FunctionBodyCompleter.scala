@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.pc.search.completion
 
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
 import org.alephium.ralph.{Ast, Keyword}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToFuncId
@@ -52,7 +52,22 @@ object FunctionBodyCompleter {
         )
 
       case None =>
-        Iterator.empty
+        // Functions are not mandatory for `TxScript`. When no actual function is found,
+        // the request is assumed to have been executed within the `main` function of `TxScript`.
+        // This is only an assumption because the main function does not contain a source index,
+        // and therefore, the `cursorIndex` cannot be used to confirm this.
+        SourceCodeSearcher
+          .findTxScriptMainFunction(sourceCode)
+          .map {
+            mainFunction =>
+              suggestInFunctionBody(
+                cursorIndex = cursorIndex,
+                functionNode = mainFunction,
+                sourceCode = sourceCode,
+                workspace = workspace
+              )
+          }
+          .getOrElse(Iterator.empty)
     }
 
   /**
