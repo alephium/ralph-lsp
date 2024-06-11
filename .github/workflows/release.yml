@@ -81,9 +81,9 @@ jobs:
           asset_name: ralph-lsp-${{ steps.get_version.outputs.VERSION }}.vsix
           asset_content_type: application/octet-stream
 
-#      - name: Publish VSCode Extension
-#        env:
-#          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
-#        run: |
-#          cd plugin-vscode
-#          vsce publish -p $VSCE_TOKEN
+      - name: Publish VSCode Extension
+        env:
+          VSCE_PAT: ${{ secrets.VSCODE_PUBLISH_TOKEN }}
+        run: |
+          cd plugin-vscode
+          vsce publish ${{ steps.get_version.outputs.VERSION }}
