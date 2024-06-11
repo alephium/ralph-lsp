@@ -62,6 +62,11 @@ object SourceCodeCompleter {
         // Request is for an annotation value. Eg: `@using(updateFields = tr@@ue)`
         AnnotationCompleter.suggestAnnotationValues()
 
+      case Some(Node(_: Ast.ContractWithState, _)) =>
+        // FIXME: At the moment there is no AST that represents the code immediately after the contract definition and before the contract body.
+        //        Therefore, all keywords all `pub`, `fn`, `extends`, `implements` etc are suggested in both cases,
+        ContractBodyCompleter.suggest()
+
       case Some(closest) =>
         FunctionBodyCompleter.suggest(
           cursorIndex = cursorIndex,
