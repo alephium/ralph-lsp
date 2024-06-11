@@ -1,10 +1,21 @@
 {
   "name": "ralph-lsp",
+  "displayName": "Ralph LSP (Alephium)",
   "description": "Language server for Ralph - The smart contract programming language for the Alephium blockchain",
   "author": "Alephium",
   "license": "LGPL-3.0",
   "version": "0.0.1",
   "publisher": "Alephium",
+  "keywords": [
+    "ralph",
+    "RALPH",
+    "Ralph",
+    "lsp",
+    "LSP",
+    "ralph-lsp",
+    "RALPH-LSP",
+    "alephium"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/alephium/ralph-lsp"
@@ -33,7 +44,28 @@
           "description": "Traces the communication between VS Code and Ralph language server."
         }
       }
-    }
+    },
+    "languages": [
+      {
+        "id": "ralph",
+        "aliases": [
+          "ralph",
+          "RALPH",
+          "Ralph"
+        ],
+        "extensions": [
+          ".ral"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ralph",
+        "scopeName": "source.ral",
+        "path": "./syntaxes/ralph.tmLanguage.json"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
