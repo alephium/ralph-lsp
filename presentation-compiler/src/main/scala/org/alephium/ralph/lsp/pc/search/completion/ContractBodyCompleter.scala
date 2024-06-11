@@ -18,18 +18,16 @@ package org.alephium.ralph.lsp.pc.search.completion
 
 import org.alephium.ralph.Keyword
 
-import scala.collection.immutable.ArraySeq
-
 object ContractBodyCompleter {
 
   def suggest(): Iterator[Suggestion.Keyword] =
-    suggestKeywords().iterator
+    suggestKeywords()
 
   /**
    * Suggests keywords relevant to a Contract's body.
    */
-  private def suggestKeywords(): ArraySeq[Suggestion.Keyword] =
-    ArraySeq(
+  private def suggestKeywords(): Iterator[Suggestion.Keyword] =
+    Iterator(
       Suggestion.Keyword.expression(Keyword.pub),
       Suggestion.Keyword.expression(Keyword.fn),
       Suggestion.Keyword.expression(Keyword.`enum`),
