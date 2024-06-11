@@ -109,6 +109,27 @@ class TypeCompleterSpec extends AnyWordSpec with Matchers {
         }
       }
 
+      "an event field's type parameter" in {
+        doTest {
+          """
+            |Interface Object {
+            |  pub fn deposit() -> Bool
+            |}
+            |
+            |Abstract Contract Abstracted() { }
+            |
+            |Contract TestContract(int: U256) {
+            |
+            |  event MyEvent(address: A@@)
+            |
+            |  fn function() -> () {
+            |
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
+
       "a map's key type parameter" in {
         doTest {
           """
