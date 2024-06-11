@@ -1,0 +1,226 @@
+{
+  "name": "Ralph",
+  "fileTypes": ["ral"],
+  "scopeName": "source.ral",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#imports" },
+    { "include": "#types" },
+    { "include": "#storages" },
+    { "include": "#functions" },
+    { "include": "#keywords" },
+    { "include": "#global" },
+    { "include": "#number" },
+    { "include": "#constant" },
+    { "include": "#variables" }
+  ],
+  "repository": {
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.ralph",
+          "begin": "(\\/\\/)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.comment.ralph"
+            }
+          },
+          "end": "(?:\\n|$)"
+        }
+      ]
+    },
+    "imports": {
+      "patterns": [
+        {
+          "begin": "\\b(import)\\s+\"",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.import.ralph"
+            }
+          },
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "entity.name.import.ralph",
+              "match": "[^\"]*"
+            }
+          ]
+        }
+      ]
+    },
+    "operators": {
+      "comment": "Note that the order here is very important!",
+      "patterns": [
+        {
+          "match": "=",
+          "name": "keyword.operator.assignment.ralph"
+        },
+        {
+          "match": "\\+\\+",
+          "name": "keyword.operator.concat.ralph"
+        },
+        {
+          "match": "(\\+|\\-|\\*|/|%|⊕|`+`|⊖|`-`|⊗|`*`|<<|>>|&|\\^|\\|)",
+          "name": "keyword.operator.arithmetic.ralph"
+        },
+        {
+          "match": "(==|!=|<|<=|>|>=)",
+          "name": "keyword.operator.test.ralph"
+        },
+        {
+          "match": "(&&|\\|\\||!)",
+          "name": "keyword.operator.logical.ralph"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.ralph",
+          "match": "\\b(if|else|while|for|return)\\b"
+        },
+        {
+          "match": "\\b(alph)\\b",
+          "name": "keyword.alph.ralph"
+        },
+        {
+          "match": "\\b(let|mut|const)\\b",
+          "name": "keyword.let.ralph"
+        },
+        {
+          "match": "\\b(fn|pub)\\b",
+          "name": "keyword.function.ralph"
+        },
+        {
+          "match": "\\b(emit)\\b",
+          "name": "keyword.emit.ralph"
+        },
+        {
+          "match": "(@using|@unused|@std)\\b",
+          "name": "keyword.annotation.ralph"
+        },
+        { "include": "#operators" }
+      ]
+    },
+    "storages": {
+      "patterns": [
+        {
+          "match": "\\b(Interface|TxScript|Contract|AssetScript|enum|event)\\b",
+          "name": "storage.type.ralph"
+        },
+        {
+          "match": "\\b(extends|Abstract|implements)\\b",
+          "name": "storage.modifier.ralph"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "comment": "numeric types",
+          "match": "(?<![A-Za-z])(Bool|I256|U256|Address|ByteVec)\\b",
+          "captures": {
+            "1": {
+              "name": "support.type.primitive.ralph"
+            }
+          }
+        },
+        {
+          "comment": "storage declarations",
+          "match": "\\b(Interface|TxScript|Contract|AssetScript|enum|event)\\s+([A-Z][A-Za-z0-9]*)\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.ralph"
+            },
+            "2": {
+              "name": "entity.name.type.ralph"
+            }
+          }
+        }
+      ]
+    },
+    "constant": {
+      "match": "\\b(?:true|false)\\b",
+      "name": "constant.language.ralph"
+    },
+    "number": {
+      "patterns": [
+        {
+          "comment": "handles hexadecimal numbers",
+          "match": "(0x)[0-9a-fA-f]*",
+          "name": "constant.hex.numeric.ralph"
+        },
+        {
+          "comment": "handles integer and decimal numbers",
+          "match": "[+-.]?(?=[1-9]|0(?!\\d))\\d+(\\.\\d+)?([eE][+-]?\\d+)?",
+          "name": "constant.dec.numeric.ralph"
+        }
+      ]
+    },
+    "global": {
+      "patterns": [
+        {
+          "include": "#global-functions"
+        },
+        {
+          "include": "#global-types"
+        }
+      ]
+    },
+    "global-functions": {
+      "patterns": [
+        {
+          "match": "\\w*?\\!",
+          "name": "support.function.builtIn.ralph"
+        }
+      ]
+    },
+    "global-types": {
+      "patterns": [
+        {
+          "comment": "types",
+          "name": "entity.name.type.ralph",
+          "match": "\\b[A-Z][A-Za-z0-9]*\\b(?!!)"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "match": "\\b(fn)\\s+([A-Za-z][A-Za-z0-9]*)\\(",
+          "captures": {
+            "1": {
+              "name": "keyword.function.ralph"
+            },
+            "2": {
+              "name": "entity.name.function.ralph"
+            }
+          }
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "match": "\\b([A-Za-z][A-Za-z0-9]*)\\s*:\\s*([A-Z][A-Za-z0-9]*)\\b",
+          "captures": {
+            "1": {
+              "name": "variable.parameter.ralph"
+            },
+            "2": {
+              "name": "entity.name.type.ralph"
+            }
+          }
+        },
+        {
+          "match": "\\b([A-Za-z][A-Za-z0-9]*)\\s*=",
+          "captures": {
+            "1": {
+              "name": "variable.parameter.ralph"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
