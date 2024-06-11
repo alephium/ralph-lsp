@@ -28,3 +28,4 @@ project/plugins/project/
 plugin-vscode/node_modules
 plugin-vscode/package-lock.json
 */out
+*.vsix
