@@ -87,7 +87,7 @@ object WorkspaceSearcher {
    */
   def collectImplementingChildren(
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Seq[SourceLocation.Code] = {
+      workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.Code] = {
     val allInScopeCode =
       collectTrees(workspace, includeNonImportedCode = false)
 

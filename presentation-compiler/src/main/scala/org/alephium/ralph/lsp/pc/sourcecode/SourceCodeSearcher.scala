@@ -138,7 +138,7 @@ object SourceCodeSearcher {
    */
   def collectInheritedParentsForAllTrees(
       sourceCode: SourceCodeState.Parsed,
-      workspace: ArraySeq[SourceCodeState.Parsed]): Seq[SourceLocation.Code] =
+      workspace: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.Code] =
     collectInheritedParentsForAll(
       sourceCode = sourceCode,
       workspace = collectSourceTrees(workspace)
@@ -153,7 +153,7 @@ object SourceCodeSearcher {
    */
   def collectInheritedParentsForAll(
       sourceCode: SourceCodeState.Parsed,
-      workspace: ArraySeq[SourceLocation.Code]): Seq[SourceLocation.Code] =
+      workspace: ArraySeq[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
     collectInheritedParents(
       source = collectSourceTrees(sourceCode).to(ArraySeq),
       allSource = workspace
@@ -398,7 +398,7 @@ object SourceCodeSearcher {
    */
   def collectInheritedParents(
       source: ArraySeq[SourceLocation.Code],
-      allSource: ArraySeq[SourceLocation.Code]): Seq[SourceLocation.Code] =
+      allSource: ArraySeq[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
     source.flatMap {
       source =>
         collectInheritedParents(
@@ -417,7 +417,7 @@ object SourceCodeSearcher {
    */
   def collectInheritedParents(
       source: SourceLocation.Code,
-      allSource: ArraySeq[SourceLocation.Code]): Seq[SourceLocation.Code] =
+      allSource: ArraySeq[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
     source.tree.ast match {
       case Left(contract) =>
         collectInheritedParents(
@@ -427,7 +427,7 @@ object SourceCodeSearcher {
         )
 
       case Right(_) =>
-        Seq.empty
+        ArraySeq.empty
     }
 
   /**
@@ -440,7 +440,7 @@ object SourceCodeSearcher {
    */
   def collectImplementingChildren(
       source: SourceLocation.Code,
-      allSource: ArraySeq[SourceLocation.Code]): Seq[SourceLocation.Code] =
+      allSource: ArraySeq[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
     source.tree.ast match {
       case Left(contract) =>
         collectImplementingChildren(
@@ -450,7 +450,7 @@ object SourceCodeSearcher {
         )
 
       case Right(_) =>
-        Seq.empty
+        ArraySeq.empty
     }
 
   /**
@@ -465,7 +465,7 @@ object SourceCodeSearcher {
   private def collectInheritedParents(
       inheritances: Seq[Ast.Inheritance],
       allSource: ArraySeq[SourceLocation.Code],
-      processedTrees: mutable.Set[SourceLocation.Code]): Seq[SourceLocation.Code] =
+      processedTrees: mutable.Set[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
     allSource flatMap {
       source =>
         // collect the trees that belong to one of the inheritances and the ones that are not already processed
@@ -485,11 +485,11 @@ object SourceCodeSearcher {
               parents :+ source
 
             case Right(_) =>
-              Seq.empty
+              ArraySeq.empty
           }
 
         } else {
-          Seq.empty
+          ArraySeq.empty
         }
     }
 
@@ -505,7 +505,7 @@ object SourceCodeSearcher {
   private def collectImplementingChildren(
       contract: Ast.ContractWithState,
       allSource: ArraySeq[SourceLocation.Code],
-      processedTrees: mutable.Set[SourceLocation.Code]): Seq[SourceLocation.Code] =
+      processedTrees: mutable.Set[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
     allSource flatMap {
       source =>
         // collect the trees that belong to one of the inheritances and the ones that are not already processed
@@ -525,10 +525,10 @@ object SourceCodeSearcher {
               children :+ source
 
             case Right(_) =>
-              Seq.empty
+              ArraySeq.empty
           }
         } else {
-          Seq.empty
+          ArraySeq.empty
         }
     }
 
