@@ -71,14 +71,7 @@ private[search] object GoToFuncId extends StrictImplicitLogging {
                   )
               }
 
-          case Node(call: Ast.ContractCall, _) if call.callId == funcIdNode.data =>
-            goToFunctionImplementation(
-              functionId = funcIdNode.data,
-              typeExpr = call.obj,
-              workspace = workspace
-            )
-
-          case Node(call: Ast.ContractCallExpr, _) if call.callId == funcIdNode.data =>
+          case Node(call: Ast.ContractCallBase, _) if call.callId == funcIdNode.data =>
             goToFunctionImplementation(
               functionId = funcIdNode.data,
               typeExpr = call.obj,
