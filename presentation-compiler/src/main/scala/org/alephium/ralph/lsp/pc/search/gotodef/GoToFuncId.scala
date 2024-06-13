@@ -62,6 +62,7 @@ private[search] object GoToFuncId extends StrictImplicitLogging {
           case Node(funcDef: Ast.FuncDef[_], _) if funcDef.id == funcIdNode.data =>
             WorkspaceSearcher
               .collectImplementingChildren(sourceCode, workspace)
+              .childTrees
               .iterator
               .flatMap {
                 sourceCode =>

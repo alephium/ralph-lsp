@@ -83,11 +83,12 @@ object WorkspaceSearcher {
    *
    * @param sourceCode The source code for which in-scope files are being searched.
    * @param workspace  The workspace that may contain files within the scope.
-   * @return The source trees within the scope.
+   * @return An [[ImplementingChildrenResult]] instance that stores the resulting
+   *         child source trees and all trees in scope of the current workspace.
    */
   def collectImplementingChildren(
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.Code] = {
+      workspace: WorkspaceState.IsSourceAware): ImplementingChildrenResult = {
     val allInScopeCode =
       collectTrees(workspace, includeNonImportedCode = false)
 
@@ -97,7 +98,12 @@ object WorkspaceSearcher {
         allSource = allInScopeCode
       )
 
-    inheritancesInScope :+ sourceCode
+    val children = inheritancesInScope :+ sourceCode
+
+    ImplementingChildrenResult(
+      childTrees = children,
+      allTrees = allInScopeCode
+    )
   }
 
   /**

@@ -49,6 +49,7 @@ private object GoToTypeId {
             // They selected an enum definition. Find enum usages.
             WorkspaceSearcher
               .collectImplementingChildren(sourceCode, workspace)
+              .childTrees
               .iterator
               .flatMap(goToEnumTypeUsage(enumDef, _))
 
@@ -63,6 +64,7 @@ private object GoToTypeId {
             // They selected an event definition. Find event usages.
             WorkspaceSearcher
               .collectImplementingChildren(sourceCode, workspace)
+              .childTrees
               .iterator
               .flatMap(goToEventDefUsage(eventDef, _))
 
