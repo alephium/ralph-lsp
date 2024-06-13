@@ -80,16 +80,62 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
           |Abstract Contract Parent() {
           |
           |  pub fn @@function_a(boolean: Bool) -> () {
-          |    let call1 = >>function_a(true)<<
+          |    >>function_a(true)<<
           |    >>function_a(false)<<
           |  }
           |}
           |
           |Contract Child() extends Parent() {
           |
-          |  pub fn function_b(boolean: Bool) -> () {
-          |    let call1 = >>function_a(true)<<
+          |  pub fn function_b(parent: Parent,
+          |                    nftCollectionId: ByteVec) -> () {
+          |    >>function_a(true)<<
           |    >>function_a(false)<<
+          |    >>parent.function_a(true)<<
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "function usage exist using a contract call" in {
+      goTo(
+        """
+          |Contract Parent() {
+          |
+          |  pub fn @@function_a(boolean: Bool) -> () {
+          |    >>function_a(true)<<
+          |    >>function_a(false)<<
+          |  }
+          |}
+          |
+          |Contract Child() {
+          |
+          |  pub fn function_b(parent: Parent,
+          |                    nftCollectionId: ByteVec) -> () {
+          |    >>parent.function_a(true)<<
+          |    >>Parent(nftCollectionId).function_a(true)<<
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "function usage exist using brace syntax" in {
+      goTo(
+        """
+          |Contract Parent() {
+          |
+          |    @using(preapprovedAssets = true)
+          |    pub fn @@function_a(boolean: Bool) -> () {
+          |
+          |    }
+          |  }
+          |
+          |Contract Child() {
+          |
+          |  pub fn function_b(nftCollectionId: ByteVec) -> () {
+          |    >>Parent(nftCollectionId).function_a{callerAddress!() -> ALPH: 1 alph}(true)<<
           |  }
           |}
           |""".stripMargin
