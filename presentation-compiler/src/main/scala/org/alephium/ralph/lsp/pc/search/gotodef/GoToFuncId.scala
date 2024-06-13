@@ -133,7 +133,7 @@ private[search] object GoToFuncId extends StrictImplicitLogging {
       funcId: Ast.FuncId,
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] = {
-    val functions: Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+    val functions =
       if (funcId.isBuiltIn)
         workspace.build.findDependency(DependencyID.BuiltIn) match {
           case Some(builtInWorkspace) =>
