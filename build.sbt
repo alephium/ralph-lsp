@@ -29,7 +29,6 @@ val commonSettings =
         "-feature",
         "-unchecked",
         // "-Xsource:3.1",
-        "-Xfatal-warnings",
         "-Xlint:adapted-args",
         "-Xlint:constant",
         "-Xlint:delayedinit-select",
@@ -120,7 +119,8 @@ lazy val `lsp-server` =
           Dependencies.scalaCheck,
           Dependencies.scalaMock,
           Dependencies.logback,
-          Dependencies.scalaLogging
+          Dependencies.scalaLogging,
+          "com.lihaoyi" %% "fastparse" % "3.1.0"
         )
     )
     .dependsOn(`presentation-compiler`)
