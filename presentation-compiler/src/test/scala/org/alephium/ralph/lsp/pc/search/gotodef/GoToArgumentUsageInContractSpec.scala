@@ -20,7 +20,7 @@ import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class GoTotArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
+class GoToArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "argument is not used" in {
@@ -120,9 +120,10 @@ class GoTotArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
       }
 
       "from the template" when {
-        "there are no duplicate names" in {
-          goTo(
-            """
+        "parameter is defined in Parent" when {
+          "there are no duplicate names" in {
+            goTo(
+              """
               |Abstract Contract Parent(param1@@: ParamType) {
               |
               |  pub fn function(param1: ParamType, param2: ParamType) -> () {
@@ -143,12 +144,12 @@ class GoTotArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
               |
               |}
               |""".stripMargin
-          )
-        }
+            )
+          }
 
-        "there are duplicate names" in {
-          goTo(
-            """
+          "there are duplicate names" in {
+            goTo(
+              """
               |Abstract Contract Parent(param1@@: ParamType) {
               |
               |  pub fn function(param1: ParamType, param2: ParamType) -> () {
@@ -169,7 +170,38 @@ class GoTotArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
               |
               |}
               |""".stripMargin
-          )
+            )
+          }
+        }
+
+        "in Child" when {
+          "parameter is defined in Child" in {
+            goTo(
+              """
+                |// Parent should not have any usages
+                |Abstract Contract Parent(param1: ParamType) {
+                |
+                |  pub fn function(param1: ParamType, param2: ParamType) -> () {
+                |    let result = param1.someFunction()
+                |  }
+                |
+                |}
+                |
+                |Contract Child(param1@@: ParamType)
+                |  extends Parent(>>param1<<) {  // parent's input parameter should be added to usage
+                |
+                |  pub fn function(param2: ParamType) -> () {
+                |    let result = >>param1<<.someFunction()
+                |  }
+                |
+                |  pub fn function2(param1: ParamType, param2: ParamType) -> () {
+                |    let result = >>param1<<.someFunction()
+                |  }
+                |
+                |}
+                |""".stripMargin
+            )
+          }
         }
       }
 

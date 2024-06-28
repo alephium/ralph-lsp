@@ -78,6 +78,12 @@ private[search] object GoToIdent {
               workspace = workspace
             )
 
+          case Node(ast: Ast.ContractInheritance, _) if ast.idents.contains(identNode.data) =>
+            goToTemplateArgument(
+              ident = identNode.data,
+              sourceCode = sourceCode
+            )
+
           case node @ Node(field: Ast.EnumField[_], _) if field.ident == identNode.data =>
             // They selected an enum field.
             // Check the parent to find the enum type.
@@ -218,19 +224,96 @@ private[search] object GoToIdent {
 
       case None =>
         // It's a template argument, search within the source-tree and within all dependant code.
-        WorkspaceSearcher
-          .collectImplementingChildren(sourceCode, workspace)
-          .childTrees
-          .iterator
-          .flatMap {
-            sourceCode =>
-              goToVariableUsages(
-                ident = argumentNode.data.ident,
-                from = sourceCode.tree.rootNode,
-                sourceCode = sourceCode
-              )
-          }
+        goToTemplateArgumentUsage(
+          argument = argumentNode.data,
+          sourceCode = sourceCode,
+          workspace = workspace
+        )
     }
+
+  /**
+   * Navigate to the usages of a template argument.
+   *
+   * @param argument   The template argument whose usages are to be searched.
+   * @param sourceCode The source where this argument exists.
+   * @param workspace  The workspace that may contain other dependant source-code.
+   * @return An iterator containing identities representing the usage locations of the template argument.
+   */
+  private def goToTemplateArgumentUsage(
+      argument: Ast.Argument,
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] = {
+    val contractInheritanceUsage =
+      goToArgumentsUsageInInheritanceDefinition(
+        argument = argument,
+        sourceCode = sourceCode
+      )
+
+    val withInheritanceUsage =
+      goToTemplateArgumentUsageWithinInheritance(
+        argument = argument,
+        sourceCode = sourceCode,
+        workspace = workspace
+      )
+
+    contractInheritanceUsage ++ withInheritanceUsage
+  }
+
+  /**
+   * Navigate to the usages of a template argument within the scope when inheritance is defined.
+   *
+   * For example:
+   * {{{
+   *   Contract MyContract(boolean: Bool) extends OtherContract(>>boolean<<) // within OtherContract only
+   * }}}
+   *
+   * @param argument   The template argument whose usages are to be searched.
+   * @param sourceCode The source where this argument exists.
+   * @return An iterator containing identities representing the usage locations of the template argument.
+   */
+  private def goToArgumentsUsageInInheritanceDefinition(
+      argument: Ast.Argument,
+      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] =
+    sourceCode
+      .tree
+      .rootNode
+      .walkDown
+      .collect {
+        case Node(ast: Ast.ContractInheritance, _) =>
+          ast
+            .idents
+            .filter(_ == argument.ident)
+            .map {
+              ident =>
+                SourceLocation.Node(ident, sourceCode)
+            }
+      }
+      .flatten
+
+  /**
+   * Navigate to the usages of a template argument within the scope of inheriting contracts.
+   *
+   * @param argument   The template argument whose usages are to be searched.
+   * @param sourceCode The source where this argument exists.
+   * @param workspace  The workspace that may contain other dependant source-code.
+   * @return An iterator containing identities representing the usage locations of the template argument.
+   */
+  private def goToTemplateArgumentUsageWithinInheritance(
+      argument: Ast.Argument,
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] =
+    WorkspaceSearcher
+      .collectImplementingChildren(sourceCode, workspace)
+      .childTrees
+      .iterator
+      .flatMap {
+        sourceCode =>
+          goToVariableUsages(
+            ident = argument.ident,
+            from = sourceCode.tree.rootNode,
+            sourceCode = sourceCode
+          )
+      }
 
   /**
    * Navigate to arguments, constants and variables for the given identity ([[Ast.Ident]]).
@@ -549,5 +632,22 @@ private[search] object GoToIdent {
               SourceLocation.Node(mapCall, code)
           }
       }
+
+  /**
+   * Navigate to the template argument definition(s) for the given identifier.
+   *
+   * @param ident      The identifier of the argument name to find.
+   * @param sourceCode The source tree where this search is executed.
+   * @return An iterator over template arguments representing the locations where a
+   *         template argument with the given identifier is defined.
+   */
+  private def goToTemplateArgument(
+      ident: Ast.Ident,
+      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Argument]] =
+    sourceCode.tree.rootNode.walkDown.collect {
+      // ident should match and that argument's parent must be a top level object i.e. a Contract, Abstract Contract etc
+      case node @ Node(ast: Ast.Argument, _) if ast.ident == ident && node.parent.exists(_.data == sourceCode.tree.rootNode.data) =>
+        SourceLocation.Node(ast, sourceCode)
+    }
 
 }
