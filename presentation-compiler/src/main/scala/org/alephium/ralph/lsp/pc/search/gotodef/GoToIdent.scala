@@ -417,6 +417,10 @@ private[search] object GoToIdent {
         // find all the selections matching the variable name.
         case Node(variable: Ast.Variable[_], _) if variable.id == ident =>
           SourceLocation.Node(variable.id, sourceCode)
+
+        // collect all assignments
+        case Node(variable: Ast.AssignmentTarget[_], _) if variable.ident == ident =>
+          SourceLocation.Node(variable.ident, sourceCode)
       }
 
   /**

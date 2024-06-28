@@ -42,7 +42,9 @@ class GoTotArgumentUsageInTxScriptSpec extends AnyWordSpec with Matchers {
           |  let result = >>param2<<.someFunction()
           |  assert!(abc == >>param2<<, ErrorCode.SomeError)
           |  let param2_copy = >>param2<<
-          |  param2 = >>param2<< + 1
+          |  >>param2<< =
+          |       >>param2<< + 1
+          |  >>param2<< = 0 // reset
           |  emit Mint(>>param2<<, 1)
           |  function(
           |    >>param2<<,
