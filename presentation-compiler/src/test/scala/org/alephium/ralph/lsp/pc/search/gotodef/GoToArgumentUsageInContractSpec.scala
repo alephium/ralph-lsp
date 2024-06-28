@@ -20,7 +20,7 @@ import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class GoTotArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
+class GoToArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "argument is not used" in {
