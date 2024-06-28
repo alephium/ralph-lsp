@@ -78,6 +78,12 @@ private[search] object GoToIdent {
               workspace = workspace
             )
 
+          case Node(ast: Ast.ContractInheritance, _) if ast.idents.contains(identNode.data) =>
+            goToTemplateArgument(
+              ident = identNode.data,
+              sourceCode = sourceCode
+            )
+
           case node @ Node(field: Ast.EnumField[_], _) if field.ident == identNode.data =>
             // They selected an enum field.
             // Check the parent to find the enum type.
@@ -626,5 +632,22 @@ private[search] object GoToIdent {
               SourceLocation.Node(mapCall, code)
           }
       }
+
+  /**
+   * Navigate to the template argument definition(s) for the given identifier.
+   *
+   * @param ident      The identifier of the argument name to find.
+   * @param sourceCode The source tree where this search is executed.
+   * @return An iterator over template arguments representing the locations where a
+   *         template argument with the given identifier is defined.
+   */
+  private def goToTemplateArgument(
+      ident: Ast.Ident,
+      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Argument]] =
+    sourceCode.tree.rootNode.walkDown.collect {
+      // ident should match and that argument's parent must be a top level object i.e. a Contract, Abstract Contract etc
+      case node @ Node(ast: Ast.Argument, _) if ast.ident == ident && node.parent.exists(_.data == sourceCode.tree.rootNode.data) =>
+        SourceLocation.Node(ast, sourceCode)
+    }
 
 }

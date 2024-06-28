@@ -136,6 +136,55 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "template arguments are passed as inheritance parameter" when {
+      "there are no duplicates" in {
+        goTo(
+          """
+            |Abstract Contract SomeType() { }
+            |
+            |Abstract Contract Parent(param: SomeType) { }
+            |
+            |Abstract Contract Child(>>param: SomeType<<) extends Parent(@@param) { }
+            |""".stripMargin
+        )
+      }
+
+      "duplicates exist" when {
+        "template parameter is duplicated" in {
+          goTo(
+            """
+              |Abstract Contract SomeType() { }
+              |
+              |Abstract Contract Parent(param: SomeType) { }
+              |
+              |Abstract Contract Child(>>param: SomeType<<,
+              |                        >>param: SomeType<<) extends Parent(@@param) { }
+              |""".stripMargin
+          )
+        }
+
+        "function parameter is duplicated" should {
+          "not be included in search result" in {
+            goTo(
+              """
+                |Abstract Contract SomeType() { }
+                |
+                |Abstract Contract Parent(param: SomeType) { }
+                |
+                |Abstract Contract Child(>>param: SomeType<<) extends Parent(@@param) {
+                |
+                |  // the parameter `param` is not in the scope of template `param`, it's a function level scope,
+                |  // so it should not be included in the search result.
+                |  fn function(param: SomeType) -> () { }
+                |}
+                |""".stripMargin
+            )
+          }
+        }
+      }
+
+    }
   }
 
 }
