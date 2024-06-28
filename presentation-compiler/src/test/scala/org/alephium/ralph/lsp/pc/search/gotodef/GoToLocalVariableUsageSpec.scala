@@ -91,6 +91,26 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "usages exist in a for loop" in {
+      goTo(
+        """
+          |Contract Test() {
+          |
+          |  pub fn function() -> U256 {
+          |    for(let mut @@counter = 1;
+          |                >>counter<< <= 4;
+          |                >>counter<< =
+          |                     >>counter<< + 1) {
+          |      return >>counter<<
+          |    }
+          |    return >>counter<<
+          |  }
+          |}
+          |
+          |""".stripMargin
+      )
+    }
   }
 
 }
