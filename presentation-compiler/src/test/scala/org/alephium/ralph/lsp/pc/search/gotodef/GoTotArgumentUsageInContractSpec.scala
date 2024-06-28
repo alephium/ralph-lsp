@@ -45,7 +45,8 @@ class GoTotArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
           |    let result = >>param1<<.someFunction()
           |    assert!(abc == >>param1<<, ErrorCode.SomeError)
           |    let param1_copy = >>param1<<
-          |    param1 = >>param1<< + 1
+          |    >>param1<<
+          |          = >>param1<< + 1
           |    emit Mint(>>param1<<, 1)
           |    function(
           |      >>param1<<,
@@ -70,7 +71,8 @@ class GoTotArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
           |    let result = >>param1<<.someFunction()
           |    assert!(abc == >>param1<<, ErrorCode.SomeError)
           |    let param1_copy = >>param1<<
-          |    param1 = >>param1<< + 1
+          |    >>param1<< =
+          |        >>param1<< + 1
           |    emit Mint(>>param1<<, 1)
           |    function(
           |      >>param1<<,
