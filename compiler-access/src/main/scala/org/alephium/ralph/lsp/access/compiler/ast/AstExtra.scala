@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.ast
 
 import org.alephium.protocol.vm.StatelessContext
-import org.alephium.ralph.Ast
+import org.alephium.ralph.{Type, Ast}
 
 object AstExtra {
 
@@ -61,5 +61,27 @@ object AstExtra {
       // FIXME: There is still a need to display just the function signature.
       //        At the moment there is no AST type that provides just the function signature.
       funcDef.id
+
+  /**
+   * Fetches the type identifier for a given type.
+   *
+   * @param tpe The type for which to fetch the identifier.
+   * @return `Some(TypeId)` if the type has an associated [[Ast.TypeId]], otherwise [[None]].
+   */
+  def getTypeId(tpe: Type): Option[Ast.TypeId] =
+    tpe match {
+      case Type.NamedType(id) =>
+        Some(id)
+
+      case Type.Struct(id) =>
+        Some(id)
+
+      case Type.Contract(id) =>
+        Some(id)
+
+      case Type.Bool | Type.I256 | Type.U256 | Type.ByteVec | Type.Address | _: Type.FixedSizeArray | _: Type.Map | Type.Panic =>
+        None
+
+    }
 
 }

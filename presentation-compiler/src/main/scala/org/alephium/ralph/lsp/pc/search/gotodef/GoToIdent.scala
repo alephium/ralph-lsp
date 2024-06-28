@@ -90,6 +90,7 @@ private[search] object GoToIdent {
                 case enumDef: Ast.EnumDef[_] if enumDef.fields.exists(_.ident == field.ident) =>
                   WorkspaceSearcher
                     .collectImplementingChildren(sourceCode, workspace)
+                    .childTrees
                     .iterator
                     .flatMap {
                       sourceCode =>
@@ -114,6 +115,7 @@ private[search] object GoToIdent {
                 case eventDef: Ast.EventDef if eventDef.fields.exists(_.ident == field.ident) =>
                   WorkspaceSearcher
                     .collectImplementingChildren(sourceCode, workspace)
+                    .childTrees
                     .iterator
                     .flatMap {
                       sourceCode =>
@@ -130,6 +132,7 @@ private[search] object GoToIdent {
             // They selected a constant definition. Take 'em there!
             WorkspaceSearcher
               .collectImplementingChildren(sourceCode, workspace)
+              .childTrees
               .iterator
               .flatMap {
                 sourceCode =>
@@ -217,6 +220,7 @@ private[search] object GoToIdent {
         // It's a template argument, search within the source-tree and within all dependant code.
         WorkspaceSearcher
           .collectImplementingChildren(sourceCode, workspace)
+          .childTrees
           .iterator
           .flatMap {
             sourceCode =>
@@ -523,6 +527,7 @@ private[search] object GoToIdent {
     // Go-to MapDef usages.
     WorkspaceSearcher
       .collectImplementingChildren(sourceCode, workspace)
+      .childTrees
       .iterator
       .flatMap {
         code =>

@@ -80,21 +80,80 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
           |Abstract Contract Parent() {
           |
           |  pub fn @@function_a(boolean: Bool) -> () {
-          |    let call1 = >>function_a(true)<<
+          |    >>function_a(true)<<
           |    >>function_a(false)<<
           |  }
           |}
           |
           |Contract Child() extends Parent() {
           |
-          |  pub fn function_b(boolean: Bool) -> () {
-          |    let call1 = >>function_a(true)<<
+          |  pub fn function_b(parent: Parent,
+          |                    nftCollectionId: ByteVec) -> () {
+          |    >>function_a(true)<<
           |    >>function_a(false)<<
+          |    >>parent.function_a(true)<<
           |  }
           |}
           |""".stripMargin
       )
     }
+
+    "function usage exist using a contract call (no inheritance)" in {
+      goTo(
+        """
+          |Contract MyContract() {
+          |
+          |  pub fn @@function_a(boolean: Bool) -> () {
+          |    >>function_a(true)<<
+          |    >>function_a(false)<<
+          |  }
+          |}
+          |
+          |Contract Main() {
+          |
+          |  pub fn function_b(myContract: MyContract,
+          |                    nftCollectionId: ByteVec) -> () {
+          |    >>myContract.function_a(true)<<
+          |    >>MyContract(nftCollectionId).function_a(true)<<
+          |    >>MyContract(nftCollectionId).function_a{callerAddress!() -> ALPH: 1 alph}(true)<<
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "function is defined in a Parent and usage is via an instance of the Child" in {
+      goTo(
+        """
+          |Abstract Contract Parent() {
+          |
+          |  pub fn @@parentFunction(boolean: Bool) -> () {
+          |
+          |  }
+          |}
+          |
+          |
+          |Contract Child() extends Parent() {
+          |
+          |  pub fn childFunction(boolean: Bool) -> () {
+          |
+          |  }
+          |
+          |}
+          |
+          |Contract Main() {
+          |
+          |  pub fn main(nftCollectionId: ByteVec,
+          |              child: Child) -> () {
+          |    >>Child(nftCollectionId).parentFunction{callerAddress!() -> ALPH: 1 alph}(true)<<
+          |    >>child.parentFunction(true)<<
+          |    >>Child(nftCollectionId).parentFunction(true)<<
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
+
   }
 
 }
