@@ -20,9 +20,34 @@ Go to the [latest release](https://github.com/alephium/ralph-lsp/releases/latest
 
 Download `ralph-lsp.zip`, extract it and add `ralph-lsp/bin` to your `PATH` environment variable.
 
-Install [plugin-nvim](/plugin-nvim) with your favorite plugin manager, for example with [vim-plug](https://github.com/junegunn/vim-plug)
+### [vim-plug](https://github.com/junegunn/vim-plug)
+
 ```vim
   Plug 'alephium/ralph-lsp', {'rtp': 'plugin-nvim'}
+```
+
+### [lazy](https://github.com/folke/lazy.nvim)
+
+```lua
+lazy_opts = {
+    performance = {
+        rtp = {
+            paths = {
+                vim.fn.stdpath('data') .. '/lazy/ralph-lsp/plugin-nvim'
+            }
+        },
+    },
+}
+
+lazy_plugin_config = {
+   "alephium/ralph-lsp",
+   init = function()
+       -- expose directly from inside nvim
+       local path = vim.env.PATH
+       path = path .. ":" .. "/path/to/ralph-lsp/bin"
+       vim.env.PATH = path
+   end
+}
 ```
 
 The plugin adds file type detection, syntax highlighting and start the LSP server, make sure you have `ralph-lsp` available in your `PATH`
