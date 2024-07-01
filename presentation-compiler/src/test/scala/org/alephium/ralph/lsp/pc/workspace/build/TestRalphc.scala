@@ -41,12 +41,16 @@ object TestRalphc {
       ignoreCheckExternalCallerWarnings = ignoreCheckExternalCallerWarnings
     )
 
-  def genRalphcParsedConfig(compilerOptions: Gen[CompilerOptions] = genCompilerOptions()): Gen[RalphcParsedConfig] =
+  def genRalphcParsedConfig(
+      compilerOptions: Gen[CompilerOptions] = genCompilerOptions(),
+      contractsFolderName: Gen[String] = genName,
+      artifactsFolderName: Gen[String] = genName,
+      dependenciesFolderName: Gen[Option[String]] = Gen.option(genName)): Gen[RalphcParsedConfig] =
     for {
       compilerOptions        <- compilerOptions
-      contractsFolderName    <- genName
-      artifactsFolderName    <- genName
-      dependenciesFolderName <- Gen.option(genName)
+      contractsFolderName    <- contractsFolderName
+      artifactsFolderName    <- artifactsFolderName
+      dependenciesFolderName <- dependenciesFolderName
     } yield RalphcParsedConfig(
       compilerOptions = compilerOptions,
       contractPath = contractsFolderName,

@@ -88,7 +88,8 @@ object TestBuild {
       workspaceURI: Gen[URI] = genFolderURI(),
       code: Gen[String] = TestCode.genGoodCode(),
       minSourceCount: Int = 0,
-      maxSourceCount: Int = 10
+      maxSourceCount: Int = 10,
+      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Gen[(BuildState.Compiled, List[SourceCodeState.OnDisk], List[SourceCodeState.OnDisk])] =
@@ -98,7 +99,8 @@ object TestBuild {
         genCompiledWithSourceCode(
           workspaceURI = workspaceURI,
           minSourceCount = minSourceCount,
-          maxSourceCount = maxSourceCount
+          maxSourceCount = maxSourceCount,
+          config = config
         )
       // write source-code files that are not in the workspace (expect these to get filtered out)
       outsideSourceCode <-
@@ -112,13 +114,14 @@ object TestBuild {
       workspaceURI: Gen[URI] = genFolderURI(),
       code: Gen[String] = TestCode.genGoodCode(),
       minSourceCount: Int = 0,
-      maxSourceCount: Int = 10
+      maxSourceCount: Int = 10,
+      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Gen[(BuildState.Compiled, List[SourceCodeState.OnDisk])] =
     for {
       // a compiled OK build file.
-      buildCompiled <- TestBuild.genCompiledOK(workspaceURI = workspaceURI)
+      buildCompiled <- TestBuild.genCompiledOK(workspaceURI = workspaceURI, config = config)
       // write source-code files to build's contract path
       workspaceSourceCode <-
         Gen
