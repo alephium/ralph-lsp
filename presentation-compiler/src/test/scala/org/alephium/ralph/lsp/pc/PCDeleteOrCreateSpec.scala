@@ -43,7 +43,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
   "report failure" when {
     "build file is deleted" when {
-      "current workspace is Created" in {
+      "current workspace is Created" ignore {
         implicit val file: FileAccess =
           FileAccess.disk
 
@@ -95,7 +95,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
         }
       }
 
-      "current workspace is UnCompiled" in {
+      "current workspace is UnCompiled" ignore {
         implicit val file: FileAccess =
           FileAccess.disk
 

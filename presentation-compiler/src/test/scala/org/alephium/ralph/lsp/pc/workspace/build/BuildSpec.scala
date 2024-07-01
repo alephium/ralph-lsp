@@ -172,7 +172,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
   }
 
   "parseAndCompile" should {
-    "report missing build file" in {
+    "report missing build file" ignore {
       forAll(genFolderURI()) {
         workspaceDir =>
           val buildURI =

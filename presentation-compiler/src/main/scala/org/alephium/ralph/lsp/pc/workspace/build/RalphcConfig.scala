@@ -99,8 +99,10 @@ object RalphcConfig {
       }
 
   /** Write a parsed config */
-  def write(config: RalphcParsedConfig): String =
-    upickle.default.write[RalphcParsedConfig](config)
+  def write(
+      config: RalphcParsedConfig,
+      indent: Int = -1): String =
+    upickle.default.write[RalphcParsedConfig](config, indent = indent)
 
   /** Write a compiled config */
   def write(config: RalphcCompiledConfig): String =

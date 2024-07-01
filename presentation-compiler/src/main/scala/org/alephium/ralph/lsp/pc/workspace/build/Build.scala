@@ -22,7 +22,6 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyDB, Dependency}
-import org.alephium.ralph.lsp.pc.workspace.build.error._
 
 import java.net.URI
 import java.nio.file.{Path, Paths}
@@ -147,13 +146,20 @@ object Build {
             currentBuild = currentBuild
           )
         else
-          BuildState.Errored(
+          createDefaultBuildFile(
             buildURI = buildURI,
-            codeOption = None,
-            errors = ArraySeq(ErrorBuildFileNotFound(buildURI)),
-            dependencies = currentBuild.to(ArraySeq).flatMap(_.dependencies),
-            activateWorkspace = None
-          )
+            currentBuild = currentBuild
+          ) match {
+            case Some(buildErrored) =>
+              buildErrored
+
+            case None =>
+              // default build file created! Parse and compile it!
+              parseAndCompile(
+                buildURI = buildURI,
+                currentBuild = currentBuild
+              )
+          }
     }
 
   /** Parse and compile from memory */
@@ -316,5 +322,37 @@ object Build {
       fileURI = parsed.buildURI
     )
   }
+
+  /**
+   * Generate and persist a default build file.
+   *
+   * @param buildURI     The location of the build file.
+   * @param currentBuild The existing build, used to carry dependencies forward in case of error.
+   * @return `Some(error)` if there were IO errors, else `None` for successful creation.
+   */
+  private def createDefaultBuildFile(
+      buildURI: URI,
+      currentBuild: Option[BuildState.IsCompiled]
+    )(implicit file: FileAccess): Option[BuildState.Errored] =
+    file.write(
+      fileURI = buildURI,
+      string = RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = 2),
+      index = SourceIndexExtra.zero(buildURI)
+    ) match {
+      case Left(error) =>
+        val buildState =
+          BuildState.Errored(
+            buildURI = buildURI,
+            codeOption = None,
+            errors = ArraySeq(error),
+            dependencies = currentBuild.to(ArraySeq).flatMap(_.dependencies),
+            activateWorkspace = None
+          )
+
+        Some(buildState)
+
+      case Right(_) =>
+        None
+    }
 
 }
