@@ -29,6 +29,7 @@ import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers._
 
 import java.net.URI
+import java.nio.file.Paths
 
 /** Build specific generators */
 object TestBuild {
@@ -40,7 +41,7 @@ object TestBuild {
       workspaceURI <- workspaceURI
       parsedConfig <- config
     } yield {
-      val buildURI  = workspaceURI.resolve(Build.BUILD_FILE_NAME)
+      val buildURI  = Build.toBuildFile(workspaceURI)
       val buildJSON = RalphcConfig.write(parsedConfig)
       //      FileIO.write(buildJSON, buildURI).toUri shouldBe buildURI
       // run either one of the two parse functions
@@ -131,23 +132,29 @@ object TestBuild {
 
   def persist(parsed: BuildState.Parsed): BuildState.Parsed = {
     TestFile.write(parsed.buildURI, parsed.code)
-    TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.contractPath))
-    TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.artifactPath))
+
+    val workspacePath = Paths.get(parsed.workspaceURI)
+    TestFile.createDirectories(workspacePath.resolve(parsed.config.contractPath))
+    TestFile.createDirectories(workspacePath.resolve(parsed.config.artifactPath))
     parsed
       .config
       .dependencyPath
       .foreach {
         path =>
-          TestFile.createDirectories(parsed.workspaceURI.resolve(path))
+          TestFile.createDirectories(workspacePath.resolve(path))
       }
+
     parsed
   }
 
   def persist(compiled: BuildState.Compiled): BuildState.Compiled = {
     TestFile.write(compiled.buildURI, compiled.code)
-    TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.config.contractPath.toUri))
-    TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.config.artifactPath.toUri))
-    TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.dependencyPath.toUri))
+
+    val workspacePath = Paths.get(compiled.workspaceURI)
+    TestFile.createDirectories(workspacePath.resolve(compiled.config.contractPath))
+    TestFile.createDirectories(workspacePath.resolve(compiled.config.artifactPath))
+    TestFile.createDirectories(workspacePath.resolve(compiled.dependencyPath))
+
     compiled
   }
 

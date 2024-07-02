@@ -32,13 +32,27 @@ object Build {
   val BUILD_FILE_EXTENSION = "json"
 
   /** Build file of a workspace */
-  val BUILD_FILE_NAME = s"ralph.$BUILD_FILE_EXTENSION"
+  val FILE_NAME = s"ralph.$BUILD_FILE_EXTENSION"
 
-  def toBuildPath(workspacePath: Path): Path =
-    workspacePath.resolve(BUILD_FILE_NAME)
+  /** Directory name where the [[Build.FILE_NAME]] is located */
+  private val HOME_DIR_NAME =
+    FileAccess.RALPH_LSP_HOME
 
-  def toBuildURI(workspaceURI: URI): URI =
-    toBuildPath(Paths.get(workspaceURI)).toUri
+  /** Constructs the path to the workspace's build directory. */
+  def toBuildDir(workspacePath: Path): Path =
+    workspacePath.resolve(HOME_DIR_NAME)
+
+  /** Constructs the URI to the workspace's build directory. */
+  def toBuildDir(workspaceURI: URI): URI =
+    toBuildDir(Paths.get(workspaceURI)).toUri
+
+  /** Constructs the path to the workspace's build file. */
+  def toBuildFile(workspacePath: Path): Path =
+    toBuildDir(workspacePath).resolve(FILE_NAME)
+
+  /** Constructs the URI to the workspace's build file. */
+  def toBuildFile(workspaceURI: URI): URI =
+    toBuildFile(Paths.get(workspaceURI)).toUri
 
   /** Parse a build that is in-memory */
   def parse(

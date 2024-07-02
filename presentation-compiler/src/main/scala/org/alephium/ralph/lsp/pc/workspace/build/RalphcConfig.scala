@@ -19,7 +19,6 @@ package org.alephium.ralph.lsp.pc.workspace.build
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
-import org.alephium.ralph.lsp.pc.workspace.build.Build.toBuildPath
 import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorInvalidBuildSyntax, ErrorEmptyBuildFile}
 
 import java.net.URI
@@ -123,7 +122,7 @@ object RalphcConfig {
       config: RalphcParsedConfig): Try[Path] =
     Try {
       val bytes         = RalphcConfig.write(config).getBytes(StandardCharsets.UTF_8)
-      val buildFilePath = toBuildPath(workspacePath)
+      val buildFilePath = Build.toBuildFile(workspacePath)
       Files.write(buildFilePath, bytes)
     }
 

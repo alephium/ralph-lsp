@@ -40,9 +40,9 @@ object BuildValidator {
   def validateBuildURI(
       buildURI: URI,
       workspaceURI: URI): Either[CompilerMessage.Error, URI] =
-    if (!URIUtil.isFileName(buildURI, Build.BUILD_FILE_NAME))
+    if (!URIUtil.isFileName(buildURI, Build.FILE_NAME))
       Left(ErrorBuildFileNotFound(buildURI))
-    else if (!URIUtil.isFirstChild(workspaceURI, buildURI)) // Build file must be in the root workspace directory.
+    else if (!URIUtil.isFirstChild(Build.toBuildDir(workspaceURI), buildURI)) // Build file must be in the root workspace directory.
       Left(
         ErrorInvalidBuildFileLocation(
           buildURI = buildURI,

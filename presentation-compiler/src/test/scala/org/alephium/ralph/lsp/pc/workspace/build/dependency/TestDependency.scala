@@ -41,7 +41,7 @@ object TestDependency {
     // create a default build file.
     val parsed =
       BuildState.Parsed(
-        buildURI = Paths.get(Build.BUILD_FILE_NAME).toUri,
+        buildURI = Paths.get(Build.FILE_NAME).toUri,
         code = RalphcConfig.write(RalphcConfig.defaultParsedConfig),
         config = RalphcConfig.defaultParsedConfig
       )

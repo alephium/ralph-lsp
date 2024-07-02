@@ -35,7 +35,7 @@ object Dependency {
   def defaultPath(): Option[Path] =
     FileAccess
       .USER_HOME
-      .map(_.resolve(".ralph-lsp").resolve("dependencies"))
+      .map(_.resolve(FileAccess.RALPH_LSP_HOME).resolve("dependencies"))
 
   /**
    * Compile this build's dependency.

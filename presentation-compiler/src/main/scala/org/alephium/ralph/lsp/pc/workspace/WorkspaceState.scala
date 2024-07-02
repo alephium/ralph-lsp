@@ -28,7 +28,7 @@ sealed trait WorkspaceState {
   def workspaceURI: URI
 
   final def buildURI: URI =
-    Build.toBuildURI(workspaceURI)
+    Build.toBuildFile(workspaceURI)
 
 }
 
