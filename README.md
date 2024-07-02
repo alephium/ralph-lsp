@@ -70,8 +70,8 @@ Run the plugin by selecting the menu option `Run -> Run Without Debugging` or `R
 
 # Configuration
 
-After your IDE has booted up, create a mandatory config file named `ralph.json` in your project's root directory.
-You can use the following sample as reference:
+After your IDE has booted up, a config file named `ralph.json` is generated in your project's root
+directory under the folder `.ralph-lsp/ralph.json`. The file contains the following default values:
 
 ```json
 {
@@ -89,11 +89,14 @@ You can use the following sample as reference:
 ```
 
 The `dependencyPath` field is optional. If not set, the default path (`<user.home>/.ralph-lsp/dependencies/`) will be
-used.
+used. If you wish to specify a custom path, add the following to your `ralph.json` file:
 
 ```json
 "dependencyPath": "dependencies"
 ```
+
+This configuration allows you to customise the behavior of the compiler and define the paths for
+your contracts, artifacts, and dependencies.
 
 ## Configure trace (VSCode)
 
