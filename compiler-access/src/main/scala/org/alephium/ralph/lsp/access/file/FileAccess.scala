@@ -29,6 +29,9 @@ object FileAccess {
   def disk: FileAccess =
     DiskFileAccess
 
+  def RALPH_LSP_HOME: String =
+    ".ralph-lsp"
+
   def USER_HOME: Option[Path] =
     Option(System.getProperty("user.home"))
       .map(Paths.get(_))

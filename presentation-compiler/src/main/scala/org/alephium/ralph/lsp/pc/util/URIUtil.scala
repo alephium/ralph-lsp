@@ -94,6 +94,44 @@ object URIUtil {
   }
 
   /**
+   * Drops the specified number of path segments from the tail end of the URI path.
+   *
+   * Prerequisite: An empty URI cannot be created so the drop count must be less than segment count.
+   *
+   * @param uri   The original URI.
+   * @param count The number of path segments to drop the tail end.
+   * @return A new URI with tail segments removed.
+   */
+  def dropRight(
+      uri: URI,
+      count: Int): URI = {
+    val segments =
+      uri
+        .getPath
+        .split("/")
+        .filter(_.nonEmpty)
+
+    // We do not have a use case where we need to drop more than the segment count.
+    // If such case does occur, that is a bug and should be resolved with the following condition check.
+    require(count < segments.length, s"Drop count of $count is not less than segment count of ${segments.length}")
+
+    val trimmedPath =
+      segments
+        .dropRight(count)
+        .mkString("/", "/", "")
+
+    new URI(
+      uri.getScheme,
+      uri.getUserInfo,
+      uri.getHost,
+      uri.getPort,
+      trimmedPath,
+      uri.getQuery,
+      uri.getFragment
+    )
+  }
+
+  /**
    * String literal that defines an import statement for a source file.
    *
    * @return If the file is named `std/my_code.ral`, the import statement returned

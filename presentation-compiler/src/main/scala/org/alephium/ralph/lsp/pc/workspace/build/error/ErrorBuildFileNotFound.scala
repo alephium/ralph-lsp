@@ -25,7 +25,7 @@ import java.net.URI
 case class ErrorBuildFileNotFound(buildURI: URI) extends CompilerMessage.Error {
 
   override def message: String =
-    s"Build file not found. Create a '${Build.BUILD_FILE_NAME}' file in the project's root folder."
+    s"Build file not found. Create a '${Build.FILE_NAME}' file in the project's root folder."
 
   override def index: SourceIndex =
     SourceIndexExtra.zero(buildURI)

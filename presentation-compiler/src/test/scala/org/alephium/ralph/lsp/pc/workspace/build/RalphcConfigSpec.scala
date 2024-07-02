@@ -93,7 +93,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
             |
             |""".stripMargin
 
-        val fileURI = URI.create(Build.BUILD_FILE_NAME)
+        val fileURI = URI.create(Build.FILE_NAME)
         val actual  = RalphcConfig.parse(fileURI, build_ralph).left.value
 
         actual shouldBe ErrorEmptyBuildFile(fileURI)
@@ -116,6 +116,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
 
       Files.createDirectory(workspacePath.resolve(config.contractPath))
       Files.createDirectory(workspacePath.resolve(config.artifactPath))
+      Files.createDirectory(Build.toBuildDir(workspacePath))
       // create only if the dependencyPath is provided by the user i.e. is in the parsed config
       // otherwise expect the dependency compiler to write to the default dependencyPath
       config
@@ -126,7 +127,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         }
 
       // Persist the default config to the workspace
-      val expectedBuildPath = workspacePath.resolve(Build.BUILD_FILE_NAME)
+      val expectedBuildPath = Build.toBuildFile(workspacePath)
       val actualBuildPath   = RalphcConfig.persist(workspacePath, config).success.value
       actualBuildPath shouldBe expectedBuildPath
 

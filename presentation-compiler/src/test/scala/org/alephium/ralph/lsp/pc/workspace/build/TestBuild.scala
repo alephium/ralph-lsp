@@ -29,6 +29,7 @@ import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers._
 
 import java.net.URI
+import java.nio.file.Paths
 
 /** Build specific generators */
 object TestBuild {
@@ -40,7 +41,7 @@ object TestBuild {
       workspaceURI <- workspaceURI
       parsedConfig <- config
     } yield {
-      val buildURI  = workspaceURI.resolve(Build.BUILD_FILE_NAME)
+      val buildURI  = Build.toBuildFile(workspaceURI)
       val buildJSON = RalphcConfig.write(parsedConfig)
       //      FileIO.write(buildJSON, buildURI).toUri shouldBe buildURI
       // run either one of the two parse functions
@@ -88,7 +89,8 @@ object TestBuild {
       workspaceURI: Gen[URI] = genFolderURI(),
       code: Gen[String] = TestCode.genGoodCode(),
       minSourceCount: Int = 0,
-      maxSourceCount: Int = 10
+      maxSourceCount: Int = 10,
+      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Gen[(BuildState.Compiled, List[SourceCodeState.OnDisk], List[SourceCodeState.OnDisk])] =
@@ -98,7 +100,8 @@ object TestBuild {
         genCompiledWithSourceCode(
           workspaceURI = workspaceURI,
           minSourceCount = minSourceCount,
-          maxSourceCount = maxSourceCount
+          maxSourceCount = maxSourceCount,
+          config = config
         )
       // write source-code files that are not in the workspace (expect these to get filtered out)
       outsideSourceCode <-
@@ -112,13 +115,14 @@ object TestBuild {
       workspaceURI: Gen[URI] = genFolderURI(),
       code: Gen[String] = TestCode.genGoodCode(),
       minSourceCount: Int = 0,
-      maxSourceCount: Int = 10
+      maxSourceCount: Int = 10,
+      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Gen[(BuildState.Compiled, List[SourceCodeState.OnDisk])] =
     for {
       // a compiled OK build file.
-      buildCompiled <- TestBuild.genCompiledOK(workspaceURI = workspaceURI)
+      buildCompiled <- TestBuild.genCompiledOK(workspaceURI = workspaceURI, config = config)
       // write source-code files to build's contract path
       workspaceSourceCode <-
         Gen
@@ -128,23 +132,29 @@ object TestBuild {
 
   def persist(parsed: BuildState.Parsed): BuildState.Parsed = {
     TestFile.write(parsed.buildURI, parsed.code)
-    TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.contractPath))
-    TestFile.createDirectories(parsed.workspaceURI.resolve(parsed.config.artifactPath))
+
+    val workspacePath = Paths.get(parsed.workspaceURI)
+    TestFile.createDirectories(workspacePath.resolve(parsed.config.contractPath))
+    TestFile.createDirectories(workspacePath.resolve(parsed.config.artifactPath))
     parsed
       .config
       .dependencyPath
       .foreach {
         path =>
-          TestFile.createDirectories(parsed.workspaceURI.resolve(path))
+          TestFile.createDirectories(workspacePath.resolve(path))
       }
+
     parsed
   }
 
   def persist(compiled: BuildState.Compiled): BuildState.Compiled = {
     TestFile.write(compiled.buildURI, compiled.code)
-    TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.config.contractPath.toUri))
-    TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.config.artifactPath.toUri))
-    TestFile.createDirectories(compiled.workspaceURI.resolve(compiled.dependencyPath.toUri))
+
+    val workspacePath = Paths.get(compiled.workspaceURI)
+    TestFile.createDirectories(workspacePath.resolve(compiled.config.contractPath))
+    TestFile.createDirectories(workspacePath.resolve(compiled.config.artifactPath))
+    TestFile.createDirectories(workspacePath.resolve(compiled.dependencyPath))
+
     compiled
   }
 

@@ -16,20 +16,23 @@
 
 package org.alephium.ralph.lsp.pc
 
+import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
-import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorBuildFileNotFound
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
+import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, TestRalphc, BuildState, TestBuild}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace, WorkspaceFileEvent}
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.OptionValues.convertOptionToValuable
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 import scala.util.Random
 
@@ -50,15 +53,25 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
         implicit val compiler: CompilerAccess =
           CompilerAccess.ralphc
 
-        forAll(TestBuild.genCompiledOK()) {
+        // set `dependenciesFolderName` to `None` so that dependencies get written to the default folder.
+        val buildGenerator =
+          TestBuild.genCompiledOK(
+            config = TestRalphc.genRalphcParsedConfig(
+              dependenciesFolderName = None,
+              contractsFolderName = RalphcConfig.defaultParsedConfig.contractPath,
+              artifactsFolderName = RalphcConfig.defaultParsedConfig.artifactPath
+            )
+          )
+
+        forAll(buildGenerator) {
           build =>
             // delete the build file
             TestBuild delete build
+            TestFile.exists(build.buildURI) shouldBe false
             // also create a deleted event
             val event =
               WorkspaceFileEvent.Deleted(build.buildURI)
 
-            // initial/current workspace
             val workspace =
               WorkspaceState.Created(build.workspaceURI)
 
@@ -77,20 +90,37 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
             val expectedPCState =
               PCState(
-                workspace = workspace,
-                buildErrors = Some(
-                  BuildState.Errored(
-                    buildURI = build.buildURI,
-                    codeOption = None,                                         // because workspace is in created state
-                    errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
-                    dependencies = ArraySeq.empty,                             // because workspace is in created state
-                    activateWorkspace = None
+                // expected workspace
+                workspace = WorkspaceState.Compiled(
+                  sourceCode = ArraySeq.empty,    // there is no source code
+                  parsed = WorkspaceState.Parsed( // Workspace is successful parsed
+                    build = BuildState.Compiled(
+                      buildURI = build.buildURI,
+                      code = RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = 2), // Default build file is written
+                      dependencies = build.dependencies,                                       // default dependencies are written
+                      dependencyPath = Dependency.defaultPath().value,                         // Default dependency build path i.e. .ralph-lsp is used
+                      config = org                                                             // compiled build file has full paths defined
+                        .alephium
+                        .ralphc
+                        .Config(
+                          // compiled build file contains configurations from the default build coming from node
+                          compilerOptions = RalphcConfig.defaultParsedConfig.compilerOptions,
+                          contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.contractPath),
+                          artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.artifactPath)
+                        )
+                    ),
+                    sourceCode = ArraySeq.empty // there is no source-code in this workspace
                   )
-                )
+                ),
+                buildErrors = None // there are no build errors
               )
+
+            // build file exists on disk
+            TestFile.exists(build.buildURI) shouldBe true
 
             actualPCState shouldBe expectedPCState
 
+            // clear workspace
             TestWorkspace delete workspace
         }
       }
@@ -102,14 +132,23 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
         implicit val compiler: CompilerAccess =
           CompilerAccess.ralphc
 
-        forAll(TestBuild.genCompiledWithSourceCodeInAndOut()) {
-          case (build, sourceCodeIn, sourceCodeOut) =>
-            /**
-             * FAIL SCENARIO
-             */
+        // Generate
+        val buildGenerator =
+          TestBuild
+            .genCompiledWithSourceCodeInAndOut(
+              config = TestRalphc
+                .genRalphcParsedConfig(
+                  dependenciesFolderName = None,
+                  contractsFolderName = RalphcConfig.defaultParsedConfig.contractPath,
+                  artifactsFolderName = RalphcConfig.defaultParsedConfig.artifactPath
+                )
+            )
 
+        forAll(buildGenerator) {
+          case (build, sourceCodeIn, sourceCodeOut) =>
             // delete the build file
             TestBuild delete build
+            TestFile.exists(build.buildURI) shouldBe false
             // also create a deleted event
             val event =
               WorkspaceFileEvent.Deleted(build.buildURI)
@@ -130,37 +169,6 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                 buildErrors = None
               )
 
-            // invoke build event
-            val actualPCState =
-              PC.deleteOrCreate(
-                events = ArraySeq(event),
-                pcState = currentPCState
-              )
-
-            // expect PC state should maintain existing workspace (include )
-            val expectedPCState =
-              PCState(
-                workspace = workspace,
-                buildErrors = Some(
-                  BuildState.Errored(
-                    buildURI = build.buildURI,
-                    codeOption = None,                                         // no code is stored because the build is deleted
-                    errors = ArraySeq(ErrorBuildFileNotFound(build.buildURI)), // the error is reported
-                    dependencies = build.dependencies,                         // dependency from previous build is carried
-                    activateWorkspace = Some(workspace)                        // the same workspace with inside-code and outside-code is stored.
-                  )
-                )
-              )
-
-            actualPCState shouldBe expectedPCState
-
-            /**
-             * PASS SCENARIO: For the same test data execute pass scenario (Just piggy back off this test).
-             */
-            info("PASS SCENARIO: When build is OK")
-            // also test pass behaviour when build is persisted
-            TestBuild persist build
-
             // invoke the same event
             val actualPCStateOK =
               PC.deleteOrCreate(
@@ -168,12 +176,35 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                 pcState = currentPCState
               )
 
-            // no build errors this time because build file is on-disk
+            // A build file is generated
+            TestFile.exists(build.buildURI) shouldBe true
+
+            // no build errors because build file is generate
             actualPCStateOK.buildErrors shouldBe None
             // workspace is compiled
             val compiledWorkspace = actualPCStateOK.workspace.asInstanceOf[WorkspaceState.Compiled]
             // final workspace should contain ONLY the inside source-code, outside source-code is removed
             compiledWorkspace.sourceCode.map(_.fileURI) should contain theSameElementsAs sourceCodeIn.map(_.fileURI)
+
+            // Expect this default build file
+            val expectedBuild =
+              BuildState.Compiled(
+                buildURI = build.buildURI,
+                code = RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = 2), // Default build file is written
+                dependencies = build.dependencies,                                       // default dependencies are written
+                dependencyPath = Dependency.defaultPath().value,                         // Default dependency build path i.e. .ralph-lsp is used
+                config = org                                                             // compiled build file has full paths defined
+                  .alephium
+                  .ralphc
+                  .Config(
+                    // compiled build file contains configurations from the default build coming from node
+                    compilerOptions = RalphcConfig.defaultParsedConfig.compilerOptions,
+                    contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.contractPath),
+                    artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.artifactPath)
+                  )
+              )
+
+            compiledWorkspace.build shouldBe expectedBuild
 
             // clear test data
             TestWorkspace delete workspace

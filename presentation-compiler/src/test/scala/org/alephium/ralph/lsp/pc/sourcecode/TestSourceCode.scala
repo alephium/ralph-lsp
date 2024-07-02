@@ -71,7 +71,7 @@ object TestSourceCode {
   def genOnDiskForBuild(build: Gen[BuildState.Parsed] = TestBuild.genParsed()): Gen[SourceCodeState.OnDisk] =
     for {
       build <- build
-      workspacePath = Gen.const(Paths.get(build.workspaceURI.resolve(build.config.contractPath)))
+      workspacePath = Paths.get(build.workspaceURI).resolve(build.config.contractPath)
       fileURI       = genFileURI(rootFolder = workspacePath)
       sourceCode <- TestSourceCode.genOnDisk(fileURI)
     } yield sourceCode

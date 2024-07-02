@@ -94,7 +94,7 @@ object DependencyDownloader {
    */
   def defaultBuild(workspaceDir: Path): BuildState.Compiled = {
     val buildDir =
-      workspaceDir resolve Build.BUILD_FILE_NAME
+      Build.toBuildFile(workspaceDir)
 
     val compiledConfig =
       org

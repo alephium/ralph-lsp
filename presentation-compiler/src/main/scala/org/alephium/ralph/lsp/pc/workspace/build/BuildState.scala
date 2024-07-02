@@ -23,7 +23,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.{RalphcCompiledCon
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 import java.net.URI
-import java.nio.file.{Path, Paths}
+import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 
 sealed trait BuildState {
@@ -33,7 +33,7 @@ sealed trait BuildState {
   def buildURI: URI
 
   def workspaceURI: URI =
-    Paths.get(buildURI).getParent.toUri
+    URIUtil.dropRight(buildURI, count = 2) // Drop the 2 from the URI's tail end `.../.ralph-lsp/ralph.json`
 
 }
 
