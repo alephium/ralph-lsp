@@ -55,8 +55,10 @@ private object RalphCompilerAccess extends CompilerAccess {
       options: CompilerOptions,
       workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
+      val fixedContracts = InconsistentWarningsFix.fix(contracts, structs, options)
+
       val multiContract =
-        Ast.MultiContract(contracts, structs, None, None)
+        Ast.MultiContract(fixedContracts, structs, None, None)
 
       val extendedContracts =
         multiContract.extendedContracts()
