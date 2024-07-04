@@ -254,12 +254,11 @@ private[pc] object SourceCode {
     // Compile only the source-code. Import statements are already expected to be processed and included in `importedCode` collection.
     val (contracts, structs) =
       allCode
-        .map {
-          source =>
-            source.clearStructCache()
-            source.ast
-        }
+        .map(_.ast)
         .partitionMap(identity)
+
+    // Reset contracts state before compilation. This is necessary to ensure that contracts are fully recompiled.
+    contracts.foreach(_.reset())
 
     // compile the source-code
     val compilationResult =

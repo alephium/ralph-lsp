@@ -26,7 +26,7 @@ object ExprCompleter extends StrictImplicitLogging {
       expr: Ast.Expr[_],
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): Iterator[Suggestion.FuncDef] =
-    expr.tpe match {
+    expr.getCachedType() match {
       case Some(types) =>
         WorkspaceSearcher
           .collectFunctions(
