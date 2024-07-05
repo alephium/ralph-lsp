@@ -307,4 +307,61 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
     }
   }
 
+  "keep consistent warnings" when {
+    "compiling twice the same AST" in {
+      implicit val compiler: CompilerAccess = CompilerAccess.ralphc
+      // No file access should occur
+      implicit val file: FileAccess = null
+
+      val sourceCode =
+        TestSourceCode
+          .genParsedOK(
+            """|
+                |Contract MyContract(interface: MyInterface) {
+                |  pub fn getBool() -> Bool {
+                |    return interface.getBool()
+                |  }
+                |}
+                |
+                |Interface MyInterface {
+                |   pub fn getBool() -> Bool
+                |}
+                |
+                |TxScript MyScript(x: U256, y: U256) {
+                |  assert!(x != y, 0)
+                |
+                |  fn boolean() -> Bool {
+                |    return true
+                |  }
+                |}
+                |""".stripMargin
+          )
+          .sample
+          .get
+
+      def compileAndGetWarnings(code: SourceCodeState.Parsed): Seq[String] =
+        SourceCode
+          .compile(
+            sourceCode = ArraySeq(code),
+            dependency = ArraySeq.empty,
+            compilerOptions = CompilerOptions.Default,
+            workspaceErrorURI = TestFile.genFolderURI().sample.value
+          )
+          .value
+          .head
+          .asInstanceOf[SourceCodeState.Compiled]
+          .compiledCode
+          .flatMap {
+            case Right(contract) => contract.warnings
+            case Left(script)    => script.warnings
+          }
+
+      val warnings1 = compileAndGetWarnings(sourceCode)
+      val warnings2 = compileAndGetWarnings(sourceCode)
+
+      warnings1.size should be > 0
+      warnings1 shouldBe warnings2
+    }
+  }
+
 }

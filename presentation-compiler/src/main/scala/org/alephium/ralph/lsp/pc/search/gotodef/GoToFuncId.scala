@@ -216,7 +216,7 @@ private[search] object GoToFuncId extends StrictImplicitLogging {
               // function ID matches, but does it also match the type ID?
               call
                 .obj
-                .tpe
+                .getCachedType()
                 .map(_.flatMap(AstExtra.getTypeId)) // fetch the type ID of this function call
                 .iterator
                 .flatMap {
@@ -271,7 +271,7 @@ private[search] object GoToFuncId extends StrictImplicitLogging {
       typeExpr: Ast.Expr[_],
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
-    typeExpr.tpe match {
+    typeExpr.getCachedType() match {
       case Some(types) =>
         val allFunctions =
           WorkspaceSearcher.collectFunctions(
