@@ -6,6 +6,10 @@ Currently supports text document level events and diagnostics.
 
 # Install VSCode plugin
 
+`Ralph LSP` is available on the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=alephium.ralph-lsp).
+
+### Manual Installation
+
 Follow these steps:
 
 1. Download: Get the `.vsix` plugin file from the [latest release](https://github.com/alephium/ralph-lsp/releases/latest).
