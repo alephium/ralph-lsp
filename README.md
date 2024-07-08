@@ -52,6 +52,23 @@ lazy_plugin_config = {
 
 The plugin adds file type detection, syntax highlighting and start the LSP server, make sure you have `ralph-lsp` available in your `PATH`
 
+# Integrate new editor
+
+Please help us integrate Ralph LSP into your favorite editor. We are happy to assist you with any questions you may have.
+
+You can either create your own repository or add a new folder in this repository following the `plugin-<editor>` naming convention.
+
+### Define Root Directory
+
+It's important to ensure that your plugin can find the correct root directory for your Ralph project.
+For example, if you open your editor while inside the `contracts` folder, the plugin should be able to identify the root directory as `../contracts`.
+
+In our current plugins, we follow this heuristic:
+
+* Look for the presence of either `alephium.config.ts`, `contracts`, or `.ralph.json`.
+
+If none of these are found, the plugin will use the current directory as the root directory.
+
 # Build the JAR
 
 ```shell

@@ -1,7 +1,9 @@
-import {ExtensionContext} from 'vscode';
+import {ExtensionContext, Uri, workspace, } from 'vscode';
 
 import {LanguageClient, LanguageClientOptions, ServerOptions} from 'vscode-languageclient/node';
 import * as path from "node:path";
+import * as fs from 'fs';
+
 
 let client: LanguageClient;
 
@@ -32,6 +34,22 @@ function build_args(release: boolean) {
 export function activate(context: ExtensionContext) {
     console.log("Activating Ralph LSP client");
 
+    const rootFiles = ['alephium.config.ts', 'contracts', '.ralph-lsp'];
+
+    const workspaceFolders = workspace.workspaceFolders;
+
+    let rootDir: string | null = null;
+
+    if (workspaceFolders) {
+        for (const folder of workspaceFolders) {
+            const potentialRootDir = findRootDir(folder.uri.fsPath, rootFiles);
+            if (potentialRootDir) {
+                rootDir = potentialRootDir;
+                break;
+            }
+        }
+    }
+
     const args =
         build_args(true);
 
@@ -43,8 +61,9 @@ export function activate(context: ExtensionContext) {
     const clientOptions: LanguageClientOptions = {
         documentSelector: [
             {pattern: '**/*.ral'},
-            {language: 'json', pattern: '**/ralph.json'},
-        ]
+            {language: 'json', pattern: '**/ralph.json'}
+        ],
+        workspaceFolder: rootDir ? { uri: Uri.file(rootDir), name: "ralph-lsp-home", index: 0} : undefined
     };
 
     // Create the client and store it.
@@ -64,4 +83,22 @@ export function deactivate(): Thenable<void> | undefined {
         return undefined;
     }
     return client.stop();
+}
+
+// Helper function to recursively find the root directory
+function findRootDir(currentDir: string, rootFiles: string[]): string | null {
+
+  for (const file of rootFiles) {
+    if (fs.existsSync(path.join(currentDir, file))) {
+      return currentDir;
+    }
+  }
+
+  const parentDir = path.dirname(currentDir);
+  if (parentDir === currentDir) {
+    // Reached the root directory
+    return null;
+  }
+
+  return findRootDir(parentDir, rootFiles);
 }

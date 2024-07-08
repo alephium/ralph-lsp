@@ -4,7 +4,7 @@ local function ralph_init()
 
   capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = true
 
-  local root_dir = vim.fs.dirname(vim.fs.find({'build.ralph', 'contracts', 'artifacts'}, { upward = true })[1])
+  local root_dir = vim.fs.dirname(vim.fs.find({'alephium.config.ts', 'contracts', '.ralph-lsp'}, { upward = true })[1])
 
   if root_dir == nil then root_dir = vim.fn.getcwd() end
 
