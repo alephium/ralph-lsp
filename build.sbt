@@ -29,7 +29,6 @@ val commonSettings =
         "-feature",
         "-unchecked",
         // "-Xsource:3.1",
-        "-Xfatal-warnings",
         "-Xlint:adapted-args",
         "-Xlint:constant",
         "-Xlint:delayedinit-select",

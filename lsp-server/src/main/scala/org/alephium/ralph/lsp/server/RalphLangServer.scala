@@ -17,16 +17,18 @@
 package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
 import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.sourcecode._
 import org.alephium.ralph.lsp.pc.util.CollectionUtil
 import org.alephium.ralph.lsp.pc.util.URIUtil.uri
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.{PCState, PC}
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES}
@@ -44,6 +46,7 @@ import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.IterableHasAsScala
+import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object RalphLangServer {
 
@@ -100,6 +103,7 @@ object RalphLangServer {
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
     capabilities.setCompletionProvider(new CompletionOptions(false, util.Arrays.asList(".")))
     capabilities.setDefinitionProvider(true)
+    capabilities.setDocumentFormattingProvider(true)
 
     capabilities
   }
@@ -415,6 +419,40 @@ class RalphLangServer private (
             // The server must've invoked the initial compilation in the boot-up initialize function.
             logger.info("Go-to definition unsuccessful: Workspace is not compiled")
             messages.Either.forLeft(util.Arrays.asList())
+        }
+    }
+
+  override def formatting(params: DocumentFormattingParams):CompletableFuture[util.List[_<:TextEdit]]=
+    runAsync {
+      cancelChecker =>
+        val fileURI   = uri(params.getTextDocument.getUri)
+
+        cancelChecker.checkCanceled()
+
+        getPCState().workspace match {
+          case sourceAware: WorkspaceState.IsSourceAware =>
+            cancelChecker.checkCanceled()
+
+            sourceAware.sourceCode.find(_.fileURI == fileURI) match {
+              case Some(file)=>
+                file match {
+                  case compiled: SourceCodeState.IsCompiled =>
+                    compiled.parsed.ast.statements.map{
+                      case imp:Tree.Import =>
+                      val range = DiagnosticsConverter.toRange(imp.index.toLineRange(compiled.code))
+                      val name = imp.path.map(p=>s"${p.folder.value}/${p.file.value}").getOrElse("")
+                       new TextEdit(range, s"""import "$name"""")
+                      case src:Tree.Source =>
+                      val range = DiagnosticsConverter.toRange(src.index.toLineRange(compiled.code))
+                    new TextEdit(range, "")
+                    }.asJava
+              case _ => Seq.empty[TextEdit].asJava
+                }
+              case None => Seq.empty[TextEdit].asJava
+            }
+
+          case _: WorkspaceState.Created =>
+            Seq.empty[TextEdit].asJava
         }
     }
 

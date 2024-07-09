@@ -71,7 +71,9 @@ object SourceCodeState {
   sealed trait IsParsed extends IsCodeAware
 
   /** Represents: Code that is compiled. */
-  sealed trait IsCompiled extends IsParsed
+  sealed trait IsCompiled extends IsParsed{
+    def parsed: SourceCodeState.Parsed
+  }
 
   /** Represents: Code that contains error(s). */
   sealed trait IsError extends SourceCodeState
