@@ -29,10 +29,10 @@ import scala.collection.immutable.ArraySeq
 
 object Build {
 
-  val BUILD_FILE_EXTENSION = "json"
+  val FILE_EXTENSION = "json"
 
   /** Build file of a workspace */
-  val FILE_NAME = s"ralph.$BUILD_FILE_EXTENSION"
+  val FILE_NAME = s"ralph.$FILE_EXTENSION"
 
   /** Directory name where the [[Build.FILE_NAME]] is located */
   private val HOME_DIR_NAME =
@@ -67,6 +67,7 @@ object Build {
           buildURI = buildURI,
           codeOption = Some(json),
           errors = ArraySeq(error),
+          tsState = None,
           dependencies = ArraySeq.empty,
           activateWorkspace = None
         )
@@ -87,6 +88,7 @@ object Build {
           buildURI = buildURI,
           codeOption = None,
           errors = ArraySeq(error),
+          tsState = None,
           dependencies = ArraySeq.empty,
           activateWorkspace = None
         )
@@ -149,6 +151,7 @@ object Build {
           buildURI = buildURI,
           codeOption = None,
           errors = ArraySeq(error),
+          tsState = None,
           dependencies = currentBuild.to(ArraySeq).flatMap(_.dependencies),
           activateWorkspace = None
         )
@@ -240,6 +243,7 @@ object Build {
             buildURI = buildURI,
             codeOption = code,
             errors = ArraySeq(error),
+            tsState = None,
             dependencies = currentBuild.dependencies,
             activateWorkspace = None
           )
@@ -359,6 +363,7 @@ object Build {
             buildURI = buildURI,
             codeOption = None,
             errors = ArraySeq(error),
+            tsState = None,
             dependencies = currentBuild.to(ArraySeq).flatMap(_.dependencies),
             activateWorkspace = None
           )

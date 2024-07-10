@@ -23,6 +23,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuildState
 
 import java.net.URI
 import scala.collection.mutable.ListBuffer
@@ -68,10 +69,15 @@ object Diagnostics {
       case (Some(build), None) =>
         // build errors were fixed. Clear old errors
         val buildDiagnostics =
-          toFileDiagnostics(
+          clearFileDiagnotics(
             fileURI = build.buildURI,
-            code = build.codeOption,
-            errors = List.empty, // clear old errors
+            severity = CodeDiagnosticSeverity.Error
+          )
+
+        // clear old TS build errors
+        val tsBuildDiagnostics =
+          clearFileDiagnotics(
+            fileURI = build.tsBuildURI,
             severity = CodeDiagnosticSeverity.Error
           )
 
@@ -80,33 +86,23 @@ object Diagnostics {
           build.dependencies.to(Array) flatMap toFileDiagnostics
 
         // collect all diagnostics
-        dependencyDiagnostics :+ buildDiagnostics
+        dependencyDiagnostics :+ buildDiagnostics :+ tsBuildDiagnostics
 
       case (None, Some(build)) =>
         // New build has errors, create diagnostics.
         val buildDiagnostics =
-          toFileDiagnostics(
-            fileURI = build.buildURI,
-            code = build.codeOption,
-            errors = build.errors.to(List),
-            severity = CodeDiagnosticSeverity.Error
-          )
+          toFileDiagnostics(build)
 
         // build diagnostics for the dependency
         val dependencyDiagnostics =
           build.dependencies.to(Array) flatMap toFileDiagnostics
 
-        dependencyDiagnostics :+ buildDiagnostics
+        dependencyDiagnostics ++ buildDiagnostics
 
       case (Some(oldBuild), Some(newBuild)) =>
         // New build has errors, build diagnostics given previous build result.
         val buildDiagnostics =
-          toFileDiagnostics(
-            fileURI = newBuild.buildURI,
-            code = newBuild.codeOption,
-            errors = newBuild.errors.to(List),
-            severity = CodeDiagnosticSeverity.Error
-          )
+          toFileDiagnostics(newBuild)
 
         val dependencyDiagnostics =
           DependencyID
@@ -120,12 +116,64 @@ object Diagnostics {
                 )
             }
 
-        dependencyDiagnostics ++ Iterable(buildDiagnostics)
+        dependencyDiagnostics ++ buildDiagnostics
 
       case (None, None) =>
         // No state change occurred. Nothing to diagnose.
         Iterable.empty
     }
+
+  /**
+   * Builds diagnostics for the build's error state.
+   *
+   * @param build The errored build.
+   * @return The build file's diagnostics.
+   */
+  def toFileDiagnostics(build: BuildState.Errored): Array[FileDiagnostic] = {
+    // `ralph.json` diagnotics
+    val buildDiagnostics =
+      toFileDiagnostics(
+        fileURI = build.buildURI,
+        code = build.codeOption,
+        errors = build.errors.to(List),
+        severity = CodeDiagnosticSeverity.Error
+      )
+
+    // `alephium.config.ts` diagnotics
+    val tsBuildDiagnotics =
+      build.tsState match {
+        case Some(tsErrors) =>
+          toFileDiagnostics(tsErrors)
+
+        case None =>
+          clearFileDiagnotics(
+            fileURI = build.tsBuildURI,
+            severity = CodeDiagnosticSeverity.Error
+          )
+      }
+
+    Array(buildDiagnostics, tsBuildDiagnotics)
+  }
+
+  /**
+   * Builds file diagnostics for `alephium.config.ts`.
+   *
+   * @param state The errored state.
+   * @return The build file's diagnostics.
+   */
+  def toFileDiagnostics(state: TSBuildState.Errored): FileDiagnostic = {
+    val diagnostics =
+      state.errors map {
+        error =>
+          toDiagnostic(
+            code = state.code,
+            message = error,
+            severity = CodeDiagnosticSeverity.Error
+          )
+      }
+
+    FileDiagnostic(state.buildURI, diagnostics)
+  }
 
   /**
    * Given the current workspace and the next,
@@ -348,5 +396,22 @@ object Diagnostics {
 
     FileDiagnostic(fileURI, diagnostics)
   }
+
+  /**
+   * Clears all file diagnostics for the `fileURI`.
+   *
+   * @param fileURI  The file URI to clear diagnostics for.
+   * @param severity The type of diagnostics to clear.
+   * @return Cleared file diagnostics.
+   */
+  private def clearFileDiagnotics(
+      fileURI: URI,
+      severity: CodeDiagnosticSeverity): FileDiagnostic =
+    toFileDiagnostics(
+      fileURI = fileURI,
+      code = None,
+      errors = List.empty, // clear old errors
+      severity = severity
+    )
 
 }

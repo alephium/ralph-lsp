@@ -23,6 +23,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 
 import java.net.URI
@@ -104,6 +105,25 @@ private[pc] object Workspace extends StrictImplicitLogging {
 
             initialise(build)
 
+          case Some(code) if code.fileURI == currentWorkspace.tsBuildURI =>
+            // Request is for the `alephium.config.ts` build file.
+            val buildResult =
+              Workspace.build(workspace)
+
+            val newBuild =
+              buildResult.map(_.build).merge
+
+            TSBuild.build(
+              code = code.text,
+              currentBuild = newBuild
+            ) match {
+              case Some(error) =>
+                Left(error)
+
+              case None =>
+                buildResult
+            }
+
           case _ =>
             // else build from disk
             Workspace.build(currentWorkspace)
@@ -158,6 +178,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
                 buildURI = newBuild.buildURI,
                 codeOption = Some(newBuild.code),
                 errors = ArraySeq(error),
+                tsState = None,
                 dependencies = currentBuild.dependencies,
                 activateWorkspace = Some(activateWorkspace)
               )
@@ -216,6 +237,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
             buildURI = state.buildURI,
             codeOption = Some(state.code),
             errors = ArraySeq(error),
+            tsState = None,
             dependencies = state.dependencies,
             activateWorkspace = None
           )
@@ -372,7 +394,14 @@ private[pc] object Workspace extends StrictImplicitLogging {
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Option[Either[BuildState.Errored, WorkspaceState.IsSourceAware]] =
-    if (workspace.buildURI.resolve(buildURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
+    if (workspace.workspaceURI.resolve(buildURI) == workspace.tsBuildURI) // Request is for the `alephium.config.ts` build file.
+      TSBuild
+        .build(
+          code = code,
+          currentBuild = workspace.build
+        )
+        .map(Left(_))
+    else if (workspace.buildURI.resolve(buildURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
       Build.parseAndCompile(
         buildURI = buildURI,
         code = code,

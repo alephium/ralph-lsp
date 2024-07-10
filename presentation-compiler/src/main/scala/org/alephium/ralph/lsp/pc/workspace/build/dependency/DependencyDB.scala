@@ -55,6 +55,7 @@ object DependencyDB extends StrictImplicitLogging {
         buildURI = parentBuild.buildURI,
         codeOption = parentBuild.codeOption,
         errors = errors,
+        tsState = None,
         dependencies = ArraySeq.empty,
         activateWorkspace = None
       )

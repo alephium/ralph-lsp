@@ -83,6 +83,7 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
                   message = """expected json value got "b""""
                 )
               ),
+            tsState = None,
             dependencies = buildCompiled.dependencies, // dependency is carried forward
             activateWorkspace =                        // new workspace is activated with input source-code
               Some(

@@ -21,6 +21,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
+import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceFile, WorkspaceFileEvent, Workspace}
 
@@ -82,7 +83,7 @@ object PC {
         val fileExtension =
           URIUtil.getFileExtension(fileURI)
 
-        if (fileExtension == Build.BUILD_FILE_EXTENSION) {
+        if (fileExtension == Build.FILE_EXTENSION || fileExtension == TSBuild.FILE_EXTENSION) {
           // process build change
           val buildResult =
             Workspace.buildChanged(

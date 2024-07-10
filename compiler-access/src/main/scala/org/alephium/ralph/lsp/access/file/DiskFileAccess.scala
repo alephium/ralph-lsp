@@ -88,7 +88,7 @@ private object DiskFileAccess extends FileAccess {
       val filePath = Paths.get(fileURI)
       // ensure directories exists
       Files.createDirectories(filePath.getParent)
-      val createdFile = Files.writeString(Paths.get(fileURI), string)
+      val createdFile = Files.writeString(filePath, string)
       Right(createdFile)
     } catch {
       case throwable: Throwable =>
