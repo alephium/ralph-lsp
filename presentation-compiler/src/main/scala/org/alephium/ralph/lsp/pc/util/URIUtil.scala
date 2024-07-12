@@ -32,6 +32,12 @@ object URIUtil {
       new URI(string)
     }
 
+  /**
+   * Checks if the scheme component of this URI is `file`.
+   */
+  def isFileScheme(uri: URI): Boolean =
+    uri.getScheme == "file"
+
   def getFileName(uri: URI): String =
     Paths.get(uri).toFile.getName
 

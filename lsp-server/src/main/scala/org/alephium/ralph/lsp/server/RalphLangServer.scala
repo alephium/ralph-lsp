@@ -24,7 +24,7 @@ import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.util.CollectionUtil
-import org.alephium.ralph.lsp.pc.util.URIUtil.uri
+import org.alephium.ralph.lsp.pc.util.URIUtil.{isFileScheme, uri}
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.pc.{PCState, PC}
@@ -228,52 +228,60 @@ class RalphLangServer private (
   override def didOpen(params: DidOpenTextDocumentParams): Unit =
     runSync {
       val fileURI = uri(params.getTextDocument.getUri)
-      val code    = Option(params.getTextDocument.getText)
+      if (isFileScheme(fileURI)) {
+        val code = Option(params.getTextDocument.getText)
 
-      logger.debug(s"didOpen. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
+        logger.debug(s"didOpen. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
-      didChangeAndPublish(
-        fileURI = fileURI,
-        code = code
-      )
+        didChangeAndPublish(
+          fileURI = fileURI,
+          code = code
+        )
+      }
     }
 
   override def didChange(params: DidChangeTextDocumentParams): Unit =
     runSync {
       val fileURI = uri(params.getTextDocument.getUri)
-      val code    = Option(params.getContentChanges.get(0).getText)
+      if (isFileScheme(fileURI)) {
+        val code = Option(params.getContentChanges.get(0).getText)
 
-      logger.debug(s"didChange. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
+        logger.debug(s"didChange. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
-      didChangeAndPublish(
-        fileURI = fileURI,
-        code = code
-      )
+        didChangeAndPublish(
+          fileURI = fileURI,
+          code = code
+        )
+      }
     }
 
   override def didClose(params: DidCloseTextDocumentParams): Unit =
     runSync {
       val fileURI = uri(params.getTextDocument.getUri)
 
-      logger.debug(s"didClose. fileURI: $fileURI")
+      if (isFileScheme(fileURI)) {
+        logger.debug(s"didClose. fileURI: $fileURI")
 
-      didChangeAndPublish(
-        fileURI = fileURI,
-        code = None
-      )
+        didChangeAndPublish(
+          fileURI = fileURI,
+          code = None
+        )
+      }
     }
 
   override def didSave(params: DidSaveTextDocumentParams): Unit =
     runSync {
       val fileURI = uri(params.getTextDocument.getUri)
-      val code    = Option(params.getText)
+      if (isFileScheme(fileURI)) {
+        val code = Option(params.getText)
 
-      logger.debug(s"didSave. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
+        logger.debug(s"didSave. fileURI: $fileURI. code.isDefined: ${code.isDefined}")
 
-      didChangeAndPublish(
-        fileURI = fileURI,
-        code = code
-      )
+        didChangeAndPublish(
+          fileURI = fileURI,
+          code = code
+        )
+      }
     }
 
   override def didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Unit =
@@ -298,14 +306,20 @@ class RalphLangServer private (
               WorkspaceFileEvent.Created(uri(event.getUri))
           }
 
-      if (events.nonEmpty) {
+      val fileURIEvents =
+        events filter {
+          event =>
+            isFileScheme(event.uri)
+        }
+
+      if (fileURIEvents.nonEmpty) {
         val currentPCState =
           getPCState()
 
         // Build OK! process delete or create
         val newPCState =
           PC.deleteOrCreate(
-            events = events,
+            events = fileURIEvents,
             pcState = currentPCState
           )
 
@@ -323,98 +337,106 @@ class RalphLangServer private (
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
     runAsync {
       cancelChecker =>
-        val fileURI   = uri(params.getTextDocument.getUri)
-        val line      = params.getPosition.getLine
-        val character = params.getPosition.getCharacter
+        val fileURI = uri(params.getTextDocument.getUri)
+        if (!isFileScheme(fileURI)) {
+          messages.Either.forLeft(util.Arrays.asList())
+        } else {
+          val line      = params.getPosition.getLine
+          val character = params.getPosition.getCharacter
 
-        cancelChecker.checkCanceled()
+          cancelChecker.checkCanceled()
 
-        getPCState().workspace match {
-          case sourceAware: WorkspaceState.IsSourceAware =>
-            val completionResult =
-              CodeProvider.search[Suggestion](
-                line = line,
-                character = character,
-                fileURI = fileURI,
-                workspace = sourceAware
-              )
+          getPCState().workspace match {
+            case sourceAware: WorkspaceState.IsSourceAware =>
+              val completionResult =
+                CodeProvider.search[Suggestion](
+                  line = line,
+                  character = character,
+                  fileURI = fileURI,
+                  workspace = sourceAware
+                )
 
-            val suggestions =
-              completionResult match {
-                case Some(Right(suggestions)) =>
-                  // completion successful
-                  suggestions
+              val suggestions =
+                completionResult match {
+                  case Some(Right(suggestions)) =>
+                    // completion successful
+                    suggestions
 
-                case Some(Left(error)) =>
-                  // Completion failed: Log the error message
-                  logger.info("Code completion unsuccessful: " + error.message)
-                  Iterator.empty[Suggestion]
+                  case Some(Left(error)) =>
+                    // Completion failed: Log the error message
+                    logger.info("Code completion unsuccessful: " + error.message)
+                    Iterator.empty[Suggestion]
 
-                case None =>
-                  // Not a ralph file or it does not belong to the workspace's contract-uri directory.
-                  Iterator.empty[Suggestion]
-              }
+                  case None =>
+                    // Not a ralph file or it does not belong to the workspace's contract-uri directory.
+                    Iterator.empty[Suggestion]
+                }
 
-            val completionList =
-              CompletionConverter.toCompletionList(suggestions)
+              val completionList =
+                CompletionConverter.toCompletionList(suggestions)
 
-            cancelChecker.checkCanceled()
+              cancelChecker.checkCanceled()
 
-            messages.Either.forRight(completionList)
+              messages.Either.forRight(completionList)
 
-          case _: WorkspaceState.Created =>
-            // Workspace must be compiled at least once to enable code completion.
-            // The server must've invoked the initial compilation in the boot-up initialize function.
-            logger.info("Code completion unsuccessful: Workspace is not compiled")
-            messages.Either.forLeft(util.Arrays.asList())
+            case _: WorkspaceState.Created =>
+              // Workspace must be compiled at least once to enable code completion.
+              // The server must've invoked the initial compilation in the boot-up initialize function.
+              logger.info("Code completion unsuccessful: Workspace is not compiled")
+              messages.Either.forLeft(util.Arrays.asList())
+          }
         }
     }
 
   override def definition(params: DefinitionParams): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =
     runAsync {
       cancelChecker =>
-        val fileURI   = uri(params.getTextDocument.getUri)
-        val line      = params.getPosition.getLine
-        val character = params.getPosition.getCharacter
+        val fileURI = uri(params.getTextDocument.getUri)
+        if (!isFileScheme(fileURI)) {
+          messages.Either.forLeft(util.Arrays.asList())
+        } else {
+          val line      = params.getPosition.getLine
+          val character = params.getPosition.getCharacter
 
-        cancelChecker.checkCanceled()
+          cancelChecker.checkCanceled()
 
-        getPCState().workspace match {
-          case sourceAware: WorkspaceState.IsSourceAware =>
-            // Can provide GoTo definition.
-            val goToResult =
-              CodeProvider.search[SourceLocation.GoTo](
-                line = line,
-                character = character,
-                fileURI = fileURI,
-                workspace = sourceAware
-              )
+          getPCState().workspace match {
+            case sourceAware: WorkspaceState.IsSourceAware =>
+              // Can provide GoTo definition.
+              val goToResult =
+                CodeProvider.search[SourceLocation.GoTo](
+                  line = line,
+                  character = character,
+                  fileURI = fileURI,
+                  workspace = sourceAware
+                )
 
-            val locations =
-              goToResult match {
-                case Some(Right(goToLocations)) =>
-                  // successful
-                  GoToConverter.toLocations(goToLocations)
+              val locations =
+                goToResult match {
+                  case Some(Right(goToLocations)) =>
+                    // successful
+                    GoToConverter.toLocations(goToLocations)
 
-                case Some(Left(error)) =>
-                  // Go-to definition failed: Log the error message
-                  logger.info("Go-to definition unsuccessful: " + error.message)
-                  Iterator.empty[Location]
+                  case Some(Left(error)) =>
+                    // Go-to definition failed: Log the error message
+                    logger.info("Go-to definition unsuccessful: " + error.message)
+                    Iterator.empty[Location]
 
-                case None =>
-                  // Not a ralph file or it does not belong to the workspace's contract-uri directory.
-                  Iterator.empty[Location]
-              }
+                  case None =>
+                    // Not a ralph file or it does not belong to the workspace's contract-uri directory.
+                    Iterator.empty[Location]
+                }
 
-            cancelChecker.checkCanceled()
+              cancelChecker.checkCanceled()
 
-            messages.Either.forLeft(CollectionUtil.toJavaList(locations))
+              messages.Either.forLeft(CollectionUtil.toJavaList(locations))
 
-          case _: WorkspaceState.Created =>
-            // Workspace must be compiled at least once to enable GoTo definition.
-            // The server must've invoked the initial compilation in the boot-up initialize function.
-            logger.info("Go-to definition unsuccessful: Workspace is not compiled")
-            messages.Either.forLeft(util.Arrays.asList())
+            case _: WorkspaceState.Created =>
+              // Workspace must be compiled at least once to enable GoTo definition.
+              // The server must've invoked the initial compilation in the boot-up initialize function.
+              logger.info("Go-to definition unsuccessful: Workspace is not compiled")
+              messages.Either.forLeft(util.Arrays.asList())
+          }
         }
     }
 
