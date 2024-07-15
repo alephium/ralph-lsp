@@ -147,5 +147,6 @@ private object BuiltInFunctionDownloader extends DependencyDownloader {
       .replaceAll("<Contract>", "TheContract")
       .replaceAll("Bool\\|I256\\|U256\\|Address", "From")
       .replaceAll("\\.\\.\\.any", "any: Sequence")
+      .replaceAll("fn len!\\(array\\)", "fn len!(array: Array)")
 
 }
