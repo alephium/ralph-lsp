@@ -99,7 +99,7 @@ private object DiskFileAccess extends FileAccess {
       // convert URI to Path
       val filePath = Paths.get(fileURI)
       // ensure directories exists
-      Files.exists(filePath.getParent)
+      Files.createDirectories(filePath.getParent)
       val createdFile = Files.writeString(filePath, string)
       Right(createdFile)
     } catch {
