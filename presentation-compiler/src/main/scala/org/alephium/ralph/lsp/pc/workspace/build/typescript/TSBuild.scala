@@ -18,7 +18,7 @@ package org.alephium.ralph.lsp.pc.workspace.build.typescript
 
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.SourceIndex
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, Build, BuildState}
 
 import java.net.URI
 import java.nio.file.{Path, Paths}
@@ -52,22 +52,29 @@ object TSBuild {
   /**
    * Builds the TypeScript `alephium.config.ts` file.
    *
+   * This function is invoked regardless of whether the current `ralph.json`
+   * file is currently errored or not, therefore, the state is [[BuildState.IsCompiled]].
+   *
    * @param code         Current code of the TypeScript `alephium.config.ts` file.
    * @param currentBuild Current build state.
-   *                     This function is invoked if the current `ralph.json`
-   *                     file is currently errored or not, therefore, the state is [[BuildState.IsCompiled]].
    * @param file         Provides file-IO API.
-   * @return The next build state.
+   * @return Values:
+   *          - [[Left]] if build errors occurred in the TypeScript `alephium.config.ts` file.
+   *          - [[None]] if no change occurred.
+   *          - [[RalphcConfig.RalphcParsedConfig]] the newly persisted config, which is the same
+   *            as the input config.
    */
   def build(
       code: Option[String],
       currentBuild: BuildState.IsCompiled
-    )(implicit file: FileAccess): Option[BuildState.Errored] =
+    )(implicit file: FileAccess): Either[BuildState.Errored, Option[RalphcConfig.RalphcParsedConfig]] =
     compile(
       code = code,
       currentBuild = currentBuild
     ) match {
       case Left(tsError) =>
+        // There were errors in `alephium.config.ts` file.
+        // Store these errors within the workspace build's error state.
         val newState =
           currentBuild match {
             case currentBuild: BuildState.Compiled =>
@@ -81,13 +88,15 @@ object TSBuild {
               )
 
             case errored: BuildState.Errored =>
+              // Current build state is already in error state,
+              // store `alephium.config.ts` errors within it.
               errored.copy(tsState = Some(tsError))
           }
 
-        Some(newState)
+        Left(newState)
 
-      case Right(_) =>
-        None
+      case Right(config) =>
+        Right(config)
     }
 
   /**
@@ -96,38 +105,41 @@ object TSBuild {
    * @param code         Current code of the TypeScript `alephium.config.ts` file.
    *                     If `None`, this will be read from disk.
    * @param currentBuild Current build state.
-   *                     This function is invoked if the current `ralph.json`
-   *                     file is currently errored or not, therefore, the state is [[BuildState.IsCompiled]].
    * @param file         Provides file-IO API.
-   * @return Either the errored state or the path to the compiled file.
+   * @return Values:
+   *          - [[Left]] if build errors occurred in the TypeScript `alephium.config.ts` file.
+   *          - [[None]] if no change occurred.
+   *          - [[RalphcConfig.RalphcParsedConfig]] the newly persisted config, which is the same
+   *            as the input config.
    */
   private def compile(
       code: Option[String],
       currentBuild: BuildState.IsCompiled
-    )(implicit file: FileAccess): Either[TSBuildState.Errored, Path] =
-    for {
-      // Read the TypeScript code from disk
-      code <-
-        read(
-          tsBuildURI = currentBuild.tsBuildURI,
-          code = code
-        )
+    )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[RalphcConfig.RalphcParsedConfig]] =
+    read(
+      tsBuildURI = currentBuild.tsBuildURI,
+      code = code
+    ) flatMap {
+      case Some(tsCode) =>
+        TSBuildTransformer
+          .toRalphcParsedConfig(
+            tsBuildCode = tsCode,
+            currentBuild = currentBuild
+          )
+          .flatMap {
+            newConfig =>
+              persist(
+                jsonBuildURI = currentBuild.buildURI,
+                jsonBuildCode = currentBuild.codeOption,
+                tsBuildURI = currentBuild.tsBuildURI,
+                tsBuildCode = code,
+                updatedConfig = newConfig
+              )
+          }
 
-      // transform TypeScript code to ralph.json object
-      config <-
-        TSBuildTransformer.toRalphcParsedConfig(
-          tsBuildCode = code,
-          currentBuild = currentBuild
-        )
-
-      // persist the ralph.json object
-      path <-
-        persist(
-          buildURI = currentBuild.buildURI,
-          tsBuildURI = currentBuild.tsBuildURI,
-          config = config
-        )
-    } yield path
+      case None =>
+        Right(None)
+    }
 
   /**
    * Reads the content of the TypeScript `alephium.config.ts` file.
@@ -135,19 +147,22 @@ object TSBuild {
    * @param tsBuildURI The URI of the TypeScript `alephium.config.ts` build file.
    * @param code       Optional code content. If `None`, the content will be read from disk.
    * @param file       Provides file-IO API.
-   * @return Either the errored state reporting any file-IO errors or the content of the file as a string.
+   * @return Values:
+   *          - [[Left]] if build or IO errors occurred in the TypeScript `alephium.config.ts` file.
+   *          - [[None]] if `alephium.config.ts` file does not exist.
+   *          - [[String]] content of the file.
    */
   private def read(
       tsBuildURI: URI,
       code: Option[String]
-    )(implicit file: FileAccess): Either[TSBuildState.Errored, String] =
+    )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[String]] =
     code match {
-      case Some(code) =>
-        Right(code)
+      case someCode @ Some(_) =>
+        Right(someCode)
 
       case None =>
         file
-          .read(tsBuildURI)
+          .readIfExists(tsBuildURI)
           .left
           .map {
             error =>
@@ -160,33 +175,64 @@ object TSBuild {
     }
 
   /**
-   * Persists the input configuration [[RalphcConfig.RalphcParsedConfig]] to a file specified by `buildURI`.
+   * Persists the input configuration [[RalphcConfig.RalphcParsedConfig]] to a file specified by `buildURI`
+   * only if the input configuration is different from the existing configuration.
    *
-   * @param buildURI   The URI of the build `ralph.json` file.
-   * @param tsBuildURI The URI of the TypeScript `alephium.config.ts` build file.
-   * @param config     The parsed configuration to persist.
-   * @param file       Provides file-IO API.
-   * @return Either the errored state in-case of IO error or the path to the persisted file path.
+   * @param jsonBuildURI  Current build's `ralph.json` file URI.
+   * @param jsonBuildCode Current build's `ralph.json` content.
+   * @param tsBuildURI    Current build's `alephium.config.ts` file URI.
+   * @param tsBuildCode   Current build's `alephium.config.ts` content.
+   * @param updatedConfig The newly transformed configuration to persist.
+   * @param file          Provides file-IO API.
+   * @return Values:
+   *          - [[Left]] if an error occurred in case of an IO error.
+   *          - [[None]] if no change occurred.
+   *          - [[RalphcConfig.RalphcParsedConfig]] the newly persisted config, which is the same
+   *            as the input config.
    */
-  private def persist(
-      buildURI: URI,
+  def persist(
+      jsonBuildURI: URI,
+      jsonBuildCode: Option[String],
       tsBuildURI: URI,
-      config: RalphcConfig.RalphcParsedConfig
-    )(implicit file: FileAccess): Either[TSBuildState.Errored, Path] =
-    file
-      .write(
-        fileURI = buildURI,
-        string = RalphcConfig.write(config, indent = 2),
-        index = SourceIndex.empty
-      )
-      .left
-      .map {
-        error =>
-          TSBuildState.Errored(
-            buildURI = tsBuildURI,
-            code = None,
-            errors = ArraySeq(error)
-          )
+      tsBuildCode: Option[String],
+      updatedConfig: RalphcConfig.RalphcParsedConfig
+    )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[RalphcConfig.RalphcParsedConfig]] = {
+    val configChanged =
+      Build.parse(
+        buildURI = jsonBuildURI,
+        json = jsonBuildCode
+      ) match {
+        case existing: BuildState.Parsed =>
+          updatedConfig != existing.config
+
+        case _: BuildState.Errored =>
+          // current config is in error state
+          // the new config from the transformer might fix it, so allow persisting it!
+          true
       }
+
+    if (configChanged)
+      file.write( // config did change! Persist the new config.
+        fileURI = jsonBuildURI,
+        string = RalphcConfig.write(updatedConfig, indent = 2),
+        index = SourceIndex.empty
+      ) match {
+        case Right(_) =>
+          Right(Some(updatedConfig))
+
+        case Left(error) =>
+          val tsState =
+            TSBuildState.Errored(
+              buildURI = tsBuildURI,
+              code = tsBuildCode,
+              errors = ArraySeq(error)
+            )
+
+          Left(tsState)
+      }
+    else
+      Right(None)
+
+  }
 
 }

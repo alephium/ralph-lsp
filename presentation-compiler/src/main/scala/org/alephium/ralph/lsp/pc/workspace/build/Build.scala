@@ -100,6 +100,21 @@ object Build {
         )
     }
 
+  def parse(
+      buildURI: URI,
+      json: Option[String]
+    )(implicit file: FileAccess): BuildState.IsParsed =
+    json match {
+      case Some(json) =>
+        parse(
+          buildURI = buildURI,
+          json = json
+        )
+
+      case None =>
+        parse(buildURI)
+    }
+
   /** Compile a parsed build */
   def compile(
       parsed: BuildState.IsParsed,
