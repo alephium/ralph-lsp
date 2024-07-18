@@ -156,7 +156,10 @@ object PC {
 
         // is the build deleted?
         val isBuildDeleted =
-          workspaceEvents contains WorkspaceFileEvent.Deleted(workspace.buildURI)
+          workspaceEvents.collectFirst {
+            case event @ WorkspaceFileEvent.Deleted(deletedURI) if URIUtil.contains(deletedURI, workspace.buildURI) =>
+              event
+          }.isDefined
 
         val buildCode =
           if (isBuildDeleted) // if build is deleted, compile from disk

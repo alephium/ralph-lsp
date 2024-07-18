@@ -65,12 +65,19 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
         forAll(buildGenerator) {
           build =>
-            // delete the build file
-            TestBuild delete build
-            TestFile.exists(build.buildURI) shouldBe false
-            // also create a deleted event
+            // delete the build and also create a deleted event
             val event =
-              WorkspaceFileEvent.Deleted(build.buildURI)
+              if (Random.nextBoolean()) {
+                // delete the `build.json` file
+                val buildURI = TestBuild deleteFile build
+                TestFile.exists(buildURI) shouldBe false
+                WorkspaceFileEvent.Deleted(buildURI)
+              } else {
+                // delete the `.ralph-lsp` directory containing the `build.json` file
+                val dirURI = TestBuild deleteDirectory build
+                TestFile.exists(dirURI) shouldBe false
+                WorkspaceFileEvent.Deleted(dirURI)
+              }
 
             val workspace =
               WorkspaceState.Created(build.workspaceURI)
@@ -146,12 +153,19 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
         forAll(buildGenerator) {
           case (build, sourceCodeIn, sourceCodeOut) =>
-            // delete the build file
-            TestBuild delete build
-            TestFile.exists(build.buildURI) shouldBe false
-            // also create a deleted event
+            // delete the build and also create a deleted event
             val event =
-              WorkspaceFileEvent.Deleted(build.buildURI)
+              if (Random.nextBoolean()) {
+                // delete the `build.json` file
+                val buildURI = TestBuild deleteFile build
+                TestFile.exists(buildURI) shouldBe false
+                WorkspaceFileEvent.Deleted(buildURI)
+              } else {
+                // delete the `.ralph-lsp` directory containing the `build.json` file
+                val dirURI = TestBuild deleteDirectory build
+                TestFile.exists(dirURI) shouldBe false
+                WorkspaceFileEvent.Deleted(dirURI)
+              }
 
             val workspace =
               WorkspaceState.UnCompiled(

@@ -97,7 +97,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
             ErrorDependencyPathIsWithinContractPath(SourceIndex(build.code.lastIndexOf(config.contractPath), config.contractPath.length, Some(build.buildURI)))
           )
 
-        TestBuild delete build
+        TestBuild deleteDirectory build
       }
 
       "they are identical" in {
@@ -160,7 +160,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
         // expect no errors
         actual shouldBe empty
 
-        TestBuild delete build
+        TestBuild deleteDirectory build
       }
 
       "they are distinct" in {
