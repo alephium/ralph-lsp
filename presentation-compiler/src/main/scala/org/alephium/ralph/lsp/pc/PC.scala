@@ -213,16 +213,16 @@ object PC {
         val newWorkspace =
           buildError.activateWorkspace getOrElse pcState.workspace
 
-        pcState.copy(
-          buildErrors = Some(buildError),
-          workspace = newWorkspace
+        PCState(
+          workspace = newWorkspace,
+          buildErrors = Some(buildError)
         )
 
       case Right(newWorkspace) =>
         // build errors got resolved, clear it from state.
-        pcState.copy(
-          buildErrors = None,
-          workspace = newWorkspace
+        PCState(
+          workspace = newWorkspace,
+          buildErrors = None
         )
     }
 
