@@ -30,14 +30,14 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.collection.immutable.ArraySeq
 
 /**
- * Test cases for [[Workspace.build(Option[WorkspaceFile], WorkspaceState)]] function.
+ * Test cases for [[Workspace.buildClean]] function.
  */
-class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class WorkspaceBuildCleanSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   implicit val clientLogger: ClientLogger =
     TestClientLogger
 
-  "Build function 2: Building from a WorkspaceFile" should {
+  "Building from a WorkspaceFile" should {
     "not access disk" when {
       "build code is provided" in {
         implicit val file: FileAccess =
@@ -68,7 +68,7 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
         def doTest(workspaceFile: WorkspaceFile) = {
           // execute build
           val actualWorkspace =
-            Workspace.build(
+            Workspace.buildClean(
               code = Some(workspaceFile),
               workspace = workspace
             )
@@ -102,31 +102,6 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
         }
 
         TestWorkspace delete workspace
-      }
-
-      "workspace state is already source-ware" in {
-        // No IO should occur
-        implicit val file: FileAccess =
-          null
-
-        implicit val compiler: CompilerAccess =
-          null
-
-        // a source-aware workspace
-        val sourceAware: WorkspaceState.IsSourceAware =
-          WorkspaceState.Compiled(
-            sourceCode = ArraySeq.empty,
-            parsed = null
-          )
-
-        val actualWorkspace =
-          Workspace.build(
-            code = None,
-            workspace = sourceAware
-          )
-
-        // returns the same workspace without processing it.
-        actualWorkspace.value shouldBe sourceAware
       }
     }
 
@@ -173,7 +148,7 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
           workspaceFile =>
             // execute build.
             val actualWorkspace =
-              Workspace.build(
+              Workspace.buildClean(
                 code = workspaceFile,
                 workspace = workspace
               )
