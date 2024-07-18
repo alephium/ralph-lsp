@@ -18,7 +18,7 @@ package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
@@ -35,7 +35,7 @@ import scala.collection.immutable.ArraySeq
  *  - When a file is changed, use [[PC.changed]]
  *  - When a file is deleted or created, use [[PC.deleteOrCreate]]
  */
-object PC {
+object PC extends StrictImplicitLogging {
 
   /**
    * Initialises a new presentation compiler state.
@@ -125,13 +125,41 @@ object PC {
     }
 
   /**
-   * Deletes or creates a file within the workspace, which may or may not be source-aware ([[WorkspaceState.IsSourceAware]]).
+   * Deletes or creates a file within the workspace.
    *
    * @param events  Events to process.
    * @param pcState Current presentation compiler state.
    * @return The updated presentation compiler state containing the compilation result.
    */
   def deleteOrCreate(
+      events: ArraySeq[WorkspaceFileEvent],
+      pcState: PCState
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): PCState = {
+    val nextPCState =
+      deleteOrCreateJSONBuild(
+        events = events,
+        pcState = pcState
+      )
+
+    deleteOrCreateTSBuild(
+      events = events,
+      pcState = nextPCState
+    ) getOrElse nextPCState
+  }
+
+  /**
+   * Manages the deletion or creation of all files managed by the `ralph.json` build file.
+   * These files include all `.ral` source files.
+   *
+   * For processing the `alephium.config.ts` build file, see [[deleteOrCreateTSBuild]].
+   *
+   * @param events  Events to process.
+   * @param pcState Current presentation compiler state.
+   * @return The updated presentation compiler state containing the compilation result.
+   */
+  private def deleteOrCreateJSONBuild(
       events: ArraySeq[WorkspaceFileEvent],
       pcState: PCState
     )(implicit file: FileAccess,
@@ -195,6 +223,45 @@ object PC {
           pcState = pcState
         )
     }
+
+  /**
+   * Manages the deletion or creation of the `alephium.config.ts` file.
+   * This build file does not manage `.ral` source files.
+   * It only mutates the `ralph.json` build file.
+   *
+   * For processing `ralph.json` and its dependent `.ral` source files, see [[deleteOrCreateJSONBuild]].
+   *
+   * Currently, this only runs if an `alephium.config.ts` file was created.
+   * Deleting the `alephium.config.ts` file does not change the current state of the workspace,
+   * therefore, events indicating the deletion of the `alephium.config.ts` file are ignored.
+   *
+   * @param events  Events to process.
+   * @param pcState Current presentation compiler state.
+   * @return The updated presentation compiler state containing the compilation result.
+   */
+  private def deleteOrCreateTSBuild(
+      events: ArraySeq[WorkspaceFileEvent],
+      pcState: PCState
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): Option[PCState] =
+    if (events contains WorkspaceFileEvent.Created(pcState.workspace.tsBuildURI))
+      // `alephium.config.ts` file was created. Execute changed so a build occurs.
+      changed(
+        fileURI = pcState.workspace.tsBuildURI,
+        code = None,
+        pcState = pcState
+      ) match {
+        case Left(error: ErrorUnknownFileType) =>
+          // Should not never occur since `tsBuildURI` is a known file type.
+          logger.error(error.message)
+          None
+
+        case Right(nextPCState) =>
+          nextPCState
+      }
+    else
+      None
 
   /**
    * Applies a build change to the [[PCState]].
