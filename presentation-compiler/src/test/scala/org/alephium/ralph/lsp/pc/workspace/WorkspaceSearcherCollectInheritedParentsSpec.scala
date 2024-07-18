@@ -161,7 +161,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
     // it should contain all expected source-trees.
     actual should contain theSameElementsAs expected
 
-    TestBuild delete build
+    TestBuild deleteDirectory build
   }
 
 }

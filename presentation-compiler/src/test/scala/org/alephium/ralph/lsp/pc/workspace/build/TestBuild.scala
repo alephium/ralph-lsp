@@ -174,7 +174,19 @@ object TestBuild {
       (build, contractOnDisk, extensionOnDisk, extension, extensionName)
     }
 
-  def delete(build: BuildState): Unit =
-    TestFile delete build.buildURI
+  /** Deletes the build file located at `.ralph-lsp/ralph.json`. */
+  def deleteFile(build: BuildState): URI = {
+    val fileURI = build.buildURI
+    TestFile delete fileURI
+    fileURI
+  }
+
+  /** Deletes the directory `.ralph-lsp` along with the build file `ralph.json`. */
+  def deleteDirectory(build: BuildState): URI = {
+    deleteFile(build)
+    val directory = Build.toBuildDir(build.workspaceURI)
+    TestFile delete directory
+    directory
+  }
 
 }
