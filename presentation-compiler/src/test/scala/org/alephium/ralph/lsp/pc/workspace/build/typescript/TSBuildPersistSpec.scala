@@ -49,7 +49,7 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
           .persist(
             jsonBuildURI = jsonBuildURI,
             tsBuildURI = tsBuildURI,
-            tsBuildCode = None,
+            tsBuildCode = "TypeScript Code",
             jsonBuildCode = Some(currentJSONBuildCode),
             updatedConfig = newConfig
           )
@@ -77,7 +77,7 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
           .persist(
             jsonBuildURI = jsonBuildURI,
             tsBuildURI = tsBuildURI,
-            tsBuildCode = None,
+            tsBuildCode = "TypeScript Code",
             jsonBuildCode = None, // None so that JSON is fetched from disk.
             updatedConfig = newConfig
           )
@@ -102,7 +102,7 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
             .persist(
               jsonBuildURI = jsonBuildURI,
               tsBuildURI = tsBuildURI,
-              tsBuildCode = None,
+              tsBuildCode = "TypeScript Code",
               jsonBuildCode = errorJSONOption, // Optional so it's either read from memory or disk.
               updatedConfig = newConfig
             )
@@ -119,7 +119,7 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
     "existing `ralph.json` does not exist" in {
       implicit val file: FileAccess = FileAccess.disk
       val newConfig                 = RalphcConfig.defaultParsedConfig
-      val tsBuildCode               = Some("tsCode")
+      val tsBuildCode               = "TypeScript Code"
 
       forAll(TestFile.genFileURI(), TestFile.genFileURI()) {
         case (jsonBuildURI, tsBuildURI) =>
@@ -149,7 +149,7 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
       val tsBuildURI           = TestFile.genFileURI().sample.get
       val currentJSONConfig    = RalphcConfig.defaultParsedConfig
       val currentJSONBuildCode = RalphcConfig.write(currentJSONConfig, indent = Random.nextInt(10))
-      val tsBuildCode          = Some("tsCode")
+      val tsBuildCode          = "TypeScript Code"
 
       implicit val file: FileAccess =
         mock[FileAccess]
@@ -172,8 +172,8 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
 
       val expected =
         TSBuildState.Errored(
-          buildURI = tsBuildURI, // error is reported on tsBuildURI
-          code = tsBuildCode,    // TS source-code is stored
+          buildURI = tsBuildURI,    // error is reported on tsBuildURI
+          code = Some(tsBuildCode), // TS source-code is stored
           errors = ArraySeq(error)
         )
 

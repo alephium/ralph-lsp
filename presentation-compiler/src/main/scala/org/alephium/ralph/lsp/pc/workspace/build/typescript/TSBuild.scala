@@ -132,7 +132,7 @@ object TSBuild {
                 jsonBuildURI = currentBuild.buildURI,
                 jsonBuildCode = currentBuild.codeOption,
                 tsBuildURI = currentBuild.tsBuildURI,
-                tsBuildCode = code,
+                tsBuildCode = tsCode,
                 updatedConfig = newConfig
               )
           }
@@ -194,7 +194,7 @@ object TSBuild {
       jsonBuildURI: URI,
       jsonBuildCode: Option[String],
       tsBuildURI: URI,
-      tsBuildCode: Option[String],
+      tsBuildCode: String,
       updatedConfig: RalphcConfig.RalphcParsedConfig
     )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[RalphcConfig.RalphcParsedConfig]] = {
     val configChanged =
@@ -224,7 +224,7 @@ object TSBuild {
           val tsState =
             TSBuildState.Errored(
               buildURI = tsBuildURI,
-              code = tsBuildCode,
+              code = Some(tsBuildCode),
               errors = ArraySeq(error)
             )
 
