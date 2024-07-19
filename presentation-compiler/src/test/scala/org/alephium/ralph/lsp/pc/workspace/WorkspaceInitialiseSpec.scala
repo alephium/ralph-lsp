@@ -114,9 +114,9 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
               buildURI = initialBuild.buildURI,
               codeOption = Some(initialBuild.code),
               errors = ArraySeq(errorIO),               // the error is reported
-              tsState = None,                           // dependency is carried forward
-              dependencies = initialBuild.dependencies, // continue with existing workspace
-              activateWorkspace = None
+              tsState = None,                           // No `alephium.config.ts` errors
+              dependencies = initialBuild.dependencies, // dependency is carried forward
+              activateWorkspace = None                  // continue with existing workspace
             )
 
           actualError.left.value shouldBe expectedError

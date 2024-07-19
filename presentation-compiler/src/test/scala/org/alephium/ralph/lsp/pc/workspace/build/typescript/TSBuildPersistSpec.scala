@@ -66,7 +66,7 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
         val newConfig            = currentJSONConfig
 
         implicit val file: FileAccess = mock[FileAccess]
-        // Only read is invoked. write should be invoked, indicating that JSON is not persisted.
+        // Only read is invoked. write should not be invoked, indicating that JSON is not persisted.
         // This is important to check to ensure re-build does not occur unnecessarily.
         (file.read _)
           .expects(jsonBuildURI)
@@ -167,6 +167,7 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
             jsonBuildCode = Some(currentJSONBuildCode),
             tsBuildURI = tsBuildURI,
             tsBuildCode = tsBuildCode,
+            // updated the config to differ from existing JSON, so persistence occurs.
             updatedConfig = RalphcConfig.defaultParsedConfig.copy(contractPath = "updated_contract_path")
           )
 

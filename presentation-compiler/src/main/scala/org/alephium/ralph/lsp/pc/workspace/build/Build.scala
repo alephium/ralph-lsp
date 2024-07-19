@@ -100,6 +100,15 @@ object Build {
         )
     }
 
+  /**
+   * Parses the input build JSON if defined, else parses the build from disk
+   * using the provided build URI.
+   *
+   * @param buildURI Location of the build file. Used for reading JSON from disk and reporting errors.
+   * @param json     Optional build JSON.
+   * @param file     File IO API.
+   * @return Parse result.
+   */
   def parse(
       buildURI: URI,
       json: Option[String]

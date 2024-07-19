@@ -414,9 +414,13 @@ private[pc] object Workspace extends StrictImplicitLogging {
         currentBuild = workspace.build
       ) match {
         case Left(error) =>
+          // TypeScript build reported error.
           Some(Left(error))
 
         case Right(None | Some(_: RalphcConfig.RalphcParsedConfig)) =>
+          // TypeScript build successful, which means `ralph.json` was persisted.
+          // Return the existing workspace because changes to `alephium.config.ts` do not alter the current workspace state,
+          // instead, they modify the persisted `ralph.json`, which will trigger a rebuild in another call.
           Some(Right(workspace))
       }
     else if (workspace.buildURI.resolve(buildURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
