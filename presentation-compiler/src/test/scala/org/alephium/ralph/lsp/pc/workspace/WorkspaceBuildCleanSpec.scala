@@ -16,30 +16,30 @@
 
 package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.lsp.TestFile
+import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
+import org.scalacheck.Gen
 import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.ArraySeq
 
 /**
  * Test cases for [[Workspace.buildClean]] function.
  */
-class WorkspaceBuildCleanSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class WorkspaceBuildCleanSpec extends AnyWordSpec with Matchers {
 
   implicit val clientLogger: ClientLogger =
     TestClientLogger
 
-  "Building from a WorkspaceFile" should {
+  "clean build on ralph.json" should {
     "not access disk" when {
-      "build code is provided" in {
+      "JSON code is provided" in {
         implicit val file: FileAccess =
           FileAccess.disk
 
@@ -48,18 +48,9 @@ class WorkspaceBuildCleanSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
         val build =
           TestBuild
-            .genParsed()
-            .map(TestBuild.persist)
+            .genCompiledOK()
             .sample
             .get
-
-        val compiledBuild =
-          Build
-            .compile(
-              parsed = build,
-              currentBuild = None
-            )
-            .asInstanceOf[BuildState.Compiled]
 
         val workspace =
           WorkspaceState.Created(build.workspaceURI)
@@ -75,7 +66,7 @@ class WorkspaceBuildCleanSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
           val expectedWorkspace =
             WorkspaceState.UnCompiled(
-              build = compiledBuild,
+              build = build,
               sourceCode = ArraySeq.empty // workspace is empty with no source code
             )
 
@@ -106,7 +97,7 @@ class WorkspaceBuildCleanSpec extends AnyWordSpec with Matchers with ScalaCheckD
     }
 
     "access disk" when {
-      "build code is not provided" in {
+      "JSON code is not provided" in {
         implicit val file: FileAccess =
           FileAccess.disk
 
@@ -115,18 +106,9 @@ class WorkspaceBuildCleanSpec extends AnyWordSpec with Matchers with ScalaCheckD
 
         val build =
           TestBuild
-            .genParsed()
-            .map(TestBuild.persist)
+            .genCompiledOK()
             .sample
             .get
-
-        val compiledBuild =
-          Build
-            .compile(
-              parsed = build,
-              currentBuild = None
-            )
-            .asInstanceOf[BuildState.Compiled]
 
         val workspace =
           WorkspaceState.Created(build.workspaceURI)
@@ -137,8 +119,8 @@ class WorkspaceBuildCleanSpec extends AnyWordSpec with Matchers with ScalaCheckD
           Array(
             Some(
               WorkspaceFile(
-                fileURI = TestFile.genFileURI().sample.get,
-                text = None // build's code is None, so it will be fetch from disk.
+                fileURI = TestFile.genFileURI().sample.get,           // not a ralph.json URI
+                text = Gen.option(TestCode.genGoodOrBad()).sample.get // with or without code
               )
             ),
             None
@@ -156,7 +138,7 @@ class WorkspaceBuildCleanSpec extends AnyWordSpec with Matchers with ScalaCheckD
             // workspace is successfully initialised.
             val expectedWorkspace =
               WorkspaceState.UnCompiled(
-                build = compiledBuild,
+                build = build,
                 sourceCode = ArraySeq.empty // workspace is empty with no source code
               )
 
