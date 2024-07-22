@@ -21,7 +21,7 @@ import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.{RalphcCompiledConfig, RalphcParsedConfig}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
-import org.alephium.ralph.lsp.pc.workspace.build.typescript.{TSBuild, TSBuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
 
 import java.net.URI
 import java.nio.file.Path
@@ -114,7 +114,6 @@ object BuildState {
       buildURI: URI,
       codeOption: Option[String],
       errors: ArraySeq[CompilerMessage.AnyError],
-      tsState: Option[TSBuildState.Errored],
       dependencies: ArraySeq[WorkspaceState.IsParsedAndCompiled],
       activateWorkspace: Option[WorkspaceState.IsSourceAware])
     extends BuildState.IsParsed

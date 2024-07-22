@@ -83,7 +83,6 @@ class WorkspaceBuildSynchronisedSpec extends AnyWordSpec with Matchers with Scal
                   message = """expected json value got "b""""
                 )
               ),
-            tsState = None,
             dependencies = buildCompiled.dependencies, // dependency is carried forward
             activateWorkspace =                        // new workspace is activated with input source-code
               Some(

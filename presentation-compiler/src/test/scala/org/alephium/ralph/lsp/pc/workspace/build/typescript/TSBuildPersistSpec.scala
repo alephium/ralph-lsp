@@ -66,8 +66,8 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
         val newConfig            = currentJSONConfig
 
         implicit val file: FileAccess = mock[FileAccess]
-        // Only read is invoked. write should not be invoked, indicating that JSON is not persisted.
-        // This is important to check to ensure re-build does not occur unnecessarily.
+        // Only read is invoked, write should not be invoked, indicating that JSON is not persisted.
+        // This check is important to ensure that re-build/re-compile does not occur unnecessarily when `ralph.json` remains unchanged.
         (file.read _)
           .expects(jsonBuildURI)
           .returns(Right(currentJSONBuildCode))

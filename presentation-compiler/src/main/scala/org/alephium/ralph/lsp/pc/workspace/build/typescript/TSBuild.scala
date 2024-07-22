@@ -67,55 +67,8 @@ object TSBuild {
   def build(
       code: Option[String],
       currentBuild: BuildState.IsCompiled
-    )(implicit file: FileAccess): Either[BuildState.Errored, Option[RalphcConfig.RalphcParsedConfig]] =
-    compile(
-      code = code,
-      currentBuild = currentBuild
-    ) match {
-      case Left(tsError) =>
-        // There were errors in `alephium.config.ts` file.
-        // Store these errors within the workspace build's error state.
-        val newState =
-          currentBuild match {
-            case currentBuild: BuildState.Compiled =>
-              BuildState.Errored(
-                buildURI = currentBuild.buildURI,
-                codeOption = currentBuild.codeOption,
-                errors = ArraySeq.empty,
-                tsState = Some(tsError),
-                dependencies = currentBuild.dependencies,
-                activateWorkspace = None
-              )
-
-            case errored: BuildState.Errored =>
-              // Current build state is already in error state,
-              // store `alephium.config.ts` errors within it.
-              errored.copy(tsState = Some(tsError))
-          }
-
-        Left(newState)
-
-      case Right(config) =>
-        Right(config)
-    }
-
-  /**
-   * Compiles the TypeScript `alephium.config.ts` file.
-   *
-   * @param code         Current code of the TypeScript `alephium.config.ts` file.
-   *                     If `None`, this will be read from disk.
-   * @param currentBuild Current build state.
-   * @param file         Provides file-IO API.
-   * @return Values:
-   *          - [[Left]] if build errors occurred in the TypeScript `alephium.config.ts` file.
-   *          - [[None]] if no change occurred.
-   *          - [[RalphcConfig.RalphcParsedConfig]] the newly persisted config, which is the same
-   *            as the input config.
-   */
-  private def compile(
-      code: Option[String],
-      currentBuild: BuildState.IsCompiled
     )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[RalphcConfig.RalphcParsedConfig]] =
+    // Steps: read -> transform -> persist
     read(
       tsBuildURI = currentBuild.tsBuildURI,
       code = code

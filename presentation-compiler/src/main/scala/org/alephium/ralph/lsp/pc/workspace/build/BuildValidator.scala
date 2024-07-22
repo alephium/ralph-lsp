@@ -100,7 +100,6 @@ object BuildValidator {
           buildURI = parsed.buildURI,
           codeOption = Some(parsed.code),
           errors = ArraySeq.from(errors),
-          tsState = None,
           dependencies = ArraySeq.empty,
           activateWorkspace = None
         )
@@ -165,7 +164,6 @@ object BuildValidator {
               buildURI = parsed.buildURI,
               codeOption = Some(parsed.code),
               errors = ArraySeq.from(errors),
-              tsState = None,
               dependencies = ArraySeq.empty,
               activateWorkspace = None
             )
@@ -180,7 +178,6 @@ object BuildValidator {
             buildURI = parsed.buildURI,
             codeOption = Some(parsed.code),
             errors = ArraySeq(error),
-            tsState = None,
             dependencies = ArraySeq.empty,
             activateWorkspace = None
           )

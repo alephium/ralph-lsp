@@ -67,7 +67,6 @@ object Build {
           buildURI = buildURI,
           codeOption = Some(json),
           errors = ArraySeq(error),
-          tsState = None,
           dependencies = ArraySeq.empty,
           activateWorkspace = None
         )
@@ -88,7 +87,6 @@ object Build {
           buildURI = buildURI,
           codeOption = None,
           errors = ArraySeq(error),
-          tsState = None,
           dependencies = ArraySeq.empty,
           activateWorkspace = None
         )
@@ -175,7 +173,6 @@ object Build {
           buildURI = buildURI,
           codeOption = None,
           errors = ArraySeq(error),
-          tsState = None,
           dependencies = currentBuild.to(ArraySeq).flatMap(_.dependencies),
           activateWorkspace = None
         )
@@ -267,7 +264,6 @@ object Build {
             buildURI = buildURI,
             codeOption = code,
             errors = ArraySeq(error),
-            tsState = None,
             dependencies = currentBuild.dependencies,
             activateWorkspace = None
           )
@@ -387,7 +383,6 @@ object Build {
             buildURI = buildURI,
             codeOption = None,
             errors = ArraySeq(error),
-            tsState = None,
             dependencies = currentBuild.to(ArraySeq).flatMap(_.dependencies),
             activateWorkspace = None
           )

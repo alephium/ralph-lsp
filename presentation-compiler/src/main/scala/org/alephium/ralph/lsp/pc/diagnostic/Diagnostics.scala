@@ -41,28 +41,35 @@ object Diagnostics {
   def toFileDiagnostics(
       currentState: PCState,
       newState: PCState): Iterable[FileDiagnostic] = {
-    // fetch diagnostics to publish for the build file
-    val buildDiagnostics =
-      toFileDiagnosticsForBuild(
+    // fetch diagnostics to publish for `ralph.json` build file
+    val jsonBuildDiagnostics =
+      toFileDiagnosticsForJSONBuild(
         currentBuildErrors = currentState.buildErrors,
         newBuildErrors = newState.buildErrors
       )
 
-    // fetch diagnostics to publish for the source-code
+    // fetch diagnostics to publish for `alephium.config.ts` build file
+    val tsBuildDiagnostics =
+      toFileDiagnosticsForTSBuild(
+        currentBuildErrors = currentState.tsErrors,
+        newBuildErrors = newState.tsErrors
+      )
+
+    // fetch diagnostics to publish for the `*.ral` source-code files
     val workspaceDiagnostics =
       toFileDiagnosticsForWorkspace(
         currentWorkspace = Some(currentState.workspace),
         newWorkspace = Some(newState.workspace)
       )
 
-    buildDiagnostics ++ workspaceDiagnostics
+    jsonBuildDiagnostics ++ tsBuildDiagnostics ++ workspaceDiagnostics
   }
 
   /**
    * Given the current build-errors and the next, return diagnostics to publish
    * for the current compilation request.
    */
-  def toFileDiagnosticsForBuild(
+  def toFileDiagnosticsForJSONBuild(
       currentBuildErrors: Option[BuildState.Errored],
       newBuildErrors: Option[BuildState.Errored]): Iterable[FileDiagnostic] =
     (currentBuildErrors, newBuildErrors) match {
@@ -74,19 +81,12 @@ object Diagnostics {
             severity = CodeDiagnosticSeverity.Error
           )
 
-        // clear old TS build errors
-        val tsBuildDiagnostics =
-          clearFileDiagnotics(
-            fileURI = build.tsBuildURI,
-            severity = CodeDiagnosticSeverity.Error
-          )
-
         // build diagnostics for the dependency
         val dependencyDiagnostics =
           build.dependencies.to(Array) flatMap toFileDiagnostics
 
         // collect all diagnostics
-        dependencyDiagnostics :+ buildDiagnostics :+ tsBuildDiagnostics
+        dependencyDiagnostics :+ buildDiagnostics
 
       case (None, Some(build)) =>
         // New build has errors, create diagnostics.
@@ -97,7 +97,7 @@ object Diagnostics {
         val dependencyDiagnostics =
           build.dependencies.to(Array) flatMap toFileDiagnostics
 
-        dependencyDiagnostics ++ buildDiagnostics
+        dependencyDiagnostics :+ buildDiagnostics
 
       case (Some(oldBuild), Some(newBuild)) =>
         // New build has errors, build diagnostics given previous build result.
@@ -116,7 +116,7 @@ object Diagnostics {
                 )
             }
 
-        dependencyDiagnostics ++ buildDiagnostics
+        dependencyDiagnostics :+ buildDiagnostics
 
       case (None, None) =>
         // No state change occurred. Nothing to diagnose.
@@ -129,31 +129,40 @@ object Diagnostics {
    * @param build The errored build.
    * @return The build file's diagnostics.
    */
-  def toFileDiagnostics(build: BuildState.Errored): Array[FileDiagnostic] = {
+  def toFileDiagnostics(build: BuildState.Errored): FileDiagnostic =
     // `ralph.json` diagnotics
-    val buildDiagnostics =
-      toFileDiagnostics(
-        fileURI = build.buildURI,
-        code = build.codeOption,
-        errors = build.errors.to(List),
-        severity = CodeDiagnosticSeverity.Error
-      )
+    toFileDiagnostics(
+      fileURI = build.buildURI,
+      code = build.codeOption,
+      errors = build.errors.to(List),
+      severity = CodeDiagnosticSeverity.Error
+    )
 
-    // `alephium.config.ts` diagnotics
-    val tsBuildDiagnotics =
-      build.tsState match {
-        case Some(tsErrors) =>
-          toFileDiagnostics(tsErrors)
-
-        case None =>
+  /**
+   * Builds diagnostics for the TypeScript `alephium.config.ts` build's error state.
+   */
+  def toFileDiagnosticsForTSBuild(
+      currentBuildErrors: Option[TSBuildState.Errored],
+      newBuildErrors: Option[TSBuildState.Errored]): Option[FileDiagnostic] =
+    (currentBuildErrors, newBuildErrors) match {
+      case (Some(build), None) =>
+        // build errors were fixed. Clear old errors
+        val cleared =
           clearFileDiagnotics(
-            fileURI = build.tsBuildURI,
+            fileURI = build.buildURI,
             severity = CodeDiagnosticSeverity.Error
           )
-      }
 
-    Array(buildDiagnostics, tsBuildDiagnotics)
-  }
+        Some(cleared)
+
+      case (None | Some(_), Some(build)) =>
+        // New build has errors, create diagnostics for the new build.
+        Some(toFileDiagnostics(build))
+
+      case (None, None) =>
+        // No state change occurred. Nothing to diagnose.
+        None
+    }
 
   /**
    * Builds file diagnostics for `alephium.config.ts`.

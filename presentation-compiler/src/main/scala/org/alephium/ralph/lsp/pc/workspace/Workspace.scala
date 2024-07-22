@@ -24,7 +24,7 @@ import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, Build, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, BuildError, Build, BuildState}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -61,7 +61,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
       workspace: WorkspaceState
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Either[BuildState.Errored, WorkspaceState.IsSourceAware] =
+      logger: ClientLogger): Either[BuildError, WorkspaceState.IsSourceAware] =
     workspace match {
       case workspace: WorkspaceState.IsSourceAware =>
         // Workspace is already built and is source-aware. Return it!
@@ -87,7 +87,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
       workspace: WorkspaceState.Created
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Either[BuildState.Errored, WorkspaceState.UnCompiled] =
+      logger: ClientLogger): Either[BuildError, WorkspaceState.UnCompiled] =
     code match {
       case Some(code) if code.fileURI == workspace.tsBuildURI =>
         // Request is for the `alephium.config.ts` build file.
@@ -113,11 +113,13 @@ private[pc] object Workspace extends StrictImplicitLogging {
         ) match {
           case Left(error) =>
             // TSBuild errored. This error state contains all errors.
-            Left(error)
+            Left(BuildError(error))
 
           case Right(_) =>
             // TSBuild successful. Return the newly built state.
             newWorkspace
+              .left
+              .map(BuildError(_))
         }
 
       case Some(code) if code.fileURI == workspace.buildURI =>
@@ -130,6 +132,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
           )
 
         initialise(build)
+          .left
+          .map(BuildError(_))
 
       case Some(_) | None =>
         // this code file is not a build file, so build from disk.
@@ -141,6 +145,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
           )
 
         initialise(build)
+          .left
+          .map(BuildError(_))
     }
 
   /**
@@ -192,7 +198,6 @@ private[pc] object Workspace extends StrictImplicitLogging {
                 buildURI = newBuild.buildURI,
                 codeOption = Some(newBuild.code),
                 errors = ArraySeq(error),
-                tsState = None,
                 dependencies = currentBuild.dependencies,
                 activateWorkspace = Some(activateWorkspace)
               )
@@ -251,7 +256,6 @@ private[pc] object Workspace extends StrictImplicitLogging {
             buildURI = state.buildURI,
             codeOption = Some(state.code),
             errors = ArraySeq(error),
-            tsState = None,
             dependencies = state.dependencies,
             activateWorkspace = None
           )
@@ -407,7 +411,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
       workspace: WorkspaceState.IsSourceAware
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Option[Either[BuildState.Errored, WorkspaceState.IsSourceAware]] =
+      logger: ClientLogger): Option[Either[BuildError, WorkspaceState.IsSourceAware]] =
     if (workspace.workspaceURI.resolve(buildURI) == workspace.tsBuildURI) // Request is for the `alephium.config.ts` build file.
       TSBuild.build(
         code = code,
@@ -415,7 +419,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
       ) match {
         case Left(error) =>
           // TypeScript build reported error.
-          Some(Left(error))
+          Some(Left(BuildError(error)))
 
         case Right(None | Some(_: RalphcConfig.RalphcParsedConfig)) =>
           // TypeScript build successful, which means `ralph.json` was persisted.
@@ -447,13 +451,16 @@ private[pc] object Workspace extends StrictImplicitLogging {
               } else {
                 // directory changed, re-initialise the workspace and compile.
                 val result =
-                  initialise(build) map parseAndCompile
+                  initialise(build)
+                    .map(parseAndCompile)
+                    .left
+                    .map(BuildError(_))
 
                 Some(result)
               }
 
             case errored: BuildState.Errored =>
-              Some(Left(errored))
+              Some(Left(BuildError(errored)))
           }
 
         case None => // no build change occurred
@@ -486,7 +493,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
       workspace: WorkspaceState
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Either[BuildState.Errored, WorkspaceState.IsSourceAware] =
+      logger: ClientLogger): Either[BuildError, WorkspaceState.IsSourceAware] =
     build(
       code = Some(WorkspaceFile(fileURI, updatedCode)),
       workspace = workspace

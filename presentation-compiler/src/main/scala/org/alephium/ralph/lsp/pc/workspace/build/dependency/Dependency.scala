@@ -91,7 +91,6 @@ object Dependency {
           buildURI = parsed.buildURI,
           codeOption = Some(parsed.code),
           errors = ArraySeq(error),
-          tsState = None,
           dependencies = ArraySeq.empty,
           activateWorkspace = None
         )
@@ -130,7 +129,6 @@ object Dependency {
         buildURI = parsed.buildURI,
         codeOption = Some(parsed.code),
         errors = errors.flatten,
-        tsState = None,
         dependencies = ArraySeq.empty,
         activateWorkspace = None
       )
@@ -187,7 +185,6 @@ object Dependency {
         buildURI = parentWorkspaceBuild.buildURI,
         codeOption = Some(parentWorkspaceBuild.code),
         errors = ArraySeq.empty,
-        tsState = None,
         dependencies = dependencyResult, // dependency workspace with error.
         activateWorkspace = None
       )

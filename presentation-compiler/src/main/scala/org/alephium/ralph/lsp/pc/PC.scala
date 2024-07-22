@@ -22,7 +22,7 @@ import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
-import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildError, Build}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceFile, WorkspaceFileEvent, Workspace}
 
 import java.net.URI
@@ -46,7 +46,8 @@ object PC extends StrictImplicitLogging {
   def initialise(workspaceURI: URI): PCState =
     PCState(
       workspace = Workspace.create(workspaceURI),
-      buildErrors = None
+      buildErrors = None,
+      tsErrors = None
     )
 
   /**
@@ -73,6 +74,7 @@ object PC extends StrictImplicitLogging {
       case error @ Left(_) =>
         val newPCState =
           buildChanged(
+            changedFileURI = Some(fileURI),
             buildChangeResult = error,
             pcState = pcState
           )
@@ -96,6 +98,7 @@ object PC extends StrictImplicitLogging {
             buildResult map {
               buildResult =>
                 buildChanged(
+                  changedFileURI = Some(fileURI),
                   buildChangeResult = buildResult,
                   pcState = pcState
                 )
@@ -171,6 +174,7 @@ object PC extends StrictImplicitLogging {
     ) match {
       case Left(error) =>
         buildChanged(
+          changedFileURI = None,
           buildChangeResult = Left(error),
           pcState = pcState
         )
@@ -212,13 +216,17 @@ object PC extends StrictImplicitLogging {
           )
 
         val result =
-          Workspace.compile(
-            buildCode = buildCode,
-            sourceCode = newSourceCode,
-            currentBuild = workspace.build
-          )
+          Workspace
+            .compile(
+              buildCode = buildCode,
+              sourceCode = newSourceCode,
+              currentBuild = workspace.build
+            )
+            .left
+            .map(BuildError(_))
 
         buildChanged(
+          changedFileURI = None,
           buildChangeResult = result,
           pcState = pcState
         )
@@ -231,10 +239,6 @@ object PC extends StrictImplicitLogging {
    *
    * For processing `ralph.json` and its dependent `.ral` source files, see [[deleteOrCreateJSONBuild]].
    *
-   * Currently, this only runs if an `alephium.config.ts` file was created.
-   * Deleting the `alephium.config.ts` file does not change the current state of the workspace,
-   * therefore, events indicating the deletion of the `alephium.config.ts` file are ignored.
-   *
    * @param events  Events to process.
    * @param pcState Current presentation compiler state.
    * @return The updated presentation compiler state containing the compilation result.
@@ -245,15 +249,16 @@ object PC extends StrictImplicitLogging {
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Option[PCState] =
-    if (events contains WorkspaceFileEvent.Created(pcState.workspace.tsBuildURI))
-      // `alephium.config.ts` file was created. Execute changed so a build occurs.
+    // Check: Did an event occur for the `alephium.config.ts` file?
+    if (events exists (_.uri == pcState.workspace.tsBuildURI))
+      // Execute `changed` so a rebuild occurs.
       changed(
         fileURI = pcState.workspace.tsBuildURI,
-        code = None,
+        code = None, // events do not contain code, fetch from disk.
         pcState = pcState
       ) match {
         case Left(error: ErrorUnknownFileType) =>
-          // Should not never occur since `tsBuildURI` is a known file type.
+          // This should not never occur since `tsBuildURI` is a known file type.
           logger.error(error.message)
           None
 
@@ -271,10 +276,21 @@ object PC extends StrictImplicitLogging {
    * @return The updated presentation compiler state.
    */
   private def buildChanged(
-      buildChangeResult: Either[BuildState.Errored, WorkspaceState],
-      pcState: PCState): PCState =
-    buildChangeResult match {
-      case Left(buildError) =>
+      changedFileURI: Option[URI],
+      buildChangeResult: Either[BuildError, WorkspaceState],
+      pcState: PCState): PCState = {
+    // Check: Was this function called due to `alephium.config.ts` changing?
+    val isTSBuildChanged =
+      changedFileURI contains pcState.workspace.tsBuildURI
+
+    def tsErrors() =
+      if (isTSBuildChanged)
+        None // `alephium.config.ts` errors are resolved only if the changed file was the `alephium.config.ts` build file.
+      else
+        pcState.tsErrors // Else continue with existing `alephium.config.ts` errors as they were not resolved.
+
+    buildChangeResult.left.map(_.error) match {
+      case Left(Right(buildError)) =>
         // fetch the activateWorkspace to replace existing workspace
         // or-else continue with existing workspace
         val newWorkspace =
@@ -282,16 +298,34 @@ object PC extends StrictImplicitLogging {
 
         PCState(
           workspace = newWorkspace,
-          buildErrors = Some(buildError)
+          buildErrors = Some(buildError),
+          tsErrors = tsErrors()
+        )
+
+      case Left(Left(tsErrors)) =>
+        PCState(
+          workspace = pcState.workspace,
+          buildErrors = pcState.buildErrors,
+          tsErrors = Some(tsErrors)
         )
 
       case Right(newWorkspace) =>
-        // build errors got resolved, clear it from state.
+        val jsonBuildErrors =
+          if (isTSBuildChanged)
+            // if `alephium.config.ts` was changed, then a `ralph.json` file with errors will remain unresolved.
+            pcState.buildErrors
+          else
+            // if a new workspace was returned, then this can only happen if `ralph.json` errors were resolved,
+            // so clear those errors, if any.
+            None
+
         PCState(
           workspace = newWorkspace,
-          buildErrors = None
+          buildErrors = jsonBuildErrors,
+          tsErrors = tsErrors()
         )
     }
+  }
 
   /**
    * Applies a source code change to the [[PCState]].
@@ -301,11 +335,14 @@ object PC extends StrictImplicitLogging {
    * @return The updated presentation compiler state.
    */
   private def sourceCodeChanged(
-      sourceChangeResult: Either[BuildState.Errored, WorkspaceState],
+      sourceChangeResult: Either[BuildError, WorkspaceState],
       pcState: PCState): PCState =
-    sourceChangeResult match {
-      case Left(buildError) =>
-        pcState.copy(buildErrors = Some(buildError))
+    sourceChangeResult.left.map(_.error) match {
+      case Left(Right(jsonBuildError)) =>
+        pcState.copy(buildErrors = Some(jsonBuildError))
+
+      case Left(Left(tsBuildError)) =>
+        pcState.copy(tsErrors = Some(tsBuildError))
 
       case Right(newWorkspace) =>
         pcState.copy(workspace = newWorkspace)

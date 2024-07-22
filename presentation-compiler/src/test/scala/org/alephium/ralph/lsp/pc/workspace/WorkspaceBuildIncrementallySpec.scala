@@ -68,7 +68,6 @@ class WorkspaceBuildIncrementallySpec extends AnyWordSpec with Matchers with Sca
                   buildURI = workspace.buildURI,
                   codeOption = None,
                   errors = ArraySeq(ErrorBuildFileNotFound(workspace.buildURI)),
-                  tsState = None,
                   dependencies = ArraySeq.empty,
                   activateWorkspace = None
                 )
@@ -95,7 +94,6 @@ class WorkspaceBuildIncrementallySpec extends AnyWordSpec with Matchers with Sca
                   buildURI = workspace.buildURI,
                   codeOption = None,
                   errors = ArraySeq(ErrorBuildFileNotFound(workspace.buildURI)),
-                  tsState = None,
                   dependencies = ArraySeq.empty,
                   activateWorkspace = None
                 )
@@ -128,7 +126,7 @@ class WorkspaceBuildIncrementallySpec extends AnyWordSpec with Matchers with Sca
 
               // invoke build
               val result =
-                Workspace.build(None, workspace).left.value
+                Workspace.build(code = None, workspace = workspace).left.value.error.value
 
               // the workspace should contain error targeting the build-file
               result shouldBe
@@ -142,7 +140,6 @@ class WorkspaceBuildIncrementallySpec extends AnyWordSpec with Matchers with Sca
                       message = """expected json value got "b""""
                     )
                   ),
-                  tsState = None,
                   dependencies = ArraySeq.empty,
                   activateWorkspace = None
                 )

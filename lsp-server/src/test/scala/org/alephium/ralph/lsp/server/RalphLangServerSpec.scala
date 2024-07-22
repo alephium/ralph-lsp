@@ -68,7 +68,8 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
           pcState = Some(
             PCState(
               workspace = WorkspaceState.Created(workspaceURI),
-              buildErrors = None
+              buildErrors = None,
+              tsErrors = None
             )
           ),
           clientAllowsWatchedFilesDynamicRegistration = false,
