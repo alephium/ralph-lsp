@@ -118,11 +118,15 @@ object SourceCodeState {
 
   /** Represents: Code is successfully compiled */
   case class Compiled(
-      fileURI: URI,
-      code: String,
       compiledCode: Seq[Either[CompiledContract, CompiledScript]],
       parsed: SourceCodeState.Parsed)
     extends IsCompiled {
+
+    override def fileURI: URI =
+      parsed.fileURI
+
+    override def code: String =
+      parsed.code
 
     def warnings: Seq[StringWarning] =
       compiledCode flatMap {

@@ -158,8 +158,6 @@ private object SourceCodeStateBuilder {
           )
         else // else, return successfully compiled
           SourceCodeState.Compiled(
-            fileURI = sourceCodeState.fileURI,
-            code = sourceCodeState.code,
             compiledCode = compiledCode,
             parsed = sourceCodeState
           )
