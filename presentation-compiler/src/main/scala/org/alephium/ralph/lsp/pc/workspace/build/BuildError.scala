@@ -31,6 +31,6 @@ object BuildError {
 /**
  * A build error wrapper that can either be within the following files:
  *  - `ralph.json` i.e. [[BuildState.Errored]]
- *  - `alephium.config.json` i.e. [[TSBuildState.Errored]]
+ *  - `alephium.config.ts` i.e. [[TSBuildState.Errored]]
  */
 case class BuildError(error: Either[TSBuildState.Errored, BuildState.Errored]) extends AnyVal
