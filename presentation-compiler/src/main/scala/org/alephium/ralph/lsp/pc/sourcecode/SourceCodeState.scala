@@ -141,11 +141,17 @@ object SourceCodeState {
 
   /** Represents: Error during the compilation phase. */
   case class ErrorCompilation(
-      fileURI: URI,
-      code: String,
       errors: Seq[CompilerMessage.AnyError],
       parsed: SourceCodeState.Parsed)
     extends IsParserOrCompilationError
-       with IsCompiled
+       with IsCompiled {
+
+    override def fileURI: URI =
+      parsed.fileURI
+
+    override def code: String =
+      parsed.code
+
+  }
 
 }

@@ -92,8 +92,6 @@ private object SourceCodeStateBuilder {
                 // Update the target file to an error state.
                 val sourceError =
                   SourceCodeState.ErrorCompilation(
-                    fileURI = fileURI,
-                    code = parsed.code,
                     errors = ArraySeq(error),
                     parsed = parsed
                   )
@@ -151,8 +149,6 @@ private object SourceCodeStateBuilder {
 
         if (errors.nonEmpty) // if true, return errors
           SourceCodeState.ErrorCompilation(
-            fileURI = sourceCodeState.fileURI,
-            code = sourceCodeState.code,
             errors = errors,
             parsed = sourceCodeState
           )

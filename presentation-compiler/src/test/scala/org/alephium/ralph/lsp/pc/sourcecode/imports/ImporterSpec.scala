@@ -217,10 +217,8 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
 
         val expectedError =
           SourceCodeState.ErrorCompilation(
-            fileURI = myCode.fileURI,
-            code = myCode.code,
-            parsed = myCode,
-            errors = ArraySeq(expectedImportError)
+            errors = ArraySeq(expectedImportError),
+            parsed = myCode
           )
 
         actualError should contain only expectedError
