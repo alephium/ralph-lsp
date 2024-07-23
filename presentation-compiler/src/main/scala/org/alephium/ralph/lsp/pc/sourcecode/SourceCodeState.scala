@@ -71,7 +71,19 @@ object SourceCodeState {
   sealed trait IsParsed extends IsCodeAware
 
   /** Represents: Code that is compiled. */
-  sealed trait IsCompiled extends IsParsed
+  sealed trait IsCompiled extends IsParsed {
+
+    // Compilation can only be executed if a parsed state was successfully created.
+    // Therefore, the parsed states is always known during compilation.
+    def parsed: SourceCodeState.Parsed
+
+    override def fileURI: URI =
+      parsed.fileURI
+
+    override def code: String =
+      parsed.code
+
+  }
 
   /** Represents: Code that contains error(s). */
   sealed trait IsError extends SourceCodeState
@@ -122,12 +134,6 @@ object SourceCodeState {
       parsed: SourceCodeState.Parsed)
     extends IsCompiled {
 
-    override def fileURI: URI =
-      parsed.fileURI
-
-    override def code: String =
-      parsed.code
-
     def warnings: Seq[StringWarning] =
       compiledCode flatMap {
         case Left(value) =>
@@ -144,14 +150,6 @@ object SourceCodeState {
       errors: Seq[CompilerMessage.AnyError],
       parsed: SourceCodeState.Parsed)
     extends IsParserOrCompilationError
-       with IsCompiled {
-
-    override def fileURI: URI =
-      parsed.fileURI
-
-    override def code: String =
-      parsed.code
-
-  }
+       with IsCompiled
 
 }
