@@ -279,15 +279,13 @@ object PC extends StrictImplicitLogging {
       changedFileURI: Option[URI],
       buildChangeResult: Either[BuildError, WorkspaceState],
       pcState: PCState): PCState = {
-    // Check: Was this function called due to `alephium.config.ts` changing?
-    val isTSBuildChanged =
-      changedFileURI contains pcState.workspace.tsBuildURI
-
     def tsErrors() =
-      if (isTSBuildChanged)
-        None // `alephium.config.ts` errors are resolved only if the changed file was the `alephium.config.ts` build file.
+      if (changedFileURI contains pcState.workspace.tsBuildURI) // Check: Was this function called due to `alephium.config.ts` changing?
+        // `alephium.config.ts` errors are resolved only if the changed file was the `alephium.config.ts` build file.
+        None
       else
-        pcState.tsErrors // Else continue with existing `alephium.config.ts` errors as they were not resolved.
+        // Else continue with existing `alephium.config.ts` errors as they were not resolved.
+        pcState.tsErrors
 
     buildChangeResult.left.map(_.error) match {
       case Left(Right(buildError)) =>
@@ -310,18 +308,11 @@ object PC extends StrictImplicitLogging {
         )
 
       case Right(newWorkspace) =>
-        val jsonBuildErrors =
-          if (isTSBuildChanged)
-            // if `alephium.config.ts` was changed, then a `ralph.json` file with errors will remain unresolved.
-            pcState.buildErrors
-          else
-            // if a new workspace was returned, then this can only happen if `ralph.json` errors were resolved,
-            // so clear those errors, if any.
-            None
-
         PCState(
           workspace = newWorkspace,
-          buildErrors = jsonBuildErrors,
+          // A new workspace was returned! This can only happen if `ralph.json` errors were resolved,
+          // so clear those errors, if any.
+          buildErrors = None,
           tsErrors = tsErrors()
         )
     }

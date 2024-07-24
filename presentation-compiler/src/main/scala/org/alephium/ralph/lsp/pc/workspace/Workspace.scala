@@ -99,27 +99,27 @@ private[pc] object Workspace extends StrictImplicitLogging {
             currentBuild = None
           )
 
-        val newWorkspace =
-          initialise(build)
-
-        // `alephium.config.ts` is compiled regardless of whether the current `ralph.json` errored or not.
-        val newBuild =
-          newWorkspace.map(_.build).merge
-
         // Build `alephium.config.ts` using `ralph.json`'s compilation result.
         TSBuild.build(
           code = code.text,
-          currentBuild = newBuild
+          currentBuild = build
         ) match {
           case Left(error) =>
             // TSBuild errored. This error state contains all errors.
             Left(BuildError(error))
 
-          case Right(_) =>
-            // TSBuild successful. Return the newly built state.
-            newWorkspace
+          case Right(None) =>
+            // No change occurred to `ralph.json`, initialise workspace using the build above.
+            initialise(build)
               .left
               .map(BuildError(_))
+
+          case Right(Some(_)) =>
+            // An updated `ralph.json` was persisted, do a clean build on the created workspace.
+            buildClean(
+              code = None,
+              workspace = workspace
+            )
         }
 
       case Some(code) if code.fileURI == workspace.buildURI =>
@@ -421,11 +421,19 @@ private[pc] object Workspace extends StrictImplicitLogging {
           // TypeScript build reported error.
           Some(Left(BuildError(error)))
 
-        case Right(None | Some(_: RalphcConfig.RalphcParsedConfig)) =>
-          // TypeScript build successful, which means `ralph.json` was persisted.
-          // Return the existing workspace because changes to `alephium.config.ts` do not alter the current workspace state,
-          // instead, they modify the persisted `ralph.json`, which will trigger a rebuild in another call.
-          Some(Right(workspace))
+        case Right(Some(_: RalphcConfig.RalphcParsedConfig)) =>
+          // `alephium.config.ts` was built successfully, with an updated `ralph.json` persisted.
+          // Trigger a re-build of `ralph.json` and re-compilation of the workspace.
+          buildChanged(
+            buildURI = workspace.buildURI,
+            code = None,
+            workspace = workspace
+          )
+
+        case Right(None) =>
+          // `alephium.config.ts` build successful, but no change occurred to `ralph.json`,
+          // so existing build remains the same, no need to re-compile.
+          None
       }
     else if (workspace.buildURI.resolve(buildURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
       Build.parseAndCompile(
