@@ -21,7 +21,6 @@ import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.message.error.ThrowableError
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig
-import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -29,106 +28,42 @@ import org.scalatest.EitherValues._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.ArraySeq
-import scala.util.Random
 
 class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with ScalaCheckDrivenPropertyChecks {
 
   "not persist" when {
-    "new config remains unchanged" when {
-      "existing `ralph.json` content is in-memory" in {
-        implicit val file: FileAccess = null // null implies there should be no IO.
-        val jsonBuildURI              = TestFile.genFileURI().sample.get
-        val tsBuildURI                = TestFile.genFileURI().sample.get
-        val currentJSONConfig         = RalphcConfig.defaultParsedConfig
+    "new config remains unchanged" in {
+      implicit val file: FileAccess = null // null implies there should be no IO.
+      val jsonBuildURI              = TestFile.genFileURI().sample.get
+      val tsBuildURI                = TestFile.genFileURI().sample.get
+      val config                    = RalphcConfig.defaultParsedConfig
 
-        // Randomly select indent because formatting of the JSON is irrelevant.
-        val currentJSONBuildCode = RalphcConfig.write(currentJSONConfig, indent = Random.nextInt(10))
-        val newConfig            = currentJSONConfig
-
-        TSBuild
-          .persist(
-            jsonBuildURI = jsonBuildURI,
-            tsBuildURI = tsBuildURI,
-            tsBuildCode = "TypeScript Code",
-            jsonBuildCode = Some(currentJSONBuildCode),
-            updatedConfig = newConfig
-          )
-          .value shouldBe empty
-      }
-
-      "existing `ralph.json` content not in-memory" in {
-        val jsonBuildURI      = TestFile.genFileURI().sample.get
-        val tsBuildURI        = TestFile.genFileURI().sample.get
-        val currentJSONConfig = RalphcConfig.defaultParsedConfig
-
-        // Randomly select indent because formatting of the JSON is irrelevant.
-        val currentJSONBuildCode = RalphcConfig.write(currentJSONConfig, indent = Random.nextInt(10))
-        val newConfig            = currentJSONConfig
-
-        implicit val file: FileAccess = mock[FileAccess]
-        // Only read is invoked, write should not be invoked, indicating that JSON is not persisted.
-        // This check is important to ensure that re-build/re-compile does not occur unnecessarily when `ralph.json` remains unchanged.
-        (file.read _)
-          .expects(jsonBuildURI)
-          .returns(Right(currentJSONBuildCode))
-          .once()
-
-        TSBuild
-          .persist(
-            jsonBuildURI = jsonBuildURI,
-            tsBuildURI = tsBuildURI,
-            tsBuildCode = "TypeScript Code",
-            jsonBuildCode = None, // None so that JSON is fetched from disk.
-            updatedConfig = newConfig
-          )
-          .value shouldBe empty // empty! Not persisted!
-      }
+      TSBuild
+        .persist(
+          jsonBuildURI = jsonBuildURI,
+          currentConfig = Some(config),
+          tsBuildURI = tsBuildURI,
+          tsBuildCode = "TypeScript Code",
+          updatedConfig = config
+        )
+        .value shouldBe empty
     }
   }
 
   "persist" when {
-    "existing `ralph.json` is in error state" in {
+    "existing `ralph.json` is in error state or does not exist (currentConfig = None)" in {
       implicit val file: FileAccess = FileAccess.disk
       // Randomly select indent because formatting of the JSON is irrelevant.
-      val errorJSON = RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = Random.nextInt(10)).drop(10)
       val newConfig = RalphcConfig.defaultParsedConfig
-
-      forAll(TestFile.genFileURI(), TestFile.genFileURI(), Gen.option(errorJSON)) {
-        case (jsonBuildURI, tsBuildURI, errorJSONOption) =>
-          // write the errored JSON
-          TestFile.write(jsonBuildURI, errorJSON)
-
-          TSBuild
-            .persist(
-              jsonBuildURI = jsonBuildURI,
-              tsBuildURI = tsBuildURI,
-              tsBuildCode = "TypeScript Code",
-              jsonBuildCode = errorJSONOption, // Optional so it's either read from memory or disk.
-              updatedConfig = newConfig
-            )
-            .value shouldBe Some(newConfig) // new config is persisted
-
-          // Check that the persisted file has the new JSON
-          TestFile.readAll(jsonBuildURI) shouldBe RalphcConfig.write(newConfig, 2)
-
-          TestFile delete jsonBuildURI
-      }
-
-    }
-
-    "existing `ralph.json` does not exist" in {
-      implicit val file: FileAccess = FileAccess.disk
-      val newConfig                 = RalphcConfig.defaultParsedConfig
-      val tsBuildCode               = "TypeScript Code"
 
       forAll(TestFile.genFileURI(), TestFile.genFileURI()) {
         case (jsonBuildURI, tsBuildURI) =>
           TSBuild
             .persist(
               jsonBuildURI = jsonBuildURI,
-              jsonBuildCode = None,
+              currentConfig = None, // None indicates error or does not exist
               tsBuildURI = tsBuildURI,
-              tsBuildCode = tsBuildCode,
+              tsBuildCode = "TypeScript Code",
               updatedConfig = newConfig
             )
             .value shouldBe Some(newConfig) // new config is persisted
@@ -138,48 +73,47 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
 
           TestFile delete jsonBuildURI
       }
-
     }
-  }
 
-  "report IO error" when {
-    "persisted" in {
-      val error                = ThrowableError("Something went wrong", new Throwable(), SourceIndex.empty)
-      val jsonBuildURI         = TestFile.genFileURI().sample.get
-      val tsBuildURI           = TestFile.genFileURI().sample.get
-      val currentJSONConfig    = RalphcConfig.defaultParsedConfig
-      val currentJSONBuildCode = RalphcConfig.write(currentJSONConfig, indent = Random.nextInt(10))
-      val tsBuildCode          = "TypeScript Code"
+    "report IO error" when {
+      "persisted" in {
+        val error             = ThrowableError("Something went wrong", new Throwable(), SourceIndex.empty)
+        val jsonBuildURI      = TestFile.genFileURI().sample.get
+        val tsBuildURI        = TestFile.genFileURI().sample.get
+        val currentJSONConfig = RalphcConfig.defaultParsedConfig
+        val tsBuildCode       = "TypeScript Code"
 
-      implicit val file: FileAccess =
-        mock[FileAccess]
+        implicit val file: FileAccess =
+          mock[FileAccess]
 
-      // write fails
-      (file.write _)
-        .expects(*, *, *)
-        .returns(Left(error)) // inject IO error writing the JSON
-        .once()
+        // write fails
+        (file.write _)
+          .expects(*, *, *)
+          .returns(Left(error)) // inject IO error writing the JSON
+          .once()
 
-      val actual =
-        TSBuild
-          .persist(
-            jsonBuildURI = jsonBuildURI,
-            jsonBuildCode = Some(currentJSONBuildCode),
-            tsBuildURI = tsBuildURI,
-            tsBuildCode = tsBuildCode,
-            // updated the config to differ from existing JSON, so persistence occurs.
-            updatedConfig = RalphcConfig.defaultParsedConfig.copy(contractPath = "updated_contract_path")
+        val actual =
+          TSBuild
+            .persist(
+              jsonBuildURI = jsonBuildURI,
+              currentConfig = Some(currentJSONConfig),
+              tsBuildURI = tsBuildURI,
+              tsBuildCode = tsBuildCode,
+              // updated the config to differ from existing JSON, so persistence occurs.
+              updatedConfig = RalphcConfig.defaultParsedConfig.copy(contractPath = "updated_contract_path")
+            )
+
+        val expected =
+          TSBuildState.Errored(
+            buildURI = tsBuildURI,    // error is reported on tsBuildURI
+            code = Some(tsBuildCode), // TS source-code is stored
+            errors = ArraySeq(error)
           )
 
-      val expected =
-        TSBuildState.Errored(
-          buildURI = tsBuildURI,    // error is reported on tsBuildURI
-          code = Some(tsBuildCode), // TS source-code is stored
-          errors = ArraySeq(error)
-        )
-
-      actual.left.value shouldBe expected
+        actual.left.value shouldBe expected
+      }
     }
+
   }
 
 }

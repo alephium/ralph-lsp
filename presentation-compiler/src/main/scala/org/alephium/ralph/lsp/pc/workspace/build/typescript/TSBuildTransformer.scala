@@ -18,9 +18,11 @@ package org.alephium.ralph.lsp.pc.workspace.build.typescript
 
 import scala.collection.immutable.ArraySeq
 import org.alephium.ralph.{SourceIndex, CompilerOptions}
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
 
+import java.net.URI
+import scala.annotation.unused
 import scala.util.Random
 
 object TSBuildTransformer {
@@ -29,22 +31,25 @@ object TSBuildTransformer {
    * Transforms the content of the TypeScript `alephium.config.ts` build file
    * to JSON `ralph.json` build file of type [[RalphcConfig.RalphcParsedConfig]].
    *
-   * @param tsBuildCode  Content of the TypeScript `alephium.config.ts` file.
-   * @param currentBuild Current build state.
-   *                     This function is invoked whether the current `ralph.json`
-   *                     file is currently errored or not, therefore, the state is [[BuildState.IsCompiled]].
+   * @param tsBuildURI    URI for the `alephium.config.ts` build file.
+   * @param tsBuildCode   Content of the `alephium.config.ts` file.
+   * @param currentConfig Current `ralph.json` config that is known by the editor.
+   *                      Note: This function is invoked whether the current `ralph.json`
+   *                      build is errored or not, [[None]] indicating that the current `ralph.json`
+   *                      contains errors or it does not exist.
    * @return Either the errored state of the `alephium.config.ts` build file or the new `ralph.json` build file to persist.
    */
   def toRalphcParsedConfig(
+      tsBuildURI: URI,
       tsBuildCode: String,
-      currentBuild: BuildState.IsCompiled): Either[TSBuildState.Errored, RalphcConfig.RalphcParsedConfig] =
+      @unused("for now") currentConfig: Option[RalphcConfig.RalphcParsedConfig]): Either[TSBuildState.Errored, RalphcConfig.RalphcParsedConfig] =
     // FOR DEMO ONLY: Randomly generate a `ralph.json` file.
     if (Random.nextBoolean())
       Right(genRandomRalphcParsedConfig())
     else // FOR DEMO ONLY: Randomly generate an error to report in `alephium.config.ts` file.
       Left(
         TSBuildState.Errored(
-          buildURI = currentBuild.tsBuildURI,
+          buildURI = tsBuildURI,
           code = Some(tsBuildCode),
           errors = ArraySeq(StringError("Test dummy error", SourceIndex.empty))
         )

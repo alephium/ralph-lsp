@@ -55,6 +55,8 @@ object TSBuild {
    * This function is invoked regardless of whether the current `ralph.json`
    * file is currently errored or not, therefore, the state is [[BuildState.IsCompiled]].
    *
+   * Steps: read -> transform -> persist
+   *
    * @param code         Current code of the TypeScript `alephium.config.ts` file.
    * @param currentBuild Current build state.
    * @param file         Provides file-IO API.
@@ -68,22 +70,31 @@ object TSBuild {
       code: Option[String],
       currentBuild: BuildState.IsCompiled
     )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[RalphcConfig.RalphcParsedConfig]] =
-    // Steps: read -> transform -> persist
+    // Step 1: Read `alephium.config.ts`'s file content
     read(
       tsBuildURI = currentBuild.tsBuildURI,
       code = code
     ) flatMap {
       case Some(tsCode) =>
+        // Fetch the current `ralph.json`'s parsed config from current build
+        val currentConfig =
+          Build
+            .getParsedOrNone(currentBuild)
+            .map(_.config)
+
+        // Step 2: Transform
         TSBuildTransformer
           .toRalphcParsedConfig(
+            currentBuild.tsBuildURI,
             tsBuildCode = tsCode,
-            currentBuild = currentBuild
+            currentConfig = currentConfig
           )
           .flatMap {
             newConfig =>
+              // Step 3: Persist
               persist(
                 jsonBuildURI = currentBuild.buildURI,
-                jsonBuildCode = currentBuild.codeOption,
+                currentConfig = currentConfig,
                 tsBuildURI = currentBuild.tsBuildURI,
                 tsBuildCode = tsCode,
                 updatedConfig = newConfig
@@ -132,7 +143,7 @@ object TSBuild {
    * only if the input configuration is different from the existing configuration.
    *
    * @param jsonBuildURI  Current build's `ralph.json` file URI.
-   * @param jsonBuildCode Current build's `ralph.json` content.
+   * @param currentConfig Current build's `ralph.json` parsed type.
    * @param tsBuildURI    Current build's `alephium.config.ts` file URI.
    * @param tsBuildCode   Current build's `alephium.config.ts` content.
    * @param updatedConfig The newly transformed configuration to persist.
@@ -145,26 +156,12 @@ object TSBuild {
    */
   def persist(
       jsonBuildURI: URI,
-      jsonBuildCode: Option[String],
+      currentConfig: Option[RalphcConfig.RalphcParsedConfig],
       tsBuildURI: URI,
       tsBuildCode: String,
       updatedConfig: RalphcConfig.RalphcParsedConfig
-    )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[RalphcConfig.RalphcParsedConfig]] = {
-    val configChanged =
-      Build.parse(
-        buildURI = jsonBuildURI,
-        json = jsonBuildCode
-      ) match {
-        case existing: BuildState.Parsed =>
-          updatedConfig != existing.config
-
-        case _: BuildState.Errored =>
-          // current config is in error state
-          // the new config from the transformer might fix it, so allow persisting it!
-          true
-      }
-
-    if (configChanged)
+    )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[RalphcConfig.RalphcParsedConfig]] =
+    if (!currentConfig.contains(updatedConfig))
       file.write( // config did change! Persist the new config.
         fileURI = jsonBuildURI,
         string = RalphcConfig.write(updatedConfig, indent = 2),
@@ -185,7 +182,5 @@ object TSBuild {
       }
     else
       Right(None)
-
-  }
 
 }

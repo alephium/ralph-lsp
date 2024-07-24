@@ -290,6 +290,35 @@ object Build {
     }
 
   /**
+   * Fetches the parsed build state from the given compiled build state if the compiled build state has no errors.
+   *
+   * @param build The build to find the parsed state for.
+   * @return An [[Option]] containing the parsed build state, or [[None]] if the build contains compilation errors.
+   */
+  def getParsedOrNone(build: BuildState.IsCompiled)(implicit file: FileAccess): Option[BuildState.Parsed] =
+    build match {
+      case compiled: BuildState.Compiled =>
+        Some(compiled.parsed)
+
+      case errored: BuildState.Errored =>
+        // TODO: Currently, a Build's Errored state does not store the `Parsed` state.
+        //       There is a need for a `ParsedError` and `CompilationError` split, similar to `SourceCodeState`,
+        //       so a `Parsed` state is ALWAYS available for an `IsCompiled` state.
+        //       Until then, the following re-parsing of the build JSON is a temporary solution.
+        //       Re-parsing is expensive, therefore, implementing the split is necessary.
+        parse(
+          buildURI = errored.buildURI,
+          json = errored.codeOption
+        ) match {
+          case parsed: BuildState.Parsed =>
+            Some(parsed)
+
+          case _: BuildState.Errored =>
+            None
+        }
+    }
+
+  /**
    * Absolute paths of all path settings in the build file.
    *
    * @return A 4-tuple `(workspacePath, absoluteContractPath, absoluteArtifactPath, dependencyPath)`
