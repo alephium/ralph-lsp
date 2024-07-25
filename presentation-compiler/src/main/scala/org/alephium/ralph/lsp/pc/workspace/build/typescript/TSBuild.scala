@@ -63,13 +63,12 @@ object TSBuild {
    * @return Values:
    *          - [[Left]] if build errors occurred in the TypeScript `alephium.config.ts` file.
    *          - [[None]] if no change occurred.
-   *          - [[RalphcConfig.RalphcParsedConfig]] the newly persisted config, which is the same
-   *            as the input config.
+   *          - [[BuildState.Parsed]] the newly persisted config.
    */
   def build(
       code: Option[String],
       currentBuild: BuildState.IsCompiled
-    )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[RalphcConfig.RalphcParsedConfig]] =
+    )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[BuildState.Parsed]] =
     // Step 1: Read `alephium.config.ts`'s file content
     read(
       tsBuildURI = currentBuild.tsBuildURI,
@@ -151,8 +150,7 @@ object TSBuild {
    * @return Values:
    *          - [[Left]] if an error occurred in case of an IO error.
    *          - [[None]] if no change occurred.
-   *          - [[RalphcConfig.RalphcParsedConfig]] the newly persisted config, which is the same
-   *            as the input config.
+   *          - [[BuildState.Parsed]] the newly persisted config.
    */
   def persist(
       jsonBuildURI: URI,
@@ -160,15 +158,30 @@ object TSBuild {
       tsBuildURI: URI,
       tsBuildCode: String,
       updatedConfig: RalphcConfig.RalphcParsedConfig
-    )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[RalphcConfig.RalphcParsedConfig]] =
-    if (!currentConfig.contains(updatedConfig))
+    )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[BuildState.Parsed]] =
+    if (!currentConfig.contains(updatedConfig)) {
+      val updatedJSON =
+        RalphcConfig.write(
+          config = updatedConfig,
+          indent = 2
+        )
+
       file.write( // config did change! Persist the new config.
         fileURI = jsonBuildURI,
-        string = RalphcConfig.write(updatedConfig, indent = 2),
+        string = updatedJSON,
         index = SourceIndex.empty
       ) match {
         case Right(_) =>
-          Right(Some(updatedConfig))
+          // Return a parsed instance so both, the newly persisted JSON string and
+          // its typed JSON RalphcConfig instance are known, for further re-build/re-compilation to save IO.
+          val newParsedConfig =
+            BuildState.Parsed(
+              buildURI = jsonBuildURI,
+              code = updatedJSON,
+              config = updatedConfig
+            )
+
+          Right(Some(newParsedConfig))
 
         case Left(error) =>
           val tsState =
@@ -180,7 +193,8 @@ object TSBuild {
 
           Left(tsState)
       }
-    else
+    } else {
       Right(None)
+    }
 
 }

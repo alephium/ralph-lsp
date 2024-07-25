@@ -20,7 +20,7 @@ import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.message.error.ThrowableError
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig
+import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, BuildState}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -38,38 +38,48 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
       val tsBuildURI                = TestFile.genFileURI().sample.get
       val config                    = RalphcConfig.defaultParsedConfig
 
-      TSBuild
-        .persist(
+      val actual =
+        TSBuild.persist(
           jsonBuildURI = jsonBuildURI,
           currentConfig = Some(config),
           tsBuildURI = tsBuildURI,
           tsBuildCode = "TypeScript Code",
           updatedConfig = config
         )
-        .value shouldBe empty
+
+      actual.value shouldBe empty
     }
   }
 
   "persist" when {
     "existing `ralph.json` is in error state or does not exist (currentConfig = None)" in {
       implicit val file: FileAccess = FileAccess.disk
-      // Randomly select indent because formatting of the JSON is irrelevant.
-      val newConfig = RalphcConfig.defaultParsedConfig
+      val newConfig                 = RalphcConfig.defaultParsedConfig
+      val newConfigContent          = RalphcConfig.write(newConfig, indent = 2)
 
       forAll(TestFile.genFileURI(), TestFile.genFileURI()) {
         case (jsonBuildURI, tsBuildURI) =>
-          TSBuild
-            .persist(
+          val actual =
+            TSBuild.persist(
               jsonBuildURI = jsonBuildURI,
               currentConfig = None, // None indicates error or does not exist
               tsBuildURI = tsBuildURI,
               tsBuildCode = "TypeScript Code",
               updatedConfig = newConfig
             )
-            .value shouldBe Some(newConfig) // new config is persisted
+
+          // expect is the persisted config's content
+          val expected =
+            BuildState.Parsed(
+              buildURI = jsonBuildURI,
+              code = newConfigContent,
+              config = newConfig
+            )
+
+          actual.value shouldBe Some(expected) // new config is persisted
 
           // Check that the persisted file has the new JSON
-          TestFile.readAll(jsonBuildURI) shouldBe RalphcConfig.write(newConfig, 2)
+          TestFile.readAll(jsonBuildURI) shouldBe newConfigContent
 
           TestFile delete jsonBuildURI
       }
@@ -93,15 +103,14 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
           .once()
 
         val actual =
-          TSBuild
-            .persist(
-              jsonBuildURI = jsonBuildURI,
-              currentConfig = Some(currentJSONConfig),
-              tsBuildURI = tsBuildURI,
-              tsBuildCode = tsBuildCode,
-              // updated the config to differ from existing JSON, so persistence occurs.
-              updatedConfig = RalphcConfig.defaultParsedConfig.copy(contractPath = "updated_contract_path")
-            )
+          TSBuild.persist(
+            jsonBuildURI = jsonBuildURI,
+            currentConfig = Some(currentJSONConfig),
+            tsBuildURI = tsBuildURI,
+            tsBuildCode = tsBuildCode,
+            // updated the config to differ from existing JSON, so persistence occurs.
+            updatedConfig = RalphcConfig.defaultParsedConfig.copy(contractPath = "updated_contract_path")
+          )
 
         val expected =
           TSBuildState.Errored(

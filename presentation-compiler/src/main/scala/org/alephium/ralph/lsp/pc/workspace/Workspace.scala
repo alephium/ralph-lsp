@@ -24,7 +24,7 @@ import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, BuildError, Build, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildError, Build, BuildState}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -114,10 +114,11 @@ private[pc] object Workspace extends StrictImplicitLogging {
               .left
               .map(BuildError(_))
 
-          case Right(Some(_)) =>
+          case Right(Some(parsed: BuildState.Parsed)) =>
             // An updated `ralph.json` was persisted, do a clean build on the created workspace.
             buildClean(
-              code = None,
+              // the newly persisted `ralph.json` file content is known, provide WorkspaceFile so no disk read occurs.
+              code = Some(WorkspaceFile(parsed.buildURI, Some(parsed.code))),
               workspace = workspace
             )
         }
@@ -421,12 +422,12 @@ private[pc] object Workspace extends StrictImplicitLogging {
           // TypeScript build reported error.
           Some(Left(BuildError(error)))
 
-        case Right(Some(_: RalphcConfig.RalphcParsedConfig)) =>
+        case Right(Some(parsed: BuildState.Parsed)) =>
           // `alephium.config.ts` was built successfully, with an updated `ralph.json` persisted.
           // Trigger a re-build of `ralph.json` and re-compilation of the workspace.
           buildChanged(
-            buildURI = workspace.buildURI,
-            code = None,
+            buildURI = parsed.buildURI,
+            code = Some(parsed.code), // the newly persisted `ralph.json` file content is known, provide the code so no disk read occurs.
             workspace = workspace
           )
 
