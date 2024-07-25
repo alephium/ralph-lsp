@@ -102,11 +102,9 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                   sourceCode = ArraySeq.empty,    // there is no source code
                   parsed = WorkspaceState.Parsed( // Workspace is successful parsed
                     build = BuildState.Compiled(
-                      buildURI = build.buildURI,
-                      code = RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = 2), // Default build file is written
-                      dependencies = build.dependencies,                                       // default dependencies are written
-                      dependencyPath = Dependency.defaultPath().value,                         // Default dependency build path i.e. .ralph-lsp is used
-                      config = org                                                             // compiled build file has full paths defined
+                      dependencies = build.dependencies,               // default dependencies are written
+                      dependencyPath = Dependency.defaultPath().value, // Default dependency build path i.e. .ralph-lsp is used
+                      config = org                                     // compiled build file has full paths defined
                         .alephium
                         .ralphc
                         .Config(
@@ -114,7 +112,12 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                           compilerOptions = RalphcConfig.defaultParsedConfig.compilerOptions,
                           contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.contractPath),
                           artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.artifactPath)
-                        )
+                        ),
+                      parsed = BuildState.Parsed(
+                        build.buildURI,
+                        RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = 2), // Default build file is written,
+                        RalphcConfig.defaultParsedConfig
+                      )
                     ),
                     sourceCode = ArraySeq.empty // there is no source-code in this workspace
                   )
@@ -203,11 +206,9 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
             // Expect this default build file
             val expectedBuild =
               BuildState.Compiled(
-                buildURI = build.buildURI,
-                code = RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = 2), // Default build file is written
-                dependencies = build.dependencies,                                       // default dependencies are written
-                dependencyPath = Dependency.defaultPath().value,                         // Default dependency build path i.e. .ralph-lsp is used
-                config = org                                                             // compiled build file has full paths defined
+                dependencies = build.dependencies,               // default dependencies are written
+                dependencyPath = Dependency.defaultPath().value, // Default dependency build path i.e. .ralph-lsp is used
+                config = org                                     // compiled build file has full paths defined
                   .alephium
                   .ralphc
                   .Config(
@@ -215,7 +216,12 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                     compilerOptions = RalphcConfig.defaultParsedConfig.compilerOptions,
                     contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.contractPath),
                     artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.artifactPath)
-                  )
+                  ),
+                BuildState.Parsed(
+                  buildURI = build.buildURI,
+                  code = RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = 2), // Default build file is written
+                  config = RalphcConfig.defaultParsedConfig
+                )
               )
 
             compiledWorkspace.build shouldBe expectedBuild

@@ -175,11 +175,10 @@ object Dependency {
 
       // Build OK. Promote build to compiled state.
       BuildState.Compiled(
-        buildURI = parentWorkspaceBuild.buildURI,
-        code = parentWorkspaceBuild.code,
         dependencies = compiledResults, // store the compiled dependency in the build.
         dependencyPath = absoluteDependencyPath,
-        config = config
+        config = config,
+        parsed = parentWorkspaceBuild
       )
     } else {
       BuildState.Errored(

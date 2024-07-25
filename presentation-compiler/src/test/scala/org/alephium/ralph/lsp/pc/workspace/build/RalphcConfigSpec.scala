@@ -153,7 +153,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
       val parsedBuild =
         BuildState.Parsed(
           buildURI = expectedBuildPath.toUri,
-          code = RalphcConfig.write(config),
+          code = expectedCode,
           config = config
         )
 
@@ -178,11 +178,10 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
 
       readConfig shouldBe
         BuildState.Compiled(
-          buildURI = expectedBuildPath.toUri,
-          code = expectedCode,
           dependencies = compiledStd.dependencies,
           dependencyPath = expectedDependenciesPath,
-          config = expectedCompiledConfig
+          config = expectedCompiledConfig,
+          parsed = parsedBuild
         )
 
       TestWorkspace delete WorkspaceState.Created(workspacePath.toUri)

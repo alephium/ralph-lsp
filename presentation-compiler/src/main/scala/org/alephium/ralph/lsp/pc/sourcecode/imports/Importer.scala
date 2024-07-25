@@ -96,8 +96,6 @@ object Importer {
       // build a source-code state that reports all import errors in this file.
       val sourceError =
         SourceCodeState.ErrorCompilation(
-          fileURI = sourceCode.fileURI,
-          code = sourceCode.code,
           errors = importErrors,
           parsed = sourceCode
         )

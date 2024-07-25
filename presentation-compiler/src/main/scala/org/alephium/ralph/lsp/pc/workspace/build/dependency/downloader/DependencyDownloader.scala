@@ -109,12 +109,22 @@ object DependencyDownloader {
     val json =
       RalphcConfig.write(compiledConfig)
 
+    val parsed =
+      BuildState.Parsed(
+        buildURI = buildDir.toUri,
+        code = json,
+        config = RalphcConfig.RalphcParsedConfig(
+          compilerOptions = CompilerOptions.Default,
+          contractPath = workspaceDir.toString,
+          artifactPath = workspaceDir.toString
+        )
+      )
+
     BuildState.Compiled(
-      buildURI = buildDir.toUri,
-      code = json,
       dependencies = ArraySeq.empty,
       dependencyPath = workspaceDir,
-      config = compiledConfig
+      config = compiledConfig,
+      parsed = parsed
     )
   }
 

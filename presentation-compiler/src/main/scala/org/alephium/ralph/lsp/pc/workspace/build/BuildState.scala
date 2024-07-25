@@ -66,12 +66,17 @@ object BuildState {
 
   /** Build is successfully compiled */
   case class Compiled(
-      buildURI: URI,
-      code: String,
       dependencies: ArraySeq[WorkspaceState.Compiled],
       dependencyPath: Path,
-      config: RalphcCompiledConfig)
+      config: RalphcCompiledConfig,
+      parsed: BuildState.Parsed)
     extends BuildState.IsCompiled {
+
+    override def buildURI: URI =
+      parsed.buildURI
+
+    def code: String =
+      parsed.code
 
     def contractURI: URI =
       config.contractPath.toUri
