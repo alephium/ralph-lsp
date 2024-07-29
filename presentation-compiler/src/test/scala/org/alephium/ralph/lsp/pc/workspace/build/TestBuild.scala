@@ -135,7 +135,12 @@ object TestBuild {
 
     val workspacePath = Paths.get(parsed.workspaceURI)
     TestFile.createDirectories(workspacePath.resolve(parsed.config.contractPath))
-    TestFile.createDirectories(workspacePath.resolve(parsed.config.artifactPath))
+
+    parsed.config.artifactPath foreach {
+      artifactPath =>
+        TestFile.createDirectories(workspacePath.resolve(artifactPath))
+    }
+
     parsed
       .config
       .dependencyPath
@@ -152,7 +157,12 @@ object TestBuild {
 
     val workspacePath = Paths.get(compiled.workspaceURI)
     TestFile.createDirectories(workspacePath.resolve(compiled.config.contractPath))
-    TestFile.createDirectories(workspacePath.resolve(compiled.config.artifactPath))
+
+    compiled.config.artifactPath foreach {
+      artifactPath =>
+        TestFile.createDirectories(workspacePath.resolve(artifactPath))
+    }
+
     TestFile.createDirectories(workspacePath.resolve(compiled.dependencyPath))
 
     compiled

@@ -36,18 +36,18 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
           .defaultParsedConfig
           .copy(
             contractPath = "contracts",
-            artifactPath = "artifacts"
+            artifactPath = Some("artifacts")
           )
 
       val config2 = config1.copy(
         contractPath = "./contracts",
-        artifactPath = "./artifacts"
+        artifactPath = Some("./artifacts")
       )
 
       val workspacePath = Files.createTempDirectory("root_workspace")
 
       Files.createDirectory(workspacePath.resolve(config1.contractPath))
-      Files.createDirectory(workspacePath.resolve(config1.artifactPath))
+      Files.createDirectory(workspacePath.resolve(config1.artifactPath.value))
       Files.createDirectory(Build.toBuildDir(workspacePath))
 
       val buildPath       = Build.toBuildFile(workspacePath)
@@ -106,7 +106,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
             .defaultParsedConfig
             .copy(
               contractPath = "contracts",
-              artifactPath = "artifacts",
+              artifactPath = Some("artifacts"),
               dependencyPath = Some("contracts")
             )
 
@@ -119,7 +119,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
             .defaultParsedConfig
             .copy(
               contractPath = "dependencies/contracts",
-              artifactPath = "artifacts",
+              artifactPath = Some("artifacts"),
               dependencyPath = Some("dependencies")
             )
 
@@ -132,7 +132,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
             .defaultParsedConfig
             .copy(
               contractPath = "contracts",
-              artifactPath = "artifacts",
+              artifactPath = Some("artifacts"),
               dependencyPath = Some("contracts/dependencies")
             )
 
@@ -169,7 +169,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
             .defaultParsedConfig
             .copy(
               contractPath = "contracts",
-              artifactPath = "artifacts",
+              artifactPath = Some("artifacts"),
               dependencyPath = Some("dependencies")
             )
 
@@ -182,7 +182,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
             .defaultParsedConfig
             .copy(
               contractPath = "my_code/contracts",
-              artifactPath = "artifacts",
+              artifactPath = Some("artifacts"),
               dependencyPath = Some("my_code/dependencies")
             )
 

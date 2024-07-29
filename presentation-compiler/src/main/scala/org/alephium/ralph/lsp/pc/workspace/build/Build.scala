@@ -268,25 +268,37 @@ object Build {
   /**
    * Absolute paths of all path settings in the build file.
    *
-   * @return A 4-tuple `(workspacePath, absoluteContractPath, absoluteArtifactPath, dependencyPath)`
+   * @return A 4-tuple `(workspacePath, absoluteContractPath, (artifactPath, absoluteArtifactPath), dependencyPath)`
    */
-  def getAbsolutePaths(parsed: BuildState.Parsed): (Path, Path, Path, Option[Path]) = {
+  def getAbsolutePaths(parsed: BuildState.Parsed): (Path, Path, Option[(String, Path)], Option[Path]) = {
     val workspacePath            = Paths.get(parsed.workspaceURI)
     val absoluteContractPath     = workspacePath.resolve(Paths.get(parsed.config.contractPath).normalize)
-    val absoluteArtifactPath     = workspacePath.resolve(Paths.get(parsed.config.artifactPath).normalize)
+    val absoluteArtifactPath     = getAbsoluteArtifactsPath(parsed)
     val absoluteDependenciesPath = getAbsoluteDependenciesPath(parsed)
 
     (workspacePath, absoluteContractPath, absoluteArtifactPath, absoluteDependenciesPath)
   }
 
-  /** Absolute paths of contract and artifacts settings in the build file. */
-  def getAbsoluteContractArtifactPaths(parsed: BuildState.Parsed): (Path, Path) = {
+  /**
+   * Absolute paths of contract and artifacts settings in the build file.
+   *
+   * @return A [[Tuple2]] `(absoluteContractPath, (artifactPath, absoluteArtifactPath))`
+   */
+  def getAbsoluteContractArtifactPaths(parsed: BuildState.Parsed): (Path, Option[(String, Path)]) = {
     val workspacePath        = Paths.get(parsed.workspaceURI)
     val absoluteContractPath = workspacePath.resolve(Paths.get(parsed.config.contractPath).normalize)
-    val absoluteArtifactPath = workspacePath.resolve(Paths.get(parsed.config.artifactPath).normalize)
+    val absoluteArtifactPath = getAbsoluteArtifactsPath(parsed)
 
     (absoluteContractPath, absoluteArtifactPath)
   }
+
+  /** Absolute paths of dependencyPath settings in the build file. */
+  def getAbsoluteArtifactsPath(parsed: BuildState.Parsed): Option[(String, Path)] =
+    parsed.config.artifactPath map {
+      artifactPath =>
+        val absolute = Paths.get(parsed.workspaceURI).resolve(Paths.get(artifactPath).normalize)
+        (artifactPath, absolute)
+    }
 
   /** Absolute paths of dependencyPath settings in the build file. */
   def getAbsoluteDependenciesPath(parsed: BuildState.Parsed): Option[Path] =
@@ -301,22 +313,16 @@ object Build {
    * TODO: This will function will be removed when an AST is available for the JSON.
    */
   def getPathIndexes(parsed: BuildState.Parsed): (SourceIndex, SourceIndex, SourceIndex) = {
-    val contractPath = parsed.config.contractPath
-    val artifactPath = parsed.config.artifactPath
-
+    // TODO: lastIndexOf is temporary solution until an AST is available.
     val contractPathIndex =
-      SourceIndexExtra.ensurePositive(
-        index = parsed.code.lastIndexOf(contractPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-        width = contractPath.length,
+      SourceIndexExtra.lastIndexOf(
+        token = parsed.config.contractPath,
+        code = parsed.code,
         fileURI = parsed.buildURI
       )
 
     val artifactPathIndex =
-      SourceIndexExtra.ensurePositive(
-        index = parsed.code.lastIndexOf(artifactPath), // TODO: lastIndexOf is temporary solution until an AST is available.
-        width = artifactPath.length,
-        fileURI = parsed.buildURI
-      )
+      getArtifactsPathIndex(parsed)
 
     val dependencyPathIndex =
       getDependantPathIndex(parsed)
@@ -324,18 +330,23 @@ object Build {
     (contractPathIndex, artifactPathIndex, dependencyPathIndex)
   }
 
-  /** @return Index of the `dependencyPath` if configured, or-else the index of the last closing brace. */
-  def getDependantPathIndex(parsed: BuildState.Parsed): SourceIndex = {
-    // if dependencyPath is None use the index of the last closing brace "}" to report errors
-    val errorIndexToken =
-      parsed.config.dependencyPath getOrElse "}"
-
-    SourceIndexExtra.ensurePositive(
-      index = parsed.code.lastIndexOf(errorIndexToken), // TODO: lastIndexOf is temporary solution until an AST is available.
-      width = errorIndexToken.length,
+  /** @return Index of the `artifactPath` if configured, or-else the index of the last closing brace. */
+  def getArtifactsPathIndex(parsed: BuildState.Parsed): SourceIndex =
+    // if artifactPath is None use the index of the last closing brace "}" to report errors
+    SourceIndexExtra.lastIndexOf( // TODO: lastIndexOf is temporary solution until an AST is available.
+      token = parsed.config.artifactPath getOrElse "}",
+      code = parsed.code,
       fileURI = parsed.buildURI
     )
-  }
+
+  /** @return Index of the `dependencyPath` if configured, or-else the index of the last closing brace. */
+  def getDependantPathIndex(parsed: BuildState.Parsed): SourceIndex =
+    // if dependencyPath is None use the index of the last closing brace "}" to report errors
+    SourceIndexExtra.lastIndexOf( // TODO: lastIndexOf is temporary solution until an AST is available.
+      token = parsed.config.dependencyPath getOrElse "}",
+      code = parsed.code,
+      fileURI = parsed.buildURI
+    )
 
   /**
    * Generate and persist a default build file.

@@ -39,50 +39,97 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
     TestClientLogger
 
   "parse" should {
-    "parse workspace build file" when {
-      "dependencyPath is provided" in {
-        val build_ralph =
-          """{
-            |  "compilerOptions": {
-            |    "ignoreUnusedConstantsWarnings": false,
-            |    "ignoreUnusedVariablesWarnings": false,
-            |    "ignoreUnusedFieldsWarnings": false,
-            |    "ignoreUnusedPrivateFunctionsWarnings": false,
-            |    "ignoreUpdateFieldsCheckWarnings": false,
-            |    "ignoreCheckExternalCallerWarnings": false
-            |  },
-            |  "contractPath": "contracts",
-            |  "artifactPath": "artifacts",
-            |  "dependencyPath": "dependencies"
-            |}
-            |""".stripMargin
+    "succeed" when {
+      "dependencyPath" when {
+        "is provided" in {
+          val build_ralph =
+            """{
+              |  "compilerOptions": {
+              |    "ignoreUnusedConstantsWarnings": false,
+              |    "ignoreUnusedVariablesWarnings": false,
+              |    "ignoreUnusedFieldsWarnings": false,
+              |    "ignoreUnusedPrivateFunctionsWarnings": false,
+              |    "ignoreUpdateFieldsCheckWarnings": false,
+              |    "ignoreCheckExternalCallerWarnings": false
+              |  },
+              |  "contractPath": "contracts",
+              |  "artifactPath": "artifacts",
+              |  "dependencyPath": "dependencies"
+              |}
+              |""".stripMargin
 
-        val expected = RalphcConfig.defaultParsedConfig.copy(dependencyPath = Some("dependencies"))
-        val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
+          val expected = RalphcConfig.defaultParsedConfig.copy(artifactPath = Some("artifacts"), dependencyPath = Some("dependencies"))
+          val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
-        actual shouldBe expected
+          actual shouldBe expected
+        }
+
+        "is not provided" in {
+          val build_ralph =
+            """{
+              |  "compilerOptions": {
+              |    "ignoreUnusedConstantsWarnings": false,
+              |    "ignoreUnusedVariablesWarnings": false,
+              |    "ignoreUnusedFieldsWarnings": false,
+              |    "ignoreUnusedPrivateFunctionsWarnings": false,
+              |    "ignoreUpdateFieldsCheckWarnings": false,
+              |    "ignoreCheckExternalCallerWarnings": false
+              |  },
+              |  "contractPath": "contracts",
+              |  "artifactPath": "artifacts"
+              |}
+              |""".stripMargin
+
+          val expected = RalphcConfig.defaultParsedConfig.copy(artifactPath = Some("artifacts"), dependencyPath = None)
+          val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
+
+          actual shouldBe expected
+        }
       }
 
-      "dependencyPath is not provided" in {
-        val build_ralph =
-          """{
-            |  "compilerOptions": {
-            |    "ignoreUnusedConstantsWarnings": false,
-            |    "ignoreUnusedVariablesWarnings": false,
-            |    "ignoreUnusedFieldsWarnings": false,
-            |    "ignoreUnusedPrivateFunctionsWarnings": false,
-            |    "ignoreUpdateFieldsCheckWarnings": false,
-            |    "ignoreCheckExternalCallerWarnings": false
-            |  },
-            |  "contractPath": "contracts",
-            |  "artifactPath": "artifacts"
-            |}
-            |""".stripMargin
+      "artifactPath" when {
+        "is provided" in {
+          val build_ralph =
+            """{
+              |  "compilerOptions": {
+              |    "ignoreUnusedConstantsWarnings": false,
+              |    "ignoreUnusedVariablesWarnings": false,
+              |    "ignoreUnusedFieldsWarnings": false,
+              |    "ignoreUnusedPrivateFunctionsWarnings": false,
+              |    "ignoreUpdateFieldsCheckWarnings": false,
+              |    "ignoreCheckExternalCallerWarnings": false
+              |  },
+              |  "contractPath": "contracts",
+              |  "artifactPath": "artifacts"
+              |}
+              |""".stripMargin
 
-        val expected = RalphcConfig.defaultParsedConfig.copy(dependencyPath = None)
-        val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
+          val expected = RalphcConfig.defaultParsedConfig.copy(artifactPath = Some("artifacts"))
+          val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
-        actual shouldBe expected
+          actual shouldBe expected
+        }
+
+        "is not provided" in {
+          val build_ralph =
+            """{
+              |  "compilerOptions": {
+              |    "ignoreUnusedConstantsWarnings": false,
+              |    "ignoreUnusedVariablesWarnings": false,
+              |    "ignoreUnusedFieldsWarnings": false,
+              |    "ignoreUnusedPrivateFunctionsWarnings": false,
+              |    "ignoreUpdateFieldsCheckWarnings": false,
+              |    "ignoreCheckExternalCallerWarnings": false
+              |  },
+              |  "contractPath": "contracts"
+              |}
+              |""".stripMargin
+
+          val expected = RalphcConfig.defaultParsedConfig
+          val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
+
+          actual shouldBe expected
+        }
       }
     }
 
@@ -109,13 +156,28 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
       CompilerAccess.ralphc
 
     // create workspace structure with config file
-    def doTest(dependencyPath: Option[String]) = {
-      val config = RalphcConfig.defaultParsedConfig.copy(dependencyPath = dependencyPath)
+    def doTest(
+        dependencyPath: Option[String],
+        artifactPath: Option[String]) = {
+      val config =
+        RalphcConfig
+          .defaultParsedConfig
+          .copy(
+            artifactPath = artifactPath,
+            dependencyPath = dependencyPath
+          )
 
       val workspacePath = Files.createTempDirectory("root_workspace")
 
       Files.createDirectory(workspacePath.resolve(config.contractPath))
-      Files.createDirectory(workspacePath.resolve(config.artifactPath))
+
+      config
+        .artifactPath
+        .foreach {
+          artifactPath =>
+            Files.createDirectory(workspacePath.resolve(artifactPath))
+        }
+
       Files.createDirectory(Build.toBuildDir(workspacePath))
       // create only if the dependencyPath is provided by the user i.e. is in the parsed config
       // otherwise expect the dependency compiler to write to the default dependencyPath
@@ -144,10 +206,14 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
 
       // Compiled config always contains absolute paths, unlike the parsed config
       val expectedCompiledConfig =
-        Config(
-          compilerOptions = config.compilerOptions,
-          contractPath = Paths.get(workspacePath.resolve(config.contractPath).toUri),
-          artifactPath = Paths.get(workspacePath.resolve(config.artifactPath).toUri)
+        RalphcConfig.RalphcCompiledConfig(
+          isArtifactsPathDefinedInBuild = artifactPath.isDefined,
+          config = Config(
+            compilerOptions = config.compilerOptions,
+            contractPath = Paths.get(workspacePath.resolve(config.contractPath).toUri),
+            // The defined `artifactPath` or-else defaults to `contractPath`
+            artifactPath = Paths.get(workspacePath.resolve(artifactPath getOrElse config.contractPath).toUri)
+          )
         )
 
       val parsedBuild =
@@ -187,12 +253,22 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
       TestWorkspace delete WorkspaceState.Created(workspacePath.toUri)
     }
 
-    "dependencyPath is not provided" in {
-      doTest(dependencyPath = None)
-    }
+    "Optional paths are defined as" when {
+      "(None, None): None are provided" in {
+        doTest(dependencyPath = None, artifactPath = None)
+      }
 
-    "dependencyPath is provided" in {
-      doTest(dependencyPath = Some("dependencies"))
+      "(Some, None): Only dependencyPath is provided" in {
+        doTest(dependencyPath = Some("dependencies"), artifactPath = None)
+      }
+
+      "(None, Some): Only artifactPath is provided" in {
+        doTest(dependencyPath = None, artifactPath = Some("artifacts"))
+      }
+
+      "(Some, Some): Both are provided" in {
+        doTest(dependencyPath = Some("dependencies"), artifactPath = Some("artifacts"))
+      }
     }
   }
 

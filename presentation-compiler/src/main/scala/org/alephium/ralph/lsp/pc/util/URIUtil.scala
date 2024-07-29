@@ -16,6 +16,10 @@
 
 package org.alephium.ralph.lsp.pc.util
 
+import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.file.FileAccess
+
 import java.net.URI
 import java.nio.file.{Path, Paths}
 import scala.jdk.CollectionConverters.IteratorHasAsScala
@@ -53,6 +57,26 @@ object URIUtil {
       parent = Paths.get(parent),
       child = Paths.get(child)
     )
+
+  /**
+   * Checks if a given path exists or is undefined.
+   *
+   * @param path      Path to check.
+   * @param pathIndex Index to report error.
+   * @return An [[CompilerMessage.AnyError]] if an error occurs,
+   *         otherwise a `true` indicating the existence of the path or if the path is undefined.
+   */
+  def existsOrUndefined(
+      path: Option[Path],
+      pathIndex: SourceIndex
+    )(implicit file: FileAccess): Either[CompilerMessage.AnyError, Boolean] =
+    path match {
+      case Some(path) =>
+        file.exists(path.toUri, pathIndex)
+
+      case None =>
+        Right(true)
+    }
 
   /** Is the child [[Path]] within the parent [[Path]] */
   def contains(

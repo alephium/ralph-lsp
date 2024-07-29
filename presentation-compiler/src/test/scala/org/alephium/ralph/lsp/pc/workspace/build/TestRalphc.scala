@@ -44,7 +44,7 @@ object TestRalphc {
   def genRalphcParsedConfig(
       compilerOptions: Gen[CompilerOptions] = genCompilerOptions(),
       contractsFolderName: Gen[String] = genName,
-      artifactsFolderName: Gen[String] = genName,
+      artifactsFolderName: Gen[Option[String]] = Gen.option(genName),
       dependenciesFolderName: Gen[Option[String]] = Gen.option(genName)): Gen[RalphcParsedConfig] =
     for {
       compilerOptions        <- compilerOptions
