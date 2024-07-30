@@ -21,11 +21,11 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error._
 import org.alephium.ralph.lsp.access.util.TryUtil
+import org.alephium.ralphc.{Compiler => RalphC}
 
 import java.net.URI
 import java.nio.file.{Path, Paths, Files}
 import scala.io.Source
-import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.util.{Using, Success, Failure}
 
 /**
@@ -55,62 +55,16 @@ private object DiskFileAccess extends FileAccess {
         Left(error)
     }
 
-  /**
-   * Copied from ralphc/Compiler.
-   *
-   * Quick fix to resolve issue: https://github.com/alephium/ralph-lsp/issues/245.
-   *
-   * TODO: Revert after upgrade to 3.4.0 is complete.
-   */
-  private def getSourceFiles(
-      path: Path,
-      ext: String,
-      recursive: Boolean = true): Seq[Path] =
-    if (Files.isDirectory(path)) {
-      val (allFiles, allDirs) =
-        Using(Files.list(path)) {
-          files =>
-            files
-              .iterator()
-              .asScala
-              .toSeq
-              .partition(
-                p => !Files.isDirectory(p)
-              )
-        } match {
-          case Failure(exception) =>
-            throw exception
-
-          case Success(result) =>
-            result
-        }
-
-      val expectedFiles =
-        allFiles.filter(
-          p => p.toString().endsWith(ext)
-        )
-
-      if (recursive) {
-        expectedFiles ++ allDirs.flatMap(getSourceFiles(_, ext))
-      } else {
-        expectedFiles
-      }
-    } else {
-      if (Files.isRegularFile(path) && path.endsWith(ext)) {
-        Seq(path)
-      } else {
-        Seq.empty
-      }
-    }
-
   /** @inheritdoc */
   def list(workspaceURI: URI): Either[CompilerMessage.AnyError, Seq[URI]] =
     try {
       val uris =
-        getSourceFiles(
-          path = Paths.get(workspaceURI),
-          ext = s".${CompilerAccess.RALPH_FILE_EXTENSION}"
-        ).map(_.toUri)
+        RalphC
+          .getSourceFiles(
+            path = Paths.get(workspaceURI),
+            ext = s".${CompilerAccess.RALPH_FILE_EXTENSION}"
+          )
+          .map(_.toUri)
 
       Right(uris)
     } catch TryUtil.catchAllThrows(workspaceURI)
