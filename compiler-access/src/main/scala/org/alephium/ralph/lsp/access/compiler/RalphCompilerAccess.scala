@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler
 
 import fastparse.Parsed
+import org.alephium.protocol.vm.StatefulContext
 import org.alephium.ralph._
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
@@ -50,20 +51,47 @@ private object RalphCompilerAccess extends CompilerAccess {
 
   /** @inheritdoc */
   def compileContracts(
-      contracts: Seq[Ast.ContractWithState],
-      structs: Seq[Ast.Struct],
+      parsedSource: Seq[Ast.MultiContractDef],
       options: CompilerOptions,
       workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
+      val allContracts     = Seq.newBuilder[Ast.ContractWithState]
+      val otherDefinitions = Seq.newBuilder[Ast.GlobalDefinition]
+
+      parsedSource foreach {
+        case contract: Ast.ContractWithState =>
+          contract.reset() // Reset contracts state before compilation. This is necessary to ensure that contracts are fully recompiled.
+          allContracts addOne contract
+
+        case struct: Ast.Struct =>
+          otherDefinitions addOne struct
+
+        case varDef: Ast.ConstantVarDef[_] =>
+          otherDefinitions addOne varDef.asInstanceOf[Ast.ConstantVarDef[StatefulContext]]
+
+        case enumDef: Ast.EnumDef[_] =>
+          otherDefinitions addOne enumDef.asInstanceOf[Ast.EnumDef[StatefulContext]]
+      }
+
+      val globalState =
+        Ast.GlobalState.from[StatefulContext](otherDefinitions.result())
+
       val multiContract =
-        Ast.MultiContract(contracts, structs, None, None)
+        Ast.MultiContract(
+          contracts = allContracts.result(),
+          globalState = globalState,
+          dependencies = None,
+          methodSelectorTable = None
+        )
 
       val extendedContracts =
         multiContract.extendedContracts()
 
+      // TODO: Handle workspace level warning returned here
       val statefulContracts =
         extendedContracts
           .genStatefulContracts()(options)
+          ._2
           .map(_._1)
 
       val statefulScripts =

@@ -108,7 +108,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
 
     // We need to test to find in-scope inheritance for the Child contract.
     val childTree =
-      file1Trees.find(_.tree.ast.merge.name == "Child").value
+      file1Trees.find(_.tree.ast.name == "Child").value
 
     // collect all trees from file2
     val file2Trees =

@@ -29,16 +29,16 @@ object NodeBuilder extends StrictLogging {
    * @param ast The [[Ast.ContractWithState]] instance
    * @return Root node of the tree.
    */
-  def buildRootNode(ast: Either[Ast.ContractWithState, Ast.Struct]): Node[Ast.UniqueDef, Ast.Positioned] = {
+  def buildRootNode(ast: Ast.MultiContractDef): Node[Ast.MultiContractDef, Ast.Positioned] = {
     // TODO: Are all these siblings? If they are not, they need to build a tree structure using source-index.
     val rootSiblings =
       ast match {
-        case Left(ast: Ast.TxScript) =>
+        case ast: Ast.TxScript =>
           buildOne(ast.ident) ++
             buildMany(ast.templateVars) ++
             buildMany(ast.funcs)
 
-        case Left(ast: Ast.Contract) =>
+        case ast: Ast.Contract =>
           buildOne(ast.stdInterfaceId) ++
             buildOne(ast.ident) ++
             buildMany(ast.templateVars) ++
@@ -50,16 +50,23 @@ object NodeBuilder extends StrictLogging {
             buildMany(ast.inheritances) ++
             buildMany(ast.maps)
 
-        case Left(ast: Ast.ContractInterface) =>
+        case ast: Ast.ContractInterface =>
           buildOne(ast.stdId) ++
             buildOne(ast.ident) ++
             buildMany(ast.funcs) ++
             buildMany(ast.events) ++
             buildMany(ast.inheritances)
 
-        case Right(ast: Ast.Struct) =>
+        case ast: Ast.Struct =>
           buildOne(ast.id) ++
             buildMany(ast.fields)
+
+        case ast: Ast.EnumDef[_] =>
+          buildOne(ast.id) ++
+            buildMany(ast.fields)
+
+        case ast: Ast.ConstantVarDef[_] =>
+          buildOne(ast)
       }
 
     // sort the sibling according to their source-index i.e. following their order of position in code.
@@ -68,7 +75,7 @@ object NodeBuilder extends StrictLogging {
 
     // Root node
     Node(
-      data = ast.merge,
+      data = ast,
       children = sortedRootSiblings
     )
   }

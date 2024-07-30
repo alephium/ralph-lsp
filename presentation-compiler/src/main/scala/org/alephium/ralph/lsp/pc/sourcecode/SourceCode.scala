@@ -245,26 +245,20 @@ private[pc] object SourceCode {
     val sourceTreesOnly =
       sourceTrees.map(_.tree)
 
+    // Compile only the source-code. Import statements are already expected to be processed and included in `importedTrees` collection.
     val importedTreesOnly =
       importedTrees.map(_.tree)
 
     val allCode =
       sourceTreesOnly ++ importedTreesOnly
 
-    // Compile only the source-code. Import statements are already expected to be processed and included in `importedCode` collection.
-    val (contracts, structs) =
-      allCode
-        .map(_.ast)
-        .partitionMap(identity)
-
-    // Reset contracts state before compilation. This is necessary to ensure that contracts are fully recompiled.
-    contracts.foreach(_.reset())
+    val multiContractDef =
+      allCode.map(_.ast)
 
     // compile the source-code
     val compilationResult =
       compiler.compileContracts(
-        contracts = contracts,
-        structs = structs,
+        parsedSource = multiContractDef,
         options = compilerOptions,
         workspaceErrorURI = workspaceErrorURI
       )

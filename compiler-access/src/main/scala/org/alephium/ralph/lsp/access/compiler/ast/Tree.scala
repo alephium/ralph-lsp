@@ -60,7 +60,7 @@ object Tree {
     extends Tree
 
   case class Source(
-      ast: Either[Ast.ContractWithState, Ast.Struct],
+      ast: Ast.MultiContractDef,
       index: SourceIndex)
     extends Statement {
     // TODO: Move the following to a cache like Caffeine.
@@ -70,16 +70,22 @@ object Tree {
      *
      * @note Lazily initialised as it can have concurrent access or no access at all.
      */
-    lazy val rootNode: Node[Ast.UniqueDef, Ast.Positioned] =
+    lazy val rootNode: Node[Ast.MultiContractDef, Ast.Positioned] =
       NodeBuilder.buildRootNode(ast)
 
-    def typeId(): Ast.TypeId =
+    def typeId(): Option[Ast.TypeId] =
       ast match {
-        case Left(contract) =>
-          contract.ident
+        case ast: Ast.ContractWithState =>
+          Some(ast.ident)
 
-        case Right(struct) =>
-          struct.id
+        case ast: Ast.Struct =>
+          Some(ast.id)
+
+        case ast: Ast.EnumDef[_] =>
+          Some(ast.id)
+
+        case _: Ast.ConstantVarDef[_] =>
+          None
       }
 
   }

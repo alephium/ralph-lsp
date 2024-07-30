@@ -91,7 +91,7 @@ private object GoToTypeId {
       enumSelector: Ast.EnumFieldSelector[_],
       source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
     source.tree.ast match {
-      case Left(contract: Ast.Contract) =>
+      case contract: Ast.Contract =>
         contract
           .enums
           .iterator
@@ -101,7 +101,7 @@ private object GoToTypeId {
               SourceLocation.Node(enumDef.id, source)
           }
 
-      case Left(_: Ast.ContractInterface | _: Ast.TxScript) | Right(_: Ast.Struct) =>
+      case _: Ast.ContractInterface | _: Ast.TxScript | _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] =>
         Iterator.empty
     }
 

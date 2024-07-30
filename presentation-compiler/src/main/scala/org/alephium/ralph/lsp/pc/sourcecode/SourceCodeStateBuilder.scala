@@ -129,10 +129,10 @@ private object SourceCodeStateBuilder {
             }
             .collect {
               // Only Contracts and Scripts can be compiled
-              case Left(contract: Ast.Contract) if !contract.isAbstract =>
+              case contract: Ast.Contract if !contract.isAbstract =>
                 contract
 
-              case Left(script: Ast.TxScript) =>
+              case script: Ast.TxScript =>
                 script
             }
 
