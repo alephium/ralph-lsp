@@ -96,28 +96,37 @@ object DependencyDownloader {
     val buildDir =
       Build.toBuildFile(workspaceDir)
 
-    val compiledConfig =
-      org
-        .alephium
-        .ralphc
-        .Config(
-          compilerOptions = CompilerOptions.Default,
-          contractPath = workspaceDir,
-          artifactPath = workspaceDir
-        )
+    // Create a config with the workspace directory as the only directory.
+    // Sets`contractPath` as the workspace directory.
+    val parsedConfig =
+      RalphcConfig.RalphcParsedConfig(
+        compilerOptions = CompilerOptions.Default,
+        contractPath = workspaceDir.toString,
+        artifactPath = None
+      )
 
     val json =
-      RalphcConfig.write(compiledConfig)
+      RalphcConfig.write(parsedConfig)
 
     val parsed =
       BuildState.Parsed(
         buildURI = buildDir.toUri,
         code = json,
-        config = RalphcConfig.RalphcParsedConfig(
-          compilerOptions = CompilerOptions.Default,
-          contractPath = workspaceDir.toString,
-          artifactPath = workspaceDir.toString
-        )
+        config = parsedConfig
+      )
+
+    // a compiled config
+    val compiledConfig =
+      RalphcConfig.RalphcCompiledConfig(
+        isArtifactsPathDefinedInBuild = parsedConfig.artifactPath.isDefined,
+        config = org
+          .alephium
+          .ralphc
+          .Config(
+            compilerOptions = CompilerOptions.Default,
+            contractPath = workspaceDir,
+            artifactPath = workspaceDir
+          )
       )
 
     BuildState.Compiled(

@@ -108,8 +108,7 @@ directory under the folder `.ralph-lsp/ralph.json`. The file contains the follow
     "ignoreUpdateFieldsCheckWarnings": false,
     "ignoreCheckExternalCallerWarnings": false
   },
-  "contractPath": "contracts",
-  "artifactPath": "artifacts"
+  "contractPath": "contracts"
 }
 ```
 

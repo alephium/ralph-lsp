@@ -73,12 +73,15 @@ object BuildValidator {
         )
 
     // Validate: is the artifact path within the workspace
-    if (!URIUtil.contains(workspacePath, absoluteArtifactPath))
-      errors addOne
-        ErrorDirectoryDoesNotExists(
-          dirPath = parsed.config.artifactPath,
-          index = artifactPathIndex
-        )
+    absoluteArtifactPath foreach {
+      case (artifactPath, absoluteArtifactPath) =>
+        if (!URIUtil.contains(workspacePath, absoluteArtifactPath))
+          errors addOne
+            ErrorDirectoryOutsideWorkspace(
+              dirPath = artifactPath,
+              index = artifactPathIndex
+            )
+    }
 
     // Validate: DependencyPath and ContractPath should not overlap
     absoluteDependencyPath foreach {
@@ -119,7 +122,7 @@ object BuildValidator {
     val compileResult =
       for {
         contractExists     <- file.exists(absoluteContractPath.toUri, contractPathIndex)
-        artifactsExists    <- file.exists(absoluteArtifactPath.toUri, artifactPathIndex)
+        artifactsExists    <- URIUtil.existsOrUndefined(absoluteArtifactPath.map(_._2), artifactPathIndex)
         dependenciesExists <- dependencyPathExists(absoluteDependenciesPath, dependencyPathIndex)
       } yield (contractExists, artifactsExists, dependenciesExists)
 
@@ -138,11 +141,14 @@ object BuildValidator {
 
         // check if artifact path exists
         if (!artifactsExists)
-          errors addOne
-            ErrorDirectoryDoesNotExists(
-              dirPath = parsed.config.artifactPath,
-              index = artifactPathIndex
-            )
+          absoluteArtifactPath foreach {
+            case (artifactPath, _) =>
+              errors addOne
+                ErrorDirectoryDoesNotExists(
+                  dirPath = artifactPath,
+                  index = artifactPathIndex
+                )
+          }
 
         // check if dependencies path exists
         if (!dependenciesExists)

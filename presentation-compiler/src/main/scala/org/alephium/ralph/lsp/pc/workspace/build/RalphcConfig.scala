@@ -26,24 +26,66 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Path, Files}
 import scala.util.Try
 
+/**
+ * Within the context of presentation-compiler:
+ *  - Type [[RalphcCompiledConfig]] i.e. a wrapper for type [[org.alephium.ralphc.Config]] serves as the compiled ralphc-config.
+ *  - Type [[RalphcParsedConfig]] serves as the parsed ralphc-config.
+ *
+ * [[org.alephium.ralphc.Config]] is not accessed directly during parsing because:
+ *  - It's `contractPath` and `artifactPath` are of type `Path` which lose the original
+ *    user's input String value after converting it to `Path` type, which in-case of errors
+ *    displays incorrect error highlighting.
+ *  - Issue #247 requires `artifactPath` to be optional, but in [[org.alephium.ralphc.Config]] it's non-optional.
+ */
 object RalphcConfig {
 
   /**
-   * Within the context of presentation-compiler:
-   *  - Type [[RalphcCompiledConfig]] i.e. of type [[org.alephium.ralphc.Config]] serves as the compiled ralphc-config.
-   *  - Type [[RalphcParsedConfig]] serves as the parsed ralphc-config.
+   * An instance indicating a compiled Ralphc configuration.
    *
-   * [[org.alephium.ralphc.Config]] is not used during parsing because string input for
-   * fields such as `contractPath` and `artifactPath` lose the original user's input String
-   * value after converting it to `Path` type, which in-case of errors displays incorrect error highlighting.
+   * Access to [[org.alephium.ralphc.Config]] is private to prevent direct access
+   * to [[org.alephium.ralphc.Config.artifactPath]], which is non-optional.
+   * Issue <a href="https://github.com/alephium/ralph-lsp/issues/247">#247</a>
+   * requires it to be optional in the LSP.
+   *
+   * TODO: The instance of [[org.alephium.ralphc.Config]] is not needed by the compiler.
+   *       The compiler only requires [[CompilerOptions]].
+   *       Remove the usage of [[org.alephium.ralphc.Config]].
+   *
+   * @param isArtifactsPathDefinedInBuild Indicates if the artifactsPath was defined in the build.
+   * @param config                        Private compiler configuration.
    */
-  type RalphcCompiledConfig =
-    org.alephium.ralphc.Config
+  case class RalphcCompiledConfig(
+      isArtifactsPathDefinedInBuild: Boolean,
+      private val config: org.alephium.ralphc.Config) {
 
+    def contractPath: Path =
+      config.contractPath
+
+    def contractURI: URI =
+      contractPath.toUri
+
+    /** No direct access to [[config.artifactPath]] in LSP */
+    def artifactPath: Option[Path] =
+      if (isArtifactsPathDefinedInBuild)
+        Some(config.artifactPath)
+      else
+        None
+
+    def artifactURI: Option[URI] =
+      artifactPath.map(_.toUri)
+
+    def compilerOptions: CompilerOptions =
+      config.compilerOptions
+
+  }
+
+  /**
+   * An instance indicating a parsed Ralphc configuration.
+   */
   case class RalphcParsedConfig(
       compilerOptions: CompilerOptions,
       contractPath: String,
-      artifactPath: String,
+      artifactPath: Option[String] = None,
       dependencyPath: Option[String] = None)
 
   /** Default parsed config */
@@ -51,7 +93,7 @@ object RalphcConfig {
     RalphcParsedConfig(
       compilerOptions = CompilerOptions.Default,
       contractPath = "contracts",
-      artifactPath = "artifacts",
+      artifactPath = None,
       dependencyPath = None
     )
 
@@ -102,10 +144,6 @@ object RalphcConfig {
       config: RalphcParsedConfig,
       indent: Int = -1): String =
     upickle.default.write[RalphcParsedConfig](config, indent = indent)
-
-  /** Write a compiled config */
-  def write(config: RalphcCompiledConfig): String =
-    upickle.default.write[RalphcCompiledConfig](config)
 
   /**
    * Creates a config file.

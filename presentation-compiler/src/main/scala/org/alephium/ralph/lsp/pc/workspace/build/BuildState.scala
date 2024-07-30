@@ -79,10 +79,10 @@ object BuildState {
       parsed.code
 
     def contractURI: URI =
-      config.contractPath.toUri
+      config.contractURI
 
-    def artifactURI: URI =
-      config.artifactPath.toUri
+    def artifactURI: Option[URI] =
+      config.artifactURI
 
     override def findDependency(id: DependencyID): Option[WorkspaceState.Compiled] =
       BuildState.findDependency(dependencies, id)

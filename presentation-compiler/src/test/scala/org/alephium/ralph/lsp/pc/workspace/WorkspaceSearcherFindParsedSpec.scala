@@ -78,10 +78,13 @@ class WorkspaceSearcherFindParsedSpec extends AnyWordSpec with Matchers with Sca
           ) shouldBe None
 
           // file is in the artifact directory
-          WorkspaceSearcher.findParsed(
-            fileURI = build.artifactURI.resolve("blah.ral"),
-            workspace = workspace
-          ) shouldBe None
+          build.artifactURI foreach {
+            artifactURI =>
+              WorkspaceSearcher.findParsed(
+                fileURI = artifactURI.resolve("blah.ral"),
+                workspace = workspace
+              ) shouldBe None
+          }
       }
     }
   }
