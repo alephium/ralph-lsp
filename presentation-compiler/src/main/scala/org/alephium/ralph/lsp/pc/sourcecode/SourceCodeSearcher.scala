@@ -192,12 +192,15 @@ object SourceCodeSearcher {
    * @return An iterator containing type identifiers.
    */
   def collectTypes(workspaceSource: Iterator[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.TypeId]] =
-    workspaceSource map {
+    workspaceSource flatMap {
       code =>
-        SourceLocation.Node(
-          ast = code.tree.typeId(),
-          source = code
-        )
+        code.tree.typeId() map {
+          typeId =>
+            SourceLocation.Node(
+              ast = typeId,
+              source = code
+            )
+        }
     }
 
   /**
@@ -229,15 +232,21 @@ object SourceCodeSearcher {
       types: Seq[Type],
       code: SourceLocation.Code): Seq[SourceLocation.Code] =
     // collect all trees with matching types
-    types collect {
-      case Type.NamedType(id) if code.tree.typeId() == id =>
-        code
+    code.tree.typeId() match {
+      case Some(typeId) =>
+        types collect {
+          case Type.NamedType(id) if typeId == id =>
+            code
 
-      case Type.Struct(id) if code.tree.typeId() == id =>
-        code
+          case Type.Struct(id) if typeId == id =>
+            code
 
-      case Type.Contract(id) if code.tree.typeId() == id =>
-        code
+          case Type.Contract(id) if typeId == id =>
+            code
+        }
+
+      case None =>
+        Seq.empty
     }
 
   /**
@@ -308,7 +317,7 @@ object SourceCodeSearcher {
     allCode.iterator.flatMap {
       code =>
         code.tree.ast match {
-          case Left(contract) =>
+          case contract: Ast.ContractWithState =>
             contract
               .funcs
               .map {
@@ -319,7 +328,7 @@ object SourceCodeSearcher {
                   )
               }
 
-          case Right(_) =>
+          case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
             Iterator.empty
         }
     }
@@ -334,7 +343,7 @@ object SourceCodeSearcher {
   def collectFunctions(sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
     // TODO: Improve selection by checking function argument count and types.
     sourceCode.tree.ast match {
-      case Left(ast) =>
+      case ast: Ast.ContractWithState =>
         ast
           .funcs
           .iterator
@@ -346,7 +355,7 @@ object SourceCodeSearcher {
               )
           }
 
-      case Right(_) =>
+      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         Iterator.empty
     }
 
@@ -378,7 +387,7 @@ object SourceCodeSearcher {
    */
   def findTxScriptMainFunction(sourceCode: SourceLocation.Code): Option[Node[Ast.FuncDef[_], Ast.Positioned]] =
     sourceCode.tree.ast match {
-      case Left(_: Ast.TxScript) =>
+      case _: Ast.TxScript =>
         sourceCode.tree.rootNode.walkDown.collectFirst {
           case functionNode @ Node(funcDef: Ast.FuncDef[_], _) if funcDef.name == AstExtra.TX_SCRIPT_MAIN_FUNCTION_NAME =>
             functionNode.upcast(funcDef)
@@ -419,14 +428,14 @@ object SourceCodeSearcher {
       source: SourceLocation.Code,
       allSource: ArraySeq[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
     source.tree.ast match {
-      case Left(contract) =>
+      case contract: Ast.ContractWithState =>
         collectInheritedParents(
           inheritances = contract.inheritances,
           allSource = allSource,
           processedTrees = mutable.Set(source)
         )
 
-      case Right(_) =>
+      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         ArraySeq.empty
     }
 
@@ -442,14 +451,14 @@ object SourceCodeSearcher {
       source: SourceLocation.Code,
       allSource: ArraySeq[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
     source.tree.ast match {
-      case Left(contract) =>
+      case contract: Ast.ContractWithState =>
         collectImplementingChildren(
           contract = contract,
           allSource = allSource,
           processedTrees = mutable.Set(source)
         )
 
-      case Right(_) =>
+      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         ArraySeq.empty
     }
 
@@ -468,12 +477,22 @@ object SourceCodeSearcher {
       processedTrees: mutable.Set[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
     allSource flatMap {
       source =>
+        // collect the trees that belong to one of the inheritances
+        val belongsToParent =
+          source
+            .tree
+            .typeId()
+            .exists {
+              typeId =>
+                inheritances.exists(_.parentId == typeId)
+            }
+
         // collect the trees that belong to one of the inheritances and the ones that are not already processed
-        if (inheritances.exists(_.parentId == source.tree.typeId()) && !processedTrees.contains(source)) {
+        if (belongsToParent && !processedTrees.contains(source)) {
           processedTrees addOne source
 
           source.tree.ast match {
-            case Left(contract) =>
+            case contract: Ast.ContractWithState =>
               // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
               val parents =
                 collectInheritedParents(
@@ -484,7 +503,7 @@ object SourceCodeSearcher {
 
               parents :+ source
 
-            case Right(_) =>
+            case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
               ArraySeq.empty
           }
 
@@ -508,12 +527,21 @@ object SourceCodeSearcher {
       processedTrees: mutable.Set[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
     allSource flatMap {
       source =>
+        val belongs =
+          source.tree.ast match {
+            case state: Ast.ContractWithState =>
+              state.inheritances.exists(_.parentId == contract.ident)
+
+            case _: Ast.Struct | Ast.ConstantVarDef(_, _) | Ast.EnumDef(_, _) | _: Ast.AssetScript =>
+              false
+          }
+
         // collect the trees that belong to one of the inheritances and the ones that are not already processed
-        if (source.tree.ast.left.exists(_.inheritances.exists(_.parentId == contract.ident)) && !processedTrees.contains(source)) {
+        if (belongs && !processedTrees.contains(source)) {
           processedTrees addOne source
 
           source.tree.ast match {
-            case Left(contract) =>
+            case contract: Ast.ContractWithState =>
               // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
               val children =
                 collectImplementingChildren(
@@ -524,7 +552,7 @@ object SourceCodeSearcher {
 
               children :+ source
 
-            case Right(_) =>
+            case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
               ArraySeq.empty
           }
         } else {

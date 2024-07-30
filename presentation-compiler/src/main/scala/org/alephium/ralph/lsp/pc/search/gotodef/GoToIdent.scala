@@ -427,7 +427,7 @@ private[search] object GoToIdent {
       fieldSelector: Ast.EnumFieldSelector[_],
       sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.EnumField[_]]] =
     sourceCode.tree.ast match {
-      case Left(contract: Ast.Contract) =>
+      case contract: Ast.Contract =>
         contract
           .enums
           .iterator
@@ -435,7 +435,7 @@ private[search] object GoToIdent {
           .flatMap(_.fields.find(_.ident == fieldSelector.field))
           .map(SourceLocation.Node(_, sourceCode))
 
-      case Left(_: Ast.ContractInterface | _: Ast.TxScript) | Right(_: Ast.Struct) =>
+      case _: Ast.ContractInterface | _: Ast.TxScript | _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         Iterator.empty
     }
 
@@ -516,11 +516,11 @@ private[search] object GoToIdent {
       childNode: Node[Ast.Positioned, Ast.Positioned],
       sourceTree: Tree.Source): Option[Node[Ast.UniqueDef, Ast.Positioned]] =
     sourceTree.ast match {
-      case Left(_: Ast.Contract | _: Ast.ContractInterface | _: Ast.TxScript) =>
+      case _: Ast.Contract | _: Ast.ContractInterface | _: Ast.TxScript =>
         // Find the nearest function definition or use the template body as the scope.
         GoToFuncId.goToNearestFuncDef(childNode).orElse(Some(sourceTree.rootNode))
 
-      case Right(_: Ast.Struct) =>
+      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         None
     }
 
@@ -555,19 +555,13 @@ private[search] object GoToIdent {
       sourceCode: SourceLocation.Code): Seq[SourceLocation.Node[Ast.Argument]] = {
     val arguments =
       sourceCode.tree.ast match {
-        case Left(contract) =>
-          contract match {
-            case ast: Ast.TxScript =>
-              ast.templateVars
+        case ast: Ast.TxScript =>
+          ast.templateVars
 
-            case contract: Ast.Contract =>
-              contract.templateVars ++ contract.fields
+        case contract: Ast.Contract =>
+          contract.templateVars ++ contract.fields
 
-            case _: Ast.ContractInterface =>
-              Seq.empty
-          }
-
-        case Right(_) =>
+        case _: Ast.ContractInterface | _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
           Seq.empty
       }
 

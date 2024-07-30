@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.access.compiler
 import fastparse._
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.{SourceIndex, Ast, StatefulParser}
+import org.alephium.ralph.{SourceIndex, StatefulParser}
 
 import java.net.URI
 
@@ -162,34 +162,27 @@ object RalphParserExtension {
     val ralphParser =
       new StatefulParser(Some(fileURI))
 
-    P(Index ~~ (ralphParser.rawTxScript | ralphParser.rawContract | ralphParser.rawInterface | ralphParser.rawStruct) ~~ Index) flatMap {
+    P(
+      Index ~~
+        (ralphParser.rawTxScript |
+          ralphParser.rawContract |
+          ralphParser.rawInterface |
+          ralphParser.rawStruct |
+          ralphParser.constantVarDef |
+          ralphParser.rawEnumDef) ~~ Index
+    ) map {
       case (fromIndex, code, toIndex) =>
-        def toSourceTree(ast: Either[Ast.ContractWithState, Ast.Struct]) = {
-          val index =
-            SourceIndex(
-              index = fromIndex,
-              width = toIndex - fromIndex,
-              fileURI = Some(fileURI)
-            )
-
-          Tree.Source(
-            ast = ast,
-            index = index
+        val index =
+          SourceIndex(
+            index = fromIndex,
+            width = toIndex - fromIndex,
+            fileURI = Some(fileURI)
           )
-        }
 
-        code match {
-          case struct: Ast.Struct =>
-            Pass(toSourceTree(Right(struct)))
-
-          case contract: Ast.ContractWithState =>
-            Pass(toSourceTree(Left(contract)))
-
-          case _: Ast.AssetScript =>
-            // parser functions from ralphc also result in the `Ast.AssetScript` type.
-            // For whatever reason, if `AssetScript` is returned, report it as a parser failure since it is unexpected.
-            Fail("TxScript, Contract, Interface or Struct. Found AssetScript.")
-        }
+        Tree.Source(
+          ast = code,
+          index = index
+        )
     }
   }
 

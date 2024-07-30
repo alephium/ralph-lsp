@@ -225,7 +225,7 @@ private[search] object GoToFuncId extends StrictImplicitLogging {
                       .childTrees // at least one of the child trees should match this call's object type
                       .flatMap {
                         childCode =>
-                          if (thisCallTypes contains childCode.tree.typeId())
+                          if (childCode.tree.typeId() exists thisCallTypes.contains)
                             Some(SourceLocation.Node(call, code)) // Matched! Both the `funcId` and `typeId` are a match.
                           else
                             None

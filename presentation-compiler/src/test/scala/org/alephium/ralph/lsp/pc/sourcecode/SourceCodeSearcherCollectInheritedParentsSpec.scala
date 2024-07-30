@@ -16,12 +16,12 @@
 
 package org.alephium.ralph.lsp.pc.sourcecode
 
+import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.EitherValues._
 
 import scala.collection.immutable.ArraySeq
 
@@ -66,11 +66,11 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
 
       // first statement is Parent()
       val parent = parsed.ast.statements.head.asInstanceOf[Tree.Source]
-      parent.ast.merge.name shouldBe "Parent"
+      parent.ast.name shouldBe "Parent"
 
       // second statement is Child()
       val child = parsed.ast.statements.last.asInstanceOf[Tree.Source]
-      child.ast.merge.name shouldBe "Child"
+      child.ast.name shouldBe "Child"
 
       // expect parent to be returned
       val expected =
@@ -178,14 +178,14 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
 
       // the last statement in file1 is Child()
       val child = treesFromFile1.last
-      child.ast.merge.name shouldBe "Child"
+      child.ast.name shouldBe "Child"
 
       // expect parents to be returned excluding Parent3() and Child()
       val expectedTreesFromFile1 =
         treesFromFile1
           .filterNot {
             tree =>
-              tree.ast.merge.name == "Parent3" || tree.ast.merge.name == "Child"
+              tree.ast.name == "Parent3" || tree.ast.name == "Child"
           }
           .map {
             parent =>
@@ -223,7 +223,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
       actual should contain theSameElementsAs expectedTrees
 
       // Double check: Also assert the names of the parents.
-      val parentNames = actual.map(_.tree.ast.left.value.name)
+      val parentNames = actual.map(_.tree.ast.asInstanceOf[Ast.ContractWithState].name)
       // Note: Parent3 and Child are not included.
       parentNames should contain only ("Parent1", "Parent2", "Parent4", "Parent5", "Parent6")
 

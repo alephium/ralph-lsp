@@ -16,12 +16,12 @@
 
 package org.alephium.ralph.lsp.pc.sourcecode
 
+import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.EitherValues._
 
 import scala.collection.immutable.ArraySeq
 
@@ -72,11 +72,11 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
 
       // first statement is Parent()
       val parent = parsed.ast.statements.head.asInstanceOf[Tree.Source]
-      parent.ast.merge.name shouldBe "Parent"
+      parent.ast.name shouldBe "Parent"
 
       // second statement is Child()
       val child = parsed.ast.statements.last.asInstanceOf[Tree.Source]
-      child.ast.merge.name shouldBe "Child"
+      child.ast.name shouldBe "Child"
 
       // expect parent to be returned
       val expected =
@@ -178,14 +178,14 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
 
       // the first statement in file2 is Parent6()
       val parent = treesFromFile2.head
-      parent.ast.merge.name shouldBe "Parent6"
+      parent.ast.name shouldBe "Parent6"
 
       // expect children to be returned excluding Parent1() and Parent3()
       val expectedTreesFromFile1 =
         treesFromFile1
           .filterNot {
             tree =>
-              tree.ast.merge.name == "Parent1" || tree.ast.merge.name == "Parent3"
+              tree.ast.name == "Parent1" || tree.ast.name == "Parent3"
           }
           .map {
             child =>
@@ -199,7 +199,7 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
         treesFromFile2
           .filterNot {
             tree =>
-              tree.ast.merge.name == "Parent6"
+              tree.ast.name == "Parent6"
           }
           .map {
             child =>
@@ -226,7 +226,7 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
       actual should contain theSameElementsAs expectedTrees
 
       // Double check: Also assert the names of the parents.
-      val parentNames = actual.map(_.tree.ast.left.value.name)
+      val parentNames = actual.map(_.tree.ast.asInstanceOf[Ast.ContractWithState].name)
       // Note: Parent3 and Child are not included.
       parentNames should contain only ("Parent4", "Parent2", "Parent5", "Child")
 
