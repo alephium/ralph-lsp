@@ -60,7 +60,7 @@ object Tree {
     extends Tree
 
   case class Source(
-      ast: Ast.MultiContractDef,
+      ast: Ast.GlobalDefinition,
       index: SourceIndex)
     extends Statement {
     // TODO: Move the following to a cache like Caffeine.
@@ -70,7 +70,7 @@ object Tree {
      *
      * @note Lazily initialised as it can have concurrent access or no access at all.
      */
-    lazy val rootNode: Node[Ast.MultiContractDef, Ast.Positioned] =
+    lazy val rootNode: Node[Ast.GlobalDefinition, Ast.Positioned] =
       NodeBuilder.buildRootNode(ast)
 
     def typeId(): Option[Ast.TypeId] =
@@ -83,6 +83,9 @@ object Tree {
 
         case ast: Ast.EnumDef[_] =>
           Some(ast.id)
+
+        case asset: Ast.AssetScript =>
+          Some(asset.ident)
 
         case _: Ast.ConstantVarDef[_] =>
           None

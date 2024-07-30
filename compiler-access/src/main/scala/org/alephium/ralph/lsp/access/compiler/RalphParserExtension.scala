@@ -158,8 +158,19 @@ object RalphParserExtension {
    * This function is a clone of [[org.alephium.ralph.StatefulParser.multiContract]]
    * but without the requirement that it be the start of the file, so imports are allowed.
    */
-  private def sourceStatement[Unknown: P](fileURI: URI): P[Tree.Source] =
-    P(Index ~~ new StatefulParser(Some(fileURI)).globalDefinition ~~ Index) map {
+  private def sourceStatement[Unknown: P](fileURI: URI): P[Tree.Source] = {
+    val ralphParser =
+      new StatefulParser(Some(fileURI))
+
+    P(
+      Index ~~
+        (ralphParser.rawTxScript |
+          ralphParser.rawContract |
+          ralphParser.rawInterface |
+          ralphParser.rawStruct |
+          ralphParser.constantVarDef |
+          ralphParser.rawEnumDef) ~~ Index
+    ) map {
       case (fromIndex, code, toIndex) =>
         val index =
           SourceIndex(
@@ -173,6 +184,7 @@ object RalphParserExtension {
           index = index
         )
     }
+  }
 
   /**
    * A string literal. For example in the following code

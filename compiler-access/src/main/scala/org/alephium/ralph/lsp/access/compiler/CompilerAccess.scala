@@ -56,7 +56,7 @@ trait CompilerAccess {
    * @param workspaceErrorURI The [[URI]] to report errors to when `fileURI` is absent from compilation errors.
    */
   def compileContracts(
-      parsedSource: Seq[Ast.MultiContractDef],
+      parsedSource: Seq[Ast.GlobalDefinition],
       options: CompilerOptions,
       workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]
 

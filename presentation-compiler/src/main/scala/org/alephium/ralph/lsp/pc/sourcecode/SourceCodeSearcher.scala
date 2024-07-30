@@ -328,7 +328,7 @@ object SourceCodeSearcher {
                   )
               }
 
-          case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] =>
+          case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
             Iterator.empty
         }
     }
@@ -355,7 +355,7 @@ object SourceCodeSearcher {
               )
           }
 
-      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] =>
+      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         Iterator.empty
     }
 
@@ -435,7 +435,7 @@ object SourceCodeSearcher {
           processedTrees = mutable.Set(source)
         )
 
-      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] =>
+      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         ArraySeq.empty
     }
 
@@ -458,7 +458,7 @@ object SourceCodeSearcher {
           processedTrees = mutable.Set(source)
         )
 
-      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] =>
+      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         ArraySeq.empty
     }
 
@@ -503,7 +503,7 @@ object SourceCodeSearcher {
 
               parents :+ source
 
-            case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] =>
+            case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
               ArraySeq.empty
           }
 
@@ -532,7 +532,7 @@ object SourceCodeSearcher {
             case state: Ast.ContractWithState =>
               state.inheritances.exists(_.parentId == contract.ident)
 
-            case _: Ast.Struct | Ast.ConstantVarDef(_, _) | Ast.EnumDef(_, _) =>
+            case _: Ast.Struct | Ast.ConstantVarDef(_, _) | Ast.EnumDef(_, _) | _: Ast.AssetScript =>
               false
           }
 
@@ -552,7 +552,7 @@ object SourceCodeSearcher {
 
               children :+ source
 
-            case _: Ast.Struct | Ast.ConstantVarDef(_, _) | Ast.EnumDef(_, _) =>
+            case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
               ArraySeq.empty
           }
         } else {

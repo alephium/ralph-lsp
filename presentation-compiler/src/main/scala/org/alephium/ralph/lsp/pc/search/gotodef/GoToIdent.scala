@@ -435,7 +435,7 @@ private[search] object GoToIdent {
           .flatMap(_.fields.find(_.ident == fieldSelector.field))
           .map(SourceLocation.Node(_, sourceCode))
 
-      case _: Ast.ContractInterface | _: Ast.TxScript | _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] =>
+      case _: Ast.ContractInterface | _: Ast.TxScript | _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         Iterator.empty
     }
 
@@ -520,7 +520,7 @@ private[search] object GoToIdent {
         // Find the nearest function definition or use the template body as the scope.
         GoToFuncId.goToNearestFuncDef(childNode).orElse(Some(sourceTree.rootNode))
 
-      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] =>
+      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         None
     }
 
@@ -561,7 +561,7 @@ private[search] object GoToIdent {
         case contract: Ast.Contract =>
           contract.templateVars ++ contract.fields
 
-        case _: Ast.ContractInterface | _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] =>
+        case _: Ast.ContractInterface | _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
           Seq.empty
       }
 

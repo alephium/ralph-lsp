@@ -51,7 +51,7 @@ private object RalphCompilerAccess extends CompilerAccess {
 
   /** @inheritdoc */
   def compileContracts(
-      parsedSource: Seq[Ast.MultiContractDef],
+      parsedSource: Seq[Ast.GlobalDefinition],
       options: CompilerOptions,
       workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
     try {
@@ -71,6 +71,9 @@ private object RalphCompilerAccess extends CompilerAccess {
 
         case enumDef: Ast.EnumDef[_] =>
           otherDefinitions addOne enumDef.asInstanceOf[Ast.EnumDef[StatefulContext]]
+
+        case _: Ast.AssetScript =>
+        // Ignored until the multi-contract parser supports it
       }
 
       val globalState =

@@ -29,7 +29,7 @@ object NodeBuilder extends StrictLogging {
    * @param ast The [[Ast.ContractWithState]] instance
    * @return Root node of the tree.
    */
-  def buildRootNode(ast: Ast.MultiContractDef): Node[Ast.MultiContractDef, Ast.Positioned] = {
+  def buildRootNode(ast: Ast.GlobalDefinition): Node[Ast.GlobalDefinition, Ast.Positioned] = {
     // TODO: Are all these siblings? If they are not, they need to build a tree structure using source-index.
     val rootSiblings =
       ast match {
@@ -67,6 +67,10 @@ object NodeBuilder extends StrictLogging {
 
         case ast: Ast.ConstantVarDef[_] =>
           buildOne(ast)
+
+        case _: Ast.AssetScript =>
+          // AssetScript is not parsed. This will be supported in the future.
+          List.empty
       }
 
     // sort the sibling according to their source-index i.e. following their order of position in code.
