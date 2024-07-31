@@ -34,7 +34,7 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
     "input source-code has no inheritance" in {
       val parsed =
         TestSourceCode
-          .genParsed(
+          .genParsedOK(
             """
             |Contract MyContract() {
             |  fn function1() -> () {}
@@ -43,7 +43,6 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
           )
           .sample
           .get
-          .asInstanceOf[SourceCodeState.Parsed]
 
       val tree =
         parsed.ast.statements.head.asInstanceOf[Tree.Source]

@@ -56,7 +56,7 @@ class SourceCodeSearcherCollectParsedSpec extends AnyWordSpec with Matchers {
 
     val goodCodeParsed =
       TestSourceCode
-        .genParsed(
+        .genParsedOK(
           """
           |Contract MyContract() {
           |  fn function1() -> () {}
@@ -65,11 +65,10 @@ class SourceCodeSearcherCollectParsedSpec extends AnyWordSpec with Matchers {
         )
         .sample
         .get
-        .asInstanceOf[SourceCodeState.Parsed]
 
     val goodCodeCompiled =
       TestSourceCode
-        .genCompiled(
+        .genCompiledOK(
           """
           |Abstract Contract AbstractContract() { }
           |
@@ -80,7 +79,6 @@ class SourceCodeSearcherCollectParsedSpec extends AnyWordSpec with Matchers {
         )
         .sample
         .get
-        .asInstanceOf[SourceCodeState.Compiled]
 
     val errorCompilation =
       TestSourceCode
