@@ -89,7 +89,7 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
         // create and compile a dependency file
         val dependency =
           TestSourceCode
-            .genCompiled(
+            .genCompiledOK(
               fileURI = fileURI,
               code = """
                   |Contract ImportedContract(id: U256) {
@@ -99,7 +99,6 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
                   |}
                   |""".stripMargin
             )
-            .map(_.asInstanceOf[SourceCodeState.Compiled]) // No errors. Successfully compiled.
             .sample
             .get
 

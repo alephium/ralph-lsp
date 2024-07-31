@@ -14,12 +14,13 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.workspace.build
+package org.alephium.ralph.lsp.pc.workspace.build.config
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorEmptyBuildFile
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace}
@@ -58,7 +59,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          val expected = RalphcConfig.defaultParsedConfig.copy(artifactPath = Some("artifacts"), dependencyPath = Some("dependencies"))
+          val expected = RalphcConfigState.Parsed.default.copy(artifactPath = Some("artifacts"), dependencyPath = Some("dependencies"))
           val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
           actual shouldBe expected
@@ -80,7 +81,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          val expected = RalphcConfig.defaultParsedConfig.copy(artifactPath = Some("artifacts"), dependencyPath = None)
+          val expected = RalphcConfigState.Parsed.default.copy(artifactPath = Some("artifacts"), dependencyPath = None)
           val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
           actual shouldBe expected
@@ -104,7 +105,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          val expected = RalphcConfig.defaultParsedConfig.copy(artifactPath = Some("artifacts"))
+          val expected = RalphcConfigState.Parsed.default.copy(artifactPath = Some("artifacts"))
           val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
           actual shouldBe expected
@@ -125,7 +126,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          val expected = RalphcConfig.defaultParsedConfig
+          val expected = RalphcConfigState.Parsed.default
           val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
           actual shouldBe expected
@@ -160,8 +161,9 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         dependencyPath: Option[String],
         artifactPath: Option[String]) = {
       val config =
-        RalphcConfig
-          .defaultParsedConfig
+        RalphcConfigState
+          .Parsed
+          .default
           .copy(
             artifactPath = artifactPath,
             dependencyPath = dependencyPath
@@ -206,7 +208,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
 
       // Compiled config always contains absolute paths, unlike the parsed config
       val expectedCompiledConfig =
-        RalphcConfig.RalphcCompiledConfig(
+        RalphcConfigState.Compiled(
           isArtifactsPathDefinedInBuild = artifactPath.isDefined,
           config = Config(
             compilerOptions = config.compilerOptions,

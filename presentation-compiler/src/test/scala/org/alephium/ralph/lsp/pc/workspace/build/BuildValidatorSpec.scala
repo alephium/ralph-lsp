@@ -18,6 +18,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfig, RalphcConfigState}
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDependencyPathIsWithinContractPath
 import org.scalatest.OptionValues._
 import org.scalatest.TryValues.convertTryToSuccessOrFailure
@@ -32,8 +33,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
   "validate" should {
     "normalize path" in {
       val config1 =
-        RalphcConfig
-          .defaultParsedConfig
+        RalphcConfigState
+          .Parsed
+          .default
           .copy(
             contractPath = "contracts",
             artifactPath = Some("artifacts")
@@ -72,7 +74,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
     }
 
     "Fail: contractPath and dependencyPath" when {
-      def doTest(config: RalphcConfig.RalphcParsedConfig) = {
+      def doTest(config: RalphcConfigState.Parsed) = {
         // create a build file for the config
         val build =
           TestBuild
@@ -102,8 +104,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       "they are identical" in {
         val config =
-          RalphcConfig
-            .defaultParsedConfig
+          RalphcConfigState
+            .Parsed
+            .default
             .copy(
               contractPath = "contracts",
               artifactPath = Some("artifacts"),
@@ -115,8 +118,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       "contractPath is within dependencyPath" in {
         val config =
-          RalphcConfig
-            .defaultParsedConfig
+          RalphcConfigState
+            .Parsed
+            .default
             .copy(
               contractPath = "dependencies/contracts",
               artifactPath = Some("artifacts"),
@@ -128,8 +132,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       "dependencyPath is within contractPath" in {
         val config =
-          RalphcConfig
-            .defaultParsedConfig
+          RalphcConfigState
+            .Parsed
+            .default
             .copy(
               contractPath = "contracts",
               artifactPath = Some("artifacts"),
@@ -141,7 +146,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
     }
 
     "Pass: contractPath and dependencyPath" when {
-      def doTest(config: RalphcConfig.RalphcParsedConfig) = {
+      def doTest(config: RalphcConfigState.Parsed) = {
         // create a build file for the config
         val build =
           TestBuild
@@ -165,8 +170,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       "they are distinct" in {
         val config =
-          RalphcConfig
-            .defaultParsedConfig
+          RalphcConfigState
+            .Parsed
+            .default
             .copy(
               contractPath = "contracts",
               artifactPath = Some("artifacts"),
@@ -178,8 +184,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       "they are distinct within a root folder" in {
         val config =
-          RalphcConfig
-            .defaultParsedConfig
+          RalphcConfigState
+            .Parsed
+            .default
             .copy(
               contractPath = "my_code/contracts",
               artifactPath = Some("artifacts"),
