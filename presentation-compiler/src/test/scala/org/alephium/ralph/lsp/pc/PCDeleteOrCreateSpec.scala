@@ -59,8 +59,8 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
           TestBuild.genCompiledOK(
             config = TestRalphc.genRalphcParsedConfig(
               dependenciesFolderName = None,
-              contractsFolderName = RalphcConfig.defaultParsedConfig.contractPath,
-              artifactsFolderName = RalphcConfig.defaultParsedConfig.artifactPath
+              contractsFolderName = RalphcConfigState.Parsed.default.contractPath,
+              artifactsFolderName = RalphcConfigState.Parsed.default.artifactPath
             )
           )
 
@@ -112,15 +112,15 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                           .ralphc
                           .Config(
                             // compiled build file contains configurations from the default build coming from node
-                            compilerOptions = RalphcConfig.defaultParsedConfig.compilerOptions,
-                            contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.contractPath),
-                            artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.contractPath)
+                            compilerOptions = RalphcConfigState.Parsed.default.compilerOptions,
+                            contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfigState.Parsed.default.contractPath),
+                            artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfigState.Parsed.default.contractPath)
                           )
                       ),
                       parsed = BuildState.Parsed(
                         build.buildURI,
-                        RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = 2), // Default build file is written,
-                        RalphcConfig.defaultParsedConfig
+                        RalphcConfig.write(RalphcConfigState.Parsed.default, indent = 2), // Default build file is written,
+                        RalphcConfigState.Parsed.default
                       )
                     ),
                     sourceCode = ArraySeq.empty // there is no source-code in this workspace
@@ -153,8 +153,8 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
               config = TestRalphc
                 .genRalphcParsedConfig(
                   dependenciesFolderName = None,
-                  contractsFolderName = RalphcConfig.defaultParsedConfig.contractPath,
-                  artifactsFolderName = RalphcConfig.defaultParsedConfig.artifactPath
+                  contractsFolderName = RalphcConfigState.Parsed.default.contractPath,
+                  artifactsFolderName = RalphcConfigState.Parsed.default.artifactPath
                 )
             )
 
@@ -219,15 +219,15 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                     .ralphc
                     .Config(
                       // compiled build file contains configurations from the default build coming from node
-                      compilerOptions = RalphcConfig.defaultParsedConfig.compilerOptions,
-                      contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.contractPath),
-                      artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.contractPath)
+                      compilerOptions = RalphcConfigState.Parsed.default.compilerOptions,
+                      contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfigState.Parsed.default.contractPath),
+                      artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfigState.Parsed.default.contractPath)
                     )
                 ),
                 BuildState.Parsed(
                   buildURI = build.buildURI,
-                  code = RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = 2), // Default build file is written
-                  config = RalphcConfig.defaultParsedConfig
+                  code = RalphcConfig.write(RalphcConfigState.Parsed.default, indent = 2), // Default build file is written
+                  config = RalphcConfigState.Parsed.default
                 )
               )
 

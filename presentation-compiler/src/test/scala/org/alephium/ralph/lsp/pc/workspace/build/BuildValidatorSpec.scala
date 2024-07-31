@@ -33,8 +33,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
   "validate" should {
     "normalize path" in {
       val config1 =
-        RalphcConfig
-          .defaultParsedConfig
+        RalphcConfigState
+          .Parsed
+          .default
           .copy(
             contractPath = "contracts",
             artifactPath = Some("artifacts")
@@ -103,8 +104,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       "they are identical" in {
         val config =
-          RalphcConfig
-            .defaultParsedConfig
+          RalphcConfigState
+            .Parsed
+            .default
             .copy(
               contractPath = "contracts",
               artifactPath = Some("artifacts"),
@@ -116,8 +118,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       "contractPath is within dependencyPath" in {
         val config =
-          RalphcConfig
-            .defaultParsedConfig
+          RalphcConfigState
+            .Parsed
+            .default
             .copy(
               contractPath = "dependencies/contracts",
               artifactPath = Some("artifacts"),
@@ -129,8 +132,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       "dependencyPath is within contractPath" in {
         val config =
-          RalphcConfig
-            .defaultParsedConfig
+          RalphcConfigState
+            .Parsed
+            .default
             .copy(
               contractPath = "contracts",
               artifactPath = Some("artifacts"),
@@ -166,8 +170,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       "they are distinct" in {
         val config =
-          RalphcConfig
-            .defaultParsedConfig
+          RalphcConfigState
+            .Parsed
+            .default
             .copy(
               contractPath = "contracts",
               artifactPath = Some("artifacts"),
@@ -179,8 +184,9 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
 
       "they are distinct within a root folder" in {
         val config =
-          RalphcConfig
-            .defaultParsedConfig
+          RalphcConfigState
+            .Parsed
+            .default
             .copy(
               contractPath = "my_code/contracts",
               artifactPath = Some("artifacts"),

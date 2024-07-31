@@ -59,7 +59,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          val expected = RalphcConfig.defaultParsedConfig.copy(artifactPath = Some("artifacts"), dependencyPath = Some("dependencies"))
+          val expected = RalphcConfigState.Parsed.default.copy(artifactPath = Some("artifacts"), dependencyPath = Some("dependencies"))
           val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
           actual shouldBe expected
@@ -81,7 +81,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          val expected = RalphcConfig.defaultParsedConfig.copy(artifactPath = Some("artifacts"), dependencyPath = None)
+          val expected = RalphcConfigState.Parsed.default.copy(artifactPath = Some("artifacts"), dependencyPath = None)
           val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
           actual shouldBe expected
@@ -105,7 +105,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          val expected = RalphcConfig.defaultParsedConfig.copy(artifactPath = Some("artifacts"))
+          val expected = RalphcConfigState.Parsed.default.copy(artifactPath = Some("artifacts"))
           val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
           actual shouldBe expected
@@ -126,7 +126,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          val expected = RalphcConfig.defaultParsedConfig
+          val expected = RalphcConfigState.Parsed.default
           val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
           actual shouldBe expected
@@ -161,8 +161,9 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         dependencyPath: Option[String],
         artifactPath: Option[String]) = {
       val config =
-        RalphcConfig
-          .defaultParsedConfig
+        RalphcConfigState
+          .Parsed
+          .default
           .copy(
             artifactPath = artifactPath,
             dependencyPath = dependencyPath

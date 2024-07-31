@@ -34,6 +34,19 @@ import java.nio.file.Path
  */
 object RalphcConfigState {
 
+  object Parsed {
+
+    /** Default parsed config */
+    val default: RalphcConfigState.Parsed =
+      RalphcConfigState.Parsed(
+        compilerOptions = CompilerOptions.Default,
+        contractPath = "contracts",
+        artifactPath = None,
+        dependencyPath = None
+      )
+
+  }
+
   /**
    * An instance indicating a parsed Ralphc configuration.
    */

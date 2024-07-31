@@ -21,7 +21,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyDB, Dependency}
 
 import java.net.URI
@@ -362,7 +362,7 @@ object Build {
     )(implicit file: FileAccess): Option[BuildState.Errored] =
     file.write(
       fileURI = buildURI,
-      string = RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = 2),
+      string = RalphcConfig.write(RalphcConfigState.Parsed.default, indent = 2),
       index = SourceIndexExtra.zero(buildURI)
     ) match {
       case Left(error) =>

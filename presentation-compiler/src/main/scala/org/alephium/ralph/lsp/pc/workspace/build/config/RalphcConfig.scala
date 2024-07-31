@@ -16,7 +16,6 @@
 
 package org.alephium.ralph.lsp.pc.workspace.build.config
 
-import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
 import org.alephium.ralph.lsp.pc.workspace.build.Build
@@ -28,15 +27,6 @@ import java.nio.file.{Path, Files}
 import scala.util.Try
 
 object RalphcConfig {
-
-  /** Default parsed config */
-  val defaultParsedConfig: RalphcConfigState.Parsed =
-    RalphcConfigState.Parsed(
-      compilerOptions = CompilerOptions.Default,
-      contractPath = "contracts",
-      artifactPath = None,
-      dependencyPath = None
-    )
 
   def parse(
       buildURI: URI,
