@@ -22,7 +22,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
-import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralph.lsp.pc.workspace.build.{TestRalphc, BuildState, TestBuild}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace, WorkspaceFileEvent}
@@ -105,7 +105,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                     build = BuildState.Compiled(
                       dependencies = build.dependencies,               // default dependencies are written
                       dependencyPath = Dependency.defaultPath().value, // Default dependency build path i.e. .ralph-lsp is used
-                      config = RalphcConfig.RalphcCompiledConfig(
+                      config = RalphcConfigState.Compiled(
                         isArtifactsPathDefinedInBuild = false, // the default build config is used above, so artifactsPath is not defined
                         config = org                           // compiled build file has full paths defined
                           .alephium
@@ -212,7 +212,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
               BuildState.Compiled(
                 dependencies = build.dependencies,               // default dependencies are written
                 dependencyPath = Dependency.defaultPath().value, // Default dependency build path i.e. .ralph-lsp is used
-                config = RalphcConfig.RalphcCompiledConfig(
+                config = RalphcConfigState.Compiled(
                   isArtifactsPathDefinedInBuild = false, // the default build config is used above, so artifactsPath is not defined
                   config = org                           // compiled build file has full paths defined
                     .alephium

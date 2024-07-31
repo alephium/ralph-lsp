@@ -207,7 +207,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
 
       // Compiled config always contains absolute paths, unlike the parsed config
       val expectedCompiledConfig =
-        RalphcConfig.RalphcCompiledConfig(
+        RalphcConfigState.Compiled(
           isArtifactsPathDefinedInBuild = artifactPath.isDefined,
           config = Config(
             compilerOptions = config.compilerOptions,

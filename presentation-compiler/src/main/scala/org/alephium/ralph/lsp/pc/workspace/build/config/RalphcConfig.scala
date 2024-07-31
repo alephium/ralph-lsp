@@ -27,71 +27,11 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Path, Files}
 import scala.util.Try
 
-/**
- * Within the context of presentation-compiler:
- *  - Type [[RalphcCompiledConfig]] i.e. a wrapper for type [[org.alephium.ralphc.Config]] serves as the compiled ralphc-config.
- *  - Type [[RalphcParsedConfig]] serves as the parsed ralphc-config.
- *
- * [[org.alephium.ralphc.Config]] is not accessed directly during parsing because:
- *  - It's `contractPath` and `artifactPath` are of type `Path` which lose the original
- *    user's input String value after converting it to `Path` type, which in-case of errors
- *    displays incorrect error highlighting.
- *  - Issue #247 requires `artifactPath` to be optional, but in [[org.alephium.ralphc.Config]] it's non-optional.
- */
 object RalphcConfig {
 
-  /**
-   * An instance indicating a compiled Ralphc configuration.
-   *
-   * Access to [[org.alephium.ralphc.Config]] is private to prevent direct access
-   * to [[org.alephium.ralphc.Config.artifactPath]], which is non-optional.
-   * Issue <a href="https://github.com/alephium/ralph-lsp/issues/247">#247</a>
-   * requires it to be optional in the LSP.
-   *
-   * TODO: The instance of [[org.alephium.ralphc.Config]] is not needed by the compiler.
-   *       The compiler only requires [[CompilerOptions]].
-   *       Remove the usage of [[org.alephium.ralphc.Config]].
-   *
-   * @param isArtifactsPathDefinedInBuild Indicates if the artifactsPath was defined in the build.
-   * @param config                        Private compiler configuration.
-   */
-  case class RalphcCompiledConfig(
-      isArtifactsPathDefinedInBuild: Boolean,
-      private val config: org.alephium.ralphc.Config) {
-
-    def contractPath: Path =
-      config.contractPath
-
-    def contractURI: URI =
-      contractPath.toUri
-
-    /** No direct access to [[config.artifactPath]] in LSP */
-    def artifactPath: Option[Path] =
-      if (isArtifactsPathDefinedInBuild)
-        Some(config.artifactPath)
-      else
-        None
-
-    def artifactURI: Option[URI] =
-      artifactPath.map(_.toUri)
-
-    def compilerOptions: CompilerOptions =
-      config.compilerOptions
-
-  }
-
-  /**
-   * An instance indicating a parsed Ralphc configuration.
-   */
-  case class RalphcParsedConfig(
-      compilerOptions: CompilerOptions,
-      contractPath: String,
-      artifactPath: Option[String] = None,
-      dependencyPath: Option[String] = None)
-
   /** Default parsed config */
-  val defaultParsedConfig: RalphcParsedConfig =
-    RalphcParsedConfig(
+  val defaultParsedConfig: RalphcConfigState.Parsed =
+    RalphcConfigState.Parsed(
       compilerOptions = CompilerOptions.Default,
       contractPath = "contracts",
       artifactPath = None,
@@ -100,12 +40,12 @@ object RalphcConfig {
 
   def parse(
       buildURI: URI,
-      json: String): Either[CompilerMessage.AnyError, RalphcParsedConfig] =
+      json: String): Either[CompilerMessage.AnyError, RalphcConfigState.Parsed] =
     if (json.isBlank)
       Left(ErrorEmptyBuildFile(buildURI))
     else
       try
-        Right(upickle.default.read[RalphcParsedConfig](json))
+        Right(upickle.default.read[RalphcConfigState.Parsed](json))
       catch {
         case abortError: upickle.core.AbortException =>
           // Exact location of the error is known so build a FormattableError
@@ -142,9 +82,9 @@ object RalphcConfig {
 
   /** Write a parsed config */
   def write(
-      config: RalphcParsedConfig,
+      config: RalphcConfigState.Parsed,
       indent: Int = -1): String =
-    upickle.default.write[RalphcParsedConfig](config, indent = indent)
+    upickle.default.write[RalphcConfigState.Parsed](config, indent = indent)
 
   /**
    * Creates a config file.
@@ -158,7 +98,7 @@ object RalphcConfig {
    */
   def persist(
       workspacePath: Path,
-      config: RalphcParsedConfig): Try[Path] =
+      config: RalphcConfigState.Parsed): Try[Path] =
     Try {
       val bytes         = RalphcConfig.write(config).getBytes(StandardCharsets.UTF_8)
       val buildFilePath = Build.toBuildFile(workspacePath)

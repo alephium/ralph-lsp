@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorEmptyErrorsOnDownload
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.{SourceIndex, CompilerOptions}
@@ -100,7 +100,7 @@ object DependencyDownloader {
     // Create a config with the workspace directory as the only directory.
     // Sets`contractPath` as the workspace directory.
     val parsedConfig =
-      RalphcConfig.RalphcParsedConfig(
+      RalphcConfigState.Parsed(
         compilerOptions = CompilerOptions.Default,
         contractPath = workspaceDir.toString,
         artifactPath = None
@@ -118,7 +118,7 @@ object DependencyDownloader {
 
     // a compiled config
     val compiledConfig =
-      RalphcConfig.RalphcCompiledConfig(
+      RalphcConfigState.Compiled(
         isArtifactsPathDefinedInBuild = parsedConfig.artifactPath.isDefined,
         config = org
           .alephium

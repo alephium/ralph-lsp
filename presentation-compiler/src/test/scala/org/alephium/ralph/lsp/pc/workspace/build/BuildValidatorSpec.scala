@@ -18,7 +18,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfig, RalphcConfigState}
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDependencyPathIsWithinContractPath
 import org.scalatest.OptionValues._
 import org.scalatest.TryValues.convertTryToSuccessOrFailure
@@ -73,7 +73,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
     }
 
     "Fail: contractPath and dependencyPath" when {
-      def doTest(config: RalphcConfig.RalphcParsedConfig) = {
+      def doTest(config: RalphcConfigState.Parsed) = {
         // create a build file for the config
         val build =
           TestBuild
@@ -142,7 +142,7 @@ class BuildValidatorSpec extends AnyWordSpec with Matchers {
     }
 
     "Pass: contractPath and dependencyPath" when {
-      def doTest(config: RalphcConfig.RalphcParsedConfig) = {
+      def doTest(config: RalphcConfigState.Parsed) = {
         // create a build file for the config
         val build =
           TestBuild
