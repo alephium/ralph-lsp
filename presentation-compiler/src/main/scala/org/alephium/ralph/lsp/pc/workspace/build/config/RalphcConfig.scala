@@ -14,11 +14,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.workspace.build
+package org.alephium.ralph.lsp.pc.workspace.build.config
 
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.lsp.pc.util.PicklerUtil._
+import org.alephium.ralph.lsp.pc.workspace.build.Build
 import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorInvalidBuildSyntax, ErrorEmptyBuildFile}
 
 import java.net.URI

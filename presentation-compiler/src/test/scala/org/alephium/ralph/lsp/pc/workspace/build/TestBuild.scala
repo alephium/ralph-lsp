@@ -22,8 +22,9 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
-import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcParsedConfig
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig.RalphcParsedConfig
 import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc.genRalphcParsedConfig
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers._

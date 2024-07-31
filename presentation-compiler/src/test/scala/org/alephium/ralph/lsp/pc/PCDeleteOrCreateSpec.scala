@@ -22,8 +22,9 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, TestRalphc, BuildState, TestBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.{TestRalphc, BuildState, TestBuild}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace, WorkspaceFileEvent}
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory

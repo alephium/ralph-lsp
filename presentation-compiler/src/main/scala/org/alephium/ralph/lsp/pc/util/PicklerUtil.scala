@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.pc.util
 
 import org.alephium.ralph.CompilerOptions
-import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcParsedConfig
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig.RalphcParsedConfig
 import upickle.default._
 
 import java.nio.file.{Path, Paths}

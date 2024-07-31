@@ -14,12 +14,13 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.workspace.build
+package org.alephium.ralph.lsp.pc.workspace.build.config
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorEmptyBuildFile
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace}

@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.{RalphcCompiledConfig, RalphcParsedConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig.{RalphcCompiledConfig, RalphcParsedConfig}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 import java.net.URI

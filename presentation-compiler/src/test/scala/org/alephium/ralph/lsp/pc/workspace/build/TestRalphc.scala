@@ -18,7 +18,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.TestCommon.genName
-import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcParsedConfig
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig.RalphcParsedConfig
 import org.scalacheck.{Gen, Arbitrary}
 
 /** Ralph compiler related test functions */

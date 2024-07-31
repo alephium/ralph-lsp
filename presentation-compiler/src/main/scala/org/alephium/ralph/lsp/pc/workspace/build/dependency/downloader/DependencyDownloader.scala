@@ -19,8 +19,9 @@ package org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorEmptyErrorsOnDownload
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, Build, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.{SourceIndex, CompilerOptions}
 
 import java.nio.file.Path

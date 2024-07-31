@@ -18,6 +18,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDependencyPathIsWithinContractPath
 import org.scalatest.OptionValues._
 import org.scalatest.TryValues.convertTryToSuccessOrFailure

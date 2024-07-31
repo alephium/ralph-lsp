@@ -20,7 +20,8 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, Build, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.scalatest.matchers.should.Matchers._
 
 import java.nio.file.Paths
