@@ -157,36 +157,55 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
         )
       }
 
-      "global constant" in {
-        goTo(
-          """
-            |const MyCons@@tant = 0
-            |
-            |Abstract Contract Parent() {
-            |
-            |  fn function0() -> () {
-            |    let my_constant2 = >>MyConstant<<
-            |    let my_constant3 = MyConstant_B
-            |  }
-            |}
-            |
-            |Contract Parent1() extends Parent() {
-            |
-            |  pub fn function1() -> () {
-            |    let my_constant2 = >>MyConstant<<
-            |    let my_constant3 = MyConstant_B
-            |  }
-            |}
-            |
-            |Contract Child() extends Parent1() {
-            |
-            |  pub fn function2() -> () {
-            |    let my_constant2 = >>MyConstant<<
-            |    let my_constant3 = MyConstant_B
-            |  }
-            |}
-            |""".stripMargin
-        )
+      "global constant is defined" when {
+        def doTest(
+            before: String,
+            after: String) =
+          goTo(
+            s"""
+              |$before
+              |
+              |Abstract Contract Parent() {
+              |
+              |  fn function0() -> () {
+              |    let my_constant2 = >>MyConstant<<
+              |    let my_constant3 = MyConstant_B
+              |  }
+              |}
+              |
+              |Contract Parent1() extends Parent() {
+              |
+              |  pub fn function1() -> () {
+              |    let my_constant2 = >>MyConstant<<
+              |    let my_constant3 = MyConstant_B
+              |  }
+              |}
+              |
+              |Contract Child() extends Parent1() {
+              |
+              |  pub fn function2() -> () {
+              |    let my_constant2 = >>MyConstant<<
+              |    let my_constant3 = MyConstant_B
+              |  }
+              |}
+              |
+              |$after
+              |""".stripMargin
+          )
+
+        "before its usage" in {
+          doTest(
+            before = "const MyCons@@tant = 0",
+            after = "const ANOTHER = 2"
+          )
+        }
+
+        "after its usage" in {
+          doTest(
+            before = "const ANOTHER = 2",
+            after = "const MyCons@@tant = 0"
+          )
+        }
       }
     }
   }
