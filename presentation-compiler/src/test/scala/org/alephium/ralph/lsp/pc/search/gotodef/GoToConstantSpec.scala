@@ -121,6 +121,36 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "constants with expression" in {
+      goTo {
+        """
+          |const ONE = 1
+          |const TWO = 2
+          |>>const THREE = ONE + TWO<<
+          |
+          |Contract Test() {
+          |  pub fn main() -> () {
+          |     let three = THRE@@E
+          |  }
+          |}
+          |""".stripMargin
+      }
+    }
+
+    "constants is defined after its usage" in {
+      goTo {
+        """
+          |Contract Test() {
+          |  pub fn main() -> () {
+          |     let one = ONE@@
+          |  }
+          |}
+          |
+          |>>const ONE = 1<<
+          |""".stripMargin
+      }
+    }
   }
 
 }
