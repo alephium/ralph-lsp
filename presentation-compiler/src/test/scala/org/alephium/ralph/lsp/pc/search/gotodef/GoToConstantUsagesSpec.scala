@@ -24,86 +24,170 @@ import org.scalatest.wordspec.AnyWordSpec
 class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
-    "constant has not usage" in {
-      goTo(
-        """
-          |Contract GoToConstant() {
-          |
-          |  const MyCons@@tant = 0
-          |
-          |  pub fn function() -> () {
-          |
-          |  }
-          |}
-          |""".stripMargin
-      )
+    "constant has not usage" when {
+      "local" in {
+        goTo(
+          """
+            |Contract GoToConstant() {
+            |
+            |  const MyCons@@tant = 0
+            |
+            |  pub fn function() -> () {
+            |
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "global" in {
+        goTo(
+          """
+            |const MyCons@@tant = 0
+            |
+            |Contract GoToConstant() {
+            |
+            |  pub fn function() -> () {
+            |
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
     }
   }
 
   "return non-empty" when {
     "constant has multiple usages" when {
-      def doTest(contractName: String): Assertion =
-        goTo(
-          s"""
-             |Contract $contractName() {
-             |
-             |  const MyCons@@tant = 0
-             |  const MyConstant_B = 1
-             |
-             |  pub fn function() -> () {
-             |    let my_constant = >>MyConstant<<
-             |    let my_constant2 = >>MyConstant<<
-             |    let my_constant3 = MyConstant_B
-             |    for (let mut index = 0; index <= 4; index = index + 1) {
-             |      let my_constant4 = >>MyConstant<<
-             |      let my_constant5 = MyConstant_B
-             |    }
-             |  }
-             |}
-             |""".stripMargin
-        )
+      "local constants" when {
+        def doTest(contractName: String): Assertion =
+          goTo(
+            s"""
+               |Contract $contractName() {
+               |
+               |  const MyCons@@tant = 0
+               |  const MyConstant_B = 1
+               |
+               |  pub fn function() -> () {
+               |    let my_constant = >>MyConstant<<
+               |    let my_constant2 = >>MyConstant<<
+               |    let my_constant3 = MyConstant_B
+               |    for (let mut index = 0; index <= 4; index = index + 1) {
+               |      let my_constant4 = >>MyConstant<<
+               |      let my_constant5 = MyConstant_B
+               |    }
+               |  }
+               |}
+               |""".stripMargin
+          )
 
-      "constant and contract have the same ID" in {
-        // the constant name is also "MyConstant"
-        doTest(contractName = "MyConstant")
+        "constant and contract have the same ID" in {
+          // the constant name is also "MyConstant"
+          doTest(contractName = "MyConstant")
+        }
+
+        "constant and contract have unique IDs" in {
+          doTest(contractName = "MyContract")
+        }
       }
 
-      "constant and contract have unique IDs" in {
-        doTest(contractName = "MyContract")
-      }
+      "global constants" when {
+        def doTest(contractName: String): Assertion =
+          goTo(
+            s"""
+               |const MyCons@@tant = 0
+               |const MyConstant_B = 1
+               |
+               |Contract $contractName() {
+               |
+               |  pub fn function() -> () {
+               |    let my_constant = >>MyConstant<<
+               |    let my_constant2 = >>MyConstant<<
+               |    let my_constant3 = MyConstant_B
+               |    for (let mut index = 0; index <= 4; index = index + 1) {
+               |      let my_constant4 = >>MyConstant<<
+               |      let my_constant5 = MyConstant_B
+               |    }
+               |  }
+               |}
+               |""".stripMargin
+          )
 
+        "constant and contract have the same ID" in {
+          // the constant name is also "MyConstant"
+          doTest(contractName = "MyConstant")
+        }
+
+        "constant and contract have unique IDs" in {
+          doTest(contractName = "MyContract")
+        }
+      }
     }
 
-    "there is inheritance" in {
-      goTo(
-        """
-          |Abstract Contract Parent() {
-          |
-          |  const MyCons@@tant = 0
-          |
-          |  fn function0() -> () {
-          |    let my_constant2 = >>MyConstant<<
-          |    let my_constant3 = MyConstant_B
-          |  }
-          |}
-          |
-          |Contract Parent1() extends Parent() {
-          |
-          |  pub fn function1() -> () {
-          |    let my_constant2 = >>MyConstant<<
-          |    let my_constant3 = MyConstant_B
-          |  }
-          |}
-          |
-          |Contract Child() extends Parent1() {
-          |
-          |  pub fn function2() -> () {
-          |    let my_constant2 = >>MyConstant<<
-          |    let my_constant3 = MyConstant_B
-          |  }
-          |}
-          |""".stripMargin
-      )
+    "there is inheritance" when {
+      "local constant" in {
+        goTo(
+          """
+            |Abstract Contract Parent() {
+            |
+            |  const MyCons@@tant = 0
+            |
+            |  fn function0() -> () {
+            |    let my_constant2 = >>MyConstant<<
+            |    let my_constant3 = MyConstant_B
+            |  }
+            |}
+            |
+            |Contract Parent1() extends Parent() {
+            |
+            |  pub fn function1() -> () {
+            |    let my_constant2 = >>MyConstant<<
+            |    let my_constant3 = MyConstant_B
+            |  }
+            |}
+            |
+            |Contract Child() extends Parent1() {
+            |
+            |  pub fn function2() -> () {
+            |    let my_constant2 = >>MyConstant<<
+            |    let my_constant3 = MyConstant_B
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "global constant" in {
+        goTo(
+          """
+            |const MyCons@@tant = 0
+            |
+            |Abstract Contract Parent() {
+            |
+            |  fn function0() -> () {
+            |    let my_constant2 = >>MyConstant<<
+            |    let my_constant3 = MyConstant_B
+            |  }
+            |}
+            |
+            |Contract Parent1() extends Parent() {
+            |
+            |  pub fn function1() -> () {
+            |    let my_constant2 = >>MyConstant<<
+            |    let my_constant3 = MyConstant_B
+            |  }
+            |}
+            |
+            |Contract Child() extends Parent1() {
+            |
+            |  pub fn function2() -> () {
+            |    let my_constant2 = >>MyConstant<<
+            |    let my_constant3 = MyConstant_B
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
     }
   }
 
