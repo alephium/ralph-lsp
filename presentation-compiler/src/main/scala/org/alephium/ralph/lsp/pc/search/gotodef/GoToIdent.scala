@@ -138,19 +138,11 @@ private[search] object GoToIdent {
               .flatten
 
           case Node(constantDef: Ast.ConstantVarDef[_], _) if constantDef.ident == identNode.data =>
-            // They selected a constant definition. Take 'em there!
-            WorkspaceSearcher
-              .collectImplementingChildren(sourceCode, workspace)
-              .childTrees
-              .iterator
-              .flatMap {
-                sourceCode =>
-                  goToVariableUsages(
-                    ident = constantDef.ident,
-                    from = sourceCode.tree.rootNode,
-                    sourceCode = sourceCode
-                  )
-              }
+            goToConstantUsage(
+              constantDef = constantDef,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case namedVarNode @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == identNode.data =>
             // User selected a named variable. Find its usages.
@@ -677,5 +669,39 @@ private[search] object GoToIdent {
       case node @ Node(ast: Ast.Argument, _) if ast.ident == ident && node.parent.exists(_.data == sourceCode.tree.rootNode.data) =>
         SourceLocation.Node(ast, sourceCode)
     }
+
+  /**
+   * Navigate to local and global constant usages.
+   *
+   * @param constantDef The constant definition to search usages for.
+   * @param sourceCode  The source tree where this search is executed.
+   * @param workspace   The workspace where this search is executed and where all source trees exist.
+   * @return An iterator over identity nodes representing the constant usage locations.
+   */
+  private def goToConstantUsage(
+      constantDef: Ast.ConstantVarDef[_],
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] = {
+    val children =
+      if (sourceCode.tree.ast == constantDef)
+        // Is a global constant, fetch all workspace trees.
+        WorkspaceSearcher.collectAllTrees(workspace)
+      else
+        // Is a local constant, fetch all trees within the scope of inheritance.
+        WorkspaceSearcher
+          .collectImplementingChildren(sourceCode, workspace)
+          .childTrees
+
+    children
+      .iterator
+      .flatMap {
+        sourceCode =>
+          goToVariableUsages(
+            ident = constantDef.ident,
+            from = sourceCode.tree.rootNode,
+            sourceCode = sourceCode
+          )
+      }
+  }
 
 }

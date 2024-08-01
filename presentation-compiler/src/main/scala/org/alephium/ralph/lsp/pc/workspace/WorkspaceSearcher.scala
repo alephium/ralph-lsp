@@ -174,6 +174,18 @@ object WorkspaceSearcher {
   }
 
   /**
+   * Collects all in-scope workspace source trees.
+   *
+   * @param workspace The workspace to collect source trees for.
+   * @return Parsed source files in scope.
+   */
+  def collectAllTrees(workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.Code] =
+    collectTrees(
+      workspace = workspace,
+      includeNonImportedCode = false
+    )
+
+  /**
    * Collects all parsed source files, excluding `std` dependency source files
    * that are not imported.
    *
