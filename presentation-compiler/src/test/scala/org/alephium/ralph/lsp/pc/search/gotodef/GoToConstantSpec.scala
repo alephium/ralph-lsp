@@ -41,6 +41,8 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     "constant exists" in {
       goTo(
         """
+          |>>const MyConstant = 1<<
+          |
           |Abstract Contract Parent() {
           |  >>const MyConstant = 1<<
           |}
@@ -60,6 +62,11 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     "duplicate constants exists" in {
       goTo(
         """
+          |>>const MyConstant = 0<<
+          |>>const MyConstant = 1<<
+          |>>const MyConstant = 2<<
+          |>>const MyConstant = 3<<
+          |
           |Abstract Contract Parent() {
           |  >>const MyConstant = 2<<
           |  >>const MyConstant = 3<<
@@ -91,6 +98,21 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
           |
           |  >>const MyConstant = 0<<
           |  >>const MyConstant = 1<<
+          |
+          |  pub fn function() -> () {
+          |    let my_constant = MyCo@@nstant
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "only a global constant exists" in {
+      goTo(
+        """
+          |>>const MyConstant = 0<<
+          |
+          |Contract Test() {
           |
           |  pub fn function() -> () {
           |    let my_constant = MyCo@@nstant

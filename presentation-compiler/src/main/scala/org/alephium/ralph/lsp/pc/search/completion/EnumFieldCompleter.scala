@@ -38,6 +38,7 @@ object EnumFieldCompleter {
       workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.EnumFields] =
     WorkspaceSearcher
       .collectInheritedParents(sourceCode, workspace)
+      .parentTrees
       .iterator
       .flatMap {
         sourceCode =>

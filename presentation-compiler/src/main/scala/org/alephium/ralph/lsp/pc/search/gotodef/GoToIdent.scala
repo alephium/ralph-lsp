@@ -22,6 +22,8 @@ import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
+import scala.collection.immutable.ArraySeq
+
 private[search] object GoToIdent {
 
   /**
@@ -59,6 +61,7 @@ private[search] object GoToIdent {
             // They selected an enum field. Take 'em there!
             WorkspaceSearcher
               .collectInheritedParents(sourceCode, workspace)
+              .parentTrees
               .iterator
               .flatMap(goToEnumField(fieldSelector, _))
 
@@ -327,11 +330,20 @@ private[search] object GoToIdent {
       identNode: Node[Ast.Ident, Ast.Positioned],
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] = {
+    val inheritedParents =
+      WorkspaceSearcher.collectInheritedParents(sourceCode, workspace)
+
     val argumentsAndConstants =
-      WorkspaceSearcher
-        .collectInheritedParents(sourceCode, workspace)
+      inheritedParents
+        .parentTrees
         .iterator
         .flatMap(goToTemplateDefinitionsAndArguments(identNode.data, _))
+
+    val globalConstants =
+      goToGlobalConstants(
+        ident = identNode.data,
+        trees = inheritedParents.allTrees
+      )
 
     val functionArguments =
       goToNearestFunctionArguments(identNode)
@@ -343,8 +355,29 @@ private[search] object GoToIdent {
         sourceCode = sourceCode
       )
 
-    argumentsAndConstants ++ functionArguments ++ localVariables
+    argumentsAndConstants ++ globalConstants ++ functionArguments ++ localVariables
   }
+
+  /**
+   * Navigate to global constants.
+   *
+   * @param ident The identity of the constant.
+   * @param trees The source trees to search within.
+   * @return An iterator over the found constants.
+   */
+  private def goToGlobalConstants(
+      ident: Ast.Ident,
+      trees: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.ConstantVarDef[_]]] =
+    trees
+      .iterator
+      .collect {
+        // Global constants are source trees with only one node of type `Ast.ConstantVarDef`
+        case source @ SourceLocation.Code(Tree.Source(constant @ Ast.ConstantVarDef(thisIdent, _), _), _) if thisIdent == ident =>
+          SourceLocation.Node(
+            ast = constant,
+            source = source
+          )
+      }
 
   /**
    * Navigate to constants and template arguments within the source tree.
@@ -584,6 +617,7 @@ private[search] object GoToIdent {
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.MapDef]] =
     WorkspaceSearcher
       .collectInheritedParents(sourceCode, workspace)
+      .parentTrees
       .iterator
       .flatMap {
         code =>

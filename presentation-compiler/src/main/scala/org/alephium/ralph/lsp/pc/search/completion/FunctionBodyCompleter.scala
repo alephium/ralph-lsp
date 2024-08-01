@@ -157,6 +157,7 @@ object FunctionBodyCompleter {
         sourceCode = sourceCode,
         workspace = workspace
       )
+      .parentTrees
       .iterator
       .flatMap(suggestInheritedAPIs)
 
