@@ -59,6 +59,7 @@ private[search] object GoToIdent {
             // They selected an enum field. Take 'em there!
             WorkspaceSearcher
               .collectInheritedParents(sourceCode, workspace)
+              .parentTrees
               .iterator
               .flatMap(goToEnumField(fieldSelector, _))
 
@@ -330,6 +331,7 @@ private[search] object GoToIdent {
     val argumentsAndConstants =
       WorkspaceSearcher
         .collectInheritedParents(sourceCode, workspace)
+        .parentTrees
         .iterator
         .flatMap(goToTemplateDefinitionsAndArguments(identNode.data, _))
 
@@ -584,6 +586,7 @@ private[search] object GoToIdent {
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.MapDef]] =
     WorkspaceSearcher
       .collectInheritedParents(sourceCode, workspace)
+      .parentTrees
       .iterator
       .flatMap {
         code =>

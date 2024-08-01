@@ -64,7 +64,7 @@ object WorkspaceSearcher {
    */
   def collectInheritedParents(
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Seq[SourceLocation.Code] = {
+      workspace: WorkspaceState.IsSourceAware): InheritedParentsResult = {
     val allInScopeCode =
       collectTrees(workspace = workspace, includeNonImportedCode = false)
 
@@ -74,7 +74,13 @@ object WorkspaceSearcher {
         allSource = allInScopeCode
       )
 
-    inheritancesInScope :+ sourceCode
+    val parents =
+      inheritancesInScope :+ sourceCode
+
+    InheritedParentsResult(
+      parentTrees = parents,
+      allTrees = allInScopeCode
+    )
   }
 
   /**
@@ -150,6 +156,7 @@ object WorkspaceSearcher {
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
     collectInheritedParents(sourceCode, workspace)
+      .parentTrees
       .iterator
       .flatMap(SourceCodeSearcher.collectFunctions)
 

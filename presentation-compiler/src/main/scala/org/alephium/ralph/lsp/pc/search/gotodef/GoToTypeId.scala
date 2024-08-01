@@ -42,6 +42,7 @@ private object GoToTypeId {
             // They selected an enum type. Take 'em there!
             WorkspaceSearcher
               .collectInheritedParents(sourceCode, workspace)
+              .parentTrees
               .iterator
               .flatMap(goToEnumType(enumFieldSelector, _))
 
@@ -57,6 +58,7 @@ private object GoToTypeId {
             // They selected an event emit. Take 'em there!
             WorkspaceSearcher
               .collectInheritedParents(sourceCode, workspace)
+              .parentTrees
               .iterator
               .flatMap(goToEventDef(emitEvent, _))
 
