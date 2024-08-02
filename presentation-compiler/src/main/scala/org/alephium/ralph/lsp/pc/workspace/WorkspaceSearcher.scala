@@ -174,6 +174,17 @@ object WorkspaceSearcher {
   }
 
   /**
+   * Collects all global constants within the provided parsed workspace state.
+   *
+   * @param workspace The parsed workspace state from which to collect global constants.
+   * @return An iterator containing all global constants.
+   */
+  def collectGlobalConstants(workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.ConstantVarDef[_]]] = {
+    val trees = collectTrees(workspace, includeNonImportedCode = false)
+    SourceCodeSearcher.collectGlobalConstants(trees.iterator)
+  }
+
+  /**
    * Collects all in-scope workspace source trees.
    *
    * @param workspace The workspace to collect source trees for.

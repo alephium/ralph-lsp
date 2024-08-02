@@ -406,6 +406,47 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
 
       actual.sortBy(_.label) shouldBe expected.sortBy(_.label)
     }
+
+    "global constants exist" in {
+      val suggestions =
+        suggest {
+          """
+            |const ONE = 2
+            |const TWO = 2
+            |
+            |Contract Foo() {
+            |
+            |  pub fn test() -> () {
+            |    @@
+            |  }
+            |}
+            |""".stripMargin
+        }
+
+      val actual =
+        suggestions
+          .collect {
+            case constants: Suggestion.ConstantVarDef =>
+              constants
+          }
+          .flatMap(_.toCompletion())
+
+      val expected =
+        List(
+          Completion.Constant(
+            label = "ONE",
+            insert = "ONE",
+            detail = ""
+          ),
+          Completion.Constant(
+            label = "TWO",
+            insert = "TWO",
+            detail = ""
+          )
+        )
+
+      actual.sortBy(_.label) shouldBe expected.sortBy(_.label)
+    }
   }
 
   "TxScript" should {
