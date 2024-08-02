@@ -204,6 +204,21 @@ object SourceCodeSearcher {
     }
 
   /**
+   * Collects all constants names available in the provided source code.
+   *
+   * @param workspaceSource The source code to search for types.
+   * @return An iterator containing type identifiers.
+   */
+  def collectGlobalConstants(workspaceSource: Iterator[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.ConstantVarDef[_]]] =
+    workspaceSource collect {
+      case source @ SourceLocation.Code(Tree.Source(ast: Ast.ConstantVarDef[_], _), _) =>
+        SourceLocation.Node(
+          ast = ast,
+          source = source
+        )
+    }
+
+  /**
    * Collects all source tree locations for the given types.
    *
    * @param types           The types of trees for which to collect source tree locations.

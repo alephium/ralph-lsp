@@ -73,6 +73,9 @@ object FunctionBodyCompleter {
   /**
    * Provides suggestions available within the body of a function at the given position.
    *
+   * FIXME (Performance): This function invokes function [[WorkspaceSearcher.collectTrees]]
+   *                      multiple times over multiple functions which is inefficient.
+   *
    * @param cursorIndex  The position where this search was executed.
    * @param functionNode The node representing the function where this search was executed.
    * @param sourceCode   The source code containing the given function.
@@ -105,6 +108,9 @@ object FunctionBodyCompleter {
     val types =
       TypeCompleter.suggest(workspace)
 
+    val globalConstants =
+      suggestGlobalConstants(workspace)
+
     val keywords =
       suggestKeywords()
 
@@ -112,6 +118,7 @@ object FunctionBodyCompleter {
       inheritedSuggestions ++
       builtInFunctions ++
       types ++
+      globalConstants ++
       keywords
   }
 
@@ -226,6 +233,17 @@ object FunctionBodyCompleter {
       case None =>
         Iterator.empty
     }
+
+  /**
+   * Suggests global constants within the given workspace.
+   *
+   * @param workspace The workspace to search within.
+   * @return An iterator over suggestions for global constants.
+   */
+  private def suggestGlobalConstants(workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.ConstantVarDef] =
+    WorkspaceSearcher
+      .collectGlobalConstants(workspace)
+      .map(Suggestion.ConstantVarDef)
 
   /**
    * Suggests keywords relevant to a function's body.
