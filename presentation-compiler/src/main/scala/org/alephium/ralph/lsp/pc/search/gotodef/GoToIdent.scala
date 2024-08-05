@@ -89,28 +89,11 @@ private[search] object GoToIdent {
 
           case node @ Node(field: Ast.EnumField[_], _) if field.ident == identNode.data =>
             // They selected an enum field.
-            // Check the parent to find the enum type.
-            node
-              .parent
-              .map(_.data)
-              .iterator
-              .collect {
-                // Check: Parent is an enum definition which contains the enum field.
-                case enumDef: Ast.EnumDef[_] if enumDef.fields.exists(_.ident == field.ident) =>
-                  WorkspaceSearcher
-                    .collectImplementingChildren(sourceCode, workspace)
-                    .childTrees
-                    .iterator
-                    .flatMap {
-                      sourceCode =>
-                        goToEnumFieldUsage(
-                          enumType = enumDef.id,
-                          enumField = field,
-                          sourceCode = sourceCode
-                        )
-                    }
-              }
-              .flatten
+            goToEnumFieldUsage(
+              node = node.upcast(field),
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case node @ Node(field: Ast.EventField, _) if field.ident == identNode.data =>
             // They selected an event field.
@@ -183,7 +166,7 @@ private[search] object GoToIdent {
    * @param workspace     The workspace where this search was executed and where all the source trees exist.
    * @return An iterator representing the locations of the enum field implementations.
    */
-  def goToEnumField(
+  private def goToEnumField(
       fieldSelector: Ast.EnumFieldSelector[_],
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.EnumField[_]]] = {
@@ -210,6 +193,47 @@ private[search] object GoToIdent {
       .iterator
       .flatMap(goToEnumField(fieldSelector, _))
   }
+
+  /**
+   * Navigate to enum field usages.
+   *
+   * @param node       The node representing the enum field being searched.
+   * @param sourceCode The source tree where this search was executed.
+   * @param workspace  The workspace where this search was executed and where all the source trees exist.
+   * @return An iterator containing identities representing the usage locations of the enum field.
+   */
+  private def goToEnumFieldUsage(
+      node: Node[Ast.EnumField[_], Ast.Positioned],
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] =
+    // Check the parent to find the enum type.
+    node
+      .parent
+      .map(_.data)
+      .iterator
+      .collect {
+        // Check: Parent is an enum definition which contains the enum field.
+        case enumDef: Ast.EnumDef[_] if enumDef.fields.exists(_.ident == node.data.ident) =>
+          val trees =
+            if (sourceCode.tree.ast == enumDef)
+              WorkspaceSearcher.collectAllTrees(workspace) // It's a global enum, search all workspace trees.
+            else
+              WorkspaceSearcher // It's a local enum, search within the scope of inheritance.
+                .collectImplementingChildren(sourceCode, workspace)
+                .childTrees
+
+          trees
+            .iterator
+            .flatMap {
+              sourceCode =>
+                goToEnumFieldUsage(
+                  enumType = enumDef.id,
+                  enumField = node.data,
+                  sourceCode = sourceCode
+                )
+            }
+      }
+      .flatten
 
   /**
    * Navigate to variable usages of the given identity.
