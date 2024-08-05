@@ -23,83 +23,135 @@ import org.scalatest.wordspec.AnyWordSpec
 class GoToEnumTypeUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
-    "there are no enum calls or usages" in {
-      goTo(
-        """
-          |Contract MyContract() {
-          |
-          |  enum Enum@@Type {
-          |    Field0 = 0
-          |    Field1 = 1
-          |  }
-          |
-          |  pub fn function() -> () {
-          |
-          |  }
-          |}
-          |""".stripMargin
-      )
+    "there are no enum calls or usages" when {
+      "local enum" in {
+        goTo(
+          """
+            |Contract MyContract() {
+            |
+            |  enum Enum@@Type {
+            |    Field0 = 0
+            |    Field1 = 1
+            |  }
+            |
+            |  pub fn function() -> () {}
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "global enum" in {
+        goTo(
+          """
+            |enum Enum@@Type {
+            |  Field0 = 0
+            |  Field1 = 1
+            |}
+            |
+            |Contract MyContract() {
+            |
+            |  pub fn function() -> () {}
+            |}
+            |""".stripMargin
+        )
+      }
     }
   }
 
   "return non-empty" when {
-    "there are multiple calls or usages" in {
-      goTo(
-        """
-          |Contract MyContract() {
-          |
-          |  enum Enum@@Type {
-          |    Field0 = 0
-          |    Field1 = 1
-          |  }
-          |
-          |  pub fn function() -> () {
-          |    let field0 = >>EnumType<<.Field0
-          |    let field1 = >>EnumType<<.Field1
-          |  }
-          |
-          |  pub fn function() -> () {
-          |    let field0 = >>EnumType<<.Field0
-          |    for (let mut index = 0; index <= 4; index = index + 1) {
-          |      let field1 = >>EnumType<<.Field1
-          |    }
-          |  }
-          |}
-          |""".stripMargin
-      )
+    "there are multiple calls or usages" when {
+      def doTest(global: Boolean) = {
+        val enumDef =
+          """
+            |enum Enum@@Type {
+            |  Field0 = 0
+            |  Field1 = 1
+            |}
+            |""".stripMargin
+
+        goTo(
+          s"""
+              |${if (global) enumDef else ""}
+              |
+              |Contract MyContract() {
+              |
+              |  ${if (!global) enumDef else ""}
+              |
+              |  pub fn function() -> () {
+              |    let field0 = >>EnumType<<.Field0
+              |    let field1 = >>EnumType<<.Field1
+              |  }
+              |
+              |  pub fn function() -> () {
+              |    let field0 = >>EnumType<<.Field0
+              |    for (let mut index = 0; index <= 4; index = index + 1) {
+              |      let field1 = >>EnumType<<.Field1
+              |    }
+              |  }
+              |}
+              |""".stripMargin
+        )
+      }
+
+      "local enum" in {
+        doTest(global = false)
+      }
+
+      "global enum" in {
+        doTest(global = true)
+      }
+
     }
 
-    "there is inheritance" in {
-      goTo(
-        """
-          |Abstract Contract Parent() {
-          |  enum Enum@@Type {
-          |    Field0 = 0
-          |    Field1 = 1
-          |  }
-          |
-          |  fn functionParent() -> () {
-          |    let field0 = >>EnumType<<.Field0
-          |  }
-          |}
-          |
-          |Contract Parent1() extends Parent() {
-          |
-          |  pub fn function() -> () {
-          |  let field1 = >>EnumType<<.Field1
-          |    let field0 = >>EnumType<<.Field0
-          |  }
-          |}
-          |
-          |Contract Child() extends Parent1() {
-          |
-          |  pub fn function() -> () {
-          |    let field0 = >>EnumType<<.Field0
-          |    let field1 = >>EnumType<<.Field1
-          |  }
-          |}
-          |""".stripMargin
-      )
+    "there is inheritance" when {
+      def doTest(global: Boolean) = {
+        val enumDef =
+          """
+            |enum Enum@@Type {
+            |  Field0 = 0
+            |  Field1 = 1
+            |}
+            |""".stripMargin
+
+        goTo(
+          s"""
+            |${if (global) enumDef else ""}
+            |
+            |Abstract Contract Parent() {
+            |
+            |  ${if (!global) enumDef else ""}
+            |
+            |  fn functionParent() -> () {
+            |    let field0 = >>EnumType<<.Field0
+            |  }
+            |}
+            |
+            |Contract Parent1() extends Parent() {
+            |
+            |  pub fn function() -> () {
+            |  let field1 = >>EnumType<<.Field1
+            |    let field0 = >>EnumType<<.Field0
+            |  }
+            |}
+            |
+            |Contract Child() extends Parent1() {
+            |
+            |  pub fn function() -> () {
+            |    let field0 = >>EnumType<<.Field0
+            |    let field1 = >>EnumType<<.Field1
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "local enum" in {
+        doTest(global = false)
+      }
+
+      "global enum" in {
+        doTest(global = true)
+      }
     }
   }
 
