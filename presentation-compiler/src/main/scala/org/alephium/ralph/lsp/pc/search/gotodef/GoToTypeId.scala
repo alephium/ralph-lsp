@@ -48,11 +48,11 @@ private object GoToTypeId {
 
           case Node(enumDef: Ast.EnumDef[_], _) if enumDef.id == typeIdNode.data =>
             // They selected an enum definition. Find enum usages.
-            WorkspaceSearcher
-              .collectImplementingChildren(sourceCode, workspace)
-              .childTrees
-              .iterator
-              .flatMap(goToEnumTypeUsage(enumDef, _))
+            goToEnumDefUsage(
+              enumDef = enumDef,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == typeIdNode.data =>
             // They selected an event emit. Take 'em there!
@@ -81,6 +81,31 @@ private object GoToTypeId {
       case None =>
         Iterator.empty
     }
+
+  /**
+   * Navigate to the enum definition usages.
+   *
+   * @param enumDef    The enum definition to find usages for.
+   * @param sourceCode The parsed state of the source-code where the search was executed.
+   * @param workspace  The workspace where this search was executed and where all the source trees exist.
+   * @return An array sequence of enum [[Ast.TypeId]]s matching the enum definition.
+   */
+  def goToEnumDefUsage(
+      enumDef: Ast.EnumDef[_],
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] = {
+    val trees =
+      if (sourceCode.tree.ast == enumDef)
+        WorkspaceSearcher.collectAllTrees(workspace) // It's a global enum, search all workspace trees
+      else
+        WorkspaceSearcher // It's a local enum, search only the trees within the scope of inheritance
+          .collectImplementingChildren(sourceCode, workspace)
+          .childTrees
+
+    trees
+      .iterator
+      .flatMap(goToEnumTypeUsage(enumDef, _))
+  }
 
   /**
    * Navigate to the enum types for the given enum field selector.

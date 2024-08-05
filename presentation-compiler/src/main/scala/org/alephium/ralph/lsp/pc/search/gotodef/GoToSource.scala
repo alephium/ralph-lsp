@@ -65,6 +65,13 @@ private object GoToSource {
               workspace = workspace
             )
 
+          case Node(enumDef: Ast.EnumDef[_], _) =>
+            GoToTypeId.goToEnumDefUsage(
+              enumDef = enumDef,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
+
           case _ =>
             Iterator.empty
         }
