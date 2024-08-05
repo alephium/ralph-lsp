@@ -49,6 +49,10 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |
+          |enum EnumType {
+          |  >>Field0 = 0<<
+          |  Field1 = 1
+          |}
           |
           |Abstract Contract Parent() {
           |
@@ -70,6 +74,11 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           |    let field1 = EnumType.Field1
           |  }
           |}
+          |
+          |enum EnumType {
+          |  >>Field0 = 0<<
+          |  Field1 = 1
+          |}
           |""".stripMargin
       )
     }
@@ -77,6 +86,11 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
     "user selects the second enum field" in {
       goTo(
         """
+          |enum EnumType {
+          |  Field0 = 0
+          |  >>Field1 = 1<<
+          |}
+          |
           |Abstract Contract Parent() {
           |
           |  enum EnumType {
@@ -84,6 +98,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           |    >>Field1 = 1<<
           |  }
           |}
+          |
           |
           |Contract MyContract() extends Parent() {
           |
@@ -97,6 +112,11 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           |    let field1 = EnumType.Fie@@ld1
           |  }
           |}
+          |
+          |enum EnumType {
+          |  Field0 = 0
+          |  >>Field1 = 1<<
+          |}
           |""".stripMargin
       )
     }
@@ -105,6 +125,11 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
       "user selects the first enum field" in {
         goTo(
           """
+            |enum EnumType {
+            |  >>Field0 = 0<<
+            |  Field1 = 1
+            |}
+            |
             |Abstract Contract Parent() {
             |  enum EnumType {
             |    >>Field0 = 0<<
@@ -115,6 +140,11 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
             |    >>Field0 = 0<<
             |    Field1 = 1
             |  }
+            |}
+            |
+            |enum EnumType {
+            |  >>Field0 = 0<<
+            |  Field1 = 1
             |}
             |
             |Contract MyContract() extends Parent() {
@@ -141,6 +171,11 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
       "user selects the second enum field" in {
         goTo(
           """
+            |enum EnumType {
+            |  Field0 = 0
+            |  >>Field1 = 1<<
+            |}
+            |
             |Contract MyContract() {
             |
             |  enum EnumType {
@@ -167,6 +202,11 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
       "user selects the first enum field" in {
         goTo(
           """
+            |enum EnumType {
+            |  >>Field0 = 0<<
+            |  Field1 = 1
+            |}
+            |
             |Contract MyContract() {
             |
             |  enum EnumType {

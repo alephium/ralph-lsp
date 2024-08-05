@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 import scala.collection.immutable.ArraySeq
@@ -59,11 +59,11 @@ private[search] object GoToIdent {
 
           case Node(fieldSelector: Ast.EnumFieldSelector[_], _) if fieldSelector.field == identNode.data =>
             // They selected an enum field. Take 'em there!
-            WorkspaceSearcher
-              .collectInheritedParents(sourceCode, workspace)
-              .parentTrees
-              .iterator
-              .flatMap(goToEnumField(fieldSelector, _))
+            goToEnumField(
+              fieldSelector = fieldSelector,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case Node(mapFuncCall: Ast.MapFuncCall, _) if mapFuncCall.ident == identNode.data =>
             // They selected an map on a function call.
@@ -174,6 +174,42 @@ private[search] object GoToIdent {
       case None =>
         Iterator.empty
     }
+
+  /**
+   * Navigate to enum fields.
+   *
+   * @param fieldSelector The enum field to search.
+   * @param sourceCode    The source code location where this request was executed.
+   * @param workspace     The workspace where this search was executed and where all the source trees exist.
+   * @return An iterator representing the locations of the enum field implementations.
+   */
+  def goToEnumField(
+      fieldSelector: Ast.EnumFieldSelector[_],
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.EnumField[_]]] = {
+    val trees =
+      WorkspaceSearcher.collectInheritedParents(
+        sourceCode = sourceCode,
+        workspace = workspace
+      )
+
+    // Enums might be within the scope of inheritance, i.e. within a inherited parent Contract
+    val parents =
+      trees.parentTrees
+
+    // or they might be global enum types
+    val globalEnums =
+      SourceCodeSearcher.collectGlobalEnumsCode(trees.allTrees.iterator)
+
+    // collect all trees to search
+    val allTrees =
+      parents ++ globalEnums
+
+    // find matching enum fields
+    allTrees
+      .iterator
+      .flatMap(goToEnumField(fieldSelector, _))
+  }
 
   /**
    * Navigate to variable usages of the given identity.
@@ -456,13 +492,45 @@ private[search] object GoToIdent {
         contract
           .enums
           .iterator
-          .filter(_.id == fieldSelector.enumId)
-          .flatMap(_.fields.find(_.ident == fieldSelector.field))
-          .map(SourceLocation.Node(_, sourceCode))
+          .flatMap {
+            enumDef =>
+              findEnumField(
+                fieldSelector = fieldSelector,
+                enumDef = enumDef,
+                sourceCode = sourceCode
+              )
+          }
 
-      case _: Ast.ContractInterface | _: Ast.TxScript | _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
+      case enumDef: Ast.EnumDef[_] =>
+        findEnumField(
+          fieldSelector = fieldSelector,
+          enumDef = enumDef,
+          sourceCode = sourceCode
+        ).iterator
+
+      case _: Ast.ContractInterface | _: Ast.TxScript | _: Ast.Struct | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         Iterator.empty
     }
+
+  /**
+   * Find the enum field(s) for the given enum field selector within the given enum definition.
+   *
+   * @param fieldSelector The selected enum field to find.
+   * @param enumDef       The enum definition to search within.
+   * @param sourceCode    The source where the enum definition is defined.
+   * @return An array sequence of [[Ast.EnumField]]s matching the search result.
+   */
+  private def findEnumField(
+      fieldSelector: Ast.EnumFieldSelector[_],
+      enumDef: Ast.EnumDef[_],
+      sourceCode: SourceLocation.Code): Option[SourceLocation.Node[Ast.EnumField[_]]] =
+    if (enumDef.id == fieldSelector.enumId)
+      enumDef
+        .fields
+        .find(_.ident == fieldSelector.field)
+        .map(SourceLocation.Node(_, sourceCode))
+    else
+      None
 
   /**
    * Navigate to all enum usages for the given enum type and field.
