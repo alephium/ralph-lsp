@@ -204,10 +204,10 @@ object SourceCodeSearcher {
     }
 
   /**
-   * Collects all constants names available in the provided source code.
+   * Collects all global constants available in the provided source code.
    *
-   * @param workspaceSource The source code to search for types.
-   * @return An iterator containing type identifiers.
+   * @param workspaceSource The source code to search for.
+   * @return An iterator containing global constants.
    */
   def collectGlobalConstants(workspaceSource: Iterator[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.ConstantVarDef[_]]] =
     workspaceSource collect {
