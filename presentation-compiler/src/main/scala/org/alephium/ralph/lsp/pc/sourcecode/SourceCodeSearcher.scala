@@ -219,6 +219,18 @@ object SourceCodeSearcher {
     }
 
   /**
+   * Collects all source code with global enums available in the provided source code.
+   *
+   * @param workspaceSource The source code to search for global enums.
+   * @return An iterator containing all global enums.
+   */
+  def collectGlobalEnumsCode(workspaceSource: Iterator[SourceLocation.Code]): Iterator[SourceLocation.Code] =
+    workspaceSource collect {
+      case code @ SourceLocation.Code(Tree.Source(_: Ast.EnumDef[_], _), _) =>
+        code
+    }
+
+  /**
    * Collects all source tree locations for the given types.
    *
    * @param types           The types of trees for which to collect source tree locations.
