@@ -204,10 +204,10 @@ object SourceCodeSearcher {
     }
 
   /**
-   * Collects all constants names available in the provided source code.
+   * Collects all global constants available in the provided source code.
    *
-   * @param workspaceSource The source code to search for types.
-   * @return An iterator containing type identifiers.
+   * @param workspaceSource The source code to search for.
+   * @return An iterator containing global constants.
    */
   def collectGlobalConstants(workspaceSource: Iterator[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.ConstantVarDef[_]]] =
     workspaceSource collect {
@@ -216,6 +216,18 @@ object SourceCodeSearcher {
           ast = ast,
           source = source
         )
+    }
+
+  /**
+   * Collects all source code with global enums available in the provided source code.
+   *
+   * @param workspaceSource The source code to search for global enums.
+   * @return An iterator containing all global enums.
+   */
+  def collectGlobalEnumsCode(workspaceSource: Iterator[SourceLocation.Code]): Iterator[SourceLocation.Code] =
+    workspaceSource collect {
+      case code @ SourceLocation.Code(Tree.Source(_: Ast.EnumDef[_], _), _) =>
+        code
     }
 
   /**
