@@ -18,7 +18,7 @@ package org.alephium.ralph.lsp.pc.search.completion
 
 import org.alephium.ralph
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 
@@ -35,10 +35,20 @@ object EnumFieldCompleter {
   def suggest(
       enumId: Ast.TypeId,
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.EnumFields] =
-    WorkspaceSearcher
-      .collectInheritedParents(sourceCode, workspace)
-      .parentTrees
+      workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.EnumFields] = {
+    val trees =
+      WorkspaceSearcher.collectInheritedParents(
+        sourceCode = sourceCode,
+        workspace = workspace
+      )
+
+    val globalEnumTrees =
+      SourceCodeSearcher.collectGlobalEnumsCode(trees.allTrees.iterator)
+
+    val allTrees =
+      trees.parentTrees ++ globalEnumTrees
+
+    allTrees
       .iterator
       .flatMap {
         sourceCode =>
@@ -47,5 +57,6 @@ object EnumFieldCompleter {
               Suggestion.EnumFields(SourceLocation.Node(enumDef, sourceCode))
           }
       }
+  }
 
 }
