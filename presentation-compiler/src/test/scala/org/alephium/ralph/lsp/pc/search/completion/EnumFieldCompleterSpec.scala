@@ -259,6 +259,50 @@ class EnumFieldCompleterSpec extends AnyWordSpec with Matchers {
 
       actual.sortBy(_.label) shouldBe expected.sortBy(_.label)
     }
+
+    "global enum" should {
+      "list enum fields" in {
+        val suggestions =
+          suggest {
+            """
+              |enum MyEnum {
+              |  ONE = 1
+              |  TWO = 2
+              |}
+              |
+              |Contract Test() {
+              |
+              |  fn main() -> () {
+              |    let field = MyEnum.F@@
+              |  }
+              |}
+              |""".stripMargin
+          }
+
+        val actual =
+          suggestions
+            .collect {
+              case fields: Suggestion.EnumFields => fields
+            }
+            .flatMap(_.toCompletion())
+
+        val expected =
+          List(
+            Completion.EnumMember(
+              label = "ONE",
+              insert = "ONE",
+              detail = ""
+            ),
+            Completion.EnumMember(
+              label = "TWO",
+              insert = "TWO",
+              detail = ""
+            )
+          )
+
+        actual.sortBy(_.label) shouldBe expected.sortBy(_.label)
+      }
+    }
   }
 
 }
