@@ -19,13 +19,17 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.PCState
-import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.client.TestClientLogger
+import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace}
 import org.alephium.ralph.lsp.server.state.{Trace, ServerState}
 import org.eclipse.lsp4j._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.OptionValues._
 
 import java.nio.file.Paths
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
@@ -219,6 +223,85 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
         .never()
 
       server.registerClientCapabilities() shouldBe ()
+    }
+  }
+
+  "reboot" should {
+    "start a new workspace compilation" in {
+      implicit val compiler: CompilerAccess = CompilerAccess.ralphc
+      implicit val file: FileAccess         = FileAccess.disk
+      implicit val logger: ClientLogger     = TestClientLogger
+
+      val client = mock[RalphLangClient]
+      // format: off
+      val listener = CompletableFuture.runAsync(() => ()) // format: on
+      val server   = RalphLangServer(client, listener)
+
+      // create unCompiled workspace
+      val workspace =
+        TestWorkspace
+          .genUnCompiled(
+            """
+              |Contract Test() {
+              |  fn main() -> () {}
+              |}
+              |""".stripMargin
+          )
+          .sample
+          .get
+
+      //  persist the workspace
+      TestWorkspace persist workspace
+
+      /**
+       * Start LSP server for that workspace
+       */
+      // this is the initial message received from LSP client.
+      val initialise = new InitializeParams()
+      initialise.setRootUri(workspace.workspaceURI.toString)
+      // invoke server with the initialise message
+      val initializeResult = server.initialize(initialise).get()
+      // expect server capabilities returned in response
+      initializeResult shouldBe new InitializeResult(RalphLangServer.serverCapabilities())
+
+      /**
+       * Invoke initialized so an initial build occurs.
+       */
+      (client.publish _).expects(*).once() // expect diagnostics to get published
+      server.initialized(new InitializedParams()) shouldBe ()
+
+      // The server has create a workspace in Compiled state
+      val newWorkspace = server.getState().pcState.value.workspace.asInstanceOf[WorkspaceState.Compiled]
+      newWorkspace.sourceCode.map(_.fileURI) should contain only workspace.sourceCode.head.fileURI
+
+      // Write a new file to the workspace
+      val newFile =
+        TestSourceCode
+          .genUnCompiled(
+            code = """
+              |Contract Test2() {
+              |  fn main() -> () {}
+              |}
+              |""".stripMargin,
+            fileURI = workspace.build.contractURI.resolve("newFile.ral")
+          )
+          .sample
+          .get
+
+      // persist the new file
+      TestSourceCode persist newFile
+
+      // Expect diagnostics to get published twice on reboot:
+      // 1) Publish diagnostics to clear all existing errors & warning.
+      // 2) Publish diagnostics for the new build.
+      (client.publish _).expects(*).twice()
+
+      // invoke reboot, which should rebuild the workspace, but this time there will be 2 source files
+      server.reboot()
+
+      // Now the server have two source files instead of one.
+      val rebootedWorkspace = server.getState().pcState.value.workspace.asInstanceOf[WorkspaceState.Compiled]
+      rebootedWorkspace.sourceCode.map(_.fileURI) should contain only (workspace.sourceCode.head.fileURI, newFile.fileURI)
     }
   }
 

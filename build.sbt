@@ -123,7 +123,7 @@ lazy val `lsp-server` =
           Dependencies.scalaLogging
         )
     )
-    .dependsOn(`presentation-compiler`)
+    .dependsOn(`presentation-compiler` % "test->test;compile->compile")
 
 lazy val `ralph-lsp` =
   (project in file("."))
