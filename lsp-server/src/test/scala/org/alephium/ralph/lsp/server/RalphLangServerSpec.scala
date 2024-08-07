@@ -291,8 +291,10 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
       // persist the new file
       TestSourceCode persist newFile
 
-      // expect diagnostics to get published for reboot
-      (client.publish _).expects(*).once()
+      // Expect diagnostics to get published twice on reboot:
+      // 1) Publish diagnostics to clear all existing errors & warning.
+      // 2) Publish diagnostics for the new build.
+      (client.publish _).expects(*).twice()
 
       // invoke reboot, which should rebuild the workspace, but this time there will be 2 source files
       server.reboot()

@@ -459,13 +459,22 @@ class RalphLangServer private (
    */
   def reboot(): Unit = {
     // initialise a new workspace
+    val currentPCState =
+      getPCState()
+
     val newPCState =
-      PC.initialise(getPCState().workspace.workspaceURI)
+      PC.initialise(currentPCState.workspace.workspaceURI)
 
-    // set the new PC state
-    setPCState(newPCState)
+    // clear all existing diagnostics
+    val diagnostics =
+      setPCStateAndBuildDiagnostics(
+        currentPCState = currentPCState,
+        newPCState = newPCState
+      )
 
-    // invoke initial build
+    getClient() publish diagnostics
+
+    // invoke initial build on new PCState
     triggerInitialBuild()
   }
 
