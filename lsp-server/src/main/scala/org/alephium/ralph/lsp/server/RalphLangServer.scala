@@ -457,26 +457,27 @@ class RalphLangServer private (
   /**
    * Re-builds a fresh workspace from disk.
    */
-  def reboot(): Unit = {
-    // initialise a new workspace
-    val currentPCState =
-      getPCState()
+  def reboot(): Unit =
+    runSync {
+      // initialise a new workspace
+      val currentPCState =
+        getPCState()
 
-    val newPCState =
-      PC.initialise(currentPCState.workspace.workspaceURI)
+      val newPCState =
+        PC.initialise(currentPCState.workspace.workspaceURI)
 
-    // clear all existing diagnostics
-    val diagnostics =
-      setPCStateAndBuildDiagnostics(
-        currentPCState = currentPCState,
-        newPCState = newPCState
-      )
+      // clear all existing diagnostics
+      val diagnostics =
+        setPCStateAndBuildDiagnostics(
+          currentPCState = currentPCState,
+          newPCState = newPCState
+        )
 
-    getClient() publish diagnostics
+      getClient() publish diagnostics
 
-    // invoke initial build on new PCState
-    triggerInitialBuild()
-  }
+      // invoke initial build on new PCState
+      triggerInitialBuild()
+    }
 
   /**
    * Programmatically triggers a change in the build file.
