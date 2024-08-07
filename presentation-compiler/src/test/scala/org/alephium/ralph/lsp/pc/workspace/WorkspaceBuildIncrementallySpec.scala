@@ -34,14 +34,14 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.collection.immutable.ArraySeq
 
 /**
- * Test cases for [[Workspace.build(WorkspaceState)]] function.
+ * Test cases for [[Workspace.build]] function.
  */
-class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class WorkspaceBuildIncrementallySpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   implicit val clientLogger: ClientLogger =
     TestClientLogger
 
-  "Build function 1: build WorkspaceState" when {
+  "build WorkspaceState" when {
 
     /**
      * TEST CASES: When current state is [[WorkspaceState.Created]]
@@ -61,7 +61,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
           forAll(TestWorkspace.genCreated()) {
             workspace =>
-              val result = Workspace.build(workspace).left.value
+              val result = Workspace.build(None, workspace).left.value
 
               result shouldBe
                 BuildState.Errored(
@@ -87,7 +87,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
               TestWorkspace.persist(workspace)
               TestFile.exists(workspace.workspaceURI) shouldBe true
 
-              val result = Workspace.build(workspace).left.value
+              val result = Workspace.build(None, workspace).left.value
 
               result shouldBe
                 BuildState.Errored(
@@ -126,7 +126,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
               // invoke build
               val result =
-                Workspace.build(workspace).left.value
+                Workspace.build(code = None, workspace = workspace).left.value.error.value
 
               // the workspace should contain error targeting the build-file
               result shouldBe
@@ -183,7 +183,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
               // invoke initialise on the created workspace
               val buildResult =
-                Workspace.build(workspace).value
+                Workspace.build(None, workspace).value
 
               // sort the resulting workspace state's source code
               val actualWorkspace =
@@ -233,7 +233,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
           )
 
         val actualWorkspace =
-          Workspace.build(expectedWorkspace).value
+          Workspace.build(None, expectedWorkspace).value
 
         actualWorkspace shouldBe expectedWorkspace
       }

@@ -52,7 +52,7 @@ object CompilerMessage {
       SourceIndex(
         index = error.position,
         width = error.foundLength,
-        error.fileURI
+        fileURI = error.fileURI
       )
 
   }

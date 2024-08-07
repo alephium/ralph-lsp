@@ -23,6 +23,7 @@ import org.alephium.ralph.lsp.access.compiler.message.error._
 import org.alephium.ralph.lsp.access.util.TryUtil
 import org.alephium.ralphc.{Compiler => RalphC}
 
+import java.io.FileNotFoundException
 import java.net.URI
 import java.nio.file.{Path, Paths, Files}
 import scala.io.Source
@@ -79,6 +80,17 @@ private object DiskFileAccess extends FileAccess {
         Right(code)
     }
 
+  /** @inheritdoc */
+  override def readIfExists(fileURI: URI): Either[CompilerMessage.AnyError, Option[String]] =
+    read(fileURI) match {
+      case Left(ThrowableError(_, _: FileNotFoundException, _)) =>
+        Right(None)
+
+      case other =>
+        other.map(Some(_))
+    }
+
+  /** @inheritdoc */
   override def write(
       fileURI: URI,
       string: String,
@@ -88,7 +100,7 @@ private object DiskFileAccess extends FileAccess {
       val filePath = Paths.get(fileURI)
       // ensure directories exists
       Files.createDirectories(filePath.getParent)
-      val createdFile = Files.writeString(Paths.get(fileURI), string)
+      val createdFile = Files.writeString(filePath, string)
       Right(createdFile)
     } catch {
       case throwable: Throwable =>
