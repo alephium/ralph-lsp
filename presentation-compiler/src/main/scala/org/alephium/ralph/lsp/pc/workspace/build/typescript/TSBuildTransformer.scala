@@ -18,8 +18,8 @@ package org.alephium.ralph.lsp.pc.workspace.build.typescript
 
 import scala.collection.immutable.ArraySeq
 import org.alephium.ralph.{SourceIndex, CompilerOptions}
-import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfigState
 
 import java.net.URI
 import scala.annotation.unused
@@ -29,20 +29,20 @@ object TSBuildTransformer {
 
   /**
    * Transforms the content of the TypeScript `alephium.config.ts` build file
-   * to JSON `ralph.json` build file of type [[RalphcConfig.RalphcParsedConfig]].
+   * to JSON `ralph.json` build file of type [[RalphcConfigState.Parsed]].
    *
    * @param tsBuildURI    URI for the `alephium.config.ts` build file.
    * @param tsBuildCode   Content of the `alephium.config.ts` file.
    * @param currentConfig Current `ralph.json` config that is known by the editor.
    *                      Note: This function is invoked whether the current `ralph.json`
    *                      build is errored or not, [[None]] indicating that the current `ralph.json`
-   *                      contains errors or it does not exist.
+   *                      contains errors, or it does not exist.
    * @return Either the errored state of the `alephium.config.ts` build file or the new `ralph.json` build file to persist.
    */
   def toRalphcParsedConfig(
       tsBuildURI: URI,
       tsBuildCode: String,
-      @unused("for now") currentConfig: Option[RalphcConfig.RalphcParsedConfig]): Either[TSBuildState.Errored, RalphcConfig.RalphcParsedConfig] =
+      @unused("for now") currentConfig: Option[RalphcConfigState.Parsed]): Either[TSBuildState.Errored, RalphcConfigState.Parsed] =
     // FOR DEMO ONLY: Randomly generate a `ralph.json` file.
     if (Random.nextBoolean())
       Right(genRandomRalphcParsedConfig())
@@ -56,9 +56,10 @@ object TSBuildTransformer {
       )
 
   /** FOR DEMO ONLY: Randomly generate a `ralph.json` file. */
-  private def genRandomRalphcParsedConfig(): RalphcConfig.RalphcParsedConfig =
-    RalphcConfig
-      .defaultParsedConfig
+  private def genRandomRalphcParsedConfig(): RalphcConfigState.Parsed =
+    RalphcConfigState
+      .Parsed
+      .default
       .copy(
         compilerOptions = CompilerOptions(
           ignoreUnusedConstantsWarnings = Random.nextBoolean(),
@@ -69,7 +70,7 @@ object TSBuildTransformer {
           ignoreCheckExternalCallerWarnings = Random.nextBoolean()
         ),
         contractPath = Random.shuffle(List(Random.alphanumeric.take(10).mkString, "contracts")).head,
-        artifactPath = Random.shuffle(List(Random.alphanumeric.take(10).mkString, "artifacts")).head
+        artifactPath = Some(Random.shuffle(List(Random.alphanumeric.take(10).mkString, "artifacts")).head)
       )
 
 }

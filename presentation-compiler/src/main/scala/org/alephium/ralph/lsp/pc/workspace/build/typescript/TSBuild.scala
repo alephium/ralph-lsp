@@ -18,7 +18,8 @@ package org.alephium.ralph.lsp.pc.workspace.build.typescript
 
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.SourceIndex
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, Build, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 
 import java.net.URI
 import java.nio.file.{Path, Paths}
@@ -138,7 +139,7 @@ object TSBuild {
     }
 
   /**
-   * Persists the input configuration [[RalphcConfig.RalphcParsedConfig]] to a file specified by `buildURI`
+   * Persists the input configuration [[RalphcConfigState.Parsed]] to a file specified by `buildURI`
    * only if the input configuration is different from the existing configuration.
    *
    * @param jsonBuildURI  Current build's `ralph.json` file URI.
@@ -154,10 +155,10 @@ object TSBuild {
    */
   def persist(
       jsonBuildURI: URI,
-      currentConfig: Option[RalphcConfig.RalphcParsedConfig],
+      currentConfig: Option[RalphcConfigState.Parsed],
       tsBuildURI: URI,
       tsBuildCode: String,
-      updatedConfig: RalphcConfig.RalphcParsedConfig
+      updatedConfig: RalphcConfigState.Parsed
     )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[BuildState.Parsed]] =
     if (!currentConfig.contains(updatedConfig)) {
       val updatedJSON =

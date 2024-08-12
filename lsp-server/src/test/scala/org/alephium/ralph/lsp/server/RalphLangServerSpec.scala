@@ -53,12 +53,12 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
       val listener = CompletableFuture.runAsync(() => ()) // format: on
       val server   = RalphLangServer(client, listener)
 
-      // this is the initial message received from LSP client.
+      // this is the initial message received from the LSP client.
       val initialise   = new InitializeParams()
       val workspaceURI = Paths.get("test").toUri
       initialise.setRootUri(workspaceURI.toString)
 
-      // invoke server with the initialise message
+      // invoke server with the 'initialise' message
       val initializeResult = server.initialize(initialise).get()
 
       // expect server capabilities returned in response
@@ -257,21 +257,22 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
       /**
        * Start LSP server for that workspace
        */
-      // this is the initial message received from LSP client.
+      // this is the initial message received from the LSP client.
       val initialise = new InitializeParams()
       initialise.setRootUri(workspace.workspaceURI.toString)
-      // invoke server with the initialise message
+      // invoke server with the 'initialise' message
       val initializeResult = server.initialize(initialise).get()
       // expect server capabilities returned in response
       initializeResult shouldBe new InitializeResult(RalphLangServer.serverCapabilities())
 
-      /**
-       * Invoke initialized so an initial build occurs.
-       */
-      (client.publish _).expects(*).once() // expect diagnostics to get published
+      // Invoke initialized so an initial build occurs.
+      // After initialized, expect diagnostics to get published twice invoked by triggerInitialBuild():
+      //  1) First for the `alephium.config.ts` build,
+      //  2) Then for the `ralph.json` build.
+      (client.publish _).expects(*).twice()
       server.initialized(new InitializedParams()) shouldBe ()
 
-      // The server has create a workspace in Compiled state
+      // The server has created a workspace in Compiled state
       val newWorkspace = server.getState().pcState.value.workspace.asInstanceOf[WorkspaceState.Compiled]
       newWorkspace.sourceCode.map(_.fileURI) should contain only workspace.sourceCode.head.fileURI
 
@@ -292,15 +293,17 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
       // persist the new file
       TestSourceCode persist newFile
 
-      // Expect diagnostics to get published twice on reboot:
+      // Expect diagnostics to get published three times on reboot:
       // 1) Publish diagnostics to clear all existing errors & warning.
-      // 2) Publish diagnostics for the new build.
-      (client.publish _).expects(*).twice()
+      // 2) Publish diagnostics for the new builds invoked by triggerInitialBuild():
+      //    2.1) First for the `alephium.config.ts` build,
+      //    2.2) Then for the `ralph.json` build.
+      (client.publish _).expects(*).repeat(3)
 
       // invoke reboot, which should rebuild the workspace, but this time there will be 2 source files
       server.reboot()
 
-      // Now the server have two source files instead of one.
+      // Now the server has two source files instead of one.
       val rebootedWorkspace = server.getState().pcState.value.workspace.asInstanceOf[WorkspaceState.Compiled]
       rebootedWorkspace.sourceCode.map(_.fileURI) should contain only (workspace.sourceCode.head.fileURI, newFile.fileURI)
     }

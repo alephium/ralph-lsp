@@ -20,7 +20,8 @@ import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.message.error.ThrowableError
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -36,7 +37,7 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
       implicit val file: FileAccess = null // null implies there should be no IO.
       val jsonBuildURI              = TestFile.genFileURI().sample.get
       val tsBuildURI                = TestFile.genFileURI().sample.get
-      val config                    = RalphcConfig.defaultParsedConfig
+      val config                    = RalphcConfigState.Parsed.default
 
       val actual =
         TSBuild.persist(
@@ -54,7 +55,7 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
   "persist" when {
     "existing `ralph.json` is in error state or does not exist (currentConfig = None)" in {
       implicit val file: FileAccess = FileAccess.disk
-      val newConfig                 = RalphcConfig.defaultParsedConfig
+      val newConfig                 = RalphcConfigState.Parsed.default
       val newConfigContent          = RalphcConfig.write(newConfig, indent = 2)
 
       forAll(TestFile.genFileURI(), TestFile.genFileURI()) {
@@ -90,7 +91,7 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
         val error             = ThrowableError("Something went wrong", new Throwable(), SourceIndex.empty)
         val jsonBuildURI      = TestFile.genFileURI().sample.get
         val tsBuildURI        = TestFile.genFileURI().sample.get
-        val currentJSONConfig = RalphcConfig.defaultParsedConfig
+        val currentJSONConfig = RalphcConfigState.Parsed.default
         val tsBuildCode       = "TypeScript Code"
 
         implicit val file: FileAccess =
@@ -109,7 +110,7 @@ class TSBuildPersistSpec extends AnyWordSpec with Matchers with MockFactory with
             tsBuildURI = tsBuildURI,
             tsBuildCode = tsBuildCode,
             // updated the config to differ from existing JSON, so persistence occurs.
-            updatedConfig = RalphcConfig.defaultParsedConfig.copy(contractPath = "updated_contract_path")
+            updatedConfig = RalphcConfigState.Parsed.default.copy(contractPath = "updated_contract_path")
           )
 
         val expected =
