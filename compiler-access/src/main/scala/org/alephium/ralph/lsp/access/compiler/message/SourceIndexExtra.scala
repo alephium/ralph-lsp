@@ -51,6 +51,26 @@ object SourceIndexExtra {
         fileURI = Some(fileURI)
       )
 
+  /**
+   * Similar to `String.lastIndexOf`, this returns the last index of
+   * the given token in the provided code.
+   *
+   * @param token   The token to find.
+   * @param code    The code within which to search for the token.
+   * @param fileURI The file URI of the input code.
+   * @return A [[SourceIndex]] if the token was found, otherwise the [[SourceIndex]]
+   *         for the zeroth index.
+   */
+  def lastIndexOf(
+      token: String,
+      code: String,
+      fileURI: URI): SourceIndex =
+    SourceIndexExtra.ensurePositive(
+      index = code.lastIndexOf(token), // TODO: lastIndexOf is temporary solution until an AST is available.
+      width = token.length,
+      fileURI = fileURI
+    )
+
   implicit class SourceIndexExtension(val sourceIndex: SourceIndex) extends AnyVal {
 
     def from: Int =

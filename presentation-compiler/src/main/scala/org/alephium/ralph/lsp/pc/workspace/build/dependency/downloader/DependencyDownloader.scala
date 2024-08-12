@@ -19,8 +19,9 @@ package org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorEmptyErrorsOnDownload
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, Build, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.{SourceIndex, CompilerOptions}
 
 import java.nio.file.Path
@@ -96,28 +97,37 @@ object DependencyDownloader {
     val buildDir =
       Build.toBuildFile(workspaceDir)
 
-    val compiledConfig =
-      org
-        .alephium
-        .ralphc
-        .Config(
-          compilerOptions = CompilerOptions.Default,
-          contractPath = workspaceDir,
-          artifactPath = workspaceDir
-        )
+    // Create a config with the workspace directory as the only directory.
+    // Sets`contractPath` as the workspace directory.
+    val parsedConfig =
+      RalphcConfigState.Parsed(
+        compilerOptions = CompilerOptions.Default,
+        contractPath = workspaceDir.toString,
+        artifactPath = None
+      )
 
     val json =
-      RalphcConfig.write(compiledConfig)
+      RalphcConfig.write(parsedConfig)
 
     val parsed =
       BuildState.Parsed(
         buildURI = buildDir.toUri,
         code = json,
-        config = RalphcConfig.RalphcParsedConfig(
-          compilerOptions = CompilerOptions.Default,
-          contractPath = workspaceDir.toString,
-          artifactPath = workspaceDir.toString
-        )
+        config = parsedConfig
+      )
+
+    // a compiled config
+    val compiledConfig =
+      RalphcConfigState.Compiled(
+        isArtifactsPathDefinedInBuild = parsedConfig.artifactPath.isDefined,
+        config = org
+          .alephium
+          .ralphc
+          .Config(
+            compilerOptions = CompilerOptions.Default,
+            contractPath = workspaceDir,
+            artifactPath = workspaceDir
+          )
       )
 
     BuildState.Compiled(

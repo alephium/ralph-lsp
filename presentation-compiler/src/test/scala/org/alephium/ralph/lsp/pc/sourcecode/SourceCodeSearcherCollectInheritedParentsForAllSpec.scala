@@ -87,7 +87,7 @@ class SourceCodeSearcherCollectInheritedParentsForAllSpec extends AnyWordSpec wi
         )
 
       val actualNames =
-        result.map(_.tree.ast.merge.name)
+        result.map(_.tree.ast.name)
 
       val expectedNames =
         Array("Parent1", "Parent2", "Parent3")
@@ -138,7 +138,7 @@ class SourceCodeSearcherCollectInheritedParentsForAllSpec extends AnyWordSpec wi
         )
 
       val actualNames =
-        result.map(_.tree.ast.merge.name)
+        result.map(_.tree.ast.name)
 
       val expectedNames =
         Array("Parent1", "Parent2", "Parent3")

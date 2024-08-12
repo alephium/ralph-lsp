@@ -14,24 +14,18 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.workspace.build.error
+package org.alephium.ralph.lsp.pc.workspace
 
-import org.alephium.ralph.SourceIndex
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
-import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 
-import java.net.URI
+import scala.collection.immutable.ArraySeq
 
-case class ErrorEmptyBuildFile(fileURI: URI) extends CompilerMessage.Error {
-
-  override def message: String = {
-    val defaultBuild = RalphcConfig.write(RalphcConfigState.Parsed.default)
-
-    s"""Empty build file detected. Consider copying the following default build JSON or refer to the documentation for guidance.
-         |$defaultBuild""".stripMargin
-  }
-
-  override def index: SourceIndex =
-    SourceIndexExtra.zero(fileURI)
-
-}
+/**
+ * Result type for the function [[WorkspaceSearcher.collectInheritedParents]].
+ *
+ * @param parentTrees The resulting parent trees within the current workspace.
+ * @param allTrees   All trees in scope within the current workspace.
+ */
+case class InheritedParentsResult(
+    parentTrees: ArraySeq[SourceLocation.Code],
+    allTrees: ArraySeq[SourceLocation.Code])

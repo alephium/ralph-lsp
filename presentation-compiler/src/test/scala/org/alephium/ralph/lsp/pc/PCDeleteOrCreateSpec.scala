@@ -22,8 +22,9 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, TestRalphc, BuildState, TestBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.{TestRalphc, BuildState, TestBuild}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace, WorkspaceFileEvent}
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
@@ -58,8 +59,8 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
           TestBuild.genCompiledOK(
             config = TestRalphc.genRalphcParsedConfig(
               dependenciesFolderName = None,
-              contractsFolderName = RalphcConfig.defaultParsedConfig.contractPath,
-              artifactsFolderName = RalphcConfig.defaultParsedConfig.artifactPath
+              contractsFolderName = RalphcConfigState.Parsed.default.contractPath,
+              artifactsFolderName = RalphcConfigState.Parsed.default.artifactPath
             )
           )
 
@@ -105,19 +106,22 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                     build = BuildState.Compiled(
                       dependencies = build.dependencies,               // default dependencies are written
                       dependencyPath = Dependency.defaultPath().value, // Default dependency build path i.e. .ralph-lsp is used
-                      config = org                                     // compiled build file has full paths defined
-                        .alephium
-                        .ralphc
-                        .Config(
-                          // compiled build file contains configurations from the default build coming from node
-                          compilerOptions = RalphcConfig.defaultParsedConfig.compilerOptions,
-                          contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.contractPath),
-                          artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.artifactPath)
-                        ),
+                      config = RalphcConfigState.Compiled(
+                        isArtifactsPathDefinedInBuild = false, // the default build config is used above, so artifactsPath is not defined
+                        config = org                           // compiled build file has full paths defined
+                          .alephium
+                          .ralphc
+                          .Config(
+                            // compiled build file contains configurations from the default build coming from node
+                            compilerOptions = RalphcConfigState.Parsed.default.compilerOptions,
+                            contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfigState.Parsed.default.contractPath),
+                            artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfigState.Parsed.default.contractPath)
+                          )
+                      ),
                       parsed = BuildState.Parsed(
                         build.buildURI,
-                        RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = 2), // Default build file is written,
-                        RalphcConfig.defaultParsedConfig
+                        RalphcConfig.write(RalphcConfigState.Parsed.default, indent = 2), // Default build file is written,
+                        RalphcConfigState.Parsed.default
                       )
                     ),
                     sourceCode = ArraySeq.empty // there is no source-code in this workspace
@@ -151,8 +155,8 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
               config = TestRalphc
                 .genRalphcParsedConfig(
                   dependenciesFolderName = None,
-                  contractsFolderName = RalphcConfig.defaultParsedConfig.contractPath,
-                  artifactsFolderName = RalphcConfig.defaultParsedConfig.artifactPath
+                  contractsFolderName = RalphcConfigState.Parsed.default.contractPath,
+                  artifactsFolderName = RalphcConfigState.Parsed.default.artifactPath
                 )
             )
 
@@ -211,19 +215,22 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
               BuildState.Compiled(
                 dependencies = build.dependencies,               // default dependencies are written
                 dependencyPath = Dependency.defaultPath().value, // Default dependency build path i.e. .ralph-lsp is used
-                config = org                                     // compiled build file has full paths defined
-                  .alephium
-                  .ralphc
-                  .Config(
-                    // compiled build file contains configurations from the default build coming from node
-                    compilerOptions = RalphcConfig.defaultParsedConfig.compilerOptions,
-                    contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.contractPath),
-                    artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfig.defaultParsedConfig.artifactPath)
-                  ),
+                config = RalphcConfigState.Compiled(
+                  isArtifactsPathDefinedInBuild = false, // the default build config is used above, so artifactsPath is not defined
+                  config = org                           // compiled build file has full paths defined
+                    .alephium
+                    .ralphc
+                    .Config(
+                      // compiled build file contains configurations from the default build coming from node
+                      compilerOptions = RalphcConfigState.Parsed.default.compilerOptions,
+                      contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfigState.Parsed.default.contractPath),
+                      artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfigState.Parsed.default.contractPath)
+                    )
+                ),
                 BuildState.Parsed(
                   buildURI = build.buildURI,
-                  code = RalphcConfig.write(RalphcConfig.defaultParsedConfig, indent = 2), // Default build file is written
-                  config = RalphcConfig.defaultParsedConfig
+                  code = RalphcConfig.write(RalphcConfigState.Parsed.default, indent = 2), // Default build file is written
+                  config = RalphcConfigState.Parsed.default
                 )
               )
 

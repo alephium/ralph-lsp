@@ -18,7 +18,7 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 private object GoToTypeId {
@@ -40,23 +40,25 @@ private object GoToTypeId {
         parent match {
           case Node(enumFieldSelector: Ast.EnumFieldSelector[_], _) if enumFieldSelector.enumId == typeIdNode.data =>
             // They selected an enum type. Take 'em there!
-            WorkspaceSearcher
-              .collectInheritedParents(sourceCode, workspace)
-              .iterator
-              .flatMap(goToEnumType(enumFieldSelector, _))
+            goToEnumType(
+              enumFieldSelector = enumFieldSelector,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case Node(enumDef: Ast.EnumDef[_], _) if enumDef.id == typeIdNode.data =>
             // They selected an enum definition. Find enum usages.
-            WorkspaceSearcher
-              .collectImplementingChildren(sourceCode, workspace)
-              .childTrees
-              .iterator
-              .flatMap(goToEnumTypeUsage(enumDef, _))
+            goToEnumDefUsage(
+              enumDef = enumDef,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == typeIdNode.data =>
             // They selected an event emit. Take 'em there!
             WorkspaceSearcher
               .collectInheritedParents(sourceCode, workspace)
+              .parentTrees
               .iterator
               .flatMap(goToEventDef(emitEvent, _))
 
@@ -81,17 +83,78 @@ private object GoToTypeId {
     }
 
   /**
+   * Navigate to the enum definition usages.
+   *
+   * @param enumDef    The enum definition to find usages for.
+   * @param sourceCode The parsed state of the source-code where the search was executed.
+   * @param workspace  The workspace where this search was executed and where all the source trees exist.
+   * @return An array sequence of enum [[Ast.TypeId]]s matching the enum definition.
+   */
+  def goToEnumDefUsage(
+      enumDef: Ast.EnumDef[_],
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] = {
+    val trees =
+      if (sourceCode.tree.ast == enumDef)
+        WorkspaceSearcher.collectAllTrees(workspace) // It's a global enum, search all workspace trees
+      else
+        WorkspaceSearcher // It's a local enum, search only the trees within the scope of inheritance
+          .collectImplementingChildren(sourceCode, workspace)
+          .childTrees
+
+    trees
+      .iterator
+      .flatMap(goToEnumTypeUsage(enumDef, _))
+  }
+
+  /**
+   * Navigate to the enum types for the given enum field selector.
+   *
+   * @param enumFieldSelector The enum type to find.
+   * @param sourceCode        The parsed state of the source-code where the search was executed.
+   * @param workspace         The workspace where this search was executed and where all the source trees exist.
+   * @return An array sequence of enum [[Ast.TypeId]]s matching the enum type.
+   */
+  private def goToEnumType(
+      enumFieldSelector: Ast.EnumFieldSelector[_],
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] = {
+    val trees =
+      WorkspaceSearcher.collectInheritedParents(
+        sourceCode = sourceCode,
+        workspace = workspace
+      )
+
+    // Enums might be within the scope of inheritance, i.e. within a inherited parent Contract
+    val parents =
+      trees.parentTrees
+
+    // or they might be global enum types
+    val globalEnums =
+      SourceCodeSearcher.collectGlobalEnumsCode(trees.allTrees.iterator)
+
+    // collected all trees that are in scope for an enum type access
+    val allTrees =
+      parents ++ globalEnums
+
+    // find matching enum TypeId within each of those trees
+    allTrees
+      .iterator
+      .flatMap(goToEnumType(enumFieldSelector, _))
+  }
+
+  /**
    * Navigate to the enum types for the given enum field selector.
    *
    * @param enumSelector The enum type to find.
    * @param source       The source tree to search within.
-   * @return An array sequence of enum [[Ast.TypeId]]s matching the search result.
+   * @return An array sequence of enum [[Ast.TypeId]]s matching the enum type.
    */
   private def goToEnumType(
       enumSelector: Ast.EnumFieldSelector[_],
       source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
     source.tree.ast match {
-      case Left(contract: Ast.Contract) =>
+      case contract: Ast.Contract =>
         contract
           .enums
           .iterator
@@ -101,7 +164,13 @@ private object GoToTypeId {
               SourceLocation.Node(enumDef.id, source)
           }
 
-      case Left(_: Ast.ContractInterface | _: Ast.TxScript) | Right(_: Ast.Struct) =>
+      case enumDef: Ast.EnumDef[_] =>
+        if (enumDef.id == enumSelector.enumId)
+          Iterator(SourceLocation.Node(enumDef.id, source))
+        else
+          Iterator.empty
+
+      case _: Ast.ContractInterface | _: Ast.TxScript | _: Ast.Struct | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         Iterator.empty
     }
 

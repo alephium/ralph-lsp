@@ -40,6 +40,11 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     "user selects the enum type of the first field" in {
       goTo(
         """
+          |enum >>EnumType<< {
+          |  Field0 = 0
+          |  Field1 = 1
+          |}
+          |
           |Abstract Contract Parent() {
           |
           |  enum >>EnumType<< {
@@ -60,6 +65,16 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
           |    let go_to_enum2 = EnumType.Field1
           |  }
           |}
+          |
+          |enum >>EnumType<< {
+          |  Field0 = 0
+          |  Field1 = 1
+          |}
+          |
+          |enum NotThis {
+          |  Field0 = 0
+          |  Field1 = 1
+          |}
           |""".stripMargin
       )
     }
@@ -67,12 +82,22 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     "user selects the enum type of the second field" in {
       goTo(
         """
+          |enum >>EnumType<< {
+          |  Field0 = 0
+          |  Field1 = 1
+          |}
+          |
           |Abstract Contract Parent() {
           |
           |  enum >>EnumType<< {
           |    Field0 = 0
           |    Field1 = 1
           |  }
+          |}
+          |
+          |enum >>EnumType<< {
+          |  Field0 = 0
+          |  Field1 = 1
           |}
           |
           |Contract MyContract() extends Parent() {
@@ -94,6 +119,11 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     "there are multiple enum types with duplicate names" in {
       goTo(
         """
+          |enum >>EnumType<< {
+          |  Field0 = 0
+          |  Field1 = 1
+          |}
+          |
           |Abstract Contract Parent2() {
           |
           |  enum EnumTypeNotUsed {
@@ -107,6 +137,11 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |
+          |enum >>EnumType<< {
+          |  Field0 = 0
+          |  Field1 = 1
+          |}
+          |
           |Abstract Contract Parent1() extends Parent2() {
           |
           |  enum >>EnumType<< {
@@ -118,6 +153,11 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
           |    Field0 = 0
           |    Field1 = 1
           |  }
+          |}
+          |
+          |enum >>EnumType<< {
+          |  Field0 = 0
+          |  Field1 = 1
           |}
           |
           |Contract MyContract() extends Parent1() {
@@ -135,6 +175,11 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
           |  pub fn function() -> () {
           |    let go_to_enum = Enu@@mType.Field0
           |  }
+          |}
+          |
+          |enum >>EnumType<< {
+          |  Field0 = 0
+          |  Field1 = 1
           |}
           |""".stripMargin
       )

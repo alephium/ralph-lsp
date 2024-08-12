@@ -16,6 +16,7 @@
 
 package org.alephium.ralph.lsp.pc.search.completion
 
+import org.alephium.ralph.Ast
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
@@ -400,6 +401,110 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
           Completion.Property(
             label = "mapChild: Map[Address, U256]",
             insert = "mapChild",
+            detail = ""
+          )
+        )
+
+      actual.sortBy(_.label) shouldBe expected.sortBy(_.label)
+    }
+
+    "global constants exist" in {
+      val suggestions =
+        suggest {
+          """
+            |const ONE = 2
+            |const TWO = 2
+            |
+            |Contract Foo() {
+            |
+            |  pub fn test() -> () {
+            |    @@
+            |  }
+            |}
+            |""".stripMargin
+        }
+
+      val actual =
+        suggestions
+          .collect {
+            case constants: Suggestion.ConstantVarDef =>
+              constants
+          }
+          .flatMap(_.toCompletion())
+
+      val expected =
+        List(
+          Completion.Constant(
+            label = "ONE",
+            insert = "ONE",
+            detail = ""
+          ),
+          Completion.Constant(
+            label = "TWO",
+            insert = "TWO",
+            detail = ""
+          )
+        )
+
+      actual.sortBy(_.label) shouldBe expected.sortBy(_.label)
+    }
+
+    "global enums exist" in {
+      val suggestions =
+        suggest {
+          """
+            |enum GlobalEnumTop {
+            |  ONE = 1
+            |  TWO = 2
+            |}
+            |
+            |Contract Foo() {
+            |
+            |  enum LocalEnum {
+            |    THREE = 3
+            |    FOUR = 4
+            |  }
+            |
+            |  pub fn test() -> () {
+            |    @@
+            |  }
+            |}
+            |
+            |enum GlobalEnumBottom {
+            |  FIVE = 5
+            |  SIX = 6
+            |}
+            |""".stripMargin
+        }
+
+      val actual =
+        suggestions
+          .collect {
+            case enums: Suggestion.EnumDef =>
+              enums
+
+            case enumCreatedTypes: Suggestion.CreatedType if enumCreatedTypes.node.source.tree.ast.isInstanceOf[Ast.EnumDef[_]] =>
+              enumCreatedTypes
+          }
+          .flatMap(_.toCompletion())
+
+      // FIXME: Global enums should not be suggested as Classes. This is the case right now because
+      //        All `GlobalDefinition`s that contain `typeId` are returned as Suggestion.CreatedInstance.
+      val expected =
+        List(
+          Completion.Enum(
+            label = "LocalEnum",
+            insert = "LocalEnum",
+            detail = ""
+          ),
+          Completion.Class(
+            label = "GlobalEnumTop",
+            insert = "GlobalEnumTop",
+            detail = ""
+          ),
+          Completion.Class(
+            label = "GlobalEnumBottom",
+            insert = "GlobalEnumBottom",
             detail = ""
           )
         )

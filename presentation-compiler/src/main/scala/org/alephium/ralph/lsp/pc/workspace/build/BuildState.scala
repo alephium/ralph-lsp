@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.{RalphcCompiledConfig, RalphcParsedConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfigState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
 
@@ -60,7 +60,7 @@ object BuildState {
   case class Parsed(
       buildURI: URI,
       code: String,
-      config: RalphcParsedConfig)
+      config: RalphcConfigState.Parsed)
     extends BuildState.IsParsed {
 
     override def codeOption: Option[String] =
@@ -72,7 +72,7 @@ object BuildState {
   case class Compiled(
       dependencies: ArraySeq[WorkspaceState.Compiled],
       dependencyPath: Path,
-      config: RalphcCompiledConfig,
+      config: RalphcConfigState.Compiled,
       parsed: BuildState.Parsed)
     extends BuildState.IsCompiled {
 
@@ -83,10 +83,10 @@ object BuildState {
       parsed.code
 
     def contractURI: URI =
-      config.contractPath.toUri
+      config.contractURI
 
-    def artifactURI: URI =
-      config.artifactPath.toUri
+    def artifactURI: Option[URI] =
+      config.artifactURI
 
     override def findDependency(id: DependencyID): Option[WorkspaceState.Compiled] =
       BuildState.findDependency(dependencies, id)

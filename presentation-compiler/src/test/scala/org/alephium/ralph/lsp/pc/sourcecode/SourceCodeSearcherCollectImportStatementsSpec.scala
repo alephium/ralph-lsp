@@ -37,7 +37,7 @@ class SourceCodeSearcherCollectImportStatementsSpec extends AnyWordSpec with Mat
   "collect distinct import statements" in {
     val goodCodeParsed =
       TestSourceCode
-        .genParsed(
+        .genParsedOK(
           """
           |import "blah/blah"
           |import "blah/blah"
@@ -51,11 +51,10 @@ class SourceCodeSearcherCollectImportStatementsSpec extends AnyWordSpec with Mat
         )
         .sample
         .get
-        .asInstanceOf[SourceCodeState.Parsed]
 
     val goodCodeCompiled =
       TestSourceCode
-        .genCompiled(
+        .genCompiledOK(
           """
           |import "std/nft_collection_interface"
           |import "std/nft_collection_interface"
@@ -71,7 +70,6 @@ class SourceCodeSearcherCollectImportStatementsSpec extends AnyWordSpec with Mat
         )
         .sample
         .get
-        .asInstanceOf[SourceCodeState.Compiled]
         .parsed
 
     val errorCompilation =

@@ -19,8 +19,10 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
+
+import scala.collection.immutable.ArraySeq
 
 private[search] object GoToIdent {
 
@@ -57,10 +59,11 @@ private[search] object GoToIdent {
 
           case Node(fieldSelector: Ast.EnumFieldSelector[_], _) if fieldSelector.field == identNode.data =>
             // They selected an enum field. Take 'em there!
-            WorkspaceSearcher
-              .collectInheritedParents(sourceCode, workspace)
-              .iterator
-              .flatMap(goToEnumField(fieldSelector, _))
+            goToEnumField(
+              fieldSelector = fieldSelector,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case Node(mapFuncCall: Ast.MapFuncCall, _) if mapFuncCall.ident == identNode.data =>
             // They selected an map on a function call.
@@ -86,28 +89,11 @@ private[search] object GoToIdent {
 
           case node @ Node(field: Ast.EnumField[_], _) if field.ident == identNode.data =>
             // They selected an enum field.
-            // Check the parent to find the enum type.
-            node
-              .parent
-              .map(_.data)
-              .iterator
-              .collect {
-                // Check: Parent is an enum definition which contains the enum field.
-                case enumDef: Ast.EnumDef[_] if enumDef.fields.exists(_.ident == field.ident) =>
-                  WorkspaceSearcher
-                    .collectImplementingChildren(sourceCode, workspace)
-                    .childTrees
-                    .iterator
-                    .flatMap {
-                      sourceCode =>
-                        goToEnumFieldUsage(
-                          enumType = enumDef.id,
-                          enumField = field,
-                          sourceCode = sourceCode
-                        )
-                    }
-              }
-              .flatten
+            goToEnumFieldUsage(
+              node = node.upcast(field),
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case node @ Node(field: Ast.EventField, _) if field.ident == identNode.data =>
             // They selected an event field.
@@ -135,19 +121,11 @@ private[search] object GoToIdent {
               .flatten
 
           case Node(constantDef: Ast.ConstantVarDef[_], _) if constantDef.ident == identNode.data =>
-            // They selected a constant definition. Take 'em there!
-            WorkspaceSearcher
-              .collectImplementingChildren(sourceCode, workspace)
-              .childTrees
-              .iterator
-              .flatMap {
-                sourceCode =>
-                  goToVariableUsages(
-                    ident = constantDef.ident,
-                    from = sourceCode.tree.rootNode,
-                    sourceCode = sourceCode
-                  )
-              }
+            goToConstantUsage(
+              constantDef = constantDef,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case namedVarNode @ Node(namedVar: Ast.NamedVar, _) if namedVar.ident == identNode.data =>
             // User selected a named variable. Find its usages.
@@ -179,6 +157,83 @@ private[search] object GoToIdent {
       case None =>
         Iterator.empty
     }
+
+  /**
+   * Navigate to enum fields.
+   *
+   * @param fieldSelector The enum field to search.
+   * @param sourceCode    The source code location where this request was executed.
+   * @param workspace     The workspace where this search was executed and where all the source trees exist.
+   * @return An iterator representing the locations of the enum field implementations.
+   */
+  private def goToEnumField(
+      fieldSelector: Ast.EnumFieldSelector[_],
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.EnumField[_]]] = {
+    val trees =
+      WorkspaceSearcher.collectInheritedParents(
+        sourceCode = sourceCode,
+        workspace = workspace
+      )
+
+    // Enums might be within the scope of inheritance, i.e. within a inherited parent Contract
+    val parents =
+      trees.parentTrees
+
+    // or they might be global enum types
+    val globalEnums =
+      SourceCodeSearcher.collectGlobalEnumsCode(trees.allTrees.iterator)
+
+    // collect all trees to search
+    val allTrees =
+      parents ++ globalEnums
+
+    // find matching enum fields
+    allTrees
+      .iterator
+      .flatMap(goToEnumField(fieldSelector, _))
+  }
+
+  /**
+   * Navigate to enum field usages.
+   *
+   * @param node       The node representing the enum field being searched.
+   * @param sourceCode The source tree where this search was executed.
+   * @param workspace  The workspace where this search was executed and where all the source trees exist.
+   * @return An iterator containing identities representing the usage locations of the enum field.
+   */
+  private def goToEnumFieldUsage(
+      node: Node[Ast.EnumField[_], Ast.Positioned],
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] =
+    // Check the parent to find the enum type.
+    node
+      .parent
+      .map(_.data)
+      .iterator
+      .collect {
+        // Check: Parent is an enum definition which contains the enum field.
+        case enumDef: Ast.EnumDef[_] if enumDef.fields.exists(_.ident == node.data.ident) =>
+          val trees =
+            if (sourceCode.tree.ast == enumDef)
+              WorkspaceSearcher.collectAllTrees(workspace) // It's a global enum, search all workspace trees.
+            else
+              WorkspaceSearcher // It's a local enum, search within the scope of inheritance.
+                .collectImplementingChildren(sourceCode, workspace)
+                .childTrees
+
+          trees
+            .iterator
+            .flatMap {
+              sourceCode =>
+                goToEnumFieldUsage(
+                  enumType = enumDef.id,
+                  enumField = node.data,
+                  sourceCode = sourceCode
+                )
+            }
+      }
+      .flatten
 
   /**
    * Navigate to variable usages of the given identity.
@@ -327,11 +382,20 @@ private[search] object GoToIdent {
       identNode: Node[Ast.Ident, Ast.Positioned],
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] = {
+    val inheritedParents =
+      WorkspaceSearcher.collectInheritedParents(sourceCode, workspace)
+
     val argumentsAndConstants =
-      WorkspaceSearcher
-        .collectInheritedParents(sourceCode, workspace)
+      inheritedParents
+        .parentTrees
         .iterator
         .flatMap(goToTemplateDefinitionsAndArguments(identNode.data, _))
+
+    val globalConstants =
+      goToGlobalConstants(
+        ident = identNode.data,
+        trees = inheritedParents.allTrees
+      )
 
     val functionArguments =
       goToNearestFunctionArguments(identNode)
@@ -343,8 +407,29 @@ private[search] object GoToIdent {
         sourceCode = sourceCode
       )
 
-    argumentsAndConstants ++ functionArguments ++ localVariables
+    argumentsAndConstants ++ globalConstants ++ functionArguments ++ localVariables
   }
+
+  /**
+   * Navigate to global constants.
+   *
+   * @param ident The identity of the constant.
+   * @param trees The source trees to search within.
+   * @return An iterator over the found constants.
+   */
+  private def goToGlobalConstants(
+      ident: Ast.Ident,
+      trees: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.ConstantVarDef[_]]] =
+    trees
+      .iterator
+      .collect {
+        // Global constants are source trees with only one node of type `Ast.ConstantVarDef`
+        case source @ SourceLocation.Code(Tree.Source(constant @ Ast.ConstantVarDef(thisIdent, _), _), _) if thisIdent == ident =>
+          SourceLocation.Node(
+            ast = constant,
+            source = source
+          )
+      }
 
   /**
    * Navigate to constants and template arguments within the source tree.
@@ -427,17 +512,49 @@ private[search] object GoToIdent {
       fieldSelector: Ast.EnumFieldSelector[_],
       sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.EnumField[_]]] =
     sourceCode.tree.ast match {
-      case Left(contract: Ast.Contract) =>
+      case contract: Ast.Contract =>
         contract
           .enums
           .iterator
-          .filter(_.id == fieldSelector.enumId)
-          .flatMap(_.fields.find(_.ident == fieldSelector.field))
-          .map(SourceLocation.Node(_, sourceCode))
+          .flatMap {
+            enumDef =>
+              findEnumField(
+                fieldSelector = fieldSelector,
+                enumDef = enumDef,
+                sourceCode = sourceCode
+              )
+          }
 
-      case Left(_: Ast.ContractInterface | _: Ast.TxScript) | Right(_: Ast.Struct) =>
+      case enumDef: Ast.EnumDef[_] =>
+        findEnumField(
+          fieldSelector = fieldSelector,
+          enumDef = enumDef,
+          sourceCode = sourceCode
+        ).iterator
+
+      case _: Ast.ContractInterface | _: Ast.TxScript | _: Ast.Struct | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         Iterator.empty
     }
+
+  /**
+   * Find the enum field(s) for the given enum field selector within the given enum definition.
+   *
+   * @param fieldSelector The selected enum field to find.
+   * @param enumDef       The enum definition to search within.
+   * @param sourceCode    The source where the enum definition is defined.
+   * @return An array sequence of [[Ast.EnumField]]s matching the search result.
+   */
+  private def findEnumField(
+      fieldSelector: Ast.EnumFieldSelector[_],
+      enumDef: Ast.EnumDef[_],
+      sourceCode: SourceLocation.Code): Option[SourceLocation.Node[Ast.EnumField[_]]] =
+    if (enumDef.id == fieldSelector.enumId)
+      enumDef
+        .fields
+        .find(_.ident == fieldSelector.field)
+        .map(SourceLocation.Node(_, sourceCode))
+    else
+      None
 
   /**
    * Navigate to all enum usages for the given enum type and field.
@@ -516,11 +633,11 @@ private[search] object GoToIdent {
       childNode: Node[Ast.Positioned, Ast.Positioned],
       sourceTree: Tree.Source): Option[Node[Ast.UniqueDef, Ast.Positioned]] =
     sourceTree.ast match {
-      case Left(_: Ast.Contract | _: Ast.ContractInterface | _: Ast.TxScript) =>
+      case _: Ast.Contract | _: Ast.ContractInterface | _: Ast.TxScript =>
         // Find the nearest function definition or use the template body as the scope.
         GoToFuncId.goToNearestFuncDef(childNode).orElse(Some(sourceTree.rootNode))
 
-      case Right(_: Ast.Struct) =>
+      case _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
         None
     }
 
@@ -555,19 +672,13 @@ private[search] object GoToIdent {
       sourceCode: SourceLocation.Code): Seq[SourceLocation.Node[Ast.Argument]] = {
     val arguments =
       sourceCode.tree.ast match {
-        case Left(contract) =>
-          contract match {
-            case ast: Ast.TxScript =>
-              ast.templateVars
+        case ast: Ast.TxScript =>
+          ast.templateVars
 
-            case contract: Ast.Contract =>
-              contract.templateVars ++ contract.fields
+        case contract: Ast.Contract =>
+          contract.templateVars ++ contract.fields
 
-            case _: Ast.ContractInterface =>
-              Seq.empty
-          }
-
-        case Right(_) =>
+        case _: Ast.ContractInterface | _: Ast.Struct | _: Ast.EnumDef[_] | _: Ast.ConstantVarDef[_] | _: Ast.AssetScript =>
           Seq.empty
       }
 
@@ -590,6 +701,7 @@ private[search] object GoToIdent {
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.MapDef]] =
     WorkspaceSearcher
       .collectInheritedParents(sourceCode, workspace)
+      .parentTrees
       .iterator
       .flatMap {
         code =>
@@ -649,5 +761,39 @@ private[search] object GoToIdent {
       case node @ Node(ast: Ast.Argument, _) if ast.ident == ident && node.parent.exists(_.data == sourceCode.tree.rootNode.data) =>
         SourceLocation.Node(ast, sourceCode)
     }
+
+  /**
+   * Navigate to local and global constant usages.
+   *
+   * @param constantDef The constant definition to search usages for.
+   * @param sourceCode  The source tree where this search is executed.
+   * @param workspace   The workspace where this search is executed and where all source trees exist.
+   * @return An iterator over identity nodes representing the constant usage locations.
+   */
+  private def goToConstantUsage(
+      constantDef: Ast.ConstantVarDef[_],
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] = {
+    val children =
+      if (sourceCode.tree.ast == constantDef)
+        // Is a global constant, fetch all workspace trees.
+        WorkspaceSearcher.collectAllTrees(workspace)
+      else
+        // Is a local constant, fetch all trees within the scope of inheritance.
+        WorkspaceSearcher
+          .collectImplementingChildren(sourceCode, workspace)
+          .childTrees
+
+    children
+      .iterator
+      .flatMap {
+        sourceCode =>
+          goToVariableUsages(
+            ident = constantDef.ident,
+            from = sourceCode.tree.rootNode,
+            sourceCode = sourceCode
+          )
+      }
+  }
 
 }

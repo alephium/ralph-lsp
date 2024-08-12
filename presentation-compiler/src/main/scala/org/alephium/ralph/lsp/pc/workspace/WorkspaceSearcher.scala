@@ -64,7 +64,7 @@ object WorkspaceSearcher {
    */
   def collectInheritedParents(
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Seq[SourceLocation.Code] = {
+      workspace: WorkspaceState.IsSourceAware): InheritedParentsResult = {
     val allInScopeCode =
       collectTrees(workspace = workspace, includeNonImportedCode = false)
 
@@ -74,7 +74,13 @@ object WorkspaceSearcher {
         allSource = allInScopeCode
       )
 
-    inheritancesInScope :+ sourceCode
+    val parents =
+      inheritancesInScope :+ sourceCode
+
+    InheritedParentsResult(
+      parentTrees = parents,
+      allTrees = allInScopeCode
+    )
   }
 
   /**
@@ -150,6 +156,7 @@ object WorkspaceSearcher {
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
     collectInheritedParents(sourceCode, workspace)
+      .parentTrees
       .iterator
       .flatMap(SourceCodeSearcher.collectFunctions)
 
@@ -165,6 +172,29 @@ object WorkspaceSearcher {
     val trees = collectTrees(workspace, includeNonImportedCode)
     SourceCodeSearcher.collectTypes(trees.iterator)
   }
+
+  /**
+   * Collects all global constants within the provided parsed workspace state.
+   *
+   * @param workspace The parsed workspace state from which to collect global constants.
+   * @return An iterator containing all global constants.
+   */
+  def collectGlobalConstants(workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.ConstantVarDef[_]]] = {
+    val trees = collectTrees(workspace, includeNonImportedCode = false)
+    SourceCodeSearcher.collectGlobalConstants(trees.iterator)
+  }
+
+  /**
+   * Collects all in-scope workspace source trees.
+   *
+   * @param workspace The workspace to collect source trees for.
+   * @return Parsed source files in scope.
+   */
+  def collectAllTrees(workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.Code] =
+    collectTrees(
+      workspace = workspace,
+      includeNonImportedCode = false
+    )
 
   /**
    * Collects all parsed source files, excluding `std` dependency source files

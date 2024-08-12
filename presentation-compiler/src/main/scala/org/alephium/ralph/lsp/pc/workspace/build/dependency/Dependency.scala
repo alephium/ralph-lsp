@@ -21,6 +21,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfigState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDefaultDependencyDirectoryDoesNotExists
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
@@ -167,10 +168,16 @@ object Dependency {
         Build.getAbsoluteContractArtifactPaths(parentWorkspaceBuild)
 
       val config =
-        Config(
-          compilerOptions = parentWorkspaceBuild.config.compilerOptions,
-          contractPath = absoluteContractPath,
-          artifactPath = absoluteArtifactPath
+        RalphcConfigState.Compiled(
+          isArtifactsPathDefinedInBuild = absoluteArtifactPath.isDefined,
+          config = Config(
+            compilerOptions = parentWorkspaceBuild.config.compilerOptions,
+            contractPath = absoluteContractPath,
+            // Issue https://github.com/alephium/ralph-lsp/issues/247 requests to "not require the existence of artifacts folder".
+            // But artifactPath is mandatory in compiler's Config instance.
+            // Therefore, if the `artifactPath` is not provided, use the `contractPath` as the `artifactPath`.
+            artifactPath = absoluteArtifactPath.map(_._2) getOrElse absoluteContractPath
+          )
         )
 
       // Build OK. Promote build to compiled state.

@@ -18,7 +18,7 @@ package org.alephium.ralph.lsp.pc.workspace.build
 
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.TestCommon.genName
-import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcParsedConfig
+import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfigState
 import org.scalacheck.{Gen, Arbitrary}
 
 /** Ralph compiler related test functions */
@@ -44,14 +44,14 @@ object TestRalphc {
   def genRalphcParsedConfig(
       compilerOptions: Gen[CompilerOptions] = genCompilerOptions(),
       contractsFolderName: Gen[String] = genName,
-      artifactsFolderName: Gen[String] = genName,
-      dependenciesFolderName: Gen[Option[String]] = Gen.option(genName)): Gen[RalphcParsedConfig] =
+      artifactsFolderName: Gen[Option[String]] = Gen.option(genName),
+      dependenciesFolderName: Gen[Option[String]] = Gen.option(genName)): Gen[RalphcConfigState.Parsed] =
     for {
       compilerOptions        <- compilerOptions
       contractsFolderName    <- contractsFolderName
       artifactsFolderName    <- artifactsFolderName
       dependenciesFolderName <- dependenciesFolderName
-    } yield RalphcParsedConfig(
+    } yield RalphcConfigState.Parsed(
       compilerOptions = compilerOptions,
       contractPath = contractsFolderName,
       artifactPath = artifactsFolderName,

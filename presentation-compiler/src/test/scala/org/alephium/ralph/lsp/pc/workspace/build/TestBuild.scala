@@ -22,8 +22,8 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
-import org.alephium.ralph.lsp.pc.workspace.build.RalphcConfig.RalphcParsedConfig
 import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc.genRalphcParsedConfig
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers._
@@ -36,7 +36,7 @@ object TestBuild {
 
   def genParsed(
       workspaceURI: Gen[URI] = genFolderURI(),
-      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()): Gen[BuildState.Parsed] =
+      config: Gen[RalphcConfigState.Parsed] = genRalphcParsedConfig()): Gen[BuildState.Parsed] =
     for {
       workspaceURI <- workspaceURI
       parsedConfig <- config
@@ -58,7 +58,7 @@ object TestBuild {
   /** Generate a successfully compiled BuildState */
   def genCompiledOK(
       workspaceURI: Gen[URI] = genFolderURI(),
-      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()
+      config: Gen[RalphcConfigState.Parsed] = genRalphcParsedConfig()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Gen[BuildState.Compiled] =
@@ -69,7 +69,7 @@ object TestBuild {
 
   def genCompiled(
       workspaceURI: Gen[URI] = genFolderURI(),
-      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()
+      config: Gen[RalphcConfigState.Parsed] = genRalphcParsedConfig()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Gen[BuildState.IsCompiled] =
@@ -90,7 +90,7 @@ object TestBuild {
       code: Gen[String] = TestCode.genGoodCode(),
       minSourceCount: Int = 0,
       maxSourceCount: Int = 10,
-      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()
+      config: Gen[RalphcConfigState.Parsed] = genRalphcParsedConfig()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Gen[(BuildState.Compiled, List[SourceCodeState.OnDisk], List[SourceCodeState.OnDisk])] =
@@ -116,7 +116,7 @@ object TestBuild {
       code: Gen[String] = TestCode.genGoodCode(),
       minSourceCount: Int = 0,
       maxSourceCount: Int = 10,
-      config: Gen[RalphcParsedConfig] = genRalphcParsedConfig()
+      config: Gen[RalphcConfigState.Parsed] = genRalphcParsedConfig()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Gen[(BuildState.Compiled, List[SourceCodeState.OnDisk])] =
@@ -135,7 +135,12 @@ object TestBuild {
 
     val workspacePath = Paths.get(parsed.workspaceURI)
     TestFile.createDirectories(workspacePath.resolve(parsed.config.contractPath))
-    TestFile.createDirectories(workspacePath.resolve(parsed.config.artifactPath))
+
+    parsed.config.artifactPath foreach {
+      artifactPath =>
+        TestFile.createDirectories(workspacePath.resolve(artifactPath))
+    }
+
     parsed
       .config
       .dependencyPath
@@ -152,7 +157,12 @@ object TestBuild {
 
     val workspacePath = Paths.get(compiled.workspaceURI)
     TestFile.createDirectories(workspacePath.resolve(compiled.config.contractPath))
-    TestFile.createDirectories(workspacePath.resolve(compiled.config.artifactPath))
+
+    compiled.config.artifactPath foreach {
+      artifactPath =>
+        TestFile.createDirectories(workspacePath.resolve(artifactPath))
+    }
+
     TestFile.createDirectories(workspacePath.resolve(compiled.dependencyPath))
 
     compiled

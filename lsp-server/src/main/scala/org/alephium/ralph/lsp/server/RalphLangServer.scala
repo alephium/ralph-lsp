@@ -307,47 +307,55 @@ class RalphLangServer private (
 
       logger.debug(s"didChangeWatchedFiles: ${changes.mkString("\n", "\n", "")}")
 
-      // collect events
-      val events =
-        changes
-          .map {
+      // Check if GIT branch was changed
+      if (changes.exists(_.getUri.endsWith(".git/HEAD"))) {
+        // TODO: Support other version control systems.
+        logger.debug("Branch change detected")
+        reboot()
+      } else {
+        // collect events
+        val events =
+          changes
+            .map {
+              event =>
+                (event.getType, event)
+            }
+            .collect {
+              case (FileChangeType.Deleted, event) =>
+                WorkspaceFileEvent.Deleted(uri(event.getUri))
+
+              case (FileChangeType.Created, event) =>
+                WorkspaceFileEvent.Created(uri(event.getUri))
+            }
+
+        val fileURIEvents =
+          events filter {
             event =>
-              (event.getType, event)
-          }
-          .collect {
-            case (FileChangeType.Deleted, event) =>
-              WorkspaceFileEvent.Deleted(uri(event.getUri))
-
-            case (FileChangeType.Created, event) =>
-              WorkspaceFileEvent.Created(uri(event.getUri))
+              isFileScheme(event.uri)
           }
 
-      val fileURIEvents =
-        events filter {
-          event =>
-            isFileScheme(event.uri)
+        if (fileURIEvents.nonEmpty) {
+          val currentPCState =
+            getPCState()
+
+          // Build OK! process delete or create
+          val newPCState =
+            PC.deleteOrCreate(
+              events = fileURIEvents,
+              pcState = currentPCState
+            )
+
+          // Set the updated workspace
+          val diagnostics =
+            setPCStateAndBuildDiagnostics(
+              currentPCState = currentPCState,
+              newPCState = newPCState
+            )
+
+          getClient() publish diagnostics
         }
-
-      if (fileURIEvents.nonEmpty) {
-        val currentPCState =
-          getPCState()
-
-        // Build OK! process delete or create
-        val newPCState =
-          PC.deleteOrCreate(
-            events = fileURIEvents,
-            pcState = currentPCState
-          )
-
-        // Set the updated workspace
-        val diagnostics =
-          setPCStateAndBuildDiagnostics(
-            currentPCState = currentPCState,
-            newPCState = newPCState
-          )
-
-        getClient() publish diagnostics
       }
+
     }
 
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
@@ -464,6 +472,40 @@ class RalphLangServer private (
 
   override def getWorkspaceService: WorkspaceService =
     this
+
+  /**
+   * Re-builds a fresh workspace from disk.
+   */
+  def reboot(): Unit =
+    runSync {
+      // initialise a new workspace
+      val currentPCState =
+        getPCState()
+
+      val newPCState =
+        PC.initialise(currentPCState.workspace.workspaceURI)
+
+      // clear all existing diagnostics
+      val diagnostics =
+        setPCStateAndBuildDiagnostics(
+          currentPCState = currentPCState,
+          newPCState = newPCState
+        )
+
+      getClient() publish diagnostics
+
+      // invoke initial build on new PCState
+      triggerInitialBuild()
+    }
+
+  /**
+   * Programmatically triggers a change in the build file.
+   */
+  private def triggerInitialBuild(): Unit =
+    didChangeAndPublish(
+      fileURI = getPCState().workspace.buildURI,
+      code = None
+    )
 
   /**
    * Apply code change and publish diagnostics.

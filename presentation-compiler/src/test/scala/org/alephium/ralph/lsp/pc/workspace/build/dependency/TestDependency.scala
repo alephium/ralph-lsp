@@ -20,7 +20,8 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.{RalphcConfig, Build, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfig, RalphcConfigState}
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.scalatest.matchers.should.Matchers._
 
 import java.nio.file.Paths
@@ -42,8 +43,8 @@ object TestDependency {
     val parsed =
       BuildState.Parsed(
         buildURI = Paths.get(Build.FILE_NAME).toUri,
-        code = RalphcConfig.write(RalphcConfig.defaultParsedConfig),
-        config = RalphcConfig.defaultParsedConfig
+        code = RalphcConfig.write(RalphcConfigState.Parsed.default),
+        config = RalphcConfigState.Parsed.default
       )
 
     // build the std dependency
