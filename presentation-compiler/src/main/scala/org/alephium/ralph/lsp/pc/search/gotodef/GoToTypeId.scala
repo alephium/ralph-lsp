@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.Ast
+import org.alephium.ralph.lsp.access.compiler.ast.AstExtra
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
@@ -69,6 +70,12 @@ private object GoToTypeId {
               .childTrees
               .iterator
               .flatMap(goToEventDefUsage(eventDef, _))
+
+          case Node(globalDef: Ast.GlobalDefinition, _) if AstExtra.getTypeId(globalDef) contains typeIdNode.data =>
+            goToTypeIdUsage(
+              selectedTypId = typeIdNode.data,
+              workspace = workspace
+            )
 
           case _ =>
             // For everything else find Contracts, Interfaces, or TxScripts with the given type ID.
@@ -244,5 +251,31 @@ private object GoToTypeId {
     WorkspaceSearcher
       .collectTypes(workspace, includeNonImportedCode = false)
       .filter(_.ast == typeId)
+
+  /**
+   * Navigate to all [[Ast.TypeId]] usages excluding itself.
+   *
+   * @param selectedTypId The selected typed ID.
+   *                      This must be the actual selected [[Ast.TypeId]] instance from the tree.
+   * @param workspace     The Workspace where the implementation of the type ID may exist.
+   * @return An iterator over [[Ast.TypeId]] usages.
+   */
+  private def goToTypeIdUsage(
+      selectedTypId: Ast.TypeId,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] =
+    WorkspaceSearcher
+      .collectAllTrees(workspace)
+      .iterator
+      .flatMap {
+        code =>
+          code.tree.rootNode.walkDown.collect {
+            // this typeId should equal the searched typeId and a different object then itself.
+            case Node(typeId: Ast.TypeId, _) if typeId == selectedTypId && typeId.ne(selectedTypId) =>
+              SourceLocation.Node(
+                ast = typeId,
+                source = code
+              )
+          }
+      }
 
 }
