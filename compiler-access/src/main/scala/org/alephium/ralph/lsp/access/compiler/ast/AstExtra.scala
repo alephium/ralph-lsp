@@ -84,4 +84,28 @@ object AstExtra {
 
     }
 
+  /**
+   * Fetches the type identifier for a given global definition.
+   *
+   * @param ast The type for which to fetch the identifier.
+   * @return `Some(TypeId)` if the type has an associated [[Ast.TypeId]], otherwise [[None]].
+   */
+  def getTypeId(ast: Ast.GlobalDefinition): Option[Ast.TypeId] =
+    ast match {
+      case ast: Ast.ContractWithState =>
+        Some(ast.ident)
+
+      case ast: Ast.Struct =>
+        Some(ast.id)
+
+      case ast: Ast.EnumDef[_] =>
+        Some(ast.id)
+
+      case asset: Ast.AssetScript =>
+        Some(asset.ident)
+
+      case _: Ast.ConstantVarDef[_] =>
+        None
+    }
+
 }
