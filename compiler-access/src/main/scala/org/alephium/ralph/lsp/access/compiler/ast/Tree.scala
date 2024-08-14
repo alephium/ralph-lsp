@@ -74,22 +74,7 @@ object Tree {
       NodeBuilder.buildRootNode(ast)
 
     def typeId(): Option[Ast.TypeId] =
-      ast match {
-        case ast: Ast.ContractWithState =>
-          Some(ast.ident)
-
-        case ast: Ast.Struct =>
-          Some(ast.id)
-
-        case ast: Ast.EnumDef[_] =>
-          Some(ast.id)
-
-        case asset: Ast.AssetScript =>
-          Some(asset.ident)
-
-        case _: Ast.ConstantVarDef[_] =>
-          None
-      }
+      AstExtra.getTypeId(ast)
 
   }
 
