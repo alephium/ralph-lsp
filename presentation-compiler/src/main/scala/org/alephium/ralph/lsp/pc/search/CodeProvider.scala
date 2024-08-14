@@ -22,6 +22,7 @@ import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.{Suggestion, CodeCompletionProvider}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefinitionProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
+import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 import java.net.URI
@@ -70,6 +71,93 @@ object CodeProvider {
    * @tparam A The type to search.
    */
   def search[A](
+      line: Int,
+      character: Int,
+      fileURI: URI,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit provider: CodeProvider[A],
+      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[A]]] =
+    // if the fileURI belongs to the workspace, then search just within that workspace
+    if (URIUtil.contains(workspace.build.contractURI, fileURI))
+      searchWorkspace[A](
+        line = line,
+        character = character,
+        fileURI = fileURI,
+        workspace = workspace
+      )
+    else // else search all source files
+      searchWorkspaceAndDependencies[A](
+        line = line,
+        character = character,
+        fileURI = fileURI,
+        workspace = workspace
+      )
+
+  /**
+   * Executes search on dependencies and the workspace that can use this dependency.
+   *
+   * @param character Character offset on a line in a document (zero-based).
+   * @param fileURI   The text document's uri.
+   * @param workspace Current workspace state.
+   * @tparam A The type to search.
+   */
+  private def searchWorkspaceAndDependencies[A](
+      line: Int,
+      character: Int,
+      fileURI: URI,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit provider: CodeProvider[A],
+      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[A]]] =
+    // Search on dependencies should only run for go-to definitions requests. Code-completion is ignored.
+    if (provider == CodeProvider.goToDefinition)
+      workspace
+        .build
+        .dependencies
+        .find { // find the dependency where this search was executed
+          dependency =>
+            URIUtil.contains(dependency.build.contractURI, fileURI)
+        }
+        .flatMap {
+          dependency =>
+            // merge all source files of all dependencies, because dependencies themselves could be interdependent.
+            val dependencySourceCode =
+              workspace
+                .build
+                .dependencies
+                .flatMap(_.sourceCode)
+
+            // merge all dependencies and workspace source-files.
+            val mergedSourceCode =
+              workspace.sourceCode ++ dependencySourceCode
+
+            // create one workspace with all source-code.
+            val mergedWorkspace =
+              WorkspaceState.UnCompiled(
+                build = dependency.build,
+                sourceCode = mergedSourceCode
+              )
+
+            // execute search on that one workspace
+            searchWorkspace[A](
+              line = line,
+              character = character,
+              fileURI = fileURI,
+              workspace = mergedWorkspace
+            )
+        }
+    else
+      None
+
+  /**
+   * Execute search at cursor position within the current workspace state.
+   *
+   * @param line      Line position in a document (zero-based).
+   * @param character Character offset on a line in a document (zero-based).
+   * @param fileURI   The text document's uri.
+   * @param workspace Current workspace state.
+   * @tparam A The type to search.
+   */
+  private def searchWorkspace[A](
       line: Int,
       character: Int,
       fileURI: URI,
