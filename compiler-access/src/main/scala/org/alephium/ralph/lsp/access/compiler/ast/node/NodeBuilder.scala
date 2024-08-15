@@ -143,17 +143,17 @@ object NodeBuilder extends StrictLogging {
         buildParent(right)
       )
 
-    case Some(positioned: Positioned) =>
-      processParent(positioned)
-
-    case Some(tuple @ (_: Positioned, _: Positioned)) =>
-      processParent(tuple)
-
     case positions: Seq[_] =>
       buildParents(positions)
 
-    case Some(positions: Seq[_]) =>
-      buildParents(positions)
+    case Some(product) =>
+      processParent(product)
+
+    case Right(product) =>
+      processParent(product)
+
+    case Left(product) =>
+      processParent(product)
   }
 
 }
