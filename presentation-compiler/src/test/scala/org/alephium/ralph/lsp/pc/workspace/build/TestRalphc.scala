@@ -32,13 +32,15 @@ object TestRalphc {
       ignoreUnusedPrivateFunctionsWarnings <- Arbitrary.arbitrary[Boolean]
       ignoreUpdateFieldsCheckWarnings      <- Arbitrary.arbitrary[Boolean]
       ignoreCheckExternalCallerWarnings    <- Arbitrary.arbitrary[Boolean]
+      ignoreUnusedFunctionReturnWarnings   <- Arbitrary.arbitrary[Boolean]
     } yield CompilerOptions(
       ignoreUnusedConstantsWarnings = ignoreUnusedConstantsWarnings,
       ignoreUnusedVariablesWarnings = ignoreUnusedVariablesWarnings,
       ignoreUnusedFieldsWarnings = ignoreUnusedFieldsWarnings,
       ignoreUnusedPrivateFunctionsWarnings = ignoreUnusedPrivateFunctionsWarnings,
       ignoreUpdateFieldsCheckWarnings = ignoreUpdateFieldsCheckWarnings,
-      ignoreCheckExternalCallerWarnings = ignoreCheckExternalCallerWarnings
+      ignoreCheckExternalCallerWarnings = ignoreCheckExternalCallerWarnings,
+      ignoreUnusedFunctionReturnWarnings = ignoreUnusedFunctionReturnWarnings
     )
 
   def genRalphcParsedConfig(
