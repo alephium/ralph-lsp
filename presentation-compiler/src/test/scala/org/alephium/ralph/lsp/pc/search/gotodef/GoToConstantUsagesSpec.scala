@@ -68,7 +68,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
                |  const MyCons@@tant = 0
                |  const MyConstant_B = 1
                |
-               |  pub fn function() -> () {
+               |  pub fn function() -> [U256; >>MyConstant<<] {
                |    let my_constant = >>MyConstant<<
                |    let my_constant2 = >>MyConstant<<
                |    let my_constant3 = MyConstant_B
@@ -76,6 +76,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
                |      let my_constant4 = >>MyConstant<<
                |      let my_constant5 = MyConstant_B
                |    }
+               |    return [0; >>MyConstant<<]
                |  }
                |}
                |""".stripMargin
@@ -100,7 +101,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
                |
                |Contract $contractName() {
                |
-               |  pub fn function() -> () {
+               |  pub fn function() -> [U256; >>MyConstant<<] {
                |    let my_constant = >>MyConstant<<
                |    let my_constant2 = >>MyConstant<<
                |    let my_constant3 = MyConstant_B
@@ -108,6 +109,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
                |      let my_constant4 = >>MyConstant<<
                |      let my_constant5 = MyConstant_B
                |    }
+               |    return [0; >>MyConstant<<]
                |  }
                |}
                |""".stripMargin
@@ -132,25 +134,28 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
             |
             |  const MyCons@@tant = 0
             |
-            |  fn function0() -> () {
+            |  fn function0() -> [U256; >>MyConstant<<] {
             |    let my_constant2 = >>MyConstant<<
             |    let my_constant3 = MyConstant_B
+            |    return [0; >>MyConstant<<]
             |  }
             |}
             |
             |Contract Parent1() extends Parent() {
             |
-            |  pub fn function1() -> () {
+            |  pub fn function1() -> [U256; >>MyConstant<<] {
             |    let my_constant2 = >>MyConstant<<
             |    let my_constant3 = MyConstant_B
+            |    return [0; >>MyConstant<<]
             |  }
             |}
             |
             |Contract Child() extends Parent1() {
             |
-            |  pub fn function2() -> () {
+            |  pub fn function2() -> [U256; >>MyConstant<<] {
             |    let my_constant2 = >>MyConstant<<
             |    let my_constant3 = MyConstant_B
+            |    return [0; >>MyConstant<<]
             |  }
             |}
             |""".stripMargin
@@ -167,25 +172,28 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
               |
               |Abstract Contract Parent() {
               |
-              |  fn function0() -> () {
+              |  fn function0() -> [U256; >>MyConstant<<] {
               |    let my_constant2 = >>MyConstant<<
               |    let my_constant3 = MyConstant_B
+              |    return [0; >>MyConstant<<]
               |  }
               |}
               |
               |Contract Parent1() extends Parent() {
               |
-              |  pub fn function1() -> () {
+              |  pub fn function1() -> [U256; >>MyConstant<<] {
               |    let my_constant2 = >>MyConstant<<
               |    let my_constant3 = MyConstant_B
+              |    return [0; >>MyConstant<<]
               |  }
               |}
               |
               |Contract Child() extends Parent1() {
               |
-              |  pub fn function2() -> () {
+              |  pub fn function2() -> [U256; >>MyConstant<<] {
               |    let my_constant2 = >>MyConstant<<
               |    let my_constant3 = MyConstant_B
+              |    return [0; >>MyConstant<<]
               |  }
               |}
               |

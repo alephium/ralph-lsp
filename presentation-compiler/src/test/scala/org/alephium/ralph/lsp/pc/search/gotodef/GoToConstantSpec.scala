@@ -151,6 +151,37 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       }
     }
+
+    "constant is used within array type definition" when {
+      "global constant" in {
+        goTo {
+          """
+            |const SIZE@@ = 2
+            |
+            |Contract Test() {
+            |  fn test() -> [U256; >>SIZE<<] {
+            |    return [0; >>SIZE<<]
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "local constant" in {
+        goTo {
+          """
+            |Contract Test() {
+            |
+            |  const SIZE@@ = 2
+            |
+            |  fn test() -> [U256; >>SIZE<<] {
+            |    return [0; >>SIZE<<]
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
+    }
   }
 
 }

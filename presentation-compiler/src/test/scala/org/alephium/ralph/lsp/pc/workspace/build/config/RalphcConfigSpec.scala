@@ -51,7 +51,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |    "ignoreUnusedFieldsWarnings": false,
               |    "ignoreUnusedPrivateFunctionsWarnings": false,
               |    "ignoreUpdateFieldsCheckWarnings": false,
-              |    "ignoreCheckExternalCallerWarnings": false
+              |    "ignoreCheckExternalCallerWarnings": false,
+              |    "ignoreUnusedFunctionReturnWarnings": false
               |  },
               |  "contractPath": "contracts",
               |  "artifactPath": "artifacts",
@@ -74,7 +75,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |    "ignoreUnusedFieldsWarnings": false,
               |    "ignoreUnusedPrivateFunctionsWarnings": false,
               |    "ignoreUpdateFieldsCheckWarnings": false,
-              |    "ignoreCheckExternalCallerWarnings": false
+              |    "ignoreCheckExternalCallerWarnings": false,
+              |    "ignoreUnusedFunctionReturnWarnings": false
               |  },
               |  "contractPath": "contracts",
               |  "artifactPath": "artifacts"
@@ -98,7 +100,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |    "ignoreUnusedFieldsWarnings": false,
               |    "ignoreUnusedPrivateFunctionsWarnings": false,
               |    "ignoreUpdateFieldsCheckWarnings": false,
-              |    "ignoreCheckExternalCallerWarnings": false
+              |    "ignoreCheckExternalCallerWarnings": false,
+              |    "ignoreUnusedFunctionReturnWarnings": false
               |  },
               |  "contractPath": "contracts",
               |  "artifactPath": "artifacts"
@@ -120,7 +123,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |    "ignoreUnusedFieldsWarnings": false,
               |    "ignoreUnusedPrivateFunctionsWarnings": false,
               |    "ignoreUpdateFieldsCheckWarnings": false,
-              |    "ignoreCheckExternalCallerWarnings": false
+              |    "ignoreCheckExternalCallerWarnings": false,
+              |    "ignoreUnusedFunctionReturnWarnings": false
               |  },
               |  "contractPath": "contracts"
               |}
