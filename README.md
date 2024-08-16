@@ -95,8 +95,20 @@ Run the plugin by selecting the menu option `Run -> Run Without Debugging` or `R
 
 # Configuration
 
-After your IDE has booted up, a config file named `ralph.json` is generated in your project's root
-directory under the folder `.ralph-lsp/ralph.json`. The file contains the following default values:
+After your IDE has booted up, a config file named `ralph.json` will be generated in your project's root
+directory under the folder `.ralph-lsp/ralph.json`. The file contains the following default value for
+`contractPath`, which configures a source directory named `contracts` for compilation:
+
+```json
+{
+  "contractPath": "contracts"
+}
+```
+
+The `compilerOptions` and `dependencyPath` fields are optional. If `dependencyPath` is not specified,
+the default path (`<user.home>/.ralph-lsp/dependencies/`) will be used.
+
+Here’s an example of how the `ralph.json` file might look with additional configuration:
 
 ```json
 {
@@ -109,15 +121,9 @@ directory under the folder `.ralph-lsp/ralph.json`. The file contains the follow
     "ignoreCheckExternalCallerWarnings": false,
     "ignoreUnusedFunctionReturnWarnings": false
   },
-  "contractPath": "contracts"
+  "contractPath": "contracts",
+  "dependencyPath": "dependencies"
 }
-```
-
-The `dependencyPath` field is optional. If not set, the default path (`<user.home>/.ralph-lsp/dependencies/`) will be
-used. If you wish to specify a custom path, add the following to your `ralph.json` file:
-
-```json
-"dependencyPath": "dependencies"
 ```
 
 This configuration allows you to customise the behavior of the compiler and define the paths for
