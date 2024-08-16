@@ -171,7 +171,7 @@ object Dependency {
         RalphcConfigState.Compiled(
           isArtifactsPathDefinedInBuild = absoluteArtifactPath.isDefined,
           config = Config(
-            compilerOptions = parentWorkspaceBuild.config.compilerOptions,
+            compilerOptions = parentWorkspaceBuild.config.toRalphcCompilerOptions(),
             contractPath = absoluteContractPath,
             // Issue https://github.com/alephium/ralph-lsp/issues/247 requests to "not require the existence of artifacts folder".
             // But artifactPath is mandatory in compiler's Config instance.

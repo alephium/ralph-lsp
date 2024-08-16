@@ -101,8 +101,8 @@ object DependencyDownloader {
     // Sets`contractPath` as the workspace directory.
     val parsedConfig =
       RalphcConfigState.Parsed(
-        compilerOptions = CompilerOptions.Default,
         contractPath = workspaceDir.toString,
+        compilerOptions = None,
         artifactPath = None
       )
 
