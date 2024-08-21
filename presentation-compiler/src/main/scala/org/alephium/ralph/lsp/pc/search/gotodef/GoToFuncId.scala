@@ -155,26 +155,38 @@ private[search] object GoToFuncId extends StrictImplicitLogging {
   private def goToFunctionUsage(
       funcId: Ast.FuncId,
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] = {
-    val children =
-      WorkspaceSearcher.collectImplementingChildren(sourceCode, workspace)
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
+    if (funcId.isBuiltIn) {
+      val allTrees =
+        WorkspaceSearcher.collectAllTrees(workspace)
 
-    // Direct calls can only occur within the scope of inheritance.
-    val directCallUsages =
       goToDirectCallFunctionUsage(
         funcId = funcId,
-        children = children.childTrees
+        children = allTrees
       )
+    } else {
+      val children =
+        WorkspaceSearcher.collectImplementingChildren(
+          sourceCode = sourceCode,
+          workspace = workspace
+        )
 
-    // Contract call can occur anywhere where an instance of the Contract can be created.
-    val contractCallUsages =
-      goToContractCallFunctionUsage(
-        funcId = funcId,
-        children = children
-      )
+      // Direct calls can only occur within the scope of inheritance.
+      val directCallUsages =
+        goToDirectCallFunctionUsage(
+          funcId = funcId,
+          children = children.childTrees
+        )
 
-    directCallUsages ++ contractCallUsages
-  }
+      // Contract call can occur anywhere where an instance of the Contract can be created.
+      val contractCallUsages =
+        goToContractCallFunctionUsage(
+          funcId = funcId,
+          children = children
+        )
+
+      directCallUsages ++ contractCallUsages
+    }
 
   /**
    * Navigates to all direct function call usages for the specified [[Ast.FuncId]].
