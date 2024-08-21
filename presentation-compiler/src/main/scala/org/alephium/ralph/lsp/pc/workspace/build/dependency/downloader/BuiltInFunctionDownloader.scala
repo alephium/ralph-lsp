@@ -27,7 +27,7 @@ import org.alephium.ralph.{SourceIndex, BuiltIn}
 import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 
-object BuiltInFunctionDownloader extends DependencyDownloader {
+object BuiltInFunctionDownloader extends DependencyDownloader.Native {
 
   override def dependencyID: DependencyID.BuiltIn.type =
     DependencyID.BuiltIn

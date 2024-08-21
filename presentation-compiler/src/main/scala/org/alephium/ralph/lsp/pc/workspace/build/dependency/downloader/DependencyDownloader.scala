@@ -82,8 +82,13 @@ trait DependencyDownloader extends StrictImplicitLogging { self =>
 
 object DependencyDownloader {
 
+  /**
+   * Indicates dependencies that are native to Ralph - `std` and builtin`.
+   */
+  trait Native extends DependencyDownloader
+
   /** All dependency downloaders */
-  def all(): ArraySeq[DependencyDownloader] =
+  def all(): ArraySeq[DependencyDownloader.Native] =
     ArraySeq(
       StdInterfaceDownloader,
       BuiltInFunctionDownloader

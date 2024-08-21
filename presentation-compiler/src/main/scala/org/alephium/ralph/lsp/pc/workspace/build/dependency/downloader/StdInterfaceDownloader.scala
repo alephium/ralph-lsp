@@ -31,7 +31,7 @@ import scala.io.Source
 import scala.jdk.CollectionConverters.{IteratorHasAsScala, MapHasAsJava}
 import scala.util.{Using, Success, Failure}
 
-object StdInterfaceDownloader extends DependencyDownloader with StrictImplicitLogging {
+object StdInterfaceDownloader extends DependencyDownloader.Native with StrictImplicitLogging {
 
   override def dependencyID: DependencyID.Std.type =
     DependencyID.Std

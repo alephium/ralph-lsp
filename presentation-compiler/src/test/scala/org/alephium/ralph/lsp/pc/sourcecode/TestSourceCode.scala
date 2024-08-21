@@ -53,6 +53,27 @@ object TestSourceCode {
       (persistedOnDisk, code)
     }
 
+  /** Generates an on-disk source file within the `contractURI` of the given build */
+  def genOnDiskAndPersist(
+      build: BuildState.Compiled,
+      code: Gen[String]): Gen[SourceCodeState.OnDisk] =
+    // Generate a source-file name within the contract URI
+    for {
+      // Generate a source-file name within the contract URI
+      sourceFile <-
+        TestFile.genFileURI(
+          rootFolder = Paths.get(build.contractURI)
+        )
+
+      // write the source code
+      (sourceCode, _) <-
+        TestSourceCode
+          .genOnDiskAndPersist(
+            fileURI = sourceFile,
+            code = code.sample.get
+          )
+    } yield sourceCode
+
   /**
    */
   def genOnDiskForRoot(rootURI: Gen[URI] = genFolderURI()): Gen[SourceCodeState.OnDisk] =
