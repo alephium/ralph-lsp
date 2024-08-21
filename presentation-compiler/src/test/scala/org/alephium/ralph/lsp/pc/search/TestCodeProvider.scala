@@ -40,32 +40,15 @@ import scala.collection.immutable.ArraySeq
 object TestCodeProvider {
 
   /**
-   * Runs completion where `@@` is.
+   * Runs code completion where `@@` is positioned.
    *
-   * For example: The following runs completion between the double quotes.
-   * {{{
-   *   TestCompleter(""" import "@@" """)
-   * }}}
+   * @param code The code to run code completion on.
+   * @return A list of code completion suggestions.
    */
-  private def apply[A](code: String)(implicit provider: CodeProvider[A]): (Iterator[A], SourceCodeState.IsCodeAware, WorkspaceState.IsParsedAndCompiled) = {
-    val (linePosition, _, codeWithoutAtSymbol) = TestCodeUtil.indicatorPosition(code)
-
-    // run completion at that line and character
-    val (searchResult, workspace) =
-      TestCodeProvider(
-        line = linePosition.line,
-        character = linePosition.character,
-        code = codeWithoutAtSymbol
-      )
-
-    workspace.sourceCode should have size 1
-
-    // delete the workspace
-    TestWorkspace delete workspace
-
-    (searchResult.value, workspace.sourceCode.head.asInstanceOf[SourceCodeState.IsCodeAware], workspace)
-
-  }
+  def suggest(code: String): List[Suggestion] =
+    TestCodeProvider[Suggestion](code)
+      ._1
+      .toList
 
   /**
    * Runs GoTo definition where `@@` is located
@@ -211,15 +194,32 @@ object TestCodeProvider {
   }
 
   /**
-   * Runs code completion where `@@` is positioned.
+   * Runs completion where `@@` is.
    *
-   * @param code The code to run code completion on.
-   * @return A list of code completion suggestions.
+   * For example: The following runs completion between the double quotes.
+   * {{{
+   *   TestCompleter(""" import "@@" """)
+   * }}}
    */
-  def suggest(code: String): List[Suggestion] =
-    TestCodeProvider[Suggestion](code)
-      ._1
-      .toList
+  private def apply[A](code: String)(implicit provider: CodeProvider[A]): (Iterator[A], SourceCodeState.IsCodeAware, WorkspaceState.IsParsedAndCompiled) = {
+    val (linePosition, _, codeWithoutAtSymbol) = TestCodeUtil.indicatorPosition(code)
+
+    // run completion at that line and character
+    val (searchResult, workspace) =
+      TestCodeProvider(
+        line = linePosition.line,
+        character = linePosition.character,
+        code = codeWithoutAtSymbol
+      )
+
+    workspace.sourceCode should have size 1
+
+    // delete the workspace
+    TestWorkspace delete workspace
+
+    (searchResult.value, workspace.sourceCode.head.asInstanceOf[SourceCodeState.IsCodeAware], workspace)
+
+  }
 
   /**
    * Run test completion.
