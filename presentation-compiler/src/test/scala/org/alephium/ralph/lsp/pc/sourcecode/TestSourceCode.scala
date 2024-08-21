@@ -67,11 +67,10 @@ object TestSourceCode {
 
       // write the source code
       (sourceCode, _) <-
-        TestSourceCode
-          .genOnDiskAndPersist(
-            fileURI = sourceFile,
-            code = code.sample.get
-          )
+        genOnDiskAndPersist(
+          fileURI = sourceFile,
+          code = code.sample.get
+        )
     } yield sourceCode
 
   /**
@@ -81,7 +80,7 @@ object TestSourceCode {
       rootURI <- rootURI
       workspacePath = Gen.const(Paths.get(rootURI))
       fileURI       = genFileURI(rootFolder = workspacePath)
-      sourceCode <- TestSourceCode.genOnDisk(fileURI)
+      sourceCode <- genOnDisk(fileURI)
     } yield {
       // assert that SourceCode URI is a child of rootURI
       URIUtil.contains(rootURI, sourceCode.fileURI) shouldBe true
@@ -94,7 +93,7 @@ object TestSourceCode {
       build <- build
       workspacePath = Paths.get(build.workspaceURI).resolve(build.config.contractPath)
       fileURI       = genFileURI(rootFolder = workspacePath)
-      sourceCode <- TestSourceCode.genOnDisk(fileURI)
+      sourceCode <- genOnDisk(fileURI)
     } yield sourceCode
 
   /**
