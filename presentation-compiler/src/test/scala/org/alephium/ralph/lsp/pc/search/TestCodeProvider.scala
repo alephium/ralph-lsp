@@ -26,7 +26,7 @@ import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.{StdInterfaceDownloader, DependencyDownloader, BuiltInFunctionDownloader}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace, Workspace}
 import org.scalacheck.Gen
 import org.scalatest.Assertion
@@ -46,16 +46,17 @@ object TestCodeProvider {
    * @return A list of code completion suggestions.
    */
   def suggest(code: String): List[Suggestion] =
-    TestCodeProvider[Suggestion](code)
-      ._1
-      .toList
+    TestCodeProvider[Suggestion](
+      code = code,
+      dependencyDownloaders = DependencyDownloader.all()
+    )._1.toList
 
   /**
    * Runs GoTo definition where `@@` is located
    * and expects the go-to location to be the text
    * between the symbols `>>...<<`.
    *
-   * If the go-to symbols are not provided, then it expects empty result.
+   * If the go-to symbols are not provided, then it expects an empty result.
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
@@ -65,7 +66,10 @@ object TestCodeProvider {
 
     // Execute go-to definition.
     val (searchResult, sourceCode, _) =
-      TestCodeProvider[SourceLocation.GoTo](codeWithoutGoToSymbols)
+      TestCodeProvider[SourceLocation.GoTo](
+        code = codeWithoutGoToSymbols,
+        dependencyDownloaders = ArraySeq.empty
+      )
 
     // Expect GoToLocations to also contain the fileURI
     val expectedGoToLocations =
@@ -103,7 +107,7 @@ object TestCodeProvider {
         string =>
           (string, string)
       },
-      dependencyId = DependencyID.BuiltIn
+      downloader = BuiltInFunctionDownloader
     )
 
   /**
@@ -111,8 +115,8 @@ object TestCodeProvider {
    * the resulting go-to definition to be in a std file.
    *
    * @param code         The code with the search indicator '@@'.
-   * @param expected     An optional tuple where the first element is the expected line and the second
-   *                     is the highlighted token in that line.
+   * @param expected     An optional tuple where the first element is the expected line,
+   *                     and the second is the highlighted token in that line.
    */
   def goToStd(
       code: String,
@@ -120,35 +124,38 @@ object TestCodeProvider {
     goToDependency(
       code = code,
       expected = expected,
-      dependencyId = DependencyID.Std
+      downloader = StdInterfaceDownloader
     )
 
   /**
    * Runs go-to definition where @@ is positioned, expecting
    * the resulting go-to definition to be within a dependency workspace.
    *
-   * @param code         The code with the search indicator '@@'.
-   * @param expected     An optional tuple where the first element is the expected line and the second
-   *                     is the highlighted token in that line.
-   * @param dependencyId The dependency ID to test on.
+   * @param code       The code with the search indicator '@@'.
+   * @param expected   An optional tuple where the first element is the expected line,
+   *                   and the second is the highlighted token in that line.
+   * @param downloader The dependency to download, and to test on.
    */
   private def goToDependency(
       code: String,
       expected: Option[(String, String)],
-      dependencyId: DependencyID): Assertion = {
+      downloader: DependencyDownloader): Assertion = {
     val (_, codeWithoutGoToSymbols, _, _) =
       TestCodeUtil.lineRanges(code)
 
     // Execute go-to definition.
     val (searchResult, _, workspace) =
-      TestCodeProvider[SourceLocation.GoTo](codeWithoutGoToSymbols)
+      TestCodeProvider[SourceLocation.GoTo](
+        code = codeWithoutGoToSymbols,
+        dependencyDownloaders = ArraySeq(downloader)
+      )
 
     expected match {
       case Some((expectedLine, expectedHighlightedToken)) =>
         val expectedResults =
           workspace
             .build
-            .findDependency(dependencyId)
+            .findDependency(downloader.dependencyID)
             .to(ArraySeq)
             .flatMap(_.sourceCode)
             .filter(_.code.contains(expectedLine)) // filter source-files that contain this code function.
@@ -201,15 +208,20 @@ object TestCodeProvider {
    *   TestCompleter(""" import "@@" """)
    * }}}
    */
-  private def apply[A](code: String)(implicit provider: CodeProvider[A]): (Iterator[A], SourceCodeState.IsCodeAware, WorkspaceState.IsParsedAndCompiled) = {
-    val (linePosition, _, codeWithoutAtSymbol) = TestCodeUtil.indicatorPosition(code)
+  private def apply[A](
+      code: String,
+      dependencyDownloaders: ArraySeq[DependencyDownloader]
+    )(implicit provider: CodeProvider[A]): (Iterator[A], SourceCodeState.IsCodeAware, WorkspaceState.IsParsedAndCompiled) = {
+    val (linePosition, _, codeWithoutAtSymbol) =
+      TestCodeUtil.indicatorPosition(code)
 
     // run completion at that line and character
     val (searchResult, workspace) =
       TestCodeProvider(
         line = linePosition.line,
         character = linePosition.character,
-        code = codeWithoutAtSymbol
+        code = codeWithoutAtSymbol,
+        dependencyDownloaders = dependencyDownloaders
       )
 
     workspace.sourceCode should have size 1
@@ -222,7 +234,7 @@ object TestCodeProvider {
   }
 
   /**
-   * Run test completion.
+   * Runs test on the given [[CodeProvider]], at the given line and character number.
    *
    * @param line      The target line number
    * @param character The target character within the line
@@ -232,7 +244,8 @@ object TestCodeProvider {
   private def apply[A](
       line: Int,
       character: Int,
-      code: Gen[String]
+      code: Gen[String],
+      dependencyDownloaders: ArraySeq[DependencyDownloader]
     )(implicit provider: CodeProvider[A]): (Either[CompilerMessage.Error, Iterator[A]], WorkspaceState.IsParsedAndCompiled) = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess           = FileAccess.disk
@@ -241,7 +254,7 @@ object TestCodeProvider {
     // create a build file
     val build =
       TestBuild
-        .genCompiledOK()
+        .genCompiledOK(dependencyDownloaders = dependencyDownloaders)
         .sample
         .get
 
