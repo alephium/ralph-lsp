@@ -16,6 +16,7 @@
 
 package org.alephium.ralph.lsp.pc.workspace.build.typescript
 
+import com.typesafe.scalalogging.StrictLogging
 import scala.collection.immutable.ArraySeq
 import org.alephium.ralph.{SourceIndex, CompilerOptions}
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
@@ -25,7 +26,20 @@ import java.net.URI
 import scala.annotation.unused
 import scala.util.Random
 
+import scala.util.matching.Regex
+
 object TSBuildTransformer {
+
+  case class TSConfig(
+      sourceDir: Option[String],
+      artifactDir: Option[String],
+      ignoreUnusedConstantsWarnings: Option[Boolean],
+      ignoreUnusedVariablesWarnings: Option[Boolean],
+      ignoreUnusedFieldsWarnings: Option[Boolean],
+      ignoreUnusedPrivateFunctionsWarnings: Option[Boolean],
+      ignoreUpdateFieldsCheckWarnings: Option[Boolean],
+      ignoreCheckExternalCallerWarnings: Option[Boolean],
+      errorOnWarnings: Option[Boolean] = None)
 
   /**
    * Transforms the content of the TypeScript `alephium.config.ts` build file
@@ -40,37 +54,77 @@ object TSBuildTransformer {
    * @return Either the errored state of the `alephium.config.ts` build file or the new `ralph.json` build file to persist.
    */
   def toRalphcParsedConfig(
-      tsBuildURI: URI,
+      @unused tsBuildURI: URI,
       tsBuildCode: String,
-      @unused("for now") currentConfig: Option[RalphcConfigState.Parsed]): Either[TSBuildState.Errored, RalphcConfigState.Parsed] =
-    // FOR DEMO ONLY: Randomly generate a `ralph.json` file.
-    if (Random.nextBoolean())
-      Right(genRandomRalphcParsedConfig())
-    else // FOR DEMO ONLY: Randomly generate an error to report in `alephium.config.ts` file.
-      Left(
-        TSBuildState.Errored(
-          buildURI = tsBuildURI,
-          code = Some(tsBuildCode),
-          errors = ArraySeq(StringError("Test dummy error", SourceIndex.empty))
-        )
+      currentConfig: Option[RalphcConfigState.Parsed]): Either[TSBuildState.Errored, RalphcConfigState.Parsed] =
+    // TODO Do we want some error if we can't extract the config?
+    Right(
+      mergeConfig(
+        currentConfig.getOrElse(RalphcConfigState.Parsed.default),
+        extractTSConfig(tsBuildCode)
       )
+    )
 
-  /** FOR DEMO ONLY: Randomly generate a `ralph.json` file. */
-  private def genRandomRalphcParsedConfig(): RalphcConfigState.Parsed =
-    RalphcConfigState
-      .Parsed
-      .default
-      .copy(
-        compilerOptions = CompilerOptions(
-          ignoreUnusedConstantsWarnings = Random.nextBoolean(),
-          ignoreUnusedVariablesWarnings = Random.nextBoolean(),
-          ignoreUnusedFieldsWarnings = Random.nextBoolean(),
-          ignoreUpdateFieldsCheckWarnings = Random.nextBoolean(),
-          ignoreUnusedPrivateFunctionsWarnings = Random.nextBoolean(),
-          ignoreCheckExternalCallerWarnings = Random.nextBoolean()
-        ),
-        contractPath = Random.shuffle(List(Random.alphanumeric.take(10).mkString, "contracts")).head,
-        artifactPath = Some(Random.shuffle(List(Random.alphanumeric.take(10).mkString, "artifacts")).head)
-      )
+  /**
+   * Merge the TypeScript build configuration with the current Ralph configuration.
+   * The TypeScript build configuration takes precedence over the Ralph configuration.
+   * If a field is not present in the TypeScript build configuration, the Ralph configuration is used.
+   */
+  private def mergeConfig(
+      parsed: RalphcConfigState.Parsed,
+      tsConfig: TSConfig): RalphcConfigState.Parsed = {
+    val compilerOptions = parsed.compilerOptions
+    RalphcConfigState.Parsed(
+      compilerOptions = CompilerOptions(
+        ignoreUnusedConstantsWarnings = tsConfig.ignoreUnusedConstantsWarnings.getOrElse(compilerOptions.ignoreUnusedConstantsWarnings),
+        ignoreUnusedVariablesWarnings = tsConfig.ignoreUnusedVariablesWarnings.getOrElse(compilerOptions.ignoreUnusedVariablesWarnings),
+        ignoreUnusedFieldsWarnings = tsConfig.ignoreUnusedFieldsWarnings.getOrElse(compilerOptions.ignoreUnusedFieldsWarnings),
+        ignoreUnusedPrivateFunctionsWarnings = tsConfig.ignoreUnusedPrivateFunctionsWarnings.getOrElse(compilerOptions.ignoreUnusedPrivateFunctionsWarnings),
+        ignoreUpdateFieldsCheckWarnings = tsConfig.ignoreUpdateFieldsCheckWarnings.getOrElse(compilerOptions.ignoreUpdateFieldsCheckWarnings),
+        ignoreCheckExternalCallerWarnings = tsConfig.ignoreCheckExternalCallerWarnings.getOrElse(compilerOptions.ignoreCheckExternalCallerWarnings)
+      ),
+      contractPath = tsConfig.sourceDir.getOrElse(parsed.contractPath),
+      artifactPath = tsConfig.artifactDir.orElse(parsed.artifactPath),
+      dependencyPath = parsed.dependencyPath
+    )
+  }
+
+  private val sourceDirRegex              = """sourceDir\s*:\s*'([^']*)'""".r
+  private val artifactDirRegex            = """artifactDir\s*:\s*'([^']*)'""".r
+  private val compilerOptionsRegex: Regex = """compilerOptions\s*:\s*\{([^}]*)\}""".r
+
+  private val optionsRegex: Regex =
+    """\s*(?<key>errorOnWarnings|ignoreUnusedConstantsWarnings|ignoreUnusedVariablesWarnings|ignoreUnusedFieldsWarnings|ignoreUnusedPrivateFunctionsWarnings|ignoreUpdateFieldsCheckWarnings|ignoreCheckExternalCallerWarnings)\s*:\s*(?<value>true|false)""".r
+
+  private def parseBooleanOption(option: Option[String]): Option[Boolean] =
+    option.map(_.toBoolean)
+
+  def extractTSConfig(configContent: String): TSConfig = {
+
+    val compilerOptionsContent = compilerOptionsRegex.findFirstMatchIn(configContent).map(_.group(1)).getOrElse("")
+
+    val optionsMap = optionsRegex
+      .findAllMatchIn(compilerOptionsContent)
+      .map {
+        m =>
+          m.group("key") -> m.group("value")
+      }
+      .toMap
+
+    val sourceDir   = sourceDirRegex.findFirstMatchIn(configContent).map(_.group(1))
+    val artifactDir = artifactDirRegex.findFirstMatchIn(configContent).map(_.group(1))
+
+    TSConfig(
+      sourceDir = sourceDir,
+      artifactDir = artifactDir,
+      ignoreUnusedConstantsWarnings = parseBooleanOption(optionsMap.get("ignoreUnusedConstantsWarnings")),
+      ignoreUnusedVariablesWarnings = parseBooleanOption(optionsMap.get("ignoreUnusedVariablesWarnings")),
+      ignoreUnusedFieldsWarnings = parseBooleanOption(optionsMap.get("ignoreUnusedFieldsWarnings")),
+      ignoreUnusedPrivateFunctionsWarnings = parseBooleanOption(optionsMap.get("ignoreUnusedPrivateFunctionsWarnings")),
+      ignoreUpdateFieldsCheckWarnings = parseBooleanOption(optionsMap.get("ignoreUpdateFieldsCheckWarnings")),
+      ignoreCheckExternalCallerWarnings = parseBooleanOption(optionsMap.get("ignoreCheckExternalCallerWarnings")),
+      errorOnWarnings = parseBooleanOption(optionsMap.get("errorOnWarnings"))
+    )
+  }
 
 }
