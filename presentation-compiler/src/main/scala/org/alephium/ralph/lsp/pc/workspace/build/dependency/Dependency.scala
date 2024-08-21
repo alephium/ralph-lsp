@@ -47,7 +47,8 @@ object Dependency {
    */
   def compile(
       parsed: BuildState.Parsed,
-      currentBuild: Option[BuildState.IsCompiled]
+      currentBuild: Option[BuildState.IsCompiled],
+      downloaders: ArraySeq[DependencyDownloader]
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): BuildState.IsCompiled = {
@@ -73,7 +74,7 @@ object Dependency {
             downloadAndCompileDependencies(
               parsed = parsed,
               absoluteDependencyPath = absoluteDependenciesPath,
-              dependencyDownloaders = DependencyDownloader.all()
+              dependencyDownloaders = downloaders
             )
         }
 

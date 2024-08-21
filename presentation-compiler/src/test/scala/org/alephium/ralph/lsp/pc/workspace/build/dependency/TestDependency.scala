@@ -20,11 +20,14 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
-import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfig, RalphcConfigState}
+import org.alephium.ralph.lsp.pc.util.URIUtil
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.StdInterfaceDownloader
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.scalatest.matchers.should.Matchers._
 
 import java.nio.file.Paths
+import scala.collection.immutable.ArraySeq
 
 object TestDependency {
 
@@ -52,12 +55,15 @@ object TestDependency {
       Dependency
         .compile(
           parsed = parsed,
-          currentBuild = None
+          currentBuild = None,
+          downloaders = ArraySeq(StdInterfaceDownloader)
         )
         .asInstanceOf[BuildState.Compiled]
 
-    // dependency should exists in the build
-    dependencyBuild.dependencies should have size 2
+    // only the `std` dependency should exist in the build
+    dependencyBuild.dependencies should have size 1
+    dependencyBuild.findDependency(DependencyID.Std) shouldBe defined
+    URIUtil.getFileName(dependencyBuild.dependencies.head.workspaceURI) shouldBe DependencyID.Std.dirName
 
     // return the build (the build contains the std workspace)
     dependencyBuild

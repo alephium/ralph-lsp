@@ -21,6 +21,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild}
 import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
@@ -57,7 +58,8 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
           Build
             .compile(
               parsed = build,
-              currentBuild = None
+              currentBuild = None,
+              dependencyDownloaders = DependencyDownloader.all()
             )
             .asInstanceOf[BuildState.Compiled]
 
@@ -149,7 +151,8 @@ class WorkspaceBuild2Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
           Build
             .compile(
               parsed = build,
-              currentBuild = None
+              currentBuild = None,
+              dependencyDownloaders = DependencyDownloader.all()
             )
             .asInstanceOf[BuildState.Compiled]
 

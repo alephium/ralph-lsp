@@ -23,6 +23,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 
 import java.net.URI
@@ -67,7 +68,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
           Build.parseAndCompile(
             buildURI = workspace.buildURI,
             code = None,
-            currentBuild = None
+            currentBuild = None,
+            dependencyDownloaders = DependencyDownloader.all()
           )
 
         initialise(newBuild)
@@ -99,7 +101,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
               Build.parseAndCompile(
                 buildURI = code.fileURI,
                 code = code.text,
-                currentBuild = None
+                currentBuild = None,
+                dependencyDownloaders = DependencyDownloader.all()
               )
 
             initialise(build)
@@ -132,7 +135,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
       Build.parseAndCompile(
         buildURI = currentBuild.buildURI,
         code = newBuildCode,
-        currentBuild = currentBuild
+        currentBuild = currentBuild,
+        dependencyDownloaders = DependencyDownloader.all()
       ) getOrElse currentBuild // if the build code is the same and existing build, then compile using existing build.
 
     newBuild match {
@@ -376,7 +380,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
       Build.parseAndCompile(
         buildURI = buildURI,
         code = code,
-        currentBuild = workspace.build
+        currentBuild = workspace.build,
+        dependencyDownloaders = DependencyDownloader.all()
       ) match {
         case Some(newBuild) =>
           newBuild match {

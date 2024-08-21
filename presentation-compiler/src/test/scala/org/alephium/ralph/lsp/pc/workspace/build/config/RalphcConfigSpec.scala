@@ -22,6 +22,7 @@ import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorEmptyBuildFile
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace}
 import org.alephium.ralphc.Config
@@ -160,7 +161,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
     implicit val compiler: CompilerAccess =
       CompilerAccess.ralphc
 
-    // create workspace structure with config file
+    // create workspace structure with a config file
     def doTest(
         dependencyPath: Option[String],
         artifactPath: Option[String]) = {
@@ -203,7 +204,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
       val readConfig =
         Build.parseAndCompile(
           buildURI = expectedBuildPath.toUri,
-          currentBuild = None
+          currentBuild = None,
+          dependencyDownloaders = DependencyDownloader.all()
         )
 
       // The code of the parsed config (user inputted) is expected, not the compiled config's code.
@@ -233,7 +235,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         Dependency
           .compile(
             parsed = parsedBuild,
-            currentBuild = None
+            currentBuild = None,
+            downloaders = DependencyDownloader.all()
           )
           .asInstanceOf[BuildState.Compiled]
 

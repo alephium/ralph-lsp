@@ -24,12 +24,14 @@ import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc.genRalphcParsedConfig
 import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers._
 
 import java.net.URI
 import java.nio.file.Paths
+import scala.collection.immutable.ArraySeq
 
 /** Build specific generators */
 object TestBuild {
@@ -58,18 +60,21 @@ object TestBuild {
   /** Generate a successfully compiled BuildState */
   def genCompiledOK(
       workspaceURI: Gen[URI] = genFolderURI(),
-      config: Gen[RalphcConfigState.Parsed] = genRalphcParsedConfig()
+      config: Gen[RalphcConfigState.Parsed] = genRalphcParsedConfig(),
+      dependencyDownloaders: ArraySeq[DependencyDownloader] = DependencyDownloader.all()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Gen[BuildState.Compiled] =
     genCompiled(
       workspaceURI = workspaceURI,
-      config = config
+      config = config,
+      dependencyDownloaders = dependencyDownloaders
     ).map(_.asInstanceOf[BuildState.Compiled])
 
   def genCompiled(
       workspaceURI: Gen[URI] = genFolderURI(),
-      config: Gen[RalphcConfigState.Parsed] = genRalphcParsedConfig()
+      config: Gen[RalphcConfigState.Parsed] = genRalphcParsedConfig(),
+      dependencyDownloaders: ArraySeq[DependencyDownloader] = DependencyDownloader.all()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Gen[BuildState.IsCompiled] =
@@ -80,7 +85,8 @@ object TestBuild {
       parsed =>
         Build.compile(
           parsed = persist(parsed),
-          currentBuild = None
+          currentBuild = None,
+          dependencyDownloaders = dependencyDownloaders
         )
     }
 

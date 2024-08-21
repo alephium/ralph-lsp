@@ -27,7 +27,10 @@ import org.alephium.ralph.{SourceIndex, BuiltIn}
 import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 
-private object BuiltInFunctionDownloader extends DependencyDownloader {
+object BuiltInFunctionDownloader extends DependencyDownloader {
+
+  override def dependencyID: DependencyID.BuiltIn.type =
+    DependencyID.BuiltIn
 
   /**
    * Downloads built-in function source files.
@@ -40,7 +43,7 @@ private object BuiltInFunctionDownloader extends DependencyDownloader {
       errorIndex: SourceIndex
     )(implicit logger: ClientLogger): Either[ArraySeq[CompilerMessage.AnyError], WorkspaceState.UnCompiled] = {
     val workspaceDir =
-      dependencyPath resolve DependencyID.BuiltIn.dirName
+      dependencyPath resolve dependencyID.dirName
 
     val sourceCode =
       toSourceCodeState(

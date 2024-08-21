@@ -31,7 +31,10 @@ import scala.io.Source
 import scala.jdk.CollectionConverters.{IteratorHasAsScala, MapHasAsJava}
 import scala.util.{Using, Success, Failure}
 
-private object StdInterfaceDownloader extends DependencyDownloader with StrictImplicitLogging {
+object StdInterfaceDownloader extends DependencyDownloader with StrictImplicitLogging {
+
+  override def dependencyID: DependencyID.Std.type =
+    DependencyID.Std
 
   /**
    * Download the Std package and return an un-compiled workspace for compilation.
@@ -48,7 +51,7 @@ private object StdInterfaceDownloader extends DependencyDownloader with StrictIm
     ) match {
       case Right(interfacesSource) =>
         val workspaceDir =
-          dependencyPath resolve DependencyID.Std.dirName
+          dependencyPath resolve dependencyID.dirName
 
         // a default build file.
         val build =
@@ -86,7 +89,7 @@ private object StdInterfaceDownloader extends DependencyDownloader with StrictIm
     )(implicit logger: ClientLogger): Either[ErrorDownloadingDependency, List[SourceCodeState.UnCompiled]] =
     Using.Manager {
       use =>
-        val stdURL = getClass.getResource(s"/${DependencyID.Std.dirName}")
+        val stdURL = getClass.getResource(s"/${dependencyID.dirName}")
 
         val stdPath = if (stdURL.getProtocol == "file") {
           Paths.get(stdURL.toURI)
@@ -101,7 +104,7 @@ private object StdInterfaceDownloader extends DependencyDownloader with StrictIm
         interfaceFiles.map {
           file =>
             val code     = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines().mkString("\n")
-            val filePath = dependencyPath.resolve(Paths.get(DependencyID.Std.dirName).resolve(file.getFileName.toString))
+            val filePath = dependencyPath.resolve(Paths.get(dependencyID.dirName).resolve(file.getFileName.toString))
             SourceCodeState.UnCompiled(
               fileURI = filePath.toUri,
               code = code
@@ -114,7 +117,7 @@ private object StdInterfaceDownloader extends DependencyDownloader with StrictIm
       case Failure(throwable) =>
         val error =
           ErrorDownloadingDependency(
-            dependencyID = DependencyID.Std.dirName,
+            dependencyID = dependencyID.dirName,
             throwable = throwable,
             index = errorIndex
           )

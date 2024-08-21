@@ -23,6 +23,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
 import org.alephium.ralph.lsp.pc.workspace.build.error.{ErrorBuildFileNotFound, ErrorInvalidBuildSyntax}
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild}
 import org.scalacheck.Gen
@@ -196,7 +197,8 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
                 Build
                   .compile(
                     parsed = build,
-                    currentBuild = None
+                    currentBuild = None,
+                    dependencyDownloaders = DependencyDownloader.all()
                   )
                   .asInstanceOf[BuildState.Compiled]
 
