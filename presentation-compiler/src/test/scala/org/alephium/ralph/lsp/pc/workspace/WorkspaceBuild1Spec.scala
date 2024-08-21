@@ -198,7 +198,7 @@ class WorkspaceBuild1Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
                   .compile(
                     parsed = build,
                     currentBuild = None,
-                    dependencyDownloaders = DependencyDownloader.all()
+                    dependencyDownloaders = DependencyDownloader.natives()
                   )
                   .asInstanceOf[BuildState.Compiled]
 

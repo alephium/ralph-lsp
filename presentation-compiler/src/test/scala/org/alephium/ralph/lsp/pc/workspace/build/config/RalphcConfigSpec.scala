@@ -205,7 +205,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         Build.parseAndCompile(
           buildURI = expectedBuildPath.toUri,
           currentBuild = None,
-          dependencyDownloaders = DependencyDownloader.all()
+          dependencyDownloaders = DependencyDownloader.natives()
         )
 
       // The code of the parsed config (user inputted) is expected, not the compiled config's code.
@@ -236,7 +236,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
           .compile(
             parsed = parsedBuild,
             currentBuild = None,
-            downloaders = DependencyDownloader.all()
+            downloaders = DependencyDownloader.natives()
           )
           .asInstanceOf[BuildState.Compiled]
 

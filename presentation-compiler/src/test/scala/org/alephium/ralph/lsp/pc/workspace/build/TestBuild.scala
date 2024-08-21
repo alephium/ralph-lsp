@@ -61,7 +61,7 @@ object TestBuild {
   def genCompiledOK(
       workspaceURI: Gen[URI] = genFolderURI(),
       config: Gen[RalphcConfigState.Parsed] = genRalphcParsedConfig(),
-      dependencyDownloaders: ArraySeq[DependencyDownloader] = DependencyDownloader.all()
+      dependencyDownloaders: ArraySeq[DependencyDownloader] = DependencyDownloader.natives()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Gen[BuildState.Compiled] =
@@ -74,7 +74,7 @@ object TestBuild {
   def genCompiled(
       workspaceURI: Gen[URI] = genFolderURI(),
       config: Gen[RalphcConfigState.Parsed] = genRalphcParsedConfig(),
-      dependencyDownloaders: ArraySeq[DependencyDownloader] = DependencyDownloader.all()
+      dependencyDownloaders: ArraySeq[DependencyDownloader] = DependencyDownloader.natives()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Gen[BuildState.IsCompiled] =

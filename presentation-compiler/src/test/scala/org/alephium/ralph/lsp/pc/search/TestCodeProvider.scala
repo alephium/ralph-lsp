@@ -48,7 +48,7 @@ object TestCodeProvider {
   def suggest(code: String): List[Suggestion] =
     TestCodeProvider[Suggestion](
       code = code,
-      dependencyDownloaders = DependencyDownloader.all()
+      dependencyDownloaders = DependencyDownloader.natives()
     )._1.toList
 
   /**

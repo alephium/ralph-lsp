@@ -88,7 +88,7 @@ object DependencyDownloader {
   trait Native extends DependencyDownloader
 
   /** All dependency downloaders */
-  def all(): ArraySeq[DependencyDownloader.Native] =
+  def natives(): ArraySeq[DependencyDownloader.Native] =
     ArraySeq(
       StdInterfaceDownloader,
       BuiltInFunctionDownloader

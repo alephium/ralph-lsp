@@ -69,7 +69,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
             buildURI = workspace.buildURI,
             code = None,
             currentBuild = None,
-            dependencyDownloaders = DependencyDownloader.all()
+            dependencyDownloaders = DependencyDownloader.natives()
           )
 
         initialise(newBuild)
@@ -102,7 +102,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
                 buildURI = code.fileURI,
                 code = code.text,
                 currentBuild = None,
-                dependencyDownloaders = DependencyDownloader.all()
+                dependencyDownloaders = DependencyDownloader.natives()
               )
 
             initialise(build)
@@ -136,7 +136,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
         buildURI = currentBuild.buildURI,
         code = newBuildCode,
         currentBuild = currentBuild,
-        dependencyDownloaders = DependencyDownloader.all()
+        dependencyDownloaders = DependencyDownloader.natives()
       ) getOrElse currentBuild // if the build code is the same and existing build, then compile using existing build.
 
     newBuild match {
@@ -381,7 +381,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
         buildURI = buildURI,
         code = code,
         currentBuild = workspace.build,
-        dependencyDownloaders = DependencyDownloader.all()
+        dependencyDownloaders = DependencyDownloader.natives()
       ) match {
         case Some(newBuild) =>
           newBuild match {
