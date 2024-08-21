@@ -130,7 +130,13 @@ private[search] object GoToFuncId extends StrictImplicitLogging {
             WorkspaceSearcher.collectFunctions(builtInWorkspace.parsed)
 
           case None =>
-            Iterator.empty
+            // there is no dependency on the built-in library with this workspace,
+            // but maybe the workspace itself is a built-in library that has usages within itself.
+            // TODO: Each workspace build should contain a DependencyID,
+            //       so this collection of workspace functions runs only when required.
+            WorkspaceSearcher
+              .collectAllFunctions(workspace)
+              .filter(_.ast.id.isBuiltIn)
         }
       else
         WorkspaceSearcher.collectFunctions(
