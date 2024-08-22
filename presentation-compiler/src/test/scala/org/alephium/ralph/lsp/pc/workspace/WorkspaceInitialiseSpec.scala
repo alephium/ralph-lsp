@@ -53,7 +53,8 @@ class WorkspaceInitialiseSpec extends AnyWordSpec with Matchers with ScalaCheckD
               val errored =
                 Build.compile(
                   parsed = parsed,
-                  currentBuild = None
+                  currentBuild = None,
+                  dependencyDownloaders = ArraySeq.empty
                 )(FileAccess.disk, compiler, clientLogger)
 
               // errored because contractsURI is not a persisted folder

@@ -22,7 +22,7 @@ import org.scalatest.Assertions.fail
 object TestCodeUtil {
 
   /** Use this in your test-case for */
-  private val SEARCH_INDICATOR =
+  val SEARCH_INDICATOR =
     "@@"
 
   def codeLines(code: String): Array[String] =

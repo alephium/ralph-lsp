@@ -50,7 +50,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
           TestBuild
             .genParsed()
             .map(persist)
-            .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
+            .map(Build.compile(_, None, ArraySeq.empty)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
             .map(_.asInstanceOf[BuildState.Compiled])
 
         forAll(outSideBuildGen, insideBuildGen) {
@@ -72,7 +72,8 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
                 .parseAndCompile(
                   buildURI = outsideBuild.buildURI,
                   code = buildCode,
-                  currentBuild = insideBuild
+                  currentBuild = insideBuild,
+                  dependencyDownloaders = ArraySeq.empty
                 )
                 .value
 
@@ -103,7 +104,7 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
           TestBuild
             .genParsed()
             .map(persist)
-            .map(Build.compile(_, None)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
+            .map(Build.compile(_, None, ArraySeq.empty)(FileAccess.disk, CompilerAccess.ralphc, clientLogger))
             .map(_.asInstanceOf[BuildState.Compiled])
 
         val generator =
@@ -144,7 +145,8 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
                 .parseAndCompile(
                   buildURI = build.buildURI,
                   code = buildCode,
-                  currentBuild = currentBuild
+                  currentBuild = currentBuild,
+                  dependencyDownloaders = ArraySeq.empty
                 )
                 .value
 
@@ -190,7 +192,8 @@ class BuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyC
           val actual =
             Build.parseAndCompile(
               buildURI = buildURI,
-              currentBuild = None
+              currentBuild = None,
+              dependencyDownloaders = ArraySeq.empty
             )
 
           val expected =
