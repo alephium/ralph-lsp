@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -152,6 +153,64 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
           |}
           |""".stripMargin
       )
+    }
+
+    "dependency function usage exists" when {
+      "only in workspace code" in {
+        goTo(
+          dependencyId = DependencyID.BuiltIn,
+          // the custom builtin library
+          dependency = """
+              |Interface TestBuiltIn {
+              |  fn hello!() -> ()
+              |
+              |  fn assert!@@() -> ()
+              |
+              |  fn blah!() -> ()
+              |}
+              |""".stripMargin,
+          // the developer's workspace code
+          workspace = """
+              |Contract Test() {
+              |  pub fn function() -> () {
+              |    >>assert!()<<
+              |  }
+              |}
+              |""".stripMargin
+        )
+
+      }
+
+      "within the dependency itself and also the workspace" in {
+        goTo(
+          dependencyId = DependencyID.BuiltIn,
+          // the custom builtin library
+          dependency = """
+              |Interface TestBuiltIn {
+              |  fn hello!() -> ()
+              |
+              |  fn assert!@@() -> ()
+              |
+              |  fn blah!() -> ()
+              |}
+              |
+              |Contract Test() {
+              |  pub fn function() -> () {
+              |    >>assert!(true, 0)<<
+              |  }
+              |}
+              |""".stripMargin,
+          // the developer's workspace code (no usage)
+          workspace = """
+              |Contract Test() {
+              |  pub fn function() -> () {
+              |    >>assert!(false, 1)<<
+              |  }
+              |}
+              |""".stripMargin
+        )
+
+      }
     }
 
   }
