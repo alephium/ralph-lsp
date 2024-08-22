@@ -94,7 +94,6 @@ object TSBuild {
               // Step 3: Persist
               persist(
                 jsonBuildURI = currentBuild.buildURI,
-                currentConfig = currentConfig,
                 tsBuildURI = currentBuild.tsBuildURI,
                 tsBuildCode = tsCode,
                 updatedConfig = newConfig
@@ -143,7 +142,6 @@ object TSBuild {
    * only if the input configuration is different from the existing configuration.
    *
    * @param jsonBuildURI  Current build's `ralph.json` file URI.
-   * @param currentConfig Current build's `ralph.json` parsed type.
    * @param tsBuildURI    Current build's `alephium.config.ts` file URI.
    * @param tsBuildCode   Current build's `alephium.config.ts` content.
    * @param updatedConfig The newly transformed configuration to persist.
@@ -155,12 +153,10 @@ object TSBuild {
    */
   def persist(
       jsonBuildURI: URI,
-      currentConfig: Option[RalphcConfigState.Parsed],
       tsBuildURI: URI,
       tsBuildCode: String,
       updatedConfig: RalphcConfigState.Parsed
-    )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[BuildState.Parsed]] =
-    if (!currentConfig.contains(updatedConfig)) {
+    )(implicit file: FileAccess): Either[TSBuildState.Errored, Option[BuildState.Parsed]] = {
       val updatedJSON =
         RalphcConfig.write(
           config = updatedConfig,
@@ -194,8 +190,6 @@ object TSBuild {
 
           Left(tsState)
       }
-    } else {
-      Right(None)
     }
 
 }
