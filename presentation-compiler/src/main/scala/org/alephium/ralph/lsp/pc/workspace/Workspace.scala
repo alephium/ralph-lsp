@@ -26,7 +26,6 @@ import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildError, Build, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
-import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq

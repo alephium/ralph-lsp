@@ -67,7 +67,8 @@ object TSBuildTransformer {
           ignoreUnusedFieldsWarnings = Random.nextBoolean(),
           ignoreUpdateFieldsCheckWarnings = Random.nextBoolean(),
           ignoreUnusedPrivateFunctionsWarnings = Random.nextBoolean(),
-          ignoreCheckExternalCallerWarnings = Random.nextBoolean()
+          ignoreCheckExternalCallerWarnings = Random.nextBoolean(),
+          ignoreUnusedFunctionReturnWarnings = Random.nextBoolean()
         ),
         contractPath = Random.shuffle(List(Random.alphanumeric.take(10).mkString, "contracts")).head,
         artifactPath = Some(Random.shuffle(List(Random.alphanumeric.take(10).mkString, "artifacts")).head)
