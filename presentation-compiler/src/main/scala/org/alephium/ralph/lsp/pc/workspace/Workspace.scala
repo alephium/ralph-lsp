@@ -25,6 +25,8 @@ import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildError, Build, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -96,7 +98,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
           Build.parseAndCompile(
             buildURI = workspace.buildURI,
             code = None,
-            currentBuild = None
+            currentBuild = None,
+            dependencyDownloaders = DependencyDownloader.natives()
           )
 
         // Build `alephium.config.ts` using `ralph.json`'s compilation result.
@@ -129,7 +132,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
           Build.parseAndCompile(
             buildURI = code.fileURI,
             code = code.text,
-            currentBuild = None
+            currentBuild = None,
+            dependencyDownloaders = DependencyDownloader.natives()
           )
 
         initialise(build)
@@ -142,7 +146,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
           Build.parseAndCompile(
             buildURI = workspace.buildURI,
             code = None,
-            currentBuild = None
+            currentBuild = None,
+            dependencyDownloaders = DependencyDownloader.natives()
           )
 
         initialise(build)
@@ -173,7 +178,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
       Build.parseAndCompile(
         buildURI = currentBuild.buildURI,
         code = newBuildCode,
-        currentBuild = currentBuild
+        currentBuild = currentBuild,
+        dependencyDownloaders = DependencyDownloader.natives()
       ) getOrElse currentBuild // if the build code is the same and existing build, then compile using existing build.
 
     newBuild match {
@@ -446,7 +452,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
       Build.parseAndCompile(
         buildURI = buildURI,
         code = code,
-        currentBuild = workspace.build
+        currentBuild = workspace.build,
+        dependencyDownloaders = DependencyDownloader.natives()
       ) match {
         case Some(newBuild) =>
           newBuild match {

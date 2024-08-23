@@ -22,6 +22,7 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyDB, Dependency}
 
 import java.net.URI
@@ -126,7 +127,8 @@ object Build {
   /** Compile a parsed build */
   def compile(
       parsed: BuildState.IsParsed,
-      currentBuild: Option[BuildState.IsCompiled]
+      currentBuild: Option[BuildState.IsCompiled],
+      dependencyDownloaders: ArraySeq[DependencyDownloader]
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): BuildState.IsCompiled =
@@ -146,7 +148,8 @@ object Build {
         def compileDependencies() =
           Dependency.compile(
             parsed = parsed,
-            currentBuild = currentBuild
+            currentBuild = currentBuild,
+            downloaders = dependencyDownloaders
           )
 
         // parse successful. Perform compilation!
@@ -164,7 +167,8 @@ object Build {
   /** Parse and compile from disk */
   def parseAndCompile(
       buildURI: URI,
-      currentBuild: Option[BuildState.IsCompiled]
+      currentBuild: Option[BuildState.IsCompiled],
+      dependencyDownloaders: ArraySeq[DependencyDownloader]
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): BuildState.IsCompiled =
@@ -182,7 +186,8 @@ object Build {
         if (exists)
           compile(
             parsed = parse(buildURI),
-            currentBuild = currentBuild
+            currentBuild = currentBuild,
+            dependencyDownloaders = dependencyDownloaders
           )
         else
           createDefaultBuildFile(
@@ -196,7 +201,8 @@ object Build {
               // default build file created! Parse and compile it!
               parseAndCompile(
                 buildURI = buildURI,
-                currentBuild = currentBuild
+                currentBuild = currentBuild,
+                dependencyDownloaders = dependencyDownloaders
               )
           }
     }
@@ -205,7 +211,8 @@ object Build {
   def parseAndCompile(
       buildURI: URI,
       code: String,
-      currentBuild: Option[BuildState.IsCompiled]
+      currentBuild: Option[BuildState.IsCompiled],
+      dependencyDownloaders: ArraySeq[DependencyDownloader]
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): BuildState.IsCompiled = {
@@ -218,14 +225,16 @@ object Build {
 
     compile(
       parsed = parsed,
-      currentBuild = currentBuild
+      currentBuild = currentBuild,
+      dependencyDownloaders = dependencyDownloaders
     )
   }
 
   def parseAndCompile(
       buildURI: URI,
       code: Option[String],
-      currentBuild: Option[BuildState.IsCompiled]
+      currentBuild: Option[BuildState.IsCompiled],
+      dependencyDownloaders: ArraySeq[DependencyDownloader]
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): BuildState.IsCompiled =
@@ -234,14 +243,16 @@ object Build {
         parseAndCompile(
           buildURI = buildURI,
           code = code,
-          currentBuild = currentBuild
+          currentBuild = currentBuild,
+          dependencyDownloaders = dependencyDownloaders
         )
 
       case None =>
         // Code is not known. Parse and validate it from disk.
         parseAndCompile(
           buildURI = buildURI,
-          currentBuild = currentBuild
+          currentBuild = currentBuild,
+          dependencyDownloaders = dependencyDownloaders
         )
     }
 
@@ -251,7 +262,8 @@ object Build {
   def parseAndCompile(
       buildURI: URI,
       code: Option[String],
-      currentBuild: BuildState.Compiled
+      currentBuild: BuildState.Compiled,
+      dependencyDownloaders: ArraySeq[DependencyDownloader]
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Option[BuildState.IsCompiled] =
@@ -275,7 +287,8 @@ object Build {
         Build.parseAndCompile(
           buildURI = buildURI,
           code = code,
-          currentBuild = Some(currentBuild)
+          currentBuild = Some(currentBuild),
+          dependencyDownloaders = dependencyDownloaders
         ) match {
           case newBuild: BuildState.Compiled =>
             // if the new build-file is the same as current build-file, return it as

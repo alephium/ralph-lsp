@@ -34,39 +34,39 @@ object NodeBuilder extends StrictLogging {
     val rootSiblings =
       ast match {
         case ast: Ast.TxScript =>
-          buildOne(ast.ident) ++
-            buildMany(ast.templateVars) ++
-            buildMany(ast.funcs)
+          Seq(buildParent(ast.ident)) ++
+            buildParents(ast.templateVars) ++
+            buildParents(ast.funcs)
 
         case ast: Ast.Contract =>
-          buildOne(ast.stdInterfaceId) ++
-            buildOne(ast.ident) ++
-            buildMany(ast.templateVars) ++
-            buildMany(ast.fields) ++
-            buildMany(ast.funcs) ++
-            buildMany(ast.events) ++
-            buildMany(ast.constantVars) ++
-            buildMany(ast.enums) ++
-            buildMany(ast.inheritances) ++
-            buildMany(ast.maps)
+          buildParents(ast.stdInterfaceId.toSeq) ++
+            Seq(buildParent(ast.ident)) ++
+            buildParents(ast.templateVars) ++
+            buildParents(ast.fields) ++
+            buildParents(ast.funcs) ++
+            buildParents(ast.events) ++
+            buildParents(ast.constantVars) ++
+            buildParents(ast.enums) ++
+            buildParents(ast.inheritances) ++
+            buildParents(ast.maps)
 
         case ast: Ast.ContractInterface =>
-          buildOne(ast.stdId) ++
-            buildOne(ast.ident) ++
-            buildMany(ast.funcs) ++
-            buildMany(ast.events) ++
-            buildMany(ast.inheritances)
+          buildParents(ast.stdId.toSeq) ++
+            Seq(buildParent(ast.ident)) ++
+            buildParents(ast.funcs) ++
+            buildParents(ast.events) ++
+            buildParents(ast.inheritances)
 
         case ast: Ast.Struct =>
-          buildOne(ast.id) ++
-            buildMany(ast.fields)
+          buildParent(ast.id) +:
+            buildParents(ast.fields)
 
         case ast: Ast.EnumDef[_] =>
-          buildOne(ast.id) ++
-            buildMany(ast.fields)
+          buildParent(ast.id) +:
+            buildParents(ast.fields)
 
         case ast: Ast.ConstantVarDef[_] =>
-          buildOne(ast)
+          Seq(buildParent(ast))
 
         case _: Ast.AssetScript =>
           // AssetScript is not parsed. This will be supported in the future.
@@ -84,13 +84,30 @@ object NodeBuilder extends StrictLogging {
     )
   }
 
-  private def buildOne(product: Any): List[Node[Ast.Positioned, Ast.Positioned]] =
-    product match {
+  /**
+   * Constructs a parent [[Node]] for the given positioned AST parent.
+   *
+   * @param parent The positioned AST node to process.
+   * @return A Node representing the given parent and its children.
+   */
+  private def buildParent(parent: Ast.Positioned): Node[Positioned, Positioned] = {
+    val children = processChildren(parent)
+    Node(parent, children)
+  }
+
+  /**
+   * Processes the children of the given parent node as independent parent nodes.
+   *
+   * @param parent The parent node whose children are to be processed.
+   * @return A list of nodes representing the children of the given parent node.
+   */
+  private def processChildren(parent: Any): List[Node[Ast.Positioned, Ast.Positioned]] =
+    parent match {
       case product: Product =>
         product
           .productIterator
           .toList
-          .collect(positionedProducts)
+          .collect(processParent)
           .flatten
 
       case item =>
@@ -98,35 +115,45 @@ object NodeBuilder extends StrictLogging {
         List.empty
     }
 
-  private def buildMany(products: Seq[Any]): Seq[Node[Ast.Positioned, Ast.Positioned]] =
+  /**
+   * Constructs parent [[Node]] objects for each object of type [[Ast.Positioned]] in the given sequence of products.
+   *
+   * @param products A sequence of items to process, each representing a parent node.
+   * @return A sequence of Nodes, each representing a parent node.
+   */
+  private def buildParents(products: Seq[Any]): Seq[Node[Ast.Positioned, Ast.Positioned]] =
     products
-      .collect(positionedProducts)
+      .collect(processParent)
       .flatten
 
-  private def positionedProducts: PartialFunction[Any, Seq[Node[Ast.Positioned, Ast.Positioned]]] = {
-    case positioned: Positioned =>
-      val children = buildOne(positioned)
-      List(Node(positioned, children))
+  /**
+   * Processes a product containing various types within an AST, checking for the existence
+   * of an [[Ast.Positioned]] type and processing it accordingly.
+   *
+   * @return A partial function that processes input of any type and returns a sequence of Nodes,
+   *         each representing a parent node.
+   */
+  private def processParent: PartialFunction[Any, Seq[Node[Ast.Positioned, Ast.Positioned]]] = {
+    case parent: Positioned =>
+      List(buildParent(parent))
 
     case (left: Positioned, right: Positioned) =>
-      val leftChildren  = buildOne(left)
-      val rightChildren = buildOne(right)
       List(
-        Node(left, leftChildren),
-        Node(right, rightChildren)
+        buildParent(left),
+        buildParent(right)
       )
 
-    case Some(positioned: Positioned) =>
-      positionedProducts(positioned)
-
-    case Some(tuple @ (_: Positioned, _: Positioned)) =>
-      positionedProducts(tuple)
-
     case positions: Seq[_] =>
-      buildMany(positions)
+      buildParents(positions)
 
-    case Some(positions: Seq[_]) =>
-      buildMany(positions)
+    case Some(product) =>
+      processParent(product)
+
+    case Right(product) =>
+      processParent(product)
+
+    case Left(product) =>
+      processParent(product)
   }
 
 }

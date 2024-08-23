@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -38,17 +39,46 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
   }
 
   "return non-empty" when {
-    "assert!" in {
-      goToBuiltIn(
-        code = """
-            |Contract Test() {
-            |  pub fn function() -> () {
-            |    @@assert!()
-            |  }
-            |}
-            |""".stripMargin,
-        expected = Some("""fn assert!(condition:Bool, errorCode:U256) -> ()""")
-      )
+    "assert!" when {
+      "native builtin library" in {
+        // Expect go-to definition to work directly on the native builtin library
+        goToBuiltIn(
+          code = """
+              |Contract Test() {
+              |  pub fn function() -> () {
+              |    @@assert!()
+              |  }
+              |}
+              |""".stripMargin,
+          expected = Some("""fn assert!(condition:Bool, errorCode:U256) -> ()""")
+        )
+      }
+
+      "custom builtin library" in {
+        // Expect go-to definition to work on the following custom builtin code
+        goTo(
+          dependencyId = DependencyID.BuiltIn,
+          // the custom builtin library
+          dependency = """
+              |Interface TestBuiltIn {
+              |  fn hello!() -> ()
+              |
+              |  >>fn assert!() -> ()<<
+              |
+              |  fn blah!() -> ()
+              |}
+              |""".stripMargin,
+          // the developer's workspace code
+          workspace = """
+              |Contract Test() {
+              |  pub fn function() -> () {
+              |    @@assert!()
+              |  }
+              |}
+              |""".stripMargin
+        )
+      }
+
     }
 
     "verifyAbsoluteLocktime!" in {

@@ -141,6 +141,17 @@ object WorkspaceSearcher {
    *       Consider using other [[collectFunctions]] functions for more targeted collections.
    */
   def collectFunctions(workspace: WorkspaceState.Parsed): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+    collectAllFunctions(workspace)
+
+  /**
+   * Collects ALL function definitions within the provided parsed workspace state.
+   *
+   * Note: Collecting all functions within a large workspace can be expensive.
+   *
+   * @param workspace The parsed workspace state from which to collect function definitions.
+   * @return An iterator containing all function implementations.
+   */
+  def collectAllFunctions(workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
     collectTrees(workspace, includeNonImportedCode = false)
       .iterator
       .flatMap(SourceCodeSearcher.collectFunctions)
