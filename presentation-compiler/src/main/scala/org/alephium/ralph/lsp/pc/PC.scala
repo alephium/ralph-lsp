@@ -91,7 +91,8 @@ object PC extends StrictImplicitLogging {
             Workspace.buildChanged(
               buildURI = fileURI,
               code = code,
-              workspace = aware
+              workspace = aware,
+              buildErrors = pcState.buildErrors
             )
 
           val newPCState =

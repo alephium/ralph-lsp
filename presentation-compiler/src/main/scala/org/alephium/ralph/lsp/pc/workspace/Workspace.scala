@@ -398,25 +398,30 @@ private[pc] object Workspace extends StrictImplicitLogging {
     }
 
   /**
-   * Process changes to a valid build file.
+   * Processes changes to a valid build file (`ralph.json` or `alephium.config.ts`).
    *
-   * If the build file is valid, this drops existing compilations
-   * and starts a fresh workspace.
+   * If the build file is valid and a change has occurred, this function drops existing compilation
+   * and initialises a new workspace, and re-builds it.
    *
-   * @param buildURI Location of the build file.
-   * @param code     Build file's content.
+   * @param buildURI    Location of the build file.
+   * @param code        Content of the build file, if available, otherwise it's read from the disk, if required.
+   * @param workspace   The current workspace with a successfully compiled JSON build file (`ralph.json`).
+   * @param buildErrors Provided when there are errors in the latest JSON build file (`ralph.json`).
+   * @return None if no change has occurred, otherwise, either a build error or an updated workspace state.
    */
   def buildChanged(
       buildURI: URI,
       code: Option[String],
-      workspace: WorkspaceState.IsSourceAware
+      workspace: WorkspaceState.IsSourceAware,
+      buildErrors: Option[BuildState.Errored]
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): Option[Either[BuildError, WorkspaceState.IsSourceAware]] =
     if (workspace.workspaceURI.resolve(buildURI) == workspace.tsBuildURI) // Request is for the `alephium.config.ts` build file.
       TSBuild.build(
         code = code,
-        currentBuild = workspace.build
+        // Prefer a build with errors over a successfully compiled workspace build to ensure the most recent build is processed.
+        currentBuild = buildErrors getOrElse workspace.build
       ) match {
         case Left(error) =>
           // TypeScript build reported error.
@@ -428,7 +433,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
           buildChanged(
             buildURI = parsed.buildURI,
             code = Some(parsed.code), // the newly persisted `ralph.json` file content is known, provide the code so no disk read occurs.
-            workspace = workspace
+            workspace = workspace,
+            buildErrors = buildErrors
           )
 
         case Right(None) =>
