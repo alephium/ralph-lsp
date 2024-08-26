@@ -36,6 +36,7 @@ object TSConfig {
       ignoreUnusedPrivateFunctionsWarnings: Option[Boolean],
       ignoreUpdateFieldsCheckWarnings: Option[Boolean],
       ignoreCheckExternalCallerWarnings: Option[Boolean],
+      ignoreUnusedFunctionReturnWarnings: Option[Boolean],
       errorOnWarnings: Option[Boolean] = None)
 
   object CompilerOptions {

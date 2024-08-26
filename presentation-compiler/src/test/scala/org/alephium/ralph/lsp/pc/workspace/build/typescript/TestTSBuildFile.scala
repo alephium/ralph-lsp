@@ -29,6 +29,7 @@ object TestTSBuildFile {
       ignoreUnusedPrivateFunctionsWarnings <- Gen.option(arbitrary[Boolean])
       ignoreUpdateFieldsCheckWarnings      <- Gen.option(arbitrary[Boolean])
       ignoreCheckExternalCallerWarnings    <- Gen.option(arbitrary[Boolean])
+      ignoreUnusedFunctionReturnWarnings   <- Gen.option(arbitrary[Boolean])
       errorOnWarnings                      <- Gen.option(arbitrary[Boolean])
     } yield TSConfig.CompilerOptions(
       ignoreUnusedConstantsWarnings,
@@ -37,6 +38,7 @@ object TestTSBuildFile {
       ignoreUnusedPrivateFunctionsWarnings,
       ignoreUpdateFieldsCheckWarnings,
       ignoreCheckExternalCallerWarnings,
+      ignoreUnusedFunctionReturnWarnings,
       errorOnWarnings
     )
 
@@ -78,6 +80,7 @@ object TestTSBuildFile {
         |  ${printOption("ignoreUnusedPrivateFunctionsWarnings", compilerOptions.ignoreUnusedPrivateFunctionsWarnings)}
         |  ${printOption("ignoreUpdateFieldsCheckWarnings", compilerOptions.ignoreUpdateFieldsCheckWarnings)}
         |  ${printOption("ignoreCheckExternalCallerWarnings", compilerOptions.ignoreCheckExternalCallerWarnings)}
+        |  ${printOption("ignoreUnusedFunctionReturnWarnings", compilerOptions.ignoreUnusedFunctionReturnWarnings)}
         |  ${printOption("errorOnWarnings", compilerOptions.errorOnWarnings)}
         |}""".stripMargin
     }

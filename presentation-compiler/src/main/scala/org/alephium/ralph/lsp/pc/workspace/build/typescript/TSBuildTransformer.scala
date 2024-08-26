@@ -87,7 +87,8 @@ object TSBuildTransformer {
       ignoreUnusedFieldsWarnings = tsOptions.ignoreUnusedFieldsWarnings.getOrElse(ralphOptions.ignoreUnusedFieldsWarnings),
       ignoreUnusedPrivateFunctionsWarnings = tsOptions.ignoreUnusedPrivateFunctionsWarnings.getOrElse(ralphOptions.ignoreUnusedPrivateFunctionsWarnings),
       ignoreUpdateFieldsCheckWarnings = tsOptions.ignoreUpdateFieldsCheckWarnings.getOrElse(ralphOptions.ignoreUpdateFieldsCheckWarnings),
-      ignoreCheckExternalCallerWarnings = tsOptions.ignoreCheckExternalCallerWarnings.getOrElse(ralphOptions.ignoreCheckExternalCallerWarnings)
+      ignoreCheckExternalCallerWarnings = tsOptions.ignoreCheckExternalCallerWarnings.getOrElse(ralphOptions.ignoreCheckExternalCallerWarnings),
+      ignoreUnusedFunctionReturnWarnings = tsOptions.ignoreUnusedFunctionReturnWarnings.getOrElse(ralphOptions.ignoreUnusedFunctionReturnWarnings)
     )
 
   /**
@@ -115,6 +116,7 @@ object TSBuildTransformer {
       "ignoreUnusedPrivateFunctionsWarnings",
       "ignoreUpdateFieldsCheckWarnings",
       "ignoreCheckExternalCallerWarnings",
+      "ignoreUnusedFunctionReturnWarnings",
       "errorOnWarnings"
     )
 
@@ -188,6 +190,7 @@ object TSBuildTransformer {
             ignoreUnusedPrivateFunctionsWarnings = parseBooleanOption(optionsMap.get("ignoreUnusedPrivateFunctionsWarnings")),
             ignoreUpdateFieldsCheckWarnings = parseBooleanOption(optionsMap.get("ignoreUpdateFieldsCheckWarnings")),
             ignoreCheckExternalCallerWarnings = parseBooleanOption(optionsMap.get("ignoreCheckExternalCallerWarnings")),
+            ignoreUnusedFunctionReturnWarnings = parseBooleanOption(optionsMap.get("ignoreUnusedFunctionReturnWarnings")),
             errorOnWarnings = parseBooleanOption(optionsMap.get("errorOnWarnings"))
           )
       }
