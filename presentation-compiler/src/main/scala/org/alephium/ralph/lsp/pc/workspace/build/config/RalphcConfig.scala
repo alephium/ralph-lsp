@@ -79,7 +79,7 @@ object RalphcConfig {
   /**
    * Creates a config file.
    *
-   * This can be used to generate a default config [[defaultParsedConfig]]
+   * This can be used to generate a default config [[RalphcConfigState.Parsed.default]]
    * for the user in their IDE workspace.
    *
    * @param workspacePath Workspace root path

@@ -31,10 +31,10 @@ import scala.collection.immutable.ArraySeq
 
 object Build {
 
-  val BUILD_FILE_EXTENSION = "json"
+  val FILE_EXTENSION = "json"
 
   /** Build file of a workspace */
-  val FILE_NAME = s"ralph.$BUILD_FILE_EXTENSION"
+  val FILE_NAME = s"ralph.$FILE_EXTENSION"
 
   /** Directory name where the [[Build.FILE_NAME]] is located */
   private val HOME_DIR_NAME =
@@ -98,6 +98,30 @@ object Build {
           buildURI = buildURI,
           json = json
         )
+    }
+
+  /**
+   * Parses the input build JSON if defined, else parses the build from disk
+   * using the provided build URI.
+   *
+   * @param buildURI Location of the build file. Used for reading JSON from disk and reporting errors.
+   * @param json     Optional build JSON.
+   * @param file     File IO API.
+   * @return Parse result.
+   */
+  def parse(
+      buildURI: URI,
+      json: Option[String]
+    )(implicit file: FileAccess): BuildState.IsParsed =
+    json match {
+      case Some(json) =>
+        parse(
+          buildURI = buildURI,
+          json = json
+        )
+
+      case None =>
+        parse(buildURI)
     }
 
   /** Compile a parsed build */
@@ -276,6 +300,35 @@ object Build {
 
           case errored: BuildState.Errored =>
             Some(errored)
+        }
+    }
+
+  /**
+   * Fetches the parsed build state from the given compiled build state if the compiled build state has no errors.
+   *
+   * @param build The build to find the parsed state for.
+   * @return An [[Option]] containing the parsed build state, or [[None]] if the build contains compilation errors.
+   */
+  def getParsedOrNone(build: BuildState.IsCompiled)(implicit file: FileAccess): Option[BuildState.Parsed] =
+    build match {
+      case compiled: BuildState.Compiled =>
+        Some(compiled.parsed)
+
+      case errored: BuildState.Errored =>
+        // TODO: Currently, a Build's Errored state does not store the `Parsed` state.
+        //       There is a need for a `ParsedError` and `CompilationError` split, similar to `SourceCodeState`,
+        //       so a `Parsed` state is ALWAYS available for an `IsCompiled` state.
+        //       Until then, the following re-parsing of the build JSON is a temporary solution.
+        //       Re-parsing is expensive, therefore, implementing the split is necessary.
+        parse(
+          buildURI = errored.buildURI,
+          json = errored.codeOption
+        ) match {
+          case parsed: BuildState.Parsed =>
+            Some(parsed)
+
+          case _: BuildState.Errored =>
+            None
         }
     }
 

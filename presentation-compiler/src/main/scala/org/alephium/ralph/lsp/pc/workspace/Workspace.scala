@@ -23,8 +23,9 @@ import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildError, Build, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
-import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -48,23 +49,51 @@ private[pc] object Workspace extends StrictImplicitLogging {
     WorkspaceState.Created(workspaceURI)
 
   /**
-   * Build only a [[WorkspaceState.Created]] workspace.
-   * All other workspace states are returned as-is, they do not get re-compiled.
+   * Incrementally builds the workspace.
    *
-   * @param workspace The workspace to build.
-   * @return A built workspace which is source and build aware.
+   * If the input workspace is already built, it returns the existing workspace state.
+   *
+   * @param code      The file that changed.
+   * @param workspace The current state of the workspace.
+   * @return Either build errors or an initialised workspace state that is source-aware.
    */
   def build(
+      code: Option[WorkspaceFile],
       workspace: WorkspaceState
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Either[BuildState.Errored, WorkspaceState.IsSourceAware] =
+      logger: ClientLogger): Either[BuildError, WorkspaceState.IsSourceAware] =
     workspace match {
       case workspace: WorkspaceState.IsSourceAware =>
-        Right(workspace) // already initialised
+        // Workspace is already built and is source-aware. Return it!
+        Right(workspace)
 
       case workspace: WorkspaceState.Created =>
-        val newBuild =
+        // workspace is created but it's not built yet. Let's build it!
+        buildClean(
+          code = code,
+          workspace = workspace
+        )
+    }
+
+  /**
+   * Executes build on a newly created workspace.
+   *
+   * @param code      The file that changed.
+   * @param workspace The created workspace.
+   * @return Either build errors or an [[WorkspaceState.UnCompiled]] workspace state.
+   */
+  def buildClean(
+      code: Option[WorkspaceFile],
+      workspace: WorkspaceState.Created
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): Either[BuildError, WorkspaceState.UnCompiled] =
+    code match {
+      case Some(code) if code.fileURI == workspace.tsBuildURI =>
+        // Request is for the `alephium.config.ts` build file.
+        // Built the workspace!
+        val build =
           Build.parseAndCompile(
             buildURI = workspace.buildURI,
             code = None,
@@ -72,59 +101,72 @@ private[pc] object Workspace extends StrictImplicitLogging {
             dependencyDownloaders = DependencyDownloader.natives()
           )
 
-        initialise(newBuild)
-    }
+        // Build `alephium.config.ts` using `ralph.json`'s compilation result.
+        TSBuild.build(
+          code = code.text,
+          currentBuild = build
+        ) match {
+          case Left(error) =>
+            // TSBuild errored. This error state contains all errors.
+            Left(BuildError(error))
 
-  /**
-   * If already built, return existing workspace or else invoke build.
-   *
-   * @param code File that changed.
-   * @return Returns diagnostics in-case were build errors, or-else returns an initialised workspace.
-   */
-  def build(
-      code: Option[WorkspaceFile],
-      workspace: WorkspaceState
-    )(implicit file: FileAccess,
-      compiler: CompilerAccess,
-      logger: ClientLogger): Either[BuildState.Errored, WorkspaceState.IsSourceAware] =
-    workspace match {
-      case sourceAware: WorkspaceState.IsSourceAware =>
-        // already built
-        Right(sourceAware)
-
-      case currentWorkspace: WorkspaceState.Created =>
-        // workspace is created but it's not built yet. Let's build it!
-        code match {
-          case Some(code) if code.fileURI == currentWorkspace.buildURI =>
-            // this request is for the build file, build it using the code sent by the client
-            val build =
-              Build.parseAndCompile(
-                buildURI = code.fileURI,
-                code = code.text,
-                currentBuild = None,
-                dependencyDownloaders = DependencyDownloader.natives()
-              )
-
+          case Right(None) =>
+            // No change occurred to `ralph.json`, initialise workspace using the build above.
             initialise(build)
+              .left
+              .map(BuildError(_))
 
-          case _ =>
-            // else build from disk
-            Workspace.build(currentWorkspace)
+          case Right(Some(parsed: BuildState.Parsed)) =>
+            // An updated `ralph.json` was persisted, do a clean build on the created workspace.
+            buildClean(
+              // the newly persisted `ralph.json` file content is known, provide WorkspaceFile so no disk read occurs.
+              code = Some(WorkspaceFile(parsed.buildURI, Some(parsed.code))),
+              workspace = workspace
+            )
         }
+
+      case Some(code) if code.fileURI == workspace.buildURI =>
+        // this request is for the `ralph.json` build file, build it using the code sent by the client (no disk IO).
+        val build =
+          Build.parseAndCompile(
+            buildURI = code.fileURI,
+            code = code.text,
+            currentBuild = None,
+            dependencyDownloaders = DependencyDownloader.natives()
+          )
+
+        initialise(build)
+          .left
+          .map(BuildError(_))
+
+      case Some(_) | None =>
+        // this code file is not a build file, so build from disk.
+        val build =
+          Build.parseAndCompile(
+            buildURI = workspace.buildURI,
+            code = None,
+            currentBuild = None,
+            dependencyDownloaders = DependencyDownloader.natives()
+          )
+
+        initialise(build)
+          .left
+          .map(BuildError(_))
     }
 
   /**
-   * Build without any [[WorkspaceState]] information.
+   * Builds a workspace without any existing [[WorkspaceState]] information.
    *
    * Source-code is built just from the input build information
-   * and is synchronised with source files on disk.
+   * and is synchronised with source files on disk,
+   * ensuring all source files on-disk are known to this build.
    *
    * @param newBuildCode New build file's text content.
    * @param currentBuild Currently known compiled build.
    * @param sourceCode   The source-code to initialise into a un-compiled workspace.
    * @return An un-compiled workspace with the new compiled build file.
    */
-  def build(
+  def buildSynchronised(
       newBuildCode: Option[String],
       currentBuild: BuildState.Compiled,
       sourceCode: ArraySeq[SourceCodeState]
@@ -321,7 +363,7 @@ private[pc] object Workspace extends StrictImplicitLogging {
       compiler: CompilerAccess,
       logger: ClientLogger): Either[BuildState.Errored, WorkspaceState.IsParsedAndCompiled] =
     // re-build the build file
-    build(
+    buildSynchronised(
       newBuildCode = buildCode,
       currentBuild = currentBuild,
       sourceCode = sourceCode
@@ -361,22 +403,51 @@ private[pc] object Workspace extends StrictImplicitLogging {
     }
 
   /**
-   * Process changes to a valid build file.
+   * Processes changes to a valid build file (`ralph.json` or `alephium.config.ts`).
    *
-   * If the build file is valid, this drops existing compilations
-   * and starts a fresh workspace.
+   * If the build file is valid and a change has occurred, this function drops existing compilation
+   * and initialises a new workspace, and re-builds it.
    *
-   * @param buildURI Location of the build file.
-   * @param code     Build file's content.
+   * @param buildURI    Location of the build file.
+   * @param code        Content of the build file, if available, otherwise it's read from the disk, if required.
+   * @param workspace   The current workspace with a successfully compiled JSON build file (`ralph.json`).
+   * @param buildErrors Provided when there are errors in the latest JSON build file (`ralph.json`).
+   * @return None if no change has occurred, otherwise, either a build error or an updated workspace state.
    */
   def buildChanged(
       buildURI: URI,
       code: Option[String],
-      workspace: WorkspaceState.IsSourceAware
+      workspace: WorkspaceState.IsSourceAware,
+      buildErrors: Option[BuildState.Errored]
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Option[Either[BuildState.Errored, WorkspaceState.IsSourceAware]] =
-    if (workspace.buildURI.resolve(buildURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
+      logger: ClientLogger): Option[Either[BuildError, WorkspaceState.IsSourceAware]] =
+    if (workspace.workspaceURI.resolve(buildURI) == workspace.tsBuildURI) // Request is for the `alephium.config.ts` build file.
+      TSBuild.build(
+        code = code,
+        // Prefer a build with errors over a successfully compiled workspace build to ensure the most recent build is processed.
+        currentBuild = buildErrors getOrElse workspace.build
+      ) match {
+        case Left(error) =>
+          // TypeScript build reported error.
+          Some(Left(BuildError(error)))
+
+        case Right(Some(parsed: BuildState.Parsed)) =>
+          // `alephium.config.ts` was built successfully, with an updated `ralph.json` persisted.
+          // Trigger a re-build of `ralph.json` and re-compilation of the workspace.
+          buildChanged(
+            buildURI = parsed.buildURI,
+            code = Some(parsed.code), // the newly persisted `ralph.json` file content is known, provide the code so no disk read occurs.
+            workspace = workspace,
+            buildErrors = buildErrors
+          )
+
+        case Right(None) =>
+          // `alephium.config.ts` build successful, but no change occurred to `ralph.json`,
+          // so existing build remains the same, no need to re-compile.
+          None
+      }
+    else if (workspace.buildURI.resolve(buildURI) == workspace.buildURI) // Check: Is this fileURI an updated version of the current workspace build
       Build.parseAndCompile(
         buildURI = buildURI,
         code = code,
@@ -401,13 +472,16 @@ private[pc] object Workspace extends StrictImplicitLogging {
               } else {
                 // directory changed, re-initialise the workspace and compile.
                 val result =
-                  initialise(build) map parseAndCompile
+                  initialise(build)
+                    .map(parseAndCompile)
+                    .left
+                    .map(BuildError(_))
 
                 Some(result)
               }
 
             case errored: BuildState.Errored =>
-              Some(Left(errored))
+              Some(Left(BuildError(errored)))
           }
 
         case None => // no build change occurred
@@ -440,8 +514,11 @@ private[pc] object Workspace extends StrictImplicitLogging {
       workspace: WorkspaceState
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Either[BuildState.Errored, WorkspaceState.IsSourceAware] =
-    build(workspace) map {
+      logger: ClientLogger): Either[BuildError, WorkspaceState.IsSourceAware] =
+    build(
+      code = Some(WorkspaceFile(fileURI, updatedCode)),
+      workspace = workspace
+    ) map {
       workspace =>
         if (URIUtil.contains(workspace.build.contractURI, fileURI)) {
           // source belongs to this workspace, process compilation including this file's changed code.

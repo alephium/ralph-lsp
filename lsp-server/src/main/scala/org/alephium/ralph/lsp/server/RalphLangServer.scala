@@ -202,9 +202,30 @@ class RalphLangServer private (
     runSync {
       logger.debug("Client initialized")
       registerClientCapabilities()
-      // Invoke initial compilation. Trigger it as build file changed.
+      // Invoke initial compilation. Trigger it as a build file changed.
       triggerInitialBuild()
     }
+
+  /**
+   * Programmatically triggers a change request in the build files.
+   *
+   * Both build files get processed from disk.
+   */
+  def triggerInitialBuild(): Unit = {
+    // Trigger the build of `alephium.config.ts` first, which, if it exists, will generate `ralph.json`.
+    didChangeAndPublish(
+      fileURI = getPCState().workspace.tsBuildURI,
+      code = None
+    )
+
+    // If the above does not generate `ralph.json`, this will.
+    // The cost here is relatively low because rebuilding `ralph.json` will be
+    // cancelled immediately if it's already built by the above call.
+    didChangeAndPublish(
+      fileURI = getPCState().workspace.buildURI,
+      code = None
+    )
+  }
 
   /** Register needed capabilities with the client */
   def registerClientCapabilities(): Unit =
@@ -478,15 +499,6 @@ class RalphLangServer private (
       // invoke initial build on new PCState
       triggerInitialBuild()
     }
-
-  /**
-   * Programmatically triggers a change in the build file.
-   */
-  private def triggerInitialBuild(): Unit =
-    didChangeAndPublish(
-      fileURI = getPCState().workspace.buildURI,
-      code = None
-    )
 
   /**
    * Apply code change and publish diagnostics.
