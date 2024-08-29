@@ -20,6 +20,7 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorEmptyErrorsOnDownload
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.{SourceIndex, CompilerOptions}
@@ -31,6 +32,8 @@ import scala.collection.immutable.ArraySeq
  * A dependency downloader, responsible for downloading code dependencies into an un-compiled workspace.
  */
 trait DependencyDownloader extends StrictImplicitLogging { self =>
+
+  def dependencyID: DependencyID
 
   /**
    * Downloads dependency code to an un-compiled workspace.
@@ -79,8 +82,13 @@ trait DependencyDownloader extends StrictImplicitLogging { self =>
 
 object DependencyDownloader {
 
+  /**
+   * Indicates dependencies that are native to Ralph - `std` and builtin`.
+   */
+  trait Native extends DependencyDownloader
+
   /** All dependency downloaders */
-  def all(): ArraySeq[DependencyDownloader] =
+  def natives(): ArraySeq[DependencyDownloader.Native] =
     ArraySeq(
       StdInterfaceDownloader,
       BuiltInFunctionDownloader

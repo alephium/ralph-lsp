@@ -23,6 +23,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuildState
 
 import java.net.URI
 import scala.collection.mutable.ListBuffer
@@ -40,38 +41,43 @@ object Diagnostics {
   def toFileDiagnostics(
       currentState: PCState,
       newState: PCState): Iterable[FileDiagnostic] = {
-    // fetch diagnostics to publish for the build file
-    val buildDiagnostics =
-      toFileDiagnosticsForBuild(
+    // fetch diagnostics to publish for `ralph.json` build file
+    val jsonBuildDiagnostics =
+      toFileDiagnosticsForJSONBuild(
         currentBuildErrors = currentState.buildErrors,
         newBuildErrors = newState.buildErrors
       )
 
-    // fetch diagnostics to publish for the source-code
+    // fetch diagnostics to publish for `alephium.config.ts` build file
+    val tsBuildDiagnostics =
+      toFileDiagnosticsForTSBuild(
+        currentBuildErrors = currentState.tsErrors,
+        newBuildErrors = newState.tsErrors
+      )
+
+    // fetch diagnostics to publish for the `*.ral` source-code files
     val workspaceDiagnostics =
       toFileDiagnosticsForWorkspace(
         currentWorkspace = Some(currentState.workspace),
         newWorkspace = Some(newState.workspace)
       )
 
-    buildDiagnostics ++ workspaceDiagnostics
+    jsonBuildDiagnostics ++ tsBuildDiagnostics ++ workspaceDiagnostics
   }
 
   /**
    * Given the current build-errors and the next, return diagnostics to publish
    * for the current compilation request.
    */
-  def toFileDiagnosticsForBuild(
+  def toFileDiagnosticsForJSONBuild(
       currentBuildErrors: Option[BuildState.Errored],
       newBuildErrors: Option[BuildState.Errored]): Iterable[FileDiagnostic] =
     (currentBuildErrors, newBuildErrors) match {
       case (Some(build), None) =>
         // build errors were fixed. Clear old errors
         val buildDiagnostics =
-          toFileDiagnostics(
+          clearFileDiagnotics(
             fileURI = build.buildURI,
-            code = build.codeOption,
-            errors = List.empty, // clear old errors
             severity = CodeDiagnosticSeverity.Error
           )
 
@@ -85,12 +91,7 @@ object Diagnostics {
       case (None, Some(build)) =>
         // New build has errors, create diagnostics.
         val buildDiagnostics =
-          toFileDiagnostics(
-            fileURI = build.buildURI,
-            code = build.codeOption,
-            errors = build.errors.to(List),
-            severity = CodeDiagnosticSeverity.Error
-          )
+          toFileDiagnostics(build)
 
         // build diagnostics for the dependency
         val dependencyDiagnostics =
@@ -101,12 +102,7 @@ object Diagnostics {
       case (Some(oldBuild), Some(newBuild)) =>
         // New build has errors, build diagnostics given previous build result.
         val buildDiagnostics =
-          toFileDiagnostics(
-            fileURI = newBuild.buildURI,
-            code = newBuild.codeOption,
-            errors = newBuild.errors.to(List),
-            severity = CodeDiagnosticSeverity.Error
-          )
+          toFileDiagnostics(newBuild)
 
         val dependencyDiagnostics =
           DependencyID
@@ -120,12 +116,73 @@ object Diagnostics {
                 )
             }
 
-        dependencyDiagnostics ++ Iterable(buildDiagnostics)
+        dependencyDiagnostics :+ buildDiagnostics
 
       case (None, None) =>
         // No state change occurred. Nothing to diagnose.
         Iterable.empty
     }
+
+  /**
+   * Builds diagnostics for the build's error state.
+   *
+   * @param build The errored build.
+   * @return The build file's diagnostics.
+   */
+  def toFileDiagnostics(build: BuildState.Errored): FileDiagnostic =
+    // `ralph.json` diagnotics
+    toFileDiagnostics(
+      fileURI = build.buildURI,
+      code = build.codeOption,
+      errors = build.errors.to(List),
+      severity = CodeDiagnosticSeverity.Error
+    )
+
+  /**
+   * Builds diagnostics for the TypeScript `alephium.config.ts` build's error state.
+   */
+  def toFileDiagnosticsForTSBuild(
+      currentBuildErrors: Option[TSBuildState.Errored],
+      newBuildErrors: Option[TSBuildState.Errored]): Option[FileDiagnostic] =
+    (currentBuildErrors, newBuildErrors) match {
+      case (Some(build), None) =>
+        // build errors were fixed. Clear old errors
+        val cleared =
+          clearFileDiagnotics(
+            fileURI = build.buildURI,
+            severity = CodeDiagnosticSeverity.Error
+          )
+
+        Some(cleared)
+
+      case (None | Some(_), Some(build)) =>
+        // New build has errors, create diagnostics for the new build.
+        Some(toFileDiagnostics(build))
+
+      case (None, None) =>
+        // No state change occurred. Nothing to diagnose.
+        None
+    }
+
+  /**
+   * Builds file diagnostics for `alephium.config.ts`.
+   *
+   * @param state The errored state.
+   * @return The build file's diagnostics.
+   */
+  def toFileDiagnostics(state: TSBuildState.Errored): FileDiagnostic = {
+    val diagnostics =
+      state.errors map {
+        error =>
+          toDiagnostic(
+            code = state.code,
+            message = error,
+            severity = CodeDiagnosticSeverity.Error
+          )
+      }
+
+    FileDiagnostic(state.buildURI, diagnostics)
+  }
 
   /**
    * Given the current workspace and the next,
@@ -348,5 +405,22 @@ object Diagnostics {
 
     FileDiagnostic(fileURI, diagnostics)
   }
+
+  /**
+   * Clears all file diagnostics for the `fileURI`.
+   *
+   * @param fileURI  The file URI to clear diagnostics for.
+   * @param severity The type of diagnostics to clear.
+   * @return Cleared file diagnostics.
+   */
+  private def clearFileDiagnotics(
+      fileURI: URI,
+      severity: CodeDiagnosticSeverity): FileDiagnostic =
+    toFileDiagnostics(
+      fileURI = fileURI,
+      code = None,
+      errors = List.empty, // clear old errors
+      severity = severity
+    )
 
 }

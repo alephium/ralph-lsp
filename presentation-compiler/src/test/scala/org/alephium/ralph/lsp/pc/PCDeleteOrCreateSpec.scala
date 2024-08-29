@@ -87,7 +87,8 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
             val currentPCState =
               PCState(
                 workspace = workspace,
-                buildErrors = None
+                buildErrors = None,
+                tsErrors = None
               )
 
             // invoke delete
@@ -127,7 +128,8 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                     sourceCode = ArraySeq.empty // there is no source-code in this workspace
                   )
                 ),
-                buildErrors = None // there are no build errors
+                buildErrors = None, // there are no build errors
+                tsErrors = None
               )
 
             // build file exists on disk
@@ -188,7 +190,8 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
             val currentPCState =
               PCState(
                 workspace = workspace,
-                buildErrors = None
+                buildErrors = None,
+                tsErrors = None
               )
 
             // invoke the same event
@@ -276,7 +279,8 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
           val currentPCState =
             PCState(
               workspace = workspace,
-              buildErrors = None
+              buildErrors = None,
+              tsErrors = None
             )
 
           // invoke the event
@@ -321,7 +325,8 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
           val initialPCState =
             PCState(
               workspace = workspace,
-              buildErrors = None
+              buildErrors = None,
+              tsErrors = None
             )
 
           // Add the all code to the workspace

@@ -22,7 +22,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode._
 import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
-import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.scalacheck.Gen
 
@@ -67,6 +67,16 @@ object TestWorkspace {
       client: ClientLogger): Gen[WorkspaceState.Parsed] =
     genParsed(code: _*).map(_.asInstanceOf[WorkspaceState.Parsed])
 
+  def genParsedOK(
+      build: Gen[BuildState.Compiled],
+      code: Seq[String]
+    )(implicit compiler: CompilerAccess,
+      file: FileAccess): Gen[WorkspaceState.Parsed] =
+    genParsed(
+      build = build,
+      code = code
+    ).map(_.asInstanceOf[WorkspaceState.Parsed])
+
   /**
    * Generates a parsed or errored workspace from the provided source code.
    *
@@ -78,7 +88,26 @@ object TestWorkspace {
     )(implicit compiler: CompilerAccess,
       file: FileAccess,
       client: ClientLogger): Gen[WorkspaceState.IsParsed] =
-    genUnCompiled(code: _*) map {
+    genParsed(
+      build = TestBuild.genCompiledOK(),
+      code = code.toSeq
+    )
+
+  /**
+   * Generates a parsed or errored workspace from the provided source code.
+   *
+   * @param code The source code to parse.
+   * @return The workspace containing the parser result.
+   */
+  def genParsed(
+      build: Gen[BuildState.Compiled],
+      code: Seq[String]
+    )(implicit compiler: CompilerAccess,
+      file: FileAccess): Gen[WorkspaceState.IsParsed] =
+    genUnCompiled(
+      build = build,
+      code = code
+    ) map {
       unCompiled =>
         // try parsing the workspace
         val workspace =
@@ -90,6 +119,56 @@ object TestWorkspace {
         workspace
     }
 
+  def genCompiledOK(
+      code: String*
+    )(implicit compiler: CompilerAccess,
+      file: FileAccess,
+      client: ClientLogger): Gen[WorkspaceState.Compiled] =
+    genCompiled(code: _*).map(_.asInstanceOf[WorkspaceState.Compiled])
+
+  def genCompiled(
+      code: String*
+    )(implicit compiler: CompilerAccess,
+      file: FileAccess,
+      client: ClientLogger): Gen[WorkspaceState.IsCompiled] =
+    genParsedOK(code: _*) map {
+      parsed =>
+        Workspace.compile(parsed)
+    }
+
+  def genCompiledOK(
+      build: Gen[BuildState.Compiled],
+      code: Seq[String]
+    )(implicit compiler: CompilerAccess,
+      file: FileAccess): Gen[WorkspaceState.Compiled] =
+    genCompiled(
+      build = build,
+      code = code
+    ).map(_.asInstanceOf[WorkspaceState.Compiled])
+
+  def genCompiled(
+      build: Gen[BuildState.Compiled],
+      code: Seq[String]
+    )(implicit compiler: CompilerAccess,
+      file: FileAccess): Gen[WorkspaceState.IsCompiled] =
+    genParsedOK(
+      build = build,
+      code = code
+    ) map {
+      parsed =>
+        Workspace.compile(parsed)
+    }
+
+  def genUnCompiled(
+      code: String*
+    )(implicit compiler: CompilerAccess,
+      file: FileAccess,
+      client: ClientLogger): Gen[WorkspaceState.UnCompiled] =
+    genUnCompiled(
+      build = TestBuild.genCompiledOK(),
+      code = code.toSeq
+    )
+
   /**
    * Generates an un-compiled workspace from the provided source code.
    *
@@ -97,12 +176,9 @@ object TestWorkspace {
    * @return An un-compiled workspace.
    */
   def genUnCompiled(
-      code: String*
-    )(implicit compiler: CompilerAccess,
-      file: FileAccess,
-      client: ClientLogger): Gen[WorkspaceState.UnCompiled] =
-    // Generate a build file
-    TestBuild.genCompiledOK() map {
+      build: Gen[BuildState.Compiled],
+      code: Seq[String]): Gen[WorkspaceState.UnCompiled] =
+    build map {
       build =>
         val sourceFiles =
           code

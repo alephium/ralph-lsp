@@ -34,14 +34,14 @@ import scala.collection.immutable.ArraySeq
 import scala.util.Random
 
 /**
- * Test cases for [[Workspace.build(Option[String], BuildState.Compiled, ArraySeq[SourceCodeState])]] function.
+ * Test cases for [[Workspace.buildSynchronised]] function.
  */
-class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class WorkspaceBuildSynchronisedSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   implicit val clientLogger: ClientLogger =
     TestClientLogger
 
-  "Build function 3: Building from source-code" should {
+  "Building from source-code" should {
     "fail" when {
       "new build code contains invalid syntax" in {
         // initially there exists a valid build file.
@@ -64,7 +64,7 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
 
         // run the build and expect syntax error
         val actualBuildError =
-          Workspace.build(
+          Workspace.buildSynchronised(
             newBuildCode = Some("blah"),
             currentBuild = buildCompiled,
             sourceCode = sourceCode
@@ -114,7 +114,7 @@ class WorkspaceBuild3Spec extends AnyWordSpec with Matchers with ScalaCheckDrive
             // run the build with the new build code as the current compiled build
             val actualWorkspace =
               Workspace
-                .build(
+                .buildSynchronised(
                   newBuildCode = Some(buildCompiled.code), // new build code is the same as existing compiled build.
                   currentBuild = buildCompiled,
                   sourceCode = allSourceCode.to(ArraySeq) // build with all source-code

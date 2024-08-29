@@ -18,10 +18,11 @@ package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
-import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
+import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildError, Build}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceFile, WorkspaceFileEvent, Workspace}
 
 import java.net.URI
@@ -34,7 +35,7 @@ import scala.collection.immutable.ArraySeq
  *  - When a file is changed, use [[PC.changed]]
  *  - When a file is deleted or created, use [[PC.deleteOrCreate]]
  */
-object PC {
+object PC extends StrictImplicitLogging {
 
   /**
    * Initialises a new presentation compiler state.
@@ -45,7 +46,8 @@ object PC {
   def initialise(workspaceURI: URI): PCState =
     PCState(
       workspace = Workspace.create(workspaceURI),
-      buildErrors = None
+      buildErrors = None,
+      tsErrors = None
     )
 
   /**
@@ -72,6 +74,7 @@ object PC {
       case error @ Left(_) =>
         val newPCState =
           buildChanged(
+            changedFileURI = Some(fileURI),
             buildChangeResult = error,
             pcState = pcState
           )
@@ -82,19 +85,21 @@ object PC {
         val fileExtension =
           URIUtil.getFileExtension(fileURI)
 
-        if (fileExtension == Build.BUILD_FILE_EXTENSION) {
+        if (fileExtension == Build.FILE_EXTENSION || fileExtension == TSBuild.FILE_EXTENSION) {
           // process build change
           val buildResult =
             Workspace.buildChanged(
               buildURI = fileURI,
               code = code,
-              workspace = aware
+              workspace = aware,
+              buildErrors = pcState.buildErrors
             )
 
           val newPCState =
             buildResult map {
               buildResult =>
                 buildChanged(
+                  changedFileURI = Some(fileURI),
                   buildChangeResult = buildResult,
                   pcState = pcState
                 )
@@ -124,13 +129,41 @@ object PC {
     }
 
   /**
-   * Deletes or creates a file within the workspace, which may or may not be source-aware ([[WorkspaceState.IsSourceAware]]).
+   * Deletes or creates a file within the workspace.
    *
    * @param events  Events to process.
    * @param pcState Current presentation compiler state.
    * @return The updated presentation compiler state containing the compilation result.
    */
   def deleteOrCreate(
+      events: ArraySeq[WorkspaceFileEvent],
+      pcState: PCState
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): PCState = {
+    val nextPCState =
+      deleteOrCreateJSONBuild(
+        events = events,
+        pcState = pcState
+      )
+
+    deleteOrCreateTSBuild(
+      events = events,
+      pcState = nextPCState
+    ) getOrElse nextPCState
+  }
+
+  /**
+   * Manages the deletion or creation of all files managed by the `ralph.json` build file.
+   * These files include all `.ral` source files.
+   *
+   * For processing the `alephium.config.ts` build file, see [[deleteOrCreateTSBuild]].
+   *
+   * @param events  Events to process.
+   * @param pcState Current presentation compiler state.
+   * @return The updated presentation compiler state containing the compilation result.
+   */
+  private def deleteOrCreateJSONBuild(
       events: ArraySeq[WorkspaceFileEvent],
       pcState: PCState
     )(implicit file: FileAccess,
@@ -142,6 +175,7 @@ object PC {
     ) match {
       case Left(error) =>
         buildChanged(
+          changedFileURI = None,
           buildChangeResult = Left(error),
           pcState = pcState
         )
@@ -183,17 +217,57 @@ object PC {
           )
 
         val result =
-          Workspace.compile(
-            buildCode = buildCode,
-            sourceCode = newSourceCode,
-            currentBuild = workspace.build
-          )
+          Workspace
+            .compile(
+              buildCode = buildCode,
+              sourceCode = newSourceCode,
+              currentBuild = workspace.build
+            )
+            .left
+            .map(BuildError(_))
 
         buildChanged(
+          changedFileURI = None,
           buildChangeResult = result,
           pcState = pcState
         )
     }
+
+  /**
+   * Manages the deletion or creation of the `alephium.config.ts` file.
+   * This build file does not manage `.ral` source files.
+   * It only mutates the `ralph.json` build file.
+   *
+   * For processing `ralph.json` and its dependent `.ral` source files, see [[deleteOrCreateJSONBuild]].
+   *
+   * @param events  Events to process.
+   * @param pcState Current presentation compiler state.
+   * @return The updated presentation compiler state containing the compilation result.
+   */
+  private def deleteOrCreateTSBuild(
+      events: ArraySeq[WorkspaceFileEvent],
+      pcState: PCState
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess,
+      logger: ClientLogger): Option[PCState] =
+    // Check: Did an event occur for the `alephium.config.ts` file?
+    if (events exists (_.uri == pcState.workspace.tsBuildURI))
+      // Execute `changed` so a rebuild occurs.
+      changed(
+        fileURI = pcState.workspace.tsBuildURI,
+        code = None, // events do not contain code, fetch from disk.
+        pcState = pcState
+      ) match {
+        case Left(error: ErrorUnknownFileType) =>
+          // This should not never occur since `tsBuildURI` is a known file type.
+          logger.error(error.message)
+          None
+
+        case Right(nextPCState) =>
+          nextPCState
+      }
+    else
+      None
 
   /**
    * Applies a build change to the [[PCState]].
@@ -203,27 +277,47 @@ object PC {
    * @return The updated presentation compiler state.
    */
   private def buildChanged(
-      buildChangeResult: Either[BuildState.Errored, WorkspaceState],
-      pcState: PCState): PCState =
-    buildChangeResult match {
-      case Left(buildError) =>
+      changedFileURI: Option[URI],
+      buildChangeResult: Either[BuildError, WorkspaceState],
+      pcState: PCState): PCState = {
+    def tsErrors() =
+      if (changedFileURI contains pcState.workspace.tsBuildURI) // Check: Was this function called due to `alephium.config.ts` changing?
+        // `alephium.config.ts` errors are resolved only if the changed file was the `alephium.config.ts` build file.
+        None
+      else
+        // Else continue with existing `alephium.config.ts` errors as they were not resolved.
+        pcState.tsErrors
+
+    buildChangeResult.left.map(_.error) match {
+      case Left(Right(buildError)) =>
         // fetch the activateWorkspace to replace existing workspace
         // or-else continue with existing workspace
         val newWorkspace =
           buildError.activateWorkspace getOrElse pcState.workspace
 
-        pcState.copy(
+        PCState(
+          workspace = newWorkspace,
           buildErrors = Some(buildError),
-          workspace = newWorkspace
+          tsErrors = tsErrors()
+        )
+
+      case Left(Left(tsErrors)) =>
+        PCState(
+          workspace = pcState.workspace,
+          buildErrors = pcState.buildErrors,
+          tsErrors = Some(tsErrors)
         )
 
       case Right(newWorkspace) =>
-        // build errors got resolved, clear it from state.
-        pcState.copy(
+        PCState(
+          workspace = newWorkspace,
+          // A new workspace was returned! This can only happen if `ralph.json` errors were resolved,
+          // so clear those errors, if any.
           buildErrors = None,
-          workspace = newWorkspace
+          tsErrors = tsErrors()
         )
     }
+  }
 
   /**
    * Applies a source code change to the [[PCState]].
@@ -233,11 +327,14 @@ object PC {
    * @return The updated presentation compiler state.
    */
   private def sourceCodeChanged(
-      sourceChangeResult: Either[BuildState.Errored, WorkspaceState],
+      sourceChangeResult: Either[BuildError, WorkspaceState],
       pcState: PCState): PCState =
-    sourceChangeResult match {
-      case Left(buildError) =>
-        pcState.copy(buildErrors = Some(buildError))
+    sourceChangeResult.left.map(_.error) match {
+      case Left(Right(jsonBuildError)) =>
+        pcState.copy(buildErrors = Some(jsonBuildError))
+
+      case Left(Left(tsBuildError)) =>
+        pcState.copy(tsErrors = Some(tsBuildError))
 
       case Right(newWorkspace) =>
         pcState.copy(workspace = newWorkspace)

@@ -21,6 +21,7 @@ import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfigState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
 
 import java.net.URI
 import java.nio.file.Path
@@ -34,6 +35,9 @@ sealed trait BuildState {
 
   def workspaceURI: URI =
     URIUtil.dropRight(buildURI, count = 2) // Drop the 2 from the URI's tail end `.../.ralph-lsp/ralph.json`
+
+  def tsBuildURI: URI =
+    TSBuild.toBuildFile(workspaceURI)
 
 }
 

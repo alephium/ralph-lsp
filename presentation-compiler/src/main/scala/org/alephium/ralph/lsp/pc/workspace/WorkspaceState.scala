@@ -18,6 +18,7 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 
 import java.net.URI
@@ -29,6 +30,9 @@ sealed trait WorkspaceState {
 
   final def buildURI: URI =
     Build.toBuildFile(workspaceURI)
+
+  final def tsBuildURI: URI =
+    TSBuild.toBuildFile(workspaceURI)
 
 }
 

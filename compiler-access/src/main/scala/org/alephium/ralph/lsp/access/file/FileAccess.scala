@@ -66,6 +66,14 @@ trait FileAccess {
    */
   def read(fileURI: URI): Either[CompilerMessage.AnyError, String]
 
+  /**
+   * Fetches the source code of a file, checking if the file exists within a single IO operation.
+   *
+   * @param fileURI the source code location.
+   * @return [[None]] if the file does not exist, else the String content of the file.
+   */
+  def readIfExists(fileURI: URI): Either[CompilerMessage.AnyError, Option[String]]
+
   /** Write string to the given file URI. */
   def write(
       fileURI: URI,
