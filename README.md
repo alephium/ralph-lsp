@@ -2,7 +2,12 @@
 
 Language server for Ralph.
 
-Currently supports text document level events and diagnostics.
+# Features
+
+- [Publish diagnostics](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics)
+- [Go to definition](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_definition)
+- [Completion](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_completion)
+- More to come...
 
 # Install VSCode plugin
 
