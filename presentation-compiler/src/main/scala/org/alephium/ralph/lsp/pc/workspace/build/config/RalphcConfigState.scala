@@ -40,9 +40,9 @@ object RalphcConfigState {
     val default: RalphcConfigState.Parsed =
       RalphcConfigState.Parsed(
         contractPath = "contracts",
-        compilerOptions = None,
         artifactPath = None,
-        dependencyPath = None
+        dependencyPath = None,
+        compilerOptions = None
       )
 
   }
@@ -52,9 +52,9 @@ object RalphcConfigState {
    */
   case class Parsed(
       contractPath: String,
-      compilerOptions: Option[CompilerOptionsParsed] = None,
       artifactPath: Option[String] = None,
-      dependencyPath: Option[String] = None) {
+      dependencyPath: Option[String] = None,
+      compilerOptions: Option[CompilerOptionsParsed] = None) {
 
     /**
      * Converts [[CompilerOptionsParsed]] instance to a [[CompilerOptions]] instance, with

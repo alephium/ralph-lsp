@@ -112,6 +112,8 @@ Here’s an example of how the `ralph.json` file might look with additional conf
 
 ```json
 {
+  "contractPath": "contracts",
+  "dependencyPath": "dependencies",
   "compilerOptions": {
     "ignoreUnusedConstantsWarnings": false,
     "ignoreUnusedVariablesWarnings": false,
@@ -120,9 +122,7 @@ Here’s an example of how the `ralph.json` file might look with additional conf
     "ignoreUpdateFieldsCheckWarnings": false,
     "ignoreCheckExternalCallerWarnings": false,
     "ignoreUnusedFunctionReturnWarnings": false
-  },
-  "contractPath": "contracts",
-  "dependencyPath": "dependencies"
+  }
 }
 ```
 
