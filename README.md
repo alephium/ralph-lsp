@@ -9,6 +9,10 @@ Language server for Ralph.
 - [Completion](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_completion)
 - More to come...
 
+# Requirements
+
+Java 11 or higher.
+
 # Install VSCode plugin
 
 `Ralph LSP` is available on the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=alephium.ralph-lsp).

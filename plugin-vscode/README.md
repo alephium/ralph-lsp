@@ -9,6 +9,10 @@ The Ralph LSP is an implementation of the [language server protocol](https://mic
 * [Completion](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_completion)
 * More to come...
 
+## Requirements
+
+Java 11 or higher.
+
 ## FAQ
 
 <https://github.com/alephium/ralph-lsp/issues>
