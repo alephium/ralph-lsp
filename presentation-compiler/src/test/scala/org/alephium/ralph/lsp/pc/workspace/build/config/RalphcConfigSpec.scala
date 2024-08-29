@@ -16,6 +16,7 @@
 
 package org.alephium.ralph.lsp.pc.workspace.build.config
 
+import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
@@ -61,8 +62,15 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          val expected = RalphcConfigState.Parsed.default.copy(artifactPath = Some("artifacts"), dependencyPath = Some("dependencies"))
-          val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
+          val expected =
+            RalphcConfigState.Parsed(
+              contractPath = "contracts",
+              compilerOptions = Some(CompilerOptionsParsed.from(CompilerOptions.Default)),
+              artifactPath = Some("artifacts"),
+              dependencyPath = Some("dependencies")
+            )
+
+          val actual = RalphcConfig.parse(URI.create(""), build_ralph).value
 
           actual shouldBe expected
         }
@@ -71,12 +79,10 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
           val build_ralph =
             """{
               |  "compilerOptions": {
-              |    "ignoreUnusedConstantsWarnings": false,
+              |    "ignoreUnusedConstantsWarnings": true,
               |    "ignoreUnusedVariablesWarnings": false,
-              |    "ignoreUnusedFieldsWarnings": false,
-              |    "ignoreUnusedPrivateFunctionsWarnings": false,
-              |    "ignoreUpdateFieldsCheckWarnings": false,
-              |    "ignoreCheckExternalCallerWarnings": false,
+              |    "ignoreUnusedFieldsWarnings": true,
+              |    "ignoreUpdateFieldsCheckWarnings": true,
               |    "ignoreUnusedFunctionReturnWarnings": false
               |  },
               |  "contractPath": "contracts",
@@ -84,8 +90,24 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          val expected = RalphcConfigState.Parsed.default.copy(artifactPath = Some("artifacts"), dependencyPath = None)
-          val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
+          val expected =
+            RalphcConfigState.Parsed(
+              contractPath = "contracts",
+              compilerOptions = Some(
+                CompilerOptionsParsed(
+                  ignoreUnusedConstantsWarnings = Some(true),
+                  ignoreUnusedVariablesWarnings = Some(false),
+                  ignoreUnusedFieldsWarnings = Some(true),
+                  ignoreUnusedPrivateFunctionsWarnings = None, // Not configured
+                  ignoreUpdateFieldsCheckWarnings = Some(true),
+                  ignoreCheckExternalCallerWarnings = None, // Not configured
+                  ignoreUnusedFunctionReturnWarnings = Some(false)
+                )
+              ),
+              artifactPath = Some("artifacts"),
+              dependencyPath = None
+            )
+          val actual = RalphcConfig.parse(URI.create(""), build_ralph).value
 
           actual shouldBe expected
         }
@@ -95,15 +117,6 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         "is provided" in {
           val build_ralph =
             """{
-              |  "compilerOptions": {
-              |    "ignoreUnusedConstantsWarnings": false,
-              |    "ignoreUnusedVariablesWarnings": false,
-              |    "ignoreUnusedFieldsWarnings": false,
-              |    "ignoreUnusedPrivateFunctionsWarnings": false,
-              |    "ignoreUpdateFieldsCheckWarnings": false,
-              |    "ignoreCheckExternalCallerWarnings": false,
-              |    "ignoreUnusedFunctionReturnWarnings": false
-              |  },
               |  "contractPath": "contracts",
               |  "artifactPath": "artifacts"
               |}
@@ -118,15 +131,6 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         "is not provided" in {
           val build_ralph =
             """{
-              |  "compilerOptions": {
-              |    "ignoreUnusedConstantsWarnings": false,
-              |    "ignoreUnusedVariablesWarnings": false,
-              |    "ignoreUnusedFieldsWarnings": false,
-              |    "ignoreUnusedPrivateFunctionsWarnings": false,
-              |    "ignoreUpdateFieldsCheckWarnings": false,
-              |    "ignoreCheckExternalCallerWarnings": false,
-              |    "ignoreUnusedFunctionReturnWarnings": false
-              |  },
               |  "contractPath": "contracts"
               |}
               |""".stripMargin
@@ -217,7 +221,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         RalphcConfigState.Compiled(
           isArtifactsPathDefinedInBuild = artifactPath.isDefined,
           config = Config(
-            compilerOptions = config.compilerOptions,
+            compilerOptions = config.toRalphcCompilerOptions(),
             contractPath = Paths.get(workspacePath.resolve(config.contractPath).toUri),
             // The defined `artifactPath` or-else defaults to `contractPath`
             artifactPath = Paths.get(workspacePath.resolve(artifactPath getOrElse config.contractPath).toUri)

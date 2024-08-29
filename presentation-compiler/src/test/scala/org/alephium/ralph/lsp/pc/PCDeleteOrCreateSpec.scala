@@ -16,6 +16,7 @@
 
 package org.alephium.ralph.lsp.pc
 
+import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
@@ -113,7 +114,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                           .ralphc
                           .Config(
                             // compiled build file contains configurations from the default build coming from node
-                            compilerOptions = RalphcConfigState.Parsed.default.compilerOptions,
+                            compilerOptions = CompilerOptions.Default,
                             contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfigState.Parsed.default.contractPath),
                             artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfigState.Parsed.default.contractPath)
                           )
@@ -222,7 +223,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                     .ralphc
                     .Config(
                       // compiled build file contains configurations from the default build coming from node
-                      compilerOptions = RalphcConfigState.Parsed.default.compilerOptions,
+                      compilerOptions = CompilerOptions.Default,
                       contractPath = Paths.get(build.workspaceURI).resolve(RalphcConfigState.Parsed.default.contractPath),
                       artifactPath = Paths.get(build.workspaceURI).resolve(RalphcConfigState.Parsed.default.contractPath)
                     )

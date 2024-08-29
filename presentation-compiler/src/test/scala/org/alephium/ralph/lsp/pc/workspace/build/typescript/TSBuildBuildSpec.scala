@@ -16,14 +16,13 @@
 
 package org.alephium.ralph.lsp.pc.workspace.build.typescript
 
-import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.{TestRalphc, BuildState, TestBuild}
-import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig, CompilerOptionsParsed}
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -89,18 +88,19 @@ class TSBuildBuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPr
             TSConfig(
               sourceDir = Some(jsonBuild.parsed.config.contractPath),
               artifactDir = jsonBuild.parsed.config.artifactPath,
-              compilerOptions = Some(
-                TSConfig.CompilerOptions(
-                  ignoreUnusedConstantsWarnings = Some(jsonBuild.parsed.config.compilerOptions.ignoreUnusedConstantsWarnings),
-                  ignoreUnusedVariablesWarnings = Some(jsonBuild.parsed.config.compilerOptions.ignoreUnusedVariablesWarnings),
-                  ignoreUnusedFieldsWarnings = Some(jsonBuild.parsed.config.compilerOptions.ignoreUnusedFieldsWarnings),
-                  ignoreUnusedPrivateFunctionsWarnings = Some(jsonBuild.parsed.config.compilerOptions.ignoreUnusedPrivateFunctionsWarnings),
-                  ignoreUpdateFieldsCheckWarnings = Some(jsonBuild.parsed.config.compilerOptions.ignoreUpdateFieldsCheckWarnings),
-                  ignoreCheckExternalCallerWarnings = Some(jsonBuild.parsed.config.compilerOptions.ignoreCheckExternalCallerWarnings),
-                  ignoreUnusedFunctionReturnWarnings = Some(jsonBuild.parsed.config.compilerOptions.ignoreUnusedFunctionReturnWarnings),
-                  errorOnWarnings = Gen.option(Random.nextBoolean()).sample.get
-                )
-              )
+              compilerOptions = jsonBuild.parsed.config.compilerOptions map {
+                compilerOptions =>
+                  TSConfig.CompilerOptions(
+                    ignoreUnusedConstantsWarnings = compilerOptions.ignoreUnusedConstantsWarnings,
+                    ignoreUnusedVariablesWarnings = compilerOptions.ignoreUnusedVariablesWarnings,
+                    ignoreUnusedFieldsWarnings = compilerOptions.ignoreUnusedFieldsWarnings,
+                    ignoreUnusedPrivateFunctionsWarnings = compilerOptions.ignoreUnusedPrivateFunctionsWarnings,
+                    ignoreUpdateFieldsCheckWarnings = compilerOptions.ignoreUpdateFieldsCheckWarnings,
+                    ignoreCheckExternalCallerWarnings = compilerOptions.ignoreCheckExternalCallerWarnings,
+                    ignoreUnusedFunctionReturnWarnings = compilerOptions.ignoreUnusedFunctionReturnWarnings,
+                    errorOnWarnings = Gen.option(Random.nextBoolean()).sample.get
+                  )
+              }
             )
 
           // convert TSBuild to a String
@@ -183,14 +183,16 @@ class TSBuildBuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPr
           // expect the `ralph.json` parsed state to include all values of the `alephium.config.ts` build file.
           val expectedJSONConfig =
             RalphcConfigState.Parsed(
-              compilerOptions = CompilerOptions(
-                ignoreUnusedConstantsWarnings = tsBuild.compilerOptions.value.ignoreUnusedConstantsWarnings.value,
-                ignoreUnusedVariablesWarnings = tsBuild.compilerOptions.value.ignoreUnusedVariablesWarnings.value,
-                ignoreUnusedFieldsWarnings = tsBuild.compilerOptions.value.ignoreUnusedFieldsWarnings.value,
-                ignoreUnusedPrivateFunctionsWarnings = tsBuild.compilerOptions.value.ignoreUnusedPrivateFunctionsWarnings.value,
-                ignoreUpdateFieldsCheckWarnings = tsBuild.compilerOptions.value.ignoreUpdateFieldsCheckWarnings.value,
-                ignoreCheckExternalCallerWarnings = tsBuild.compilerOptions.value.ignoreCheckExternalCallerWarnings.value,
-                ignoreUnusedFunctionReturnWarnings = tsBuild.compilerOptions.value.ignoreUnusedFunctionReturnWarnings.value
+              compilerOptions = Some(
+                CompilerOptionsParsed(
+                  ignoreUnusedConstantsWarnings = Some(tsBuild.compilerOptions.value.ignoreUnusedConstantsWarnings.value),
+                  ignoreUnusedVariablesWarnings = Some(tsBuild.compilerOptions.value.ignoreUnusedVariablesWarnings.value),
+                  ignoreUnusedFieldsWarnings = Some(tsBuild.compilerOptions.value.ignoreUnusedFieldsWarnings.value),
+                  ignoreUnusedPrivateFunctionsWarnings = Some(tsBuild.compilerOptions.value.ignoreUnusedPrivateFunctionsWarnings.value),
+                  ignoreUpdateFieldsCheckWarnings = Some(tsBuild.compilerOptions.value.ignoreUpdateFieldsCheckWarnings.value),
+                  ignoreCheckExternalCallerWarnings = Some(tsBuild.compilerOptions.value.ignoreCheckExternalCallerWarnings.value),
+                  ignoreUnusedFunctionReturnWarnings = Some(tsBuild.compilerOptions.value.ignoreUnusedFunctionReturnWarnings.value)
+                )
               ),
               contractPath = tsBuild.sourceDir.value,
               artifactPath = Some(tsBuild.artifactDir.value),

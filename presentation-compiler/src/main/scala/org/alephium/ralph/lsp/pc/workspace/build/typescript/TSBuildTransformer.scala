@@ -16,8 +16,7 @@
 
 package org.alephium.ralph.lsp.pc.workspace.build.typescript
 
-import org.alephium.ralph.CompilerOptions
-import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfigState
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, CompilerOptionsParsed}
 
 import java.net.URI
 import scala.annotation.unused
@@ -64,7 +63,7 @@ object TSBuildTransformer {
       tsConfig: TSConfig): RalphcConfigState.Parsed =
     RalphcConfigState.Parsed(
       compilerOptions = tsConfig.compilerOptions match {
-        case Some(tsOptions) => mergeCompilerOptions(ralphConfig.compilerOptions, tsOptions)
+        case Some(tsOptions) => Some(mergeCompilerOptions(ralphConfig.compilerOptions, tsOptions))
         case None            => ralphConfig.compilerOptions
       },
       contractPath = tsConfig.sourceDir.getOrElse(ralphConfig.contractPath),
@@ -76,19 +75,19 @@ object TSBuildTransformer {
    * @param ralphOptions Current Ralph compiler options.
    * @param tsOptions    TypeScript compiler options.
    *
-   * @param return The merged compiler options.
+   * @return The merged compiler options.
    */
   private def mergeCompilerOptions(
-      ralphOptions: CompilerOptions,
-      tsOptions: TSConfig.CompilerOptions): CompilerOptions =
-    CompilerOptions(
-      ignoreUnusedConstantsWarnings = tsOptions.ignoreUnusedConstantsWarnings.getOrElse(ralphOptions.ignoreUnusedConstantsWarnings),
-      ignoreUnusedVariablesWarnings = tsOptions.ignoreUnusedVariablesWarnings.getOrElse(ralphOptions.ignoreUnusedVariablesWarnings),
-      ignoreUnusedFieldsWarnings = tsOptions.ignoreUnusedFieldsWarnings.getOrElse(ralphOptions.ignoreUnusedFieldsWarnings),
-      ignoreUnusedPrivateFunctionsWarnings = tsOptions.ignoreUnusedPrivateFunctionsWarnings.getOrElse(ralphOptions.ignoreUnusedPrivateFunctionsWarnings),
-      ignoreUpdateFieldsCheckWarnings = tsOptions.ignoreUpdateFieldsCheckWarnings.getOrElse(ralphOptions.ignoreUpdateFieldsCheckWarnings),
-      ignoreCheckExternalCallerWarnings = tsOptions.ignoreCheckExternalCallerWarnings.getOrElse(ralphOptions.ignoreCheckExternalCallerWarnings),
-      ignoreUnusedFunctionReturnWarnings = tsOptions.ignoreUnusedFunctionReturnWarnings.getOrElse(ralphOptions.ignoreUnusedFunctionReturnWarnings)
+      ralphOptions: Option[CompilerOptionsParsed],
+      tsOptions: TSConfig.CompilerOptions): CompilerOptionsParsed =
+    CompilerOptionsParsed(
+      ignoreUnusedConstantsWarnings = tsOptions.ignoreUnusedConstantsWarnings.orElse(ralphOptions.flatMap(_.ignoreUnusedConstantsWarnings)),
+      ignoreUnusedVariablesWarnings = tsOptions.ignoreUnusedVariablesWarnings.orElse(ralphOptions.flatMap(_.ignoreUnusedVariablesWarnings)),
+      ignoreUnusedFieldsWarnings = tsOptions.ignoreUnusedFieldsWarnings.orElse(ralphOptions.flatMap(_.ignoreUnusedFieldsWarnings)),
+      ignoreUnusedPrivateFunctionsWarnings = tsOptions.ignoreUnusedPrivateFunctionsWarnings.orElse(ralphOptions.flatMap(_.ignoreUnusedPrivateFunctionsWarnings)),
+      ignoreUpdateFieldsCheckWarnings = tsOptions.ignoreUpdateFieldsCheckWarnings.orElse(ralphOptions.flatMap(_.ignoreUpdateFieldsCheckWarnings)),
+      ignoreCheckExternalCallerWarnings = tsOptions.ignoreCheckExternalCallerWarnings.orElse(ralphOptions.flatMap(_.ignoreCheckExternalCallerWarnings)),
+      ignoreUnusedFunctionReturnWarnings = tsOptions.ignoreUnusedFunctionReturnWarnings.orElse(ralphOptions.flatMap(_.ignoreUnusedFunctionReturnWarnings))
     )
 
   /**

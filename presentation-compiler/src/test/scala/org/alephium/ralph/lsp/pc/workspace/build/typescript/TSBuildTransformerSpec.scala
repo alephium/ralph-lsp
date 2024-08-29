@@ -18,8 +18,7 @@ package org.alephium.ralph.lsp.pc.workspace.build.typescript
 
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc
-import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfigState
-
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, CompilerOptionsParsed}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -194,40 +193,51 @@ class TSBuildTransformerSpec extends AnyWordSpec with Matchers with ScalaCheckDr
 
     "ts config is defined" in {
       forAll(TestTSBuildFile.genTSConfig, TestRalphc.genRalphcParsedConfig()) {
-        case (tsConfig, ralphcConfig) =>
-          val merged = TSBuildTransformer.mergeConfigs(ralphcConfig, tsConfig)
+        case (tsConfig, jsonConfig) =>
+          val merged = TSBuildTransformer.mergeConfigs(jsonConfig, tsConfig)
 
-          merged.contractPath shouldBe tsConfig.sourceDir.getOrElse(ralphcConfig.contractPath)
-          merged.artifactPath shouldBe tsConfig.artifactDir.orElse(ralphcConfig.artifactPath)
-          merged.dependencyPath shouldBe ralphcConfig.dependencyPath
+          val expectedCompilerOptions =
+            merged.compilerOptions match {
+              case Some(tsCompilerOptions) =>
+                // CompilerOptions are expected to be fetched from `alephium.config.ts` first.
+                // If absent, they are then fetched from `ralph.json`.
+                val expected =
+                  CompilerOptionsParsed(
+                    ignoreUnusedConstantsWarnings = //
+                      tsCompilerOptions.ignoreUnusedConstantsWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreUnusedConstantsWarnings),
+                    ignoreUnusedVariablesWarnings = //
+                      tsCompilerOptions.ignoreUnusedVariablesWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreUnusedVariablesWarnings),
+                    ignoreUnusedFieldsWarnings = //
+                      tsCompilerOptions.ignoreUnusedFieldsWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreUnusedFieldsWarnings),
+                    ignoreUnusedPrivateFunctionsWarnings =
+                      tsCompilerOptions.ignoreUnusedPrivateFunctionsWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreUnusedPrivateFunctionsWarnings),
+                    ignoreUpdateFieldsCheckWarnings =
+                      tsCompilerOptions.ignoreUpdateFieldsCheckWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreUpdateFieldsCheckWarnings),
+                    ignoreCheckExternalCallerWarnings =
+                      tsCompilerOptions.ignoreCheckExternalCallerWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreCheckExternalCallerWarnings),
+                    ignoreUnusedFunctionReturnWarnings =
+                      tsCompilerOptions.ignoreUnusedFunctionReturnWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreUnusedFunctionReturnWarnings)
+                  )
 
-          tsConfig.compilerOptions match {
-            case None => merged.compilerOptions shouldBe ralphcConfig.compilerOptions
-            case Some(tsOptions) =>
-              merged
-                .compilerOptions
-                .ignoreUnusedConstantsWarnings shouldBe tsOptions.ignoreUnusedConstantsWarnings.getOrElse(ralphcConfig.compilerOptions.ignoreUnusedConstantsWarnings)
+                Some(expected)
 
-              merged
-                .compilerOptions
-                .ignoreUnusedVariablesWarnings shouldBe tsOptions.ignoreUnusedVariablesWarnings.getOrElse(ralphcConfig.compilerOptions.ignoreUnusedVariablesWarnings)
+              case None =>
+                // `alephium.config.ts` has no compilerOptions defined,
+                // expect `ralph.json` compilerOptions to remain unchanged.
+                jsonConfig.compilerOptions
+            }
 
-              merged.compilerOptions.ignoreUnusedFieldsWarnings shouldBe tsOptions.ignoreUnusedFieldsWarnings.getOrElse(ralphcConfig.compilerOptions.ignoreUnusedFieldsWarnings)
+          val expected =
+            RalphcConfigState.Parsed(
+              contractPath = tsConfig.sourceDir getOrElse jsonConfig.contractPath,
+              artifactPath = tsConfig.artifactDir orElse jsonConfig.artifactPath,
+              dependencyPath = jsonConfig.dependencyPath,
+              compilerOptions = expectedCompilerOptions
+            )
 
-              merged.compilerOptions.ignoreUnusedPrivateFunctionsWarnings shouldBe tsOptions
-                .ignoreUnusedPrivateFunctionsWarnings
-                .getOrElse(ralphcConfig.compilerOptions.ignoreUnusedPrivateFunctionsWarnings)
-
-              merged
-                .compilerOptions
-                .ignoreUpdateFieldsCheckWarnings shouldBe tsOptions.ignoreUpdateFieldsCheckWarnings.getOrElse(ralphcConfig.compilerOptions.ignoreUpdateFieldsCheckWarnings)
-
-              merged
-                .compilerOptions
-                .ignoreCheckExternalCallerWarnings shouldBe tsOptions.ignoreCheckExternalCallerWarnings.getOrElse(ralphcConfig.compilerOptions.ignoreCheckExternalCallerWarnings)
-          }
-
+          merged shouldBe expected
       }
+
     }
   }
 
