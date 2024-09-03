@@ -108,18 +108,22 @@ Run the plugin by selecting the menu option `Run -> Run Without Debugging` or `R
 
 # Configuration
 
-After your IDE has booted up, a config file named `ralph.json` will be generated in your project's root
-directory under the folder `.ralph-lsp/ralph.json`. This file sets the `contractPath` to an empty string `""`,
-which configures the current workspace directory as the source directory for compilation:
+Configurations in `alephium.config.ts` are the primary source for build settings, and `ralph.json` is secondary.
+Any settings defined in `alephium.config.ts` will be mirrored in `ralph.json`.
 
-```json
-{
-  "contractPath": ""
-}
-```
+## `alephium.config.ts`
 
-All other fields are optional. If `dependencyPath` is not specified,
-the default path (`<user.home>/.ralph-lsp/dependencies/`) will be used.
+Refer to the [documentation](https://docs.alephium.org/sdk/cli/#configuration) for more details about the `alephium.config.ts`.
+
+## `ralph.json`
+
+Once your IDE has booted up, a config file named `ralph.json` will be generated in your project's root
+directory under the folder `.ralph-lsp/ralph.json`. 
+This file reflects the `sourceDir` and `compilerOptions` settings defined in `alephium.config.ts`.
+If `alephium.config.ts` is not present or if the settings are missing, default settings will be used.
+
+The `dependencyPath` setting is specific to Ralph-LSP and configures the directory for dependencies.
+If `dependencyPath` is not specified, the default path (`<user.home>/.ralph-lsp/dependencies/`) will be used.
 
 Here’s an example of the `ralph.json` file with all configurations set:
 
