@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.pc.workspace.build.config
 
 import org.alephium.ralph.CompilerOptions
+import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
@@ -122,7 +123,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          val expected = RalphcConfigState.Parsed.default.copy(artifactPath = Some("artifacts"))
+          val expected = RalphcConfigState.Parsed.default.copy(contractPath = "contracts", artifactPath = Some("artifacts"))
           val actual   = RalphcConfig.parse(URI.create(""), build_ralph).value
 
           actual shouldBe expected
@@ -131,7 +132,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         "is not provided" in {
           val build_ralph =
             """{
-              |  "contractPath": "contracts"
+              |  "contractPath": ""
               |}
               |""".stripMargin
 
@@ -174,13 +175,14 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
           .Parsed
           .default
           .copy(
+            contractPath = "contracts",
             artifactPath = artifactPath,
             dependencyPath = dependencyPath
           )
 
       val workspacePath = Files.createTempDirectory("root_workspace")
 
-      Files.createDirectory(workspacePath.resolve(config.contractPath))
+      TestFile.createDirectories(workspacePath.resolve(config.contractPath))
 
       config
         .artifactPath
@@ -205,7 +207,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
       actualBuildPath shouldBe expectedBuildPath
 
       // Parse and compile the config file on disk
-      val readConfig =
+      val actualBuild =
         Build.parseAndCompile(
           buildURI = expectedBuildPath.toUri,
           currentBuild = None,
@@ -255,13 +257,15 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
             Dependency.defaultPath().value
         }
 
-      readConfig shouldBe
+      val expectedBuild =
         BuildState.Compiled(
           dependencies = compiledStd.dependencies,
           dependencyPath = expectedDependenciesPath,
           config = expectedCompiledConfig,
           parsed = parsedBuild
         )
+
+      actualBuild shouldBe expectedBuild
 
       TestWorkspace delete WorkspaceState.Created(workspacePath.toUri)
     }

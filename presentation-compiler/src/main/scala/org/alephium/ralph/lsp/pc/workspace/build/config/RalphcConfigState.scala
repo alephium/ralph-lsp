@@ -39,7 +39,7 @@ object RalphcConfigState {
     /** Default parsed config */
     val default: RalphcConfigState.Parsed =
       RalphcConfigState.Parsed(
-        contractPath = "contracts",
+        contractPath = "",
         artifactPath = None,
         dependencyPath = None,
         compilerOptions = None
