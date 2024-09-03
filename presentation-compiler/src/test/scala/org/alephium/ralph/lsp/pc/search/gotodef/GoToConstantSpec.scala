@@ -182,6 +182,20 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
         }
       }
     }
+
+    "Issue #254: Global constant has no tail newline" in {
+      // https://github.com/alephium/ralph-lsp/issues/254
+      goTo {
+        """
+          |Contract Test() {
+          |  pub fn main() -> () {
+          |     let one = ONE@@
+          |  }
+          |}
+          |
+          |>>const ONE = 1<<""".stripMargin
+      }
+    }
   }
 
 }

@@ -66,12 +66,23 @@ class StringUtilSpec extends AnyWordSpec with Matchers {
 
     "fail to build time range with invalid arguments" in {
       val code = "line1\nline2\r\nline3\rline4"
-      buildLineRange(code, 0, code.length) shouldBe LineRange.zero
       buildLineRange(code, 1, 0) shouldBe LineRange.zero
       buildLineRange(code, -1, 1) shouldBe LineRange.zero
       buildLineRange(code, 1, -1) shouldBe LineRange.zero
       buildLineRange(code, code.length, code.length) shouldBe LineRange.zero
       buildLineRange(code, code.length + 1, code.length + 1) shouldBe LineRange.zero
+    }
+
+    "end-of-file" should {
+      "succeed" when {
+        "range spans the entire file" in {
+          testLineRange(">>line1\nline2\r\nline3\rline4<<")
+        }
+
+        "range spans only the last character" in {
+          testLineRange("line1\nline2\r\nline3\rline>>4<<")
+        }
+      }
     }
   }
 
