@@ -91,7 +91,7 @@ object StringUtil {
       code: String,
       from: Int,
       to: Int): LineRange =
-    if (from < 0 || to < 0 || to < from || from >= code.length || to >= code.length || code.length <= 1) {
+    if (from < 0 || to < 0 || to < from || from >= code.length || to > code.length || code.length <= 1) {
       LineRange.zero
     } else {
       var line            = 0
@@ -102,6 +102,20 @@ object StringUtil {
 
       var start: LinePosition = null
       var end: LinePosition   = null
+
+      // See issue https://github.com/alephium/ralph-lsp/issues/254
+      val isEndOfFile = // Check: If `to` ranges till the end-of-file.
+        to == code.length
+
+      // Fastparse tail `Index` parser at the end returns an index that does not exist, i.e. `index = code.length`.
+      // This needs to be adjusted because `code(code.length)` results in `IndexOutOfBoundsException`.
+      // But we also must return a `LineRange` spanning up to `code.length`
+      // so the IDEs can span up to the last character.
+      val toAdjusted =
+        if (isEndOfFile)
+          to - 1
+        else
+          to
 
       @inline def newLine() = {
         line += 1
@@ -121,7 +135,7 @@ object StringUtil {
           // Start index found
           start = LinePosition(line, col)
         }
-        if (index == to && end == null) {
+        if (index == toAdjusted && end == null) {
           // End index found, we stop the loop here
           end = LinePosition(line, col)
         } else {
@@ -138,6 +152,11 @@ object StringUtil {
           }
         }
       }
+
+      // If it's the end-of-end, re-adjust the end LinePosition to fix the above adjustment.
+      // Returning `end.character + 1` is necessary, so IDEs include the last character in its span.
+      if (isEndOfFile)
+        end = end.copy(character = end.character + 1)
 
       if (start == null || end == null) {
         LineRange.zero
