@@ -24,7 +24,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "map does not exist" in {
-      goTo(
+      goToDefinition(
         """
           |Contract Test() {
           |
@@ -39,7 +39,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "map value is extracted" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent() {
           |  >>mapping[Address, U256] counters<<
@@ -58,7 +58,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
     }
 
     "map value is set" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent() {
           |  >>mapping[Address, U256] counters<<
@@ -77,7 +77,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
     }
 
     "map is inserted" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent() {
           |  >>mapping[Address, U256] counters<<
@@ -96,7 +96,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
     }
 
     "map item is remove" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent() {
           |  >>mapping[Address, U256] counters<<
@@ -115,7 +115,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
     }
 
     "map is checked for contains" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent() {
           |  >>mapping[Address, U256] counters<<
@@ -134,7 +134,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
     }
 
     "map function is returned" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent() {
           |  >>mapping[Address, U256] counters<<

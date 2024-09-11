@@ -24,7 +24,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "enum type does not exist" in {
-      goTo(
+      goToDefinition(
         """
           |Contract MyContract() {
           |  pub fn function() -> () {
@@ -38,7 +38,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "user selects the enum type of the first field" in {
-      goTo(
+      goToDefinition(
         """
           |enum >>EnumType<< {
           |  Field0 = 0
@@ -80,7 +80,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     }
 
     "user selects the enum type of the second field" in {
-      goTo(
+      goToDefinition(
         """
           |enum >>EnumType<< {
           |  Field0 = 0
@@ -117,7 +117,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     }
 
     "there are multiple enum types with duplicate names" in {
-      goTo(
+      goToDefinition(
         """
           |enum >>EnumType<< {
           |  Field0 = 0

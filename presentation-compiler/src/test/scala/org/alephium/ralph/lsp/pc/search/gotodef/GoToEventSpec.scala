@@ -24,7 +24,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "event does not exists" in {
-      goTo(
+      goToDefinition(
         """
           |Contract Test() {
           |
@@ -40,7 +40,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "an event exists" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent() {
           |
@@ -63,7 +63,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
     }
 
     "duplicate events exist" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent() {
           |

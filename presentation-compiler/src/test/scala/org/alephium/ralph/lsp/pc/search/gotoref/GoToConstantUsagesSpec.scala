@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.search.gotodef
+package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.Assertion
@@ -26,7 +26,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
   "return empty" when {
     "constant has not usage" when {
       "local" in {
-        goTo(
+        goToReferences(
           """
             |Contract GoToConstant() {
             |
@@ -41,7 +41,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
       }
 
       "global" in {
-        goTo(
+        goToReferences(
           """
             |const MyCons@@tant = 0
             |
@@ -61,7 +61,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
     "constant has multiple usages" when {
       "local constants" when {
         def doTest(contractName: String): Assertion =
-          goTo(
+          goToReferences(
             s"""
                |Contract $contractName() {
                |
@@ -94,7 +94,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
 
       "global constants" when {
         def doTest(contractName: String): Assertion =
-          goTo(
+          goToReferences(
             s"""
                |const MyCons@@tant = 0
                |const MyConstant_B = 1
@@ -128,7 +128,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
 
     "there is inheritance" when {
       "local constant" in {
-        goTo(
+        goToReferences(
           """
             |Abstract Contract Parent() {
             |
@@ -166,7 +166,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
         def doTest(
             before: String,
             after: String) =
-          goTo(
+          goToReferences(
             s"""
               |$before
               |
@@ -213,6 +213,37 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
             before = "const ANOTHER = 2",
             after = "const MyCons@@tant = 0"
           )
+        }
+      }
+    }
+
+    "constant is used within array type definition" when {
+      "global constant" in {
+        goToReferences {
+          """
+            |const SIZE@@ = 2
+            |
+            |Contract Test() {
+            |  fn test() -> [U256; >>SIZE<<] {
+            |    return [0; >>SIZE<<]
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "local constant" in {
+        goToReferences {
+          """
+            |Contract Test() {
+            |
+            |  const SIZE@@ = 2
+            |
+            |  fn test() -> [U256; >>SIZE<<] {
+            |    return [0; >>SIZE<<]
+            |  }
+            |}
+            |""".stripMargin
         }
       }
     }

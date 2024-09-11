@@ -24,7 +24,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
   "return in empty" when {
     "function does not exist" in {
-      goTo(
+      goToDefinition(
         """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean: Bool) -> () {
@@ -39,7 +39,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
   "go to the function" when {
     "function exists" in {
-      goTo(
+      goToDefinition(
         """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean: Bool) -> () {
@@ -56,7 +56,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
     }
 
     "function and argument have same names" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent2() {
           |
@@ -86,7 +86,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
     "function is an interface function" should {
       "highlight the entire function signature" in {
-        goTo(
+        goToDefinition(
           """
             |Abstract Contract Test() {
             |

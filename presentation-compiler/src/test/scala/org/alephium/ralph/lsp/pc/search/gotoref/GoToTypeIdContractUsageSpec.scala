@@ -14,22 +14,24 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.search.gotodef
+package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 
-class GoToTypeIdStructUsageSpec extends AnyWordSpec with Matchers {
+class GoToTypeIdContractUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "no usage exists" in {
-      goTo {
+      goToReferences {
         """
-          |struct Foo@@ {
-          |  x: U256,
-          |  y: U256
+          |Contract This@@() {
+          |
+          |  fn main() -> () { }
+          |
           |}
+          |
           |""".stripMargin
       }
     }
@@ -38,34 +40,37 @@ class GoToTypeIdStructUsageSpec extends AnyWordSpec with Matchers {
   "return non-empty" when {
     "usage exists" when {
       "within itself" in {
-        goTo {
+        goToReferences {
           """
-            |struct Foo@@ {
-            |  x: U256,
-            |  mut foo: >>Foo<<
+            |Contract This@@(
+            |                 this: >>This<<)
+            |                 extends >>This<<() {
+            |
+            |  fn main(param: >>This<<) -> () {
+            |    let test = >>This<<.encodeFields!()
+            |  }
+            |
             |}
             |""".stripMargin
         }
       }
 
-      "within another struct" in {
-        goTo {
+      "within another Contract" in {
+        goToReferences {
           """
-            |struct Foo@@ { x: U256 }
-            |struct Bar { mut foo: >>Foo<< }
-            |""".stripMargin
-        }
-      }
-
-      "within a contract" in {
-        goTo {
-          """
-            |struct Foo@@ { x: U256 }
+            |Contract This@@() {
             |
-            |Contract Test(foo: >>Foo<<) {
+            |  fn main(param: Another) -> () {
+            |    let another = Another.encodeFields!()
+            |  }
             |
-            |  fn function(foo: >>Foo<<) -> () {
-            |    let foo = >>Foo<< { x: 1 }
+            |}
+            |
+            |Contract Another(this: >>This<<)
+            |   extends >>This<<() {
+            |
+            |  fn main(param: >>This<<) -> () {
+            |    let this = >>This<<.encodeFields!()
             |  }
             |
             |}

@@ -24,7 +24,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "constant does not exist" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToConstant() {
           |
@@ -39,7 +39,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "constant exists" in {
-      goTo(
+      goToDefinition(
         """
           |>>const MyConstant = 1<<
           |
@@ -60,7 +60,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "duplicate constants exists" in {
-      goTo(
+      goToDefinition(
         """
           |>>const MyConstant = 0<<
           |>>const MyConstant = 1<<
@@ -86,7 +86,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "constant and the Contract have the same name" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract MyConstant() {
           |
@@ -108,7 +108,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "only a global constant exists" in {
-      goTo(
+      goToDefinition(
         """
           |>>const MyConstant = 0<<
           |
@@ -123,7 +123,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "constants with expression" in {
-      goTo {
+      goToDefinition {
         """
           |const ONE = 1
           |const TWO = 2
@@ -139,7 +139,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "constants is defined after its usage" in {
-      goTo {
+      goToDefinition {
         """
           |Contract Test() {
           |  pub fn main() -> () {
@@ -152,40 +152,9 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
       }
     }
 
-    "constant is used within array type definition" when {
-      "global constant" in {
-        goTo {
-          """
-            |const SIZE@@ = 2
-            |
-            |Contract Test() {
-            |  fn test() -> [U256; >>SIZE<<] {
-            |    return [0; >>SIZE<<]
-            |  }
-            |}
-            |""".stripMargin
-        }
-      }
-
-      "local constant" in {
-        goTo {
-          """
-            |Contract Test() {
-            |
-            |  const SIZE@@ = 2
-            |
-            |  fn test() -> [U256; >>SIZE<<] {
-            |    return [0; >>SIZE<<]
-            |  }
-            |}
-            |""".stripMargin
-        }
-      }
-    }
-
     "Issue #254: Global constant has no tail newline" in {
       // https://github.com/alephium/ralph-lsp/issues/254
-      goTo {
+      goToDefinition {
         """
           |Contract Test() {
           |  pub fn main() -> () {

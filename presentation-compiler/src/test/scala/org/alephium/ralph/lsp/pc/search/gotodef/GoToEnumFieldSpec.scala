@@ -24,7 +24,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "enum type does not exist" in {
-      goTo(
+      goToDefinition(
         """
           |Contract MyContract() {
           |  pub fn function() -> () {
@@ -38,7 +38,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "user selects the first enum field" in {
-      goTo(
+      goToDefinition(
         """
           |// This parent is not inherited
           |Abstract Contract ParentNotUsed() {
@@ -84,7 +84,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
     }
 
     "user selects the second enum field" in {
-      goTo(
+      goToDefinition(
         """
           |enum EnumType {
           |  Field0 = 0
@@ -123,7 +123,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
 
     "there are duplicate enum types and fields" when {
       "user selects the first enum field" in {
-        goTo(
+        goToDefinition(
           """
             |enum EnumType {
             |  >>Field0 = 0<<
@@ -169,7 +169,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
       }
 
       "user selects the second enum field" in {
-        goTo(
+        goToDefinition(
           """
             |enum EnumType {
             |  Field0 = 0
@@ -200,7 +200,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
 
     "there are duplicate enum types with distinct fields" when {
       "user selects the first enum field" in {
-        goTo(
+        goToDefinition(
           """
             |enum EnumType {
             |  >>Field0 = 0<<
@@ -231,7 +231,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
       }
 
       "user selects the third enum field" in {
-        goTo(
+        goToDefinition(
           """
             |Contract MyContract() {
             |
@@ -257,7 +257,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
       }
 
       "an enum field is selected that's implemented within a parent" in {
-        goTo(
+        goToDefinition(
           """
             |Abstract Contract Parent2() {
             |  enum EnumType {

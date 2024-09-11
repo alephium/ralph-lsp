@@ -40,15 +40,47 @@ object SourceLocation {
   }
 
   /**
+   * Result types for GoTo definition location search results.
+   */
+  sealed trait GoToDef extends GoTo
+
+  /**
+   * Result types for GoTo references location search results.
+   */
+  sealed trait GoToRef extends GoTo
+
+  /**
    * Represents a source file ([[SourceCodeState.Parsed]]) without
    * a target position. For eg: Used to provide jump definition for imported files.
    *
    * @param parsed The source file containing the positioned node.
    */
-  case class File(parsed: SourceCodeState.Parsed) extends GoTo {
+  case class File(parsed: SourceCodeState.Parsed) extends GoToDef {
+
+    def lineRange(): LineRange =
+      LineRange.zero
 
     override def toLineRange(): Option[LineRange] =
-      Some(LineRange.zero)
+      Some(lineRange())
+
+  }
+
+  /**
+   * Represents a position with an import statement.
+   *
+   * @param name   The name of the file or folder.
+   * @param parsed The parsed source source-code containing the import statement.
+   */
+  case class ImportName(
+      name: Tree.Name,
+      parsed: SourceCodeState.Parsed)
+    extends GoToRef {
+
+    def lineRange(): LineRange =
+      name.index.toLineRange(parsed.code)
+
+    override def toLineRange(): Option[LineRange] =
+      Some(lineRange())
 
   }
 
@@ -62,7 +94,8 @@ object SourceLocation {
   case class Node[+A <: Ast.Positioned](
       ast: A,
       source: SourceLocation.Code)
-    extends GoTo {
+    extends GoToDef
+       with GoToRef {
 
     def toLineRange(): Option[LineRange] =
       ast

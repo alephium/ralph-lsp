@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.search.gotodef
+package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
@@ -24,7 +24,7 @@ class GoToArgumentUsageInTxScriptSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "argument is not used" in {
-      goTo(
+      goToReferences(
         """
           |TxScript GoToArgument(interfa@@ce: MyInterface) {
           |  let result = blah.function()
@@ -36,7 +36,7 @@ class GoToArgumentUsageInTxScriptSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "template argument is used" in {
-      goTo(
+      goToReferences(
         """
           |TxScript GoToArgument(param1: ParamType, param2@@: ParamType) {
           |  let result = >>param2<<.someFunction()

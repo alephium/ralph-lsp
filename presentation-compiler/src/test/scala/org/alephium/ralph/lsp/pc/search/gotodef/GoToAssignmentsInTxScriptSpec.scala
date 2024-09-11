@@ -24,7 +24,7 @@ class GoToAssignmentsInTxScriptSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "assigned variable does not exist" in {
-      goTo(
+      goToDefinition(
         """
           |TxScript GoToAssignment() {
           |  counte@@r = counter + 1
@@ -36,7 +36,7 @@ class GoToAssignmentsInTxScriptSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "assigned variables exist" in {
-      goTo(
+      goToDefinition(
         """
           |TxScript GoToAssignment(>>counter: U256<<) {
           |  >>let mut counter = 0<<

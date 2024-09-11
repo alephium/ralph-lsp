@@ -23,7 +23,7 @@ import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
-private object GoToSource {
+private object GoToDefSource {
 
   /**
    * Navigates to the definition of a token in the source code.
@@ -43,7 +43,7 @@ private object GoToSource {
         closest match {
           case identNode @ Node(ident: Ast.Ident, _) =>
             // the clicked/closest node is an ident
-            GoToIdent.goTo(
+            GoToDefIdent.goTo(
               identNode = identNode.upcast(ident),
               sourceCode = sourceCode,
               workspace = workspace
@@ -51,7 +51,7 @@ private object GoToSource {
 
           case funcIdNode @ Node(funcId: Ast.FuncId, _) =>
             // the clicked/closest node is functionId
-            GoToFuncId.goTo(
+            GoToDefFuncId.goTo(
               funcIdNode = funcIdNode.upcast(funcId),
               sourceCode = sourceCode,
               workspace = workspace
@@ -59,15 +59,8 @@ private object GoToSource {
 
           case typIdNode @ Node(typeId: Ast.TypeId, _) =>
             // the clicked/closest node is TypeId
-            GoToTypeId.goTo(
+            GoToDefTypeId.goTo(
               typeIdNode = typIdNode.upcast(typeId),
-              sourceCode = sourceCode,
-              workspace = workspace
-            )
-
-          case Node(enumDef: Ast.EnumDef[_], _) =>
-            GoToTypeId.goToEnumDefUsage(
-              enumDef = enumDef,
               sourceCode = sourceCode,
               workspace = workspace
             )

@@ -46,8 +46,9 @@ object TestCodeProvider {
    * @return A list of code completion suggestions.
    */
   def suggest(code: String): List[Suggestion] =
-    TestCodeProvider[Suggestion](
+    TestCodeProvider[Unit, Suggestion](
       code = code,
+      searchSettings = (),
       dependencyDownloaders = DependencyDownloader.natives()
     )._1.toList
 
@@ -60,14 +61,39 @@ object TestCodeProvider {
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
-  def goTo(code: String): Assertion = {
+  def goToDefinition(code: String): Assertion =
+    goTo[Unit, SourceLocation.GoToDef](
+      code = code,
+      searchSettings = ()
+    )
+
+  def goToReferences(code: String): Assertion =
+    goTo[Boolean, SourceLocation.GoToRef](
+      code = code,
+      searchSettings = false
+    )
+
+  /**
+   * Runs GoTo definition where `@@` is located
+   * and expects the go-to location to be the text
+   * between the symbols `>>...<<`.
+   *
+   * If the go-to symbols are not provided, then it expects an empty result.
+   *
+   * @param code The containing `@@` and `>>...<<` symbols.
+   */
+  def goTo[I, O <: SourceLocation.GoTo](
+      code: String,
+      searchSettings: I
+    )(implicit codeProvider: CodeProvider[I, O]): Assertion = {
     val (expectedLineRanges, codeWithoutGoToSymbols, _, _) =
       TestCodeUtil.lineRanges(code)
 
     // Execute go-to definition.
     val (searchResult, sourceCode, _) =
-      TestCodeProvider[SourceLocation.GoTo](
+      TestCodeProvider[I, O](
         code = codeWithoutGoToSymbols,
+        searchSettings = searchSettings,
         dependencyDownloaders = ArraySeq.empty
       )
 
@@ -145,10 +171,44 @@ object TestCodeProvider {
    * @param workspace    The developer's workspace code.
    * @return
    */
-  def goTo(
+  def goToReferences(
       dependencyId: DependencyID,
       dependency: String,
-      workspace: String): Unit = {
+      workspace: String): Unit =
+    goTo[Boolean, SourceLocation.GoToRef](
+      dependencyId = dependencyId,
+      dependency = dependency,
+      workspace = workspace,
+      searchSettings = false
+    )
+
+  def goToDefinition(
+      dependencyId: DependencyID,
+      dependency: String,
+      workspace: String): Unit =
+    goTo[Unit, SourceLocation.GoToDef](
+      dependencyId = dependencyId,
+      dependency = dependency,
+      workspace = workspace,
+      searchSettings = ()
+    )
+
+  /**
+   * Runs go-to definition on a custom dependency and workspace source-code.
+   * Other go-to functions test directly on native `std` and `builtin` libraries,
+   * but this allows creating custom dependency code.
+   *
+   * @param dependencyId The dependency ID to assign to the custom dependency.
+   * @param dependency   The dependency code to write to the dependency.
+   * @param workspace    The developer's workspace code.
+   * @return
+   */
+  private def goTo[I, O <: SourceLocation.GoTo](
+      dependencyId: DependencyID,
+      dependency: String,
+      workspace: String,
+      searchSettings: I
+    )(implicit codeProvider: CodeProvider[I, O]): Unit = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess           = FileAccess.disk
     implicit val compiler: CompilerAccess   = CompilerAccess.ralphc
@@ -229,10 +289,11 @@ object TestCodeProvider {
 
     // run test
     val (searchResult, testWorkspace) =
-      TestCodeProvider[SourceLocation.GoTo](
+      TestCodeProvider[I, O](
         line = indicatorPosition.line,
         character = indicatorPosition.character,
         selectedFileURI = selectedFileURI,
+        searchSettings = searchSettings,
         build = build,
         workspaceSourceCode = sourceCode
       )
@@ -268,8 +329,9 @@ object TestCodeProvider {
 
     // Execute go-to definition.
     val (searchResult, _, workspace) =
-      TestCodeProvider[SourceLocation.GoTo](
+      TestCodeProvider[Unit, SourceLocation.GoToDef](
         code = codeWithoutGoToSymbols,
+        searchSettings = (),
         dependencyDownloaders = ArraySeq(downloader)
       )
 
@@ -332,10 +394,11 @@ object TestCodeProvider {
    *                              as they can be written to `~/ralph-lsp`.
    *                              We don't want generated libraries being written to `~/ralph-lsp`.
    */
-  private def apply[A](
+  private def apply[I, O](
       code: String,
+      searchSettings: I,
       dependencyDownloaders: ArraySeq[DependencyDownloader.Native]
-    )(implicit provider: CodeProvider[A]): (Iterator[A], SourceCodeState.IsCodeAware, WorkspaceState.IsParsedAndCompiled) = {
+    )(implicit provider: CodeProvider[I, O]): (Iterator[O], SourceCodeState.IsCodeAware, WorkspaceState.IsParsedAndCompiled) = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess           = FileAccess.disk
     implicit val compiler: CompilerAccess   = CompilerAccess.ralphc
@@ -366,6 +429,7 @@ object TestCodeProvider {
         line = linePosition.line,
         character = linePosition.character,
         selectedFileURI = sourceCode.fileURI,
+        searchSettings = searchSettings,
         build = build,
         workspaceSourceCode = sourceCode
       )
@@ -388,16 +452,17 @@ object TestCodeProvider {
    * @param workspaceSourceCode The source to write to the test workspace.
    * @return Suggestions and the created workspace.
    */
-  private def apply[A](
+  private def apply[I, O](
       line: Int,
       character: Int,
       selectedFileURI: URI,
+      searchSettings: I,
       build: BuildState.Compiled,
       workspaceSourceCode: SourceCodeState.OnDisk
-    )(implicit provider: CodeProvider[A],
+    )(implicit provider: CodeProvider[I, O],
       client: ClientLogger,
       file: FileAccess,
-      compiler: CompilerAccess): (Either[CompilerMessage.Error, Iterator[A]], WorkspaceState.IsParsedAndCompiled) = {
+      compiler: CompilerAccess): (Either[CompilerMessage.Error, Iterator[O]], WorkspaceState.IsParsedAndCompiled) = {
 
     // create a workspace for the build file
     val workspace =
@@ -416,7 +481,8 @@ object TestCodeProvider {
         line = line,
         character = character,
         fileURI = selectedFileURI,
-        workspace = compiledWorkspace
+        workspace = compiledWorkspace,
+        searchSettings = searchSettings
       )
 
     (completionResult.value, compiledWorkspace)

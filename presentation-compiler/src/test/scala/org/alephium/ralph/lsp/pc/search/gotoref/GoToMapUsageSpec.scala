@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.search.gotodef
+package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
@@ -24,7 +24,7 @@ class GoToMapUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "there is no map usage" in {
-      goTo(
+      goToReferences(
         """
           |Contract Test() {
           |
@@ -39,7 +39,7 @@ class GoToMapUsageSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "map has usages" in {
-      goTo(
+      goToReferences(
         """
           |Abstract Contract Parent() {
           |  mapping[Address, U256] counter@@s
@@ -48,11 +48,11 @@ class GoToMapUsageSpec extends AnyWordSpec with Matchers {
           |Contract Child() extends Parent() {
           |
           |  pub fn function() -> Boolean {
-          |    let value = >>counters[key]<<
-          |    >>counters[key]<< = value + 1
-          |    >>counters.insert!(depositor, key, 0)<<
-          |    >>counters.remove!(depositRecipient, key)<<
-          |    return >>counters.contains!(callerAddress!())<<
+          |    let value = >>counters<<[key]
+          |    >>counters<<[key] = value + 1
+          |    >>counters<<.insert!(depositor, key, 0)
+          |    >>counters<<.remove!(depositRecipient, key)
+          |    return >>counters<<.contains!(callerAddress!())
           |  }
           |}
           |""".stripMargin

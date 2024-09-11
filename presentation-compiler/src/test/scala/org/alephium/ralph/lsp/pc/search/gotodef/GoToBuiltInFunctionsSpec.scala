@@ -56,7 +56,7 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
 
       "custom builtin library" in {
         // Expect go-to definition to work on the following custom builtin code
-        goTo(
+        goToDefinition(
           dependencyId = DependencyID.BuiltIn,
           // the custom builtin library
           dependency = """

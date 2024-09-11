@@ -24,7 +24,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "argument does not exists" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToField(interface: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -39,7 +39,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "initial character is selected" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToField(>>interface: MyInterface<<) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -52,7 +52,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "mid character is selected" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToField(>>interface: MyInterface<<) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -65,7 +65,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "last character is selected" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToField(>>interface: MyInterface<<) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -78,7 +78,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "function and the argument have the same name" in {
-      goTo(
+      goToDefinition(
         """
           |Contract MyContract(interface: MyInterface) {
           |
@@ -97,7 +97,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "there are multiple arguments with the same name" in {
-      goTo(
+      goToDefinition(
         """
           |// the furthest argument
           |Contract GoToField(>>interface: MyInterface<<) {
@@ -112,7 +112,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "there are duplicate arguments within inheritance" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent3(>>param: MyParam<<,
           |                          >>param: MyParam<<) { }
@@ -139,7 +139,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
     "template arguments are passed as inheritance parameter" when {
       "there are no duplicates" in {
-        goTo(
+        goToDefinition(
           """
             |Abstract Contract SomeType() { }
             |
@@ -152,7 +152,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
       "duplicates exist" when {
         "template parameter is duplicated" in {
-          goTo(
+          goToDefinition(
             """
               |Abstract Contract SomeType() { }
               |
@@ -166,7 +166,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
         "function parameter is duplicated" should {
           "not be included in search result" in {
-            goTo(
+            goToDefinition(
               """
                 |Abstract Contract SomeType() { }
                 |

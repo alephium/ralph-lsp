@@ -24,7 +24,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "variable does not exist" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToTest() {
           |
@@ -41,7 +41,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "single local variable exists" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToTest() {
           |
@@ -56,7 +56,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
 
     "multiple local variables exists" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToTest() {
           |
@@ -72,7 +72,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
 
     "local variable and arguments have the same name" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToTest(>>varA: Bool<<) {
           |
@@ -89,7 +89,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
 
     "variable is in an ApproveAsset expression" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToTest() {
           |

@@ -8,7 +8,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "typeId does not exist" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToConstant() {
           |
@@ -46,7 +46,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
         |""".stripMargin
 
     "type is an inheritance" in {
-      goTo(
+      goToDefinition(
         s"""
           |$types
           |
@@ -58,7 +58,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
     }
 
     "type is a function parameter" in {
-      goTo(
+      goToDefinition(
         s"""
            |$types
            |
@@ -70,7 +70,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
     }
 
     "type is a template parameter" in {
-      goTo(
+      goToDefinition(
         s"""
            |$types
            |
@@ -82,7 +82,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
     }
 
     "type is a constructor" in {
-      goTo(
+      goToDefinition(
         s"""
            |$types
            |

@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
-import org.alephium.ralph.lsp.pc.log.StrictImplicitLogging
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
@@ -30,7 +30,6 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.pc.{PCState, PC}
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES}
-import org.alephium.ralph.lsp.server.RalphLangServer._
 import org.alephium.ralph.lsp.server.converter.{DiagnosticsConverter, GoToConverter, CompletionConverter}
 import org.alephium.ralph.lsp.server.state.{Trace, ServerState}
 import org.eclipse.lsp4j._
@@ -45,7 +44,7 @@ import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.IterableHasAsScala
 
-object RalphLangServer {
+object RalphLangServer extends StrictImplicitLogging {
 
   /** Start server with pre-configured client */
   def apply(
@@ -100,6 +99,7 @@ object RalphLangServer {
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
     capabilities.setCompletionProvider(new CompletionOptions(false, util.Arrays.asList(".")))
     capabilities.setDefinitionProvider(true)
+    capabilities.setReferencesProvider(true)
 
     capabilities
   }
@@ -124,6 +124,54 @@ object RalphLangServer {
     allows contains true
   }
 
+  def goTo[I, O <: SourceLocation.GoTo](
+      fileURI: URI,
+      line: Int,
+      character: Int,
+      searchSettings: I,
+      cancelChecker: CancelChecker,
+      currentState: PCState
+    )(implicit codeProvider: CodeProvider[I, O],
+      logger: ClientLogger): Iterator[Location] =
+    if (!isFileScheme(fileURI)) {
+      Iterator.empty[Location]
+    } else {
+      cancelChecker.checkCanceled()
+
+      currentState.workspace match {
+        case sourceAware: WorkspaceState.IsSourceAware =>
+          val goToResult =
+            CodeProvider.search[I, O](
+              line = line,
+              character = character,
+              fileURI = fileURI,
+              workspace = sourceAware,
+              searchSettings = searchSettings
+            )
+
+          goToResult match {
+            case Some(Right(goToLocations)) =>
+              // successful
+              GoToConverter.toLocations(goToLocations)
+
+            case Some(Left(error)) =>
+              // Go-to definition failed: Log the error message
+              logger.info(s"${codeProvider.productPrefix} unsuccessful: " + error.message)
+              Iterator.empty[Location]
+
+            case None =>
+              // Not a ralph file or it does not belong to the workspace's contract-uri directory.
+              Iterator.empty[Location]
+          }
+
+        case _: WorkspaceState.Created =>
+          // Workspace must be compiled at least once to enable GoTo definition.
+          // The server must've invoked the initial compilation in the boot-up initialize function.
+          logger.info(s"${codeProvider.productPrefix} unsuccessful: Workspace is not compiled")
+          Iterator.empty[Location]
+      }
+    }
+
 }
 
 /**
@@ -140,6 +188,8 @@ class RalphLangServer private (
      with TextDocumentService
      with WorkspaceService
      with StrictImplicitLogging { thisServer =>
+
+  import org.alephium.ralph.lsp.server.RalphLangServer._
 
   def getState(): ServerState =
     thisServer.state
@@ -375,11 +425,12 @@ class RalphLangServer private (
           getPCState().workspace match {
             case sourceAware: WorkspaceState.IsSourceAware =>
               val completionResult =
-                CodeProvider.search[Suggestion](
+                CodeProvider.search[Unit, Suggestion](
                   line = line,
                   character = character,
                   fileURI = fileURI,
-                  workspace = sourceAware
+                  workspace = sourceAware,
+                  searchSettings = ()
                 )
 
               val suggestions =
@@ -417,53 +468,42 @@ class RalphLangServer private (
   override def definition(params: DefinitionParams): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =
     runAsync {
       cancelChecker =>
-        val fileURI = uri(params.getTextDocument.getUri)
-        if (!isFileScheme(fileURI)) {
-          messages.Either.forLeft(util.Arrays.asList())
-        } else {
-          val line      = params.getPosition.getLine
-          val character = params.getPosition.getCharacter
+        val fileURI   = uri(params.getTextDocument.getUri)
+        val line      = params.getPosition.getLine
+        val character = params.getPosition.getCharacter
 
-          cancelChecker.checkCanceled()
+        val locations =
+          goTo[Unit, SourceLocation.GoToDef](
+            fileURI = fileURI,
+            line = line,
+            character = character,
+            searchSettings = (),
+            cancelChecker = cancelChecker,
+            currentState = getPCState()
+          )
 
-          getPCState().workspace match {
-            case sourceAware: WorkspaceState.IsSourceAware =>
-              // Can provide GoTo definition.
-              val goToResult =
-                CodeProvider.search[SourceLocation.GoTo](
-                  line = line,
-                  character = character,
-                  fileURI = fileURI,
-                  workspace = sourceAware
-                )
+        messages.Either.forLeft(CollectionUtil.toJavaList(locations))
+    }
 
-              val locations =
-                goToResult match {
-                  case Some(Right(goToLocations)) =>
-                    // successful
-                    GoToConverter.toLocations(goToLocations)
+  override def references(params: ReferenceParams): CompletableFuture[util.List[_ <: Location]] =
+    runAsync {
+      cancelChecker =>
+        val fileURI              = uri(params.getTextDocument.getUri)
+        val line                 = params.getPosition.getLine
+        val character            = params.getPosition.getCharacter
+        val isIncludeDeclaration = params.getContext.isIncludeDeclaration
 
-                  case Some(Left(error)) =>
-                    // Go-to definition failed: Log the error message
-                    logger.info("Go-to definition unsuccessful: " + error.message)
-                    Iterator.empty[Location]
+        val locations =
+          goTo[Boolean, SourceLocation.GoToRef](
+            fileURI = fileURI,
+            line = line,
+            character = character,
+            searchSettings = isIncludeDeclaration,
+            cancelChecker = cancelChecker,
+            currentState = getPCState()
+          )
 
-                  case None =>
-                    // Not a ralph file or it does not belong to the workspace's contract-uri directory.
-                    Iterator.empty[Location]
-                }
-
-              cancelChecker.checkCanceled()
-
-              messages.Either.forLeft(CollectionUtil.toJavaList(locations))
-
-            case _: WorkspaceState.Created =>
-              // Workspace must be compiled at least once to enable GoTo definition.
-              // The server must've invoked the initial compilation in the boot-up initialize function.
-              logger.info("Go-to definition unsuccessful: Workspace is not compiled")
-              messages.Either.forLeft(util.Arrays.asList())
-          }
-        }
+        CollectionUtil.toJavaList(locations)
     }
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
