@@ -72,12 +72,25 @@ private object GoToDefTypeId {
             )
 
           case Node(globalDef: Ast.GlobalDefinition, _) if AstExtra.getTypeId(globalDef) contains typeIdNode.data =>
-            Iterator(
-              SourceLocation.Node(
-                ast = globalDef,
-                source = sourceCode
-              )
-            )
+            AstExtra.getTypeId(globalDef) match {
+              case Some(typeId) =>
+                // The type id known, jump to it.
+                Iterator(
+                  SourceLocation.Node(
+                    ast = typeId,
+                    source = sourceCode
+                  )
+                )
+
+              case None =>
+                // The type id is not known, jump to the entire definition itself.
+                Iterator(
+                  SourceLocation.Node(
+                    ast = globalDef,
+                    source = sourceCode
+                  )
+                )
+            }
 
           case _ =>
             // For everything else find Contracts, Interfaces, or TxScripts with the given type ID.

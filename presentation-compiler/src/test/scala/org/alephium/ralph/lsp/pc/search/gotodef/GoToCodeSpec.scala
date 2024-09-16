@@ -21,6 +21,38 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "type definition is selected" in {
+      goToDefinition(
+        """
+          |Contract >>Te@@st<<() {
+          |
+          |  pub fn function() -> () { }
+          |
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "duplicate type definition exists" when {
+      "second duplicate is selected" in {
+        goToDefinition(
+          """
+            |Contract Test() {
+            |  pub fn function() -> () { }
+            |}
+            |
+            |Contract >>Te@@st<<() {
+            |
+            |  pub fn function() -> () { }
+            |
+            |}
+            |""".stripMargin
+        )
+      }
+    }
+  }
+
   "return non-empty" when {
     val types =
       """

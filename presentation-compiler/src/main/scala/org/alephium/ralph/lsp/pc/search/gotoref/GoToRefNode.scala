@@ -184,6 +184,10 @@ object GoToRefNode {
         )
 
       case Node(globalDef: Ast.GlobalDefinition, _) =>
+        // Ast.GlobalDefinition is never expected to be submitted here,
+        // because they always have an associated type-id.
+        // But this is processed temporarily, just in-case.
+        // The behaviour here is the same as processing [[Ast.TypeId]].
         val result =
           goToTypeIdUsage(
             globalDef = globalDef,
