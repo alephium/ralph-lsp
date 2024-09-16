@@ -36,6 +36,28 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "enum field definition is selected" in {
+      goToDefinition(
+        """
+          |// This parent is not inherited
+          |Abstract Contract ParentNotUsed() {
+          |
+          |  enum EnumType {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |}
+          |
+          |enum EnumType {
+          |  >>Field@@0 = 0<<
+          |  Field1 = 1
+          |}
+          |""".stripMargin
+      )
+    }
+  }
+
   "return non-empty" when {
     "user selects the first enum field" in {
       goToDefinition(
