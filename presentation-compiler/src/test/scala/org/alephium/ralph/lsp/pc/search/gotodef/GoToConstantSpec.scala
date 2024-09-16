@@ -37,6 +37,35 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "constant definition is selected" in {
+      goToDefinition(
+        """
+          |Contract Test() {
+          |
+          |  >>const My@@Constant = 1<<
+          |
+          |  pub fn function() -> () { }
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "duplicate constant definitions exist" in {
+      goToDefinition(
+        """
+          |Contract Test() {
+          |
+          |  const MyConstant = 1
+          |  >>const My@@Constant = 1<<
+          |
+          |  pub fn function() -> () { }
+          |}
+          |""".stripMargin
+      )
+    }
+  }
+
   "return non-empty" when {
     "constant exists" in {
       goToDefinition(
