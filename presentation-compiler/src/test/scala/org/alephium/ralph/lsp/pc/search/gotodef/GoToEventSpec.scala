@@ -38,6 +38,35 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "an event definition is selected" in {
+      goToDefinition(
+        """
+          |Contract Test() extends Parent() {
+          |
+          |  >>event Transf@@er(to: Address, amount: U256)<<
+          |
+          |  pub fn function() -> () { }
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "duplicate event definitions exist" in {
+      goToDefinition(
+        """
+          |Contract Test() extends Parent() {
+          |
+          |  event Transfer(to: Address, amount: U256)
+          |  >>event Transf@@er(to: Address, amount: U256)<<
+          |
+          |  pub fn function() -> () { }
+          |}
+          |""".stripMargin
+      )
+    }
+  }
+
   "return non-empty" when {
     "an event exists" in {
       goToDefinition(
