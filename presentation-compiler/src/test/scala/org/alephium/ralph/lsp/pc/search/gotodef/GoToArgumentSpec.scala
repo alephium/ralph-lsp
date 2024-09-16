@@ -37,6 +37,61 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "template argument is selected" in {
+      goToDefinition(
+        """
+            |Contract Test(>>interfa@@ce: MyInterface<<,
+            |              interface2: MyInterface) {
+            |
+            |  fn test(boolean: Bool) -> () { }
+            |
+            |}
+            |""".stripMargin
+      )
+    }
+
+    "function argument  is selected" in {
+      goToDefinition(
+        """
+            |Contract Test(interface2: MyInterface) {
+            |
+            |  fn test(>>interfa@@ce: MyInterface<<) -> () { }
+            |
+            |}
+            |""".stripMargin
+      )
+    }
+
+    "function and template argument exist with duplicate names" should {
+      "select only itself" when {
+        "function argument is selected" in {
+          goToDefinition(
+            """
+                |Contract Test(interface: MyInterface) {
+                |
+                |  fn test(>>interfa@@ce: MyInterface<<) -> () { }
+                |
+                |}
+                |""".stripMargin
+          )
+        }
+
+        "template argument is selected" in {
+          goToDefinition(
+            """
+                |Contract Test(>>interfa@@ce: MyInterface<<) {
+                |
+                |  fn test(interface: MyInterface) -> () { }
+                |
+                |}
+                |""".stripMargin
+          )
+        }
+      }
+    }
+  }
+
   "return non-empty" when {
     "initial character is selected" in {
       goToDefinition(

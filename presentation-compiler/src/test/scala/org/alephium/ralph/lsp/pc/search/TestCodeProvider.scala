@@ -86,13 +86,21 @@ object TestCodeProvider {
       code: String,
       searchSettings: I
     )(implicit codeProvider: CodeProvider[I, O]): Assertion = {
-    val (expectedLineRanges, codeWithoutGoToSymbols, _, _) =
-      TestCodeUtil.lineRanges(code)
+    // To find line ranges remove the select indicator @@
+    val codeWithoutSelectSymbol =
+      code.replace(TestCodeUtil.SEARCH_INDICATOR, "")
+
+    val (expectedLineRanges, _, _, _) =
+      TestCodeUtil.lineRanges(codeWithoutSelectSymbol)
+
+    // Remove all line-range indicators and keep the select indicator @@
+    val codeWithoutLineRangeSymbols =
+      code.replaceAll(">>|<<", "")
 
     // Execute go-to definition.
-    val (searchResult, sourceCode, _) =
+    val (searchResultIterator, sourceCode, _) =
       TestCodeProvider[I, O](
-        code = codeWithoutGoToSymbols,
+        code = codeWithoutLineRangeSymbols,
         searchSettings = searchSettings,
         dependencyDownloaders = ArraySeq.empty
       )
@@ -104,14 +112,16 @@ object TestCodeProvider {
           (sourceCode.fileURI, lineRange)
       }
 
+    // Convert to List for debugging
+    val searchResultList =
+      searchResultIterator.toList
+
     // For actual search result assert only the fileURI and line-ranges
     val actual =
-      searchResult
-        .toList
-        .map {
-          result =>
-            (result.parsed.fileURI, result.toLineRange().value)
-        }
+      searchResultList map {
+        result =>
+          (result.parsed.fileURI, result.toLineRange().value)
+      }
 
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
     actual should contain theSameElementsAs expectedGoToLocations
