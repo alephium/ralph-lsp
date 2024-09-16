@@ -36,6 +36,19 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "EnumType definition is selected" in {
+      goToDefinition(
+        """
+          |>>enum En@@umType {
+          |  Field0 = 0
+          |  Field1 = 1
+          |}<<
+          |""".stripMargin
+      )
+    }
+  }
+
   "return non-empty" when {
     "user selects the enum type of the first field" in {
       goToDefinition(
