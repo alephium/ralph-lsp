@@ -40,10 +40,10 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     "EnumType definition is selected" in {
       goToDefinition(
         """
-          |>>enum En@@umType {
+          |enum >>En@@umType<< {
           |  Field0 = 0
           |  Field1 = 1
-          |}<<
+          |}
           |""".stripMargin
       )
     }

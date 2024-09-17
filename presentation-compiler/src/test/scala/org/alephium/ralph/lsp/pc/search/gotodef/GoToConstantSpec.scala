@@ -43,7 +43,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
         """
           |Contract Test() {
           |
-          |  >>const My@@Constant = 1<<
+          |  const >>My@@Constant<< = 1
           |
           |  pub fn function() -> () { }
           |}
@@ -57,7 +57,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
           |Contract Test() {
           |
           |  const MyConstant = 1
-          |  >>const My@@Constant = 1<<
+          |  const >>My@@Constant<< = 1
           |
           |  pub fn function() -> () { }
           |}
@@ -70,15 +70,15 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     "constant exists" in {
       goToDefinition(
         """
-          |>>const MyConstant = 1<<
+          |const >>MyConstant<< = 1
           |
           |Abstract Contract Parent() {
-          |  >>const MyConstant = 1<<
+          |  const >>MyConstant<< = 1
           |}
           |
           |Contract Child() extends Parent() {
           |
-          |  >>const MyConstant = 0<<
+          |  const >>MyConstant<< = 0
           |
           |  pub fn function() -> () {
           |    let my_constant = MyCo@@nstant
@@ -91,20 +91,20 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     "duplicate constants exists" in {
       goToDefinition(
         """
-          |>>const MyConstant = 0<<
-          |>>const MyConstant = 1<<
-          |>>const MyConstant = 2<<
-          |>>const MyConstant = 3<<
+          |const >>MyConstant<< = 0
+          |const >>MyConstant<< = 1
+          |const >>MyConstant<< = 2
+          |const >>MyConstant<< = 3
           |
           |Abstract Contract Parent() {
-          |  >>const MyConstant = 2<<
-          |  >>const MyConstant = 3<<
+          |  const >>MyConstant<< = 2
+          |  const >>MyConstant<< = 3
           |}
           |
           |Contract Child() extends Parent() {
           |
-          |  >>const MyConstant = 0<<
-          |  >>const MyConstant = 1<<
+          |  const >>MyConstant<< = 0
+          |  const >>MyConstant<< = 1
           |
           |  pub fn function() -> () {
           |    let my_constant = MyCo@@nstant
@@ -119,14 +119,14 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
         """
           |Abstract Contract MyConstant() {
           |
-          |  >>const MyConstant = 2<<
-          |  >>const MyConstant = 3<<
+          |  const >>MyConstant<< = 2
+          |  const >>MyConstant<< = 3
           |}
           |
           |Contract MyConstant() extends MyConstant() {
           |
-          |  >>const MyConstant = 0<<
-          |  >>const MyConstant = 1<<
+          |  const >>MyConstant<< = 0
+          |  const >>MyConstant<< = 1
           |
           |  pub fn function() -> () {
           |    let my_constant = MyCo@@nstant
@@ -139,7 +139,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     "only a global constant exists" in {
       goToDefinition(
         """
-          |>>const MyConstant = 0<<
+          |const >>MyConstant<< = 0
           |
           |Contract Test() {
           |
@@ -156,7 +156,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
         """
           |const ONE = 1
           |const TWO = 2
-          |>>const THREE = ONE + TWO<<
+          |const >>THREE<< = ONE + TWO
           |
           |Contract Test() {
           |  pub fn main() -> () {
@@ -176,7 +176,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |
-          |>>const ONE = 1<<
+          |const >>ONE<< = 1
           |""".stripMargin
       }
     }
@@ -191,7 +191,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |
-          |>>const ONE = 1<<""".stripMargin
+          |const >>ONE<< = 1""".stripMargin
       }
     }
   }

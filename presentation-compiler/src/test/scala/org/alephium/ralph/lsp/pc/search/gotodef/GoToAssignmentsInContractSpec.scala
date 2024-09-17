@@ -45,7 +45,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
             |Contract GoToAssignment() {
             |
             |  pub fn function() -> () {
-            |    >>let counter = 0<<
+            |    let >>counter<< = 0
             |    counte@@r = counter + 1
             |  }
             |}
@@ -58,7 +58,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
           """
             |Contract GoToAssignment() {
             |
-            |  pub fn function(>>mut counter: U256<<) -> () {
+            |  pub fn function(mut >>counter<<: U256) -> () {
             |    counte@@r = counter + 1
             |  }
             |}
@@ -69,7 +69,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
       "as template argument" in {
         goToDefinition(
           """
-            |Contract GoToAssignment(>>mut counter: U256<<) {
+            |Contract GoToAssignment(mut >>counter<<: U256) {
             |
             |  pub fn function(mut bool: Bool) -> () {
             |    counte@@r = counter + 1
@@ -82,23 +82,23 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
       "at multiple locations" in {
         goToDefinition(
           """
-            |Abstract Contract Parent2(>>mut counter: U256<<) { }
+            |Abstract Contract Parent2(mut >>counter<<: U256) { }
             |
             |// This is not an Abstract, but Go-To definition should still work as expected.
-            |Contract Parent1(>>mut counter: U256<<,
-            |                 >>mut counter: U256<<) extends Parent2() {
+            |Contract Parent1(mut >>counter<<: U256,
+            |                 mut >>counter<<: U256) extends Parent2() {
             |
             |  // the counter parameter here is not in scope, so it should get added to search result.
             |  fn function(mut counter: U256) -> () {}
             |
             |}
             |
-            |Contract GoToAssignment(>>mut counter: U256<<) extends Parent1() {
+            |Contract GoToAssignment(mut >>counter<<: U256) extends Parent1() {
             |
-            |  pub fn function(>>mut counter: U256<<) -> () {
-            |    >>let mut counter = 0<<
+            |  pub fn function(mut >>counter<<: U256) -> () {
+            |    let mut >>counter<< = 0
             |    counte@@r = counter + 1
-            |    for (>>let mut counter = 0<<; counter <= 4; counter = counter + 1) {
+            |    for (let mut >>counter<< = 0; counter <= 4; counter = counter + 1) {
             |      counter = counter + 1
             |    }
             |  }

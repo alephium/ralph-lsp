@@ -19,11 +19,11 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
-private object GoToDefSource {
+private object GoToDefSource extends StrictImplicitLogging {
 
   /**
    * Navigates to the definition of a token in the source code.
@@ -65,11 +65,13 @@ private object GoToDefSource {
               workspace = workspace
             )
 
-          case _ =>
+          case Node(ast, _) =>
+            logger.trace(s"No GoToDef implementation for '${ast.getClass.getSimpleName}'")
             Iterator.empty
         }
 
       case None =>
+        logger.trace(s"Closest node not found for cursor index '$cursorIndex' source '${sourceCode.parsed.fileURI}'")
         Iterator.empty
     }
 

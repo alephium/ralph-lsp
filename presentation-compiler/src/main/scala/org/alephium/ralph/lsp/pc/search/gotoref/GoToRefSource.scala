@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.Ast
+import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
@@ -65,13 +66,33 @@ private object GoToRefSource extends StrictImplicitLogging {
         .find(_.data eq defLocation.ast)
 
     defNode match {
-      case Some(defNode) =>
-        GoToRefNode.goTo(
-          definition = defNode,
+      case Some(defNode @ Node(ident: Ast.Ident, _)) =>
+        GoToRefIdent.goTo(
+          definition = defNode.upcast(ident),
           sourceCode = defLocation.source,
           workspace = workspace,
           isIncludeDeclaration = isIncludeDeclaration
         )
+
+      case Some(defNode @ Node(ident: Ast.FuncId, _)) =>
+        GoToRefFuncId.goTo(
+          definition = defNode.upcast(ident),
+          sourceCode = defLocation.source,
+          workspace = workspace,
+          isIncludeDeclaration = isIncludeDeclaration
+        )
+
+      case Some(defNode @ Node(ident: Ast.TypeId, _)) =>
+        GoToRefTypeId.goTo(
+          definition = defNode.upcast(ident),
+          sourceCode = defLocation.source,
+          workspace = workspace,
+          isIncludeDeclaration = isIncludeDeclaration
+        )
+
+      case Some(Node(ast, _)) =>
+        logger.trace(s"No GoToRef implementation for '${ast.getClass.getSimpleName}'")
+        Iterator.empty
 
       case None =>
         logger.trace(s"Node not found for AST '${defLocation.ast.getClass.getSimpleName}' at source index '${defLocation.ast.sourceIndex}'")

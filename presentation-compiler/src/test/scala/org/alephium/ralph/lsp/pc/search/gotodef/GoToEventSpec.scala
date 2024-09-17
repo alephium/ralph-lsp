@@ -44,7 +44,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
         """
           |Contract Test() extends Parent() {
           |
-          |  >>event Transf@@er(to: Address, amount: U256)<<
+          |  event >>Transf@@er<<(to: Address, amount: U256)
           |
           |  pub fn function() -> () { }
           |}
@@ -58,7 +58,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
           |Contract Test() extends Parent() {
           |
           |  event Transfer(to: Address, amount: U256)
-          |  >>event Transf@@er(to: Address, amount: U256)<<
+          |  event >>Transf@@er<<(to: Address, amount: U256)
           |
           |  pub fn function() -> () { }
           |}
@@ -75,13 +75,13 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
           |
           |  event TransferNotUsed(to: Address, amount: U256)
           |
-          |  >>event Transfer(to: Address, amount: U256)<<
+          |  event >>Transfer<<(to: Address, amount: U256)
           |
           |}
           |
           |Contract Test() extends Parent() {
           |
-          |  >>event Transfer(to: Address, amount: U256)<<
+          |  event >>Transfer<<(to: Address, amount: U256)
           |
           |  pub fn function() -> () {
           |    emit Transfe@@r(to, amount)
@@ -96,18 +96,18 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
         """
           |Abstract Contract Parent() {
           |
-          |  >>event Transfer(amount: U256)<<
-          |  >>event Transfer(to: Address, amount: U256)<<
+          |  event >>Transfer<<(amount: U256)
+          |  event >>Transfer<<(to: Address, amount: U256)
           |  event TransferNotUsed(to: Address, amount: U256)
-          |  >>event Transfer(to: Address)<<
+          |  event >>Transfer<<(to: Address)
           |
           |}
           |
           |Contract Test() extends Parent() {
           |
-          |  >>event Transfer(to: Address, amount: U256)<<
-          |  >>event Transfer(amount: U256)<<
-          |  >>event Transfer(to: Address)<<
+          |  event >>Transfer<<(to: Address, amount: U256)
+          |  event >>Transfer<<(amount: U256)
+          |  event >>Transfer<<(to: Address)
           |
           |  pub fn function() -> () {
           |    emit Transfe@@r(to, amount)

@@ -50,7 +50,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           |}
           |
           |enum EnumType {
-          |  >>Field@@0 = 0<<
+          |  >>Field@@0<< = 0
           |  Field1 = 1
           |}
           |""".stripMargin
@@ -72,14 +72,14 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           |}
           |
           |enum EnumType {
-          |  >>Field0 = 0<<
+          |  >>Field0<< = 0
           |  Field1 = 1
           |}
           |
           |Abstract Contract Parent() {
           |
           |  enum EnumType {
-          |    >>Field0 = 0<<
+          |    >>Field0<< = 0
           |    Field1 = 1
           |  }
           |}
@@ -87,7 +87,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           |Contract MyContract() extends Parent() {
           |
           |  enum EnumType {
-          |    >>Field0 = 0<<
+          |    >>Field0<< = 0
           |    Field1 = 1
           |  }
           |
@@ -98,7 +98,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           |}
           |
           |enum EnumType {
-          |  >>Field0 = 0<<
+          |  >>Field0<< = 0
           |  Field1 = 1
           |}
           |""".stripMargin
@@ -110,14 +110,14 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
         """
           |enum EnumType {
           |  Field0 = 0
-          |  >>Field1 = 1<<
+          |  >>Field1<< = 1
           |}
           |
           |Abstract Contract Parent() {
           |
           |  enum EnumType {
           |    Field0 = 0
-          |    >>Field1 = 1<<
+          |    >>Field1<< = 1
           |  }
           |}
           |
@@ -126,7 +126,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           |
           |  enum EnumType {
           |    Field0 = 0
-          |    >>Field1 = 1<<
+          |    >>Field1<< = 1
           |  }
           |
           |  pub fn function() -> () {
@@ -137,7 +137,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           |
           |enum EnumType {
           |  Field0 = 0
-          |  >>Field1 = 1<<
+          |  >>Field1<< = 1
           |}
           |""".stripMargin
       )
@@ -148,36 +148,36 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
         goToDefinition(
           """
             |enum EnumType {
-            |  >>Field0 = 0<<
+            |  >>Field0<< = 0
             |  Field1 = 1
             |}
             |
             |Abstract Contract Parent() {
             |  enum EnumType {
-            |    >>Field0 = 0<<
+            |    >>Field0<< = 0
             |    Field1 = 1
             |  }
             |
             |  enum EnumType {
-            |    >>Field0 = 0<<
+            |    >>Field0<< = 0
             |    Field1 = 1
             |  }
             |}
             |
             |enum EnumType {
-            |  >>Field0 = 0<<
+            |  >>Field0<< = 0
             |  Field1 = 1
             |}
             |
             |Contract MyContract() extends Parent() {
             |
             |  enum EnumType {
-            |    >>Field0 = 0<<
+            |    >>Field0<< = 0
             |    Field1 = 1
             |  }
             |
             |  enum EnumType {
-            |    >>Field0 = 0<<
+            |    >>Field0<< = 0
             |    Field1 = 1
             |  }
             |
@@ -195,19 +195,19 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           """
             |enum EnumType {
             |  Field0 = 0
-            |  >>Field1 = 1<<
+            |  >>Field1<< = 1
             |}
             |
             |Contract MyContract() {
             |
             |  enum EnumType {
             |    Field0 = 0
-            |    >>Field1 = 1<<
+            |    >>Field1<< = 1
             |  }
             |
             |  enum EnumType {
             |    Field0 = 0
-            |    >>Field1 = 1<<
+            |    >>Field1<< = 1
             |  }
             |
             |  pub fn function() -> () {
@@ -225,14 +225,14 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
         goToDefinition(
           """
             |enum EnumType {
-            |  >>Field0 = 0<<
+            |  >>Field0<< = 0
             |  Field1 = 1
             |}
             |
             |Contract MyContract() {
             |
             |  enum EnumType {
-            |    >>Field0 = 0<<
+            |    >>Field0<< = 0
             |    Field1 = 1
             |  }
             |
@@ -263,7 +263,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
             |  }
             |
             |  enum EnumType {
-            |    >>Field2 = 2<<
+            |    >>Field2<< = 2
             |    Field3 = 3
             |  }
             |
@@ -283,14 +283,14 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
           """
             |Abstract Contract Parent2() {
             |  enum EnumType {
-            |    >>Field0 = 00<<
+            |    >>Field0<< = 00
             |    Field3 = 3
             |  }
             |}
             |
             |Abstract Contract Parent1() extends Parent2() {
             |  enum EnumType {
-            |    >>Field0 = 00<<
+            |    >>Field0<< = 00
             |    Field3 = 3
             |  }
             |}
@@ -298,7 +298,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
             |Contract MyContract() extends Parent1() {
             |
             |  enum EnumType {
-            |    >>Field0 = 0<<
+            |    >>Field0<< = 0
             |    Field1 = 1
             |  }
             |

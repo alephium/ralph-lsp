@@ -90,9 +90,9 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
           """
             |Abstract Contract Test() {
             |
-            |  >>fn function() -> ()<<
+            |  fn >>function<<() -> ()
             |
-            |  >>fn function(address: Address) -> ()<<
+            |  fn >>function<<(address: Address) -> ()
             |
             |  // this function has a body so only the function ID is highlighted.
             |  fn >>function<<() -> () {

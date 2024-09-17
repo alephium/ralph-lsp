@@ -42,12 +42,12 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
       goToDefinition(
         """
           |Abstract Contract Parent() {
-          |  >>mapping[Address, U256] counters<<
+          |  mapping[Address, U256] >>counters<<
           |}
           |
           |Contract Child() extends Parent() {
           |
-          |  >>mapping[Address, U256] counters<<
+          |  mapping[Address, U256] >>counters<<
           |
           |  pub fn function() -> () {
           |    let value = counter@@s[key]
@@ -61,12 +61,12 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
       goToDefinition(
         """
           |Abstract Contract Parent() {
-          |  >>mapping[Address, U256] counters<<
+          |  mapping[Address, U256] >>counters<<
           |}
           |
           |Contract Child() extends Parent() {
           |
-          |  >>mapping[Address, U256] counters<<
+          |  mapping[Address, U256] >>counters<<
           |
           |  pub fn function() -> () {
           |    counter@@s[key] = value + 1
@@ -80,12 +80,12 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
       goToDefinition(
         """
           |Abstract Contract Parent() {
-          |  >>mapping[Address, U256] counters<<
+          |  mapping[Address, U256] >>counters<<
           |}
           |
           |Contract Child() extends Parent() {
           |
-          |  >>mapping[Address, U256] counters<<
+          |  mapping[Address, U256] >>counters<<
           |
           |  pub fn function() -> () {
           |    counter@@s.insert!(depositor, key, 0)
@@ -99,12 +99,12 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
       goToDefinition(
         """
           |Abstract Contract Parent() {
-          |  >>mapping[Address, U256] counters<<
+          |  mapping[Address, U256] >>counters<<
           |}
           |
           |Contract Child() extends Parent() {
           |
-          |  >>mapping[Address, U256] counters<<
+          |  mapping[Address, U256] >>counters<<
           |
           |  pub fn function() -> () {
           |    counter@@s.remove!(depositRecipient, key)
@@ -118,12 +118,12 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
       goToDefinition(
         """
           |Abstract Contract Parent() {
-          |  >>mapping[Address, U256] counters<<
+          |  mapping[Address, U256] >>counters<<
           |}
           |
           |Contract Child() extends Parent() {
           |
-          |  >>mapping[Address, U256] counters<<
+          |  mapping[Address, U256] >>counters<<
           |
           |  pub fn function() -> () {
           |    counter@@s.contains!(callerAddress!())
@@ -137,12 +137,12 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
       goToDefinition(
         """
           |Abstract Contract Parent() {
-          |  >>mapping[Address, U256] counters<<
+          |  mapping[Address, U256] >>counters<<
           |}
           |
           |Contract Child() extends Parent() {
           |
-          |  >>mapping[Address, U256] counters<<
+          |  mapping[Address, U256] >>counters<<
           |
           |  pub fn function() -> Bool {
           |    return counter@@s.contains!(callerAddress!())

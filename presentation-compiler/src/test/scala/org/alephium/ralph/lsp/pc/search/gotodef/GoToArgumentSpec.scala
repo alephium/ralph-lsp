@@ -41,7 +41,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     "template argument is selected" in {
       goToDefinition(
         """
-            |Contract Test(>>interfa@@ce: MyInterface<<,
+            |Contract Test(>>interfa@@ce<<: MyInterface,
             |              interface2: MyInterface) {
             |
             |  fn test(boolean: Bool) -> () { }
@@ -56,7 +56,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         """
             |Contract Test(interface2: MyInterface) {
             |
-            |  fn test(>>interfa@@ce: MyInterface<<) -> () { }
+            |  fn test(>>interfa@@ce<<: MyInterface) -> () { }
             |
             |}
             |""".stripMargin
@@ -70,7 +70,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
             """
                 |Contract Test(interface: MyInterface) {
                 |
-                |  fn test(>>interfa@@ce: MyInterface<<) -> () { }
+                |  fn test(>>interfa@@ce<<: MyInterface) -> () { }
                 |
                 |}
                 |""".stripMargin
@@ -80,7 +80,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         "template argument is selected" in {
           goToDefinition(
             """
-                |Contract Test(>>interfa@@ce: MyInterface<<) {
+                |Contract Test(>>interfa@@ce<<: MyInterface) {
                 |
                 |  fn test(interface: MyInterface) -> () { }
                 |
@@ -96,7 +96,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     "initial character is selected" in {
       goToDefinition(
         """
-          |Contract GoToField(>>interface: MyInterface<<) {
+          |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
           |    // first character
           |    let result = @@interface.function()
@@ -109,7 +109,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     "mid character is selected" in {
       goToDefinition(
         """
-          |Contract GoToField(>>interface: MyInterface<<) {
+          |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
           |    // mid character
           |    let result = inte@@rface.function()
@@ -122,7 +122,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     "last character is selected" in {
       goToDefinition(
         """
-          |Contract GoToField(>>interface: MyInterface<<) {
+          |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
           |    // last character
           |    let result = interface@@.function()
@@ -138,7 +138,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
           |Contract MyContract(interface: MyInterface) {
           |
           |  // argument_b is also a function, but it should still go to the argument.
-          |  pub fn function_a(>>argument_b: Bool<<) -> () {
+          |  pub fn function_a(>>argument_b<<: Bool) -> () {
           |    let go_to_function = @@argument_b
           |    let result = blah.function()
           |  }
@@ -155,10 +155,10 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       goToDefinition(
         """
           |// the furthest argument
-          |Contract GoToField(>>interface: MyInterface<<) {
+          |Contract GoToField(>>interface<<: MyInterface) {
           |
           |  // the nearest argument
-          |  pub fn local_function(>>interface: MyInterface<<) -> () {
+          |  pub fn local_function(>>interface<<: MyInterface) -> () {
           |    let result = interface@@.function()
           |  }
           |}
@@ -169,22 +169,22 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     "there are duplicate arguments within inheritance" in {
       goToDefinition(
         """
-          |Abstract Contract Parent3(>>param: MyParam<<,
-          |                          >>param: MyParam<<) { }
+          |Abstract Contract Parent3(>>param<<: MyParam,
+          |                          >>param<<: MyParam) { }
           |
           |
-          |Abstract Contract Parent2(>>param: MyParam<<,
-          |                          >>param: MyParam<<) extends Parent3() { }
+          |Abstract Contract Parent2(>>param<<: MyParam,
+          |                          >>param<<: MyParam) extends Parent3() { }
           |
-          |Abstract Contract Parent1(>>param: MyParam<<) extends Parent2() {
+          |Abstract Contract Parent1(>>param<<: MyParam) extends Parent2() {
           |
           |  // this function also has `interface` as parameter, but it is not in scope.
           |  pub fn local_function(param: MyParam) -> () { }
           |}
           |
-          |Contract GoToField(>>param: MyParam<<) extends Parent1() {
+          |Contract GoToField(>>param<<: MyParam) extends Parent1() {
           |
-          |  pub fn local_function(>>param: MyParam<<) -> () {
+          |  pub fn local_function(>>param<<: MyParam) -> () {
           |    let result = param@@.function()
           |  }
           |}
@@ -200,7 +200,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
             |
             |Abstract Contract Parent(param: SomeType) { }
             |
-            |Abstract Contract Child(>>param: SomeType<<) extends Parent(@@param) { }
+            |Abstract Contract Child(>>param<<: SomeType) extends Parent(@@param) { }
             |""".stripMargin
         )
       }
@@ -213,8 +213,8 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
               |
               |Abstract Contract Parent(param: SomeType) { }
               |
-              |Abstract Contract Child(>>param: SomeType<<,
-              |                        >>param: SomeType<<) extends Parent(@@param) { }
+              |Abstract Contract Child(>>param<<: SomeType,
+              |                        >>param<<: SomeType) extends Parent(@@param) { }
               |""".stripMargin
           )
         }
@@ -227,7 +227,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
                 |
                 |Abstract Contract Parent(param: SomeType) { }
                 |
-                |Abstract Contract Child(>>param: SomeType<<) extends Parent(@@param) {
+                |Abstract Contract Child(>>param<<: SomeType) extends Parent(@@param) {
                 |
                 |  // the parameter `param` is not in the scope of template `param`, it's a function level scope,
                 |  // so it should not be included in the search result.

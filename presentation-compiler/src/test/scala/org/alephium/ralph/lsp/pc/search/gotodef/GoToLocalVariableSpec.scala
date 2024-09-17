@@ -46,7 +46,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
           |Contract GoToTest() {
           |
           |  pub fn function() -> () {
-          |    >>let varA = 123<<
+          |    let >>varA<< = 123
           |    let varB = var@@A
           |  }
           |
@@ -61,9 +61,9 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
           |Contract GoToTest() {
           |
           |  pub fn function() -> () {
-          |    >>let varA = 123<<
+          |    let >>varA<< = 123
           |    let varB = var@@A
-          |    >>let varA = ABC<<
+          |    let >>varA<< = ABC
           |  }
           |
           |}
@@ -74,12 +74,12 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     "local variable and arguments have the same name" in {
       goToDefinition(
         """
-          |Contract GoToTest(>>varA: Bool<<) {
+          |Contract GoToTest(>>varA<<: Bool) {
           |
-          |  pub fn function(>>varA: Bool<<) -> () {
-          |    >>let varA = 123<<
+          |  pub fn function(>>varA<<: Bool) -> () {
+          |    let >>varA<< = 123
           |    let varB = var@@A
-          |    for (>>let mut varA = 0<<; varA <= 4; varA = varA + 1) {
+          |    for (let mut >>varA<< = 0; varA <= 4; varA = varA + 1) {
           |       function(true)
           |    }
           |  }
@@ -94,7 +94,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
           |Contract GoToTest() {
           |
           |  pub fn function() -> () {
-          |    >>let varA = 123<<
+          |    let >>varA<< = 123
           |    obj.fun{builtIn!() -> ALPH: varA@@}(somethingElse)
           |  }
           |

@@ -42,7 +42,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
         goToDefinition(
           """
             |Abstract Contract Action() {
-            |  >>fn function() -> Bool<<
+            |  fn >>function<<() -> Bool
             |}
             |
             |Contract Main(action: Action) {
@@ -58,7 +58,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
         goToDefinition(
           """
             |Abstract Contract Action() {
-            |  >>fn function() -> Bool<<
+            |  fn >>function<<() -> Bool
             |}
             |
             |Contract Main() {
@@ -115,7 +115,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
             |Interface Parent2 {
             |  fn not_used2() -> ()
             |
-            |  >>fn function() -> ()<<
+            |  fn >>function<<() -> ()
             |}
             |
             |Abstract Contract Parent1() implements Parent2 {

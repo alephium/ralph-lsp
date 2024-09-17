@@ -19,10 +19,11 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.AstExtra
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
-private object GoToDefTypeId {
+private object GoToDefTypeId extends StrictImplicitLogging {
 
   /**
    * Navigate to the positioned ASTs for the given type identifier.
@@ -35,7 +36,8 @@ private object GoToDefTypeId {
   def goTo(
       typeIdNode: Node[Ast.TypeId, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
     typeIdNode.parent match { // take one step up to check the type of TypeId node.
       case Some(parent) =>
         parent match {
@@ -58,7 +60,7 @@ private object GoToDefTypeId {
           case Node(enumDef: Ast.EnumDef[_], _) if enumDef.id == typeIdNode.data =>
             Iterator(
               SourceLocation.Node(
-                ast = enumDef,
+                ast = enumDef.id,
                 source = sourceCode
               )
             )
@@ -66,31 +68,23 @@ private object GoToDefTypeId {
           case Node(eventDef: Ast.EventDef, _) if eventDef.id == typeIdNode.data =>
             Iterator(
               SourceLocation.Node(
-                ast = eventDef,
+                ast = eventDef.id,
                 source = sourceCode
               )
             )
 
           case Node(globalDef: Ast.GlobalDefinition, _) if AstExtra.getTypeId(globalDef) contains typeIdNode.data =>
-            AstExtra.getTypeId(globalDef) match {
-              case Some(typeId) =>
-                // The type id known, jump to it.
-                Iterator(
-                  SourceLocation.Node(
-                    ast = typeId,
-                    source = sourceCode
-                  )
-                )
+            val id =
+              AstExtra
+                .getIdentOrTypeId(globalDef)
+                .merge
 
-              case None =>
-                // The type id is not known, jump to the entire definition itself.
-                Iterator(
-                  SourceLocation.Node(
-                    ast = globalDef,
-                    source = sourceCode
-                  )
-                )
-            }
+            Iterator(
+              SourceLocation.Node(
+                ast = id,
+                source = sourceCode
+              )
+            )
 
           case _ =>
             // For everything else find Contracts, Interfaces, or TxScripts with the given type ID.
@@ -101,6 +95,7 @@ private object GoToDefTypeId {
         }
 
       case None =>
+        logger.error(s"Parent node not found for AST '${typeIdNode.data.getClass.getSimpleName}' at source index '${typeIdNode.data.sourceIndex}'")
         Iterator.empty
     }
 
@@ -180,14 +175,14 @@ private object GoToDefTypeId {
    */
   private def goToEventDef(
       emitEvent: Ast.EmitEvent[_],
-      source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.EventDef]] =
+      source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
     source
       .tree
       .rootNode
       .walkDown
       .collect {
         case Node(eventDef: Ast.EventDef, _) if eventDef.id == emitEvent.id =>
-          SourceLocation.Node(eventDef, source)
+          SourceLocation.Node(eventDef.id, source)
       }
 
   /**

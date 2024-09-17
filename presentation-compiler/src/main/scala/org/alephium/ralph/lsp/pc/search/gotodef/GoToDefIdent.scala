@@ -19,12 +19,13 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 import scala.collection.immutable.ArraySeq
 
-private[search] object GoToDefIdent {
+private[search] object GoToDefIdent extends StrictImplicitLogging {
 
   /**
    * Navigate to the argument(s) for the given identifier.
@@ -37,7 +38,8 @@ private[search] object GoToDefIdent {
   def goTo(
       identNode: Node[Ast.Ident, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] =
     identNode.parent match { // take one step up to check the type of ident node.
       case Some(parent) =>
         parent match {
@@ -90,7 +92,7 @@ private[search] object GoToDefIdent {
           case Node(field: Ast.EnumField[_], _) if field.ident == identNode.data =>
             Iterator(
               SourceLocation.Node(
-                ast = field,
+                ast = field.ident,
                 source = sourceCode
               )
             )
@@ -98,7 +100,7 @@ private[search] object GoToDefIdent {
           case Node(field: Ast.EventField, _) if field.ident == identNode.data =>
             Iterator(
               SourceLocation.Node(
-                ast = field,
+                ast = field.ident,
                 source = sourceCode
               )
             )
@@ -106,7 +108,7 @@ private[search] object GoToDefIdent {
           case Node(constantDef: Ast.ConstantVarDef[_], _) if constantDef.ident == identNode.data =>
             Iterator(
               SourceLocation.Node(
-                ast = constantDef,
+                ast = constantDef.ident,
                 source = sourceCode
               )
             )
@@ -115,7 +117,7 @@ private[search] object GoToDefIdent {
             // User selected a named variable. Find its usages.
             Iterator(
               SourceLocation.Node(
-                ast = namedVar,
+                ast = namedVar.ident,
                 source = sourceCode
               )
             )
@@ -124,7 +126,7 @@ private[search] object GoToDefIdent {
             // They selected an argument. Take 'em there!
             Iterator(
               SourceLocation.Node(
-                ast = argument,
+                ast = argument.ident,
                 source = sourceCode
               )
             )
@@ -132,16 +134,18 @@ private[search] object GoToDefIdent {
           case Node(mapDef: Ast.MapDef, _) if mapDef.ident == identNode.data =>
             Iterator(
               SourceLocation.Node(
-                ast = mapDef,
+                ast = mapDef.ident,
                 source = sourceCode
               )
             )
 
-          case _ =>
+          case Node(ast, _) =>
+            logger.error(s"GoTo not implemented for parent node '${ast.getClass.getSimpleName}' at source index '${ast.sourceIndex}'")
             Iterator.empty
         }
 
       case None =>
+        logger.error(s"Parent node not found for AST '${identNode.data.getClass.getSimpleName}' at source index '${identNode.data.sourceIndex}'")
         Iterator.empty
     }
 
@@ -156,7 +160,7 @@ private[search] object GoToDefIdent {
   private def goToEnumField(
       fieldSelector: Ast.EnumFieldSelector[_],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.EnumField[_]]] = {
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] = {
     val trees =
       WorkspaceSearcher.collectInheritedParents(
         sourceCode = sourceCode,
@@ -179,6 +183,13 @@ private[search] object GoToDefIdent {
     allTrees
       .iterator
       .flatMap(goToEnumField(fieldSelector, _))
+      .map {
+        node =>
+          SourceLocation.Node(
+            ast = node.ast.ident,
+            source = node.source
+          )
+      }
   }
 
   /**
@@ -192,7 +203,7 @@ private[search] object GoToDefIdent {
   private def goToScopeDefinitions(
       identNode: Node[Ast.Ident, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] = {
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] = {
     val inheritedParents =
       WorkspaceSearcher.collectInheritedParents(sourceCode, workspace)
 
@@ -209,14 +220,30 @@ private[search] object GoToDefIdent {
       )
 
     val functionArguments =
-      goToNearestFunctionArguments(identNode)
-        .map(SourceLocation.Node(_, sourceCode))
+      goToNearestFunctionArguments(identNode) map {
+        argument =>
+          // collect identities
+          SourceLocation.Node(
+            ast = argument.ident,
+            source = sourceCode
+          )
+      }
 
     val localVariables =
       goToInScopeVariables(
         identNode = identNode,
         sourceCode = sourceCode
-      )
+      ) flatMap {
+        node =>
+          // collect identities
+          node.ast.vars collect {
+            case namedVar: Ast.NamedVar =>
+              SourceLocation.Node(
+                ast = namedVar.ident,
+                source = sourceCode
+              )
+          }
+      }
 
     argumentsAndConstants ++ globalConstants ++ functionArguments ++ localVariables
   }
@@ -230,14 +257,14 @@ private[search] object GoToDefIdent {
    */
   private def goToGlobalConstants(
       ident: Ast.Ident,
-      trees: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.ConstantVarDef[_]]] =
+      trees: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.Ident]] =
     trees
       .iterator
       .collect {
         // Global constants are source trees with only one node of type `Ast.ConstantVarDef`
         case source @ SourceLocation.Code(Tree.Source(constant @ Ast.ConstantVarDef(thisIdent, _), _), _) if thisIdent == ident =>
           SourceLocation.Node(
-            ast = constant,
+            ast = constant.ident,
             source = source
           )
       }
@@ -251,7 +278,7 @@ private[search] object GoToDefIdent {
    */
   private def goToTemplateDefinitionsAndArguments(
       ident: Ast.Ident,
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Positioned]] = {
+      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] = {
     val constantsAndMaps =
       goToTemplateLevelDefinitions(
         ident = ident,
@@ -276,7 +303,7 @@ private[search] object GoToDefIdent {
    */
   private def goToTemplateLevelDefinitions(
       ident: Ast.Ident,
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] =
     sourceCode
       .tree
       .rootNode
@@ -284,10 +311,10 @@ private[search] object GoToDefIdent {
       .map(_.data)
       .collect {
         case constant: Ast.ConstantVarDef[_] if constant.ident == ident =>
-          SourceLocation.Node(constant, sourceCode)
+          SourceLocation.Node(constant.ident, sourceCode)
 
         case mapDef: Ast.MapDef if mapDef.ident == ident =>
-          SourceLocation.Node(mapDef, sourceCode)
+          SourceLocation.Node(mapDef.ident, sourceCode)
       }
 
   /**
@@ -413,7 +440,7 @@ private[search] object GoToDefIdent {
    */
   private def goToTemplateArguments(
       ident: Ast.Ident,
-      sourceCode: SourceLocation.Code): Seq[SourceLocation.Node[Ast.Argument]] = {
+      sourceCode: SourceLocation.Code): Seq[SourceLocation.Node[Ast.Ident]] = {
     val arguments =
       sourceCode.tree.ast match {
         case ast: Ast.TxScript =>
@@ -428,7 +455,13 @@ private[search] object GoToDefIdent {
 
     arguments
       .filter(_.ident == ident)
-      .map(SourceLocation.Node(_, sourceCode))
+      .map {
+        argument =>
+          SourceLocation.Node(
+            ast = argument.ident,
+            source = sourceCode
+          )
+      }
   }
 
   /**
@@ -442,7 +475,7 @@ private[search] object GoToDefIdent {
   private def goToMapFunction(
       ident: Ast.Ident,
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.MapDef]] =
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] =
     WorkspaceSearcher
       .collectInheritedParents(sourceCode, workspace)
       .parentTrees
@@ -451,7 +484,7 @@ private[search] object GoToDefIdent {
         code =>
           code.tree.rootNode.walkDown.collect {
             case Node(mapDef: Ast.MapDef, _) if mapDef.ident == ident =>
-              SourceLocation.Node(mapDef, code)
+              SourceLocation.Node(mapDef.ident, code)
           }
       }
 
@@ -465,11 +498,11 @@ private[search] object GoToDefIdent {
    */
   private def goToTemplateArgument(
       ident: Ast.Ident,
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Argument]] =
+      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] =
     sourceCode.tree.rootNode.walkDown.collect {
       // ident should match and that argument's parent must be a top level object i.e. a Contract, Abstract Contract etc
       case node @ Node(ast: Ast.Argument, _) if ast.ident == ident && node.parent.exists(_.data == sourceCode.tree.rootNode.data) =>
-        SourceLocation.Node(ast, sourceCode)
+        SourceLocation.Node(ast.ident, sourceCode)
     }
 
 }

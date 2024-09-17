@@ -18,7 +18,6 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.protocol.vm.StatefulContext
 import org.alephium.ralph.Ast
-import org.alephium.ralph.lsp.access.compiler.ast.AstExtra
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
@@ -69,16 +68,18 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
           case Node(funcDef: Ast.FuncDef[_], _) if funcDef.id == funcIdNode.data =>
             Iterator(
               SourceLocation.Node(
-                ast = funcDef,
+                ast = funcDef.id,
                 source = sourceCode
               )
             )
 
-          case _ =>
+          case Node(ast, _) =>
+            logger.error(s"GoTo not implemented for parent node '${ast.getClass.getSimpleName}' at source index '${ast.sourceIndex}'")
             Iterator.empty
         }
 
       case None =>
+        logger.error(s"Parent node not found for AST '${funcIdNode.data.getClass.getSimpleName}' at source index '${funcIdNode.data.sourceIndex}'")
         Iterator.empty
     }
 
@@ -195,7 +196,7 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
       .map {
         funcDef =>
           SourceLocation.Node(
-            ast = AstExtra.funcSignature(funcDef.ast),
+            ast = funcDef.ast.id,
             source = funcDef.source
           )
       }
