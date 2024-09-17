@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.pc.search.gotoref
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 
-object IncludeDeclaration {
+private object IncludeDeclaration {
 
   def add(
       definitionAST: Ast.TypeId,

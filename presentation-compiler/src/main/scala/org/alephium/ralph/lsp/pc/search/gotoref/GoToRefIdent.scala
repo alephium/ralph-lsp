@@ -24,7 +24,7 @@ import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefTypeId.goToNearestFuncDef
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
-object GoToRefIdent extends StrictImplicitLogging {
+private object GoToRefIdent extends StrictImplicitLogging {
 
   /**
    * Navigates to the definition of a token in the source code.

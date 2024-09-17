@@ -25,7 +25,7 @@ import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 import scala.collection.immutable.ArraySeq
 
-private[search] object GoToDefIdent extends StrictImplicitLogging {
+private object GoToDefIdent extends StrictImplicitLogging {
 
   /**
    * Navigate to the argument(s) for the given identifier.

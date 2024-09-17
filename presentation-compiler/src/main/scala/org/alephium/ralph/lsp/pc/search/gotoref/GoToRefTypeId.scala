@@ -24,7 +24,7 @@ import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
-object GoToRefTypeId extends StrictImplicitLogging {
+private object GoToRefTypeId extends StrictImplicitLogging {
 
   /**
    * Navigates to the references of a token in the source code.

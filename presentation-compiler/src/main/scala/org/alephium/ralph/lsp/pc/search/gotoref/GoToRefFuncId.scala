@@ -25,7 +25,7 @@ import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, ImplementingChildren
 
 import scala.collection.immutable.ArraySeq
 
-object GoToRefFuncId extends StrictImplicitLogging {
+private object GoToRefFuncId extends StrictImplicitLogging {
 
   def goTo(
       definition: Node[Ast.FuncId, Ast.Positioned],
