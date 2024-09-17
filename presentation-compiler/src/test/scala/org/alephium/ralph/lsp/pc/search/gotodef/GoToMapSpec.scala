@@ -37,6 +37,42 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "map definition itself is selected" in {
+      goToDefinition(
+        """
+          |Abstract Contract Parent() {
+          |  mapping[Address, U256] >>coun@@ters<<
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "duplicate maps exist" when {
+      "first map is selected" in {
+        goToDefinition(
+          """
+            |Abstract Contract Parent() {
+            |  mapping[Address, U256] >>coun@@ters<<
+            |  mapping[Address, U256] counters
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "second map is selected" in {
+        goToDefinition(
+          """
+            |Abstract Contract Parent() {
+            |  mapping[Address, U256] counters
+            |  mapping[Address, U256] >>coun@@ters<<
+            |}
+            |""".stripMargin
+        )
+      }
+    }
+  }
+
   "return non-empty" when {
     "map value is extracted" in {
       goToDefinition(
