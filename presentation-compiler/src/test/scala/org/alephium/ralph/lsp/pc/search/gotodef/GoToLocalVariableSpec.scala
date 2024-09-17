@@ -39,6 +39,54 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "variable itself is selected" in {
+      goToDefinition(
+        """
+          |Contract Test() {
+          |
+          |  pub fn function() -> () {
+          |    let >>var@@A<< = 123
+          |  }
+          |
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "duplicate variables exists" when {
+      "first var is selected" in {
+        goToDefinition(
+          """
+            |Contract Test() {
+            |
+            |  pub fn function() -> () {
+            |    let >>var@@A<< = 123
+            |    let varA = 123
+            |  }
+            |
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "second var is selected" in {
+        goToDefinition(
+          """
+            |Contract Test() {
+            |
+            |  pub fn function() -> () {
+            |    let varA = 123
+            |    let >>var@@A<< = 123
+            |  }
+            |
+            |}
+            |""".stripMargin
+        )
+      }
+    }
+  }
+
   "return non-empty" when {
     "single local variable exists" in {
       goToDefinition(
