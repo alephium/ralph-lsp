@@ -124,6 +124,21 @@ object RalphLangServer extends StrictImplicitLogging {
     allows contains true
   }
 
+  /**
+   * Executes Go-to services.
+   *
+   * @param fileURI        URI of the file where this request was executed.
+   * @param line           Line number within the file where this request was executed.
+   * @param character      Character number within the Line where this request was executed.
+   * @param searchSettings Settings defined for the input [[CodeProvider]].
+   * @param cancelChecker  Cancellation support instance.
+   * @param currentState   Current presentation-compiler state.
+   * @param codeProvider   Target [[CodeProvider]] to use for responding to this request.
+   * @param logger         Remote client and local logger.
+   * @tparam I The type of input [[CodeProvider]] settings.
+   * @tparam O The type of [[CodeProvider]] function output.
+   * @return Go-to search results.
+   */
   def goTo[I, O <: SourceLocation.GoTo](
       fileURI: URI,
       line: Int,

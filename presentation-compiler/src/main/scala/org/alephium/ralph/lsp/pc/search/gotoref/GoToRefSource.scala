@@ -31,7 +31,7 @@ private object GoToRefSource extends StrictImplicitLogging {
       workspace: WorkspaceState.IsSourceAware,
       isIncludeDeclaration: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
-    // request is for source-code go-to definition
+    // request is for source-code go-to references
     CodeProvider
       .goToDefinition
       .search(

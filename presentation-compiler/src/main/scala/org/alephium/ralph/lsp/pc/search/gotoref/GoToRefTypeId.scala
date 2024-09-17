@@ -27,11 +27,11 @@ import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 object GoToRefTypeId extends StrictImplicitLogging {
 
   /**
-   * Navigates to the definition of a token in the source code.
+   * Navigates to the references of a token in the source code.
    *
-   * @param cursorIndex The index of the token clicked by the user.
-   * @param sourceCode  The parsed state of the source-code where the search is executed.
-   * @param workspace   The workspace where this search was executed and where all the source trees exist.
+   * @param definition The definition to search references for.
+   * @param sourceCode The parsed state of the source-code where the search is executed.
+   * @param workspace  The workspace where this search was executed and where all the source trees exist.
    * @return An iterator over the target go-to location(s).
    */
   def goTo(

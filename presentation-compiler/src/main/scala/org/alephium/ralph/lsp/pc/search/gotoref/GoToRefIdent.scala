@@ -29,9 +29,9 @@ object GoToRefIdent extends StrictImplicitLogging {
   /**
    * Navigates to the definition of a token in the source code.
    *
-   * @param cursorIndex The index of the token clicked by the user.
-   * @param sourceCode  The parsed state of the source-code where the search is executed.
-   * @param workspace   The workspace where this search was executed and where all the source trees exist.
+   * @param definition The definition to search references for.
+   * @param sourceCode The parsed state of the source-code where the search is executed.
+   * @param workspace  The workspace where this search was executed and where all the source trees exist.
    * @return An iterator over the target go-to location(s).
    */
   def goTo(
@@ -61,7 +61,7 @@ object GoToRefIdent extends StrictImplicitLogging {
 
           case node @ Node(field: Ast.EventField, _) =>
             // They selected an event field.
-            // Check the parent to find the event definition.
+            // Check the parent to find the event references.
             val result =
               goToEventFieldUsages(
                 node = node.upcast(field),
