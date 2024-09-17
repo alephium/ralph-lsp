@@ -42,7 +42,7 @@ class GoToEventIdUsageSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "an event usage exists" in {
-      goToReferences(
+      goToReferencesForAll(">>Transfer<<".r, ">>Transfe@@r<<")(
         """
           |Contract Test() {
           |
@@ -57,7 +57,7 @@ class GoToEventIdUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "multiple usage exists" in {
-      goToReferences(
+      goToReferencesForAll(">>Transfer<<".r, ">>Transfe@@r<<")(
         """
           |Contract Test() {
           |
@@ -76,7 +76,7 @@ class GoToEventIdUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "there is inheritance" in {
-      goToReferences(
+      goToReferencesForAll(">>Transfer<<".r, ">>Transfe@@r<<")(
         """
           |Abstract Contract Parent() {
           |

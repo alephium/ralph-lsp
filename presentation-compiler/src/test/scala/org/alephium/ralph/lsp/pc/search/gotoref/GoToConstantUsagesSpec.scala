@@ -17,7 +17,6 @@
 package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
-import org.scalatest.Assertion
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -60,8 +59,8 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
   "return non-empty" when {
     "constant has multiple usages" when {
       "local constants" when {
-        def doTest(contractName: String): Assertion =
-          goToReferences(
+        def doTest(contractName: String) =
+          goToReferencesForAll(">>MyConstant<<".r, ">>MyCons@@tant<<")(
             s"""
                |Contract $contractName() {
                |
@@ -93,7 +92,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
       }
 
       "global constants" when {
-        def doTest(contractName: String): Assertion =
+        def doTest(contractName: String) =
           goToReferences(
             s"""
                |const MyCons@@tant = 0
@@ -128,7 +127,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
 
     "there is inheritance" when {
       "local constant" in {
-        goToReferences(
+        goToReferencesForAll(">>MyConstant<<".r, ">>MyCons@@tant<<")(
           """
             |Abstract Contract Parent() {
             |
@@ -166,7 +165,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
         def doTest(
             before: String,
             after: String) =
-          goToReferences(
+          goToReferencesForAll(">>MyConstant<<".r, ">>MyCons@@tant<<")(
             s"""
               |$before
               |
@@ -219,7 +218,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
 
     "constant is used within array type definition" when {
       "global constant" in {
-        goToReferences {
+        goToReferencesForAll(">>SIZE<<".r, ">>SIZE@@<<")(
           """
             |const SIZE@@ = 2
             |
@@ -229,11 +228,11 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
             |  }
             |}
             |""".stripMargin
-        }
+        )
       }
 
       "local constant" in {
-        goToReferences {
+        goToReferencesForAll(">>SIZE<<".r, ">>SIZE@@<<")(
           """
             |Contract Test() {
             |
@@ -244,7 +243,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
             |  }
             |}
             |""".stripMargin
-        }
+        )
       }
     }
   }

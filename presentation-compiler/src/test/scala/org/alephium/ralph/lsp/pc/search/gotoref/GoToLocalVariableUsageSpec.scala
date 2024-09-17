@@ -41,7 +41,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "a single usage exists" in {
-      goToReferences(
+      goToReferencesForAll(">>varA<<".r, ">>var@@A<<")(
         """
           |Contract GoToTest() {
           |
@@ -56,7 +56,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "multiple local variables exists" in {
-      goToReferences(
+      goToReferencesForAll(">>varB<<".r, ">>var@@B<<")(
         """
           |Contract GoToTest() {
           |
@@ -73,7 +73,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "local variable and arguments have the same name" in {
-      goToReferences(
+      goToReferencesForAll(">>varB<<".r, ">>var@@B<<")(
         """
           |Contract GoToTest(varA: Bool) {
           |
@@ -93,7 +93,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "usages exist in a for loop" in {
-      goToReferences(
+      goToReferencesForAll(">>counter<<".r, ">>counte@@r<<")(
         """
           |Contract Test() {
           |

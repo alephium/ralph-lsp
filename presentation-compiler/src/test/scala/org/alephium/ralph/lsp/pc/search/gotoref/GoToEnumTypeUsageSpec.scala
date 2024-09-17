@@ -69,7 +69,7 @@ class GoToEnumTypeUsageSpec extends AnyWordSpec with Matchers {
             |}
             |""".stripMargin
 
-        goToReferences(
+        goToReferencesForAll(">>EnumType<<".r, ">>EnumTyp@@e<<")(
           s"""
               |${if (global) enumDef else ""}
               |
@@ -113,7 +113,7 @@ class GoToEnumTypeUsageSpec extends AnyWordSpec with Matchers {
             |}
             |""".stripMargin
 
-        goToReferences(
+        goToReferencesForAll(">>EnumType<<".r, ">>EnumTyp@@e<<")(
           s"""
             |${if (global) enumDef else ""}
             |

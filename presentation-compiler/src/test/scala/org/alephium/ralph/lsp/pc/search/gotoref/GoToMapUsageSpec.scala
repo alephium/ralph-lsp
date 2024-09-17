@@ -39,7 +39,7 @@ class GoToMapUsageSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "map has usages" in {
-      goToReferences(
+      goToReferencesForAll(">>counters<<".r, ">>counter@@s<<")(
         """
           |Abstract Contract Parent() {
           |  mapping[Address, U256] counter@@s

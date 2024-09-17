@@ -46,7 +46,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "function usage exist" in {
-      goToReferences(
+      goToReferencesForAll(">>function_a<<".r, ">>functio@@n_a<<")(
         """
           |Contract MyContract(interface: MyInterface) {
           |
@@ -76,7 +76,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "function usage exist within inheritance" in {
-      goToReferences(
+      goToReferencesForAll(">>function_a<<".r, ">>functio@@n_a<<")(
         """
           |Abstract Contract Parent() {
           |
@@ -100,7 +100,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "function usage exist using a contract call (no inheritance)" in {
-      goToReferences(
+      goToReferencesForAll(">>function_a<<".r, ">>functio@@n_a<<")(
         """
           |Contract MyContract() {
           |
@@ -124,7 +124,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "function is defined in a Parent and usage is via an instance of the Child" in {
-      goToReferences(
+      goToReferencesForAll(">>parentFunction<<".r, ">>parentFunctio@@n<<")(
         """
           |Abstract Contract Parent() {
           |

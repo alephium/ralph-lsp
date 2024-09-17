@@ -40,7 +40,7 @@ class GoToTypeIdContractUsageSpec extends AnyWordSpec with Matchers {
   "return non-empty" when {
     "usage exists" when {
       "within itself" in {
-        goToReferences {
+        goToReferencesForAll(">>This<<".r, ">>Thi@@s<<")(
           """
             |Contract This@@(
             |                 this: >>This<<)
@@ -52,11 +52,11 @@ class GoToTypeIdContractUsageSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-        }
+        )
       }
 
       "within another Contract" in {
-        goToReferences {
+        goToReferencesForAll(">>This<<".r, ">>Thi@@s<<")(
           """
             |Contract This@@() {
             |
@@ -75,7 +75,7 @@ class GoToTypeIdContractUsageSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-        }
+        )
       }
     }
   }

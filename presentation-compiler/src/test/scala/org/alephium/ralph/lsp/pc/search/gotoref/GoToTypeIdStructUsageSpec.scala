@@ -38,27 +38,27 @@ class GoToTypeIdStructUsageSpec extends AnyWordSpec with Matchers {
   "return non-empty" when {
     "usage exists" when {
       "within itself" in {
-        goToReferences {
+        goToReferencesForAll(">>Foo<<".r, ">>Fo@@o<<")(
           """
             |struct Foo@@ {
             |  x: U256,
             |  mut foo: >>Foo<<
             |}
             |""".stripMargin
-        }
+        )
       }
 
       "within another struct" in {
-        goToReferences {
+        goToReferencesForAll(">>Foo<<".r, ">>Fo@@o<<")(
           """
             |struct Foo@@ { x: U256 }
             |struct Bar { mut foo: >>Foo<< }
             |""".stripMargin
-        }
+        )
       }
 
       "within a contract" in {
-        goToReferences {
+        goToReferencesForAll(">>Foo<<".r, ">>Fo@@o<<")(
           """
             |struct Foo@@ { x: U256 }
             |
@@ -70,7 +70,7 @@ class GoToTypeIdStructUsageSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-        }
+        )
       }
     }
   }

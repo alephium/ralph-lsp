@@ -36,7 +36,7 @@ class GoToArgumentUsageInTxScriptSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "template argument is used" in {
-      goToReferences(
+      goToReferencesForAll(">>param2<<".r, ">>para@@m2<<")(
         """
           |TxScript GoToArgument(param1: ParamType, param2@@: ParamType) {
           |  let result = >>param2<<.someFunction()

@@ -70,7 +70,7 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          goToReferences(
+          goToReferencesForAll(">>Field0<<".r, ">>Fie@@ld0<<")(
             s"""
               |${if (global) enumDef else ""}
               |
@@ -113,7 +113,7 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          goToReferences(
+          goToReferencesForAll(">>Field1<<".r, ">>Fie@@ld1<<")(
             s"""
                |${if (global) enumDef else ""}
                |
@@ -156,7 +156,7 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          goToReferences(
+          goToReferencesForAll(">>Field1<<".r, ">>Fie@@ld1<<")(
             s"""
                |${if (global) enumDef else ""}
                |

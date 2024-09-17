@@ -18,9 +18,9 @@ package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.TestCommon
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.access.util.TestCodeUtil
+import org.alephium.ralph.lsp.access.util.{TestCodeUtil, StringUtil}
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
@@ -36,6 +36,7 @@ import org.scalatest.matchers.should.Matchers._
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
+import scala.util.matching.Regex
 
 object TestCodeProvider {
 
@@ -61,17 +62,90 @@ object TestCodeProvider {
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
-  def goToDefinition(code: String): Assertion =
+  def goToDefinition(code: String): List[(URI, LineRange)] =
     goTo[Unit, SourceLocation.GoToDef](
       code = code,
       searchSettings = ()
     )
 
-  def goToReferences(code: String): Assertion =
+  def goToReferences(code: String): List[(URI, LineRange)] =
     goTo[Boolean, SourceLocation.GoToRef](
       code = code,
       searchSettings = false
     )
+
+  /**
+   * Background: Go-to references should output the same result, regardless of whether it is executed
+   * on the definition/declaration or on the usages.
+   *
+   * This function first runs "Find References" on the given code (which is executed on the declaration)
+   * and then on all references. It asserts that, in both cases, the references returned must ALWAYS be the same.
+   *
+   * @param referencesFinder     The regex that matches references, eg: `>>MyContract<<`.
+   * @param referenceReplacement The string used to replace references in the code, eg: `>>MyCont@@ract<<`.
+   * @param code                 Initial code to run the test on.
+   * @return List of ranges where the references were found.
+   */
+  def goToReferencesForAll(
+      referencesFinder: Regex,
+      referenceReplacement: String
+    )(code: String): Unit = {
+    // Initially, execute the test defined.
+    // This should be most expressed on the declaration.
+    val firstResult =
+      goToReferences(code)
+        .map(_._2)
+
+    // remove the select indicator @@ from the code.
+    val codeWithoutSelectSymbol =
+      code.replace(TestCodeUtil.SEARCH_INDICATOR, "")
+
+    // find all matches
+    val matches =
+      referencesFinder
+        .findAllMatchIn(codeWithoutSelectSymbol)
+        .toList
+
+    if (matches.isEmpty)
+      fail(s"No matches found for regex '$referencesFinder' with replacement '$referenceReplacement'")
+
+    // execute the same test on all matches
+    matches foreach {
+      matched =>
+        // replace the `>>MyContract<<` with the `referenceReplacement` string.
+        val newCode =
+          StringUtil.replaceSubstring(
+            string = codeWithoutSelectSymbol,
+            start = matched.start,
+            end = matched.end,
+            replacement = referenceReplacement
+          )
+
+        def reportCodeOnFailure[T](test: => T): T =
+          try
+            test
+          catch {
+            case throwable: Throwable =>
+              // report the code that failed
+              fail(newCode, throwable)
+          }
+
+        // The code must have changed.
+        // No point running test on the same code.
+        codeWithoutSelectSymbol should not be newCode
+
+        val newRanges =
+          reportCodeOnFailure {
+            goToReferences(newCode)
+              .map(_._2)
+          }
+
+        // also check that the result is the same as the first ranges returned on declaration.
+        reportCodeOnFailure {
+          firstResult should contain theSameElementsAs newRanges
+        }
+    }
+  }
 
   /**
    * Runs GoTo definition where `@@` is located
@@ -85,7 +159,7 @@ object TestCodeProvider {
   def goTo[I, O <: SourceLocation.GoTo](
       code: String,
       searchSettings: I
-    )(implicit codeProvider: CodeProvider[I, O]): Assertion = {
+    )(implicit codeProvider: CodeProvider[I, O]): List[(URI, LineRange)] = {
     // To find line ranges remove the select indicator @@
     val codeWithoutSelectSymbol =
       code.replace(TestCodeUtil.SEARCH_INDICATOR, "")
@@ -125,6 +199,7 @@ object TestCodeProvider {
 
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
     actual should contain theSameElementsAs expectedGoToLocations
+    actual
   }
 
   /**

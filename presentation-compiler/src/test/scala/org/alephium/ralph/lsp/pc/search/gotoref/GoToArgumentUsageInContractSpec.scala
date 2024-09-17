@@ -38,7 +38,7 @@ class GoToArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "function argument is used" in {
-      goToReferences(
+      goToReferencesForAll(">>param1<<".r, ">>para@@m1<<")(
         """
           |Contract GoToArgument() {
           |  pub fn function(param1@@: ParamType, param2: ParamType) -> () {
@@ -64,7 +64,7 @@ class GoToArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
     }
 
     "template argument is used" in {
-      goToReferences(
+      goToReferencesForAll(">>param1<<".r, ">>para@@m1<<")(
         """
           |Contract GoToArgument(param1@@: ParamType, param2: ParamType) {
           |  pub fn function(param3: ParamType) -> () {
@@ -91,7 +91,7 @@ class GoToArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
 
     "arguments are inherited" when {
       "from a function" in {
-        goToReferences(
+        goToReferencesForAll(">>param1<<".r, ">>para@@m1<<")(
           """
             |// Nothing from parent gets used
             |Abstract Contract Parent() {
@@ -121,7 +121,7 @@ class GoToArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
 
       "from the template" when {
         "parameter is defined in Parent" when {
-          "there are no duplicate names" in {
+          "there are no template argument duplicate names" in {
             goToReferences(
               """
               |Abstract Contract Parent(param1@@: ParamType) {
@@ -144,6 +144,32 @@ class GoToArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
               |
               |}
               |""".stripMargin
+            )
+          }
+
+          "there are no duplicate names" in {
+            goToReferencesForAll(">>param1<<".r, ">>para@@m1<<")(
+              """
+                |Abstract Contract Parent(param1@@: ParamType) {
+                |
+                |  pub fn function(param0: ParamType, param2: ParamType) -> () {
+                |    let result = >>param1<<.someFunction()
+                |  }
+                |
+                |}
+                |
+                |Contract Child() extends Parent() {
+                |
+                |  pub fn function(param2: ParamType) -> () {
+                |    let result = >>param1<<.someFunction()
+                |  }
+                |
+                |  pub fn function2(param0: ParamType, param2: ParamType) -> () {
+                |    let result = >>param1<<.someFunction()
+                |  }
+                |
+                |}
+                |""".stripMargin
             )
           }
 
