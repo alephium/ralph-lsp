@@ -37,6 +37,36 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "the function itself is selected" in {
+      goToDefinition(
+        """
+          |Abstract Contract Action() {
+          |  fn >>funct@@ion<<() -> Bool
+          |}
+          |
+          |""".stripMargin
+      )
+    }
+
+    "duplicate functions exist" when {
+      "second duplicate is selected" should {
+        "still select only itself" in {
+          goToDefinition(
+            """
+              |Abstract Contract Action() {
+              |  fn function() -> Bool
+              |
+              |  fn >>funct@@ion<<() -> Bool
+              |}
+              |
+              |""".stripMargin
+          )
+        }
+      }
+    }
+  }
+
   "go to the function" when {
     "function exists" in {
       goToDefinition(
