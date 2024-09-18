@@ -25,16 +25,24 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 private object GoToRefSource extends StrictImplicitLogging {
 
+  /**
+   * Navigates to the references of a token in the source code.
+   *
+   * @param cursorIndex          The index of the token selected.
+   * @param sourceCode           The parsed state of the source-code where the search is executed.
+   * @param workspace            The workspace where this search was executed and where all the source trees exist.
+   * @param isIncludeDeclaration True if the search result should also include the declarations.
+   * @return An iterator reference location(s).
+   */
   def goTo(
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
       isIncludeDeclaration: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
-    // request is for source-code go-to references
     CodeProvider
       .goToDefinition
-      .search(
+      .search( // find definitions for the token at the given cursorIndex.
         cursorIndex = cursorIndex,
         sourceCode = sourceCode,
         workspace = workspace,
@@ -45,6 +53,7 @@ private object GoToRefSource extends StrictImplicitLogging {
           Iterator.empty
 
         case location @ SourceLocation.Node(_, _) =>
+          // find references for the definitions
           goTo(
             defLocation = location,
             workspace = workspace,
@@ -52,6 +61,14 @@ private object GoToRefSource extends StrictImplicitLogging {
           )
       }
 
+  /**
+   * Navigates to the references of a token in the source code.
+   *
+   * @param defLocation          The definition/declaration node of the token selected.
+   * @param workspace            The workspace where this search was executed and where all the source trees exist.
+   * @param isIncludeDeclaration True if the search result should also include the declarations.
+   * @return An iterator reference location(s).
+   */
   def goTo(
       defLocation: SourceLocation.Node[Ast.Positioned],
       workspace: WorkspaceState.IsSourceAware,
@@ -63,8 +80,9 @@ private object GoToRefSource extends StrictImplicitLogging {
         .tree
         .rootNode
         .walkDown
-        .find(_.data eq defLocation.ast)
+        .find(_.data eq defLocation.ast) // find the node where this definition belongs.
 
+    // Execute go-to references
     defNode match {
       case Some(defNode @ Node(ident: Ast.Ident, _)) =>
         GoToRefIdent.goTo(

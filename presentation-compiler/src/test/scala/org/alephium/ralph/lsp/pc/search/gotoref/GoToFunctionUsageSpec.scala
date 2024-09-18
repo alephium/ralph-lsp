@@ -50,7 +50,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
         """
           |Contract MyContract(interface: MyInterface) {
           |
-          |  // function_a is clicked and it has 5 call
+          |  // function_a is selected and it has 5 call
           |  pub fn @@function_a(boolean: Bool) -> () {
           |    let call1 = >>function_a<<(true)
           |    >>function_a<<(false)

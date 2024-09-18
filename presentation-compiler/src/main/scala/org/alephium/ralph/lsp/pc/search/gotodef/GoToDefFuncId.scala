@@ -44,7 +44,7 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
       case Some(parent) =>
         parent match {
           case Node(callExpr: Ast.CallExpr[_], _) if callExpr.id == funcIdNode.data =>
-            // The user clicked on a local function. Take 'em there!
+            // The user selected on a local function. Take 'em there!
             goToFunction(
               funcId = callExpr.id,
               sourceCode = sourceCode,

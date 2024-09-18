@@ -28,7 +28,7 @@ private object GoToDefSource extends StrictImplicitLogging {
   /**
    * Navigates to the definition of a token in the source code.
    *
-   * @param cursorIndex The index of the token clicked by the user.
+   * @param cursorIndex The index of the token selected.
    * @param sourceCode  The parsed state of the source-code where the search is executed.
    * @param workspace   The workspace where this search was executed and where all the source trees exist.
    * @return An iterator over the target go-to location(s).
@@ -42,7 +42,7 @@ private object GoToDefSource extends StrictImplicitLogging {
       case Some(closest) =>
         closest match {
           case identNode @ Node(ident: Ast.Ident, _) =>
-            // the clicked/closest node is an ident
+            // the selected/closest node is an ident
             GoToDefIdent.goTo(
               identNode = identNode.upcast(ident),
               sourceCode = sourceCode,
@@ -50,7 +50,7 @@ private object GoToDefSource extends StrictImplicitLogging {
             )
 
           case funcIdNode @ Node(funcId: Ast.FuncId, _) =>
-            // the clicked/closest node is functionId
+            // the selected/closest node is functionId
             GoToDefFuncId.goTo(
               funcIdNode = funcIdNode.upcast(funcId),
               sourceCode = sourceCode,
@@ -58,7 +58,7 @@ private object GoToDefSource extends StrictImplicitLogging {
             )
 
           case typIdNode @ Node(typeId: Ast.TypeId, _) =>
-            // the clicked/closest node is TypeId
+            // the selected/closest node is TypeId
             GoToDefTypeId.goTo(
               typeIdNode = typIdNode.upcast(typeId),
               sourceCode = sourceCode,

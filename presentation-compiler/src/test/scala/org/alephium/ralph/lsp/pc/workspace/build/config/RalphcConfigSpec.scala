@@ -192,7 +192,7 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
         }
 
       Files.createDirectory(Build.toBuildDir(workspacePath))
-      // create only if the dependencyPath is provided by the user i.e. is in the parsed config
+      // create only if the dependencyPath is provided by the dev i.e. is in the parsed config
       // otherwise expect the dependency compiler to write to the default dependencyPath
       config
         .dependencyPath
