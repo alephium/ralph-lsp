@@ -14,23 +14,20 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.search.gotodef
+package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class GoToMapUsageSpec extends AnyWordSpec with Matchers {
+class GoToArgumentUsageInTxScriptSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
-    "there is no map usage" in {
-      goTo(
+    "argument is not used" in {
+      goToReferences(
         """
-          |Contract Test() {
-          |
-          |  mapping[Address, U256] counter@@s
-          |
-          |  pub fn function() -> () { }
+          |TxScript GoToArgument(interfa@@ce: MyInterface) {
+          |  let result = blah.function()
           |}
           |""".stripMargin
       )
@@ -38,21 +35,25 @@ class GoToMapUsageSpec extends AnyWordSpec with Matchers {
   }
 
   "return non-empty" when {
-    "map has usages" in {
-      goTo(
+    "template argument is used" in {
+      goToReferencesForAll(">>param2<<".r, ">>para@@m2<<")(
         """
-          |Abstract Contract Parent() {
-          |  mapping[Address, U256] counter@@s
-          |}
-          |
-          |Contract Child() extends Parent() {
-          |
-          |  pub fn function() -> Boolean {
-          |    let value = >>counters[key]<<
-          |    >>counters[key]<< = value + 1
-          |    >>counters.insert!(depositor, key, 0)<<
-          |    >>counters.remove!(depositRecipient, key)<<
-          |    return >>counters.contains!(callerAddress!())<<
+          |TxScript GoToArgument(param1: ParamType, param2@@: ParamType) {
+          |  let result = >>param2<<.someFunction()
+          |  assert!(abc == >>param2<<, ErrorCode.SomeError)
+          |  let param2_copy = >>param2<<
+          |  >>param2<< =
+          |       >>param2<< + 1
+          |  >>param2<< = 0 // reset
+          |  emit Mint(>>param2<<, 1)
+          |  function(
+          |    >>param2<<,
+          |    >>param2<<
+          |  )
+          |  for (let mut varA = >>param2<<;
+          |               varA <= 4;
+          |               varA = >>param2<< + 1) {
+          |     function(>>param2<<)
           |  }
           |}
           |""".stripMargin

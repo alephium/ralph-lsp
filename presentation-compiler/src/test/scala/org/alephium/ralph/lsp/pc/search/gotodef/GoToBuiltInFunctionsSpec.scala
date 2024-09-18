@@ -50,20 +50,20 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
               |  }
               |}
               |""".stripMargin,
-          expected = Some("""fn assert!(condition:Bool, errorCode:U256) -> ()""")
+          expected = Some("""assert!""")
         )
       }
 
       "custom builtin library" in {
         // Expect go-to definition to work on the following custom builtin code
-        goTo(
+        goToDefinition(
           dependencyId = DependencyID.BuiltIn,
           // the custom builtin library
           dependency = """
               |Interface TestBuiltIn {
               |  fn hello!() -> ()
               |
-              |  >>fn assert!() -> ()<<
+              |  fn >>assert!<<() -> ()
               |
               |  fn blah!() -> ()
               |}
@@ -92,7 +92,7 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
             |  }
             |}
             |""".stripMargin,
-        expected = Some("""fn verifyAbsoluteLocktime!(lockUntil:U256) -> ()""")
+        expected = Some("""verifyAbsoluteLocktime!""")
       )
     }
 
@@ -111,7 +111,7 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
             |  }
             |}
             |""".stripMargin,
-        expected = Some("""fn assert!(condition:Bool, errorCode:U256) -> ()""")
+        expected = Some("""assert!""")
       )
     }
   }

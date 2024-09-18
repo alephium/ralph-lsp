@@ -19,10 +19,11 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.AstExtra
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
-private object GoToTypeId {
+private object GoToDefTypeId extends StrictImplicitLogging {
 
   /**
    * Navigate to the positioned ASTs for the given type identifier.
@@ -35,7 +36,8 @@ private object GoToTypeId {
   def goTo(
       typeIdNode: Node[Ast.TypeId, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
     typeIdNode.parent match { // take one step up to check the type of TypeId node.
       case Some(parent) =>
         parent match {
@@ -43,14 +45,6 @@ private object GoToTypeId {
             // They selected an enum type. Take 'em there!
             goToEnumType(
               enumFieldSelector = enumFieldSelector,
-              sourceCode = sourceCode,
-              workspace = workspace
-            )
-
-          case Node(enumDef: Ast.EnumDef[_], _) if enumDef.id == typeIdNode.data =>
-            // They selected an enum definition. Find enum usages.
-            goToEnumDefUsage(
-              enumDef = enumDef,
               sourceCode = sourceCode,
               workspace = workspace
             )
@@ -63,18 +57,33 @@ private object GoToTypeId {
               .iterator
               .flatMap(goToEventDef(emitEvent, _))
 
+          case Node(enumDef: Ast.EnumDef[_], _) if enumDef.id == typeIdNode.data =>
+            Iterator(
+              SourceLocation.Node(
+                ast = enumDef.id,
+                source = sourceCode
+              )
+            )
+
           case Node(eventDef: Ast.EventDef, _) if eventDef.id == typeIdNode.data =>
-            // They selected an event definition. Find event usages.
-            WorkspaceSearcher
-              .collectImplementingChildren(sourceCode, workspace)
-              .childTrees
-              .iterator
-              .flatMap(goToEventDefUsage(eventDef, _))
+            Iterator(
+              SourceLocation.Node(
+                ast = eventDef.id,
+                source = sourceCode
+              )
+            )
 
           case Node(globalDef: Ast.GlobalDefinition, _) if AstExtra.getTypeId(globalDef) contains typeIdNode.data =>
-            goToTypeIdUsage(
-              selectedTypId = typeIdNode.data,
-              workspace = workspace
+            val id =
+              AstExtra
+                .getIdentOrTypeId(globalDef)
+                .merge
+
+            Iterator(
+              SourceLocation.Node(
+                ast = id,
+                source = sourceCode
+              )
             )
 
           case _ =>
@@ -86,33 +95,9 @@ private object GoToTypeId {
         }
 
       case None =>
+        logger.error(s"Parent node not found for AST '${typeIdNode.data.getClass.getSimpleName}' at source index '${typeIdNode.data.sourceIndex}'")
         Iterator.empty
     }
-
-  /**
-   * Navigate to the enum definition usages.
-   *
-   * @param enumDef    The enum definition to find usages for.
-   * @param sourceCode The parsed state of the source-code where the search was executed.
-   * @param workspace  The workspace where this search was executed and where all the source trees exist.
-   * @return An array sequence of enum [[Ast.TypeId]]s matching the enum definition.
-   */
-  def goToEnumDefUsage(
-      enumDef: Ast.EnumDef[_],
-      sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] = {
-    val trees =
-      if (sourceCode.tree.ast == enumDef)
-        WorkspaceSearcher.collectAllTrees(workspace) // It's a global enum, search all workspace trees
-      else
-        WorkspaceSearcher // It's a local enum, search only the trees within the scope of inheritance
-          .collectImplementingChildren(sourceCode, workspace)
-          .childTrees
-
-    trees
-      .iterator
-      .flatMap(goToEnumTypeUsage(enumDef, _))
-  }
 
   /**
    * Navigate to the enum types for the given enum field selector.
@@ -182,25 +167,6 @@ private object GoToTypeId {
     }
 
   /**
-   * Navigate to the enum type name usage.
-   *
-   * @param enumDef The enum definition containing the enum type identifier to find calls for.
-   * @param source  The source tree to search within.
-   * @return An array sequence of enum type [[Ast.TypeId]]s matching the search result.
-   */
-  private def goToEnumTypeUsage(
-      enumDef: Ast.EnumDef[_],
-      source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
-    source
-      .tree
-      .rootNode
-      .walkDown
-      .collect {
-        case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumDef.id =>
-          SourceLocation.Node(selector.enumId, source)
-      }
-
-  /**
    * Navigate to the event definition.
    *
    * @param emitEvent The event definition contain the event type identifier to find calls for.
@@ -209,33 +175,14 @@ private object GoToTypeId {
    */
   private def goToEventDef(
       emitEvent: Ast.EmitEvent[_],
-      source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.EventDef]] =
-    source
-      .tree
-      .rootNode
-      .walkDown
-      .collect {
-        case Node(eventDef: Ast.EventDef, _) if eventDef.id == emitEvent.id =>
-          SourceLocation.Node(eventDef, source)
-      }
-
-  /**
-   * Navigate to the event type name usages.
-   *
-   * @param eventDef The event definition containing the enum type identifier to find calls for.
-   * @param source   The source tree to search within.
-   * @return An array sequence of enum type [[Ast.TypeId]]s matching the search result.
-   */
-  private def goToEventDefUsage(
-      eventDef: Ast.EventDef,
       source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
     source
       .tree
       .rootNode
       .walkDown
       .collect {
-        case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == eventDef.id =>
-          SourceLocation.Node(emitEvent.id, source)
+        case Node(eventDef: Ast.EventDef, _) if eventDef.id == emitEvent.id =>
+          SourceLocation.Node(eventDef.id, source)
       }
 
   /**
@@ -251,31 +198,5 @@ private object GoToTypeId {
     WorkspaceSearcher
       .collectTypes(workspace, includeNonImportedCode = false)
       .filter(_.ast == typeId)
-
-  /**
-   * Navigate to all [[Ast.TypeId]] usages excluding itself.
-   *
-   * @param selectedTypId The selected typed ID.
-   *                      This must be the actual selected [[Ast.TypeId]] instance from the tree.
-   * @param workspace     The Workspace where the implementation of the type ID may exist.
-   * @return An iterator over [[Ast.TypeId]] usages.
-   */
-  private def goToTypeIdUsage(
-      selectedTypId: Ast.TypeId,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] =
-    WorkspaceSearcher
-      .collectAllTrees(workspace)
-      .iterator
-      .flatMap {
-        code =>
-          code.tree.rootNode.walkDown.collect {
-            // this typeId should equal the searched typeId and a different object then itself.
-            case Node(typeId: Ast.TypeId, _) if typeId == selectedTypId && typeId.ne(selectedTypId) =>
-              SourceLocation.Node(
-                ast = typeId,
-                source = code
-              )
-          }
-      }
 
 }

@@ -24,7 +24,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "argument does not exists" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToField(interface: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -37,11 +37,66 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "template argument is selected" in {
+      goToDefinition(
+        """
+            |Contract Test(>>interfa@@ce<<: MyInterface,
+            |              interface2: MyInterface) {
+            |
+            |  fn test(boolean: Bool) -> () { }
+            |
+            |}
+            |""".stripMargin
+      )
+    }
+
+    "function argument  is selected" in {
+      goToDefinition(
+        """
+            |Contract Test(interface2: MyInterface) {
+            |
+            |  fn test(>>interfa@@ce<<: MyInterface) -> () { }
+            |
+            |}
+            |""".stripMargin
+      )
+    }
+
+    "function and template argument exist with duplicate names" should {
+      "select only itself" when {
+        "function argument is selected" in {
+          goToDefinition(
+            """
+                |Contract Test(interface: MyInterface) {
+                |
+                |  fn test(>>interfa@@ce<<: MyInterface) -> () { }
+                |
+                |}
+                |""".stripMargin
+          )
+        }
+
+        "template argument is selected" in {
+          goToDefinition(
+            """
+                |Contract Test(>>interfa@@ce<<: MyInterface) {
+                |
+                |  fn test(interface: MyInterface) -> () { }
+                |
+                |}
+                |""".stripMargin
+          )
+        }
+      }
+    }
+  }
+
   "return non-empty" when {
     "initial character is selected" in {
-      goTo(
+      goToDefinition(
         """
-          |Contract GoToField(>>interface: MyInterface<<) {
+          |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
           |    // first character
           |    let result = @@interface.function()
@@ -52,9 +107,9 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "mid character is selected" in {
-      goTo(
+      goToDefinition(
         """
-          |Contract GoToField(>>interface: MyInterface<<) {
+          |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
           |    // mid character
           |    let result = inte@@rface.function()
@@ -65,9 +120,9 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "last character is selected" in {
-      goTo(
+      goToDefinition(
         """
-          |Contract GoToField(>>interface: MyInterface<<) {
+          |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
           |    // last character
           |    let result = interface@@.function()
@@ -78,12 +133,12 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "function and the argument have the same name" in {
-      goTo(
+      goToDefinition(
         """
           |Contract MyContract(interface: MyInterface) {
           |
           |  // argument_b is also a function, but it should still go to the argument.
-          |  pub fn function_a(>>argument_b: Bool<<) -> () {
+          |  pub fn function_a(>>argument_b<<: Bool) -> () {
           |    let go_to_function = @@argument_b
           |    let result = blah.function()
           |  }
@@ -97,13 +152,13 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "there are multiple arguments with the same name" in {
-      goTo(
+      goToDefinition(
         """
           |// the furthest argument
-          |Contract GoToField(>>interface: MyInterface<<) {
+          |Contract GoToField(>>interface<<: MyInterface) {
           |
           |  // the nearest argument
-          |  pub fn local_function(>>interface: MyInterface<<) -> () {
+          |  pub fn local_function(>>interface<<: MyInterface) -> () {
           |    let result = interface@@.function()
           |  }
           |}
@@ -112,24 +167,24 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "there are duplicate arguments within inheritance" in {
-      goTo(
+      goToDefinition(
         """
-          |Abstract Contract Parent3(>>param: MyParam<<,
-          |                          >>param: MyParam<<) { }
+          |Abstract Contract Parent3(>>param<<: MyParam,
+          |                          >>param<<: MyParam) { }
           |
           |
-          |Abstract Contract Parent2(>>param: MyParam<<,
-          |                          >>param: MyParam<<) extends Parent3() { }
+          |Abstract Contract Parent2(>>param<<: MyParam,
+          |                          >>param<<: MyParam) extends Parent3() { }
           |
-          |Abstract Contract Parent1(>>param: MyParam<<) extends Parent2() {
+          |Abstract Contract Parent1(>>param<<: MyParam) extends Parent2() {
           |
           |  // this function also has `interface` as parameter, but it is not in scope.
           |  pub fn local_function(param: MyParam) -> () { }
           |}
           |
-          |Contract GoToField(>>param: MyParam<<) extends Parent1() {
+          |Contract GoToField(>>param<<: MyParam) extends Parent1() {
           |
-          |  pub fn local_function(>>param: MyParam<<) -> () {
+          |  pub fn local_function(>>param<<: MyParam) -> () {
           |    let result = param@@.function()
           |  }
           |}
@@ -139,40 +194,40 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
     "template arguments are passed as inheritance parameter" when {
       "there are no duplicates" in {
-        goTo(
+        goToDefinition(
           """
             |Abstract Contract SomeType() { }
             |
             |Abstract Contract Parent(param: SomeType) { }
             |
-            |Abstract Contract Child(>>param: SomeType<<) extends Parent(@@param) { }
+            |Abstract Contract Child(>>param<<: SomeType) extends Parent(@@param) { }
             |""".stripMargin
         )
       }
 
       "duplicates exist" when {
         "template parameter is duplicated" in {
-          goTo(
+          goToDefinition(
             """
               |Abstract Contract SomeType() { }
               |
               |Abstract Contract Parent(param: SomeType) { }
               |
-              |Abstract Contract Child(>>param: SomeType<<,
-              |                        >>param: SomeType<<) extends Parent(@@param) { }
+              |Abstract Contract Child(>>param<<: SomeType,
+              |                        >>param<<: SomeType) extends Parent(@@param) { }
               |""".stripMargin
           )
         }
 
         "function parameter is duplicated" should {
           "not be included in search result" in {
-            goTo(
+            goToDefinition(
               """
                 |Abstract Contract SomeType() { }
                 |
                 |Abstract Contract Parent(param: SomeType) { }
                 |
-                |Abstract Contract Child(>>param: SomeType<<) extends Parent(@@param) {
+                |Abstract Contract Child(>>param<<: SomeType) extends Parent(@@param) {
                 |
                 |  // the parameter `param` is not in the scope of template `param`, it's a function level scope,
                 |  // so it should not be included in the search result.

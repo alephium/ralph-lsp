@@ -14,50 +14,43 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.search.gotodef
+package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
-import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 import scala.collection.immutable.ArraySeq
 
-private object GoToImport {
+private object GoToRefImport {
 
   def goTo(
       cursorIndex: Int,
-      dependency: Option[WorkspaceState.Compiled],
-      importStatement: Tree.Import): ArraySeq[SourceLocation.GoTo] =
-    dependency match {
-      case Some(dependency) =>
-        goTo(
-          cursorIndex = cursorIndex,
-          dependency = dependency,
-          importStatement = importStatement
-        ) map {
-          code =>
-            SourceLocation.File(code.parsed)
-        }
-
-      case None =>
-        ArraySeq.empty
-    }
-
-  private def goTo(
-      cursorIndex: Int,
-      dependency: WorkspaceState.Compiled,
-      importStatement: Tree.Import): ArraySeq[SourceCodeState.Compiled] =
+      importStatement: Tree.Import,
+      workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.ImportName] =
     importStatement.path match {
       case Some(importPath) =>
         if (importPath.folder.index contains cursorIndex) // check: is the cursor on a folder
-          dependency                                      // return all files that are within the folder
-            .sourceCode
-            .filter(_.importIdentifier.exists(_.path.exists(_.folder.value == importPath.folder.value)))
+          WorkspaceSearcher
+            .collectAllParsed(workspace)
+            .flatMap {
+              parsed =>
+                parsed.ast.statements.collect {
+                  case Tree.Import(_, Some(thisPath), _) if importPath.folder.value == thisPath.folder.value =>
+                    SourceLocation.ImportName(thisPath.folder, parsed)
+                }
+            }
         else if (importPath.file.index contains cursorIndex) // check: is the cursor for a file
-          dependency                                         // find the file
-            .sourceCode
-            .filter(_.importIdentifier.exists(_.string.name.value == importStatement.string.name.value))
+          WorkspaceSearcher
+            .collectAllParsed(workspace)
+            .flatMap {
+              parsed =>
+                parsed.ast.statements.collect {
+                  case Tree.Import(_, Some(thisPath), _) if importPath.folder.value == thisPath.folder.value && importPath.file.value == thisPath.file.value =>
+                    SourceLocation.ImportName(thisPath.file, parsed)
+                }
+            }
         else
           ArraySeq.empty
 

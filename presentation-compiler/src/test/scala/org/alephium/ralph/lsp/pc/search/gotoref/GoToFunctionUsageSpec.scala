@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.search.gotodef
+package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
@@ -26,7 +26,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "function usage do not exist" in {
-      goTo(
+      goToReferences(
         """
           |Contract MyContract(interface: MyInterface) {
           |
@@ -46,29 +46,29 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "function usage exist" in {
-      goTo(
+      goToReferencesForAll(">>function_a<<".r, ">>functio@@n_a<<")(
         """
           |Contract MyContract(interface: MyInterface) {
           |
-          |  // function_a is clicked and it has 5 call
+          |  // function_a is selected and it has 5 call
           |  pub fn @@function_a(boolean: Bool) -> () {
-          |    let call1 = >>function_a(true)<<
-          |    >>function_a(false)<<
+          |    let call1 = >>function_a<<(true)
+          |    >>function_a<<(false)
           |  }
           |
           |  pub fn function_b(boolean: Bool) -> () {
-          |    let call2 = >>function_a(true)<<
-          |    >>function_a(false)<<
-          |    let call3 = >>function_a(false)<<
-          |    >>function_a(true)<<
+          |    let call2 = >>function_a<<(true)
+          |    >>function_a<<(false)
+          |    let call3 = >>function_a<<(false)
+          |    >>function_a<<(true)
           |  }
           |
           |  pub fn function_c(boolean: Bool) -> () {
-          |    let call4 = >>function_a(false)<<
+          |    let call4 = >>function_a<<(false)
           |    for (let mut index = 0; index <= 4; index = index + 1) {
-          |      >>function_a(true)<<
+          |      >>function_a<<(true)
           |    }
-          |    let call5 = >>function_a(true)<<
+          |    let call5 = >>function_a<<(true)
           |  }
           |}
           |""".stripMargin
@@ -76,13 +76,13 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "function usage exist within inheritance" in {
-      goTo(
+      goToReferencesForAll(">>function_a<<".r, ">>functio@@n_a<<")(
         """
           |Abstract Contract Parent() {
           |
           |  pub fn @@function_a(boolean: Bool) -> () {
-          |    >>function_a(true)<<
-          |    >>function_a(false)<<
+          |    >>function_a<<(true)
+          |    >>function_a<<(false)
           |  }
           |}
           |
@@ -90,9 +90,9 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
           |
           |  pub fn function_b(parent: Parent,
           |                    nftCollectionId: ByteVec) -> () {
-          |    >>function_a(true)<<
-          |    >>function_a(false)<<
-          |    >>parent.function_a(true)<<
+          |    >>function_a<<(true)
+          |    >>function_a<<(false)
+          |    parent.>>function_a<<(true)
           |  }
           |}
           |""".stripMargin
@@ -100,13 +100,13 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "function usage exist using a contract call (no inheritance)" in {
-      goTo(
+      goToReferencesForAll(">>function_a<<".r, ">>functio@@n_a<<")(
         """
           |Contract MyContract() {
           |
           |  pub fn @@function_a(boolean: Bool) -> () {
-          |    >>function_a(true)<<
-          |    >>function_a(false)<<
+          |    >>function_a<<(true)
+          |    >>function_a<<(false)
           |  }
           |}
           |
@@ -114,9 +114,9 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
           |
           |  pub fn function_b(myContract: MyContract,
           |                    nftCollectionId: ByteVec) -> () {
-          |    >>myContract.function_a(true)<<
-          |    >>MyContract(nftCollectionId).function_a(true)<<
-          |    >>MyContract(nftCollectionId).function_a{callerAddress!() -> ALPH: 1 alph}(true)<<
+          |    myContract.>>function_a<<(true)
+          |    MyContract(nftCollectionId).>>function_a<<(true)
+          |    MyContract(nftCollectionId).>>function_a<<{callerAddress!() -> ALPH: 1 alph}(true)
           |  }
           |}
           |""".stripMargin
@@ -124,7 +124,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "function is defined in a Parent and usage is via an instance of the Child" in {
-      goTo(
+      goToReferencesForAll(">>parentFunction<<".r, ">>parentFunctio@@n<<")(
         """
           |Abstract Contract Parent() {
           |
@@ -146,9 +146,9 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
           |
           |  pub fn main(nftCollectionId: ByteVec,
           |              child: Child) -> () {
-          |    >>Child(nftCollectionId).parentFunction{callerAddress!() -> ALPH: 1 alph}(true)<<
-          |    >>child.parentFunction(true)<<
-          |    >>Child(nftCollectionId).parentFunction(true)<<
+          |    Child(nftCollectionId).>>parentFunction<<{callerAddress!() -> ALPH: 1 alph}(true)
+          |    child.>>parentFunction<<(true)
+          |    Child(nftCollectionId).>>parentFunction<<(true)
           |  }
           |}
           |""".stripMargin
@@ -157,7 +157,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
 
     "dependency function usage exists" when {
       "only in workspace code" in {
-        goTo(
+        goToReferences(
           dependencyId = DependencyID.BuiltIn,
           // the custom builtin library
           dependency = """
@@ -173,7 +173,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
           workspace = """
               |Contract Test() {
               |  pub fn function() -> () {
-              |    >>assert!()<<
+              |    >>assert!<<()
               |  }
               |}
               |""".stripMargin
@@ -182,7 +182,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
       }
 
       "within the dependency itself and also the workspace" in {
-        goTo(
+        goToReferences(
           dependencyId = DependencyID.BuiltIn,
           // the custom builtin library
           dependency = """
@@ -196,7 +196,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
               |
               |Contract Test() {
               |  pub fn function() -> () {
-              |    >>assert!(true, 0)<<
+              |    >>assert!<<(true, 0)
               |  }
               |}
               |""".stripMargin,
@@ -204,7 +204,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
           workspace = """
               |Contract Test() {
               |  pub fn function() -> () {
-              |    >>assert!(false, 1)<<
+              |    >>assert!<<(false, 1)
               |  }
               |}
               |""".stripMargin

@@ -24,7 +24,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
   "return in empty" when {
     "function does not exist" in {
-      goTo(
+      goToDefinition(
         """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean: Bool) -> () {
@@ -37,9 +37,39 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "the function itself is selected" in {
+      goToDefinition(
+        """
+          |Abstract Contract Action() {
+          |  fn >>funct@@ion<<() -> Bool
+          |}
+          |
+          |""".stripMargin
+      )
+    }
+
+    "duplicate functions exist" when {
+      "second duplicate is selected" should {
+        "still select only itself" in {
+          goToDefinition(
+            """
+              |Abstract Contract Action() {
+              |  fn function() -> Bool
+              |
+              |  fn >>funct@@ion<<() -> Bool
+              |}
+              |
+              |""".stripMargin
+          )
+        }
+      }
+    }
+  }
+
   "go to the function" when {
     "function exists" in {
-      goTo(
+      goToDefinition(
         """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean: Bool) -> () {
@@ -56,7 +86,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
     }
 
     "function and argument have same names" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent2() {
           |
@@ -86,13 +116,13 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
     "function is an interface function" should {
       "highlight the entire function signature" in {
-        goTo(
+        goToDefinition(
           """
             |Abstract Contract Test() {
             |
-            |  >>fn function() -> ()<<
+            |  fn >>function<<() -> ()
             |
-            |  >>fn function(address: Address) -> ()<<
+            |  fn >>function<<(address: Address) -> ()
             |
             |  // this function has a body so only the function ID is highlighted.
             |  fn >>function<<() -> () {

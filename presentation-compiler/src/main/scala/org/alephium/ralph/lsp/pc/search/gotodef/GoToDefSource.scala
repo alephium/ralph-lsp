@@ -19,16 +19,16 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
-private object GoToSource {
+private object GoToDefSource extends StrictImplicitLogging {
 
   /**
    * Navigates to the definition of a token in the source code.
    *
-   * @param cursorIndex The index of the token clicked by the user.
+   * @param cursorIndex The index of the token selected.
    * @param sourceCode  The parsed state of the source-code where the search is executed.
    * @param workspace   The workspace where this search was executed and where all the source trees exist.
    * @return An iterator over the target go-to location(s).
@@ -42,41 +42,36 @@ private object GoToSource {
       case Some(closest) =>
         closest match {
           case identNode @ Node(ident: Ast.Ident, _) =>
-            // the clicked/closest node is an ident
-            GoToIdent.goTo(
+            // the selected/closest node is an ident
+            GoToDefIdent.goTo(
               identNode = identNode.upcast(ident),
               sourceCode = sourceCode,
               workspace = workspace
             )
 
           case funcIdNode @ Node(funcId: Ast.FuncId, _) =>
-            // the clicked/closest node is functionId
-            GoToFuncId.goTo(
+            // the selected/closest node is functionId
+            GoToDefFuncId.goTo(
               funcIdNode = funcIdNode.upcast(funcId),
               sourceCode = sourceCode,
               workspace = workspace
             )
 
           case typIdNode @ Node(typeId: Ast.TypeId, _) =>
-            // the clicked/closest node is TypeId
-            GoToTypeId.goTo(
+            // the selected/closest node is TypeId
+            GoToDefTypeId.goTo(
               typeIdNode = typIdNode.upcast(typeId),
               sourceCode = sourceCode,
               workspace = workspace
             )
 
-          case Node(enumDef: Ast.EnumDef[_], _) =>
-            GoToTypeId.goToEnumDefUsage(
-              enumDef = enumDef,
-              sourceCode = sourceCode,
-              workspace = workspace
-            )
-
-          case _ =>
+          case Node(ast, _) =>
+            logger.trace(s"No GoToDef implementation for '${ast.getClass.getSimpleName}'")
             Iterator.empty
         }
 
       case None =>
+        logger.trace(s"Closest node not found for cursor index '$cursorIndex' source '${sourceCode.parsed.fileURI}'")
         Iterator.empty
     }
 

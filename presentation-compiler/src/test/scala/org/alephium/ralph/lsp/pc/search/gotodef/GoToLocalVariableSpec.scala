@@ -24,7 +24,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "variable does not exist" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToTest() {
           |
@@ -39,14 +39,62 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "variable itself is selected" in {
+      goToDefinition(
+        """
+          |Contract Test() {
+          |
+          |  pub fn function() -> () {
+          |    let >>var@@A<< = 123
+          |  }
+          |
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "duplicate variables exists" when {
+      "first var is selected" in {
+        goToDefinition(
+          """
+            |Contract Test() {
+            |
+            |  pub fn function() -> () {
+            |    let >>var@@A<< = 123
+            |    let varA = 123
+            |  }
+            |
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "second var is selected" in {
+        goToDefinition(
+          """
+            |Contract Test() {
+            |
+            |  pub fn function() -> () {
+            |    let varA = 123
+            |    let >>var@@A<< = 123
+            |  }
+            |
+            |}
+            |""".stripMargin
+        )
+      }
+    }
+  }
+
   "return non-empty" when {
     "single local variable exists" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToTest() {
           |
           |  pub fn function() -> () {
-          |    >>let varA = 123<<
+          |    let >>varA<< = 123
           |    let varB = var@@A
           |  }
           |
@@ -56,14 +104,14 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
 
     "multiple local variables exists" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToTest() {
           |
           |  pub fn function() -> () {
-          |    >>let varA = 123<<
+          |    let >>varA<< = 123
           |    let varB = var@@A
-          |    >>let varA = ABC<<
+          |    let >>varA<< = ABC
           |  }
           |
           |}
@@ -72,14 +120,14 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
 
     "local variable and arguments have the same name" in {
-      goTo(
+      goToDefinition(
         """
-          |Contract GoToTest(>>varA: Bool<<) {
+          |Contract GoToTest(>>varA<<: Bool) {
           |
-          |  pub fn function(>>varA: Bool<<) -> () {
-          |    >>let varA = 123<<
+          |  pub fn function(>>varA<<: Bool) -> () {
+          |    let >>varA<< = 123
           |    let varB = var@@A
-          |    for (>>let mut varA = 0<<; varA <= 4; varA = varA + 1) {
+          |    for (let mut >>varA<< = 0; varA <= 4; varA = varA + 1) {
           |       function(true)
           |    }
           |  }
@@ -89,12 +137,12 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
 
     "variable is in an ApproveAsset expression" in {
-      goTo(
+      goToDefinition(
         """
           |Contract GoToTest() {
           |
           |  pub fn function() -> () {
-          |    >>let varA = 123<<
+          |    let >>varA<< = 123
           |    obj.fun{builtIn!() -> ALPH: varA@@}(somethingElse)
           |  }
           |

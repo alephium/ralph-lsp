@@ -24,6 +24,14 @@ object StringUtil {
   def spaceBetweenCommaAndSemicolon(string: String): String =
     string.replaceAll("([:,])", "$1 ")
 
+  /** Substitute a String between `start` and `end` indexes with a `replacement` String */
+  def replaceSubstring(
+      string: String,
+      start: Int,
+      end: Int,
+      replacement: String): String =
+    string.substring(0, start) + replacement + string.substring(end)
+
   /**
    * This method calculates the index of a character in the source code
    * given its line number and position within that line.

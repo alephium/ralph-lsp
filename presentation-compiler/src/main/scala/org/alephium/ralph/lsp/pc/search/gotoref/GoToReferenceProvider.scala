@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.search.gotodef
+package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
@@ -22,43 +22,44 @@ import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 /**
- * Implements [[CodeProvider]] that provides go-to definition results of type [[SourceLocation.GoToDef]].
+ * Implements [[CodeProvider]] that provides go-to references results of type [[SourceLocation.GoToRef]].
  *
- * To execution this function invoke [[CodeProvider.search]] with [[SourceLocation.GoToDef]] as type parameter.
+ * To execution this function invoke [[CodeProvider.search]] with [[Boolean]] and [[SourceLocation.GoToRef]] as type parameter.
  */
-private[search] case object GoToDefinitionProvider extends CodeProvider[Unit, SourceLocation.GoToDef] with StrictImplicitLogging {
+private[search] case object GoToReferenceProvider extends CodeProvider[Boolean, SourceLocation.GoToRef] with StrictImplicitLogging {
 
   /** @inheritdoc */
   override def search(
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
-      searchSettings: Unit
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDef] =
+      isIncludeDeclaration: Boolean
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToRef] =
     // find the statement where this cursorIndex sits.
     sourceCode.ast.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>
         statement match {
           case importStatement: Tree.Import =>
             // request is for import go-to definition
-            GoToDefImport
+            GoToRefImport
               .goTo(
                 cursorIndex = cursorIndex,
-                dependency = workspace.build.findDependency(DependencyID.Std),
-                importStatement = importStatement
+                importStatement = importStatement,
+                workspace = workspace
               )
               .iterator
 
-          case tree: Tree.Source =>
+          case _: Tree.Source =>
             // request is for source-code go-to definition
-            GoToDefSource.goTo(
+            GoToRefSource.goTo(
               cursorIndex = cursorIndex,
-              sourceCode = SourceLocation.Code(tree, sourceCode),
-              workspace = workspace
+              sourceCode = sourceCode,
+              workspace = workspace,
+              isIncludeDeclaration = isIncludeDeclaration
             )
+
         }
 
       case None =>

@@ -16,61 +16,53 @@
 
 package org.alephium.ralph.lsp.pc.search.gotodef
 
+import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 
-class GoToTypeIdStructUsageSpec extends AnyWordSpec with Matchers {
+class GoToNamedVarSpec extends AnyWordSpec with Matchers {
 
-  "return empty" when {
-    "no usage exists" in {
-      goTo {
+  "return self" when {
+    "variable definition is selected" in {
+      goToDefinition(
         """
-          |struct Foo@@ {
-          |  x: U256,
-          |  y: U256
+          |Contract Test() {
+          |
+          |  pub fn function() -> () {
+          |    let >>count@@er<< = 0
+          |  }
           |}
           |""".stripMargin
-      }
+      )
     }
-  }
 
-  "return non-empty" when {
-    "usage exists" when {
-      "within itself" in {
-        goTo {
+    "duplicates exist" when {
+      "first duplicate is selected" in {
+        goToDefinition(
           """
-            |struct Foo@@ {
-            |  x: U256,
-            |  mut foo: >>Foo<<
-            |}
-            |""".stripMargin
-        }
-      }
-
-      "within another struct" in {
-        goTo {
-          """
-            |struct Foo@@ { x: U256 }
-            |struct Bar { mut foo: >>Foo<< }
-            |""".stripMargin
-        }
-      }
-
-      "within a contract" in {
-        goTo {
-          """
-            |struct Foo@@ { x: U256 }
+            |Contract Test() {
             |
-            |Contract Test(foo: >>Foo<<) {
-            |
-            |  fn function(foo: >>Foo<<) -> () {
-            |    let foo = >>Foo<< { x: 1 }
+            |  pub fn function() -> () {
+            |    let >>count@@er<< = 0
+            |    let counter = 0
             |  }
-            |
             |}
             |""".stripMargin
-        }
+        )
+      }
+
+      "second duplicate is selected" in {
+        goToDefinition(
+          """
+            |Contract Test() {
+            |
+            |  pub fn function() -> () {
+            |    let counter = 0
+            |    let >>count@@er<< = 0
+            |  }
+            |}
+            |""".stripMargin
+        )
       }
     }
   }

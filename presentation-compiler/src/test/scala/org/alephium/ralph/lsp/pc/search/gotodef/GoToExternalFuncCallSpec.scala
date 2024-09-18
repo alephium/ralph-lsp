@@ -24,7 +24,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "external function does not exist" in {
-      goTo(
+      goToDefinition(
         """
           |Contract Main(action: Action) {
           |  pub fn main() -> () {
@@ -39,10 +39,10 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
   "return non-empty" when {
     "external abstract function exists" should {
       "go from template parameter" in {
-        goTo(
+        goToDefinition(
           """
             |Abstract Contract Action() {
-            |  >>fn function() -> Bool<<
+            |  fn >>function<<() -> Bool
             |}
             |
             |Contract Main(action: Action) {
@@ -55,10 +55,10 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
       }
 
       "go from function parameter" in {
-        goTo(
+        goToDefinition(
           """
             |Abstract Contract Action() {
-            |  >>fn function() -> Bool<<
+            |  fn >>function<<() -> Bool
             |}
             |
             |Contract Main() {
@@ -73,7 +73,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
 
     "external function exists" should {
       "go from template parameter" in {
-        goTo(
+        goToDefinition(
           """
             |Contract Action() {
             |  fn >>function<<() -> Bool {
@@ -91,7 +91,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
       }
 
       "go from function parameter" in {
-        goTo(
+        goToDefinition(
           """
             |Contract Action() {
             |  fn >>function<<() -> Bool {
@@ -110,12 +110,12 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
     }
 
     "external function exists in nested hierarchy" in {
-      goTo(
+      goToDefinition(
         """
             |Interface Parent2 {
             |  fn not_used2() -> ()
             |
-            |  >>fn function() -> ()<<
+            |  fn >>function<<() -> ()
             |}
             |
             |Abstract Contract Parent1() implements Parent2 {

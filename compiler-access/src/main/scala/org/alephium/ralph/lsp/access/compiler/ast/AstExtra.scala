@@ -48,21 +48,6 @@ object AstExtra {
       }
 
   /**
-   * Return the function signature for the given function definition.
-   *
-   * @param funcDef The function definition.
-   * @return The function signature.
-   */
-  def funcSignature[A <: StatelessContext](funcDef: Ast.FuncDef[A]): Ast.Positioned =
-    if (funcDef.bodyOpt.isEmpty)
-      funcDef // show the entire function definition to display the function signature.
-    else
-      // The function contains a body so return just the function id.
-      // FIXME: There is still a need to display just the function signature.
-      //        At the moment there is no AST type that provides just the function signature.
-      funcDef.id
-
-  /**
    * Fetches the type identifier for a given type.
    *
    * @param tpe The type for which to fetch the identifier.
@@ -106,6 +91,30 @@ object AstExtra {
 
       case _: Ast.ConstantVarDef[_] =>
         None
+    }
+
+  /**
+   * Fetches the type or named identifier for a given global definition.
+   *
+   * @param ast The type or named identifier for which to fetch the identifier.
+   * @return [[Ast.TypeId]] if the type has an associated [[Ast.TypeId]], otherwise [[Ast.Ident]].
+   */
+  def getIdentOrTypeId(ast: Ast.GlobalDefinition): Either[Ast.TypeId, Ast.Ident] =
+    ast match {
+      case ast: Ast.ContractWithState =>
+        Left(ast.ident)
+
+      case ast: Ast.Struct =>
+        Left(ast.id)
+
+      case ast: Ast.EnumDef[_] =>
+        Left(ast.id)
+
+      case asset: Ast.AssetScript =>
+        Left(asset.ident)
+
+      case ast: Ast.ConstantVarDef[_] =>
+        Right(ast.ident)
     }
 
 }

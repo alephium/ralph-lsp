@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.search.gotodef
+package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
@@ -25,7 +25,7 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
   "return empty" when {
     "there are no enum field calls or usages" when {
       "local enum" in {
-        goTo(
+        goToReferences(
           """
             |Contract MyContract() {
             |
@@ -41,7 +41,7 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
       }
 
       "global enum" in {
-        goTo(
+        goToReferences(
           """
             |enum EnumType {
             |  Fie@@ld0 = 0
@@ -70,7 +70,7 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          goTo(
+          goToReferencesForAll(">>Field0<<".r, ">>Fie@@ld0<<")(
             s"""
               |${if (global) enumDef else ""}
               |
@@ -113,7 +113,7 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          goTo(
+          goToReferencesForAll(">>Field1<<".r, ">>Fie@@ld1<<")(
             s"""
                |${if (global) enumDef else ""}
                |
@@ -156,7 +156,7 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
 
-          goTo(
+          goToReferencesForAll(">>Field1<<".r, ">>Fie@@ld1<<")(
             s"""
                |${if (global) enumDef else ""}
                |

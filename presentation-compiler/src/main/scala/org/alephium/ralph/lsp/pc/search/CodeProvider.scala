@@ -21,6 +21,7 @@ import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.{Suggestion, CodeCompletionProvider}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefinitionProvider
+import org.alephium.ralph.lsp.pc.search.gotoref.GoToReferenceProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
@@ -31,9 +32,10 @@ import java.net.URI
  * A trait representing a code provider, which performs search operations
  * within the source code of a workspace.
  *
- * @tparam A The type of search results.
+ * @tparam I The type of search settings.
+ * @tparam O The type of search results.
  */
-trait CodeProvider[A] {
+trait CodeProvider[I, O] extends Product {
 
   /**
    * Performs a search operation at the cursor index within the source-code of a workspace.
@@ -41,25 +43,30 @@ trait CodeProvider[A] {
    * @param cursorIndex The index location where the search operation is performed.
    * @param sourceCode  The parsed state of the source-code where the search is executed.
    * @param workspace   The workspace state where the source-code is located.
-   * @return An iterator over search results of type [[A]].
+   * @return An iterator over search results of type [[O]].
    */
   def search(
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
-      workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterator[A]
+      workspace: WorkspaceState.IsSourceAware,
+      searchSettings: I
+    )(implicit logger: ClientLogger): Iterator[O]
 
 }
 
 object CodeProvider {
 
   /** The code-completer implementation of [[CodeProvider]]. */
-  implicit val codeCompleter: CodeProvider[Suggestion] =
+  implicit val codeCompleter: CodeProvider[Unit, Suggestion] =
     CodeCompletionProvider
 
   /** The go-to definition implementation of [[CodeProvider]]. */
-  implicit val goToDefinition: CodeProvider[SourceLocation.GoTo] =
+  implicit val goToDefinition: CodeProvider[Unit, SourceLocation.GoToDef] =
     GoToDefinitionProvider
+
+  /** The go-to references implementation of [[CodeProvider]]. */
+  implicit val goToReferences: CodeProvider[Boolean, SourceLocation.GoToRef] =
+    GoToReferenceProvider
 
   /**
    * Execute search at cursor position within the current workspace state.
@@ -68,29 +75,32 @@ object CodeProvider {
    * @param character Character offset on a line in a document (zero-based).
    * @param fileURI   The text document's uri.
    * @param workspace Current workspace state.
-   * @tparam A The type to search.
+   * @tparam O The type to search.
    */
-  def search[A](
+  def search[I, O](
       line: Int,
       character: Int,
       fileURI: URI,
-      workspace: WorkspaceState.IsSourceAware
-    )(implicit provider: CodeProvider[A],
-      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[A]]] =
+      workspace: WorkspaceState.IsSourceAware,
+      searchSettings: I
+    )(implicit provider: CodeProvider[I, O],
+      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     // if the fileURI belongs to the workspace, then search just within that workspace
     if (URIUtil.contains(workspace.build.contractURI, fileURI))
-      searchWorkspace[A](
+      searchWorkspace[I, O](
         line = line,
         character = character,
         fileURI = fileURI,
-        workspace = workspace
+        workspace = workspace,
+        searchSettings = searchSettings
       )
     else // else search all source files
-      searchWorkspaceAndDependencies[A](
+      searchWorkspaceAndDependencies[I, O](
         line = line,
         character = character,
         fileURI = fileURI,
-        workspace = workspace
+        workspace = workspace,
+        searchSettings = searchSettings
       )
 
   /**
@@ -99,17 +109,18 @@ object CodeProvider {
    * @param character Character offset on a line in a document (zero-based).
    * @param fileURI   The text document's uri.
    * @param workspace Current workspace state.
-   * @tparam A The type to search.
+   * @tparam O The type to search.
    */
-  private def searchWorkspaceAndDependencies[A](
+  private def searchWorkspaceAndDependencies[I, O](
       line: Int,
       character: Int,
       fileURI: URI,
-      workspace: WorkspaceState.IsSourceAware
-    )(implicit provider: CodeProvider[A],
-      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[A]]] =
+      workspace: WorkspaceState.IsSourceAware,
+      searchSettings: I
+    )(implicit provider: CodeProvider[I, O],
+      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     // Search on dependencies should only run for go-to definitions requests. Code-completion is ignored.
-    if (provider == CodeProvider.goToDefinition)
+    if (provider == CodeProvider.goToDefinition || provider == CodeProvider.goToReferences)
       workspace
         .build
         .dependencies
@@ -138,11 +149,12 @@ object CodeProvider {
               )
 
             // execute search on that one workspace
-            searchWorkspace[A](
+            searchWorkspace[I, O](
               line = line,
               character = character,
               fileURI = fileURI,
-              workspace = mergedWorkspace
+              workspace = mergedWorkspace,
+              searchSettings = searchSettings
             )
         }
     else
@@ -155,15 +167,16 @@ object CodeProvider {
    * @param character Character offset on a line in a document (zero-based).
    * @param fileURI   The text document's uri.
    * @param workspace Current workspace state.
-   * @tparam A The type to search.
+   * @tparam O The type to search.
    */
-  private def searchWorkspace[A](
+  private def searchWorkspace[I, O](
       line: Int,
       character: Int,
       fileURI: URI,
-      workspace: WorkspaceState.IsSourceAware
-    )(implicit provider: CodeProvider[A],
-      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[A]]] =
+      workspace: WorkspaceState.IsSourceAware,
+      searchSettings: I
+    )(implicit provider: CodeProvider[I, O],
+      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     WorkspaceSearcher
       .findParsed( // find the parsed file where this search was executed.
         fileURI = fileURI,
@@ -185,7 +198,8 @@ object CodeProvider {
               provider.search(
                 cursorIndex = cursorIndex,
                 sourceCode = parsed,
-                workspace = workspace
+                workspace = workspace,
+                searchSettings = searchSettings
               )
           }
       }

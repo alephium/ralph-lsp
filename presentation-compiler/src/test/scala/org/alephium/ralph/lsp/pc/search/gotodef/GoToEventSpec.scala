@@ -24,7 +24,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "event does not exists" in {
-      goTo(
+      goToDefinition(
         """
           |Contract Test() {
           |
@@ -38,21 +38,50 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "return self" when {
+    "an event definition is selected" in {
+      goToDefinition(
+        """
+          |Contract Test() extends Parent() {
+          |
+          |  event >>Transf@@er<<(to: Address, amount: U256)
+          |
+          |  pub fn function() -> () { }
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "duplicate event definitions exist" in {
+      goToDefinition(
+        """
+          |Contract Test() extends Parent() {
+          |
+          |  event Transfer(to: Address, amount: U256)
+          |  event >>Transf@@er<<(to: Address, amount: U256)
+          |
+          |  pub fn function() -> () { }
+          |}
+          |""".stripMargin
+      )
+    }
+  }
+
   "return non-empty" when {
     "an event exists" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent() {
           |
           |  event TransferNotUsed(to: Address, amount: U256)
           |
-          |  >>event Transfer(to: Address, amount: U256)<<
+          |  event >>Transfer<<(to: Address, amount: U256)
           |
           |}
           |
           |Contract Test() extends Parent() {
           |
-          |  >>event Transfer(to: Address, amount: U256)<<
+          |  event >>Transfer<<(to: Address, amount: U256)
           |
           |  pub fn function() -> () {
           |    emit Transfe@@r(to, amount)
@@ -63,22 +92,22 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
     }
 
     "duplicate events exist" in {
-      goTo(
+      goToDefinition(
         """
           |Abstract Contract Parent() {
           |
-          |  >>event Transfer(amount: U256)<<
-          |  >>event Transfer(to: Address, amount: U256)<<
+          |  event >>Transfer<<(amount: U256)
+          |  event >>Transfer<<(to: Address, amount: U256)
           |  event TransferNotUsed(to: Address, amount: U256)
-          |  >>event Transfer(to: Address)<<
+          |  event >>Transfer<<(to: Address)
           |
           |}
           |
           |Contract Test() extends Parent() {
           |
-          |  >>event Transfer(to: Address, amount: U256)<<
-          |  >>event Transfer(amount: U256)<<
-          |  >>event Transfer(to: Address)<<
+          |  event >>Transfer<<(to: Address, amount: U256)
+          |  event >>Transfer<<(amount: U256)
+          |  event >>Transfer<<(to: Address)
           |
           |  pub fn function() -> () {
           |    emit Transfe@@r(to, amount)

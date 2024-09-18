@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.search.gotodef
+package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
@@ -24,7 +24,7 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "first event field has no usage" in {
-      goTo(
+      goToReferences(
         """
           |Contract Test() {
           |
@@ -40,7 +40,7 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "second event field has no usage" in {
-      goTo(
+      goToReferences(
         """
           |Contract Test() {
           |
@@ -58,7 +58,7 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
 
   "return non-empty for an event field" when {
     "it has a usage" in {
-      goTo(
+      goToReferences(
         """
           |Contract Test() {
           |
@@ -73,7 +73,7 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "it has multiple usages" in {
-      goTo(
+      goToReferences(
         """
           |Contract Test() {
           |
@@ -92,7 +92,7 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "there is inheritance" in {
-      goTo(
+      goToReferences(
         """
           |Abstract Contract Parent() {
           |

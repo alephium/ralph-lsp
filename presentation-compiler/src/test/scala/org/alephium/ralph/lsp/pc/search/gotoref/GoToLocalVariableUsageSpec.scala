@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.search.gotodef
+package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
@@ -24,7 +24,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "variable is not used" in {
-      goTo(
+      goToReferences(
         """
           |Contract GoToTest() {
           |
@@ -41,7 +41,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "a single usage exists" in {
-      goTo(
+      goToReferencesForAll(">>varA<<".r, ">>var@@A<<")(
         """
           |Contract GoToTest() {
           |
@@ -56,7 +56,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "multiple local variables exists" in {
-      goTo(
+      goToReferencesForAll(">>varB<<".r, ">>var@@B<<")(
         """
           |Contract GoToTest() {
           |
@@ -73,7 +73,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "local variable and arguments have the same name" in {
-      goTo(
+      goToReferencesForAll(">>varB<<".r, ">>var@@B<<")(
         """
           |Contract GoToTest(varA: Bool) {
           |
@@ -93,7 +93,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "usages exist in a for loop" in {
-      goTo(
+      goToReferencesForAll(">>counter<<".r, ">>counte@@r<<")(
         """
           |Contract Test() {
           |

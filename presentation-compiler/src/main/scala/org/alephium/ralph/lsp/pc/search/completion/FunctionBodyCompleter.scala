@@ -20,7 +20,7 @@ import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
 import org.alephium.ralph.{Ast, Keyword}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
-import org.alephium.ralph.lsp.pc.search.gotodef.GoToFuncId
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefFuncId
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
@@ -42,7 +42,7 @@ object FunctionBodyCompleter {
       closestToCursor: Node[Ast.Positioned, Ast.Positioned],
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion] =
-    GoToFuncId.goToNearestFuncDef(closestToCursor) match {
+    GoToDefFuncId.goToNearestFuncDef(closestToCursor) match {
       case Some(functionNode) =>
         suggestInFunctionBody(
           cursorIndex = cursorIndex,
