@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.pc.workspace.build.config
 
 import org.alephium.ralph.CompilerOptions
+import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSConfig
 
 object CompilerOptionsParsed {
 
@@ -35,6 +36,23 @@ object CompilerOptionsParsed {
       ignoreUpdateFieldsCheckWarnings = Some(options.ignoreUpdateFieldsCheckWarnings),
       ignoreCheckExternalCallerWarnings = Some(options.ignoreCheckExternalCallerWarnings),
       ignoreUnusedFunctionReturnWarnings = Some(options.ignoreUnusedFunctionReturnWarnings)
+    )
+
+  /**
+   * Converts TypeScript compiler options defined in `alephium.config.ts` to `ralph.json`'s [[CompilerOptionsParsed]].
+   *
+   * @param options The [[TSConfig.CompilerOptions]] instance to be converted.
+   * @return A [[CompilerOptionsParsed]] instance containing the corresponding values.
+   */
+  def from(options: TSConfig.CompilerOptions): CompilerOptionsParsed =
+    CompilerOptionsParsed(
+      ignoreUnusedConstantsWarnings = options.ignoreUnusedConstantsWarnings,
+      ignoreUnusedVariablesWarnings = options.ignoreUnusedVariablesWarnings,
+      ignoreUnusedFieldsWarnings = options.ignoreUnusedFieldsWarnings,
+      ignoreUnusedPrivateFunctionsWarnings = options.ignoreUnusedPrivateFunctionsWarnings,
+      ignoreUpdateFieldsCheckWarnings = options.ignoreUpdateFieldsCheckWarnings,
+      ignoreCheckExternalCallerWarnings = options.ignoreCheckExternalCallerWarnings,
+      ignoreUnusedFunctionReturnWarnings = options.ignoreUnusedFunctionReturnWarnings
     )
 
 }

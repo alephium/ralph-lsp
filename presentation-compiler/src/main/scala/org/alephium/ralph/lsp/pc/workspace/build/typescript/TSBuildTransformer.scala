@@ -24,6 +24,9 @@ import scala.util.matching.Regex
 
 object TSBuildTransformer {
 
+  /** The default `sourceDir` directory as documented in <a href="https://docs.alephium.org/sdk/cli/#configuration">Configuration</a> */
+  val DEFAULT_SOURCE_DIR = "contracts"
+
   /**
    * Transforms the content of the TypeScript `alephium.config.ts` build file
    * to JSON `ralph.json` build file of type [[RalphcConfigState.Parsed]].
@@ -43,8 +46,8 @@ object TSBuildTransformer {
     // TODO Do we want to report some error to `alephium.config.ts` if we can't extract the config? currently we always fall back to the current or default config
     Right(
       mergeConfigs(
-        currentConfig.getOrElse(RalphcConfigState.Parsed.default),
-        extractTSConfig(tsBuildCode)
+        jsonConfig = currentConfig,
+        tsConfig = extractTSConfig(tsBuildCode)
       )
     )
 
@@ -53,41 +56,20 @@ object TSBuildTransformer {
    * The TypeScript build configuration takes precedence over the Ralph configuration.
    * If a field is not present or couldn't be extracted in the TypeScript build configuration, the Ralph configuration is used.
    *
-   * @param ralphConfig Current Ralph configuration.
-   * @param tsConfig    TypeScript build configuration.
-   *
+   * @param jsonConfig Current Ralph configuration.
+   * @param tsConfig   TypeScript build configuration.
    * @return The merged Ralph configuration.
    */
   def mergeConfigs(
-      ralphConfig: RalphcConfigState.Parsed,
+      jsonConfig: Option[RalphcConfigState.Parsed],
       tsConfig: TSConfig): RalphcConfigState.Parsed =
     RalphcConfigState.Parsed(
-      compilerOptions = tsConfig.compilerOptions match {
-        case Some(tsOptions) => Some(mergeCompilerOptions(ralphConfig.compilerOptions, tsOptions))
-        case None            => ralphConfig.compilerOptions
-      },
-      contractPath = tsConfig.sourceDir.getOrElse(ralphConfig.contractPath),
-      artifactPath = tsConfig.artifactDir.orElse(ralphConfig.artifactPath),
-      dependencyPath = ralphConfig.dependencyPath
-    )
-
-  /**
-   * @param ralphOptions Current Ralph compiler options.
-   * @param tsOptions    TypeScript compiler options.
-   *
-   * @return The merged compiler options.
-   */
-  private def mergeCompilerOptions(
-      ralphOptions: Option[CompilerOptionsParsed],
-      tsOptions: TSConfig.CompilerOptions): CompilerOptionsParsed =
-    CompilerOptionsParsed(
-      ignoreUnusedConstantsWarnings = tsOptions.ignoreUnusedConstantsWarnings.orElse(ralphOptions.flatMap(_.ignoreUnusedConstantsWarnings)),
-      ignoreUnusedVariablesWarnings = tsOptions.ignoreUnusedVariablesWarnings.orElse(ralphOptions.flatMap(_.ignoreUnusedVariablesWarnings)),
-      ignoreUnusedFieldsWarnings = tsOptions.ignoreUnusedFieldsWarnings.orElse(ralphOptions.flatMap(_.ignoreUnusedFieldsWarnings)),
-      ignoreUnusedPrivateFunctionsWarnings = tsOptions.ignoreUnusedPrivateFunctionsWarnings.orElse(ralphOptions.flatMap(_.ignoreUnusedPrivateFunctionsWarnings)),
-      ignoreUpdateFieldsCheckWarnings = tsOptions.ignoreUpdateFieldsCheckWarnings.orElse(ralphOptions.flatMap(_.ignoreUpdateFieldsCheckWarnings)),
-      ignoreCheckExternalCallerWarnings = tsOptions.ignoreCheckExternalCallerWarnings.orElse(ralphOptions.flatMap(_.ignoreCheckExternalCallerWarnings)),
-      ignoreUnusedFunctionReturnWarnings = tsOptions.ignoreUnusedFunctionReturnWarnings.orElse(ralphOptions.flatMap(_.ignoreUnusedFunctionReturnWarnings))
+      contractPath = tsConfig.sourceDir getOrElse DEFAULT_SOURCE_DIR,
+      // Currently, artifactPath is not used until #84 is implemented, so its is always defaulted to None
+      artifactPath = None,
+      // leave dependencyPath in `ralph.json` unchanged.
+      dependencyPath = jsonConfig.flatMap(_.dependencyPath),
+      compilerOptions = tsConfig.compilerOptions map CompilerOptionsParsed.from
     )
 
   /**
