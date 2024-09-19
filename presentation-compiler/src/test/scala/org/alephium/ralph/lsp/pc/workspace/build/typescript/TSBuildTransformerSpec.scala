@@ -19,9 +19,11 @@ package org.alephium.ralph.lsp.pc.workspace.build.typescript
 import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc
 import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, CompilerOptionsParsed}
+import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import org.scalatest.EitherValues._
 
 class TSBuildTransformerSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
@@ -183,54 +185,43 @@ class TSBuildTransformerSpec extends AnyWordSpec with Matchers with ScalaCheckDr
 
   "merge configs" when {
     "ts config is empty" in {
-      forAll(TestRalphc.genRalphcParsedConfig()) {
-        ralphcConfig =>
-          val merged = TSBuildTransformer.mergeConfigs(ralphcConfig, TSConfig.empty)
+      forAll(Gen.option(TestRalphc.genRalphcParsedConfig())) {
+        jsonConfig =>
+          val actual =
+            TSBuildTransformer.mergeConfigs(
+              jsonConfig = jsonConfig,
+              tsConfig = TSConfig.empty
+            )
 
-          merged shouldBe ralphcConfig
+          val expected =
+            RalphcConfigState.Parsed(
+              contractPath = TSBuildTransformer.DEFAULT_SOURCE_DIR,
+              artifactPath = None,
+              dependencyPath = jsonConfig.flatMap(_.dependencyPath),
+              compilerOptions = None
+            )
+
+          actual shouldBe expected
       }
     }
 
     "ts config is defined" in {
       forAll(TestTSBuildFile.genTSConfig, TestRalphc.genRalphcParsedConfig()) {
         case (tsConfig, jsonConfig) =>
-          val merged = TSBuildTransformer.mergeConfigs(jsonConfig, tsConfig)
+          val merged = TSBuildTransformer.mergeConfigs(Some(jsonConfig), tsConfig)
+
+          val expectedContractPath =
+            tsConfig.sourceDir getOrElse TSBuildTransformer.DEFAULT_SOURCE_DIR
 
           val expectedCompilerOptions =
-            merged.compilerOptions match {
-              case Some(tsCompilerOptions) =>
-                // CompilerOptions are expected to be fetched from `alephium.config.ts` first.
-                // If absent, they are then fetched from `ralph.json`.
-                val expected =
-                  CompilerOptionsParsed(
-                    ignoreUnusedConstantsWarnings = //
-                      tsCompilerOptions.ignoreUnusedConstantsWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreUnusedConstantsWarnings),
-                    ignoreUnusedVariablesWarnings = //
-                      tsCompilerOptions.ignoreUnusedVariablesWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreUnusedVariablesWarnings),
-                    ignoreUnusedFieldsWarnings = //
-                      tsCompilerOptions.ignoreUnusedFieldsWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreUnusedFieldsWarnings),
-                    ignoreUnusedPrivateFunctionsWarnings =
-                      tsCompilerOptions.ignoreUnusedPrivateFunctionsWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreUnusedPrivateFunctionsWarnings),
-                    ignoreUpdateFieldsCheckWarnings =
-                      tsCompilerOptions.ignoreUpdateFieldsCheckWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreUpdateFieldsCheckWarnings),
-                    ignoreCheckExternalCallerWarnings =
-                      tsCompilerOptions.ignoreCheckExternalCallerWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreCheckExternalCallerWarnings),
-                    ignoreUnusedFunctionReturnWarnings =
-                      tsCompilerOptions.ignoreUnusedFunctionReturnWarnings orElse jsonConfig.compilerOptions.flatMap(_.ignoreUnusedFunctionReturnWarnings)
-                  )
-
-                Some(expected)
-
-              case None =>
-                // `alephium.config.ts` has no compilerOptions defined,
-                // expect `ralph.json` compilerOptions to remain unchanged.
-                jsonConfig.compilerOptions
-            }
+            tsConfig.compilerOptions map CompilerOptionsParsed.from
 
           val expected =
             RalphcConfigState.Parsed(
-              contractPath = tsConfig.sourceDir getOrElse jsonConfig.contractPath,
-              artifactPath = tsConfig.artifactDir orElse jsonConfig.artifactPath,
+              contractPath = expectedContractPath,
+              artifactPath = None,
+              // dependencyPath remain unchanged.
+              // changes in `alephium.config.ts` should be change `dependencyPath`.
               dependencyPath = jsonConfig.dependencyPath,
               compilerOptions = expectedCompilerOptions
             )
@@ -243,11 +234,22 @@ class TSBuildTransformerSpec extends AnyWordSpec with Matchers with ScalaCheckDr
 
   "toRalphcParsedConfig should fall back to default config" when {
     "ts and ralph configs are empty" in {
-      TSBuildTransformer.toRalphcParsedConfig(
-        tsBuildURI = TestFile.genFileURI().sample.get,
-        tsBuildCode = "",
-        currentConfig = None
-      ) shouldBe Right(RalphcConfigState.Parsed.default)
+      val actual =
+        TSBuildTransformer
+          .toRalphcParsedConfig(
+            tsBuildURI = TestFile.genFileURI().sample.get,
+            tsBuildCode = "",
+            currentConfig = None
+          )
+          .value
+
+      val expected =
+        RalphcConfigState
+          .Parsed
+          .default
+          .copy(contractPath = TSBuildTransformer.DEFAULT_SOURCE_DIR)
+
+      actual shouldBe expected
     }
   }
 

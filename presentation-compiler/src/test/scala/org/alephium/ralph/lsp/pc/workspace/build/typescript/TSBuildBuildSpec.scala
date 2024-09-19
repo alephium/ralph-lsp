@@ -78,7 +78,16 @@ class TSBuildBuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPr
 
   "not update `ralph.json`" when {
     "both build files have identical settings" in {
-      forAll(TestBuild.genCompiledOK(config = TestRalphc.genRalphcParsedConfig(dependenciesFolderName = Some("some_deps")))) {
+      val generator =
+        TestBuild.genCompiledOK(
+          config = TestRalphc.genRalphcParsedConfig(
+            dependenciesFolderName = Some("some_deps"),
+            // Currently, artifactPath is not used until #84 is implemented, so its is always defaulted to None
+            artifactsFolderName = None
+          )
+        )
+
+      forAll(generator) {
         jsonBuild =>
           // the JSON on disk before the build
           val preBuildJSON = TestFile readAll jsonBuild.buildURI
@@ -195,7 +204,8 @@ class TSBuildBuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPr
                 )
               ),
               contractPath = tsBuild.sourceDir.value,
-              artifactPath = Some(tsBuild.artifactDir.value),
+              // Currently, artifactPath is not used until #84 is implemented, so its is always defaulted to None
+              artifactPath = None,
               // dependency path is not configured in `alephium.config.ts`, so it should remain the same as the existing `ralph.json` configured value
               // tests that it does not get overwritten.
               dependencyPath = Some(jsonBuild.parsed.config.dependencyPath.value)

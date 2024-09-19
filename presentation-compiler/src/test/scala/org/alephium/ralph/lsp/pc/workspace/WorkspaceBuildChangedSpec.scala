@@ -93,7 +93,8 @@ class WorkspaceBuildChangedSpec extends AnyWordSpec with Matchers {
       val ralph_json_parsed = RalphcConfig.parse(goodWorkspace.buildURI, ralph_json).value
       // values from `alephium.config.ts` are copied into `ralph.json`
       ralph_json_parsed.contractPath shouldBe ""
-      ralph_json_parsed.artifactPath.value shouldBe ""
+      // Currently, artifactPath is not used until #84 is implemented, so its is always defaulted to None
+      ralph_json_parsed.artifactPath shouldBe empty
 
       TestWorkspace delete goodWorkspace
     }
