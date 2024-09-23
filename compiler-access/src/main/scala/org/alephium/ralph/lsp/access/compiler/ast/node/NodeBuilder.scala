@@ -154,6 +154,10 @@ object NodeBuilder extends StrictLogging {
 
     case Left(product) =>
       processParent(product)
+
+    case other =>
+      logger.trace(s"Not a Positioned instance: ${other.getClass}")
+      Seq.empty
   }
 
 }
