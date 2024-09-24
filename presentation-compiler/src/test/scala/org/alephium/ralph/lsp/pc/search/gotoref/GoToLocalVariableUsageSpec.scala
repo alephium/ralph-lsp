@@ -111,6 +111,31 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "tuple usages exist" in {
+      goToReferencesForAll(">>second<<".r, ">>secon@@d<<")(
+        """
+          |Contract Test() {
+          |  fn test() -> () {
+          |    let (first, secon@@d, third, fourth) = getTuple()
+          |
+          |    function(
+          |      first,
+          |      >>second<<
+          |    )
+          |
+          |    let copyFirst = first
+          |    let copySecond = >>second<<
+          |
+          |    function2(
+          |      first,
+          |      >>second<<
+          |    )
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
 }
