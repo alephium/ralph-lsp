@@ -237,7 +237,7 @@ private object GoToDefIdent extends StrictImplicitLogging {
         node =>
           // collect identities
           node.ast.vars collect {
-            case namedVar: Ast.NamedVar =>
+            case namedVar: Ast.NamedVar if namedVar.ident == identNode.data =>
               SourceLocation.Node(
                 ast = namedVar.ident,
                 source = sourceCode
