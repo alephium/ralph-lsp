@@ -150,6 +150,61 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "variable is a tuple" when {
+      "first tuple is queried" in {
+        goToDefinition(
+          """
+            |Contract Test() {
+            |  fn test() -> () {
+            |    let (>>first<<, second) = getTuple()
+            |
+            |    function(
+            |      firs@@t,
+            |      second
+            |    )
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "second tuple is queried" in {
+        goToDefinition(
+          """
+            |Contract Test() {
+            |  fn test() -> () {
+            |    let (first, >>second<<) = getTuple()
+            |
+            |    function(
+            |      first,
+            |      secon@@d
+            |    )
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "there are duplicate tuples" in {
+        goToDefinition(
+          """
+            |Contract Test() {
+            |  fn test() -> () {
+            |    let (first, >>second<<) = getTuple()
+            |    let (first, >>second<<, third) = getTuple()
+            |    let (first, >>second<<, third, fourth) = getTuple()
+            |
+            |    function(
+            |      first,
+            |      secon@@d
+            |    )
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
+    }
   }
 
 }
