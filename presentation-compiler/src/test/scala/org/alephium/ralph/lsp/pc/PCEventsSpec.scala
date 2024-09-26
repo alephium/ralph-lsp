@@ -39,9 +39,9 @@ import scala.collection.immutable.ArraySeq
 import scala.util.Random
 
 /**
- * Test cases for [[PC.deleteOrCreate]] function.
+ * Test cases for [[PC.events]] function.
  */
-class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
+class PCEventsSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
   implicit val clientLogger: ClientLogger =
     TestClientLogger
@@ -93,7 +93,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
             // invoke delete
             val actualPCState =
-              PC.deleteOrCreate(
+              PC.events(
                 events = ArraySeq(event),
                 pcState = currentPCState
               )
@@ -106,7 +106,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                   parsed = WorkspaceState.Parsed( // Workspace is successful parsed
                     build = BuildState.Compiled(
                       dependencies = build.dependencies,               // default dependencies are written
-                      dependencyPath = Dependency.defaultPath().value, // Default dependency build path i.e. .ralph-lsp is used
+                      dependencyPath = Dependency.defaultPath().value, // Default dependency build path i.e. `.ralph-lsp` is used
                       config = RalphcConfigState.Compiled(
                         isArtifactsPathDefinedInBuild = false, // the default build config is used above, so artifactsPath is not defined
                         config = org                           // compiled build file has full paths defined
@@ -196,7 +196,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
             // invoke the same event
             val actualPCStateOK =
-              PC.deleteOrCreate(
+              PC.events(
                 events = ArraySeq(event),
                 pcState = currentPCState
               )
@@ -285,7 +285,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
           // invoke the event
           val actualPCState =
-            PC.deleteOrCreate(
+            PC.events(
               events = ArraySeq(event),
               pcState = currentPCState
             )
@@ -331,7 +331,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
           // Add the all code to the workspace
           val compiledPCState =
-            PC.deleteOrCreate(
+            PC.events(
               events = allCode.to(ArraySeq).map {
                 code =>
                   WorkspaceFileEvent.Created(code.fileURI)
@@ -347,12 +347,12 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
           // Delete the abstract contract
           TestSourceCode delete extension
           val erroredState =
-            PC.deleteOrCreate(
+            PC.events(
               events = ArraySeq(WorkspaceFileEvent.Deleted(extension.fileURI)),
               pcState = compiledPCState
             )
 
-          // The workspace is not compiling anymore
+          // The workspace is not compiling any more
           val erroredWorkspace = erroredState.workspace.asInstanceOf[WorkspaceState.Errored]
 
           // But error isn't at workspace level
@@ -370,7 +370,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
           TestSourceCode persist (extension, code = Gen.const(extensionCode))
 
           val recompiledPCState =
-            PC.deleteOrCreate(
+            PC.events(
               events = ArraySeq(WorkspaceFileEvent.Created(extension.fileURI)),
               pcState = erroredState
             )
