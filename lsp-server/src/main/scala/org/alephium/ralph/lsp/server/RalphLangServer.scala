@@ -375,36 +375,30 @@ class RalphLangServer private (
       logger.debug(s"didChangeWatchedFiles: ${changes.mkString("\n", "\n", "")}")
 
       val events =
-        changes
-          .map {
-            event =>
-              (event.getType, event)
-          }
-          .collect {
-            case (FileChangeType.Deleted, event) =>
-              WorkspaceFileEvent.Deleted(uri(event.getUri))
+        changes collect {
+          case fileEvent if isFileScheme(uri(fileEvent.getUri)) =>
+            val fileURI = uri(fileEvent.getUri)
 
-            case (FileChangeType.Created, event) =>
-              WorkspaceFileEvent.Created(uri(event.getUri))
+            fileEvent.getType match {
+              case FileChangeType.Created =>
+                WorkspaceFileEvent.Created(fileURI)
 
-            case (FileChangeType.Changed, event) =>
-              WorkspaceFileEvent.Changed(uri(event.getUri))
-          }
+              case FileChangeType.Changed =>
+                WorkspaceFileEvent.Changed(fileURI)
 
-      val fileURIEvents =
-        events filter {
-          event =>
-            isFileScheme(event.uri)
+              case FileChangeType.Deleted =>
+                WorkspaceFileEvent.Deleted(fileURI)
+            }
         }
 
-      if (fileURIEvents.nonEmpty) {
+      if (events.nonEmpty) {
         val currentPCState =
           getPCState()
 
         // Build OK! process delete or create
         val newPCState =
           PC.events(
-            events = fileURIEvents,
+            events = events,
             pcState = currentPCState
           )
 
