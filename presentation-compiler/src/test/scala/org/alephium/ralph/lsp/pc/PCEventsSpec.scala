@@ -245,34 +245,46 @@ class PCEventsSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
   }
 
   "succeed" when {
-    "source-file is deleted" in {
+    "one source-file deleted and another is changed" in {
       implicit val file: FileAccess =
         FileAccess.disk
 
       implicit val compiler: CompilerAccess =
         CompilerAccess.ralphc
 
-      forAll(TestBuild.genCompiledWithSourceCodeInAndOut(minSourceCount = 1)) {
+      // ensure a minimum of 2 source files are created within the workspace
+      forAll(TestBuild.genCompiledWithSourceCodeInAndOut(minSourceCount = 2)) {
         case (build, sourceCodeIn, sourceCodeOut) =>
-          val allCode =
-            Random.shuffle(sourceCodeIn ++ sourceCodeOut)
+          // all source files shuffled
+          val allCodeOnDisk = Random.shuffle(sourceCodeIn ++ sourceCodeOut)
+          // only the workspace source files shuffled
+          val shuffledSourceCodeIn = Random.shuffle(sourceCodeIn)
 
           // randomly select a source-file to delete
-          val sourceToDelete =
-            Random.shuffle(sourceCodeIn).head
+          val sourceToDelete = shuffledSourceCodeIn.head
+          // randomly select a source-file to change
+          val sourceToChange = shuffledSourceCodeIn.last
 
           // create a deleted event
-          val event =
-            WorkspaceFileEvent.Deleted(sourceToDelete.fileURI)
-
+          val deleteEvent = WorkspaceFileEvent.Deleted(sourceToDelete.fileURI)
           // physically delete the source-file from disk
-          TestSourceCode delete sourceToDelete
+          TestFile exists sourceToDelete.fileURI // it should exist
+          TestSourceCode delete sourceToDelete   // delete it
+
+          // create a changed event
+          val changeEvent = WorkspaceFileEvent.Changed(sourceToChange.fileURI)
+          // overwrite the changed source-file on disk
+          val preUpdateCode = TestFile readAll sourceToChange.fileURI
+          val updatedCode   = "Abstract Contract UpdateGoodCode() { }"
+          preUpdateCode should not be updatedCode
+          // change the existing code
+          TestFile.write(sourceToChange.fileURI, updatedCode)
 
           // create initial workspace state with allCode (inside and out source-code)
           val workspace =
             WorkspaceState.UnCompiled(
               build = build,
-              sourceCode = allCode.to(ArraySeq)
+              sourceCode = allCodeOnDisk.to(ArraySeq)
             )
 
           // current PCState contains no errors
@@ -283,10 +295,10 @@ class PCEventsSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
               tsErrors = None
             )
 
-          // invoke the event
+          // invoke both the event
           val actualPCState =
             PC.events(
-              events = ArraySeq(event),
+              events = ArraySeq(deleteEvent, changeEvent),
               pcState = currentPCState
             )
 
@@ -298,9 +310,13 @@ class PCEventsSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
           // The deleted file and the outside source-code should be removed.
           val expectedSourceCode = sourceCodeIn.filter(_.fileURI != sourceToDelete.fileURI)
           compiledWorkspace.sourceCode.map(_.fileURI) should contain theSameElementsAs expectedSourceCode.map(_.fileURI)
+          // the Changed Event should result in the new code being saved
+          val changedSourceFile = compiledWorkspace.sourceCode.find(_.fileURI == sourceToChange.fileURI).value
+          changedSourceFile.parsed.code shouldBe updatedCode
 
           // clear test data
           TestWorkspace delete workspace
+          TestSourceCode deleteAll sourceCodeOut
       }
     }
 
