@@ -18,7 +18,6 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.protocol.vm.StatefulContext
 import org.alephium.ralph.{Type, Ast}
-import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.util.URIUtil
@@ -43,7 +42,7 @@ object WorkspaceSearcher {
       fileURI: URI,
       workspace: WorkspaceState.IsSourceAware): Option[Either[CompilerMessage.Error, SourceCodeState.Parsed]] =
     // file must belong to the workspace contractURI and must be a ralph source file
-    if (URIUtil.contains(workspace.build.contractURI, fileURI) && URIUtil.getFileExtension(fileURI) == CompilerAccess.RALPH_FILE_EXTENSION) {
+    if (URIUtil.contains(workspace.build.contractURI, fileURI) && URIUtil.isRalphFileExtension(fileURI)) {
       val parsedOrError =
         SourceCodeSearcher.findParsed(
           fileURI = fileURI,

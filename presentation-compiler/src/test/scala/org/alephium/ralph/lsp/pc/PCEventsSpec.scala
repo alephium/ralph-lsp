@@ -39,9 +39,9 @@ import scala.collection.immutable.ArraySeq
 import scala.util.Random
 
 /**
- * Test cases for [[PC.deleteOrCreate]] function.
+ * Test cases for [[PC.events]] function.
  */
-class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
+class PCEventsSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks with MockFactory {
 
   implicit val clientLogger: ClientLogger =
     TestClientLogger
@@ -93,7 +93,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
             // invoke delete
             val actualPCState =
-              PC.deleteOrCreate(
+              PC.events(
                 events = ArraySeq(event),
                 pcState = currentPCState
               )
@@ -106,7 +106,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
                   parsed = WorkspaceState.Parsed( // Workspace is successful parsed
                     build = BuildState.Compiled(
                       dependencies = build.dependencies,               // default dependencies are written
-                      dependencyPath = Dependency.defaultPath().value, // Default dependency build path i.e. .ralph-lsp is used
+                      dependencyPath = Dependency.defaultPath().value, // Default dependency build path i.e. `.ralph-lsp` is used
                       config = RalphcConfigState.Compiled(
                         isArtifactsPathDefinedInBuild = false, // the default build config is used above, so artifactsPath is not defined
                         config = org                           // compiled build file has full paths defined
@@ -196,7 +196,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
             // invoke the same event
             val actualPCStateOK =
-              PC.deleteOrCreate(
+              PC.events(
                 events = ArraySeq(event),
                 pcState = currentPCState
               )
@@ -245,34 +245,46 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
   }
 
   "succeed" when {
-    "source-file is deleted" in {
+    "one source-file deleted and another is changed" in {
       implicit val file: FileAccess =
         FileAccess.disk
 
       implicit val compiler: CompilerAccess =
         CompilerAccess.ralphc
 
-      forAll(TestBuild.genCompiledWithSourceCodeInAndOut(minSourceCount = 1)) {
+      // ensure a minimum of 2 source files are created within the workspace
+      forAll(TestBuild.genCompiledWithSourceCodeInAndOut(minSourceCount = 2)) {
         case (build, sourceCodeIn, sourceCodeOut) =>
-          val allCode =
-            Random.shuffle(sourceCodeIn ++ sourceCodeOut)
+          // all source files shuffled
+          val allCodeOnDisk = Random.shuffle(sourceCodeIn ++ sourceCodeOut)
+          // only the workspace source files shuffled
+          val shuffledSourceCodeIn = Random.shuffle(sourceCodeIn)
 
           // randomly select a source-file to delete
-          val sourceToDelete =
-            Random.shuffle(sourceCodeIn).head
+          val sourceToDelete = shuffledSourceCodeIn.head
+          // randomly select a source-file to change
+          val sourceToChange = shuffledSourceCodeIn.last
 
           // create a deleted event
-          val event =
-            WorkspaceFileEvent.Deleted(sourceToDelete.fileURI)
-
+          val deleteEvent = WorkspaceFileEvent.Deleted(sourceToDelete.fileURI)
           // physically delete the source-file from disk
-          TestSourceCode delete sourceToDelete
+          TestFile exists sourceToDelete.fileURI // it should exist
+          TestSourceCode delete sourceToDelete   // delete it
+
+          // create a changed event
+          val changeEvent = WorkspaceFileEvent.Changed(sourceToChange.fileURI)
+          // overwrite the changed source-file on disk
+          val preUpdateCode = TestFile readAll sourceToChange.fileURI
+          val updatedCode   = "Abstract Contract UpdateGoodCode() { }"
+          preUpdateCode should not be updatedCode
+          // change the existing code
+          TestFile.write(sourceToChange.fileURI, updatedCode)
 
           // create initial workspace state with allCode (inside and out source-code)
           val workspace =
             WorkspaceState.UnCompiled(
               build = build,
-              sourceCode = allCode.to(ArraySeq)
+              sourceCode = allCodeOnDisk.to(ArraySeq)
             )
 
           // current PCState contains no errors
@@ -283,10 +295,10 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
               tsErrors = None
             )
 
-          // invoke the event
+          // invoke both the event
           val actualPCState =
-            PC.deleteOrCreate(
-              events = ArraySeq(event),
+            PC.events(
+              events = ArraySeq(deleteEvent, changeEvent),
               pcState = currentPCState
             )
 
@@ -298,9 +310,13 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
           // The deleted file and the outside source-code should be removed.
           val expectedSourceCode = sourceCodeIn.filter(_.fileURI != sourceToDelete.fileURI)
           compiledWorkspace.sourceCode.map(_.fileURI) should contain theSameElementsAs expectedSourceCode.map(_.fileURI)
+          // the Changed Event should result in the new code being saved
+          val changedSourceFile = compiledWorkspace.sourceCode.find(_.fileURI == sourceToChange.fileURI).value
+          changedSourceFile.parsed.code shouldBe updatedCode
 
           // clear test data
           TestWorkspace delete workspace
+          TestSourceCode deleteAll sourceCodeOut
       }
     }
 
@@ -331,7 +347,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
 
           // Add the all code to the workspace
           val compiledPCState =
-            PC.deleteOrCreate(
+            PC.events(
               events = allCode.to(ArraySeq).map {
                 code =>
                   WorkspaceFileEvent.Created(code.fileURI)
@@ -347,12 +363,12 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
           // Delete the abstract contract
           TestSourceCode delete extension
           val erroredState =
-            PC.deleteOrCreate(
+            PC.events(
               events = ArraySeq(WorkspaceFileEvent.Deleted(extension.fileURI)),
               pcState = compiledPCState
             )
 
-          // The workspace is not compiling anymore
+          // The workspace is not compiling any more
           val erroredWorkspace = erroredState.workspace.asInstanceOf[WorkspaceState.Errored]
 
           // But error isn't at workspace level
@@ -370,7 +386,7 @@ class PCDeleteOrCreateSpec extends AnyWordSpec with Matchers with ScalaCheckDriv
           TestSourceCode persist (extension, code = Gen.const(extensionCode))
 
           val recompiledPCState =
-            PC.deleteOrCreate(
+            PC.events(
               events = ArraySeq(WorkspaceFileEvent.Created(extension.fileURI)),
               pcState = erroredState
             )

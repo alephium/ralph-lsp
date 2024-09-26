@@ -19,7 +19,8 @@ package org.alephium.ralph.lsp.pc.workspace
 import java.net.URI
 
 /**
- * Events dispatched by LSP-client for files & folders that are being watched.
+ * <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#fileChangeType">File Change Events</a>
+ * dispatched by LSP-client for files & folders that are being watched.
  */
 sealed trait WorkspaceFileEvent {
 
@@ -29,10 +30,13 @@ sealed trait WorkspaceFileEvent {
 
 object WorkspaceFileEvent {
 
-  /** A file or folder is created */
+  /** Represents the creation of a file or folder */
   case class Created(uri: URI) extends WorkspaceFileEvent
 
-  /** A file or folder is deleted */
+  /** Represents the deletion of a file or folder */
   case class Deleted(uri: URI) extends WorkspaceFileEvent
+
+  /** Represents a change to a file */
+  case class Changed(uri: URI) extends WorkspaceFileEvent
 
 }

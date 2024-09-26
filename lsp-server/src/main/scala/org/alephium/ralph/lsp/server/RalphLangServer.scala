@@ -374,53 +374,42 @@ class RalphLangServer private (
 
       logger.debug(s"didChangeWatchedFiles: ${changes.mkString("\n", "\n", "")}")
 
-      // Check if GIT branch was changed
-      if (changes.exists(_.getUri.endsWith(".git/HEAD"))) {
-        // TODO: Support other version control systems.
-        logger.debug("Branch change detected")
-        reboot()
-      } else {
-        // collect events
-        val events =
-          changes
-            .map {
-              event =>
-                (event.getType, event)
+      val events =
+        changes collect {
+          case fileEvent if isFileScheme(uri(fileEvent.getUri)) =>
+            val fileURI = uri(fileEvent.getUri)
+
+            fileEvent.getType match {
+              case FileChangeType.Created =>
+                WorkspaceFileEvent.Created(fileURI)
+
+              case FileChangeType.Changed =>
+                WorkspaceFileEvent.Changed(fileURI)
+
+              case FileChangeType.Deleted =>
+                WorkspaceFileEvent.Deleted(fileURI)
             }
-            .collect {
-              case (FileChangeType.Deleted, event) =>
-                WorkspaceFileEvent.Deleted(uri(event.getUri))
-
-              case (FileChangeType.Created, event) =>
-                WorkspaceFileEvent.Created(uri(event.getUri))
-            }
-
-        val fileURIEvents =
-          events filter {
-            event =>
-              isFileScheme(event.uri)
-          }
-
-        if (fileURIEvents.nonEmpty) {
-          val currentPCState =
-            getPCState()
-
-          // Build OK! process delete or create
-          val newPCState =
-            PC.deleteOrCreate(
-              events = fileURIEvents,
-              pcState = currentPCState
-            )
-
-          // Set the updated workspace
-          val diagnostics =
-            setPCStateAndBuildDiagnostics(
-              currentPCState = currentPCState,
-              newPCState = newPCState
-            )
-
-          getClient() publish diagnostics
         }
+
+      if (events.nonEmpty) {
+        val currentPCState =
+          getPCState()
+
+        // Build OK! process delete or create
+        val newPCState =
+          PC.events(
+            events = events,
+            pcState = currentPCState
+          )
+
+        // Set the updated workspace
+        val diagnostics =
+          setPCStateAndBuildDiagnostics(
+            currentPCState = currentPCState,
+            newPCState = newPCState
+          )
+
+        getClient() publish diagnostics
       }
 
     }

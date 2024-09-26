@@ -33,7 +33,7 @@ import scala.collection.immutable.ArraySeq
  *
  * To invoke a compilation, there are only two ways:
  *  - When a file is changed, use [[PC.changed]]
- *  - When a file is deleted or created, use [[PC.deleteOrCreate]]
+ *  - When files are deleted or created, or when changes span multiple files, use [[PC.events]]
  */
 object PC extends StrictImplicitLogging {
 
@@ -129,41 +129,41 @@ object PC extends StrictImplicitLogging {
     }
 
   /**
-   * Deletes or creates a file within the workspace.
+   * Processes deletion, creation or modifications to multiple files.
    *
    * @param events  Events to process.
    * @param pcState Current presentation compiler state.
    * @return The updated presentation compiler state containing the compilation result.
    */
-  def deleteOrCreate(
+  def events(
       events: ArraySeq[WorkspaceFileEvent],
       pcState: PCState
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
       logger: ClientLogger): PCState = {
     val nextPCState =
-      deleteOrCreateJSONBuild(
+      jsonBuildEvents(
         events = events,
         pcState = pcState
       )
 
-    deleteOrCreateTSBuild(
+    tsBuildEvents(
       events = events,
       pcState = nextPCState
     ) getOrElse nextPCState
   }
 
   /**
-   * Manages the deletion or creation of all files managed by the `ralph.json` build file.
+   * Manages the deletion, creation and changes to all files managed by the `ralph.json` build file.
    * These files include all `.ral` source files.
    *
-   * For processing the `alephium.config.ts` build file, see [[deleteOrCreateTSBuild]].
+   * For processing the `alephium.config.ts` build file, see [[tsBuildEvents]].
    *
    * @param events  Events to process.
    * @param pcState Current presentation compiler state.
    * @return The updated presentation compiler state containing the compilation result.
    */
-  private def deleteOrCreateJSONBuild(
+  private def jsonBuildEvents(
       events: ArraySeq[WorkspaceFileEvent],
       pcState: PCState
     )(implicit file: FileAccess,
@@ -238,13 +238,13 @@ object PC extends StrictImplicitLogging {
    * This build file does not manage `.ral` source files.
    * It only mutates the `ralph.json` build file.
    *
-   * For processing `ralph.json` and its dependent `.ral` source files, see [[deleteOrCreateJSONBuild]].
+   * For processing `ralph.json` and its dependent `.ral` source files, see [[jsonBuildEvents]].
    *
    * @param events  Events to process.
    * @param pcState Current presentation compiler state.
    * @return The updated presentation compiler state containing the compilation result.
    */
-  private def deleteOrCreateTSBuild(
+  private def tsBuildEvents(
       events: ArraySeq[WorkspaceFileEvent],
       pcState: PCState
     )(implicit file: FileAccess,
@@ -259,7 +259,7 @@ object PC extends StrictImplicitLogging {
         pcState = pcState
       ) match {
         case Left(error: ErrorUnknownFileType) =>
-          // This should not never occur since `tsBuildURI` is a known file type.
+          // This should never occur since `tsBuildURI` is a known file type.
           logger.error(error.message)
           None
 
