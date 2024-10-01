@@ -20,7 +20,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
 import org.alephium.ralph.lsp.{TestCode, TestFile}
-import org.alephium.ralph.{CompiledScript, CompilerOptions, CompiledContract}
+import org.alephium.ralph.{CompiledScript, CompilerOptions, CompiledContract, Warning}
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers
@@ -339,7 +339,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
           .sample
           .get
 
-      def compileAndGetWarnings(code: SourceCodeState.Parsed): Seq[String] =
+      def compileAndGetWarnings(code: SourceCodeState.Parsed): Seq[Warning] =
         SourceCode
           .compile(
             sourceCode = ArraySeq(code),
