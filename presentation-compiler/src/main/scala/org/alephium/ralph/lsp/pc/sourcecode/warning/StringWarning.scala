@@ -19,13 +19,14 @@ package org.alephium.ralph.lsp.pc.sourcecode.warning
 import org.alephium.ralph
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
+import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 
 import java.net.URI
 
 /**
  * String warning reported by `ralphc` not containing source-location information.
  */
-object StringWarning {
+object StringWarning extends StrictImplicitLogging {
 
   @inline def apply(
       message: String,
@@ -42,18 +43,18 @@ object StringWarning {
    * @param fileURI File [[URI]] where this warning is to be reported.
    * @return A [[StringWarning]] with the specified file [[URI]] set.
    */
-  @inline def apply(
+  def apply(
       warning: ralph.Warning,
-      fileURI: URI): StringWarning =
+      fileURI: URI
+    )(implicit logger: ClientLogger): StringWarning =
     warning.sourceIndex match {
       case Some(sourceIndex) =>
         sourceIndex.fileURI match {
           case Some(sourceIndexFileURI) => // SourceIndex contains a fileURI.
-            // TODO: Resolved in next PR: Replace this as it throws Exceptions.
-            //       It should be replaced with error message logged using ClientLogger.
-            // There should never be a case where fileURI are different.
-            // This assert is performed to detect bugs; Warnings should always be mapped to the right fileURI.
-            assert(sourceIndexFileURI == sourceIndexFileURI, s"Warning's '$fileURI' is not equal to SourceFile's URI '$sourceIndexFileURI'")
+            // There should never be a case where the fileURIs are different.
+            // But this check is performed to detect bugs; Warnings should always be mapped to the right fileURI.
+            if (sourceIndexFileURI != fileURI)
+              logger.error(s"Warning-URI '$fileURI' is not equal to Source-URI '$sourceIndexFileURI'. Message: ${warning.message}")
 
             StringWarning(
               message = warning.message,

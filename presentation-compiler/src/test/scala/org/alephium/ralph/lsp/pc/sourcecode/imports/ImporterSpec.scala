@@ -22,6 +22,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.error.ImportError
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
 import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
@@ -74,6 +75,10 @@ class ImporterSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
 
         // expect no file IO because the code is in memory
         implicit val file: FileAccess =
+          null
+
+        // No errors are logged
+        implicit val logger: ClientLogger =
           null
 
         val fileURI =
