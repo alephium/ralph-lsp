@@ -18,6 +18,8 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.client.TestClientLogger
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -27,6 +29,7 @@ class SourceCodeSearcherCollectParsedSpec extends AnyWordSpec with Matchers {
 
   implicit val file: FileAccess         = FileAccess.disk
   implicit val compiler: CompilerAccess = CompilerAccess.ralphc
+  implicit val logger: ClientLogger     = TestClientLogger
 
   "return empty" when {
     "input is empty" in {

@@ -19,6 +19,8 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.error.TestError
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.client.TestClientLogger
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode._
 import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc
 import org.alephium.ralph.lsp.{TestCode, TestFile}
@@ -84,6 +86,9 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
             .map(persist(_, TestCode.genGoodCode()))
             .map(SourceCode.parse)
             .map(_.asInstanceOf[SourceCodeState.Parsed])
+
+        implicit val logger: ClientLogger =
+          TestClientLogger
 
         forAll(parsed, TestRalphc.genCompilerOptions()) {
           case (parsed, compilerOptions) =>

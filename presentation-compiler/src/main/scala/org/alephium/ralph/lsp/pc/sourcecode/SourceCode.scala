@@ -20,6 +20,7 @@ import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.imports.Importer
 import org.alephium.ralph.lsp.pc.util.CollectionUtil._
 import org.alephium.ralph.lsp.pc.util.URIUtil
@@ -190,7 +191,8 @@ private[pc] object SourceCode {
       dependency: ArraySeq[SourceCodeState.Compiled],
       compilerOptions: CompilerOptions,
       workspaceErrorURI: URI
-    )(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
+    )(implicit compiler: CompilerAccess,
+      logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
     Importer.typeCheck(
       sourceCode = sourceCode,
       dependency = dependency
@@ -241,7 +243,8 @@ private[pc] object SourceCode {
       importedTrees: ArraySeq[SourceLocation.Code],
       compilerOptions: CompilerOptions,
       workspaceErrorURI: URI
-    )(implicit compiler: CompilerAccess): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] = {
+    )(implicit compiler: CompilerAccess,
+      logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] = {
     val sourceTreesOnly =
       sourceTrees.map(_.tree)
 

@@ -318,7 +318,8 @@ private[pc] object Workspace extends StrictImplicitLogging {
   def parseAndCompile(
       workspace: WorkspaceState.UnCompiled
     )(implicit file: FileAccess,
-      compiler: CompilerAccess): WorkspaceState.IsParsedAndCompiled =
+      compiler: CompilerAccess,
+      logger: ClientLogger): WorkspaceState.IsParsedAndCompiled =
     parse(workspace) match {
       case unCompiled: WorkspaceState.UnCompiled =>
         // Still un-compiled. There are errors.
@@ -332,7 +333,10 @@ private[pc] object Workspace extends StrictImplicitLogging {
   /**
    * Compile a parsed workspace.
    */
-  def compile(workspace: WorkspaceState.Parsed)(implicit compiler: CompilerAccess): WorkspaceState.IsCompiled = {
+  def compile(
+      workspace: WorkspaceState.Parsed
+    )(implicit compiler: CompilerAccess,
+      logger: ClientLogger): WorkspaceState.IsCompiled = {
     val compilationResult =
       SourceCode.compile(
         sourceCode = workspace.sourceCode,

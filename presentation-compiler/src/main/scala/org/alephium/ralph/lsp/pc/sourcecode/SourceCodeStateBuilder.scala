@@ -19,7 +19,8 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
-import org.alephium.ralph.lsp.access.compiler.message.warning.StringWarning
+import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.pc.sourcecode.warning.StringWarning
 import org.alephium.ralph.{CompiledScript, Warning, Ast, CompiledContract}
 
 import java.net.URI
@@ -40,7 +41,8 @@ private object SourceCodeStateBuilder {
   def toSourceCodeState(
       parsedCode: ArraySeq[SourceCodeState.Parsed],
       workspaceErrorURI: URI,
-      compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript], Array[Warning])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
+      compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript], Array[Warning])]
+    )(implicit logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
     compilationResult match {
       case Left(error) =>
         // update the error to SourceCodeState
@@ -118,7 +120,8 @@ private object SourceCodeStateBuilder {
       compiledContracts: Array[CompiledContract],
       compiledScripts: Array[CompiledScript],
       warnings: Array[Warning],
-      workspaceErrorURI: URI): ArraySeq[SourceCodeState.IsCompiled] =
+      workspaceErrorURI: URI
+    )(implicit logger: ClientLogger): ArraySeq[SourceCodeState.IsCompiled] =
     parsedCode map {
       sourceCodeState =>
         val matchedCode = // Map contracts and scripts to their fileURIs.
@@ -160,7 +163,8 @@ private object SourceCodeStateBuilder {
   private def collectURIWarnings(
       fileURI: URI,
       warnings: Array[Warning],
-      compiledCode: Seq[Either[CompiledContract, CompiledScript]]): Seq[StringWarning] = {
+      compiledCode: Seq[Either[CompiledContract, CompiledScript]]
+    )(implicit logger: ClientLogger): Seq[StringWarning] = {
     // Collect warnings that exist within the compiled code
     val innerWarnings =
       compiledCode flatMap {

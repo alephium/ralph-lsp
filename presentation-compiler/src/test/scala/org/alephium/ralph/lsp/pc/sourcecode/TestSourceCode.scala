@@ -21,6 +21,7 @@ import org.alephium.ralph.lsp.TestFile._
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.error.TestError
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.TestDependency
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
@@ -203,7 +204,8 @@ object TestSourceCode {
       code: Gen[String] = TestCode.genGoodCode(),
       fileURI: Gen[URI] = genFileURI()
     )(implicit file: FileAccess,
-      compiler: CompilerAccess): Gen[SourceCodeState.Compiled] =
+      compiler: CompilerAccess,
+      logger: ClientLogger): Gen[SourceCodeState.Compiled] =
     genCompiled(
       code = code,
       fileURI = fileURI
@@ -213,7 +215,8 @@ object TestSourceCode {
       code: Gen[String] = TestCode.genGoodCode(),
       fileURI: Gen[URI] = genFileURI()
     )(implicit file: FileAccess,
-      compiler: CompilerAccess): Gen[SourceCodeState.IsParsed] = {
+      compiler: CompilerAccess,
+      logger: ClientLogger): Gen[SourceCodeState.IsParsed] = {
     val parsed =
       genParsedOK(
         code = code,
@@ -223,10 +226,16 @@ object TestSourceCode {
     genCompiled(parsed)
   }
 
-  def genCompiled(parsed: Gen[SourceCodeState.Parsed])(implicit compiler: CompilerAccess): Gen[SourceCodeState.IsParsed] =
+  def genCompiled(
+      parsed: Gen[SourceCodeState.Parsed]
+    )(implicit compiler: CompilerAccess,
+      logger: ClientLogger): Gen[SourceCodeState.IsParsed] =
     parsed map compile
 
-  def compile(parsed: SourceCodeState.Parsed)(implicit compiler: CompilerAccess): SourceCodeState.IsParsed = {
+  def compile(
+      parsed: SourceCodeState.Parsed
+    )(implicit compiler: CompilerAccess,
+      logger: ClientLogger): SourceCodeState.IsParsed = {
     val result =
       SourceCode.compile(
         sourceCode = ArraySeq(parsed),

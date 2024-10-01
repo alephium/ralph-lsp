@@ -18,9 +18,11 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.client.TestClientLogger
+import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
 import org.alephium.ralph.lsp.{TestCode, TestFile}
-import org.alephium.ralph.{CompiledScript, CompilerOptions, CompiledContract, Warning}
+import org.alephium.ralph.{CompiledScript, Warning, CompilerOptions, CompiledContract}
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers
@@ -31,6 +33,8 @@ import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 
 class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+
+  implicit val logger: ClientLogger = TestClientLogger
 
   "return empty compiled source-code" when {
     "source-code and dependency are empty" in {

@@ -140,7 +140,8 @@ object TestWorkspace {
       build: Gen[BuildState.Compiled],
       code: Seq[String]
     )(implicit compiler: CompilerAccess,
-      file: FileAccess): Gen[WorkspaceState.Compiled] =
+      file: FileAccess,
+      logger: ClientLogger): Gen[WorkspaceState.Compiled] =
     genCompiled(
       build = build,
       code = code
@@ -150,7 +151,8 @@ object TestWorkspace {
       build: Gen[BuildState.Compiled],
       code: Seq[String]
     )(implicit compiler: CompilerAccess,
-      file: FileAccess): Gen[WorkspaceState.IsCompiled] =
+      file: FileAccess,
+      logger: ClientLogger): Gen[WorkspaceState.IsCompiled] =
     genParsedOK(
       build = build,
       code = code
