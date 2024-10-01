@@ -53,7 +53,7 @@ private object RalphCompilerAccess extends CompilerAccess {
   def compileContracts(
       parsedSource: Seq[Ast.GlobalDefinition],
       options: CompilerOptions,
-      workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])] =
+      workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript], Array[Warning])] =
     try {
       val allContracts     = Seq.newBuilder[Ast.ContractWithState]
       val otherDefinitions = Seq.newBuilder[Ast.GlobalDefinition]
@@ -90,17 +90,16 @@ private object RalphCompilerAccess extends CompilerAccess {
       val extendedContracts =
         multiContract.extendedContracts()
 
-      // TODO: Handle workspace level warning returned here
+      val (warnings, statefulContractsAndIndex) =
+        extendedContracts.genStatefulContracts()(options)
+
       val statefulContracts =
-        extendedContracts
-          .genStatefulContracts()(options)
-          ._2
-          .map(_._1)
+        statefulContractsAndIndex.map(_._1)
 
       val statefulScripts =
         extendedContracts.genStatefulScripts()(options)
 
-      Right((statefulContracts.toArray, statefulScripts.toArray))
+      Right((statefulContracts.toArray, statefulScripts.toArray, warnings.toArray))
     } catch TryUtil.catchAllThrows(workspaceErrorURI)
 
 }

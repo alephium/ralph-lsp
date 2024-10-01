@@ -131,19 +131,9 @@ object SourceCodeState {
   /** Represents: Code is successfully compiled */
   case class Compiled(
       compiledCode: Seq[Either[CompiledContract, CompiledScript]],
-      parsed: SourceCodeState.Parsed)
-    extends IsCompiled {
-
-    def warnings: Seq[StringWarning] =
-      compiledCode flatMap {
-        case Left(value) =>
-          value.warnings map (StringWarning(_, fileURI))
-
-        case Right(value) =>
-          value.warnings map (StringWarning(_, fileURI))
-      }
-
-  }
+      parsed: SourceCodeState.Parsed,
+      warnings: Seq[StringWarning])
+    extends IsCompiled
 
   /** Represents: Error during the compilation phase. */
   case class ErrorCompilation(

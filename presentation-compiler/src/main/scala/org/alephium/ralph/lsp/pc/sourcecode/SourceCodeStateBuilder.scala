@@ -16,11 +16,11 @@
 
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
-import org.alephium.ralph.{CompiledScript, Ast, CompiledContract}
+import org.alephium.ralph.lsp.access.compiler.message.warning.StringWarning
+import org.alephium.ralph.{CompiledScript, Warning, Ast, CompiledContract}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -40,7 +40,7 @@ private object SourceCodeStateBuilder {
   def toSourceCodeState(
       parsedCode: ArraySeq[SourceCodeState.Parsed],
       workspaceErrorURI: URI,
-      compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
+      compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript], Array[Warning])]): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
     compilationResult match {
       case Left(error) =>
         // update the error to SourceCodeState
@@ -55,12 +55,13 @@ private object SourceCodeStateBuilder {
             Left(error)
         }
 
-      case Right((compiledContracts, compiledScripts)) =>
+      case Right((compiledContracts, compiledScripts, warnings)) =>
         val state =
           buildCompiledSourceCodeState(
             parsedCode = parsedCode,
             compiledContracts = compiledContracts,
             compiledScripts = compiledScripts,
+            warnings = warnings,
             workspaceErrorURI = workspaceErrorURI
           )
 
@@ -116,29 +117,13 @@ private object SourceCodeStateBuilder {
       parsedCode: ArraySeq[SourceCodeState.Parsed],
       compiledContracts: Array[CompiledContract],
       compiledScripts: Array[CompiledScript],
+      warnings: Array[Warning],
       workspaceErrorURI: URI): ArraySeq[SourceCodeState.IsCompiled] =
     parsedCode map {
       sourceCodeState =>
-        val parsedContracts =
-          sourceCodeState
-            .ast
-            .statements
-            .collect {
-              case statement: Tree.Source => // collect only the source-code, ignoring import statements.
-                statement.ast
-            }
-            .collect {
-              // Only Contracts and Scripts can be compiled
-              case contract: Ast.Contract if !contract.isAbstract =>
-                contract
-
-              case script: Ast.TxScript =>
-                script
-            }
-
         val matchedCode = // Map contracts and scripts to their fileURIs.
           findMatchingContractOrScript(
-            parsedContracts = parsedContracts,
+            sourceCodeState = sourceCodeState,
             compiledContracts = compiledContracts,
             compiledScripts = compiledScripts,
             workspaceErrorURI = workspaceErrorURI
@@ -155,24 +140,84 @@ private object SourceCodeStateBuilder {
         else // else, return successfully compiled
           SourceCodeState.Compiled(
             compiledCode = compiledCode,
-            parsed = sourceCodeState
+            parsed = sourceCodeState,
+            warnings = collectURIWarnings(
+              fileURI = sourceCodeState.fileURI,
+              compiledCode = compiledCode,
+              warnings = warnings
+            )
           )
     }
 
+  /**
+   * Collects all warnings to report for the given file URI.
+   *
+   * @param fileURI      The file URI to collect warnings for.
+   * @param warnings     Warnings that were not reported within the [[CompiledContract]] or [[CompiledScript]].
+   * @param compiledCode Compilation result for the given file URI.
+   * @return [[StringWarning]]s with the given file URI set.
+   */
+  private def collectURIWarnings(
+      fileURI: URI,
+      warnings: Array[Warning],
+      compiledCode: Seq[Either[CompiledContract, CompiledScript]]): Seq[StringWarning] = {
+    // Collect warnings that exist within the compiled code
+    val innerWarnings =
+      compiledCode flatMap {
+        case Left(contract) =>
+          contract.warnings map (StringWarning(_, fileURI))
+
+        case Right(script) =>
+          script.warnings map (StringWarning(_, fileURI))
+      }
+
+    // collect warnings to report at the given `fileURI`, that were returned by `genStatefulContracts()`
+    val outerWarning =
+      warnings
+        .filter {
+          warning =>
+            warning.sourceIndex.exists(_.fileURI contains fileURI)
+        }
+        .map {
+          warning =>
+            StringWarning(
+              warning = warning,
+              fileURI = fileURI
+            )
+        }
+
+    innerWarnings ++ outerWarning
+  }
+
   private def findMatchingContractOrScript(
-      parsedContracts: Seq[ContractWithState],
+      sourceCodeState: SourceCodeState.Parsed,
       compiledContracts: Array[CompiledContract],
       compiledScripts: Array[CompiledScript],
       workspaceErrorURI: URI): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
-    parsedContracts map {
-      contract =>
-        findMatchingContractOrScript(
-          contract = contract,
-          compiledContracts = compiledContracts,
-          compiledScripts = compiledScripts,
-          workspaceErrorURI = workspaceErrorURI
-        )
-    }
+    sourceCodeState
+      .ast
+      .statements
+      .collect {
+        case statement: Tree.Source => // collect only the source-code, ignoring import statements.
+          statement.ast
+      }
+      .collect {
+        // Only Contracts and Scripts can be compiled
+        case contract: Ast.Contract if !contract.isAbstract =>
+          contract
+
+        case script: Ast.TxScript =>
+          script
+      }
+      .map {
+        contract =>
+          findMatchingContractOrScript(
+            contract = contract,
+            compiledContracts = compiledContracts,
+            compiledScripts = compiledScripts,
+            workspaceErrorURI = workspaceErrorURI
+          )
+      }
 
   private def findMatchingContractOrScript(
       contract: Ast.ContractWithState,
