@@ -53,7 +53,7 @@ object StringWarning {
             //       It should be replaced with error message logged using ClientLogger.
             // There should never be a case where fileURI are different.
             // This assert is performed to detect bugs; Warnings should always be mapped to the right fileURI.
-            assert(sourceIndexFileURI == sourceIndexFileURI, s"Warning's '$fileURI' is not equal to SourceFile's URI '$sourceIndexFileURI'")
+            assert(sourceIndexFileURI == fileURI, s"Warning's '$fileURI' is not equal to SourceFile's URI '$sourceIndexFileURI'")
 
             StringWarning(
               message = warning.message,
