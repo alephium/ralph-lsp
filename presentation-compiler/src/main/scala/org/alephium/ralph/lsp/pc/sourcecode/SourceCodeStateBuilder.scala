@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
-import org.alephium.ralph.lsp.access.compiler.message.warning.StringWarning
+import org.alephium.ralph.lsp.pc.sourcecode.warning.StringWarning
 import org.alephium.ralph.{CompiledScript, Warning, Ast, CompiledContract}
 
 import java.net.URI
