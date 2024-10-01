@@ -16,7 +16,6 @@
 
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.Ast.ContractWithState
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
@@ -119,26 +118,9 @@ private object SourceCodeStateBuilder {
       workspaceErrorURI: URI): ArraySeq[SourceCodeState.IsCompiled] =
     parsedCode map {
       sourceCodeState =>
-        val parsedContracts =
-          sourceCodeState
-            .ast
-            .statements
-            .collect {
-              case statement: Tree.Source => // collect only the source-code, ignoring import statements.
-                statement.ast
-            }
-            .collect {
-              // Only Contracts and Scripts can be compiled
-              case contract: Ast.Contract if !contract.isAbstract =>
-                contract
-
-              case script: Ast.TxScript =>
-                script
-            }
-
         val matchedCode = // Map contracts and scripts to their fileURIs.
           findMatchingContractOrScript(
-            parsedContracts = parsedContracts,
+            sourceCodeState = sourceCodeState,
             compiledContracts = compiledContracts,
             compiledScripts = compiledScripts,
             workspaceErrorURI = workspaceErrorURI
@@ -160,19 +142,34 @@ private object SourceCodeStateBuilder {
     }
 
   private def findMatchingContractOrScript(
-      parsedContracts: Seq[ContractWithState],
+      sourceCodeState: SourceCodeState.Parsed,
       compiledContracts: Array[CompiledContract],
       compiledScripts: Array[CompiledScript],
       workspaceErrorURI: URI): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
-    parsedContracts map {
-      contract =>
-        findMatchingContractOrScript(
-          contract = contract,
-          compiledContracts = compiledContracts,
-          compiledScripts = compiledScripts,
-          workspaceErrorURI = workspaceErrorURI
-        )
-    }
+    sourceCodeState
+      .ast
+      .statements
+      .collect {
+        case statement: Tree.Source => // collect only the source-code, ignoring import statements.
+          statement.ast
+      }
+      .collect {
+        // Only Contracts and Scripts can be compiled
+        case contract: Ast.Contract if !contract.isAbstract =>
+          contract
+
+        case script: Ast.TxScript =>
+          script
+      }
+      .map {
+        contract =>
+          findMatchingContractOrScript(
+            contract = contract,
+            compiledContracts = compiledContracts,
+            compiledScripts = compiledScripts,
+            workspaceErrorURI = workspaceErrorURI
+          )
+      }
 
   private def findMatchingContractOrScript(
       contract: Ast.ContractWithState,
