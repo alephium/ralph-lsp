@@ -24,6 +24,20 @@ import org.scalatest.wordspec.AnyWordSpec
 /** Test for go to function */
 class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
 
+  "annotation exploration" in {
+    goToReferences(
+      """
+          |Contract MyContract() {
+          |
+          |  @using(c@@heckExternalCaller = false)
+          |  pub fn function_a(boolean: Bool) -> () {
+          |
+          |  }
+          |}
+          |""".stripMargin
+    )
+  }
+
   "return empty" when {
     "function usage do not exist" in {
       goToReferences(

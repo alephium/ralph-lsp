@@ -15,7 +15,7 @@ object Dependencies {
   lazy val scalaMock  = "org.scalamock"     %% "scalamock"       % "6.0.0"    % Test
 
   /** Core */
-  lazy val ralphc = "org.alephium" %% "alephium-ralphc" % "3.7.0" excludeAll (
+  lazy val ralphc = "org.alephium" %% "alephium-ralphc" % "3.7.1+4-c71623bb+20241003-0847-SNAPSHOT" excludeAll (
     ExclusionRule(organization = "org.rocksdb"),
     ExclusionRule(organization = "io.prometheus"),
     ExclusionRule(organization = "org.alephium", name = "alephium-api_2.13"),

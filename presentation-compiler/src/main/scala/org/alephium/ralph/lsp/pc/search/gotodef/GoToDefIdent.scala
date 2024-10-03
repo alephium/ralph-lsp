@@ -16,6 +16,7 @@
 
 package org.alephium.ralph.lsp.pc.search.gotodef
 
+import org.alephium.ralph.RalphAnnotation
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
@@ -135,6 +136,35 @@ private object GoToDefIdent extends StrictImplicitLogging {
             Iterator(
               SourceLocation.Node(
                 ast = mapDef.ident,
+                source = sourceCode
+              )
+            )
+
+          case Node(annotationField: Ast.AnnotationField[_], _) =>
+            println(s"${Console.RED}${Console.BOLD}*** annotationField ***${Console.RESET}$annotationField")
+            println(s"${Console.RED}${Console.BOLD}*** identNode.parent ***${Console.RESET}${identNode.parent.get.parent}")
+
+            val allAnnotation: Seq[RalphAnnotation[_]] =
+              Seq(
+                RalphAnnotation.InterfaceStdAnnotation,
+                RalphAnnotation.InterfaceUsingAnnotation,
+                RalphAnnotation.ContractStdAnnotation,
+                RalphAnnotation.FunctionUsingAnnotation,
+                RalphAnnotation.InterfaceUsingAnnotation
+              )
+
+            val parent = identNode.parent.get.parent.get.data.asInstanceOf[Ast.Annotation[_]].id.name
+
+            val annotation = allAnnotation.find {
+              anno =>
+                anno.id == parent && anno.keys.contains(annotationField.ident.name)
+            }
+
+            println(s"${Console.RED}${Console.BOLD}*** Field with doc ***${Console.RESET}${annotation.get.fields.find(_.name == annotationField.ident.name)}")
+
+            Iterator(
+              SourceLocation.Node(
+                ast = annotationField.ident,
                 source = sourceCode
               )
             )

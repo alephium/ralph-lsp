@@ -16,7 +16,7 @@
 
 package org.alephium.ralph.lsp.pc.search.completion
 
-import org.alephium.ralph.{Type, Parser, Keyword}
+import org.alephium.ralph.{Type, RalphAnnotation, Keyword}
 
 object AnnotationCompleter {
 
@@ -31,8 +31,8 @@ object AnnotationCompleter {
   def suggestAnnotationNames(): Iterator[Suggestion.Keyword] =
     Iterator(
       Suggestion.Keyword(
-        label = Parser.FunctionUsingAnnotation.id,
-        insert = Parser.FunctionUsingAnnotation.id,
+        label = RalphAnnotation.FunctionUsingAnnotation.id,
+        insert = RalphAnnotation.FunctionUsingAnnotation.id,
         detail = ""
       )
     )
@@ -45,11 +45,11 @@ object AnnotationCompleter {
    * `using` annotations.
    *
    * @return An iterator over `@using` annotation fields.
-   * @note Currently hardcoded to support only [[Parser.FunctionUsingAnnotation.keys]],
+   * @note Currently hardcoded to support only [[RalphAnnotation.FunctionUsingAnnotation.keys]],
    *       as only the `@using` annotation is supported.
    */
   def suggestAnnotationKeys(): Iterator[Suggestion.AnnotationField] =
-    Parser.FunctionUsingAnnotation.keys.iterator.map {
+    RalphAnnotation.FunctionUsingAnnotation.keys.iterator.map {
       key =>
         Suggestion.AnnotationField(
           label = key,
@@ -62,7 +62,7 @@ object AnnotationCompleter {
    * Suggests `@using` annotation values.
    *
    * @return An iterator over `@using` annotation values.
-   * @note Currently hardcoded to support only the values of [[Parser.FunctionUsingAnnotation.keys]],
+   * @note Currently hardcoded to support only the values of [[RalphAnnotation.FunctionUsingAnnotation.keys]],
    *       as only the `@using` annotation is supported.
    */
   def suggestAnnotationValues(): Iterator[Suggestion.Keyword] =
