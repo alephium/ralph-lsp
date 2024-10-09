@@ -104,7 +104,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
           |                     >>counter<< + 1) {
           |      return >>counter<<
           |    }
-          |    return outer
+          |    return counter
           |  }
           |}
           |
