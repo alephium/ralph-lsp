@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.ast
 
 import org.alephium.protocol.vm.StatelessContext
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.{Type, Ast}
 
 object AstExtra {
@@ -46,6 +47,36 @@ object AstExtra {
         case _ =>
           false
       }
+
+  /**
+   * Checks if the `current` AST's position is before the `anchor` AST's position.
+   *
+   * @param current The AST whose position is being tested.
+   * @param anchor  The AST with which the position of `current` is compared.
+   * @return `true` if `current`'s position is before `anchor`'s position, `false` otherwise.
+   */
+  def isBehind(
+      current: Ast.Positioned,
+      anchor: Ast.Positioned): Boolean =
+    SourceIndexExtra.isBehind(
+      current = current.sourceIndex,
+      anchor = anchor.sourceIndex
+    )
+
+  /**
+   * Checks if the `current` AST's position is after the `anchor` AST's position.
+   *
+   * @param current The AST whose position is being tested.
+   * @param anchor  The AST with which the position of `current` is compared.
+   * @return `true` if `current`'s position is after `anchor`'s position, `false` otherwise.
+   */
+  def isAhead(
+      current: Ast.Positioned,
+      anchor: Ast.Positioned): Boolean =
+    SourceIndexExtra.isAhead(
+      current = current.sourceIndex,
+      anchor = anchor.sourceIndex
+    )
 
   /**
    * Fetches the type identifier for a given type.

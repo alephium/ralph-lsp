@@ -71,6 +71,51 @@ object SourceIndexExtra {
       fileURI = fileURI
     )
 
+  def contains(
+      parent: Option[SourceIndex],
+      child: Option[SourceIndex]): Boolean =
+    (parent, child) match {
+      case (Some(parent), Some(child)) =>
+        parent contains child
+
+      case (_, _) =>
+        false
+    }
+
+  /**
+   * Checks if the `current` position is before the `anchor`'s position.
+   *
+   * @param current The SourceIndex whose position is being tested.
+   * @param anchor  The SourceIndex with which the position of `current` is compared.
+   * @return `true` if `current`'s position is before `anchor`'s position, `false` otherwise.
+   */
+  def isBehind(
+      current: Option[SourceIndex],
+      anchor: Option[SourceIndex]): Boolean =
+    current
+      .zip(anchor)
+      .exists {
+        case (current, anchor) =>
+          current isBehind anchor
+      }
+
+  /**
+   * Checks if the `current` SourceIndex's position is after the `anchor` SourceIndex's position.
+   *
+   * @param current The SourceIndex whose position is being tested.
+   * @param anchor  The SourceIndex with which the position of `current` is compared.
+   * @return `true` if `current`'s position is after `anchor`'s position, `false` otherwise.
+   */
+  def isAhead(
+      current: Option[SourceIndex],
+      anchor: Option[SourceIndex]): Boolean =
+    current
+      .zip(anchor)
+      .exists {
+        case (current, anchor) =>
+          current isAhead anchor
+      }
+
   implicit class SourceIndexExtension(val sourceIndex: SourceIndex) extends AnyVal {
 
     def from: Int =
@@ -85,6 +130,27 @@ object SourceIndexExtra {
     /** Checks if the given index is within this SourceIndex's from and to index */
     def contains(index: Int): Boolean =
       index >= from && index <= to
+
+    def contains(child: SourceIndex): Boolean =
+      (sourceIndex.fileURI, child.fileURI) match {
+        case (Some(parentURI), Some(childURI)) if parentURI == childURI =>
+          sourceIndex contains child.from
+
+        case (_, _) =>
+          false
+      }
+
+    def isBehind(that: SourceIndex): Boolean =
+      isBehind(that.from)
+
+    def isBehind(index: Int): Boolean =
+      sourceIndex.from < index
+
+    def isAhead(that: SourceIndex): Boolean =
+      isAhead(that.from)
+
+    def isAhead(index: Int): Boolean =
+      sourceIndex.from > index
 
     /** Offset this SourceIndex */
     def +(right: Int): SourceIndex =
