@@ -21,6 +21,7 @@ import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
+import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
@@ -96,7 +97,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
             val result =
               goToLocalVariableUsage(
                 fromNode = namedVarNode.upcast(namedVar),
-                sourceCode = sourceCode
+                sourceCode = sourceCode,
+                workspace = workspace
               )
 
             IncludeDeclaration.add(
@@ -227,7 +229,9 @@ private object GoToRefIdent extends StrictImplicitLogging {
    */
   private def goToLocalVariableUsage(
       fromNode: Node[Ast.NamedVar, Ast.Positioned],
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] =
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] =
     goToNearestBlockInScope(fromNode, sourceCode.tree)
       .iterator
       .flatMap {
@@ -235,7 +239,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
           goToVariableUsages(
             definition = fromNode.data.ident,
             from = from,
-            sourceCode = sourceCode
+            sourceCode = sourceCode,
+            workspace = workspace
           )
       }
 
@@ -250,14 +255,16 @@ private object GoToRefIdent extends StrictImplicitLogging {
   private def goToArgumentUsage(
       argumentNode: Node[Ast.Argument, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] =
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] =
     goToNearestFuncDef(argumentNode) match {
       case Some(functionNode) =>
         // It's a function argument, search within this function's body.
         goToVariableUsages(
           definition = argumentNode.data.ident,
           from = functionNode,
-          sourceCode = sourceCode
+          sourceCode = sourceCode,
+          workspace = workspace
         )
 
       case None =>
@@ -280,7 +287,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
   private def goToTemplateArgumentUsage(
       argument: Ast.Argument,
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] = {
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] = {
     val contractInheritanceUsage =
       goToArgumentsUsageInInheritanceDefinition(
         argument = argument,
@@ -339,7 +347,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
   private def goToTemplateArgumentUsageWithinInheritance(
       argument: Ast.Argument,
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] =
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] =
     WorkspaceSearcher
       .collectImplementingChildren(sourceCode, workspace)
       .childTrees
@@ -349,7 +358,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
           goToVariableUsages(
             definition = argument.ident,
             from = sourceCode.tree.rootNode,
-            sourceCode = sourceCode
+            sourceCode = sourceCode,
+            workspace = workspace
           )
       }
 
@@ -460,7 +470,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
   private def goToConstantUsage(
       constantDef: Ast.ConstantVarDef[_],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] = {
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] = {
     val children =
       if (sourceCode.tree.ast == constantDef)
         // Is a global constant, fetch all workspace trees.
@@ -478,7 +489,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
           goToVariableUsages(
             definition = constantDef.ident,
             from = sourceCode.tree.rootNode,
-            sourceCode = sourceCode
+            sourceCode = sourceCode,
+            workspace = workspace
           )
       }
   }
@@ -487,13 +499,15 @@ private object GoToRefIdent extends StrictImplicitLogging {
    * Navigate to all variable usages for the given variable identifier.
    *
    * @param definition The variable identifier to search for.
-   * @param from       The node to search within, walking downwards.
+   * @param from  The node to search within, walking downwards.
    * @return An array sequence of variable usage IDs.
    */
   private def goToVariableUsages(
       definition: Ast.Ident,
       from: Node[Ast.Positioned, Ast.Positioned],
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] =
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] =
     from
       .walkDown
       .collect {
@@ -505,6 +519,52 @@ private object GoToRefIdent extends StrictImplicitLogging {
         case Node(variable: Ast.AssignmentTarget[_], _) if variable.ident == definition =>
           SourceLocation.Node(variable.ident, sourceCode)
       }
+      .filter {
+        reference =>
+          // So far the collected references match the name, but they also must match the actual definition in scope.
+          isReferenceForDefinition(
+            definition = definition,
+            reference = reference,
+            sourceCode = sourceCode,
+            workspace = workspace
+          )
+      }
+
+  /**
+   * Checks if the input `reference` is in fact a reference for the input `definition`'s instance.
+   * There could be duplicate definitions, a go-to-definition test can confirm this.
+   *
+   * @param definition The definition to expect.
+   * @param reference  The reference to test.
+   * @param sourceCode The parsed state of the source-code where the search is executed.
+   * @param workspace  The workspace where this search was executed and where all the source trees exist.
+   * @return True if definitions were a match, otherwise false.
+   */
+  private def isReferenceForDefinition(
+      definition: Ast.Ident,
+      reference: SourceLocation.Node[Ast.Ident],
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Boolean =
+    reference.ast.sourceIndex exists {
+      referenceSourceIndex =>
+        CodeProvider
+          .goToDefinition
+          .search(
+            cursorIndex = referenceSourceIndex.index,
+            sourceCode = sourceCode.parsed,
+            workspace = workspace,
+            searchSettings = ()
+          )
+          .exists {
+            case SourceLocation.File(_) =>
+              false
+
+            case SourceLocation.Node(foundDefinition, _) =>
+              // The following could be tested with `ast eq ident`
+              foundDefinition == definition && foundDefinition.sourceIndex == definition.sourceIndex
+          }
+    }
 
   /**
    * Navigate to the nearest function definition for which the given child node is in scope.
