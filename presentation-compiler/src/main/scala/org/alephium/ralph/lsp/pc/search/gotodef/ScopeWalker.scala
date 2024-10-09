@@ -29,10 +29,11 @@ private object ScopeWalker {
    * Navigates the nodes within the scope of the `anchor` node, starting from the `from` node.
    *
    * @param from   The node where the search starts.
-   * @param anchor The node where the search ends. If the collected result is empty,
-   *               nodes after the `anchor`'s position are processed until at least one item is collected.
-   * @param pf     Only the Nodes defined by partial function are collected.
-   * @return Nodes within the scope.
+   * @param anchor The node which is being scoped and where the search ends.
+   *               If the collected result is empty, nodes after the `anchor`'s position
+   *               are processed until at least one item is collected.
+   * @param pf     Only the Nodes defined by this partial function are collected.
+   * @return Nodes within the scope of the anchor AST.
    */
   def walk[T](
       from: Node[Ast.Positioned, Ast.Positioned],
@@ -41,11 +42,9 @@ private object ScopeWalker {
     val found  = ListBuffer.empty[T]
     var walker = from.walkDown
 
-    while (walker.hasNext) {
-      val next = walker.next()
-
-      next match {
-        // Check: Is this a scoped node that does not contain the anchor node? If yes, drop all its child nodes.
+    while (walker.hasNext)
+      walker.next() match {
+        // Check: Is this a scoped node that does not contain the anchor node within its scope? If yes, drop all its child nodes.
         // format: off
         case block @ Node(_: Ast.While[_] | _: Ast.ForLoop[_] | _: Ast.IfBranch[_] | _: Ast.ElseBranch[_], _) if !SourceIndexExtra.contains(block.data.sourceIndex, anchor.sourceIndex) =>
         // format: on
@@ -67,7 +66,6 @@ private object ScopeWalker {
         case _ =>
         // ignore the rest
       }
-    }
 
     found
 
