@@ -233,7 +233,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
       .flatMap {
         from =>
           goToVariableUsages(
-            ident = fromNode.data.ident,
+            definition = fromNode.data.ident,
             from = from,
             sourceCode = sourceCode
           )
@@ -255,7 +255,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
       case Some(functionNode) =>
         // It's a function argument, search within this function's body.
         goToVariableUsages(
-          ident = argumentNode.data.ident,
+          definition = argumentNode.data.ident,
           from = functionNode,
           sourceCode = sourceCode
         )
@@ -347,7 +347,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
       .flatMap {
         sourceCode =>
           goToVariableUsages(
-            ident = argument.ident,
+            definition = argument.ident,
             from = sourceCode.tree.rootNode,
             sourceCode = sourceCode
           )
@@ -476,7 +476,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
       .flatMap {
         sourceCode =>
           goToVariableUsages(
-            ident = constantDef.ident,
+            definition = constantDef.ident,
             from = sourceCode.tree.rootNode,
             sourceCode = sourceCode
           )
@@ -486,23 +486,23 @@ private object GoToRefIdent extends StrictImplicitLogging {
   /**
    * Navigate to all variable usages for the given variable identifier.
    *
-   * @param ident The variable identifier to search for.
-   * @param from  The node to search within, walking downwards.
+   * @param definition The variable identifier to search for.
+   * @param from       The node to search within, walking downwards.
    * @return An array sequence of variable usage IDs.
    */
   private def goToVariableUsages(
-      ident: Ast.Ident,
+      definition: Ast.Ident,
       from: Node[Ast.Positioned, Ast.Positioned],
       sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] =
     from
       .walkDown
       .collect {
         // find all the selections matching the variable name.
-        case Node(variable: Ast.Variable[_], _) if variable.id == ident =>
+        case Node(variable: Ast.Variable[_], _) if variable.id == definition =>
           SourceLocation.Node(variable.id, sourceCode)
 
         // collect all assignments
-        case Node(variable: Ast.AssignmentTarget[_], _) if variable.ident == ident =>
+        case Node(variable: Ast.AssignmentTarget[_], _) if variable.ident == definition =>
           SourceLocation.Node(variable.ident, sourceCode)
       }
 
