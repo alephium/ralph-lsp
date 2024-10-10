@@ -111,7 +111,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
           |  pub fn function() -> () {
           |    let >>varA<< = 123
           |    let varB = var@@A
-          |    let >>varA<< = ABC
+          |    let varA = ABC
           |  }
           |
           |}
@@ -127,7 +127,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
           |  pub fn function(>>varA<<: Bool) -> () {
           |    let >>varA<< = 123
           |    let varB = var@@A
-          |    for (let mut >>varA<< = 0; varA <= 4; varA = varA + 1) {
+          |    for (let mut varA = 0; varA <= 4; varA = varA + 1) {
           |       function(true)
           |    }
           |  }

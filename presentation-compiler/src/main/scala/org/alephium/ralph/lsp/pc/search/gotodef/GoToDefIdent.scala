@@ -331,12 +331,13 @@ private object GoToDefIdent extends StrictImplicitLogging {
       .iterator
       .flatMap {
         block =>
-          block
-            .walkDown
-            .collect {
-              case Node(varDef: Ast.VarDef[_], _) if AstExtra.containsNamedVar(varDef, identNode.data) =>
-                SourceLocation.Node(varDef, sourceCode)
-            }
+          ScopeWalker.walk(
+            from = block,
+            anchor = identNode.data
+          ) {
+            case Node(varDef: Ast.VarDef[_], _) if AstExtra.containsNamedVar(varDef, identNode.data) =>
+              SourceLocation.Node(varDef, sourceCode)
+          }
       }
 
   /**
