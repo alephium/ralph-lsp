@@ -147,9 +147,9 @@ object RalphLangServer extends StrictImplicitLogging {
       cancelChecker: CancelChecker,
       currentState: PCState
     )(implicit codeProvider: CodeProvider[I, O],
-      logger: ClientLogger): Iterator[Location] =
+      logger: ClientLogger): Iterator[O] =
     if (!isFileScheme(fileURI)) {
-      Iterator.empty[Location]
+      Iterator.empty
     } else {
       cancelChecker.checkCanceled()
 
@@ -167,23 +167,23 @@ object RalphLangServer extends StrictImplicitLogging {
           goToResult match {
             case Some(Right(goToLocations)) =>
               // successful
-              GoToConverter.toLocations(goToLocations)
+              goToLocations
 
             case Some(Left(error)) =>
               // Go-to definition failed: Log the error message
               logger.info(s"${codeProvider.productPrefix} unsuccessful: " + error.message)
-              Iterator.empty[Location]
+              Iterator.empty
 
             case None =>
               // Not a ralph file or it does not belong to the workspace's contract-uri directory.
-              Iterator.empty[Location]
+              Iterator.empty
           }
 
         case _: WorkspaceState.Created =>
           // Workspace must be compiled at least once to enable GoTo definition.
           // The server must've invoked the initial compilation in the boot-up initialize function.
           logger.info(s"${codeProvider.productPrefix} unsuccessful: Workspace is not compiled")
-          Iterator.empty[Location]
+          Iterator.empty
       }
     }
 
@@ -486,7 +486,10 @@ class RalphLangServer private (
             currentState = getPCState()
           )
 
-        messages.Either.forLeft(CollectionUtil.toJavaList(locations))
+        val javaLocations =
+          CollectionUtil.toJavaList(GoToConverter.toLocations(locations))
+
+        messages.Either.forLeft(javaLocations)
     }
 
   override def references(params: ReferenceParams): CompletableFuture[util.List[_ <: Location]] =
@@ -507,7 +510,10 @@ class RalphLangServer private (
             currentState = getPCState()
           )
 
-        CollectionUtil.toJavaList(locations)
+        val javaLocations =
+          GoToConverter.toLocations(locations)
+
+        CollectionUtil.toJavaList(javaLocations)
     }
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
