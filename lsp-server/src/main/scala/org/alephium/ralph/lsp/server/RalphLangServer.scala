@@ -30,7 +30,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.pc.{PCState, PC}
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES}
-import org.alephium.ralph.lsp.server.converter.{DiagnosticsConverter, GoToConverter, CompletionConverter}
+import org.alephium.ralph.lsp.server.converter.{DiagnosticsConverter, GoToConverter, CompletionConverter, RenameConverter}
 import org.alephium.ralph.lsp.server.state.{Trace, ServerState}
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{CancelChecker, messages, CompletableFutures}
@@ -537,7 +537,7 @@ class RalphLangServer private (
           )
 
         val javaLocations =
-          GoToConverter
+          RenameConverter
             .toTextEdits(
               goTos = locations,
               newText = params.getNewName
