@@ -42,7 +42,7 @@ import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
-import scala.jdk.CollectionConverters.IterableHasAsScala
+import scala.jdk.CollectionConverters.{SeqHasAsJava, MapHasAsJava, IterableHasAsScala}
 
 object RalphLangServer extends StrictImplicitLogging {
 
@@ -100,6 +100,7 @@ object RalphLangServer extends StrictImplicitLogging {
     capabilities.setCompletionProvider(new CompletionOptions(false, util.Arrays.asList(".")))
     capabilities.setDefinitionProvider(true)
     capabilities.setReferencesProvider(true)
+    capabilities.setRenameProvider(true)
 
     capabilities
   }
@@ -514,6 +515,38 @@ class RalphLangServer private (
           GoToConverter.toLocations(locations)
 
         CollectionUtil.toJavaList(javaLocations)
+    }
+
+  override def rename(params: RenameParams): CompletableFuture[WorkspaceEdit] =
+    runAsync {
+      cancelChecker =>
+        val fileURI   = uri(params.getTextDocument.getUri)
+        val line      = params.getPosition.getLine
+        val character = params.getPosition.getCharacter
+
+        val locations =
+          goTo[Unit, SourceLocation.Rename](
+            fileURI = fileURI,
+            line = line,
+            character = character,
+            searchSettings = (),
+            cancelChecker = cancelChecker,
+            currentState = getPCState()
+          )
+
+        val javaLocations =
+          GoToConverter
+            .toTextEdits(
+              goTos = locations,
+              newText = params.getNewName
+            )
+            .map {
+              case (key, value) =>
+                (key.toString, value.asJava)
+            }
+            .asJava
+
+        new WorkspaceEdit(javaLocations)
     }
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
