@@ -165,6 +165,8 @@ object RalphLangServer extends StrictImplicitLogging {
               searchSettings = searchSettings
             )
 
+          cancelChecker.checkCanceled()
+
           goToResult match {
             case Some(Right(goToLocations)) =>
               // successful
@@ -176,7 +178,7 @@ object RalphLangServer extends StrictImplicitLogging {
               Iterator.empty
 
             case None =>
-              // Not a ralph file or it does not belong to the workspace's contract-uri directory.
+              // Not a ralph file, or it does not belong to the workspace's contract-uri directory.
               Iterator.empty
           }
 
