@@ -39,7 +39,7 @@ private object RenameAll extends StrictImplicitLogging {
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Rename] = {
-    val result =
+    val (cannotRename, canRename) =
       CodeProvider
         .goToReferences
         .search(
@@ -48,23 +48,20 @@ private object RenameAll extends StrictImplicitLogging {
           workspace = workspace,
           searchSettings = true // isIncludeDeclaration = true
         )
-        .toList // to allow multiple iterations
+        .partition {
+          ref =>
+            // Changes must be within the developer's workspace. Cannot change dependencies.
+            isRenamingDisallowed(
+              ref = ref,
+              build = workspace.build
+            )
+        }
 
-    // Changes must be within the developer's workspace. Cannot change dependencies.
-    val cannotRenameCode =
-      result filter {
-        ref =>
-          isRenamingDisallowed(
-            ref = ref,
-            build = workspace.build
-          )
-      }
-
-    if (cannotRenameCode.isEmpty) {
-      result.iterator
+    if (cannotRename.isEmpty) {
+      canRename
     } else {
       // contains tokens that cannot be renamed
-      val outsideCodeURIs       = cannotRenameCode.map(_.parsed.fileURI)
+      val outsideCodeURIs       = cannotRename.map(_.parsed.fileURI)
       val outsideCodeURIStrings = outsideCodeURIs.mkString(", ")
       logger.info(s"Operation blocked: Renaming within files outside the active workspace is not allowed. Affected files: $outsideCodeURIStrings")
       Iterator.empty
