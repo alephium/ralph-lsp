@@ -60,6 +60,10 @@ private object GoToRefSource extends StrictImplicitLogging {
             isIncludeDeclaration = isIncludeDeclaration
           )
       }
+      .distinctBy { // There could be multiple definitions for a reference which could result in duplicates.
+        node =>     // Ensure duplicates are removed.
+          (node, node.ast.sourceIndex)
+      }
 
   /**
    * Navigates to the references of a token in the source code.
