@@ -61,9 +61,9 @@ private object RenameAll extends StrictImplicitLogging {
       canRename
     } else {
       // contains tokens that cannot be renamed
-      val outsideCodeURIs       = cannotRename.map(_.parsed.fileURI)
-      val outsideCodeURIStrings = outsideCodeURIs.mkString(", ")
-      logger.info(s"Operation blocked: Renaming within files outside the active workspace is not allowed. Affected files: $outsideCodeURIStrings")
+      val cannotRenameURIs       = cannotRename.map(_.parsed.fileURI)
+      val cannotRenameURIStrings = cannotRenameURIs.mkString(", ")
+      logger.info(s"Operation blocked: Renaming within files outside the active workspace is not allowed. Affected files: $cannotRenameURIStrings")
       Iterator.empty
     }
   }
@@ -84,7 +84,7 @@ private object RenameAll extends StrictImplicitLogging {
         child = ref.parsed.fileURI
       )
 
-    val isInDependencyPath =
+    def isInDependencyPath =
       URIUtil.contains(
         parent = build.dependencyPath,
         child = ref.parsed.fileURI
