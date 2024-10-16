@@ -153,6 +153,25 @@ class GoToEnumTypeUsageSpec extends AnyWordSpec with Matchers {
         doTest(global = true)
       }
     }
+
+    "references are searched on a reference itself" in {
+      goToReferencesForAll(">>ErrorCode<<".r, ">>ErrorCod@@e<<")(
+        """
+          |Abstract Contract Parent() {
+          |  enum ErrorCode { Error1 = 1 }
+          |}
+          |
+          |Contract Child() extends Parent() {
+          |  enum ErrorCode { Error2 = 2 }
+          |
+          |  fn function() -> () {
+          |    assert!(true, >>ErrorCod@@e<<.Error2)
+          |    assert!(true, >>ErrorCode<<.Error2)
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
 }
