@@ -16,24 +16,19 @@
 
 package org.alephium.ralph.lsp.server.converter
 
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange}
 import org.eclipse.lsp4j
 
-/** Converts Go-to definition types to LSP4J types */
-object GoToConverter {
+/** Implements converts for common types shared between all LSP4J types */
+object CommonConverter {
 
-  /** Convert [[SourceLocation.GoTo]]s to LSP4J types [[lsp4j.Location]] */
-  def toLocations(goTos: Iterator[SourceLocation.GoTo]): Iterator[lsp4j.Location] =
-    goTos flatMap toLocation
+  def toRange(range: LineRange): lsp4j.Range =
+    new lsp4j.Range(
+      toPosition(range.from),
+      toPosition(range.to)
+    )
 
-  /** Convert [[SourceLocation.GoTo]] to LSP4J type [[lsp4j.Location]] */
-  private def toLocation(goTo: SourceLocation.GoTo): Option[lsp4j.Location] =
-    goTo.toLineRange() map {
-      lineRange =>
-        new lsp4j.Location(
-          goTo.parsed.fileURI.toString,
-          CommonConverter.toRange(lineRange)
-        )
-    }
+  @inline private def toPosition(position: LinePosition): lsp4j.Position =
+    new lsp4j.Position(position.line, position.character)
 
 }

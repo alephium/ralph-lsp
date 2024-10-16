@@ -63,6 +63,24 @@ object URIUtil {
       child = Paths.get(child)
     )
 
+  /** Is the child [[Path]] within the parent [[URI]] */
+  def contains(
+      parent: URI,
+      child: Path): Boolean =
+    contains(
+      parent = Paths.get(parent),
+      child = child
+    )
+
+  /** Is the child [[URI]] within the parent [[Path]] */
+  def contains(
+      parent: Path,
+      child: URI): Boolean =
+    contains(
+      parent = parent,
+      child = Paths.get(child)
+    )
+
   /**
    * Checks if a given path exists or is undefined.
    *
