@@ -21,7 +21,7 @@ import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.{Suggestion, CodeCompletionProvider}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefinitionProvider
-import org.alephium.ralph.lsp.pc.search.gotoref.GoToReferenceProvider
+import org.alephium.ralph.lsp.pc.search.gotoref.{GoToReferenceProvider, GoToRefSetting}
 import org.alephium.ralph.lsp.pc.search.rename.RenameProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.URIUtil
@@ -66,7 +66,7 @@ object CodeProvider {
     GoToDefinitionProvider
 
   /** The go-to references implementation of [[CodeProvider]]. */
-  implicit val goToReferences: CodeProvider[Boolean, SourceLocation.GoToRef] =
+  implicit val goToReferences: CodeProvider[GoToRefSetting, SourceLocation.GoToRef] =
     GoToReferenceProvider
 
   /** The rename request implementation of [[CodeProvider]]. */

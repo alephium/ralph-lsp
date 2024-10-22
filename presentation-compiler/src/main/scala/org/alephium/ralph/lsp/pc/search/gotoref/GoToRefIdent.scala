@@ -39,7 +39,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
       definition: Node[Ast.Ident, Ast.Positioned],
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware,
-      isIncludeDeclaration: Boolean
+      settings: GoToRefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
     definition.parent match {
       case Some(parent) =>
@@ -57,7 +57,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
               definitionAST = field.ident,
               definitionSource = sourceCode,
               result = result,
-              isIncludeDeclaration = isIncludeDeclaration
+              isIncludeDeclaration = settings.includeDeclaration
             )
 
           case node @ Node(field: Ast.EventField, _) =>
@@ -74,7 +74,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
               definitionAST = field.ident,
               definitionSource = sourceCode,
               result = result,
-              isIncludeDeclaration = isIncludeDeclaration
+              isIncludeDeclaration = settings.includeDeclaration
             )
 
           case Node(constantDef: Ast.ConstantVarDef[_], _) =>
@@ -89,7 +89,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
               definitionAST = constantDef.ident,
               definitionSource = sourceCode,
               result = result,
-              isIncludeDeclaration = isIncludeDeclaration
+              isIncludeDeclaration = settings.includeDeclaration
             )
 
           case namedVarNode @ Node(namedVar: Ast.NamedVar, _) =>
@@ -105,7 +105,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
               definitionAST = namedVar.ident,
               definitionSource = sourceCode,
               result = result,
-              isIncludeDeclaration = isIncludeDeclaration
+              isIncludeDeclaration = settings.includeDeclaration
             )
 
           case argumentNode @ Node(argument: Ast.Argument, _) =>
@@ -121,7 +121,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
               definitionAST = argument.ident,
               definitionSource = sourceCode,
               result = result,
-              isIncludeDeclaration = isIncludeDeclaration
+              isIncludeDeclaration = settings.includeDeclaration
             )
 
           case Node(mapFuncCall: Ast.MapDef, _) =>
@@ -137,7 +137,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
               definitionAST = mapFuncCall.ident,
               definitionSource = sourceCode,
               result = result,
-              isIncludeDeclaration = isIncludeDeclaration
+              isIncludeDeclaration = settings.includeDeclaration
             )
 
           case Node(ast, _) =>

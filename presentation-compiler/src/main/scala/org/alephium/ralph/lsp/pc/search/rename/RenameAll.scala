@@ -18,6 +18,7 @@ package org.alephium.ralph.lsp.pc.search.rename
 
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
@@ -46,7 +47,7 @@ private object RenameAll extends StrictImplicitLogging {
           cursorIndex = cursorIndex,
           sourceCode = sourceCode,
           workspace = workspace,
-          searchSettings = true // isIncludeDeclaration = true
+          searchSettings = GoToRefSetting(includeDeclaration = true)
         )
         .partition {
           ref =>

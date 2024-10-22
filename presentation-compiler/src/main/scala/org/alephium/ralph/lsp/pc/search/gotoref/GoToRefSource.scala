@@ -38,7 +38,7 @@ private object GoToRefSource extends StrictImplicitLogging {
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
-      isIncludeDeclaration: Boolean
+      settings: GoToRefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
     CodeProvider
       .goToDefinition
@@ -57,7 +57,7 @@ private object GoToRefSource extends StrictImplicitLogging {
           goTo(
             defLocation = location,
             workspace = workspace,
-            isIncludeDeclaration = isIncludeDeclaration
+            settings = settings
           )
       }
       .distinctBy { // There could be multiple definitions for a reference which could result in duplicates.
@@ -76,7 +76,7 @@ private object GoToRefSource extends StrictImplicitLogging {
   def goTo(
       defLocation: SourceLocation.Node[Ast.Positioned],
       workspace: WorkspaceState.IsSourceAware,
-      isIncludeDeclaration: Boolean
+      settings: GoToRefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] = {
     val defNode =
       defLocation
@@ -93,7 +93,7 @@ private object GoToRefSource extends StrictImplicitLogging {
           definition = defNode.upcast(ident),
           sourceCode = defLocation.source,
           workspace = workspace,
-          isIncludeDeclaration = isIncludeDeclaration
+          settings = settings
         )
 
       case Some(defNode @ Node(ident: Ast.FuncId, _)) =>
@@ -101,7 +101,7 @@ private object GoToRefSource extends StrictImplicitLogging {
           definition = defNode.upcast(ident),
           sourceCode = defLocation.source,
           workspace = workspace,
-          isIncludeDeclaration = isIncludeDeclaration
+          settings = settings
         )
 
       case Some(defNode @ Node(ident: Ast.TypeId, _)) =>
@@ -109,7 +109,7 @@ private object GoToRefSource extends StrictImplicitLogging {
           definition = defNode.upcast(ident),
           sourceCode = defLocation.source,
           workspace = workspace,
-          isIncludeDeclaration = isIncludeDeclaration
+          settings = settings
         )
 
       case Some(Node(ast, _)) =>

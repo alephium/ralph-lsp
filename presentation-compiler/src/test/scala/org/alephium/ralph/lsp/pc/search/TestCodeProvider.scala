@@ -24,6 +24,7 @@ import org.alephium.ralph.lsp.access.util.{TestCodeUtil, StringUtil}
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
+import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.{TestRalphc, BuildState, TestBuild}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
@@ -69,9 +70,9 @@ object TestCodeProvider {
     )
 
   def goToReferences(code: String): List[(URI, LineRange)] =
-    goTo[Boolean, SourceLocation.GoToRef](
+    goTo[GoToRefSetting, SourceLocation.GoToRef](
       code = code,
-      searchSettings = false
+      searchSettings = GoToRefSetting(includeDeclaration = false)
     )
 
   /**
@@ -260,11 +261,11 @@ object TestCodeProvider {
       dependencyId: DependencyID,
       dependency: String,
       workspace: String): Unit =
-    goTo[Boolean, SourceLocation.GoToRef](
+    goTo[GoToRefSetting, SourceLocation.GoToRef](
       dependencyId = dependencyId,
       dependency = dependency,
       workspace = workspace,
-      searchSettings = false
+      searchSettings = GoToRefSetting(includeDeclaration = false)
     )
 
   def goToDefinition(

@@ -28,14 +28,14 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
  *
  * To execution this function invoke [[CodeProvider.search]] with [[Boolean]] and [[SourceLocation.GoToRef]] as type parameter.
  */
-private[search] case object GoToReferenceProvider extends CodeProvider[Boolean, SourceLocation.GoToRef] with StrictImplicitLogging {
+private[search] case object GoToReferenceProvider extends CodeProvider[GoToRefSetting, SourceLocation.GoToRef] with StrictImplicitLogging {
 
   /** @inheritdoc */
   override def search(
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
-      isIncludeDeclaration: Boolean
+      searchSettings: GoToRefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToRef] =
     // find the statement where this cursorIndex sits.
     sourceCode.ast.statements.find(_.index contains cursorIndex) match {
@@ -57,7 +57,7 @@ private[search] case object GoToReferenceProvider extends CodeProvider[Boolean, 
               cursorIndex = cursorIndex,
               sourceCode = sourceCode,
               workspace = workspace,
-              isIncludeDeclaration = isIncludeDeclaration
+              settings = searchSettings
             )
 
         }
