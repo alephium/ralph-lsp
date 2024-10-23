@@ -25,7 +25,7 @@ object RenameConverter {
 
   /** Converts rename results to LSP4J type [[lsp4j.TextEdit]] */
   def toTextEdits(
-      goTos: Iterator[SourceLocation.Rename],
+      goTos: Iterator[SourceLocation.GoToRename],
       newText: String): Map[URI, List[lsp4j.TextEdit]] =
     goTos
       .flatMap {
@@ -40,7 +40,7 @@ object RenameConverter {
 
   /** Converts a rename result to LSP4J type [[lsp4j.TextEdit]] */
   private def toTextEdit(
-      goTo: SourceLocation.Rename,
+      goTo: SourceLocation.GoToRename,
       newText: String): Option[(URI, TextEdit)] =
     goTo.toLineRange() map {
       lineRange =>

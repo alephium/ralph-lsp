@@ -20,7 +20,7 @@ import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class RenameFunctionSpec extends AnyWordSpec with Matchers {
+class GoToRenameFunctionSpec extends AnyWordSpec with Matchers {
 
   "not rename" when {
     "overloaded functions do not have an abstract function" in {

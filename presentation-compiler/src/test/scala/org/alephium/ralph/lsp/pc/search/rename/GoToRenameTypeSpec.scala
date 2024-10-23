@@ -20,7 +20,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 
-class RenameTypeSpec extends AnyWordSpec with Matchers {
+class GoToRenameTypeSpec extends AnyWordSpec with Matchers {
 
   "rename self" when {
     "there are no references" in {

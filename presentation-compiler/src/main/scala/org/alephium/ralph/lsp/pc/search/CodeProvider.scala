@@ -70,7 +70,7 @@ object CodeProvider {
     GoToReferenceProvider
 
   /** The rename request implementation of [[CodeProvider]]. */
-  implicit val renameProvider: CodeProvider[Unit, SourceLocation.Rename] =
+  implicit val renameProvider: CodeProvider[Unit, SourceLocation.GoToRename] =
     RenameProvider
 
   /**

@@ -100,7 +100,7 @@ object TestCodeProvider {
     )
 
   def goToRename(code: String): List[(URI, LineRange)] =
-    goTo[Unit, SourceLocation.Rename](
+    goTo[Unit, SourceLocation.GoToRename](
       code = code,
       searchSettings = ()
     )
@@ -133,7 +133,7 @@ object TestCodeProvider {
       renameFinder: Regex,
       renameReplacer: String
     )(code: String): Unit =
-    goToForAll[Unit, SourceLocation.Rename](
+    goToForAll[Unit, SourceLocation.GoToRename](
       finder = renameFinder,
       replacer = renameReplacer,
       settings = (),

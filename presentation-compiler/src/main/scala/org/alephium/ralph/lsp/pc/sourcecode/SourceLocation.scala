@@ -47,7 +47,7 @@ object SourceLocation {
   /**
    * Result types for renaming location search results.
    */
-  sealed trait Rename extends GoTo
+  sealed trait GoToRename extends GoTo
 
   /**
    * Result types for GoTo references location search results.
@@ -80,7 +80,7 @@ object SourceLocation {
       name: Tree.Name,
       parsed: SourceCodeState.Parsed)
     extends GoToRef
-       with Rename {
+       with GoToRename {
 
     def lineRange(): LineRange =
       name.index.toLineRange(parsed.code)
@@ -102,7 +102,7 @@ object SourceLocation {
       source: SourceLocation.Code)
     extends GoToDef
        with GoToRef
-       with Rename {
+       with GoToRename {
 
     def toLineRange(): Option[LineRange] =
       ast

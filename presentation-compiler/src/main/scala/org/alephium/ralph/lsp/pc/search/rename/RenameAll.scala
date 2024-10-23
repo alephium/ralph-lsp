@@ -44,7 +44,7 @@ private object RenameAll extends StrictImplicitLogging {
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.Rename] = {
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToRename] = {
     val references =
       collectReferences(
         cursorIndex = cursorIndex,
@@ -86,10 +86,10 @@ private object RenameAll extends StrictImplicitLogging {
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterable[SourceLocation.Rename] = {
+    )(implicit logger: ClientLogger): Iterable[SourceLocation.GoToRename] = {
     // collects all nodes that must be renamed
     val nodesToRename =
-      ListBuffer.empty[(SourceLocation.Rename, SourceIndex)]
+      ListBuffer.empty[(SourceLocation.GoToRename, SourceIndex)]
 
     // settings to run go-to-references on
     val searchSettings =
@@ -152,7 +152,7 @@ private object RenameAll extends StrictImplicitLogging {
    * @return True if renaming is disallowed, false otherwise.
    */
   private def isRenamingDisallowed(
-      ref: SourceLocation.Rename,
+      ref: SourceLocation.GoToRename,
       build: BuildState.Compiled): Boolean = {
     val isOutsideWorkspace =
       !URIUtil.contains(

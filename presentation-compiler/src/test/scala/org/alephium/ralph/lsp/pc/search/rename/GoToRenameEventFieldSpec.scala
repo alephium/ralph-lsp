@@ -20,7 +20,7 @@ import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class RenameEventFieldSpec extends AnyWordSpec with Matchers {
+class GoToRenameEventFieldSpec extends AnyWordSpec with Matchers {
 
   "not rename usages" when {
     "no duplicate event fields" in {

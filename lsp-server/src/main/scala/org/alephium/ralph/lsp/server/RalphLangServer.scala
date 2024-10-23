@@ -537,7 +537,7 @@ class RalphLangServer private (
         val character = params.getPosition.getCharacter
 
         val locations =
-          goTo[Unit, SourceLocation.Rename](
+          goTo[Unit, SourceLocation.GoToRename](
             fileURI = fileURI,
             line = line,
             character = character,
