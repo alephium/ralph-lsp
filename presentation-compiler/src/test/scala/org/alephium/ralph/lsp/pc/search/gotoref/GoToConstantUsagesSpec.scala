@@ -93,7 +93,8 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
 
       "global constants" when {
         def doTest(contractName: String) =
-          goToReferences()(s"""
+          goToReferences() {
+            s"""
                |const MyCons@@tant = 0
                |const MyConstant_B = 1
                |
@@ -110,7 +111,8 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
                |    return [0; >>MyConstant<<]
                |  }
                |}
-               |""".stripMargin)
+               |""".stripMargin
+          }
 
         "constant and contract have the same ID" in {
           // the constant name is also "MyConstant"
