@@ -100,7 +100,7 @@ private object GoToRenameAll extends StrictImplicitLogging {
         goToDefSetting = GoToDefSetting(includeAbstractFuncDef = true)
       )
 
-    /** Start collect the nodes to rename */
+    // Start collect the nodes to rename
     def runCollect(
         cursorIndex: Int,
         sourceCode: SourceCodeState.Parsed): Unit =
