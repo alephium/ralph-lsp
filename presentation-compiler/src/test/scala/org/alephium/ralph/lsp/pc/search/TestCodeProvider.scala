@@ -81,6 +81,12 @@ object TestCodeProvider {
       searchSettings = settings
     )
 
+  def goToRename(code: String): List[(URI, LineRange)] =
+    goTo[Unit, SourceLocation.Rename](
+      code = code,
+      searchSettings = ()
+    )
+
   /**
    * Background: Go-to references should output the same result, regardless of whether it is executed
    * on the definition/declaration or on the usages.
