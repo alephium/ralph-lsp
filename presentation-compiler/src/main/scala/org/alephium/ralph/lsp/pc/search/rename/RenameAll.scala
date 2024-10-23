@@ -94,7 +94,8 @@ private object RenameAll extends StrictImplicitLogging {
     val searchSettings =
       GoToRefSetting(
         includeDeclaration = true,
-        includeTemplateArgumentOverrides = true
+        includeTemplateArgumentOverrides = true,
+        includeEventFieldReferences = false // do not rename event field references
       )
 
     /** Start collect the nodes to rename */

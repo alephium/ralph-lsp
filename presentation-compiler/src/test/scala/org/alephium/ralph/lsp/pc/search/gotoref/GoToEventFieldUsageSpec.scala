@@ -54,6 +54,21 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       }
     }
+
+    "includeEventFieldReferences is disabled" in {
+      goToReferences(settings = testGoToRefSetting.copy(includeEventFieldReferences = false)) {
+        """
+          |Contract Test() {
+          |
+          |  event Transfer(to: Address, a@@mount: U256)
+          |
+          |  pub fn function() -> () {
+          |    emit Transfer(to, someAmount)
+          |  }
+          |}
+          |""".stripMargin
+      }
+    }
   }
 
   "return non-empty for an event field" when {

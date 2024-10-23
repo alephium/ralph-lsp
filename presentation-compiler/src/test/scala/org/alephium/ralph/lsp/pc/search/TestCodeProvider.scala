@@ -44,7 +44,8 @@ object TestCodeProvider {
   val testGoToRefSetting: GoToRefSetting =
     GoToRefSetting(
       includeDeclaration = false,
-      includeTemplateArgumentOverrides = false
+      includeTemplateArgumentOverrides = false,
+      includeEventFieldReferences = true
     )
 
   /**

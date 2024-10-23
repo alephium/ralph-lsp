@@ -27,7 +27,16 @@ package org.alephium.ralph.lsp.pc.search.gotoref
  *                                              Abstract Contract Parent(variable@@: Bool) { }
  *                                              Abstract Contract Child(>>variable<<: Bool) extends Parent(variable) { }
  *                                         }}}
+ * @param includeEventFieldReferences      Creating an instance of an Event does not require named field parameter.
+ *                                         Settings this to false will exclude event field references from the search result.
+ *                                         For example, in the following case, renaming `to` should not rename `buyer`.
+ *                                         But `buyer` should be included when responding to go-to-references requests.
+ *                                         {{{
+ *                                               event Transfer(to: Address)
+ *                                               emit Transfer(buyer)
+ *                                         }}}
  */
 case class GoToRefSetting(
     includeDeclaration: Boolean,
-    includeTemplateArgumentOverrides: Boolean)
+    includeTemplateArgumentOverrides: Boolean,
+    includeEventFieldReferences: Boolean)

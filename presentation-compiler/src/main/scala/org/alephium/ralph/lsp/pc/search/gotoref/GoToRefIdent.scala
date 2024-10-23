@@ -68,7 +68,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
               goToEventFieldUsages(
                 node = node.upcast(field),
                 sourceCode = sourceCode,
-                workspace = workspace
+                workspace = workspace,
+                settings = settings
               )
 
             IncludeDeclaration.add(
@@ -156,30 +157,34 @@ private object GoToRefIdent extends StrictImplicitLogging {
   private def goToEventFieldUsages(
       node: Node[Ast.EventField, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware) =
-    // They selected an event field.
-    // Check the parent to find the event definition.
-    node
-      .parent
-      .map(_.data)
-      .iterator
-      .collect {
-        // Check: Parent is an event definition which contains the event field.
-        case eventDef: Ast.EventDef if eventDef.fields.exists(_.ident == node.data.ident) =>
-          WorkspaceSearcher
-            .collectImplementingChildren(sourceCode, workspace)
-            .childTrees
-            .iterator
-            .flatMap {
-              sourceCode =>
-                goToEventFieldUsage(
-                  eventDefId = eventDef.id,
-                  eventFieldIndex = eventDef.fields.indexWhere(_.ident == node.data.ident),
-                  sourceCode = sourceCode
-                )
-            }
-      }
-      .flatten
+      workspace: WorkspaceState.IsSourceAware,
+      settings: GoToRefSetting) =
+    if (settings.includeEventFieldReferences)
+      // They selected an event field.
+      // Check the parent to find the event definition.
+      node
+        .parent
+        .map(_.data)
+        .iterator
+        .collect {
+          // Check: Parent is an event definition which contains the event field.
+          case eventDef: Ast.EventDef if eventDef.fields.exists(_.ident == node.data.ident) =>
+            WorkspaceSearcher
+              .collectImplementingChildren(sourceCode, workspace)
+              .childTrees
+              .iterator
+              .flatMap {
+                sourceCode =>
+                  goToEventFieldUsage(
+                    eventDefId = eventDef.id,
+                    eventFieldIndex = eventDef.fields.indexWhere(_.ident == node.data.ident),
+                    sourceCode = sourceCode
+                  )
+              }
+        }
+        .flatten
+    else
+      Iterator.empty
 
   /**
    * Navigate to enum field usages.
