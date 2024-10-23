@@ -20,6 +20,7 @@ import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.URIUtil
@@ -95,7 +96,8 @@ private object RenameAll extends StrictImplicitLogging {
       GoToRefSetting(
         includeDeclaration = true,
         includeTemplateArgumentOverrides = true,
-        includeEventFieldReferences = false // do not rename event field references
+        includeEventFieldReferences = false, // do not rename event field references
+        goToDefSetting = GoToDefSetting(includeAbstractFuncDef = true)
       )
 
     /** Start collect the nodes to rename */

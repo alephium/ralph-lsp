@@ -24,7 +24,7 @@ class GoToArraySpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "there is no array definition" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract Test()  {
           |  fn main() -> () {
@@ -38,7 +38,7 @@ class GoToArraySpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "there is a single array definition" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract Test(>>array<<: [U256; 2])  {
           |  fn main() -> () {
@@ -51,7 +51,7 @@ class GoToArraySpec extends AnyWordSpec with Matchers {
 
     "there are duplicate array definitions" when {
       "without inheritance" in {
-        goToDefinition(
+        goToDefinition()(
           """
             |Contract Test(>>array<<: [U256; 2])  {
             |  fn main(>>array<<: [U256; 2]) -> () {
@@ -63,7 +63,7 @@ class GoToArraySpec extends AnyWordSpec with Matchers {
       }
 
       "within inheritance" in {
-        goToDefinition(
+        goToDefinition()(
           """
             |Contract Parent(>>array<<: [U256; 2])  {
             |  fn main(array: [U256; 2]) -> () {

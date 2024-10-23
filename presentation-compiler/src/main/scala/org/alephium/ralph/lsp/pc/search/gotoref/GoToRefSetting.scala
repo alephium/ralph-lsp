@@ -16,6 +16,8 @@
 
 package org.alephium.ralph.lsp.pc.search.gotoref
 
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
+
 /**
  * Settings that control go-to-references search behaviour.
  *
@@ -35,8 +37,11 @@ package org.alephium.ralph.lsp.pc.search.gotoref
  *                                               event Transfer(to: Address)
  *                                               emit Transfer(buyer)
  *                                         }}}
+ * @param goToDefSetting                   This setting will be used for executing Go-to-definitions which is sometimes
+ *                                         accessed by go-to-references to simplify reference search.
  */
 case class GoToRefSetting(
     includeDeclaration: Boolean,
     includeTemplateArgumentOverrides: Boolean,
-    includeEventFieldReferences: Boolean)
+    includeEventFieldReferences: Boolean,
+    goToDefSetting: GoToDefSetting)

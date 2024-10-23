@@ -46,7 +46,7 @@ private object GoToRefSource extends StrictImplicitLogging {
         cursorIndex = cursorIndex,
         sourceCode = sourceCode,
         workspace = workspace,
-        searchSettings = ()
+        searchSettings = settings.goToDefSetting
       )
       .flatMap {
         case SourceLocation.File(_) =>

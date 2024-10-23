@@ -24,6 +24,7 @@ import org.alephium.ralph.lsp.access.util.{TestCodeUtil, StringUtil}
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.{TestRalphc, BuildState, TestBuild}
@@ -41,11 +42,15 @@ import scala.util.matching.Regex
 
 object TestCodeProvider {
 
+  val testGoToDefSetting: GoToDefSetting =
+    GoToDefSetting(includeAbstractFuncDef = false)
+
   val testGoToRefSetting: GoToRefSetting =
     GoToRefSetting(
       includeDeclaration = false,
       includeTemplateArgumentOverrides = false,
-      includeEventFieldReferences = true
+      includeEventFieldReferences = true,
+      goToDefSetting = testGoToDefSetting
     )
 
   /**
@@ -70,10 +75,22 @@ object TestCodeProvider {
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
-  def goToDefinition(code: String): List[(URI, LineRange)] =
-    goTo[Unit, SourceLocation.GoToDef](
+  def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] =
+    goTo[GoToDefSetting, SourceLocation.GoToDef](
       code = code,
-      searchSettings = ()
+      searchSettings = settings
+    )
+
+  def goToDefinitionForAll(
+      referencesFinder: Regex,
+      referenceReplacement: String,
+      settings: GoToDefSetting = testGoToDefSetting
+    )(code: String): Unit =
+    goToForAll[GoToDefSetting, SourceLocation.GoToDef](
+      finder = referencesFinder,
+      replacer = referenceReplacement,
+      settings = settings,
+      code = code
     )
 
   def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String): List[(URI, LineRange)] =
@@ -311,15 +328,16 @@ object TestCodeProvider {
       searchSettings = settings
     )
 
-  def goToDefinition(
+  def goToDefinitionOnDependency(
       dependencyId: DependencyID,
       dependency: String,
-      workspace: String): Unit =
-    goTo[Unit, SourceLocation.GoToDef](
+      workspace: String,
+      setting: GoToDefSetting = testGoToDefSetting): Unit =
+    goTo[GoToDefSetting, SourceLocation.GoToDef](
       dependencyId = dependencyId,
       dependency = dependency,
       workspace = workspace,
-      searchSettings = ()
+      searchSettings = setting
     )
 
   /**
@@ -458,9 +476,9 @@ object TestCodeProvider {
 
     // Execute go-to definition.
     val (searchResult, _, workspace) =
-      TestCodeProvider[Unit, SourceLocation.GoToDef](
+      TestCodeProvider[GoToDefSetting, SourceLocation.GoToDef](
         code = codeWithoutGoToSymbols,
-        searchSettings = (),
+        searchSettings = testGoToDefSetting,
         dependencyDownloaders = ArraySeq(downloader)
       )
 

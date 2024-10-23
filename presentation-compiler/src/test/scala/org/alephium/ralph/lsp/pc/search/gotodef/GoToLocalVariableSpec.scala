@@ -24,7 +24,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "variable does not exist" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract GoToTest() {
           |
@@ -41,7 +41,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
   "return self" when {
     "variable itself is selected" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract Test() {
           |
@@ -56,7 +56,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
     "duplicate variables exists" when {
       "first var is selected" in {
-        goToDefinition(
+        goToDefinition()(
           """
             |Contract Test() {
             |
@@ -71,7 +71,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "second var is selected" in {
-        goToDefinition(
+        goToDefinition()(
           """
             |Contract Test() {
             |
@@ -89,7 +89,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "single local variable exists" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract GoToTest() {
           |
@@ -104,7 +104,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
 
     "multiple local variables exists" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract GoToTest() {
           |
@@ -120,7 +120,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
 
     "local variable and arguments have the same name" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract GoToTest(>>varA<<: Bool) {
           |
@@ -137,7 +137,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
 
     "variable is in an ApproveAsset expression" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract GoToTest() {
           |
@@ -153,7 +153,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
     "variable is a tuple" when {
       "first tuple is queried" in {
-        goToDefinition(
+        goToDefinition()(
           """
             |Contract Test() {
             |  fn test() -> () {
@@ -170,7 +170,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "second tuple is queried" in {
-        goToDefinition(
+        goToDefinition()(
           """
             |Contract Test() {
             |  fn test() -> () {
@@ -187,7 +187,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "there are duplicate tuples" in {
-        goToDefinition(
+        goToDefinition()(
           """
             |Contract Test() {
             |  fn test() -> () {

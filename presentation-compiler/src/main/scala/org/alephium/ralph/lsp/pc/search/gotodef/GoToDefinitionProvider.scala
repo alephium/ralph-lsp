@@ -29,14 +29,14 @@ import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
  *
  * To execution this function invoke [[CodeProvider.search]] with [[SourceLocation.GoToDef]] as type parameter.
  */
-private[search] case object GoToDefinitionProvider extends CodeProvider[Unit, SourceLocation.GoToDef] with StrictImplicitLogging {
+private[search] case object GoToDefinitionProvider extends CodeProvider[GoToDefSetting, SourceLocation.GoToDef] with StrictImplicitLogging {
 
   /** @inheritdoc */
   override def search(
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
-      searchSettings: Unit
+      searchSettings: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDef] =
     // find the statement where this cursorIndex sits.
     sourceCode.ast.statements.find(_.index contains cursorIndex) match {
@@ -57,7 +57,8 @@ private[search] case object GoToDefinitionProvider extends CodeProvider[Unit, So
             GoToDefSource.goTo(
               cursorIndex = cursorIndex,
               sourceCode = SourceLocation.Code(tree, sourceCode),
-              workspace = workspace
+              workspace = workspace,
+              settings = searchSettings
             )
         }
 

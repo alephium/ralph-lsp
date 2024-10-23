@@ -22,7 +22,7 @@ import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
-import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefIdent
+import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefIdent, GoToDefSetting}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
@@ -84,7 +84,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
               goToConstantUsage(
                 constantDef = constantDef,
                 sourceCode = sourceCode,
-                workspace = workspace
+                workspace = workspace,
+                goToDefSetting = settings.goToDefSetting
               )
 
             IncludeDeclaration.add(
@@ -100,7 +101,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
               goToLocalVariableUsage(
                 fromNode = namedVarNode.upcast(namedVar),
                 sourceCode = sourceCode,
-                workspace = workspace
+                workspace = workspace,
+                goToDefSetting = settings.goToDefSetting
               )
 
             IncludeDeclaration.add(
@@ -117,7 +119,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
                 argumentNode = argumentNode.upcast(argument),
                 sourceCode = sourceCode,
                 workspace = workspace,
-                includeTemplateArgumentOverrides = settings.includeTemplateArgumentOverrides
+                settings = settings
               )
 
             IncludeDeclaration.add(
@@ -237,7 +239,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
   private def goToLocalVariableUsage(
       fromNode: Node[Ast.NamedVar, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware
+      workspace: WorkspaceState.IsSourceAware,
+      goToDefSetting: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] =
     goToNearestBlockInScope(fromNode, sourceCode.tree)
       .iterator
@@ -247,7 +250,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
             definition = fromNode.data.ident,
             from = from,
             sourceCode = sourceCode,
-            workspace = workspace
+            workspace = workspace,
+            goToDefSetting = goToDefSetting
           )
       }
 
@@ -263,7 +267,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
       argumentNode: Node[Ast.Argument, Ast.Positioned],
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware,
-      includeTemplateArgumentOverrides: Boolean
+      settings: GoToRefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] =
     goToNearestFuncDef(argumentNode) match {
       case Some(functionNode) =>
@@ -272,7 +276,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
           definition = argumentNode.data.ident,
           from = functionNode,
           sourceCode = sourceCode,
-          workspace = workspace
+          workspace = workspace,
+          goToDefSetting = settings.goToDefSetting
         )
 
       case None =>
@@ -281,7 +286,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
           argument = argumentNode.data,
           sourceCode = sourceCode,
           workspace = workspace,
-          includeTemplateArgumentOverrides = includeTemplateArgumentOverrides
+          settings = settings
         )
     }
 
@@ -297,7 +302,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
       argument: Ast.Argument,
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware,
-      includeTemplateArgumentOverrides: Boolean
+      settings: GoToRefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] = {
     val contractInheritanceUsage =
       goToArgumentsUsageInInheritanceDefinition(
@@ -309,11 +314,12 @@ private object GoToRefIdent extends StrictImplicitLogging {
       goToTemplateArgumentUsageWithinInheritance(
         argument = argument,
         sourceCode = sourceCode,
-        workspace = workspace
+        workspace = workspace,
+        goToDefSetting = settings.goToDefSetting
       )
 
     val overriddenArguments =
-      if (includeTemplateArgumentOverrides)
+      if (settings.includeTemplateArgumentOverrides)
         goToOverriddenTemplateArguments(
           argument = argument,
           sourceCode = sourceCode,
@@ -367,7 +373,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
   private def goToTemplateArgumentUsageWithinInheritance(
       argument: Ast.Argument,
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware
+      workspace: WorkspaceState.IsSourceAware,
+      goToDefSetting: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] =
     WorkspaceSearcher
       .collectImplementingChildren(sourceCode, workspace)
@@ -379,7 +386,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
             definition = argument.ident,
             from = sourceCode.tree.rootNode,
             sourceCode = sourceCode,
-            workspace = workspace
+            workspace = workspace,
+            goToDefSetting = goToDefSetting
           )
       }
 
@@ -521,7 +529,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
   private def goToConstantUsage(
       constantDef: Ast.ConstantVarDef[_],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware
+      workspace: WorkspaceState.IsSourceAware,
+      goToDefSetting: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] = {
     val children =
       if (sourceCode.tree.ast == constantDef)
@@ -541,7 +550,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
             definition = constantDef.ident,
             from = sourceCode.tree.rootNode,
             sourceCode = sourceCode,
-            workspace = workspace
+            workspace = workspace,
+            goToDefSetting = goToDefSetting
           )
       }
   }
@@ -557,7 +567,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
       definition: Ast.Ident,
       from: Node[Ast.Positioned, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware
+      workspace: WorkspaceState.IsSourceAware,
+      goToDefSetting: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] =
     from
       .walkDown
@@ -577,7 +588,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
             definition = definition,
             reference = reference,
             sourceCode = sourceCode,
-            workspace = workspace
+            workspace = workspace,
+            goToDefSetting = goToDefSetting
           )
       }
 
@@ -595,7 +607,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
       definition: Ast.Ident,
       reference: SourceLocation.Node[Ast.Ident],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware
+      workspace: WorkspaceState.IsSourceAware,
+      goToDefSetting: GoToDefSetting
     )(implicit logger: ClientLogger): Boolean =
     reference.ast.sourceIndex exists {
       referenceSourceIndex =>
@@ -605,7 +618,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
             cursorIndex = referenceSourceIndex.index,
             sourceCode = sourceCode.parsed,
             workspace = workspace,
-            searchSettings = ()
+            searchSettings = goToDefSetting
           )
           .exists {
             case SourceLocation.File(_) =>
