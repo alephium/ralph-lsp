@@ -24,7 +24,7 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 /**
  * Implements [[CodeProvider]] that provides renaming results of type [[SourceLocation.GoToRename]].
  */
-case object RenameProvider extends CodeProvider[Unit, SourceLocation.GoToRename] {
+private[search] case object GoToRenameProvider extends CodeProvider[Unit, SourceLocation.GoToRename] {
 
   /** @inheritdoc */
   override def search(
@@ -33,7 +33,7 @@ case object RenameProvider extends CodeProvider[Unit, SourceLocation.GoToRename]
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: Unit
     )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToRename] =
-    RenameAll.rename(
+    GoToRenameAll.rename(
       cursorIndex = cursorIndex,
       sourceCode = sourceCode,
       workspace = workspace

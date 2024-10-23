@@ -30,7 +30,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import scala.collection.mutable.ListBuffer
 
 /** Rename all references */
-private object RenameAll extends StrictImplicitLogging {
+private object GoToRenameAll extends StrictImplicitLogging {
 
   /**
    * Searches for related tokens that can be renamed for the token at the given cursor index.

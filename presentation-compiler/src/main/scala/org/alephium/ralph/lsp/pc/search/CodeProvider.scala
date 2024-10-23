@@ -22,7 +22,7 @@ import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.{Suggestion, CodeCompletionProvider}
 import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefSetting, GoToDefinitionProvider}
 import org.alephium.ralph.lsp.pc.search.gotoref.{GoToReferenceProvider, GoToRefSetting}
-import org.alephium.ralph.lsp.pc.search.rename.RenameProvider
+import org.alephium.ralph.lsp.pc.search.rename.GoToRenameProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
@@ -70,8 +70,8 @@ object CodeProvider {
     GoToReferenceProvider
 
   /** The rename request implementation of [[CodeProvider]]. */
-  implicit val renameProvider: CodeProvider[Unit, SourceLocation.GoToRename] =
-    RenameProvider
+  implicit val goToRenameProvider: CodeProvider[Unit, SourceLocation.GoToRename] =
+    GoToRenameProvider
 
   /**
    * Execute search at cursor position within the current workspace state.
