@@ -26,7 +26,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "function usage do not exist" in {
-      goToReferences(
+      goToReferences() {
         """
           |Contract MyContract(interface: MyInterface) {
           |
@@ -40,7 +40,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
   }
 
@@ -157,7 +157,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
 
     "dependency function usage exists" when {
       "only in workspace code" in {
-        goToReferences(
+        goToReferencesOnDependency(
           dependencyId = DependencyID.BuiltIn,
           // the custom builtin library
           dependency = """
@@ -182,7 +182,7 @@ class GoToFunctionUsageSpec extends AnyWordSpec with Matchers {
       }
 
       "within the dependency itself and also the workspace" in {
-        goToReferences(
+        goToReferencesOnDependency(
           dependencyId = DependencyID.BuiltIn,
           // the custom builtin library
           dependency = """

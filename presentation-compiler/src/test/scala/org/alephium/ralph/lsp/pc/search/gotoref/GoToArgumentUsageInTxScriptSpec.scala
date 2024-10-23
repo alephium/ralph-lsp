@@ -24,13 +24,13 @@ class GoToArgumentUsageInTxScriptSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "argument is not used" in {
-      goToReferences(
+      goToReferences() {
         """
           |TxScript GoToArgument(interfa@@ce: MyInterface) {
           |  let result = blah.function()
           |}
           |""".stripMargin
-      )
+      }
     }
   }
 

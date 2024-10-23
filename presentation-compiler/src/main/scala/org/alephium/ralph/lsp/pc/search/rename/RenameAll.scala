@@ -47,7 +47,10 @@ private object RenameAll extends StrictImplicitLogging {
           cursorIndex = cursorIndex,
           sourceCode = sourceCode,
           workspace = workspace,
-          searchSettings = GoToRefSetting(includeDeclaration = true)
+          searchSettings = GoToRefSetting(
+            includeDeclaration = true,
+            includeTemplateArgumentOverrides = true
+          )
         )
         .partition {
           ref =>

@@ -19,6 +19,15 @@ package org.alephium.ralph.lsp.pc.search.gotoref
 /**
  * Settings that control go-to-references search behaviour.
  *
- * @param includeDeclaration If true, includes definitions/declarations to the search result.
+ * @param includeDeclaration               If true, includes definitions/declarations to the search result.
+ * @param includeTemplateArgumentOverrides If true, includes overridden template/Contract level arguments.
+ *                                         For example: In the following case the overridden `variable` in `Child` Contract
+ *                                         will be included when searching for references on `variable` defined in `Parent` Contract.
+ *                                         {{{
+ *                                              Abstract Contract Parent(variable@@: Bool) { }
+ *                                              Abstract Contract Child(>>variable<<: Bool) extends Parent(variable) { }
+ *                                         }}}
  */
-case class GoToRefSetting(includeDeclaration: Boolean)
+case class GoToRefSetting(
+    includeDeclaration: Boolean,
+    includeTemplateArgumentOverrides: Boolean)

@@ -24,7 +24,7 @@ class GoToMapUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "there is no map usage" in {
-      goToReferences(
+      goToReferences() {
         """
           |Contract Test() {
           |
@@ -33,7 +33,7 @@ class GoToMapUsageSpec extends AnyWordSpec with Matchers {
           |  pub fn function() -> () { }
           |}
           |""".stripMargin
-      )
+      }
     }
   }
 

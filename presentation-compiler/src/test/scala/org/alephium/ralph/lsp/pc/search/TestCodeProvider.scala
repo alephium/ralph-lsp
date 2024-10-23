@@ -41,6 +41,12 @@ import scala.util.matching.Regex
 
 object TestCodeProvider {
 
+  val testGoToRefSetting: GoToRefSetting =
+    GoToRefSetting(
+      includeDeclaration = false,
+      includeTemplateArgumentOverrides = false
+    )
+
   /**
    * Runs code completion where `@@` is positioned.
    *
@@ -69,10 +75,10 @@ object TestCodeProvider {
       searchSettings = ()
     )
 
-  def goToReferences(code: String): List[(URI, LineRange)] =
+  def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String): List[(URI, LineRange)] =
     goTo[GoToRefSetting, SourceLocation.GoToRef](
       code = code,
-      searchSettings = GoToRefSetting(includeDeclaration = false)
+      searchSettings = settings
     )
 
   /**
@@ -89,13 +95,40 @@ object TestCodeProvider {
    */
   def goToReferencesForAll(
       referencesFinder: Regex,
-      referenceReplacement: String
-    )(code: String): Unit = {
+      referenceReplacement: String,
+      settings: GoToRefSetting = testGoToRefSetting
+    )(code: String): Unit =
+    goToForAll[GoToRefSetting, SourceLocation.GoToRef](
+      finder = referencesFinder,
+      replacer = referenceReplacement,
+      settings = settings,
+      code = code
+    )
+
+  def goToRenameForAll(
+      renameFinder: Regex,
+      renameReplacer: String
+    )(code: String): Unit =
+    goToForAll[Unit, SourceLocation.Rename](
+      finder = renameFinder,
+      replacer = renameReplacer,
+      settings = (),
+      code = code
+    )
+
+  private def goToForAll[I, O <: SourceLocation.GoTo](
+      finder: Regex,
+      replacer: String,
+      settings: I,
+      code: String
+    )(implicit codeProvider: CodeProvider[I, O]): Unit = {
     // Initially, execute the test defined.
     // This should be most expressed on the declaration.
     val firstResult =
-      goToReferences(code)
-        .map(_._2)
+      goTo(
+        code = code,
+        searchSettings = settings
+      ).map(_._2)
 
     // remove the select indicator @@ from the code.
     val codeWithoutSelectSymbol =
@@ -103,12 +136,12 @@ object TestCodeProvider {
 
     // find all matches
     val matches =
-      referencesFinder
+      finder
         .findAllMatchIn(codeWithoutSelectSymbol)
         .toList
 
     if (matches.isEmpty)
-      fail(s"No matches found for regex '$referencesFinder' with replacement '$referenceReplacement'")
+      fail(s"No matches found for regex '$finder' with replacement '$replacer'")
 
     // execute the same test on all matches
     matches foreach {
@@ -119,7 +152,7 @@ object TestCodeProvider {
             string = codeWithoutSelectSymbol,
             start = matched.start,
             end = matched.end,
-            replacement = referenceReplacement
+            replacement = replacer
           )
 
         def reportCodeOnFailure[T](test: => T): T =
@@ -137,8 +170,10 @@ object TestCodeProvider {
 
         val newRanges =
           reportCodeOnFailure {
-            goToReferences(newCode)
-              .map(_._2)
+            goTo(
+              code = newCode,
+              searchSettings = settings
+            ).map(_._2)
           }
 
         // also check that the result is the same as the first ranges returned on declaration.
@@ -199,7 +234,7 @@ object TestCodeProvider {
       }
 
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-    actual should contain theSameElementsAs expectedGoToLocations
+    actual.map(_._2).sortBy(_.to.character) should contain theSameElementsAs expectedGoToLocations.map(_._2).sortBy(_.to.character)
     actual
   }
 
@@ -257,15 +292,16 @@ object TestCodeProvider {
    * @param workspace    The developer's workspace code.
    * @return
    */
-  def goToReferences(
+  def goToReferencesOnDependency(
       dependencyId: DependencyID,
       dependency: String,
-      workspace: String): Unit =
+      workspace: String,
+      settings: GoToRefSetting = testGoToRefSetting): Unit =
     goTo[GoToRefSetting, SourceLocation.GoToRef](
       dependencyId = dependencyId,
       dependency = dependency,
       workspace = workspace,
-      searchSettings = GoToRefSetting(includeDeclaration = false)
+      searchSettings = settings
     )
 
   def goToDefinition(

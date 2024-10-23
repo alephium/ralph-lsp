@@ -506,7 +506,8 @@ class RalphLangServer private (
 
         val settings =
           GoToRefSetting(
-            includeDeclaration = isIncludeDeclaration
+            includeDeclaration = isIncludeDeclaration,
+            includeTemplateArgumentOverrides = false
           )
 
         val locations =

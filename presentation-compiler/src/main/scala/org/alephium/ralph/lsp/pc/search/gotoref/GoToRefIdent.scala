@@ -22,6 +22,7 @@ import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefIdent
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
@@ -114,7 +115,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
               goToArgumentUsage(
                 argumentNode = argumentNode.upcast(argument),
                 sourceCode = sourceCode,
-                workspace = workspace
+                workspace = workspace,
+                includeTemplateArgumentOverrides = settings.includeTemplateArgumentOverrides
               )
 
             IncludeDeclaration.add(
@@ -255,7 +257,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
   private def goToArgumentUsage(
       argumentNode: Node[Ast.Argument, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware
+      workspace: WorkspaceState.IsSourceAware,
+      includeTemplateArgumentOverrides: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] =
     goToNearestFuncDef(argumentNode) match {
       case Some(functionNode) =>
@@ -272,7 +275,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
         goToTemplateArgumentUsage(
           argument = argumentNode.data,
           sourceCode = sourceCode,
-          workspace = workspace
+          workspace = workspace,
+          includeTemplateArgumentOverrides = includeTemplateArgumentOverrides
         )
     }
 
@@ -287,7 +291,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
   private def goToTemplateArgumentUsage(
       argument: Ast.Argument,
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware
+      workspace: WorkspaceState.IsSourceAware,
+      includeTemplateArgumentOverrides: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] = {
     val contractInheritanceUsage =
       goToArgumentsUsageInInheritanceDefinition(
@@ -302,7 +307,17 @@ private object GoToRefIdent extends StrictImplicitLogging {
         workspace = workspace
       )
 
-    contractInheritanceUsage ++ withInheritanceUsage
+    val overriddenArguments =
+      if (includeTemplateArgumentOverrides)
+        goToOverriddenTemplateArguments(
+          argument = argument,
+          sourceCode = sourceCode,
+          workspace = workspace
+        )
+      else
+        Iterator.empty
+
+    contractInheritanceUsage ++ withInheritanceUsage ++ overriddenArguments
   }
 
   /**
@@ -360,6 +375,37 @@ private object GoToRefIdent extends StrictImplicitLogging {
             from = sourceCode.tree.rootNode,
             sourceCode = sourceCode,
             workspace = workspace
+          )
+      }
+
+  /**
+   * Includes overridden template/Contract level arguments.
+   *
+   * For example: In the following case the overridden `variable` in `Child` Contract
+   * are collect when searching for references on `variable` defined in `Parent` Contract.
+   * {{{
+   *    Abstract Contract Parent(variable@@: Bool) { }
+   *    Abstract Contract Child(>>variable<<: Bool) extends Parent(variable) { }
+   * }}}
+   *
+   * @param argument   The template argument whose overrides are to be searched.
+   * @param sourceCode The source where this argument exists.
+   * @param workspace  The workspace that may contain other dependant source-code.
+   * @return An iterator containing identities representing the locations where the template argument is overridden.
+   */
+  private def goToOverriddenTemplateArguments(
+      argument: Ast.Argument,
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] =
+    WorkspaceSearcher
+      .collectInheritanceHierarchy(sourceCode, workspace)
+      .flatten()
+      .iterator
+      .flatMap {
+        sourceCode =>
+          GoToDefIdent.goToTemplateArguments(
+            ident = argument.ident,
+            sourceCode = sourceCode
           )
       }
 
