@@ -153,10 +153,10 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
 
   /**
    * If [[GoToDefSetting.includeAbstractFuncDef]] is true,
-   * this function behaves similar to if go-to-implementation was executed.
+   * this function behaves as if go-to-implementation was executed.
    *
-   * For example, in the following case, executing go-to-definition on either one of
-   * the functions will result in both the abstract and the implementation being returned.
+   * For example, in the following case, executing go-to-definition on either of the
+   * functions will result in both the abstract and the implementation being returned:
    * {{{
    *    Abstract Contract Parent() {
    *      fn >>function<<() -> ()
@@ -167,7 +167,8 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
    *    }
    * }}}
    *
-   * The final result will always include a [[SourceLocation.Node]] instance of the input `funcId`.
+   * The final result will always include at least one [[SourceLocation.Node]] instance,
+   * representing the input `funcId`.
    *
    * @param funcId     The [[Ast.FuncId]] of the function to locate.
    * @param sourceCode The source tree to search.
@@ -179,7 +180,7 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting): Iterator[SourceLocation.Node[Ast.FuncId]] = {
-    // An iterator with only the input FuncDef as the result
+    // An iterator with only the input `FuncId` as the result
     def selfOnly() =
       Iterator(
         SourceLocation.Node(

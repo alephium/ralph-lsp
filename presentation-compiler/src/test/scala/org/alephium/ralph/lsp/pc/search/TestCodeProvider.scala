@@ -258,7 +258,7 @@ object TestCodeProvider {
       }
 
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-    actual.map(_._2).sortBy(_.to.character) should contain theSameElementsAs expectedGoToLocations.map(_._2).sortBy(_.to.character)
+    actual should contain theSameElementsAs expectedGoToLocations
     actual
   }
 

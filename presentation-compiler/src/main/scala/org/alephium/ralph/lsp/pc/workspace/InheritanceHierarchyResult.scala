@@ -20,6 +20,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 
 import scala.collection.immutable.ArraySeq
 
+/** All inheritance data for the [[self]] */
 case class InheritanceHierarchyResult(
     parentTrees: ArraySeq[SourceLocation.Code],
     childTrees: ArraySeq[SourceLocation.Code],

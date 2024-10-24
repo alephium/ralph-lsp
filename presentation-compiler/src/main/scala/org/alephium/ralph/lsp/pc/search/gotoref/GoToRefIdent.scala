@@ -392,10 +392,10 @@ private object GoToRefIdent extends StrictImplicitLogging {
       }
 
   /**
-   * Includes overridden template/Contract level arguments.
+   * Includes overridden template or contract-level arguments.
    *
-   * For example: In the following case the overridden `variable` in `Child` Contract
-   * are collect when searching for references on `variable` defined in `Parent` Contract.
+   * For example: In the following case, the overridden `variable` in the `Child` contract
+   * is collected when searching for references to the `variable` defined in `Parent` Contract:
    * {{{
    *    Abstract Contract Parent(variable@@: Bool) { }
    *    Abstract Contract Child(>>variable<<: Bool) extends Parent(variable) { }

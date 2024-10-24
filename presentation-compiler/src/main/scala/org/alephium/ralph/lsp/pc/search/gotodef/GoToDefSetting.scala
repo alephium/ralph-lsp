@@ -19,10 +19,10 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 /**
  * Settings that control go-to-definitions search behaviour.
  *
- * @param includeAbstractFuncDef If true, includes abstract functions.
- *                               This behaviour is similar to go-to-implementation.
- *                               For example: In the following case executing go-to-definition on either one of
- *                               the functions will return both the abstract and the implementation.
+ * @param includeAbstractFuncDef If `true`, abstract functions are included in the search result.
+ *                               This behaviour is similar to a go-to-implementation operation.
+ *                               For example: In the following case, executing go-to-definition on either one of
+ *                               the functions will return both the abstract definition and the implementation.
  *                               {{{
  *                                   Abstract Contract Parent() {
  *                                     fn >>function<<() -> ()

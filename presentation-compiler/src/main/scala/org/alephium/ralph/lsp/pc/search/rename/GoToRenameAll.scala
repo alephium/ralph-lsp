@@ -33,7 +33,7 @@ import scala.collection.mutable.ListBuffer
 private object GoToRenameAll extends StrictImplicitLogging {
 
   /**
-   * Searches for related tokens that can be renamed for the token at the given cursor index.
+   * Searches for related symbols that can be renamed for the symbol at the given cursor index.
    *
    * @param cursorIndex The index where this operation is performed.
    * @param sourceCode  The parsed state of the source-code where the search is executed.
@@ -65,7 +65,7 @@ private object GoToRenameAll extends StrictImplicitLogging {
     if (cannotRename.isEmpty) {
       canRename.iterator
     } else {
-      // contains tokens that cannot be renamed
+      // contains symbols that cannot be renamed
       val cannotRenameURIs       = cannotRename.map(_.parsed.fileURI)
       val cannotRenameURIStrings = cannotRenameURIs.mkString(", ")
       logger.info(s"Operation blocked: Renaming within files outside the active workspace is not allowed. Affected files: $cannotRenameURIStrings")
@@ -75,7 +75,7 @@ private object GoToRenameAll extends StrictImplicitLogging {
 
   /**
    * Searches for related symbols that should be renamed following the renaming occurring
-   * on the symbol which is at the given cursor index.
+   * on the symbol located at the given cursor index.
    *
    * @param cursorIndex The index where this operation is performed.
    * @param sourceCode  The parsed state of the source-code where the search is executed.

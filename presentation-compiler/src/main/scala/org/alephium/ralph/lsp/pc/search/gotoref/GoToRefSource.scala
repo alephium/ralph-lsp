@@ -28,10 +28,10 @@ private object GoToRefSource extends StrictImplicitLogging {
   /**
    * Navigates to the references of a token in the source code.
    *
-   * @param cursorIndex          The index of the token selected.
-   * @param sourceCode           The parsed state of the source-code where the search is executed.
-   * @param workspace            The workspace where this search was executed and where all the source trees exist.
-   * @param isIncludeDeclaration True if the search result should also include the declarations.
+   * @param cursorIndex The index of the token selected.
+   * @param sourceCode  The parsed state of the source-code where the search is executed.
+   * @param workspace   The workspace where this search was executed and where all the source trees exist.
+   * @param settings    Search settings.
    * @return An iterator reference location(s).
    */
   def goTo(
@@ -68,9 +68,9 @@ private object GoToRefSource extends StrictImplicitLogging {
   /**
    * Navigates to the references of a token in the source code.
    *
-   * @param defLocation          The definition/declaration node of the token selected.
-   * @param workspace            The workspace where this search was executed and where all the source trees exist.
-   * @param isIncludeDeclaration True if the search result should also include the declarations.
+   * @param defLocation The definition/declaration node of the token selected.
+   * @param workspace   The workspace where this search was executed and where all the source trees exist.
+   * @param settings    Search settings.
    * @return An iterator reference location(s).
    */
   def goTo(

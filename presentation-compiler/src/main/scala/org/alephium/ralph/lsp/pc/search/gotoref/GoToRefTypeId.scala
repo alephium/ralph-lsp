@@ -31,6 +31,7 @@ private object GoToRefTypeId extends StrictImplicitLogging {
    * @param definition The definition to search references for.
    * @param sourceCode The parsed state of the source-code where the search is executed.
    * @param workspace  The workspace where this search was executed and where all the source trees exist.
+   * @param settings   Search settings.
    * @return An iterator over the target go-to location(s).
    */
   def goTo(
