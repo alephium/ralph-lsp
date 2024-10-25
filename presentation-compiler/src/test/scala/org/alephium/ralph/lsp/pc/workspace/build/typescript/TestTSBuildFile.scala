@@ -81,6 +81,7 @@ object TestTSBuildFile {
         |  ${printOption("ignoreUpdateFieldsCheckWarnings", compilerOptions.ignoreUpdateFieldsCheckWarnings)}
         |  ${printOption("ignoreCheckExternalCallerWarnings", compilerOptions.ignoreCheckExternalCallerWarnings)}
         |  ${printOption("ignoreUnusedFunctionReturnWarnings", compilerOptions.ignoreUnusedFunctionReturnWarnings)}
+        |  ${printOption("skipAbstractContractCheck", compilerOptions.skipAbstractContractCheck)}
         |  ${printOption("errorOnWarnings", compilerOptions.errorOnWarnings)}
         |}""".stripMargin
     }

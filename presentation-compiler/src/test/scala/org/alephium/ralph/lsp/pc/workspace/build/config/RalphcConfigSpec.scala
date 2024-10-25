@@ -55,7 +55,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |    "ignoreUnusedPrivateFunctionsWarnings": false,
               |    "ignoreUpdateFieldsCheckWarnings": false,
               |    "ignoreCheckExternalCallerWarnings": false,
-              |    "ignoreUnusedFunctionReturnWarnings": false
+              |    "ignoreUnusedFunctionReturnWarnings": false,
+              |    "skipAbstractContractCheck": false
               |  },
               |  "contractPath": "contracts",
               |  "artifactPath": "artifacts",
@@ -84,7 +85,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
               |    "ignoreUnusedVariablesWarnings": false,
               |    "ignoreUnusedFieldsWarnings": true,
               |    "ignoreUpdateFieldsCheckWarnings": true,
-              |    "ignoreUnusedFunctionReturnWarnings": false
+              |    "ignoreUnusedFunctionReturnWarnings": false,
+              |    "skipAbstractContractCheck": true
               |  },
               |  "contractPath": "contracts",
               |  "artifactPath": "artifacts"
@@ -102,7 +104,8 @@ class RalphcConfigSpec extends AnyWordSpec with Matchers {
                   ignoreUnusedPrivateFunctionsWarnings = None, // Not configured
                   ignoreUpdateFieldsCheckWarnings = Some(true),
                   ignoreCheckExternalCallerWarnings = None, // Not configured
-                  ignoreUnusedFunctionReturnWarnings = Some(false)
+                  ignoreUnusedFunctionReturnWarnings = Some(false),
+                  skipAbstractContractCheck = Some(true)
                 )
               ),
               artifactPath = Some("artifacts"),
