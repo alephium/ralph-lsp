@@ -43,6 +43,7 @@ import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.IterableHasAsScala
+import scala.jdk.OptionConverters.RichOptional
 
 object RalphLangServer extends StrictImplicitLogging {
 
@@ -240,6 +241,9 @@ class RalphLangServer private (
     runAsync {
       cancelChecker =>
         logger.debug("Initialize request")
+
+        shutdownOnProcessExit(params.getProcessId)
+
         // Previous commit uses the non-deprecated API but that does not work in vim.
         val rootURI =
           RalphLangServer.getRootUri(params)
@@ -735,10 +739,51 @@ class RalphLangServer private (
   override def setTrace(params: SetTraceParams): Unit =
     setTraceSetting(params.getValue)
 
+  /**
+   * Shuts down the server if the process either exits or cannot be found.
+   *
+   * @param processId The ID of the process to monitor. If null, the server will
+   *                  immediately initiate a shutdown.
+   */
+  private def shutdownOnProcessExit(processId: Integer): Unit =
+    Option(processId) match {
+      case Some(pid) =>
+        logger.trace(s"Monitoring exit of process with ID $pid.")
+        if (pid == ProcessHandle.current().pid().toInt)
+          logger.debug(s"Monitoring exit of current process $pid is not allowed.")
+        else
+          ProcessHandle.of(pid.toLong).toScala match {
+            case Some(processHandle) =>
+              val _ =
+                processHandle
+                  .onExit()
+                  .thenRun {
+                    () =>
+                      logger.trace(s"Parent process with ID $pid has terminated. Initiating server shutdown.")
+                      thisServer.exit()
+                  }
+                  .exceptionally {
+                    throwable =>
+                      logger.error(s"Error during ProcessHandle exit for PID $pid. Initiating forced server shutdown.", throwable)
+                      thisServer.exit()
+                      null
+                  }
+
+            case None =>
+              logger.error(s"Process with ID $pid not found. Initiating server shutdown.")
+              thisServer.exit()
+          }
+
+      case None =>
+        logger.error("Provided process ID is null. Initiating server shutdown.")
+        thisServer.exit()
+    }
+
   override def shutdown(): CompletableFuture[AnyRef] =
     runSync {
-      logger.info("shutdown")
+      logger.info("Shutdown request received")
       if (thisServer.state.shutdownReceived) {
+        logger.info("Shutdown already in progress")
         logAndSend(ResponseError.ShutdownRequested)
       } else {
         thisServer.state = thisServer.state.copy(shutdownReceived = true)
@@ -748,21 +793,27 @@ class RalphLangServer private (
 
   def exitWithCode(): Int =
     runSync {
-      logger.info("exit")
+      logger.info("System exit initiated")
 
       thisServer.state.listener match {
         case Some(listener) =>
-          listener.cancel(true)
+          logger.trace("Cancelling listener")
+          val result = listener.cancel(true)
+          if (result)
+            logger.trace("Listener cancelled")
 
         case None =>
-          logger.error("Listener is empty. Exit invoked on server that is not initialised")
+          logger.error("Listener is empty. Exit invoked on server that is not initialised.")
       }
 
-      if (thisServer.state.shutdownReceived) {
-        0
-      } else {
-        1
-      }
+      val code =
+        if (thisServer.state.shutdownReceived)
+          0
+        else
+          1
+
+      logger.info(s"Exit with code $code")
+      code
     }
 
   override def exit(): Unit =
