@@ -33,6 +33,7 @@ object TestRalphc {
       ignoreUpdateFieldsCheckWarnings      <- Arbitrary.arbitrary[Boolean]
       ignoreCheckExternalCallerWarnings    <- Arbitrary.arbitrary[Boolean]
       ignoreUnusedFunctionReturnWarnings   <- Arbitrary.arbitrary[Boolean]
+      skipAbstractContractCheck            <- Arbitrary.arbitrary[Boolean]
     } yield CompilerOptions(
       ignoreUnusedConstantsWarnings = ignoreUnusedConstantsWarnings,
       ignoreUnusedVariablesWarnings = ignoreUnusedVariablesWarnings,
@@ -40,7 +41,8 @@ object TestRalphc {
       ignoreUnusedPrivateFunctionsWarnings = ignoreUnusedPrivateFunctionsWarnings,
       ignoreUpdateFieldsCheckWarnings = ignoreUpdateFieldsCheckWarnings,
       ignoreCheckExternalCallerWarnings = ignoreCheckExternalCallerWarnings,
-      ignoreUnusedFunctionReturnWarnings = ignoreUnusedFunctionReturnWarnings
+      ignoreUnusedFunctionReturnWarnings = ignoreUnusedFunctionReturnWarnings,
+      skipAbstractContractCheck = skipAbstractContractCheck
     )
 
   def genCompilerOptionsJSON(): Gen[CompilerOptionsParsed] =
@@ -52,6 +54,7 @@ object TestRalphc {
       ignoreUpdateFieldsCheckWarnings      <- Gen.option(Arbitrary.arbitrary[Boolean])
       ignoreCheckExternalCallerWarnings    <- Gen.option(Arbitrary.arbitrary[Boolean])
       ignoreUnusedFunctionReturnWarnings   <- Gen.option(Arbitrary.arbitrary[Boolean])
+      skipAbstractContractCheck            <- Gen.option(Arbitrary.arbitrary[Boolean])
     } yield CompilerOptionsParsed(
       ignoreUnusedConstantsWarnings = ignoreUnusedConstantsWarnings,
       ignoreUnusedVariablesWarnings = ignoreUnusedVariablesWarnings,
@@ -59,7 +62,8 @@ object TestRalphc {
       ignoreUnusedPrivateFunctionsWarnings = ignoreUnusedPrivateFunctionsWarnings,
       ignoreUpdateFieldsCheckWarnings = ignoreUpdateFieldsCheckWarnings,
       ignoreCheckExternalCallerWarnings = ignoreCheckExternalCallerWarnings,
-      ignoreUnusedFunctionReturnWarnings = ignoreUnusedFunctionReturnWarnings
+      ignoreUnusedFunctionReturnWarnings = ignoreUnusedFunctionReturnWarnings,
+      skipAbstractContractCheck = skipAbstractContractCheck
     )
 
   def genRalphcParsedConfig(

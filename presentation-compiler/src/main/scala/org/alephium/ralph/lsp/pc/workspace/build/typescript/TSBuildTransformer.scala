@@ -98,6 +98,7 @@ object TSBuildTransformer {
       "ignoreUpdateFieldsCheckWarnings",
       "ignoreCheckExternalCallerWarnings",
       "ignoreUnusedFunctionReturnWarnings",
+      "skipAbstractContractCheck",
       "errorOnWarnings"
     )
 
@@ -172,6 +173,7 @@ object TSBuildTransformer {
             ignoreUpdateFieldsCheckWarnings = parseBooleanOption(optionsMap.get("ignoreUpdateFieldsCheckWarnings")),
             ignoreCheckExternalCallerWarnings = parseBooleanOption(optionsMap.get("ignoreCheckExternalCallerWarnings")),
             ignoreUnusedFunctionReturnWarnings = parseBooleanOption(optionsMap.get("ignoreUnusedFunctionReturnWarnings")),
+            skipAbstractContractCheck = parseBooleanOption(optionsMap.get("skipAbstractContractCheck")),
             errorOnWarnings = parseBooleanOption(optionsMap.get("errorOnWarnings"))
           )
       }

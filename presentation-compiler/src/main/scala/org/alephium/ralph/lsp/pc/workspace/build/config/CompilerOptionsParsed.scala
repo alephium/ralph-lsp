@@ -35,7 +35,8 @@ object CompilerOptionsParsed {
       ignoreUnusedPrivateFunctionsWarnings = Some(options.ignoreUnusedPrivateFunctionsWarnings),
       ignoreUpdateFieldsCheckWarnings = Some(options.ignoreUpdateFieldsCheckWarnings),
       ignoreCheckExternalCallerWarnings = Some(options.ignoreCheckExternalCallerWarnings),
-      ignoreUnusedFunctionReturnWarnings = Some(options.ignoreUnusedFunctionReturnWarnings)
+      ignoreUnusedFunctionReturnWarnings = Some(options.ignoreUnusedFunctionReturnWarnings),
+      skipAbstractContractCheck = Some(options.skipAbstractContractCheck)
     )
 
   /**
@@ -52,7 +53,8 @@ object CompilerOptionsParsed {
       ignoreUnusedPrivateFunctionsWarnings = options.ignoreUnusedPrivateFunctionsWarnings,
       ignoreUpdateFieldsCheckWarnings = options.ignoreUpdateFieldsCheckWarnings,
       ignoreCheckExternalCallerWarnings = options.ignoreCheckExternalCallerWarnings,
-      ignoreUnusedFunctionReturnWarnings = options.ignoreUnusedFunctionReturnWarnings
+      ignoreUnusedFunctionReturnWarnings = options.ignoreUnusedFunctionReturnWarnings,
+      skipAbstractContractCheck = options.skipAbstractContractCheck
     )
 
 }
@@ -67,7 +69,8 @@ case class CompilerOptionsParsed(
     ignoreUnusedPrivateFunctionsWarnings: Option[Boolean] = None,
     ignoreUpdateFieldsCheckWarnings: Option[Boolean] = None,
     ignoreCheckExternalCallerWarnings: Option[Boolean] = None,
-    ignoreUnusedFunctionReturnWarnings: Option[Boolean] = None) {
+    ignoreUnusedFunctionReturnWarnings: Option[Boolean] = None,
+    skipAbstractContractCheck: Option[Boolean] = None) {
 
   /**
    * Converts this [[CompilerOptionsParsed]] instance to a [[CompilerOptions]] instance.
@@ -83,7 +86,8 @@ case class CompilerOptionsParsed(
       ignoreUnusedPrivateFunctionsWarnings = ignoreUnusedPrivateFunctionsWarnings getOrElse CompilerOptions.Default.ignoreUnusedPrivateFunctionsWarnings,
       ignoreUpdateFieldsCheckWarnings = ignoreUpdateFieldsCheckWarnings getOrElse CompilerOptions.Default.ignoreUpdateFieldsCheckWarnings,
       ignoreCheckExternalCallerWarnings = ignoreCheckExternalCallerWarnings getOrElse CompilerOptions.Default.ignoreCheckExternalCallerWarnings,
-      ignoreUnusedFunctionReturnWarnings = ignoreUnusedFunctionReturnWarnings getOrElse CompilerOptions.Default.ignoreUnusedFunctionReturnWarnings
+      ignoreUnusedFunctionReturnWarnings = ignoreUnusedFunctionReturnWarnings getOrElse CompilerOptions.Default.ignoreUnusedFunctionReturnWarnings,
+      skipAbstractContractCheck = skipAbstractContractCheck getOrElse CompilerOptions.Default.skipAbstractContractCheck
     )
 
 }
