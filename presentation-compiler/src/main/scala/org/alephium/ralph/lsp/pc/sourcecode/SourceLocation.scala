@@ -45,9 +45,14 @@ object SourceLocation {
   sealed trait GoToDef extends GoTo
 
   /**
+   * Result types for renaming location search results.
+   */
+  sealed trait Rename extends GoTo
+
+  /**
    * Result types for GoTo references location search results.
    */
-  sealed trait GoToRef extends GoTo
+  sealed trait GoToRef extends Rename
 
   /**
    * Represents a source file ([[SourceCodeState.Parsed]]) without
