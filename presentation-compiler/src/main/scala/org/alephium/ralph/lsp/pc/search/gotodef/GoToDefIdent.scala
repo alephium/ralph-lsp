@@ -25,7 +25,7 @@ import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 import scala.collection.immutable.ArraySeq
 
-private object GoToDefIdent extends StrictImplicitLogging {
+private[search] object GoToDefIdent extends StrictImplicitLogging {
 
   /**
    * Navigate to the argument(s) for the given identifier.
@@ -439,7 +439,7 @@ private object GoToDefIdent extends StrictImplicitLogging {
    * @param sourceCode The source tree to search within.
    * @return An array sequence of [[Ast.Argument]]s matching the search result.
    */
-  private def goToTemplateArguments(
+  def goToTemplateArguments(
       ident: Ast.Ident,
       sourceCode: SourceLocation.Code): Seq[SourceLocation.Node[Ast.Ident]] = {
     val arguments =

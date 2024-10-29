@@ -24,7 +24,7 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "first event field has no usage" in {
-      goToReferences(
+      goToReferences() {
         """
           |Contract Test() {
           |
@@ -36,11 +36,11 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
           |}
           |
           |""".stripMargin
-      )
+      }
     }
 
     "second event field has no usage" in {
-      goToReferences(
+      goToReferences() {
         """
           |Contract Test() {
           |
@@ -52,13 +52,28 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
           |}
           |
           |""".stripMargin
-      )
+      }
+    }
+
+    "includeEventFieldReferences is disabled" in {
+      goToReferences(settings = testGoToRefSetting.copy(includeEventFieldReferences = false)) {
+        """
+          |Contract Test() {
+          |
+          |  event Transfer(to: Address, a@@mount: U256)
+          |
+          |  pub fn function() -> () {
+          |    emit Transfer(to, someAmount)
+          |  }
+          |}
+          |""".stripMargin
+      }
     }
   }
 
   "return non-empty for an event field" when {
     "it has a usage" in {
-      goToReferences(
+      goToReferences() {
         """
           |Contract Test() {
           |
@@ -69,11 +84,11 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
 
     "it has multiple usages" in {
-      goToReferences(
+      goToReferences() {
         """
           |Contract Test() {
           |
@@ -88,11 +103,11 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
 
     "there is inheritance" in {
-      goToReferences(
+      goToReferences() {
         """
           |Abstract Contract Parent() {
           |
@@ -117,7 +132,7 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
   }
 

@@ -31,7 +31,7 @@ private object GoToRefFuncId extends StrictImplicitLogging {
       definition: Node[Ast.FuncId, Ast.Positioned],
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware,
-      isIncludeDeclaration: Boolean
+      settings: GoToRefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
     definition.parent match {
       case Some(parent) =>
@@ -48,7 +48,7 @@ private object GoToRefFuncId extends StrictImplicitLogging {
               definitionAST = funcDef.id,
               definitionSource = sourceCode,
               result = result,
-              isIncludeDeclaration = isIncludeDeclaration
+              isIncludeDeclaration = settings.includeDeclaration
             )
 
           case Node(ast, _) =>

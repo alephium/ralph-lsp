@@ -22,6 +22,8 @@ import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
+import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.util.CollectionUtil
 import org.alephium.ralph.lsp.pc.util.URIUtil.{isFileScheme, uri}
@@ -30,7 +32,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.pc.{PCState, PC}
 import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES}
-import org.alephium.ralph.lsp.server.converter.{DiagnosticsConverter, GoToConverter, CompletionConverter}
+import org.alephium.ralph.lsp.server.converter.{DiagnosticsConverter, GoToConverter, CompletionConverter, RenameConverter}
 import org.alephium.ralph.lsp.server.state.{Trace, ServerState}
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{CancelChecker, messages, CompletableFutures}
@@ -42,7 +44,7 @@ import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
-import scala.jdk.CollectionConverters.IterableHasAsScala
+import scala.jdk.CollectionConverters.{SeqHasAsJava, MapHasAsJava, IterableHasAsScala}
 import scala.jdk.OptionConverters.RichOptional
 
 object RalphLangServer extends StrictImplicitLogging {
@@ -101,6 +103,7 @@ object RalphLangServer extends StrictImplicitLogging {
     capabilities.setCompletionProvider(new CompletionOptions(false, util.Arrays.asList(".")))
     capabilities.setDefinitionProvider(true)
     capabilities.setReferencesProvider(true)
+    capabilities.setRenameProvider(true)
 
     capabilities
   }
@@ -148,9 +151,9 @@ object RalphLangServer extends StrictImplicitLogging {
       cancelChecker: CancelChecker,
       currentState: PCState
     )(implicit codeProvider: CodeProvider[I, O],
-      logger: ClientLogger): Iterator[Location] =
+      logger: ClientLogger): Iterator[O] =
     if (!isFileScheme(fileURI)) {
-      Iterator.empty[Location]
+      Iterator.empty
     } else {
       cancelChecker.checkCanceled()
 
@@ -165,26 +168,28 @@ object RalphLangServer extends StrictImplicitLogging {
               searchSettings = searchSettings
             )
 
+          cancelChecker.checkCanceled()
+
           goToResult match {
             case Some(Right(goToLocations)) =>
               // successful
-              GoToConverter.toLocations(goToLocations)
+              goToLocations
 
             case Some(Left(error)) =>
               // Go-to definition failed: Log the error message
               logger.info(s"${codeProvider.productPrefix} unsuccessful: " + error.message)
-              Iterator.empty[Location]
+              Iterator.empty
 
             case None =>
-              // Not a ralph file or it does not belong to the workspace's contract-uri directory.
-              Iterator.empty[Location]
+              // Not a ralph file, or it does not belong to the workspace's contract-uri directory.
+              Iterator.empty
           }
 
         case _: WorkspaceState.Created =>
           // Workspace must be compiled at least once to enable GoTo definition.
           // The server must've invoked the initial compilation in the boot-up initialize function.
           logger.info(s"${codeProvider.productPrefix} unsuccessful: Workspace is not compiled")
-          Iterator.empty[Location]
+          Iterator.empty
       }
     }
 
@@ -481,16 +486,19 @@ class RalphLangServer private (
         val character = params.getPosition.getCharacter
 
         val locations =
-          goTo[Unit, SourceLocation.GoToDef](
+          goTo[GoToDefSetting, SourceLocation.GoToDef](
             fileURI = fileURI,
             line = line,
             character = character,
-            searchSettings = (),
+            searchSettings = GoToDefSetting(includeAbstractFuncDef = false),
             cancelChecker = cancelChecker,
             currentState = getPCState()
           )
 
-        messages.Either.forLeft(CollectionUtil.toJavaList(locations))
+        val javaLocations =
+          CollectionUtil.toJavaList(GoToConverter.toLocations(locations))
+
+        messages.Either.forLeft(javaLocations)
     }
 
   override def references(params: ReferenceParams): CompletableFuture[util.List[_ <: Location]] =
@@ -501,17 +509,60 @@ class RalphLangServer private (
         val character            = params.getPosition.getCharacter
         val isIncludeDeclaration = params.getContext.isIncludeDeclaration
 
+        val settings =
+          GoToRefSetting(
+            includeDeclaration = isIncludeDeclaration,
+            includeTemplateArgumentOverrides = false,
+            includeEventFieldReferences = true,
+            goToDefSetting = GoToDefSetting(includeAbstractFuncDef = false)
+          )
+
         val locations =
-          goTo[Boolean, SourceLocation.GoToRef](
+          goTo[GoToRefSetting, SourceLocation.GoToRef](
             fileURI = fileURI,
             line = line,
             character = character,
-            searchSettings = isIncludeDeclaration,
+            searchSettings = settings,
             cancelChecker = cancelChecker,
             currentState = getPCState()
           )
 
-        CollectionUtil.toJavaList(locations)
+        val javaLocations =
+          GoToConverter.toLocations(locations)
+
+        CollectionUtil.toJavaList(javaLocations)
+    }
+
+  override def rename(params: RenameParams): CompletableFuture[WorkspaceEdit] =
+    runAsync {
+      cancelChecker =>
+        val fileURI   = uri(params.getTextDocument.getUri)
+        val line      = params.getPosition.getLine
+        val character = params.getPosition.getCharacter
+
+        val locations =
+          goTo[Unit, SourceLocation.GoToRename](
+            fileURI = fileURI,
+            line = line,
+            character = character,
+            searchSettings = (),
+            cancelChecker = cancelChecker,
+            currentState = getPCState()
+          )
+
+        val javaLocations =
+          RenameConverter
+            .toTextEdits(
+              goTos = locations,
+              newText = params.getNewName
+            )
+            .map {
+              case (key, value) =>
+                (key.toString, value.asJava)
+            }
+            .asJava
+
+        new WorkspaceEdit(javaLocations)
     }
 
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =

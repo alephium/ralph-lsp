@@ -21,7 +21,7 @@ import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
@@ -38,7 +38,8 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
   def goTo(
       funcIdNode: Node[Ast.FuncId, Ast.Positioned],
       sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware
+      workspace: WorkspaceState.IsSourceAware,
+      settings: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
     funcIdNode.parent match { // take one step up to check the type of function call.
       case Some(parent) =>
@@ -66,11 +67,11 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
             )
 
           case Node(funcDef: Ast.FuncDef[_], _) if funcDef.id == funcIdNode.data =>
-            Iterator(
-              SourceLocation.Node(
-                ast = funcDef.id,
-                source = sourceCode
-              )
+            goToFunctionDefinitions(
+              funcId = funcDef.id,
+              sourceCode = sourceCode,
+              workspace = workspace,
+              settings = settings
             )
 
           case Node(ast, _) =>
@@ -148,6 +149,78 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
       funcId = funcId,
       functions = functions
     )
+  }
+
+  /**
+   * If [[GoToDefSetting.includeAbstractFuncDef]] is true,
+   * this function behaves as if go-to-implementation was executed.
+   *
+   * For example, in the following case, executing go-to-definition on either of the
+   * functions will result in both the abstract and the implementation being returned:
+   * {{{
+   *    Abstract Contract Parent() {
+   *      fn >>function<<() -> ()
+   *    }
+   *
+   *    Contract Child() extends Parent() {
+   *      fn >>function()<< -> () { }
+   *    }
+   * }}}
+   *
+   * The final result will always include at least one [[SourceLocation.Node]] instance,
+   * representing the input `funcId`.
+   *
+   * @param funcId     The [[Ast.FuncId]] of the function to locate.
+   * @param sourceCode The source tree to search.
+   * @param workspace  The workspace where this search was executed and where all the source trees exist.
+   * @return An iterator over all searched function definitions.
+   */
+  private def goToFunctionDefinitions(
+      funcId: Ast.FuncId,
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware,
+      settings: GoToDefSetting): Iterator[SourceLocation.Node[Ast.FuncId]] = {
+    // An iterator with only the input `FuncId` as the result
+    def selfOnly() =
+      Iterator(
+        SourceLocation.Node(
+          ast = funcId,
+          source = sourceCode
+        )
+      )
+
+    // Check: Should it include abstract functions definitions?
+    if (settings.includeAbstractFuncDef) {
+      val functions =
+        WorkspaceSearcher
+          .collectInheritanceHierarchy(
+            sourceCode = sourceCode,
+            workspace = workspace
+          )
+          .flatten()
+          .flatMap(SourceCodeSearcher.collectFunctions)
+          .filter {
+            thisFuncDef =>
+              // filter only the functions with the same name
+              thisFuncDef.ast.id.name == funcId.name
+          }
+
+      // Check: Does an abstract function exist in the inheritance hierarchy?
+      if (functions.exists(_.ast.bodyOpt.isEmpty))
+        functions // Yes! Rename all functions.
+          .iterator
+          .map {
+            funcDef =>
+              SourceLocation.Node(
+                ast = funcDef.ast.id,
+                source = funcDef.source
+              )
+          }
+      else
+        selfOnly() // No! Rename only self.
+    } else {
+      selfOnly()
+    }
   }
 
   /**

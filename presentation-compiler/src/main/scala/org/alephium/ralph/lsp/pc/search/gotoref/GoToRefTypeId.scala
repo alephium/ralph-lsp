@@ -31,13 +31,14 @@ private object GoToRefTypeId extends StrictImplicitLogging {
    * @param definition The definition to search references for.
    * @param sourceCode The parsed state of the source-code where the search is executed.
    * @param workspace  The workspace where this search was executed and where all the source trees exist.
+   * @param settings   Search settings.
    * @return An iterator over the target go-to location(s).
    */
   def goTo(
       definition: Node[Ast.TypeId, Ast.Positioned],
       sourceCode: SourceLocation.Code,
       workspace: WorkspaceState.IsSourceAware,
-      isIncludeDeclaration: Boolean
+      settings: GoToRefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
     definition.parent match {
       case Some(parent) =>
@@ -55,7 +56,7 @@ private object GoToRefTypeId extends StrictImplicitLogging {
               definitionAST = enumDef.id,
               definitionSource = sourceCode,
               result = result,
-              isIncludeDeclaration = isIncludeDeclaration
+              isIncludeDeclaration = settings.includeDeclaration
             )
 
           case Node(eventDef: Ast.EventDef, _) =>
@@ -71,7 +72,7 @@ private object GoToRefTypeId extends StrictImplicitLogging {
               definitionAST = eventDef.id,
               definitionSource = sourceCode,
               result = result,
-              isIncludeDeclaration = isIncludeDeclaration
+              isIncludeDeclaration = settings.includeDeclaration
             )
 
           case Node(globalDef: Ast.GlobalDefinition, _) =>
@@ -91,7 +92,7 @@ private object GoToRefTypeId extends StrictImplicitLogging {
                   definitionAST = typeId,
                   definitionSource = sourceCode,
                   result = result,
-                  isIncludeDeclaration = isIncludeDeclaration
+                  isIncludeDeclaration = settings.includeDeclaration
                 )
 
               case None =>
@@ -109,7 +110,7 @@ private object GoToRefTypeId extends StrictImplicitLogging {
               definitionAST = typeId,
               definitionSource = sourceCode,
               result = result,
-              isIncludeDeclaration = isIncludeDeclaration
+              isIncludeDeclaration = settings.includeDeclaration
             )
 
           case Node(ast, _) =>

@@ -24,7 +24,7 @@ class GoToEventIdUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "event has no usage" in {
-      goToReferences(
+      goToReferences() {
         """
           |Contract Test() {
           |
@@ -36,7 +36,7 @@ class GoToEventIdUsageSpec extends AnyWordSpec with Matchers {
           |}
           |
           |""".stripMargin
-      )
+      }
     }
   }
 

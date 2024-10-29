@@ -14,26 +14,20 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.server.converter
+package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
-import org.eclipse.lsp4j
 
-/** Converts Go-to definition types to LSP4J types */
-object GoToConverter {
+import scala.collection.immutable.ArraySeq
 
-  /** Convert [[SourceLocation.GoTo]]s to LSP4J types [[lsp4j.Location]] */
-  def toLocations(goTos: Iterator[SourceLocation.GoTo]): Iterator[lsp4j.Location] =
-    goTos flatMap toLocation
+/** All inheritance data for the [[self]] */
+case class InheritanceHierarchyResult(
+    parentTrees: ArraySeq[SourceLocation.Code],
+    childTrees: ArraySeq[SourceLocation.Code],
+    allTrees: ArraySeq[SourceLocation.Code],
+    self: SourceLocation.Code) {
 
-  /** Convert [[SourceLocation.GoTo]] to LSP4J type [[lsp4j.Location]] */
-  private def toLocation(goTo: SourceLocation.GoTo): Option[lsp4j.Location] =
-    goTo.toLineRange() map {
-      lineRange =>
-        new lsp4j.Location(
-          goTo.parsed.fileURI.toString,
-          CommonConverter.toRange(lineRange)
-        )
-    }
+  def flatten(): ArraySeq[SourceLocation.Code] =
+    ((parentTrees :+ self) ++ childTrees).distinct
 
 }

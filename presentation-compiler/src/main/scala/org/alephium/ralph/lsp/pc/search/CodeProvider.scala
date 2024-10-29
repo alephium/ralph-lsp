@@ -20,8 +20,9 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.{Suggestion, CodeCompletionProvider}
-import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefinitionProvider
-import org.alephium.ralph.lsp.pc.search.gotoref.GoToReferenceProvider
+import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefSetting, GoToDefinitionProvider}
+import org.alephium.ralph.lsp.pc.search.gotoref.{GoToReferenceProvider, GoToRefSetting}
+import org.alephium.ralph.lsp.pc.search.rename.GoToRenameProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
@@ -61,12 +62,16 @@ object CodeProvider {
     CodeCompletionProvider
 
   /** The go-to definition implementation of [[CodeProvider]]. */
-  implicit val goToDefinition: CodeProvider[Unit, SourceLocation.GoToDef] =
+  implicit val goToDefinition: CodeProvider[GoToDefSetting, SourceLocation.GoToDef] =
     GoToDefinitionProvider
 
   /** The go-to references implementation of [[CodeProvider]]. */
-  implicit val goToReferences: CodeProvider[Boolean, SourceLocation.GoToRef] =
+  implicit val goToReferences: CodeProvider[GoToRefSetting, SourceLocation.GoToRef] =
     GoToReferenceProvider
+
+  /** The rename request implementation of [[CodeProvider]]. */
+  implicit val goToRename: CodeProvider[Unit, SourceLocation.GoToRename] =
+    GoToRenameProvider
 
   /**
    * Execute search at cursor position within the current workspace state.
