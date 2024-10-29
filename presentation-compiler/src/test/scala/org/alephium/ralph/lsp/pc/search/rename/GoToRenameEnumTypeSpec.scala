@@ -112,18 +112,18 @@ class GoToRenameEnumTypeSpec extends AnyWordSpec with Matchers {
           |  }
           |
           |  fn parent(contract: TestEnum) -> () {
-          |    let _ = >>TestEnum<<.Blah
-          |    let _ = >>TestEnum<<.TWO
-          |    let _ = >>TestEnum<<.FOUR
+          |    let a = >>TestEnum<<.Blah
+          |    let b = >>TestEnum<<.TWO
+          |    let c = >>TestEnum<<.FOUR
           |  }
           |}
           |
           |Contract Child() extends Parent() {
           |  fn child(contract: TestEnum) -> () {
           |    while(true) {
-          |      let _ = >>TestEnum<<.Blah
-          |      let _ = >>TestEnum<<.TWO
-          |      let _ = >>TestEnum<<.FOUR
+          |      let a = >>TestEnum<<.Blah
+          |      let b = >>TestEnum<<.TWO
+          |      let c = >>TestEnum<<.FOUR
           |    }
           |  }
           |}
