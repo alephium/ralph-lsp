@@ -28,17 +28,17 @@ private object GoToRefSource extends StrictImplicitLogging {
   /**
    * Navigates to the references of a token in the source code.
    *
-   * @param cursorIndex          The index of the token selected.
-   * @param sourceCode           The parsed state of the source-code where the search is executed.
-   * @param workspace            The workspace where this search was executed and where all the source trees exist.
-   * @param isIncludeDeclaration True if the search result should also include the declarations.
+   * @param cursorIndex The index of the token selected.
+   * @param sourceCode  The parsed state of the source-code where the search is executed.
+   * @param workspace   The workspace where this search was executed and where all the source trees exist.
+   * @param settings    Search settings.
    * @return An iterator reference location(s).
    */
   def goTo(
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
-      isIncludeDeclaration: Boolean
+      settings: GoToRefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
     CodeProvider
       .goToDefinition
@@ -46,7 +46,7 @@ private object GoToRefSource extends StrictImplicitLogging {
         cursorIndex = cursorIndex,
         sourceCode = sourceCode,
         workspace = workspace,
-        searchSettings = ()
+        searchSettings = settings.goToDefSetting
       )
       .flatMap {
         case SourceLocation.File(_) =>
@@ -57,7 +57,7 @@ private object GoToRefSource extends StrictImplicitLogging {
           goTo(
             defLocation = location,
             workspace = workspace,
-            isIncludeDeclaration = isIncludeDeclaration
+            settings = settings
           )
       }
       .distinctBy { // There could be multiple definitions for a reference which could result in duplicates.
@@ -68,15 +68,15 @@ private object GoToRefSource extends StrictImplicitLogging {
   /**
    * Navigates to the references of a token in the source code.
    *
-   * @param defLocation          The definition/declaration node of the token selected.
-   * @param workspace            The workspace where this search was executed and where all the source trees exist.
-   * @param isIncludeDeclaration True if the search result should also include the declarations.
+   * @param defLocation The definition/declaration node of the token selected.
+   * @param workspace   The workspace where this search was executed and where all the source trees exist.
+   * @param settings    Search settings.
    * @return An iterator reference location(s).
    */
   def goTo(
       defLocation: SourceLocation.Node[Ast.Positioned],
       workspace: WorkspaceState.IsSourceAware,
-      isIncludeDeclaration: Boolean
+      settings: GoToRefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] = {
     val defNode =
       defLocation
@@ -93,7 +93,7 @@ private object GoToRefSource extends StrictImplicitLogging {
           definition = defNode.upcast(ident),
           sourceCode = defLocation.source,
           workspace = workspace,
-          isIncludeDeclaration = isIncludeDeclaration
+          settings = settings
         )
 
       case Some(defNode @ Node(ident: Ast.FuncId, _)) =>
@@ -101,7 +101,7 @@ private object GoToRefSource extends StrictImplicitLogging {
           definition = defNode.upcast(ident),
           sourceCode = defLocation.source,
           workspace = workspace,
-          isIncludeDeclaration = isIncludeDeclaration
+          settings = settings
         )
 
       case Some(defNode @ Node(ident: Ast.TypeId, _)) =>
@@ -109,7 +109,7 @@ private object GoToRefSource extends StrictImplicitLogging {
           definition = defNode.upcast(ident),
           sourceCode = defLocation.source,
           workspace = workspace,
-          isIncludeDeclaration = isIncludeDeclaration
+          settings = settings
         )
 
       case Some(Node(ast, _)) =>

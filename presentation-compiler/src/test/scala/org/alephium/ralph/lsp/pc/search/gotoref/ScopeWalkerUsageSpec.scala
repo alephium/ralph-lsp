@@ -167,7 +167,7 @@ class ScopeWalkerUsageSpec extends AnyWordSpec with Matchers {
   "disallow variable access" when {
     "definition is in a different scope" when {
       "defined before usage" in {
-        goToReferences(
+        goToReferences() {
           """
             |Contract Test() {
             |
@@ -182,11 +182,11 @@ class ScopeWalkerUsageSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-        )
+        }
       }
 
       "defined after usage" in {
-        goToReferences(
+        goToReferences() {
           """
             |Contract Test() {
             |
@@ -201,11 +201,11 @@ class ScopeWalkerUsageSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-        )
+        }
       }
 
       "defined after usage but in an inner scope" in {
-        goToReferences(
+        goToReferences() {
           """
             |Contract Test() {
             |
@@ -220,7 +220,7 @@ class ScopeWalkerUsageSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-        )
+        }
       }
 
       "defined in a for loop" in {

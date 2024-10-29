@@ -24,6 +24,8 @@ import org.alephium.ralph.lsp.access.util.{TestCodeUtil, StringUtil}
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
+import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.{TestRalphc, BuildState, TestBuild}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
@@ -39,6 +41,17 @@ import scala.collection.immutable.ArraySeq
 import scala.util.matching.Regex
 
 object TestCodeProvider {
+
+  val testGoToDefSetting: GoToDefSetting =
+    GoToDefSetting(includeAbstractFuncDef = false)
+
+  val testGoToRefSetting: GoToRefSetting =
+    GoToRefSetting(
+      includeDeclaration = false,
+      includeTemplateArgumentOverrides = false,
+      includeEventFieldReferences = true,
+      goToDefSetting = testGoToDefSetting
+    )
 
   /**
    * Runs code completion where `@@` is positioned.
@@ -62,16 +75,34 @@ object TestCodeProvider {
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
-  def goToDefinition(code: String): List[(URI, LineRange)] =
-    goTo[Unit, SourceLocation.GoToDef](
+  def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] =
+    goTo[GoToDefSetting, SourceLocation.GoToDef](
       code = code,
-      searchSettings = ()
+      searchSettings = settings
     )
 
-  def goToReferences(code: String): List[(URI, LineRange)] =
-    goTo[Boolean, SourceLocation.GoToRef](
+  def goToDefinitionForAll(
+      referencesFinder: Regex,
+      referenceReplacement: String,
+      settings: GoToDefSetting = testGoToDefSetting
+    )(code: String): Unit =
+    goToForAll[GoToDefSetting, SourceLocation.GoToDef](
+      finder = referencesFinder,
+      replacer = referenceReplacement,
+      settings = settings,
+      code = code
+    )
+
+  def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String): List[(URI, LineRange)] =
+    goTo[GoToRefSetting, SourceLocation.GoToRef](
       code = code,
-      searchSettings = false
+      searchSettings = settings
+    )
+
+  def goToRename(code: String): List[(URI, LineRange)] =
+    goTo[Unit, SourceLocation.GoToRename](
+      code = code,
+      searchSettings = ()
     )
 
   /**
@@ -88,13 +119,40 @@ object TestCodeProvider {
    */
   def goToReferencesForAll(
       referencesFinder: Regex,
-      referenceReplacement: String
-    )(code: String): Unit = {
+      referenceReplacement: String,
+      settings: GoToRefSetting = testGoToRefSetting
+    )(code: String): Unit =
+    goToForAll[GoToRefSetting, SourceLocation.GoToRef](
+      finder = referencesFinder,
+      replacer = referenceReplacement,
+      settings = settings,
+      code = code
+    )
+
+  def goToRenameForAll(
+      renameFinder: Regex,
+      renameReplacer: String
+    )(code: String): Unit =
+    goToForAll[Unit, SourceLocation.GoToRename](
+      finder = renameFinder,
+      replacer = renameReplacer,
+      settings = (),
+      code = code
+    )
+
+  private def goToForAll[I, O <: SourceLocation.GoTo](
+      finder: Regex,
+      replacer: String,
+      settings: I,
+      code: String
+    )(implicit codeProvider: CodeProvider[I, O]): Unit = {
     // Initially, execute the test defined.
     // This should be most expressed on the declaration.
     val firstResult =
-      goToReferences(code)
-        .map(_._2)
+      goTo(
+        code = code,
+        searchSettings = settings
+      ).map(_._2)
 
     // remove the select indicator @@ from the code.
     val codeWithoutSelectSymbol =
@@ -102,12 +160,12 @@ object TestCodeProvider {
 
     // find all matches
     val matches =
-      referencesFinder
+      finder
         .findAllMatchIn(codeWithoutSelectSymbol)
         .toList
 
     if (matches.isEmpty)
-      fail(s"No matches found for regex '$referencesFinder' with replacement '$referenceReplacement'")
+      fail(s"No matches found for regex '$finder' with replacement '$replacer'")
 
     // execute the same test on all matches
     matches foreach {
@@ -118,7 +176,7 @@ object TestCodeProvider {
             string = codeWithoutSelectSymbol,
             start = matched.start,
             end = matched.end,
-            replacement = referenceReplacement
+            replacement = replacer
           )
 
         def reportCodeOnFailure[T](test: => T): T =
@@ -136,8 +194,10 @@ object TestCodeProvider {
 
         val newRanges =
           reportCodeOnFailure {
-            goToReferences(newCode)
-              .map(_._2)
+            goTo(
+              code = newCode,
+              searchSettings = settings
+            ).map(_._2)
           }
 
         // also check that the result is the same as the first ranges returned on declaration.
@@ -256,26 +316,28 @@ object TestCodeProvider {
    * @param workspace    The developer's workspace code.
    * @return
    */
-  def goToReferences(
+  def goToReferencesOnDependency(
       dependencyId: DependencyID,
       dependency: String,
-      workspace: String): Unit =
-    goTo[Boolean, SourceLocation.GoToRef](
+      workspace: String,
+      settings: GoToRefSetting = testGoToRefSetting): Unit =
+    goTo[GoToRefSetting, SourceLocation.GoToRef](
       dependencyId = dependencyId,
       dependency = dependency,
       workspace = workspace,
-      searchSettings = false
+      searchSettings = settings
     )
 
-  def goToDefinition(
+  def goToDefinitionOnDependency(
       dependencyId: DependencyID,
       dependency: String,
-      workspace: String): Unit =
-    goTo[Unit, SourceLocation.GoToDef](
+      workspace: String,
+      setting: GoToDefSetting = testGoToDefSetting): Unit =
+    goTo[GoToDefSetting, SourceLocation.GoToDef](
       dependencyId = dependencyId,
       dependency = dependency,
       workspace = workspace,
-      searchSettings = ()
+      searchSettings = setting
     )
 
   /**
@@ -414,9 +476,9 @@ object TestCodeProvider {
 
     // Execute go-to definition.
     val (searchResult, _, workspace) =
-      TestCodeProvider[Unit, SourceLocation.GoToDef](
+      TestCodeProvider[GoToDefSetting, SourceLocation.GoToDef](
         code = codeWithoutGoToSymbols,
-        searchSettings = (),
+        searchSettings = testGoToDefSetting,
         dependencyDownloaders = ArraySeq(downloader)
       )
 

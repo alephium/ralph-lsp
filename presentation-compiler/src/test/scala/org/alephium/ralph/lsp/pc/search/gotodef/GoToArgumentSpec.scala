@@ -24,7 +24,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "argument does not exists" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract GoToField(interface: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -39,7 +39,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
   "return self" when {
     "template argument is selected" in {
-      goToDefinition(
+      goToDefinition()(
         """
             |Contract Test(>>interfa@@ce<<: MyInterface,
             |              interface2: MyInterface) {
@@ -52,7 +52,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "function argument  is selected" in {
-      goToDefinition(
+      goToDefinition()(
         """
             |Contract Test(interface2: MyInterface) {
             |
@@ -66,7 +66,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     "function and template argument exist with duplicate names" should {
       "select only itself" when {
         "function argument is selected" in {
-          goToDefinition(
+          goToDefinition()(
             """
                 |Contract Test(interface: MyInterface) {
                 |
@@ -78,7 +78,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         }
 
         "template argument is selected" in {
-          goToDefinition(
+          goToDefinition()(
             """
                 |Contract Test(>>interfa@@ce<<: MyInterface) {
                 |
@@ -94,7 +94,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "initial character is selected" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -107,7 +107,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "mid character is selected" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -120,7 +120,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "last character is selected" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -133,7 +133,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "function and the argument have the same name" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Contract MyContract(interface: MyInterface) {
           |
@@ -152,7 +152,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "there are multiple arguments with the same name" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |// the furthest argument
           |Contract GoToField(>>interface<<: MyInterface) {
@@ -167,7 +167,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "there are duplicate arguments within inheritance" in {
-      goToDefinition(
+      goToDefinition()(
         """
           |Abstract Contract Parent3(>>param<<: MyParam,
           |                          >>param<<: MyParam) { }
@@ -194,7 +194,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
     "template arguments are passed as inheritance parameter" when {
       "there are no duplicates" in {
-        goToDefinition(
+        goToDefinition()(
           """
             |Abstract Contract SomeType() { }
             |
@@ -207,7 +207,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
       "duplicates exist" when {
         "template parameter is duplicated" in {
-          goToDefinition(
+          goToDefinition()(
             """
               |Abstract Contract SomeType() { }
               |
@@ -221,7 +221,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
         "function parameter is duplicated" should {
           "not be included in search result" in {
-            goToDefinition(
+            goToDefinition()(
               """
                 |Abstract Contract SomeType() { }
                 |

@@ -24,7 +24,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "variable is not used" in {
-      goToReferences(
+      goToReferences() {
         """
           |Contract GoToTest() {
           |
@@ -35,7 +35,7 @@ class GoToLocalVariableUsageSpec extends AnyWordSpec with Matchers {
           |
           |}
           |""".stripMargin
-      )
+      }
     }
   }
 

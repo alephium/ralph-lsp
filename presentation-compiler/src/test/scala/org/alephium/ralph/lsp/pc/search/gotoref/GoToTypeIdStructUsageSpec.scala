@@ -24,7 +24,7 @@ class GoToTypeIdStructUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "no usage exists" in {
-      goToReferences {
+      goToReferences() {
         """
           |struct Foo@@ {
           |  x: U256,

@@ -47,12 +47,12 @@ object SourceLocation {
   /**
    * Result types for renaming location search results.
    */
-  sealed trait Rename extends GoTo
+  sealed trait GoToRename extends GoTo
 
   /**
    * Result types for GoTo references location search results.
    */
-  sealed trait GoToRef extends Rename
+  sealed trait GoToRef extends GoTo
 
   /**
    * Represents a source file ([[SourceCodeState.Parsed]]) without
@@ -79,7 +79,8 @@ object SourceLocation {
   case class ImportName(
       name: Tree.Name,
       parsed: SourceCodeState.Parsed)
-    extends GoToRef {
+    extends GoToRef
+       with GoToRename {
 
     def lineRange(): LineRange =
       name.index.toLineRange(parsed.code)
@@ -100,7 +101,8 @@ object SourceLocation {
       ast: A,
       source: SourceLocation.Code)
     extends GoToDef
-       with GoToRef {
+       with GoToRef
+       with GoToRename {
 
     def toLineRange(): Option[LineRange] =
       ast

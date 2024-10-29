@@ -24,7 +24,7 @@ class GoToTypeIdContractUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "no usage exists" in {
-      goToReferences {
+      goToReferences() {
         """
           |Contract This@@() {
           |

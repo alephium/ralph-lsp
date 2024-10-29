@@ -22,6 +22,8 @@ import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
 import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
+import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.util.CollectionUtil
 import org.alephium.ralph.lsp.pc.util.URIUtil.{isFileScheme, uri}
@@ -480,11 +482,11 @@ class RalphLangServer private (
         val character = params.getPosition.getCharacter
 
         val locations =
-          goTo[Unit, SourceLocation.GoToDef](
+          goTo[GoToDefSetting, SourceLocation.GoToDef](
             fileURI = fileURI,
             line = line,
             character = character,
-            searchSettings = (),
+            searchSettings = GoToDefSetting(includeAbstractFuncDef = false),
             cancelChecker = cancelChecker,
             currentState = getPCState()
           )
@@ -503,12 +505,20 @@ class RalphLangServer private (
         val character            = params.getPosition.getCharacter
         val isIncludeDeclaration = params.getContext.isIncludeDeclaration
 
+        val settings =
+          GoToRefSetting(
+            includeDeclaration = isIncludeDeclaration,
+            includeTemplateArgumentOverrides = false,
+            includeEventFieldReferences = true,
+            goToDefSetting = GoToDefSetting(includeAbstractFuncDef = false)
+          )
+
         val locations =
-          goTo[Boolean, SourceLocation.GoToRef](
+          goTo[GoToRefSetting, SourceLocation.GoToRef](
             fileURI = fileURI,
             line = line,
             character = character,
-            searchSettings = isIncludeDeclaration,
+            searchSettings = settings,
             cancelChecker = cancelChecker,
             currentState = getPCState()
           )
@@ -527,7 +537,7 @@ class RalphLangServer private (
         val character = params.getPosition.getCharacter
 
         val locations =
-          goTo[Unit, SourceLocation.Rename](
+          goTo[Unit, SourceLocation.GoToRename](
             fileURI = fileURI,
             line = line,
             character = character,

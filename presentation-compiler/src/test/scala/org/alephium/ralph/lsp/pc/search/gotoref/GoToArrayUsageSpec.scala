@@ -24,7 +24,7 @@ class GoToArrayUsageSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "there is no array usage" in {
-      goToReferences(
+      goToReferences() {
         """
           |Contract Test(arra@@y: [U256; 2])  {
           |  fn main(array: [U256; 2]) -> () {
@@ -32,7 +32,7 @@ class GoToArrayUsageSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
   }
 

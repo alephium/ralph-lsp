@@ -55,6 +55,39 @@ object WorkspaceSearcher {
     }
 
   /**
+   * Collects all parent and child source implementations inherited and implemented by the given source tree.
+   *
+   * @param sourceCode The source code for which in-scope files are being searched.
+   * @param workspace  The workspace that may contain files within the scope.
+   * @return The source trees within the scope.
+   */
+  def collectInheritanceHierarchy(
+      sourceCode: SourceLocation.Code,
+      workspace: WorkspaceState.IsSourceAware): InheritanceHierarchyResult = {
+    val allInScopeCode =
+      collectTrees(workspace = workspace, includeNonImportedCode = false)
+
+    val parents =
+      SourceCodeSearcher.collectInheritedParents(
+        source = sourceCode,
+        allSource = allInScopeCode
+      )
+
+    val children =
+      SourceCodeSearcher.collectImplementingChildren(
+        source = sourceCode,
+        allSource = allInScopeCode
+      )
+
+    InheritanceHierarchyResult(
+      parentTrees = parents,
+      childTrees = children,
+      allTrees = allInScopeCode,
+      self = sourceCode
+    )
+  }
+
+  /**
    * Collects all parent source implementations inherited by the given source tree.
    *
    * @param sourceCode The source code for which in-scope files are being searched.

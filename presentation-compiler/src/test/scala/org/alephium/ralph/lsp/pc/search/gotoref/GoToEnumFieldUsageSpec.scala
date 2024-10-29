@@ -25,7 +25,7 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
   "return empty" when {
     "there are no enum field calls or usages" when {
       "local enum" in {
-        goToReferences(
+        goToReferences() {
           """
             |Contract MyContract() {
             |
@@ -37,11 +37,11 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
             |  pub fn function() -> () { }
             |}
             |""".stripMargin
-        )
+        }
       }
 
       "global enum" in {
-        goToReferences(
+        goToReferences() {
           """
             |enum EnumType {
             |  Fie@@ld0 = 0
@@ -53,7 +53,7 @@ class GoToEnumFieldUsageSpec extends AnyWordSpec with Matchers {
             |  pub fn function() -> () { }
             |}
             |""".stripMargin
-        )
+        }
       }
     }
   }
