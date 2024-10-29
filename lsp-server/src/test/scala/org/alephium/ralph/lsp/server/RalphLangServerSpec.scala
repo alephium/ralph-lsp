@@ -57,6 +57,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
       val initialise   = new InitializeParams()
       val workspaceURI = Paths.get("test").toUri
       initialise.setRootUri(workspaceURI.toString)
+      initialise.setProcessId(ProcessHandle.current().pid().toInt)
 
       // invoke server with the 'initialise' message
       val initializeResult = server.initialize(initialise).get()
@@ -260,6 +261,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
       // this is the initial message received from the LSP client.
       val initialise = new InitializeParams()
       initialise.setRootUri(workspace.workspaceURI.toString)
+      initialise.setProcessId(ProcessHandle.current().pid().toInt)
       // invoke server with the 'initialise' message
       val initializeResult = server.initialize(initialise).get()
       // expect server capabilities returned in response
