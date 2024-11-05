@@ -20,7 +20,7 @@ import org.alephium.ralph.lsp.TestCode
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
-import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.TestBuild
 import org.scalamock.scalatest.MockFactory

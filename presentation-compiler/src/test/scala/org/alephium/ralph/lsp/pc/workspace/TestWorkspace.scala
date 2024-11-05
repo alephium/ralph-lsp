@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.pc.workspace
 import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode._
 import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}

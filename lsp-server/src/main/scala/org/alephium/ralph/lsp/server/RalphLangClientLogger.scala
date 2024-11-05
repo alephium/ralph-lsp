@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.server
 
 import com.typesafe.scalalogging.Logger
-import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.server.state.Trace
 
 /**

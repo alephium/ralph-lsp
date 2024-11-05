@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.pc.client
 
 import com.typesafe.scalalogging.Logger
-import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 
 /** Test logger that has no remote client. This simply logs to SLF4J. */
 object TestClientLogger extends ClientLogger {

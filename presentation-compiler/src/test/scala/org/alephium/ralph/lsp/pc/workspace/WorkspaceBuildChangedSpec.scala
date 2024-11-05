@@ -20,7 +20,7 @@ import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
-import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfig
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorInvalidBuildSyntax
 import org.alephium.ralph.lsp.pc.workspace.build.typescript.TestTSBuildFile

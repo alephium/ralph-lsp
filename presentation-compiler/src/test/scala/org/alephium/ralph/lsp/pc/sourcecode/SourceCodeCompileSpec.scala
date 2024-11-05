@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
-import org.alephium.ralph.lsp.pc.log.ClientLogger
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
 import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.alephium.ralph.{CompiledScript, Warning, CompilerOptions, CompiledContract}
