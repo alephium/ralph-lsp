@@ -83,6 +83,7 @@ lazy val `compiler-access` =
           Dependencies.ralphc,
           Dependencies.scalaTest,
           Dependencies.scalaCheck,
+          Dependencies.scalaMock,
           Dependencies.logback,
           Dependencies.scalaLogging
         )
