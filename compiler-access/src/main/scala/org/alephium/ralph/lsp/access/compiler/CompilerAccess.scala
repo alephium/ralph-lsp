@@ -18,7 +18,8 @@ package org.alephium.ralph.lsp.access.compiler
 
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.{CompilerOptions, Warning, CompiledScript, Ast, CompiledContract}
+import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph._
 
 import java.net.URI
 
@@ -58,6 +59,7 @@ trait CompilerAccess {
   def compileContracts(
       parsedSource: Seq[Ast.GlobalDefinition],
       options: CompilerOptions,
-      workspaceErrorURI: URI): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript], Array[Warning])]
+      workspaceErrorURI: URI
+    )(implicit logger: ClientLogger): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript], Array[Warning])]
 
 }

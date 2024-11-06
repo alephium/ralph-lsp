@@ -146,52 +146,34 @@ private object SourceCodeStateBuilder {
             parsed = sourceCodeState,
             warnings = collectURIWarnings(
               fileURI = sourceCodeState.fileURI,
-              compiledCode = compiledCode,
               warnings = warnings
-            )
+            ).toSeq
           )
     }
 
   /**
-   * Collects all warnings to report for the given file URI.
+   * Collects all warnings associated with the given file URI.
    *
-   * @param fileURI      The file URI to collect warnings for.
-   * @param warnings     Warnings that were not reported within the [[CompiledContract]] or [[CompiledScript]].
-   * @param compiledCode Compilation result for the given file URI.
-   * @return [[StringWarning]]s with the given file URI set.
+   * @param fileURI  The file URI for which warnings are being collected.
+   * @param warnings Warnings to filter and search.
+   * @return A collection of [[StringWarning]]s for the given file URI.
    */
   private def collectURIWarnings(
       fileURI: URI,
-      warnings: Array[Warning],
-      compiledCode: Seq[Either[CompiledContract, CompiledScript]]
-    )(implicit logger: ClientLogger): Seq[StringWarning] = {
-    // Collect warnings that exist within the compiled code
-    val innerWarnings =
-      compiledCode flatMap {
-        case Left(contract) =>
-          contract.warnings map (StringWarning(_, fileURI))
-
-        case Right(script) =>
-          script.warnings map (StringWarning(_, fileURI))
+      warnings: Array[Warning]
+    )(implicit logger: ClientLogger): Array[StringWarning] =
+    warnings // collect warnings to report at the given `fileURI`, that were returned by `genStatefulContracts()`
+      .filter {
+        warning =>
+          warning.sourceIndex.exists(_.fileURI contains fileURI)
       }
-
-    // collect warnings to report at the given `fileURI`, that were returned by `genStatefulContracts()`
-    val outerWarning =
-      warnings
-        .filter {
-          warning =>
-            warning.sourceIndex.exists(_.fileURI contains fileURI)
-        }
-        .map {
-          warning =>
-            StringWarning(
-              warning = warning,
-              fileURI = fileURI
-            )
-        }
-
-    innerWarnings ++ outerWarning
-  }
+      .map {
+        warning =>
+          StringWarning(
+            warning = warning,
+            fileURI = fileURI
+          )
+      }
 
   private def findMatchingContractOrScript(
       sourceCodeState: SourceCodeState.Parsed,
