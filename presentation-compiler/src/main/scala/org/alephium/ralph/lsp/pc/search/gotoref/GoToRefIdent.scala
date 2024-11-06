@@ -20,7 +20,7 @@ import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
-import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefIdent, GoToDefSetting}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation

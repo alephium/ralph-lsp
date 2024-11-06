@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.pc.search.completion
 
 import org.alephium.ralph.Ast
-import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 object ExprCompleter extends StrictImplicitLogging {

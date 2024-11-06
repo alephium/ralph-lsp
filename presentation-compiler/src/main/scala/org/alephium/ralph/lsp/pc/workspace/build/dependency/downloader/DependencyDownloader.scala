@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.pc.log.{ClientLogger, StrictImplicitLogging}
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
