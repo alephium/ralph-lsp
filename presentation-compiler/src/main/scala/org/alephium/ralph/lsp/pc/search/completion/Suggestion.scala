@@ -198,7 +198,7 @@ object Suggestion {
 
           Some(suggestion)
 
-        case Ast.AnonymousVar =>
+        case _: Ast.AnonymousVar =>
           None
       }
 
