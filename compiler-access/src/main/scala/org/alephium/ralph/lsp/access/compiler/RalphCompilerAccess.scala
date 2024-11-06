@@ -154,7 +154,7 @@ private object RalphCompilerAccess extends CompilerAccess with StrictImplicitLog
       warning =>
         warning.sourceIndex match {
           case Some(warningSourceIndex) => // Warning has SourceIndex!
-            if (warningSourceIndex.fileURI.isEmpty)               // Is the Warning's fileURI empty?
+            if (warningSourceIndex.fileURI.isEmpty) {             // Is the Warning's fileURI empty?
               contract.ast.sourceIndex.flatMap(_.fileURI) match { // It's empty! Assign it from Contract's fileURI.
                 case Some(contractFileURI) =>
                   // update the Warning's fileURI
@@ -165,8 +165,9 @@ private object RalphCompilerAccess extends CompilerAccess with StrictImplicitLog
                   logger.error(CompilerLogMessage.UnassignedWarningNoneFileURI(warning, contract.ast.name))
                   None
               }
-            else
-              Some(warning) // Warning is good. It contains all file information.
+            } else { // Warning is good. It contains all file information.
+              Some(warning)
+            }
 
           case None => // Warning's SourceIndex is None. Assign it one, either `Contract.Ident.SourceIndex` or `Contract.SourceIndex`.
             if (contract.ast.ident.sourceIndex.isDefined) {
