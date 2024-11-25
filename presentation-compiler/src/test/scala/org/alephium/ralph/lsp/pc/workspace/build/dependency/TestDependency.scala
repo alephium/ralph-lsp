@@ -21,12 +21,12 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
-import org.alephium.ralph.lsp.utils.log.ClientLogger
-import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace}
-import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.{StdInterfaceDownloader, DependencyDownloader}
+import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, WorkspaceState}
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfig, RalphcConfigState}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.{DependencyDownloader, StdInterfaceDownloader}
+import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.lsp.utils.URIUtil
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.OptionValues._
 

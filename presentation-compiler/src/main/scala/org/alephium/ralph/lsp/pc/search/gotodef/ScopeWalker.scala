@@ -18,8 +18,8 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.AstExtra
-import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
+import org.alephium.ralph.lsp.utils.Node
 
 import scala.collection.mutable.ListBuffer
 

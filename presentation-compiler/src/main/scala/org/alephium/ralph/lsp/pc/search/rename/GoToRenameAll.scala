@@ -18,14 +18,14 @@ package org.alephium.ralph.lsp.pc.search.rename
 
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
-import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
-import org.alephium.ralph.lsp.pc.util.URIUtil
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
+import org.alephium.ralph.lsp.utils.URIUtil
 
 import scala.collection.mutable.ListBuffer
 

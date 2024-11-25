@@ -18,14 +18,14 @@ package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.util.StringUtil
-import org.alephium.ralph.lsp.utils.log.ClientLogger
-import org.alephium.ralph.lsp.pc.search.completion.{Suggestion, CodeCompletionProvider}
-import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefSetting, GoToDefinitionProvider}
+import org.alephium.ralph.lsp.pc.search.completion.{CodeCompletionProvider, Suggestion}
+import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefinitionProvider, GoToDefSetting}
 import org.alephium.ralph.lsp.pc.search.gotoref.{GoToReferenceProvider, GoToRefSetting}
 import org.alephium.ralph.lsp.pc.search.rename.GoToRenameProvider
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
-import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
+import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.lsp.utils.URIUtil
 
 import java.net.URI
 

@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.access.compiler.ast
+package org.alephium.ralph.lsp.utils.node
 
-import org.alephium.ralph.lsp.access.compiler.ast.node.Node
+import org.alephium.ralph.lsp.utils.Node
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

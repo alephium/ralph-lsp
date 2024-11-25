@@ -21,8 +21,8 @@ import org.alephium.ralph.{Ast, Type}
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceCodeState, SourceLocation}
-import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.utils.URIUtil
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq

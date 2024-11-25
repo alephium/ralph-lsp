@@ -17,15 +17,15 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.CompilerOptions
+import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.alephium.ralph.lsp.TestFile._
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.error.TestError
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.utils.log.ClientLogger
-import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.TestDependency
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
-import org.alephium.ralph.lsp.{TestCode, TestFile}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.TestDependency
+import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.lsp.utils.URIUtil
 import org.scalacheck.Gen
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._

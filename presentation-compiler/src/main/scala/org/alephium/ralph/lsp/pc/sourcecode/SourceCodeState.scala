@@ -16,12 +16,12 @@
 
 package org.alephium.ralph.lsp.pc.sourcecode
 
+import org.alephium.ralph.{CompiledContract, CompiledScript}
 import org.alephium.ralph.lsp.access.compiler.RalphParserExtension
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.warning.StringWarning
-import org.alephium.ralph.lsp.pc.util.URIUtil
-import org.alephium.ralph.{CompiledScript, CompiledContract}
+import org.alephium.ralph.lsp.utils.URIUtil
 
 import java.net.URI
 

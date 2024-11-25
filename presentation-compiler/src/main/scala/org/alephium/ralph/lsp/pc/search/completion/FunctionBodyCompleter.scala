@@ -16,13 +16,13 @@
 
 package org.alephium.ralph.lsp.pc.search.completion
 
-import org.alephium.ralph.lsp.access.compiler.ast.node.Node
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
 import org.alephium.ralph.{Ast, Keyword}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefFuncId
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceLocation}
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
+import org.alephium.ralph.lsp.utils.Node
 
 import scala.collection.immutable.ArraySeq
 
