@@ -157,4 +157,38 @@ case class Node[+A, B] private (
     else
       self.asInstanceOf[Node[C, B]]
 
+  /**
+   * Builds a string representation of the tree structure of the current [[Node]]
+   * and its children, formatted according to the provided function.
+   *
+   * @param format Converts a [[Node]] of type `B` into a displayable string format.
+   * @param tab    Number of spaces to use for indentation.
+   * @return String representing the tree structure.
+   */
+  def toStringTree(
+      format: B => String,
+      tab: Int = 2): String = {
+    def toStringTree(
+        node: Node[B, B],
+        index: Int): Seq[String] = {
+      val children =
+        node.children flatMap {
+          child =>
+            toStringTree(child, index + tab)
+        }
+
+      val spaces         = " " * index
+      val thisNodeString = spaces + format(node.data)
+      thisNodeString +: children
+    }
+
+    val strings =
+      toStringTree(
+        node = self.asInstanceOf[Node[B, B]],
+        index = 0
+      )
+
+    strings.mkString("\n")
+  }
+
 }
