@@ -19,6 +19,8 @@ package org.alephium.ralph.lsp.access.compiler
 import org.alephium.ralph._
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.error.FastParseError
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.utils.URIUtil
 
@@ -45,6 +47,14 @@ object CompilerAccess {
  * @see [[org.alephium.ralph.lsp.access.file.FileAccess]] for file-io.
  */
 trait CompilerAccess {
+
+  /**
+   * Runs the soft parser.
+   *
+   * @param code Code to parse.
+   * @return Parsing error or successfully parsed [[SoftAST]].
+   */
+  def parseSoft(code: String): Either[FastParseError, SoftAST.BlockBody]
 
   /**
    * Runs the parser phase.
