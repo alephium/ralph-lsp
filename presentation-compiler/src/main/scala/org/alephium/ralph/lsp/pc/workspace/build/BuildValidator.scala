@@ -122,7 +122,7 @@ object BuildValidator {
     val compileResult =
       for {
         contractExists     <- file.exists(absoluteContractPath.toUri, contractPathIndex)
-        artifactsExists    <- URIUtil.existsOrUndefined(absoluteArtifactPath.map(_._2), artifactPathIndex)
+        artifactsExists    <- file.existsOrUndefined(absoluteArtifactPath.map(_._2), artifactPathIndex)
         dependenciesExists <- dependencyPathExists(absoluteDependenciesPath, dependencyPathIndex)
       } yield (contractExists, artifactsExists, dependenciesExists)
 
