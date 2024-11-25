@@ -27,5 +27,6 @@ project/plugins/project/
 # plugin-vscode
 plugin-vscode/node_modules
 plugin-vscode/package-lock.json
+plugin-vscode/tsconfig.tsbuildinfo
 */out
 *.vsix
