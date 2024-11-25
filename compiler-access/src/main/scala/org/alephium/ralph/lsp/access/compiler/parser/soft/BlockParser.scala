@@ -20,12 +20,12 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object BlockParser {
 
   def clause[Unknown: P](mandatory: Boolean): P[SoftAST.BlockClause] =
-    P(Index ~ TokenParser.openCurly(mandatory) ~ spaceOrFail.? ~ body(Some('}')) ~ spaceOrFail.? ~ TokenParser.closeCurly ~ Index) map {
+    P(Index ~ TokenParser.openCurly(mandatory) ~ spaceOrFail.? ~ body(Some(Token.CloseCurly.lexeme.head)) ~ spaceOrFail.? ~ TokenParser.closeCurly ~ Index) map {
       case (from, openCurly, preBodySpace, body, postBodySpace, closeCurly, to) =>
         SoftAST.BlockClause(
           index = range(from, to),
