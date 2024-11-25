@@ -16,8 +16,6 @@
 
 package org.alephium.ralph.lsp.pc.util
 
-import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-
 import java.net.URI
 import java.nio.file.{Path, Paths}
 import scala.jdk.CollectionConverters.IteratorHasAsScala
@@ -46,10 +44,6 @@ object URIUtil {
   // TODO: Probably an easier way to do this using URI.
   def getFileExtension(uri: URI): String =
     getFileName(uri).dropWhile(_ != '.').drop(1)
-
-  /** Checks if the URI is of a `*.ral` source file */
-  def isRalphFileExtension(uri: URI): Boolean =
-    getFileExtension(uri) == CompilerAccess.RALPH_FILE_EXTENSION
 
   /** Is the child [[URI]] within the parent [[URI]] */
   def contains(

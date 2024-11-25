@@ -397,14 +397,14 @@ private[pc] object Workspace extends StrictImplicitLogging {
 
             case WorkspaceFileEvent.Created(uri) =>
               // Add or replace created source files
-              if (URIUtil.isRalphFileExtension(uri))
+              if (CompilerAccess.isRalphFileExtension(uri))
                 newSourceCode putIfEmpty SourceCodeState.OnDisk(uri)
               else
                 newSourceCode // ignore - not a Ralph source file
 
             case WorkspaceFileEvent.Changed(uri) =>
               // Replace changed source files
-              if (URIUtil.isRalphFileExtension(uri))
+              if (CompilerAccess.isRalphFileExtension(uri))
                 newSourceCode put SourceCodeState.OnDisk(uri)
               else
                 newSourceCode // ignore - not a Ralph source file

@@ -16,10 +16,11 @@
 
 package org.alephium.ralph.lsp.access.compiler
 
+import org.alephium.ralph._
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.utils.log.ClientLogger
-import org.alephium.ralph._
 
 import java.net.URI
 
@@ -29,6 +30,10 @@ object CompilerAccess {
 
   def ralphc: CompilerAccess =
     RalphCompilerAccess
+
+  /** Checks if the URI is of a `*.ral` source file */
+  def isRalphFileExtension(uri: URI): Boolean =
+    URIUtil.getFileExtension(uri) == RALPH_FILE_EXTENSION
 
 }
 
