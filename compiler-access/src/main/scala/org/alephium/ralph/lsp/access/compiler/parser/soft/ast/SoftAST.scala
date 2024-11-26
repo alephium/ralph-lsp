@@ -36,6 +36,9 @@ sealed trait SoftAST extends Product { self =>
   final def toCode(): String =
     toNode().toCode()
 
+  final def toStringTree(): String =
+    toNode().toStringTree(_.toStringPretty())
+
   def toStringPretty(): String =
     if (self.children().nonEmpty)
       s"${self.getClass.getSimpleName}: ${self.index}"

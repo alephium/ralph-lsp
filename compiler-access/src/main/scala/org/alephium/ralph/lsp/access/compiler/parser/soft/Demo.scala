@@ -37,6 +37,6 @@ object Demo extends App {
 
   // Emit parsed AST
   println("SoftAST:")
-  println(ast.toNode().toStringTree(_.toStringPretty()))
+  println(ast.toStringTree())
 
 }
