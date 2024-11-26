@@ -58,7 +58,7 @@ object Token {
   case object Dot                                              extends Delimiter(".")
   case object Colon                                            extends Delimiter(":")
   case object Semicolon                                        extends Delimiter(";")
-  case object Newline                                          extends Delimiter("\n")
+  case object Newline                                          extends Delimiter(System.lineSeparator())
   case object Space                                            extends Delimiter(" ")
 
   sealed abstract class Punctuator(override val lexeme: String) extends Token
