@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object CommonParser {
 
@@ -42,7 +42,7 @@ private object CommonParser {
     }
 
   def text[Unknown: P]: P[SoftAST.Text] =
-    P(Index ~ CharsWhile(_ != '\n').! ~ Index) map {
+    P(Index ~ CharsWhile(_ != Token.Newline.lexeme.head).! ~ Index) map {
       case (from, text, to) =>
         SoftAST.Text(
           code = text,
@@ -51,7 +51,7 @@ private object CommonParser {
     }
 
   def unresolved[Unknown: P](stopChar: Option[Char]): P[SoftAST.Unresolved] =
-    P(Index ~ CharsWhileNot(Seq(' ', '\n') ++ stopChar: _*).! ~ Index) map {
+    P(Index ~ CharsWhileNot(Seq(Token.Space.lexeme.head, Token.Newline.lexeme.head) ++ stopChar: _*).! ~ Index) map {
       case (from, text, to) =>
         SoftAST.Unresolved(
           code = text,
@@ -92,7 +92,7 @@ private object CommonParser {
   private def isLetterDigitOrUnderscore[Unknown: P]: P[Unit] =
     CharsWhile {
       char =>
-        char.isLetterOrDigit || char == '_'
+        char.isLetterOrDigit || char == Token.Underscore.lexeme.head
     }
 
 }
