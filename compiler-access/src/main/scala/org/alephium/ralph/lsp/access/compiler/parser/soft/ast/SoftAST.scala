@@ -291,6 +291,7 @@ object SoftAST {
       this
         .copy(
           code = code
+            .replaceAll("\r", "\\\\r") // Replace carriage with \\r
             .replaceAll("\n", "\\\\n") // Replace newline with \\n
             .replaceAll("\t", "\\\\t") // Replace tab with \\t
         )

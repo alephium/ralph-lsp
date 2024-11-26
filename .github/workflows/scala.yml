@@ -20,7 +20,7 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: sbt
-      - run: sbt "compile;test;doc;stage"
+      - run: sbt "project compiler-access" run
 
   styling:
     runs-on: ubuntu-latest
