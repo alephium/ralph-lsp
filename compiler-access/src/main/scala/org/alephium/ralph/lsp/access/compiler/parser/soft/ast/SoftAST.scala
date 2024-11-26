@@ -37,7 +37,7 @@ sealed trait SoftAST extends Product { self =>
     toNode().toCode()
 
   final def toStringTree(): String =
-    toNode().toStringTree(_.toStringPretty())
+    toNode().toStringTree()
 
   def toStringPretty(): String =
     if (self.children().nonEmpty)
@@ -59,6 +59,9 @@ object SoftAST {
         case (code, _) =>
           code
       }
+
+    def toStringTree(): String =
+      node.toStringTree(_.toStringPretty())
 
   }
 
