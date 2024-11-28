@@ -18,24 +18,24 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
+import org.alephium.ralph.lsp.pc.{PC, PCState}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
-import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
-import org.alephium.ralph.lsp.pc.util.CollectionUtil
-import org.alephium.ralph.lsp.pc.util.URIUtil.{isFileScheme, uri}
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
-import org.alephium.ralph.lsp.pc.{PCState, PC}
 import org.alephium.ralph.lsp.server
-import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES_ID, WORKSPACE_WATCHED_FILES}
-import org.alephium.ralph.lsp.server.converter.{DiagnosticsConverter, GoToConverter, CompletionConverter, RenameConverter}
-import org.alephium.ralph.lsp.server.state.{Trace, ServerState}
+import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
+import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter, GoToConverter, RenameConverter}
+import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
+import org.alephium.ralph.lsp.utils.CollectionUtil
+import org.alephium.ralph.lsp.utils.URIUtil.{isFileScheme, uri}
 import org.eclipse.lsp4j._
-import org.eclipse.lsp4j.jsonrpc.{CancelChecker, messages, CompletableFutures}
+import org.eclipse.lsp4j.jsonrpc.{messages, CancelChecker, CompletableFutures}
 import org.eclipse.lsp4j.services._
 
 import java.net.URI
@@ -44,7 +44,7 @@ import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
-import scala.jdk.CollectionConverters.{SeqHasAsJava, MapHasAsJava, IterableHasAsScala}
+import scala.jdk.CollectionConverters.{IterableHasAsScala, MapHasAsJava, SeqHasAsJava}
 import scala.jdk.OptionConverters.RichOptional
 
 object RalphLangServer extends StrictImplicitLogging {

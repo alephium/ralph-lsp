@@ -18,14 +18,14 @@ package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCode, SourceCodeState}
-import org.alephium.ralph.lsp.pc.util.CollectionUtil._
-import org.alephium.ralph.lsp.pc.util.URIUtil
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildError, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
-import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildError, Build, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
+import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
+import org.alephium.ralph.lsp.utils.CollectionUtil._
+import org.alephium.ralph.lsp.utils.URIUtil
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -397,14 +397,14 @@ private[pc] object Workspace extends StrictImplicitLogging {
 
             case WorkspaceFileEvent.Created(uri) =>
               // Add or replace created source files
-              if (URIUtil.isRalphFileExtension(uri))
+              if (CompilerAccess.isRalphFileExtension(uri))
                 newSourceCode putIfEmpty SourceCodeState.OnDisk(uri)
               else
                 newSourceCode // ignore - not a Ralph source file
 
             case WorkspaceFileEvent.Changed(uri) =>
               // Replace changed source files
-              if (URIUtil.isRalphFileExtension(uri))
+              if (CompilerAccess.isRalphFileExtension(uri))
                 newSourceCode put SourceCodeState.OnDisk(uri)
               else
                 newSourceCode // ignore - not a Ralph source file

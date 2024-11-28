@@ -57,6 +57,18 @@ private object DiskFileAccess extends FileAccess {
     }
 
   /** @inheritdoc */
+  override def existsOrUndefined(
+      path: Option[Path],
+      pathIndex: SourceIndex): Either[CompilerMessage.AnyError, Boolean] =
+    path match {
+      case Some(path) =>
+        exists(path.toUri, pathIndex)
+
+      case None =>
+        Right(true)
+    }
+
+  /** @inheritdoc */
   def list(workspaceURI: URI): Either[CompilerMessage.AnyError, Seq[URI]] =
     try {
       val uris =

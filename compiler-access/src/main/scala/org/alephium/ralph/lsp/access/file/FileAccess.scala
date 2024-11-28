@@ -53,6 +53,18 @@ trait FileAccess {
       index: SourceIndex): Either[CompilerMessage.AnyError, Boolean]
 
   /**
+   * Checks if a given path exists or is undefined.
+   *
+   * @param path      Path to check.
+   * @param pathIndex Index to report error.
+   * @return An [[CompilerMessage.AnyError]] if an error occurs,
+   *         otherwise a `true` indicating the existence of the path or if the path is undefined.
+   */
+  def existsOrUndefined(
+      path: Option[Path],
+      pathIndex: SourceIndex): Either[CompilerMessage.AnyError, Boolean]
+
+  /**
    * Fetch all workspace source file locations.
    *
    * @param workspaceURI Project/workspace location.

@@ -18,12 +18,12 @@ package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
-import org.alephium.ralph.lsp.pc.util.URIUtil
+import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceFile, WorkspaceFileEvent, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildError}
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildError, Build}
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceFile, WorkspaceFileEvent, Workspace}
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
+import org.alephium.ralph.lsp.utils.URIUtil
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq

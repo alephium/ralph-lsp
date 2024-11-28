@@ -14,12 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the library. If not, see http://www.gnu.org/licenses/.
 
-package org.alephium.ralph.lsp.pc.util
-
-import org.alephium.ralph.SourceIndex
-import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.access.file.FileAccess
+package org.alephium.ralph.lsp.utils
 
 import java.net.URI
 import java.nio.file.{Path, Paths}
@@ -50,10 +45,6 @@ object URIUtil {
   def getFileExtension(uri: URI): String =
     getFileName(uri).dropWhile(_ != '.').drop(1)
 
-  /** Checks if the URI is of a `*.ral` source file */
-  def isRalphFileExtension(uri: URI): Boolean =
-    getFileExtension(uri) == CompilerAccess.RALPH_FILE_EXTENSION
-
   /** Is the child [[URI]] within the parent [[URI]] */
   def contains(
       parent: URI,
@@ -80,26 +71,6 @@ object URIUtil {
       parent = parent,
       child = Paths.get(child)
     )
-
-  /**
-   * Checks if a given path exists or is undefined.
-   *
-   * @param path      Path to check.
-   * @param pathIndex Index to report error.
-   * @return An [[CompilerMessage.AnyError]] if an error occurs,
-   *         otherwise a `true` indicating the existence of the path or if the path is undefined.
-   */
-  def existsOrUndefined(
-      path: Option[Path],
-      pathIndex: SourceIndex
-    )(implicit file: FileAccess): Either[CompilerMessage.AnyError, Boolean] =
-    path match {
-      case Some(path) =>
-        file.exists(path.toUri, pathIndex)
-
-      case None =>
-        Right(true)
-    }
 
   /** Is the child [[Path]] within the parent [[Path]] */
   def contains(

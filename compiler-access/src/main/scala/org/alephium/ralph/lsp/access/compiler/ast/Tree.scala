@@ -16,8 +16,9 @@
 
 package org.alephium.ralph.lsp.access.compiler.ast
 
-import org.alephium.ralph.lsp.access.compiler.ast.node.{Node, NodeBuilder}
-import org.alephium.ralph.{SourceIndex, Ast}
+import org.alephium.ralph.{Ast, SourceIndex}
+import org.alephium.ralph.lsp.access.compiler.ast.node.NodeBuilder
+import org.alephium.ralph.lsp.utils.Node
 
 /** Ralph Syntax Tree (AST) */
 sealed trait Tree {

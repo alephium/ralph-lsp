@@ -17,11 +17,11 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.Ast
-import org.alephium.ralph.lsp.access.compiler.ast.node.Node
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceLocation}
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
+import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeSearcher}
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, WorkspaceSearcher}
 
 import scala.collection.immutable.ArraySeq
 

@@ -17,11 +17,11 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.protocol.vm.StatefulContext
-import org.alephium.ralph.lsp.access.compiler.ast.node.Node
-import org.alephium.ralph.{Type, Ast}
+import org.alephium.ralph.{Ast, Type}
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.sourcecode.error._
+import org.alephium.ralph.lsp.utils.Node
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq

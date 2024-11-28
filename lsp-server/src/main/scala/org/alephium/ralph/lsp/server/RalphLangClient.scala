@@ -16,7 +16,7 @@
 
 package org.alephium.ralph.lsp.server
 
-import org.alephium.ralph.lsp.pc.util.ExceptionUtil
+import org.alephium.ralph.lsp.utils.ExceptionUtil
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.services.LanguageClient
 

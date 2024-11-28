@@ -19,6 +19,7 @@ package org.alephium.ralph.lsp.access.compiler.ast.node
 import com.typesafe.scalalogging.StrictLogging
 import org.alephium.ralph.Ast
 import org.alephium.ralph.Ast.Positioned
+import org.alephium.ralph.lsp.utils.Node
 
 /** Functions that build a traversable tree from [[Ast.ContractWithState]], returning the root [[Node]]. */
 object NodeBuilder extends StrictLogging {

@@ -19,9 +19,9 @@ package org.alephium.ralph.lsp.pc.workspace.build
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.util.URIUtil
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralph.lsp.pc.workspace.build.error._
+import org.alephium.ralph.lsp.utils.URIUtil
 
 import java.net.URI
 import java.nio.file.Path
@@ -122,7 +122,7 @@ object BuildValidator {
     val compileResult =
       for {
         contractExists     <- file.exists(absoluteContractPath.toUri, contractPathIndex)
-        artifactsExists    <- URIUtil.existsOrUndefined(absoluteArtifactPath.map(_._2), artifactPathIndex)
+        artifactsExists    <- file.existsOrUndefined(absoluteArtifactPath.map(_._2), artifactPathIndex)
         dependenciesExists <- dependencyPathExists(absoluteDependenciesPath, dependencyPathIndex)
       } yield (contractExists, artifactsExists, dependenciesExists)
 
