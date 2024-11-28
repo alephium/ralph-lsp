@@ -16,7 +16,8 @@
 
 package org.alephium.ralph.lsp.access.util
 
-import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange}
+import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange, SourceIndexExtra}
 import org.scalatest.Assertions.fail
 
 object TestCodeUtil {
@@ -90,6 +91,33 @@ object TestCodeUtil {
       case None =>
         fail(s"Location indicator '$SEARCH_INDICATOR' not provided")
     }
+  }
+
+  /**
+   * Extracts the [[SourceIndex]] of the substring the extracted [[SourceIndex]].
+   *
+   * @param code the input string containing the tokens `>>` and `<<`
+   * @return [[SourceIndex]] of the substring between the tokens `>>` and `<<`
+   */
+  def indexOf(code: String): SourceIndex =
+    indexCodeOf(code)._1
+
+  /**
+   * Extracts the [[SourceIndex]] for the substring between the tokens `>>` and `<<`
+   * and returns a tuple containing the extracted [[SourceIndex]] and the code
+   * with the `>>` and `<<` tokens removed.
+   *
+   * @param code String containing the tokens `>>` and `<<`.
+   * @return A tuple where:
+   *          - The first element is the [[SourceIndex]] of the substring between the tokens `>>` and `<<`.
+   *          - The second element is the code with the `>>` and `<<` tokens removed.
+   */
+  def indexCodeOf(code: String): (SourceIndex, String) = {
+    val start              = code.indexOf(">>")
+    val codeWithoutStart   = code.replaceFirst(">>", "")
+    val end                = codeWithoutStart.indexOf("<<")
+    val codeWithoutSymbols = codeWithoutStart.replaceFirst("<<", "")
+    (SourceIndexExtra.range(start, end), codeWithoutSymbols)
   }
 
 }

@@ -31,6 +31,21 @@ object SourceIndexExtra {
     )
 
   /**
+   * Creates a [[SourceIndex]] when the start and end indexes are known.
+   *
+   * @param from the starting index of the range (inclusive)
+   * @param to   the ending index of the range (exclusive)
+   */
+  @inline def range(
+      from: Int,
+      to: Int): SourceIndex =
+    SourceIndex(
+      index = from,
+      width = to - from,
+      fileURI = None
+    )
+
+  /**
    * Sending negative index to the client would be incorrect.
    * This set the index to be an empty range.
    *

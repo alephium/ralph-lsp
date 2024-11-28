@@ -21,7 +21,9 @@ import org.alephium.protocol.vm.StatefulContext
 import org.alephium.ralph._
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.access.compiler.message.error._
+import org.alephium.ralph.lsp.access.compiler.message.error.FastParseError
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.SoftParser
 import org.alephium.ralph.lsp.access.util.TryUtil
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
@@ -35,6 +37,16 @@ import java.net.URI
  */
 
 private object RalphCompilerAccess extends CompilerAccess with StrictImplicitLogging {
+
+  /** @inheritdoc */
+  override def parseSoft(code: String): Either[FastParseError, SoftAST.BlockBody] =
+    fastparse.parse(code, SoftParser.parse(_)) match {
+      case Parsed.Success(ast: SoftAST.BlockBody, _) =>
+        Right(ast)
+
+      case failure: Parsed.Failure =>
+        Left(FastParseError(failure))
+    }
 
   /** @inheritdoc */
   def parseContracts(
