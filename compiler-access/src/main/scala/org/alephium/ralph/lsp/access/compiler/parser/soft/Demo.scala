@@ -10,10 +10,11 @@ object Demo extends App {
   val ast =
     compiler.parseSoft {
       """
-        |Contract HelloWorld(type: SomeType, tuple: (A, B)) {
+        |Contract HelloWorld(type: SomeType, tuple: (A, B)) extends Parent1(arg1, arg2) implements Parent2 {
         |
         |  fn function(nested_tuple: (A, (B, C))) -> ABC {
         |    // comment
+        |    function(arg1, (arg2, arg3))
         |  }
         |
         |  🚀
