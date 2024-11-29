@@ -92,7 +92,7 @@ private object TokenParser {
         SoftAST.CloseCurlyExpected(range(from, to))
     }
 
-  def comma[Unknown: P]: P[SoftAST.Comma] =
+  def commaOrFail[Unknown: P]: P[SoftAST.Comma] =
     P(Index ~ Token.Comma.lexeme ~ Index) map {
       case (from, to) =>
         SoftAST.Comma(range(from, to))
@@ -107,25 +107,25 @@ private object TokenParser {
         SoftAST.ForwardArrowExpected(range(from, to))
     }
 
-  def doubleForwardSlash[Unknown: P]: P[SoftAST.DoubleForwardSlash] =
+  def doubleForwardSlashOrFail[Unknown: P]: P[SoftAST.DoubleForwardSlash] =
     P(Index ~ Token.DoubleForwardSlash.lexeme ~ Index) map {
       case (from, to) =>
         SoftAST.DoubleForwardSlash(range(from, to))
     }
 
-  def Contract[Unknown: P]: P[SoftAST.Contract] =
+  def ContractOrFail[Unknown: P]: P[SoftAST.Contract] =
     P(Index ~ Token.Contract.lexeme ~ Index) map {
       case (from, to) =>
         SoftAST.Contract(range(from, to))
     }
 
-  def TxScript[Unknown: P]: P[SoftAST.TxScript] =
+  def TxScriptOrFail[Unknown: P]: P[SoftAST.TxScript] =
     P(Index ~ Token.TxScript.lexeme ~ Index) map {
       case (from, to) =>
         SoftAST.TxScript(range(from, to))
     }
 
-  def fn[Unknown: P]: P[SoftAST.Fn] =
+  def FnOrFail[Unknown: P]: P[SoftAST.Fn] =
     P(Index ~ Token.Fn.lexeme ~ Index) map {
       case (from, to) =>
         SoftAST.Fn(range(from, to))

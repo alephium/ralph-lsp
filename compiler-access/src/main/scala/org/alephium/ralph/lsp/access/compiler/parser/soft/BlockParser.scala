@@ -62,9 +62,9 @@ private object BlockParser {
 
   private def part[Unknown: P](stopChars: Option[String]): P[SoftAST.BodyPartAST] =
     P {
-      TemplateParser.parse |
-        FunctionParser.parse |
-        CommentParser.parse |
+      TemplateParser.parseOrFail |
+        FunctionParser.parseOrFail |
+        CommentParser.parseOrFail |
         unresolved(stopChars)
     }
 

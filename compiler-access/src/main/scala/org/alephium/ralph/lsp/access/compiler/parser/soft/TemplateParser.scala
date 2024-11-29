@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
 private object TemplateParser {
 
-  def parse[Unknown: P] =
+  def parseOrFail[Unknown: P] =
     P(Index ~ templateType ~ space ~ identifier ~ spaceOrFail.? ~ ParameterParser.parse ~ spaceOrFail.? ~ BlockParser.clause(required = true) ~ Index) map {
       case (from, templateType, preIdentifierSpace, identifier, preParamSpace, params, postParamSpace, block, to) =>
         SoftAST.Template(
@@ -24,6 +24,6 @@ private object TemplateParser {
     }
 
   private def templateType[Unknown: P]: P[SoftAST.TemplateToken] =
-    P(TokenParser.Contract | TokenParser.TxScript)
+    P(TokenParser.ContractOrFail | TokenParser.TxScriptOrFail)
 
 }

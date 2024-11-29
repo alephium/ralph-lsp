@@ -41,7 +41,7 @@ private object TypeParser {
     }
 
   private def commaTypeName[Unknown: P]: P[SoftAST.TailType] =
-    P(Index ~ TokenParser.comma ~ spaceOrFail.? ~ parse ~ spaceOrFail.? ~ Index) map {
+    P(Index ~ TokenParser.commaOrFail ~ spaceOrFail.? ~ parse ~ spaceOrFail.? ~ Index) map {
       case (from, comma, preTypeNameSpace, typeName, postTypeNameSpace, to) =>
         SoftAST.TailType(
           index = range(from, to),
