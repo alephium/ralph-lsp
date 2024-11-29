@@ -77,7 +77,7 @@ private object CommonParser {
         SoftAST.IdentifierExpected(range(from, to))
     }
 
-  def identifierOrFail[Unknown: P]: P[SoftAST.IdentifierAST] =
+  def identifierOrFail[Unknown: P]: P[SoftAST.Identifier] =
     P(Index ~ isLetterDigitOrUnderscore.! ~ Index) map {
       case (from, identifier, to) =>
         SoftAST.Identifier(

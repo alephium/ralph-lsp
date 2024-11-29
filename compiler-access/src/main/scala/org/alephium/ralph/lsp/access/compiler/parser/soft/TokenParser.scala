@@ -137,4 +137,16 @@ private object TokenParser {
         SoftAST.Fn(range(from, to))
     }
 
+  def Implements[Unknown: P]: P[SoftAST.Implements] =
+    P(Index ~ Token.Implements.lexeme ~ Index) map {
+      case (from, to) =>
+        SoftAST.Implements(range(from, to))
+    }
+
+  def Extends[Unknown: P]: P[SoftAST.Extends] =
+    P(Index ~ Token.Extends.lexeme ~ Index) map {
+      case (from, to) =>
+        SoftAST.Extends(range(from, to))
+    }
+
 }

@@ -9,8 +9,19 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 private object TemplateParser {
 
   def parseOrFail[Unknown: P] =
-    P(Index ~ templateType ~ space ~ identifier ~ spaceOrFail.? ~ ParameterParser.parse ~ spaceOrFail.? ~ BlockParser.clause(required = true) ~ Index) map {
-      case (from, templateType, preIdentifierSpace, identifier, preParamSpace, params, postParamSpace, block, to) =>
+    P(
+      Index ~
+        (TokenParser.ContractOrFail | TokenParser.TxScriptOrFail) ~
+        space ~
+        identifier ~
+        spaceOrFail.? ~
+        ParameterParser.parse ~
+        spaceOrFail.? ~
+        inheritance.rep ~
+        BlockParser.clause(required = true) ~
+        Index
+    ) map {
+      case (from, templateType, preIdentifierSpace, identifier, preParamSpace, params, postParamSpace, inheritance, block, to) =>
         SoftAST.Template(
           index = range(from, to),
           templateType = templateType,
@@ -19,11 +30,22 @@ private object TemplateParser {
           preParamSpace = preParamSpace,
           params = params,
           postParamSpace = postParamSpace,
+          inheritance = inheritance,
           block = block
         )
     }
 
-  private def templateType[Unknown: P]: P[SoftAST.TemplateToken] =
-    P(TokenParser.ContractOrFail | TokenParser.TxScriptOrFail)
+  /** Syntax: `implements or extends contract(arg1, arg2 ...)` */
+  private def inheritance[Unknown: P]: P[SoftAST.TemplateInheritance] =
+    P(Index ~ (TokenParser.Implements | TokenParser.Extends) ~ space ~ (ReferenceCallParser.parseOrFail | identifier) ~ spaceOrFail.? ~ Index) map {
+      case (from, token, preConstructorCallSpace, constructorCall, postConstructorCallSpace, to) =>
+        SoftAST.TemplateInheritance(
+          index = range(from, to),
+          inheritanceType = token,
+          preConstructorCallSpace = preConstructorCallSpace,
+          reference = constructorCall,
+          postConstructorCallSpace = postConstructorCallSpace
+        )
+    }
 
 }

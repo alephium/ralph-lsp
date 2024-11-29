@@ -88,6 +88,10 @@ object SoftAST {
   case class Comma(index: SourceIndex)              extends TokenAST(Token.Comma)
   case class DoubleForwardSlash(index: SourceIndex) extends TokenAST(Token.DoubleForwardSlash)
 
+  sealed trait InheritanceType              extends SoftAST
+  case class Implements(index: SourceIndex) extends TokenAST(Token.Implements) with InheritanceType
+  case class Extends(index: SourceIndex)    extends TokenAST(Token.Extends) with InheritanceType
+
   sealed abstract class TemplateToken(token: Token) extends TokenAST(token)
   case class Contract(index: SourceIndex)           extends TemplateToken(Token.Contract)
   case class TxScript(index: SourceIndex)           extends TemplateToken(Token.TxScript)
@@ -120,12 +124,22 @@ object SoftAST {
       index: SourceIndex,
       templateType: TemplateToken,
       preIdentifierSpace: SpaceAST,
-      identifier: SoftAST.IdentifierAST,
+      identifier: IdentifierAST,
       preParamSpace: Option[Space],
       params: ParameterClauseAST,
       postParamSpace: Option[Space],
+      inheritance: Seq[TemplateInheritance],
       block: BlockClause)
     extends BodyPartAST
+
+  /** Syntax: `implements or extends contract(arg1, arg2 ...)` */
+  case class TemplateInheritance(
+      index: SourceIndex,
+      inheritanceType: InheritanceType,
+      preConstructorCallSpace: SpaceAST,
+      reference: ReferenceCallOrIdentifier,
+      postConstructorCallSpace: Option[Space])
+    extends SoftAST
 
   case class BlockClause(
       index: SourceIndex,
@@ -285,7 +299,7 @@ object SoftAST {
     extends TokenExpectedErrorAST(Token.ForwardArrow)
        with FunctionReturnAST
 
-  sealed trait IdentifierAST extends SoftAST
+  sealed trait IdentifierAST extends SoftAST with ReferenceCallOrIdentifier
 
   case class Identifier(
       code: String,
@@ -342,6 +356,8 @@ object SoftAST {
     extends ExpectedErrorAST("Space")
        with SpaceAST
 
+  sealed trait ReferenceCallOrIdentifier extends SoftAST
+
   /**
    * TODO: Currently a reference is an identifier [[IdentifierAST]].
    *       It should be replaced with an expression, when an `Expression`
@@ -355,6 +371,7 @@ object SoftAST {
       preArgumentsSpace: Option[Space],
       arguments: Arguments)
     extends BodyPartAST
+       with ReferenceCallOrIdentifier
 
   private def collectASTs: PartialFunction[Any, Seq[SoftAST]] = {
     case ast: SoftAST =>
