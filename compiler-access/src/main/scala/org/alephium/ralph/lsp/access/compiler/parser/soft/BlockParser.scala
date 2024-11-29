@@ -64,6 +64,7 @@ private object BlockParser {
     P {
       TemplateParser.parseOrFail |
         FunctionParser.parseOrFail |
+        ReferenceCallParser.parseOrFail |
         CommentParser.parseOrFail |
         unresolved(stopChars)
     }
