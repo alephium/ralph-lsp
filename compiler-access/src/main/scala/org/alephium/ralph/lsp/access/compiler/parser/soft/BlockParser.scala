@@ -25,7 +25,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 private object BlockParser {
 
   def clause[Unknown: P](required: Boolean): P[SoftAST.BlockClause] =
-    P(Index ~ TokenParser.openCurly(required) ~ spaceOrFail.? ~ body(Some(Token.CloseCurly.lexeme.head)) ~ spaceOrFail.? ~ TokenParser.closeCurly ~ Index) map {
+    P(Index ~ TokenParser.openCurly(required) ~ spaceOrFail.? ~ body(Some(Token.CloseCurly.lexeme)) ~ spaceOrFail.? ~ TokenParser.closeCurly ~ Index) map {
       case (from, openCurly, preBodySpace, body, postBodySpace, closeCurly, to) =>
         SoftAST.BlockClause(
           index = range(from, to),
@@ -38,10 +38,10 @@ private object BlockParser {
     }
 
   def body[Unknown: P]: P[SoftAST.BlockBody] =
-    body(stopChar = None)
+    body(stopChars = None)
 
-  private def body[Unknown: P](stopChar: Option[Char]): P[SoftAST.BlockBody] =
-    P(Index ~ spaceOrFail.? ~ bodyPart(stopChar).rep ~ Index) map {
+  private def body[Unknown: P](stopChars: Option[String]): P[SoftAST.BlockBody] =
+    P(Index ~ spaceOrFail.? ~ bodyPart(stopChars).rep ~ Index) map {
       case (from, headSpace, parts, to) =>
         SoftAST.BlockBody(
           index = range(from, to),
@@ -50,8 +50,8 @@ private object BlockParser {
         )
     }
 
-  private def bodyPart[Unknown: P](stopChar: Option[Char]): P[SoftAST.BlockBodyPart] =
-    P(Index ~ part(stopChar) ~ spaceOrFail.? ~ Index) map {
+  private def bodyPart[Unknown: P](stopChars: Option[String]): P[SoftAST.BlockBodyPart] =
+    P(Index ~ part(stopChars) ~ spaceOrFail.? ~ Index) map {
       case (from, ast, space, to) =>
         SoftAST.BlockBodyPart(
           index = range(from, to),
@@ -60,12 +60,12 @@ private object BlockParser {
         )
     }
 
-  private def part[Unknown: P](stopChar: Option[Char]): P[SoftAST.BodyPartAST] =
+  private def part[Unknown: P](stopChars: Option[String]): P[SoftAST.BodyPartAST] =
     P {
       TemplateParser.parse |
         FunctionParser.parse |
         CommentParser.parse |
-        unresolved(stopChar)
+        unresolved(stopChars)
     }
 
 }

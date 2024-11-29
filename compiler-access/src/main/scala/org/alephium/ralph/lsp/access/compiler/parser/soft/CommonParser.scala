@@ -50,8 +50,8 @@ private object CommonParser {
         )
     }
 
-  def unresolved[Unknown: P](stopChar: Option[Char]): P[SoftAST.Unresolved] =
-    P(Index ~ CharsWhileNot(Token.Space.lexeme ++ Token.Newline.lexeme ++ stopChar).! ~ Index) map {
+  def unresolved[Unknown: P](stopChars: Option[String]): P[SoftAST.Unresolved] =
+    P(Index ~ CharsWhileNot(Token.Space.lexeme ++ Token.Newline.lexeme ++ stopChars.getOrElse("")).! ~ Index) map {
       case (from, text, to) =>
         SoftAST.Unresolved(
           code = text,
