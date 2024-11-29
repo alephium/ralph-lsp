@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse.{P, Parsed}
+import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.access.compiler.message.error.FastParseError
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.scalatest.matchers.should.Matchers._
@@ -47,7 +48,42 @@ object TestParser {
   def parseType(code: String): SoftAST.TypeAST =
     runParser(TypeParser.parse(_))(code)
 
-  private def runParser[T <: SoftAST](parser: P[_] => P[T])(code: String): T = {
+  def parseOrFailArgument(code: String): Either[CompilerError.FastParseError, SoftAST.Arguments] =
+    runParserOrFail(ArgumentParser.parseOrFail(_))(code)
+
+  def parseArgument(code: String): SoftAST.Arguments =
+    runParser(ArgumentParser.parse(_))(code)
+
+  /**
+   * Executes the parser ensuring no [[CompilerError.FastParseError]] error.
+   * If a [[CompilerError.FastParseError]] error does occur, a formatted error message is printed.
+   *
+   * @param parser The parser function to execute.
+   * @param code The code to run the parser on.
+   * @tparam T The type of parsed result.
+   * @return A successfully parsed instance of type [[T]].
+   */
+  private def runParser[T <: SoftAST](parser: P[_] => P[T])(code: String): T =
+    runParserOrFail(parser)(code) match {
+      case Left(error) =>
+        // Print a formatted error so it's easier to debug.
+        fail(error.toFormatter().format(Some(Console.RED)))
+
+      case Right(ast) =>
+        ast
+    }
+
+  /**
+   * Executes the parser ensuring that the resulting AST's code matches the provided/input code.
+   *
+   * @param parser The parser function to execute.
+   * @param code The code to run the parser on.
+   * @tparam T The type of parsed result.
+   * @return An `Either` containing:
+   *         - A successfully parsed instance of type [[T]] if parsing succeeds.
+   *         - Or, the FastParse parsing error [[CompilerError.FastParseError]].
+   */
+  private def runParserOrFail[T <: SoftAST](parser: P[_] => P[T])(code: String): Either[CompilerError.FastParseError, T] = {
     // invoke .get to ensure that the parser should NEVER fail
     val result =
       fastparse.parse(code, parser) match {
@@ -58,34 +94,30 @@ object TestParser {
           Left(FastParseError(failure))
       }
 
-    val ast =
-      result match {
-        case Left(error) =>
-          // Print a formatted error so it's easier to debug.
-          fail(error.error.toFormatter().format(Some(Console.RED)))
+    result
+      .left
+      .map(_.error)
+      .map {
+        ast =>
+          val astToCode =
+            ast.toCode()
 
-        case Right(ast) =>
+          // AST returned by the parser should ALWAYS emit code identical to the inputted code.
+          // Always assert this for each test case.
+          try
+            code shouldBe astToCode
+          catch {
+            case throwable: Throwable =>
+              // Print debug info for cases where the emitted code differs from the input code.
+              println("Input Code:")
+              println(code)
+              println("\nAST to Code:")
+              println(astToCode)
+              throw throwable
+          }
+
           ast
       }
-
-    val astToCode =
-      ast.toCode()
-
-    // AST returned by the parser should ALWAYS emit code identical to the inputted code.
-    // Always assert this for each test case.
-    try
-      code shouldBe astToCode
-    catch {
-      case throwable: Throwable =>
-        // Print debug info for cases where the emitted code differs from the input code.
-        println("Input Code:")
-        println(code)
-        println("\nAST to Code:")
-        println(astToCode)
-        throw throwable
-    }
-
-    ast
   }
 
 }

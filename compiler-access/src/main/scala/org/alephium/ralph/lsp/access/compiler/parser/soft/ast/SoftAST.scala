@@ -233,6 +233,44 @@ object SoftAST {
       postTypeNameSpace: Option[Space])
     extends SoftAST
 
+  sealed trait ArgumentAST       extends SoftAST     // Syntax: (arg1, arg2, (arg3, arg4))
+  sealed trait NonEmptyArguments extends ArgumentAST // Does not contain `ArgumentExpected`
+  sealed trait SingleArgumentAST extends ArgumentAST // Does not contain multiple arguments
+
+  /** A named argument. Syntax: (arg1) */
+  case class Argument(
+      code: String,
+      index: SourceIndex)
+    extends SingleArgumentAST
+       with NonEmptyArguments
+       with CodeAST
+
+  /** Multiple arguments. Syntax: (arg1, (arg2, arg3)) */
+  case class Arguments(
+      index: SourceIndex,
+      openParen: OpenParenAST,
+      preHeadArgumentSpace: Option[Space],
+      headArgument: Option[ArgumentAST],
+      tailArguments: Seq[TailArgument],
+      closeParen: CloseParenAST)
+    extends NonEmptyArguments
+       with BodyPartAST
+
+  /** Missing argument. Syntax: (>>missing<<, (arg2, arg3)) */
+  case class ArgumentExpected(
+      index: SourceIndex)
+    extends ExpectedErrorAST("Argument")
+       with SingleArgumentAST
+
+  /** Syntax: (arg1, >>arg2, (arg3, arg4)<<) */
+  case class TailArgument(
+      index: SourceIndex,
+      comma: Comma,
+      preArgumentSpace: Option[Space],
+      argument: ArgumentAST,
+      postArgumentSpace: Option[Space])
+    extends SoftAST
+
   sealed trait FunctionReturnAST extends SoftAST
 
   case class FunctionReturn(

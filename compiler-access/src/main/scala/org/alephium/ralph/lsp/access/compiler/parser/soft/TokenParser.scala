@@ -32,6 +32,12 @@ private object TokenParser {
         SoftAST.ColonExpected(range(from, to))
     }
 
+  def openParen[Unknown: P](required: Boolean): P[SoftAST.OpenParenAST] =
+    if (required)
+      openParen
+    else
+      openParenOrFail
+
   def openParen[Unknown: P]: P[SoftAST.OpenParenAST] =
     P(Index ~ Token.OpenParen.lexeme.!.? ~ Index) map {
       case (from, Some(_), to) =>

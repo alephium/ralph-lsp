@@ -71,6 +71,15 @@ private object CommonParser {
         SoftAST.IdentifierExpected(range(from, to))
     }
 
+  def namedArgumentOrFail[Unknown: P]: P[SoftAST.Argument] =
+    P(Index ~ isLetterDigitOrUnderscore.! ~ Index) map {
+      case (from, argument, to) =>
+        SoftAST.Argument(
+          code = argument,
+          index = range(from, to)
+        )
+    }
+
   def typeName[Unknown: P]: P[SoftAST.SingleTypeAST] =
     P(Index ~ isLetterDigitOrUnderscore.!.? ~ Index) map {
       case (from, Some(typeName), to) =>
