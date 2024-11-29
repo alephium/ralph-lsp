@@ -25,7 +25,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 private object FunctionParser {
 
   def parse[Unknown: P]: P[SoftAST.Function] =
-    P(TokenParser.fn ~ space ~ signature ~ spaceOrFail.? ~ BlockParser.clause(mandatory = false).?) map {
+    P(TokenParser.fn ~ space ~ signature ~ spaceOrFail.? ~ BlockParser.clause(required = false).?) map {
       case (fnDeceleration, headSpace, signature, tailSpace, block) =>
         SoftAST.Function(
           index = range(fnDeceleration.index.from, signature.index.to),

@@ -62,8 +62,8 @@ private object TokenParser {
         SoftAST.CloseParen(range(from, to))
     }
 
-  def openCurly[Unknown: P](mandatory: Boolean): P[SoftAST.OpenCurlyAST] =
-    if (mandatory)
+  def openCurly[Unknown: P](required: Boolean): P[SoftAST.OpenCurlyAST] =
+    if (required)
       openCurly
     else
       openCurlyOrFail
