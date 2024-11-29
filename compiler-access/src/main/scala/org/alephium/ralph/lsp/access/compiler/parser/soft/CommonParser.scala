@@ -59,6 +59,12 @@ private object CommonParser {
         )
     }
 
+  def identifier[Unknown: P](required: Boolean): P[SoftAST.IdentifierAST] =
+    if (required)
+      identifier
+    else
+      identifierOrFail
+
   def identifier[Unknown: P]: P[SoftAST.IdentifierAST] =
     P(Index ~ isLetterDigitOrUnderscore.!.? ~ Index) map {
       case (from, Some(identifier), to) =>
@@ -69,6 +75,15 @@ private object CommonParser {
 
       case (from, None, to) =>
         SoftAST.IdentifierExpected(range(from, to))
+    }
+
+  def identifierOrFail[Unknown: P]: P[SoftAST.IdentifierAST] =
+    P(Index ~ isLetterDigitOrUnderscore.! ~ Index) map {
+      case (from, identifier, to) =>
+        SoftAST.Identifier(
+          code = identifier,
+          index = range(from, to)
+        )
     }
 
   def namedArgumentOrFail[Unknown: P]: P[SoftAST.Argument] =

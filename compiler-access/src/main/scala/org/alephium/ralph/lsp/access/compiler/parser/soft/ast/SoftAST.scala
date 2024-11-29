@@ -342,6 +342,20 @@ object SoftAST {
     extends ExpectedErrorAST("Space")
        with SpaceAST
 
+  /**
+   * TODO: Currently a reference is an identifier [[IdentifierAST]].
+   *       It should be replaced with an expression, when an `Expression`
+   *       type is available.
+   *
+   * Syntax: reference(arg1, arg2, (arg3, arg4))
+   */
+  case class ReferenceCall(
+      index: SourceIndex,
+      reference: IdentifierAST,
+      preArgumentsSpace: Option[Space],
+      arguments: Arguments)
+    extends BodyPartAST
+
   private def collectASTs: PartialFunction[Any, Seq[SoftAST]] = {
     case ast: SoftAST =>
       Seq(ast)

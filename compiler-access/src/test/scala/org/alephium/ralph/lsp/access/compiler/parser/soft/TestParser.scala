@@ -54,6 +54,12 @@ object TestParser {
   def parseArgument(code: String): SoftAST.Arguments =
     runParser(ArgumentParser.parse(_))(code)
 
+  def parseOrFailReferenceCall(code: String): Either[CompilerError.FastParseError, SoftAST.ReferenceCall] =
+    runParserOrFail(ReferenceCallParser.parseOrFail(_))(code)
+
+  def parseReferenceCall(code: String): SoftAST.ReferenceCall =
+    runParser(ReferenceCallParser.parse(_))(code)
+
   /**
    * Executes the parser ensuring no [[CompilerError.FastParseError]] error.
    * If a [[CompilerError.FastParseError]] error does occur, a formatted error message is printed.
@@ -67,6 +73,8 @@ object TestParser {
     runParserOrFail(parser)(code) match {
       case Left(error) =>
         // Print a formatted error so it's easier to debug.
+        // FastParse failures and error messages are not something we use for reporting,
+        // but they are used for parser function composition.
         fail(error.toFormatter().format(Some(Console.RED)))
 
       case Right(ast) =>
