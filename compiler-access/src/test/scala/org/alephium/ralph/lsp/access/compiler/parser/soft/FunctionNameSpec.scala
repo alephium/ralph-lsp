@@ -76,7 +76,7 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
 
   "random characters and symbols after function name" in {
     val root =
-      parseSoft("fn abcd *YNKJ BUP(*P")
+      parseSoft("fn abcd *YNKJ BUP*P")
 
     val (functions, unresolved) =
       root
@@ -99,7 +99,7 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
     function.signature.fnName shouldBe
       SoftAST.Identifier(
         code = "abcd",
-        index = indexOf("fn >>abcd<< *YNKJ BUP(*P")
+        index = indexOf("fn >>abcd<< *YNKJ BUP*P")
       )
 
     /**
@@ -110,13 +110,13 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
     unresolved.head shouldBe
       SoftAST.Unresolved(
         code = "*YNKJ",
-        index = indexOf("fn abcd >>*YNKJ<< BUP(*P")
+        index = indexOf("fn abcd >>*YNKJ<< BUP*P")
       )
     // last unresolved
     unresolved.last shouldBe
       SoftAST.Unresolved(
-        code = "BUP(*P",
-        index = indexOf("fn abcd *YNKJ >>BUP(*P<<")
+        code = "BUP*P",
+        index = indexOf("fn abcd *YNKJ >>BUP*P<<")
       )
   }
 
