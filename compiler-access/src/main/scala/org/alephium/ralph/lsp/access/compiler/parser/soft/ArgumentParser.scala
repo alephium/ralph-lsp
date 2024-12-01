@@ -43,26 +43,24 @@ private object ArgumentParser {
    */
   private def arguments[Unknown: P](required: Boolean): P[SoftAST.Arguments] =
     P(Index ~ TokenParser.openParen(required) ~ spaceOrFail.? ~ Index ~ tupledOrNamedOrFail.? ~ tailArgument.rep ~ TokenParser.closeParen ~ Index) map {
-      // if tail argument is provided, but head argument is missing, report the head argument as required
-      case (from, openParen, preHeadArgumentSpace, headArgumentIndex, None, tailArguments, closeParen, to) if tailArguments.nonEmpty =>
+      case (from, openParen, preHeadArgumentSpace, headArgumentIndex, headArgument, tailArguments, closeParen, to) =>
+        // if tail argument is provided, but head argument is missing, report the head argument as required.
+        // For example, in the cases `(, tailArgs)`, head argument is missing which is required.
+        val headArgumentAdjusted =
+          if (tailArguments.nonEmpty && headArgument.isEmpty)
+            Some(SoftAST.ArgumentExpected(range(headArgumentIndex, headArgumentIndex)))
+          else
+            headArgument
+
         SoftAST.Arguments(
           index = range(from, to),
           openParen = openParen,
           preHeadArgumentSpace = preHeadArgumentSpace,
-          headArgument = Some(SoftAST.ArgumentExpected(range(headArgumentIndex, headArgumentIndex))),
+          headArgument = headArgumentAdjusted,
           tailArguments = tailArguments,
           closeParen = closeParen
         )
 
-      case (from, openParen, preHeadArgumentSpace, _, headArgument, tailArguments, closeParen, to) =>
-        SoftAST.Arguments(
-          index = range(from, to),
-          openParen = openParen,
-          preHeadArgumentSpace = preHeadArgumentSpace,
-          headArgument = headArgument,
-          tailArguments = tailArguments,
-          closeParen = closeParen
-        )
     }
 
   /**
