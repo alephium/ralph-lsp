@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -122,7 +122,7 @@ class BlockBodyReferenceCallSpec extends AnyWordSpec with Matchers {
         ),
         postPartSpace = Some(
           SoftAST.Space(
-            code = "\n\n",
+            code = Token.Newline.lexeme * 2, // Newline twice
             index = indexOf {
               """
                 |Contract ABC () {}
