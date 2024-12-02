@@ -66,7 +66,7 @@ private object ParameterParser {
     }
 
   private def tailParam[Unknown: P]: P[SoftAST.TailParameter] =
-    P(Index ~ spaceOrFail.? ~ TokenParser.comma ~ spaceOrFail.? ~ oneParameter ~ Index) map {
+    P(Index ~ spaceOrFail.? ~ TokenParser.commaOrFail ~ spaceOrFail.? ~ oneParameter ~ Index) map {
       case (from, headSpace, comma, tailSpace, param, to) =>
         SoftAST.TailParameter(
           index = range(from, to),

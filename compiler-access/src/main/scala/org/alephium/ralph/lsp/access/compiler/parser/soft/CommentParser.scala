@@ -24,8 +24,8 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
 private object CommentParser {
 
-  def parse[Unknown: P]: P[SoftAST.Comment] =
-    P(Index ~ TokenParser.doubleForwardSlash ~ spaceOrFail.? ~ text.? ~ Index) map {
+  def parseOrFail[Unknown: P]: P[SoftAST.Comment] =
+    P(Index ~ TokenParser.doubleForwardSlashOrFail ~ spaceOrFail.? ~ text.? ~ Index) map {
       case (from, doubleForwardSlash, space, text, to) =>
         SoftAST.Comment(
           index = range(from, to),

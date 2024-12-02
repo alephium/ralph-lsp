@@ -27,10 +27,10 @@ object TestParser {
     runParser(SoftParser.parse(_))(code)
 
   def parseTemplate(code: String): SoftAST.Template =
-    runParser(TemplateParser.parse(_))(code)
+    runParser(TemplateParser.parseOrFail(_))(code)
 
   def parseFunction(code: String): SoftAST.Function =
-    runParser(FunctionParser.parse(_))(code)
+    runParser(FunctionParser.parseOrFail(_))(code)
 
   def parseParameter(code: String): SoftAST.ParameterClauseAST =
     runParser(ParameterParser.parse(_))(code)
@@ -42,7 +42,7 @@ object TestParser {
     runParser(BlockParser.body(_))(code)
 
   def parseComment(code: String): SoftAST.Comment =
-    runParser(CommentParser.parse(_))(code)
+    runParser(CommentParser.parseOrFail(_))(code)
 
   def parseType(code: String): SoftAST.TypeAST =
     runParser(TypeParser.parse(_))(code)
