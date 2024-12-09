@@ -13,7 +13,8 @@ object Demo extends App {
         |Contract HelloWorld(type: SomeType, tuple: (A, B)) {
         |
         |  fn function(nested_tuple: (A, (B, C))) -> ABC {
-        |    // comment
+        |    // one
+        |    // two
         |  }
         |
         |  🚀

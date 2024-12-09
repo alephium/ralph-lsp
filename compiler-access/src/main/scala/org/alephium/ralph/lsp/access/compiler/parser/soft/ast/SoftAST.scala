@@ -260,11 +260,19 @@ object SoftAST {
     extends ExpectedErrorAST("Identifier")
        with IdentifierAST
 
+  case class Comments(
+      index: SourceIndex,
+      preCommentSpace: Option[Space],
+      comments: Seq[Comment],
+      postCommentSpace: Option[Space])
+    extends BodyPartAST
+
   case class Comment(
       index: SourceIndex,
       doubleForwardSlash: DoubleForwardSlash,
-      space: Option[Space],
-      text: Option[Text])
+      preTextSpace: Option[Space],
+      text: Option[Text],
+      postTextSpace: Option[Space])
     extends BodyPartAST
 
   case class Text(
