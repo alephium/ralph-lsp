@@ -23,7 +23,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object TokenParser {
 
-  def colon[Unknown: P]: P[SoftAST.ColonAST] =
+  def Colon[Unknown: P]: P[SoftAST.ColonAST] =
     P(Index ~ Token.Colon.lexeme.!.? ~ Index) map {
       case (from, Some(_), to) =>
         SoftAST.Colon(range(from, to))
@@ -32,7 +32,7 @@ private object TokenParser {
         SoftAST.ColonExpected(range(from, to))
     }
 
-  def openParen[Unknown: P]: P[SoftAST.OpenParenAST] =
+  def OpenParen[Unknown: P]: P[SoftAST.OpenParenAST] =
     P(Index ~ Token.OpenParen.lexeme.!.? ~ Index) map {
       case (from, Some(_), to) =>
         SoftAST.OpenParen(range(from, to))
@@ -41,13 +41,13 @@ private object TokenParser {
         SoftAST.OpenParenExpected(range(from, to))
     }
 
-  def openParenOrFail[Unknown: P]: P[SoftAST.OpenParen] =
+  def OpenParenOrFail[Unknown: P]: P[SoftAST.OpenParen] =
     P(Index ~ Token.OpenParen.lexeme ~ Index) map {
       case (from, to) =>
         SoftAST.OpenParen(range(from, to))
     }
 
-  def closeParen[Unknown: P]: P[SoftAST.CloseParenAST] =
+  def CloseParen[Unknown: P]: P[SoftAST.CloseParenAST] =
     P(Index ~ Token.CloseParen.lexeme.!.? ~ Index) map {
       case (from, Some(_), to) =>
         SoftAST.CloseParen(range(from, to))
@@ -56,19 +56,19 @@ private object TokenParser {
         SoftAST.CloseParenExpected(range(from, to))
     }
 
-  def closeParenOrFail[Unknown: P]: P[SoftAST.CloseParenAST] =
+  def CloseParenOrFail[Unknown: P]: P[SoftAST.CloseParenAST] =
     P(Index ~ Token.CloseParen.lexeme ~ Index) map {
       case (from, to) =>
         SoftAST.CloseParen(range(from, to))
     }
 
-  def openCurly[Unknown: P](required: Boolean): P[SoftAST.OpenCurlyAST] =
+  def OpenCurly[Unknown: P](required: Boolean): P[SoftAST.OpenCurlyAST] =
     if (required)
-      openCurly
+      OpenCurly
     else
-      openCurlyOrFail
+      OpenCurlyOrFail
 
-  def openCurly[Unknown: P]: P[SoftAST.OpenCurlyAST] =
+  def OpenCurly[Unknown: P]: P[SoftAST.OpenCurlyAST] =
     P(Index ~ Token.OpenCurly.lexeme.!.? ~ Index) map {
       case (from, Some(_), to) =>
         SoftAST.OpenCurly(range(from, to))
@@ -77,13 +77,13 @@ private object TokenParser {
         SoftAST.OpenCurlyExpected(range(from, to))
     }
 
-  def openCurlyOrFail[Unknown: P]: P[SoftAST.OpenCurly] =
+  def OpenCurlyOrFail[Unknown: P]: P[SoftAST.OpenCurly] =
     P(Index ~ Token.OpenCurly.lexeme.! ~ Index) map {
       case (from, _, to) =>
         SoftAST.OpenCurly(range(from, to))
     }
 
-  def closeCurly[Unknown: P]: P[SoftAST.CloseCurlyAST] =
+  def CloseCurly[Unknown: P]: P[SoftAST.CloseCurlyAST] =
     P(Index ~ Token.CloseCurly.lexeme.!.? ~ Index) map {
       case (from, Some(_), to) =>
         SoftAST.CloseCurly(range(from, to))
@@ -92,13 +92,13 @@ private object TokenParser {
         SoftAST.CloseCurlyExpected(range(from, to))
     }
 
-  def commaOrFail[Unknown: P]: P[SoftAST.Comma] =
+  def CommaOrFail[Unknown: P]: P[SoftAST.Comma] =
     P(Index ~ Token.Comma.lexeme ~ Index) map {
       case (from, to) =>
         SoftAST.Comma(range(from, to))
     }
 
-  def forwardArrow[Unknown: P]: P[SoftAST.ForwardArrowAST] =
+  def ForwardArrow[Unknown: P]: P[SoftAST.ForwardArrowAST] =
     P(Index ~ Token.ForwardArrow.lexeme.!.? ~ Index) map {
       case (from, Some(_), to) =>
         SoftAST.ForwardArrow(range(from, to))
@@ -107,7 +107,7 @@ private object TokenParser {
         SoftAST.ForwardArrowExpected(range(from, to))
     }
 
-  def doubleForwardSlashOrFail[Unknown: P]: P[SoftAST.DoubleForwardSlash] =
+  def DoubleForwardSlashOrFail[Unknown: P]: P[SoftAST.DoubleForwardSlash] =
     P(Index ~ Token.DoubleForwardSlash.lexeme ~ Index) map {
       case (from, to) =>
         SoftAST.DoubleForwardSlash(range(from, to))

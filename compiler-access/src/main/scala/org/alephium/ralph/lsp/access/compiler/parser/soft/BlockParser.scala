@@ -25,7 +25,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 private object BlockParser {
 
   def clause[Unknown: P](required: Boolean): P[SoftAST.BlockClause] =
-    P(Index ~ TokenParser.openCurly(required) ~ spaceOrFail.? ~ body(Some(Token.CloseCurly.lexeme)) ~ spaceOrFail.? ~ TokenParser.closeCurly ~ Index) map {
+    P(Index ~ TokenParser.OpenCurly(required) ~ spaceOrFail.? ~ body(Some(Token.CloseCurly.lexeme)) ~ spaceOrFail.? ~ TokenParser.CloseCurly ~ Index) map {
       case (from, openCurly, preBodySpace, body, postBodySpace, closeCurly, to) =>
         SoftAST.BlockClause(
           index = range(from, to),

@@ -51,7 +51,7 @@ private object FunctionParser {
     }
 
   private def returnSignature[Unknown: P]: P[SoftAST.FunctionReturnAST] =
-    P(Index ~ (TokenParser.forwardArrow ~ spaceOrFail.? ~ TypeParser.parse).? ~ Index) map {
+    P(Index ~ (TokenParser.ForwardArrow ~ spaceOrFail.? ~ TypeParser.parse).? ~ Index) map {
       case (from, Some((forwardArrow, space, tpe)), to) =>
         SoftAST.FunctionReturn(
           index = range(from, to),

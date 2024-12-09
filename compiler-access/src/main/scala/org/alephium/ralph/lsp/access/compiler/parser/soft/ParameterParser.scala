@@ -28,7 +28,7 @@ private object ParameterParser {
     P(emptyParams | atLeastOneParam)
 
   private def emptyParams[Unknown: P]: P[SoftAST.EmptyParameterClause] =
-    P(Index ~ TokenParser.openParenOrFail ~ spaceOrFail.? ~ TokenParser.closeParenOrFail ~ Index) map {
+    P(Index ~ TokenParser.OpenParenOrFail ~ spaceOrFail.? ~ TokenParser.CloseParenOrFail ~ Index) map {
       case (from, openParen, space, closeParen, to) =>
         SoftAST.EmptyParameterClause(
           index = range(from, to),
@@ -39,7 +39,7 @@ private object ParameterParser {
     }
 
   private def atLeastOneParam[Unknown: P]: P[SoftAST.NonEmptyParameterClause] =
-    P(Index ~ TokenParser.openParen ~ spaceOrFail.? ~ oneParameter ~ tailParam.rep ~ spaceOrFail.? ~ TokenParser.closeParen ~ Index) map {
+    P(Index ~ TokenParser.OpenParen ~ spaceOrFail.? ~ oneParameter ~ tailParam.rep ~ spaceOrFail.? ~ TokenParser.CloseParen ~ Index) map {
       case (from, openParen, headSpace, headParam, tailParams, tailSpace, closeParen, to) =>
         SoftAST.NonEmptyParameterClause(
           index = range(from, to),
@@ -53,7 +53,7 @@ private object ParameterParser {
     }
 
   private def oneParameter[Unknown: P]: P[SoftAST.Parameter] =
-    P(Index ~ identifier ~ spaceOrFail.? ~ TokenParser.colon ~ spaceOrFail.? ~ TypeParser.parse ~ Index) map {
+    P(Index ~ identifier ~ spaceOrFail.? ~ TokenParser.Colon ~ spaceOrFail.? ~ TypeParser.parse ~ Index) map {
       case (from, paramName, headSpace, colon, tailSpace, typeName, to) =>
         SoftAST.Parameter(
           index = range(from, to),
@@ -66,7 +66,7 @@ private object ParameterParser {
     }
 
   private def tailParam[Unknown: P]: P[SoftAST.TailParameter] =
-    P(Index ~ spaceOrFail.? ~ TokenParser.commaOrFail ~ spaceOrFail.? ~ oneParameter ~ Index) map {
+    P(Index ~ spaceOrFail.? ~ TokenParser.CommaOrFail ~ spaceOrFail.? ~ oneParameter ~ Index) map {
       case (from, headSpace, comma, tailSpace, param, to) =>
         SoftAST.TailParameter(
           index = range(from, to),

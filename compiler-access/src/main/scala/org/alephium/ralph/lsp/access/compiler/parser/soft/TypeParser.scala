@@ -28,7 +28,7 @@ private object TypeParser {
     P(tupledTypeNames | typeName)
 
   private def tupledTypeNames[Unknown: P]: P[SoftAST.TupledType] =
-    P(Index ~ TokenParser.openParenOrFail ~ spaceOrFail.? ~ parse ~ commaTypeName.rep ~ TokenParser.closeParen ~ Index) map {
+    P(Index ~ TokenParser.OpenParenOrFail ~ spaceOrFail.? ~ parse ~ commaTypeName.rep ~ TokenParser.CloseParen ~ Index) map {
       case (from, openParen, preHeadTypeSpace, headType, tailTypes, closeParen, to) =>
         SoftAST.TupledType(
           index = range(from, to),
@@ -41,7 +41,7 @@ private object TypeParser {
     }
 
   private def commaTypeName[Unknown: P]: P[SoftAST.TailType] =
-    P(Index ~ TokenParser.commaOrFail ~ spaceOrFail.? ~ parse ~ spaceOrFail.? ~ Index) map {
+    P(Index ~ TokenParser.CommaOrFail ~ spaceOrFail.? ~ parse ~ spaceOrFail.? ~ Index) map {
       case (from, comma, preTypeNameSpace, typeName, postTypeNameSpace, to) =>
         SoftAST.TailType(
           index = range(from, to),
