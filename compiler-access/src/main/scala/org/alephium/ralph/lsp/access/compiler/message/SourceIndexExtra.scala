@@ -30,6 +30,9 @@ object SourceIndexExtra {
       fileURI = Some(fileURI)
     )
 
+  @inline def point(from: Int): SourceIndex =
+    range(from, from)
+
   /**
    * Creates a [[SourceIndex]] when the start and end indexes are known.
    *
