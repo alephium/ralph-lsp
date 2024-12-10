@@ -769,8 +769,8 @@ object SoftAST {
     case ast: SoftAST =>
       Seq(ast)
 
-    case some @ Some(_) =>
-      (some.iterator flatMap collectASTs).toSeq
+    case Some(any) =>
+      collectASTs(any)
 
     case seq: Seq[_] =>
       seq flatMap collectASTs
