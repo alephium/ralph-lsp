@@ -16,25 +16,38 @@
 
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
-import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
+import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class CommentSpec extends AnyWordSpec with Matchers {
 
-  "no comment text" should {
+  "no text comment" should {
     "store empty comment" in {
       val comment =
         parseComment("//")
 
       val expected =
-        SoftAST.Comment(
+        SoftAST.Comments(
           index = indexOf(">>//<<"),
-          doubleForwardSlash = SoftAST.DoubleForwardSlash(indexOf(">>//<<")),
-          space = None,
-          text = None
+          preCommentSpace = None,
+          comments = Seq(
+            SoftAST.Comment(
+              index = indexOf(">>//<<"),
+              doubleForwardSlash = SoftAST.DoubleForwardSlash(
+                code = SoftAST.Code(
+                  index = indexOf(">>//<<"),
+                  text = "//"
+                )
+              ),
+              preTextSpace = None,
+              text = None,
+              postTextSpace = None
+            )
+          ),
+          postCommentSpace = None
         )
 
       comment shouldBe expected
@@ -47,11 +60,31 @@ class CommentSpec extends AnyWordSpec with Matchers {
         parseComment("// ")
 
       val expected =
-        SoftAST.Comment(
+        SoftAST.Comments(
           index = indexOf(">>// <<"),
-          doubleForwardSlash = SoftAST.DoubleForwardSlash(indexOf(">>//<< ")),
-          space = Some(SoftAST.Space(" ", indexOf("//>> <<"))),
-          text = None
+          preCommentSpace = None,
+          comments = Seq(
+            SoftAST.Comment(
+              index = indexOf(">>// <<"),
+              doubleForwardSlash = SoftAST.DoubleForwardSlash(
+                code = SoftAST.Code(
+                  index = indexOf(">>//<< "),
+                  text = Token.DoubleForwardSlash.lexeme
+                )
+              ),
+              Some(
+                SoftAST.Space(
+                  code = SoftAST.Code(
+                    index = indexOf("//>> <<"),
+                    text = " "
+                  )
+                )
+              ),
+              text = None,
+              postTextSpace = None
+            )
+          ),
+          postCommentSpace = None
         )
 
       comment shouldBe expected
@@ -60,15 +93,50 @@ class CommentSpec extends AnyWordSpec with Matchers {
 
   "text as comment" should {
     "store the space and the comment" in {
+      val newLine =
+        Token.Newline.lexeme
+
       val comment =
-        parseComment("// my comment")
+        parseComment(s"// my comment $newLine")
 
       val expected =
-        SoftAST.Comment(
-          index = indexOf(">>// my comment<<"),
-          doubleForwardSlash = SoftAST.DoubleForwardSlash(indexOf(">>//<< my comment")),
-          space = Some(SoftAST.Space(" ", indexOf("//>> <<my comment"))),
-          text = Some(SoftAST.Text("my comment", indexOf("// >>my comment<<")))
+        SoftAST.Comments(
+          index = indexOf(s">>// my comment $newLine<<"),
+          preCommentSpace = None,
+          comments = Seq(
+            SoftAST.Comment(
+              index = indexOf(s">>// my comment $newLine<<"),
+              doubleForwardSlash = SoftAST.DoubleForwardSlash(
+                code = SoftAST.Code(
+                  index = indexOf(s">>//<< my comment $newLine"),
+                  text = "//"
+                )
+              ),
+              preTextSpace = Some(
+                SoftAST.Space(
+                  code = SoftAST.Code(
+                    index = indexOf(s"//>> <<my comment $newLine"),
+                    text = " "
+                  )
+                )
+              ),
+              text = Some(
+                SoftAST.Code(
+                  index = indexOf(s"// >>my comment <<$newLine"),
+                  text = "my comment "
+                )
+              ),
+              postTextSpace = Some(
+                SoftAST.Space(
+                  code = SoftAST.Code(
+                    index = indexOf(s"// my comment >>$newLine<<"),
+                    text = newLine
+                  )
+                )
+              )
+            )
+          ),
+          postCommentSpace = None
         )
 
       comment shouldBe expected
@@ -84,11 +152,36 @@ class CommentSpec extends AnyWordSpec with Matchers {
         parseComment(code)
 
       val expected =
-        SoftAST.Comment(
+        SoftAST.Comments(
           index = indexOf(s">>$code<<"),
-          doubleForwardSlash = SoftAST.DoubleForwardSlash(indexOf(">>//<< fn function()")),
-          space = Some(SoftAST.Space(" ", indexOf("//>> <<fn function()"))),
-          text = Some(SoftAST.Text("fn function()", indexOf("// >>fn function()<<")))
+          preCommentSpace = None,
+          comments = Seq(
+            SoftAST.Comment(
+              index = indexOf(s">>$code<<"),
+              doubleForwardSlash = SoftAST.DoubleForwardSlash(
+                code = SoftAST.Code(
+                  index = indexOf(">>//<< fn function()"),
+                  text = "//"
+                )
+              ),
+              preTextSpace = Some(
+                SoftAST.Space(
+                  code = SoftAST.Code(
+                    index = indexOf("//>> <<fn function()"),
+                    text = " "
+                  )
+                )
+              ),
+              text = Some(
+                SoftAST.Code(
+                  index = indexOf("// >>fn function()<<"),
+                  text = "fn function()"
+                )
+              ),
+              postTextSpace = None
+            )
+          ),
+          postCommentSpace = None
         )
 
       comment shouldBe expected

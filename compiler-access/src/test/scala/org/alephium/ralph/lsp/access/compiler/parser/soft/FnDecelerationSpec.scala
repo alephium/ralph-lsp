@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -29,7 +29,14 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
       val function =
         parseFunction("fn")
 
-      function.fn shouldBe SoftAST.Fn(indexOf(">>fn<<"))
+      function.fn shouldBe
+        SoftAST.Fn(
+          SoftAST.Code(
+            index = indexOf(">>fn<<"),
+            text = Token.Fn.lexeme
+          )
+        )
+
       function.preSignatureSpace shouldBe SoftAST.SpaceExpected(indexOf("fn>><<"))
       function.postSignatureSpace shouldBe empty
       function.block shouldBe empty
@@ -48,7 +55,14 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
       functions should have size 1
       val function = functions.head
 
-      function.fn shouldBe SoftAST.Fn(indexOf(s" >>fn<<"))
+      function.fn shouldBe
+        SoftAST.Fn(
+          SoftAST.Code(
+            index = indexOf(" >>fn<<"),
+            text = Token.Fn.lexeme
+          )
+        )
+
       function.preSignatureSpace shouldBe SoftAST.SpaceExpected(indexOf(s" fn>><<"))
       function.postSignatureSpace shouldBe empty
       function.block shouldBe empty
@@ -58,8 +72,22 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
       val function =
         parseFunction("fn  ")
 
-      function.fn shouldBe SoftAST.Fn(indexOf(s">>fn<< "))
-      function.preSignatureSpace shouldBe SoftAST.Space("  ", indexOf(s"fn>>  <<"))
+      function.fn shouldBe
+        SoftAST.Fn(
+          SoftAST.Code(
+            index = indexOf(">>fn<<  "),
+            text = Token.Fn.lexeme
+          )
+        )
+
+      function.preSignatureSpace shouldBe
+        SoftAST.Space(
+          SoftAST.Code(
+            index = indexOf(s"fn>>  <<"),
+            text = "  "
+          )
+        )
+
       function.postSignatureSpace shouldBe empty
       function.block shouldBe empty
     }
@@ -75,28 +103,30 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
       val body =
         parseSoft(code)
 
-      val allUnresolved =
+      val blahIdentifiers =
         body
           .parts
           .map(_.part)
           .collect {
-            case unresolved: SoftAST.Unresolved =>
-              unresolved
+            case blahIdentifier: SoftAST.Identifier if blahIdentifier.code.text == "blah" =>
+              blahIdentifier
           }
 
-      allUnresolved should have size 1
-      val actual = allUnresolved.last
+      blahIdentifiers should have size 1
+      val actual = blahIdentifiers.last
 
       val expected =
-        SoftAST.Unresolved(
-          code = "blah",
-          index = blahIndex
+        SoftAST.Identifier(
+          SoftAST.Code(
+            index = blahIndex,
+            text = "blah"
+          )
         )
 
       actual shouldBe expected
     }
 
-    "within another function with invalid syntax" in {
+    "within another function with incomplete syntax" in {
       val root =
         parseSoft {
           """fn function(
@@ -105,17 +135,19 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
         }
 
-      val (functions, unresolved) =
+      val (functions, identifiers) =
         root
-          .parts
-          .map(_.part)
+          .toNode()
+          .walkDown
+          .map(_.data)
           .collect {
             case function: SoftAST.Function =>
               Left(function)
 
-            case unresolved: SoftAST.Unresolved =>
-              Right(unresolved)
+            case identifier: SoftAST.Identifier if identifier.code.text == "fn" =>
+              Right(identifier)
           }
+          .toList
           .partitionMap(identity)
 
       /**
@@ -125,23 +157,27 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
       val function = functions.head
       function.signature.fnName shouldBe
         SoftAST.Identifier(
-          code = "function",
-          index = indexOf("fn >>function<<")
+          SoftAST.Code(
+            index = indexOf("fn >>function<<"),
+            text = "function"
+          )
         )
 
       /**
-       * Test Unresolved
+       * Test Identifiers
        */
-      unresolved should have size 1
-      unresolved.head shouldBe
-        SoftAST.Unresolved(
-          code = "}",
-          index = indexOf {
-            """fn function(
-              |  fn
-              |>>}<<
-              |""".stripMargin
-          }
+      identifiers should have size 1
+      identifiers.head shouldBe
+        SoftAST.Identifier(
+          SoftAST.Code(
+            index = indexOf {
+              """fn function(
+                |  >>fn<<
+                |}
+                |""".stripMargin
+            },
+            text = "fn"
+          )
         )
     }
   }

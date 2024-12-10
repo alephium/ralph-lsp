@@ -25,16 +25,16 @@ sealed trait Token { self =>
 object Token {
 
   sealed abstract class Operator(override val lexeme: String) extends Token
-  case object Negative                                        extends Operator("-")
-  case object Positive                                        extends Operator("+")
-  case object Plus                                            extends Operator("+")
   case object Minus                                           extends Operator("-")
+  case object Plus                                            extends Operator("+")
   case object Asterisk                                        extends Operator("*")
   case object ForwardSlash                                    extends Operator("/")
-  case object DoubleForwardSlash                              extends Operator("//")
   case object GreaterThan                                     extends Operator(">")
   case object LessThan                                        extends Operator("<")
+  case object Equality                                        extends Operator("==")
   case object GreaterThanOrEqual                              extends Operator(">=")
+  case object PlusEquals                                      extends Operator("+=")
+  case object MinusEquals                                     extends Operator("-=")
   case object LessThanOrEqual                                 extends Operator("<=")
   case object Equal                                           extends Operator("=")
   case object NotEqual                                        extends Operator("!=")
@@ -60,6 +60,7 @@ object Token {
   case object Semicolon                                        extends Delimiter(";")
   case object Newline                                          extends Delimiter(System.lineSeparator())
   case object Space                                            extends Delimiter(" ")
+  case object DoubleForwardSlash                               extends Delimiter("//")
 
   sealed abstract class Punctuator(override val lexeme: String) extends Token
   case object Hash                                              extends Punctuator("#")
@@ -74,6 +75,7 @@ object Token {
   case object Struct                                      extends Data("struct")
   case object Const                                       extends Data("const")
   case object Enum                                        extends Data("enum")
+  case object Event                                       extends Data("event")
 
   sealed abstract class Control(override val lexeme: String) extends Token
   case object If                                             extends Control("if")
@@ -87,7 +89,6 @@ object Token {
 
   sealed abstract class Definition(override val lexeme: String) extends Token
   case object Fn                                                extends Definition("fn")
-  case object Event                                             extends Definition("event")
   case object Import                                            extends Definition("import")
   case object Contract                                          extends Definition("Contract")
   case object Abstract                                          extends Definition("Abstract")

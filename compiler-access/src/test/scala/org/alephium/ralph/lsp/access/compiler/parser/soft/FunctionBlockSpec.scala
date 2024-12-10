@@ -28,31 +28,53 @@ class FunctionBlockSpec extends AnyWordSpec with Matchers {
   "function name is not defined" when {
     "block is defined" when {
       "block is empty" in {
-        val function = parseFunction("fn {}")
+        val function = parseFunction("fn -> {}")
         // the block '{}' is parsed even though a lot of the function signature is missing, e.g., function name.
         val block = function.block.value
-        block.index shouldBe indexOf("fn >>{}<<")
-        block.body shouldBe SoftAST.BlockBody(indexOf("fn {>><<}"), None, Seq.empty)
+
+        block.index shouldBe indexOf("fn -> >>{}<<")
+
+        block.body shouldBe
+          SoftAST.BlockBody(
+            index = indexOf("fn -> {>><<}"),
+            prePartsSpace = None,
+            parts = Seq.empty
+          )
       }
 
       "block contains a space" in {
         val function = parseFunction("fn -> { }")
         // the block '{ }' is parsed even though a lot of the function signature is missing.
         val block = function.block.value
+
         block.index shouldBe indexOf("fn -> >>{ }<<")
-        block.body shouldBe SoftAST.BlockBody(indexOf("fn -> { >><<}"), None, Seq.empty)
+
+        block.body shouldBe
+          SoftAST.BlockBody(
+            index = indexOf("fn -> { >><<}"),
+            prePartsSpace = None,
+            parts = Seq.empty
+          )
       }
     }
 
     "closing curly is missing" in {
       val function =
-        parseFunction("fn {")
+        parseFunction("fn -> {")
 
       // even with error syntax, the block still gets parsed, reporting the missing closing curly brace
       val block = function.block.value
-      block.index shouldBe indexOf("fn >>{<<")
-      block.body shouldBe SoftAST.BlockBody(indexOf("fn {>><<"), None, Seq.empty)
-      block.closeCurly shouldBe SoftAST.CloseCurlyExpected(indexOf("fn {>><<"))
+      block.index shouldBe indexOf("fn -> >>{<<")
+
+      block.body shouldBe
+        SoftAST.BlockBody(
+          index = indexOf("fn -> {>><<"),
+          prePartsSpace = None,
+          parts = Seq.empty
+        )
+
+      block.closeCurly shouldBe
+        SoftAST.CloseCurlyExpected(indexOf("fn -> {>><<"))
     }
 
   }
