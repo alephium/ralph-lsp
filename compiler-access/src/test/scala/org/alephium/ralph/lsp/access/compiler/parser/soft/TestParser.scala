@@ -32,8 +32,8 @@ object TestParser {
   def parseFunction(code: String): SoftAST.Function =
     runParser(FunctionParser.parseOrFail(_))(code)
 
-  def parseParameter(code: String): SoftAST.ParameterClauseAST =
-    runParser(ParameterParser.parse(_))(code)
+  def parseTuple(code: String): SoftAST.Tuple =
+    runParser(TupleParser.parse(_))(code)
 
   def parseBlockClause(mandatory: Boolean)(code: String): SoftAST.BlockClause =
     runParser(BlockParser.clause(mandatory)(_))(code)

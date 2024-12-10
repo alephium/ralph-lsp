@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -32,9 +32,21 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(
           index = indexOf("fn >>-> <<"),
-          forwardArrow = SoftAST.ForwardArrow(indexOf("fn >>-><< ")),
-          space = Some(SoftAST.Space(" ", indexOf("fn __>> <<"))),
-          tpe = SoftAST.TypeExpected(indexOf("fn -> >><<"))
+          forwardArrow = SoftAST.ForwardArrow(
+            SoftAST.Code(
+              index = indexOf("fn >>-><< "),
+              text = Token.ForwardArrow.lexeme
+            )
+          ),
+          space = Some(
+            SoftAST.Space(
+              SoftAST.Code(
+                index = indexOf("fn __>> <<"),
+                text = " "
+              )
+            )
+          ),
+          tpe = SoftAST.IdentifierExpected(indexOf("fn -> >><<"))
         )
     }
 
@@ -45,9 +57,26 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(
           index = indexOf("fn >>-> type<<"),
-          forwardArrow = SoftAST.ForwardArrow(indexOf("fn >>-><< type")),
-          space = Some(SoftAST.Space(" ", indexOf("fn __>> <<type"))),
-          tpe = SoftAST.Type("type", indexOf("fn -> >>type<<"))
+          forwardArrow = SoftAST.ForwardArrow(
+            SoftAST.Code(
+              index = indexOf("fn >>-><< type"),
+              text = Token.ForwardArrow.lexeme
+            )
+          ),
+          space = Some(
+            SoftAST.Space(
+              SoftAST.Code(
+                index = indexOf("fn __>> <<type"),
+                text = " "
+              )
+            )
+          ),
+          tpe = SoftAST.Identifier(
+            SoftAST.Code(
+              index = indexOf("fn -> >>type<<"),
+              text = "type"
+            )
+          )
         )
     }
   }
@@ -59,16 +88,30 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
 
       function.signature.fnName shouldBe
         SoftAST.Identifier(
-          code = "function",
-          index = indexOf("fn >>function<< -> ")
+          SoftAST.Code(
+            index = indexOf("fn >>function<< -> "),
+            text = "function"
+          )
         )
 
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(
           index = indexOf("fn function >>-> <<"),
-          forwardArrow = SoftAST.ForwardArrow(indexOf("fn function >>-><< ")),
-          space = Some(SoftAST.Space(" ", indexOf("fn function __>> <<"))),
-          tpe = SoftAST.TypeExpected(indexOf("fn function -> >><<"))
+          forwardArrow = SoftAST.ForwardArrow(
+            SoftAST.Code(
+              index = indexOf("fn function >>-><< "),
+              text = Token.ForwardArrow.lexeme
+            )
+          ),
+          space = Some(
+            SoftAST.Space(
+              SoftAST.Code(
+                index = indexOf("fn function __>> <<"),
+                text = " "
+              )
+            )
+          ),
+          tpe = SoftAST.IdentifierExpected(indexOf("fn function -> >><<"))
         )
     }
 
@@ -78,16 +121,35 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
 
       function.signature.fnName shouldBe
         SoftAST.Identifier(
-          code = "function",
-          index = indexOf("fn >>function<< -> ")
+          SoftAST.Code(
+            index = indexOf("fn >>function<< -> "),
+            text = "function"
+          )
         )
 
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(
           index = indexOf("fn function >>-> type<<"),
-          forwardArrow = SoftAST.ForwardArrow(indexOf("fn function >>-><< type")),
-          space = Some(SoftAST.Space(" ", indexOf("fn function __>> <<type"))),
-          tpe = SoftAST.Type("type", indexOf("fn function -> >>type<<"))
+          forwardArrow = SoftAST.ForwardArrow(
+            SoftAST.Code(
+              index = indexOf("fn function >>-><< type"),
+              text = Token.ForwardArrow.lexeme
+            )
+          ),
+          space = Some(
+            SoftAST.Space(
+              SoftAST.Code(
+                index = indexOf("fn function __>> <<type"),
+                text = " "
+              )
+            )
+          ),
+          tpe = SoftAST.Identifier(
+            SoftAST.Code(
+              index = indexOf("fn function -> >>type<<"),
+              text = "type"
+            )
+          )
         )
     }
   }
@@ -99,20 +161,41 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
 
       function.signature.fnName shouldBe
         SoftAST.Identifier(
-          code = "function",
-          index = indexOf("fn >>function<<(-> ")
+          SoftAST.Code(
+            index = indexOf("fn >>function<<(-> "),
+            text = "function"
+          )
         )
 
-      val params = function.signature.params.asInstanceOf[SoftAST.NonEmptyParameterClause]
-      params.openParen shouldBe SoftAST.OpenParen(indexOf("fn function>>(<<-> "))
-      params.closeParen shouldBe SoftAST.CloseParenExpected(indexOf("fn function(>><<-> "))
+      function.signature.params.openParen shouldBe
+        SoftAST.OpenParen(
+          SoftAST.Code(
+            index = indexOf("fn function>>(<<-> "),
+            text = Token.OpenParen.lexeme
+          )
+        )
+
+      function.signature.params.closeParen shouldBe
+        SoftAST.CloseParenExpected(indexOf("fn function(>><<-> "))
 
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(
           index = indexOf("fn function(>>-> <<"),
-          forwardArrow = SoftAST.ForwardArrow(indexOf("fn function(>>-><< ")),
-          space = Some(SoftAST.Space(" ", indexOf("fn function(__>> <<"))),
-          tpe = SoftAST.TypeExpected(indexOf("fn function(-> >><<"))
+          forwardArrow = SoftAST.ForwardArrow(
+            SoftAST.Code(
+              index = indexOf("fn function(>>-><< "),
+              text = Token.ForwardArrow.lexeme
+            )
+          ),
+          space = Some(
+            SoftAST.Space(
+              SoftAST.Code(
+                index = indexOf("fn function(__>> <<"),
+                text = " "
+              )
+            )
+          ),
+          tpe = SoftAST.IdentifierExpected(indexOf("fn function(-> >><<"))
         )
     }
 
@@ -122,20 +205,46 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
 
       function.signature.fnName shouldBe
         SoftAST.Identifier(
-          code = "function",
-          index = indexOf("fn >>function<<(-> Type")
+          SoftAST.Code(
+            index = indexOf("fn >>function<<(-> Type"),
+            text = "function"
+          )
         )
 
-      val params = function.signature.params.asInstanceOf[SoftAST.NonEmptyParameterClause]
-      params.openParen shouldBe SoftAST.OpenParen(indexOf("fn function>>(<<-> Type"))
-      params.closeParen shouldBe SoftAST.CloseParenExpected(indexOf("fn function(>><<-> Type"))
+      function.signature.params.openParen shouldBe
+        SoftAST.OpenParen(
+          SoftAST.Code(
+            index = indexOf("fn function>>(<<-> Type"),
+            text = Token.OpenParen.lexeme
+          )
+        )
+
+      function.signature.params.closeParen shouldBe
+        SoftAST.CloseParenExpected(indexOf("fn function(>><<-> Type"))
 
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(
           index = indexOf("fn function(>>-> Type<<"),
-          forwardArrow = SoftAST.ForwardArrow(indexOf("fn function(>>-><< Type")),
-          space = Some(SoftAST.Space(" ", indexOf("fn function(__>> <<Type"))),
-          tpe = SoftAST.Type("Type", indexOf("fn function(-> >>Type<<"))
+          forwardArrow = SoftAST.ForwardArrow(
+            SoftAST.Code(
+              index = indexOf("fn function(>>-><< Type"),
+              text = Token.ForwardArrow.lexeme
+            )
+          ),
+          space = Some(
+            SoftAST.Space(
+              SoftAST.Code(
+                index = indexOf("fn function(__>> <<Type"),
+                text = " "
+              )
+            )
+          ),
+          tpe = SoftAST.Identifier(
+            SoftAST.Code(
+              index = indexOf("fn function(-> >>Type<<"),
+              text = "Type"
+            )
+          )
         )
 
     }
@@ -148,20 +257,46 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
 
       function.signature.fnName shouldBe
         SoftAST.Identifier(
-          code = "function",
-          index = indexOf("fn >>function<<() -> ")
+          SoftAST.Code(
+            index = indexOf("fn >>function<<() -> "),
+            text = "function"
+          )
         )
 
-      val params = function.signature.params.asInstanceOf[SoftAST.EmptyParameterClause]
-      params.openParen shouldBe SoftAST.OpenParen(indexOf("fn function>>(<<) -> "))
-      params.closeParen shouldBe SoftAST.CloseParen(indexOf("fn function(>>)<< -> "))
+      function.signature.params.openParen shouldBe
+        SoftAST.OpenParen(
+          SoftAST.Code(
+            index = indexOf("fn function>>(<<) -> "),
+            text = Token.OpenParen.lexeme
+          )
+        )
+
+      function.signature.params.closeParen shouldBe
+        SoftAST.CloseParen(
+          SoftAST.Code(
+            index = indexOf("fn function(>>)<< -> "),
+            text = Token.CloseParen.lexeme
+          )
+        )
 
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(
           index = indexOf("fn function() >>-> <<"),
-          forwardArrow = SoftAST.ForwardArrow(indexOf("fn function() >>-><< ")),
-          space = Some(SoftAST.Space(" ", indexOf("fn function() __>> <<"))),
-          tpe = SoftAST.TypeExpected(indexOf("fn function() -> >><<"))
+          forwardArrow = SoftAST.ForwardArrow(
+            SoftAST.Code(
+              index = indexOf("fn function() >>-><< "),
+              text = Token.ForwardArrow.lexeme
+            )
+          ),
+          space = Some(
+            SoftAST.Space(
+              SoftAST.Code(
+                index = indexOf("fn function() __>> <<"),
+                text = " "
+              )
+            )
+          ),
+          tpe = SoftAST.IdentifierExpected(indexOf("fn function() -> >><<"))
         )
     }
 
@@ -171,20 +306,51 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
 
       function.signature.fnName shouldBe
         SoftAST.Identifier(
-          code = "function",
-          index = indexOf("fn >>function<<() -> type")
+          SoftAST.Code(
+            index = indexOf("fn >>function<<() -> type"),
+            text = "function"
+          )
         )
 
-      val params = function.signature.params.asInstanceOf[SoftAST.EmptyParameterClause]
-      params.openParen shouldBe SoftAST.OpenParen(indexOf("fn function>>(<<) -> type"))
-      params.closeParen shouldBe SoftAST.CloseParen(indexOf("fn function(>>)<< -> type"))
+      function.signature.params.openParen shouldBe
+        SoftAST.OpenParen(
+          SoftAST.Code(
+            index = indexOf("fn function>>(<<) -> type"),
+            text = Token.OpenParen.lexeme
+          )
+        )
+
+      function.signature.params.closeParen shouldBe
+        SoftAST.CloseParen(
+          SoftAST.Code(
+            index = indexOf("fn function(>>)<< -> type"),
+            text = Token.CloseParen.lexeme
+          )
+        )
 
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(
           index = indexOf("fn function() >>-> type<<"),
-          forwardArrow = SoftAST.ForwardArrow(indexOf("fn function() >>-><< type")),
-          space = Some(SoftAST.Space(" ", indexOf("fn function() __>> <<type"))),
-          tpe = SoftAST.Type("type", indexOf("fn function() -> >>type<<"))
+          forwardArrow = SoftAST.ForwardArrow(
+            SoftAST.Code(
+              index = indexOf("fn function() >>-><< type"),
+              text = Token.ForwardArrow.lexeme
+            )
+          ),
+          space = Some(
+            SoftAST.Space(
+              SoftAST.Code(
+                index = indexOf("fn function() __>> <<type"),
+                text = " "
+              )
+            )
+          ),
+          tpe = SoftAST.Identifier(
+            SoftAST.Code(
+              index = indexOf("fn function() -> >>type<<"),
+              text = "type"
+            )
+          )
         )
     }
 
@@ -203,25 +369,51 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
 
     function.signature.fnName shouldBe
       SoftAST.Identifier(
-        code = "function",
-        index = indexOf("fn >>function<<() => ABC")
+        SoftAST.Code(
+          index = indexOf("fn >>function<<() => ABC"),
+          text = "function"
+        )
       )
 
-    val params = function.signature.params.asInstanceOf[SoftAST.EmptyParameterClause]
-    params.openParen shouldBe SoftAST.OpenParen(indexOf("fn function>>(<<) => ABC"))
-    params.closeParen shouldBe SoftAST.CloseParen(indexOf("fn function(>>)<< => ABC"))
+    function.signature.params.openParen shouldBe
+      SoftAST.OpenParen(
+        SoftAST.Code(
+          index = indexOf("fn function>>(<<) => ABC"),
+          text = Token.OpenParen.lexeme
+        )
+      )
+
+    function.signature.params.closeParen shouldBe
+      SoftAST.CloseParen(
+        SoftAST.Code(
+          index = indexOf("fn function(>>)<< => ABC"),
+          text = Token.CloseParen.lexeme
+        )
+      )
 
     /**
      * Second part is [[SoftAST.Unresolved]] arrow `=>`
      */
     val unresolvedArrow = block.parts(1).part.asInstanceOf[SoftAST.Unresolved]
-    unresolvedArrow shouldBe SoftAST.Unresolved("=>", indexOf("fn function() >>=><< ABC"))
+    unresolvedArrow shouldBe
+      SoftAST.Unresolved(
+        SoftAST.Code(
+          index = indexOf("fn function() >>=><< ABC"),
+          text = "=>"
+        )
+      )
 
     /**
-     * Third part is [[SoftAST.Unresolved]] token `ABC`
+     * Third part is [[SoftAST.Identifier]] token `ABC`
      */
-    val unresolvedToken = block.parts(2).part.asInstanceOf[SoftAST.Unresolved]
-    unresolvedToken shouldBe SoftAST.Unresolved("ABC", indexOf("fn function() => >>ABC<<"))
+    val identifier = block.parts(2).part.asInstanceOf[SoftAST.Identifier]
+    identifier shouldBe
+      SoftAST.Identifier(
+        SoftAST.Code(
+          index = indexOf("fn function() => >>ABC<<"),
+          text = "ABC"
+        )
+      )
   }
 
 }

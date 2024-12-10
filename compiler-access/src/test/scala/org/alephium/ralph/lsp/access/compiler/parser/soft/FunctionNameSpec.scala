@@ -30,8 +30,10 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
 
     function.signature.fnName shouldBe
       SoftAST.Identifier(
-        code = "function",
-        index = indexOf("fn >>function<<")
+        SoftAST.Code(
+          index = indexOf("fn >>function<<"),
+          text = "function"
+        )
       )
   }
 
@@ -41,8 +43,10 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
 
     function.signature.fnName shouldBe
       SoftAST.Identifier(
-        code = "_FnUc_TiOn_",
-        index = indexOf("fn >>_FnUc_TiOn_<<")
+        SoftAST.Code(
+          index = indexOf("fn >>_FnUc_TiOn_<<"),
+          text = "_FnUc_TiOn_"
+        )
       )
   }
 
@@ -50,15 +54,31 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
     val function =
       parseFunction("fn       _FnUc_TiOn_        ")
 
-    function.preSignatureSpace shouldBe SoftAST.Space("       ", indexOf("fn>>       <<_FnUc_TiOn_        "))
+    function.preSignatureSpace shouldBe
+      SoftAST.Space(
+        SoftAST.Code(
+          index = indexOf("fn>>       <<_FnUc_TiOn_        "),
+          text = "       "
+        )
+      )
 
     function.signature.fnName shouldBe
       SoftAST.Identifier(
-        code = "_FnUc_TiOn_",
-        index = indexOf("fn       >>_FnUc_TiOn_<<        ")
+        SoftAST.Code(
+          index = indexOf("fn       >>_FnUc_TiOn_<<        "),
+          text = "_FnUc_TiOn_"
+        )
       )
 
-    function.signature.preParamSpace should contain(SoftAST.Space("        ", indexOf("fn       _FnUc_TiOn_>>        <<")))
+    function.signature.preParamSpace should
+      contain(
+        SoftAST.Space(
+          SoftAST.Code(
+            index = indexOf("fn       _FnUc_TiOn_>>        <<"),
+            text = "        "
+          )
+        )
+      )
   }
 
   "unresolved characters after function name" in {
@@ -67,8 +87,10 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
 
     val expected =
       SoftAST.Identifier(
-        code = "abcd",
-        index = indexOf("fn >>abcd<< efgh ijk")
+        SoftAST.Code(
+          index = indexOf("fn >>abcd<< efgh ijk"),
+          text = "abcd"
+        )
       )
 
     function.signature.fnName shouldBe expected
@@ -76,7 +98,7 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
 
   "random characters and symbols after function name" in {
     val root =
-      parseSoft("fn abcd *YNKJ BUP(*P")
+      parseSoft("fn abcd *YNKJ *BUPP")
 
     val (functions, unresolved) =
       root
@@ -98,8 +120,10 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
     val function = functions.head
     function.signature.fnName shouldBe
       SoftAST.Identifier(
-        code = "abcd",
-        index = indexOf("fn >>abcd<< *YNKJ BUP(*P")
+        SoftAST.Code(
+          index = indexOf("fn >>abcd<< *YNKJ *BUPP"),
+          text = "abcd"
+        )
       )
 
     /**
@@ -109,14 +133,18 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
     // head unresolved
     unresolved.head shouldBe
       SoftAST.Unresolved(
-        code = "*YNKJ",
-        index = indexOf("fn abcd >>*YNKJ<< BUP(*P")
+        SoftAST.Code(
+          index = indexOf("fn abcd >>*YNKJ<< *BUPP"),
+          text = "*YNKJ"
+        )
       )
     // last unresolved
     unresolved.last shouldBe
       SoftAST.Unresolved(
-        code = "BUP(*P",
-        index = indexOf("fn abcd *YNKJ >>BUP(*P<<")
+        SoftAST.Code(
+          index = indexOf("fn abcd *YNKJ >>*BUPP<<"),
+          text = "*BUPP"
+        )
       )
   }
 
@@ -129,18 +157,18 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
           |
           |
           |efgh ijk
-          |
-          |LMNO
           |""".stripMargin
       }
 
     function.signature.fnName shouldBe
       SoftAST.Identifier(
-        code = "abcd",
-        index = indexOf("""fn
-            |
-            |>>abcd<<
-            |""".stripMargin)
+        SoftAST.Code(
+          index = indexOf("""fn
+              |
+              |>>abcd<<
+              |""".stripMargin),
+          text = "abcd"
+        )
       )
 
   }
@@ -151,14 +179,15 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
 
     function.signature.fnName shouldBe
       SoftAST.Identifier(
-        code = "abcd",
-        index = indexOf("fn >>abcd<<(")
+        SoftAST.Code(
+          index = indexOf("fn >>abcd<<("),
+          text = "abcd"
+        )
       )
 
     function
       .signature
       .params
-      .asInstanceOf[SoftAST.NonEmptyParameterClause]
       .closeParen shouldBe SoftAST.CloseParenExpected(indexOf("fn abcd(>><<"))
   }
 
@@ -168,14 +197,15 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
 
     function.signature.fnName shouldBe
       SoftAST.Identifier(
-        code = "abcd",
-        index = indexOf("fn >>abcd<<)")
+        SoftAST.Code(
+          index = indexOf("fn >>abcd<<)"),
+          text = "abcd"
+        )
       )
 
     function
       .signature
       .params
-      .asInstanceOf[SoftAST.NonEmptyParameterClause]
       .openParen shouldBe SoftAST.OpenParenExpected(indexOf("fn abcd>><<)"))
   }
 

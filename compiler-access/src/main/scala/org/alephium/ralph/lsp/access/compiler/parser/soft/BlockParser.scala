@@ -25,7 +25,15 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 private object BlockParser {
 
   def clause[Unknown: P](required: Boolean): P[SoftAST.BlockClause] =
-    P(Index ~ TokenParser.OpenCurly(required) ~ spaceOrFail.? ~ body(Some(Token.CloseCurly.lexeme)) ~ spaceOrFail.? ~ TokenParser.CloseCurly ~ Index) map {
+    P {
+      Index ~
+        TokenParser.OpenCurly(required) ~
+        spaceOrFail.? ~
+        body(Some(Token.CloseCurly.lexeme)) ~
+        spaceOrFail.? ~
+        TokenParser.CloseCurly ~
+        Index
+    } map {
       case (from, openCurly, preBodySpace, body, postBodySpace, closeCurly, to) =>
         SoftAST.BlockClause(
           index = range(from, to),
@@ -41,7 +49,12 @@ private object BlockParser {
     body(stopChars = None)
 
   private def body[Unknown: P](stopChars: Option[String]): P[SoftAST.BlockBody] =
-    P(Index ~ spaceOrFail.? ~ bodyPart(stopChars).rep ~ Index) map {
+    P {
+      Index ~
+        spaceOrFail.? ~
+        bodyPart(stopChars).rep ~
+        Index
+    } map {
       case (from, headSpace, parts, to) =>
         SoftAST.BlockBody(
           index = range(from, to),
@@ -51,7 +64,12 @@ private object BlockParser {
     }
 
   private def bodyPart[Unknown: P](stopChars: Option[String]): P[SoftAST.BlockBodyPart] =
-    P(Index ~ part(stopChars) ~ spaceOrFail.? ~ Index) map {
+    P {
+      Index ~
+        part(stopChars) ~
+        spaceOrFail.? ~
+        Index
+    } map {
       case (from, ast, space, to) =>
         SoftAST.BlockBodyPart(
           index = range(from, to),
@@ -63,7 +81,9 @@ private object BlockParser {
   private def part[Unknown: P](stopChars: Option[String]): P[SoftAST.BodyPartAST] =
     P {
       TemplateParser.parseOrFail |
+        DataTemplateParser.parseOrFail |
         FunctionParser.parseOrFail |
+        ExpressionParser.parseOrFail |
         CommentParser.parseOrFail |
         unresolved(stopChars)
     }

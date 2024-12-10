@@ -17,39 +17,12 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
-import fastparse.NoWhitespace.noWhitespaceImplicit
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
 private object TypeParser {
 
   def parse[Unknown: P]: P[SoftAST.TypeAST] =
-    P(tupledTypeNames | typeName)
-
-  private def tupledTypeNames[Unknown: P]: P[SoftAST.TupledType] =
-    P(Index ~ TokenParser.OpenParenOrFail ~ spaceOrFail.? ~ parse ~ commaTypeName.rep ~ TokenParser.CloseParen ~ Index) map {
-      case (from, openParen, preHeadTypeSpace, headType, tailTypes, closeParen, to) =>
-        SoftAST.TupledType(
-          index = range(from, to),
-          openParen = openParen,
-          preHeadTypeSpace = preHeadTypeSpace,
-          headType = headType,
-          tailTypes = tailTypes,
-          closeParen = closeParen
-        )
-    }
-
-  private def commaTypeName[Unknown: P]: P[SoftAST.TailType] =
-    P(Index ~ TokenParser.CommaOrFail ~ spaceOrFail.? ~ parse ~ spaceOrFail.? ~ Index) map {
-      case (from, comma, preTypeNameSpace, typeName, postTypeNameSpace, to) =>
-        SoftAST.TailType(
-          index = range(from, to),
-          comma = comma,
-          preTypeNameSpace = preTypeNameSpace,
-          tpe = typeName,
-          postTypeNameSpace = postTypeNameSpace
-        )
-    }
+    P(TupleParser.parseOrFail | identifier)
 
 }

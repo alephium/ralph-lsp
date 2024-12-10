@@ -56,7 +56,7 @@ private object CommentParser {
   /**
    * Parses single-line comments.
    *
-   * Syntax: `// [space][text][space]`
+   * Syntax: `[//][Space][Text][Space]`
    *
    * @return A parsed representation of a single-line comment as a [[SoftAST.Comment]] object.
    */
