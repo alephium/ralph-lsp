@@ -17,14 +17,26 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
+import fastparse.NoWhitespace.noWhitespaceImplicit
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
+import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
-private object ParameterParser {
+private object AccessModifierParser {
 
-  def parse[Unknown: P]: P[SoftAST.Tuple] =
-    TupleParser.parse
-
-  def parseOrFail[Unknown: P]: P[SoftAST.Tuple] =
-    TupleParser.parseOrFail
+  def parseOrFail[Unknown: P]: P[SoftAST.AccessModifier] =
+    P {
+      Index ~
+        TokenParser.PubOrFail ~
+        spaceOrFail.? ~
+        Index
+    } map {
+      case (from, doubleForwardSlash, space, to) =>
+        SoftAST.AccessModifier(
+          index = range(from, to),
+          doubleForwardSlash,
+          postTokenSpace = space
+        )
+    }
 
 }

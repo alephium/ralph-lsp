@@ -18,17 +18,31 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{range, SourceIndexExtension}
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
 private object FunctionParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.Function] =
-    P(TokenParser.FnOrFail ~ space ~ signature ~ spaceOrFail.? ~ BlockParser.clause(required = false).?) map {
-      case (fnDeceleration, headSpace, signature, tailSpace, block) =>
+    P {
+      Index ~
+        AnnotationParser.parseOrFail.? ~
+        spaceOrFail.? ~
+        AccessModifierParser.parseOrFail.? ~
+        TokenParser.FnOrFail ~
+        space ~
+        signature ~
+        spaceOrFail.? ~
+        BlockParser.clause(required = false).? ~
+        Index
+    } map {
+      case (from, annotation, postAnnotationSpace, pub, fnDeceleration, headSpace, signature, tailSpace, block, to) =>
         SoftAST.Function(
-          index = range(fnDeceleration.index.from, signature.index.to),
+          index = range(from, to),
+          annotation = annotation,
+          postAnnotationSpace = postAnnotationSpace,
+          pub = pub,
           fn = fnDeceleration,
           preSignatureSpace = headSpace,
           signature = signature,
@@ -51,7 +65,7 @@ private object FunctionParser {
     }
 
   private def returnSignature[Unknown: P]: P[SoftAST.FunctionReturnAST] =
-    P(Index ~ (TokenParser.forwardArrow ~ spaceOrFail.? ~ TypeParser.parse).? ~ Index) map {
+    P(Index ~ (TokenParser.ForwardArrow ~ spaceOrFail.? ~ TypeParser.parse).? ~ Index) map {
       case (from, Some((forwardArrow, space, tpe)), to) =>
         SoftAST.FunctionReturn(
           index = range(from, to),

@@ -24,14 +24,58 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
 private object CommentParser {
 
-  def parseOrFail[Unknown: P]: P[SoftAST.Comment] =
-    P(Index ~ TokenParser.doubleForwardSlashOrFail ~ spaceOrFail.? ~ text.? ~ Index) map {
-      case (from, doubleForwardSlash, space, text, to) =>
+  /**
+   * Parses multi-line comments.
+   *
+   * Syntax: `[Space][Comments...][Space]`
+   *
+   * This parser is unique as it handles both the spaces before (`preSpace`)
+   * and after (`postSpace`) the comment syntax, unlike other parsers that
+   * ignore spaces before the initial syntax. In the case of comments,
+   * the initial syntax is `//`.
+   *
+   * @return A parsed representation of comments as a [[SoftAST.Comments]] object.
+   */
+  def parseOrFail[Unknown: P]: P[SoftAST.Comments] =
+    P {
+      Index ~
+        spaceOrFail.? ~
+        one.rep(1) ~
+        spaceOrFail.? ~
+        Index
+    } map {
+      case (from, preSpace, comments, postSpace, to) =>
+        SoftAST.Comments(
+          index = range(from, to),
+          preCommentSpace = preSpace,
+          comments = comments,
+          postCommentSpace = postSpace
+        )
+    }
+
+  /**
+   * Parses single-line comments.
+   *
+   * Syntax: `[//][Space][Text][Space]`
+   *
+   * @return A parsed representation of a single-line comment as a [[SoftAST.Comment]] object.
+   */
+  private def one[Unknown: P]: P[SoftAST.Comment] =
+    P {
+      Index ~
+        TokenParser.DoubleForwardSlashOrFail ~
+        spaceOrFail.? ~
+        text.? ~
+        spaceOrFail.? ~
+        Index
+    } map {
+      case (from, doubleForwardSlash, preTextSpace, text, postTextSpace, to) =>
         SoftAST.Comment(
           index = range(from, to),
           doubleForwardSlash = doubleForwardSlash,
-          space = space,
-          text = text
+          preTextSpace = preTextSpace,
+          text = text,
+          postTextSpace = postTextSpace
         )
     }
 

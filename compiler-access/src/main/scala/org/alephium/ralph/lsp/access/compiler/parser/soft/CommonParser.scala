@@ -18,19 +18,10 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object CommonParser {
-
-  def spaceOrFail[Unknown: P]: P[SoftAST.Space] =
-    P(Index ~ CharsWhileIn(" \t\r\n").! ~ Index) map {
-      case (from, text, to) =>
-        SoftAST.Space(
-          code = text,
-          index = range(from, to)
-        )
-    }
 
   def space[Unknown: P]: P[SoftAST.SpaceAST] =
     P(Index ~ spaceOrFail.?) map {
@@ -41,46 +32,73 @@ private object CommonParser {
         SoftAST.SpaceExpected(range(from, from))
     }
 
-  def text[Unknown: P]: P[SoftAST.Text] =
+  def spaceOrFail[Unknown: P]: P[SoftAST.Space] =
+    P(toCodeOrFail(CharsWhileIn(" \t\r\n").!)) map {
+      text =>
+        SoftAST.Space(text)
+    }
+
+  def text[Unknown: P]: P[SoftAST.Code] =
     P(Index ~ CharsWhileNot(Token.Newline.lexeme).! ~ Index) map {
       case (from, text, to) =>
-        SoftAST.Text(
-          code = text,
+        SoftAST.Code(
+          text = text,
           index = range(from, to)
         )
     }
 
   def unresolved[Unknown: P](stopChars: Option[String]): P[SoftAST.Unresolved] =
-    P(Index ~ CharsWhileNot(Token.Space.lexeme ++ Token.Newline.lexeme ++ stopChars.getOrElse("")).! ~ Index) map {
-      case (from, text, to) =>
+    P {
+      Index ~
+        toCodeOrFail(CharsWhileNot(Token.Space.lexeme ++ Token.Newline.lexeme ++ stopChars.getOrElse("")).!) ~
+        CommentParser.parseOrFail.? ~
+        Index
+    } map {
+      case (from, text, tailComment, to) =>
         SoftAST.Unresolved(
+          index = range(from, to),
           code = text,
-          index = range(from, to)
+          documentation = tailComment
         )
     }
+
+  def identifier[Unknown: P](required: Boolean): P[SoftAST.IdentifierAST] =
+    if (required)
+      identifier
+    else
+      identifierOrFail
 
   def identifier[Unknown: P]: P[SoftAST.IdentifierAST] =
-    P(Index ~ isLetterDigitOrUnderscore.!.? ~ Index) map {
-      case (from, Some(identifier), to) =>
-        SoftAST.Identifier(
-          code = identifier,
-          index = range(from, to)
-        )
+    P(Index ~ identifierOrFail.?) map {
+      case (_, Some(identifier)) =>
+        identifier
 
-      case (from, None, to) =>
-        SoftAST.IdentifierExpected(range(from, to))
+      case (from, None) =>
+        SoftAST.IdentifierExpected(point(from))
     }
 
-  def typeName[Unknown: P]: P[SoftAST.SingleTypeAST] =
-    P(Index ~ isLetterDigitOrUnderscore.!.? ~ Index) map {
-      case (from, Some(typeName), to) =>
-        SoftAST.Type(
-          code = typeName,
+  def identifierOrFail[Unknown: P]: P[SoftAST.Identifier] =
+    P {
+      Index ~
+        CommentParser.parseOrFail.? ~
+        toCodeOrFail(isLetterDigitOrUnderscore.!) ~
+        Index
+    } map {
+      case (from, documentation, code, to) =>
+        SoftAST.Identifier(
+          index = range(from, to),
+          code = code,
+          documentation = documentation
+        )
+    }
+
+  def toCodeOrFail[Unknown: P](parser: => P[String]): P[SoftAST.Code] =
+    P(Index ~ parser ~ Index) map {
+      case (from, code, to) =>
+        SoftAST.Code(
+          text = code,
           index = range(from, to)
         )
-
-      case (from, None, to) =>
-        SoftAST.TypeExpected(range(from, to))
     }
 
   private def CharsWhileNot[Unknown: P](chars: String): P[Unit] =
@@ -92,7 +110,7 @@ private object CommonParser {
   private def isLetterDigitOrUnderscore[Unknown: P]: P[Unit] =
     CharsWhile {
       char =>
-        char.isLetterOrDigit || char == Token.Underscore.lexeme.head
+        char.isLetterOrDigit || Token.Underscore.lexeme.contains(char)
     }
 
 }
