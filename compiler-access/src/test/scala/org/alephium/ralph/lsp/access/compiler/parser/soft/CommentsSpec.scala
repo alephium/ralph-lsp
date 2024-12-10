@@ -64,7 +64,7 @@ class CommentsSpec extends AnyWordSpec with Matchers {
                   |<<// two
                   |""".stripMargin
               },
-              text = "\n"
+              text = Token.Newline.lexeme
             )
           )
         )
@@ -120,7 +120,7 @@ class CommentsSpec extends AnyWordSpec with Matchers {
                   |// two>>
                   |<<""".stripMargin
               },
-              text = "\n"
+              text = Token.Newline.lexeme
             )
           )
         )
@@ -218,7 +218,7 @@ class CommentsSpec extends AnyWordSpec with Matchers {
                         """//>>
                           |<<//""".stripMargin
                       },
-                      text = "\n"
+                      text = Token.Newline.lexeme
                     )
                   )
                 ),

@@ -93,41 +93,44 @@ class CommentSpec extends AnyWordSpec with Matchers {
 
   "text as comment" should {
     "store the space and the comment" in {
+      val newLine =
+        Token.Newline.lexeme
+
       val comment =
-        parseComment("// my comment \n")
+        parseComment(s"// my comment $newLine")
 
       val expected =
         SoftAST.Comments(
-          index = indexOf(">>// my comment \n<<"),
+          index = indexOf(s">>// my comment $newLine<<"),
           preCommentSpace = None,
           comments = Seq(
             SoftAST.Comment(
-              index = indexOf(">>// my comment \n<<"),
+              index = indexOf(s">>// my comment $newLine<<"),
               doubleForwardSlash = SoftAST.DoubleForwardSlash(
                 code = SoftAST.Code(
-                  index = indexOf(">>//<< my comment \n"),
+                  index = indexOf(s">>//<< my comment $newLine"),
                   text = "//"
                 )
               ),
               preTextSpace = Some(
                 SoftAST.Space(
                   code = SoftAST.Code(
-                    index = indexOf("//>> <<my comment \n"),
+                    index = indexOf(s"//>> <<my comment $newLine"),
                     text = " "
                   )
                 )
               ),
               text = Some(
                 SoftAST.Code(
-                  index = indexOf("// >>my comment <<\n"),
+                  index = indexOf(s"// >>my comment <<$newLine"),
                   text = "my comment "
                 )
               ),
               postTextSpace = Some(
                 SoftAST.Space(
                   code = SoftAST.Code(
-                    index = indexOf("// my comment >>\n<<"),
-                    text = "\n"
+                    index = indexOf(s"// my comment >>$newLine<<"),
+                    text = newLine
                   )
                 )
               )
