@@ -186,6 +186,17 @@ object SoftAST {
       code: Code)
     extends TokenDocumentedAST
 
+  object At {
+
+    def apply(code: Code): At =
+      At(
+        index = code.index,
+        documentation = None,
+        code = code
+      )
+
+  }
+
   case class At(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -501,7 +512,7 @@ object SoftAST {
 
   case class Function(
       index: SourceIndex,
-      annotation: Option[Annotation],
+      annotations: Seq[Annotation],
       postAnnotationSpace: Option[Space],
       pub: Option[AccessModifier],
       fn: Fn,
@@ -729,7 +740,8 @@ object SoftAST {
       preIdentifierSpace: Option[Space],
       identifier: IdentifierAST,
       postIdentifierSpace: Option[Space],
-      tuple: Option[Tuple])
+      tuple: Option[Tuple],
+      postTupleSpace: Option[Space])
     extends ExpressionAST
 
   sealed trait SpaceAST extends SoftAST

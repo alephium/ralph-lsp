@@ -355,6 +355,31 @@ private object TokenParser {
         )
     }
 
+  /**
+   * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.
+   */
+  def Reserved[Unknown: P]: P[Token.Reserved] = {
+    val it =
+      Token.reserved.iterator
+
+    val head =
+      P(it.next().lexeme) map {
+        _ =>
+          Token.reserved.head
+      }
+
+    it.foldLeft(head) {
+      case (parser, keyword) =>
+        def nextParser =
+          P(keyword.lexeme) map {
+            _ =>
+              keyword
+          }
+
+        parser | nextParser
+    }
+  }
+
   def OperatorOrFail[Unknown: P]: P[SoftAST.Operator] =
     P {
       buildOperatorParser(Token.Or) |
