@@ -77,6 +77,18 @@ private object CommonParser {
         SoftAST.IdentifierExpected(point(from))
     }
 
+  /**
+   * Parses identifiers as long as they are not reserved tokens [[Token.Reserved]].
+   *
+   * For example, the following code will result in an [[SoftAST.IdentifierExpected]] error
+   * because `let` is a reserved token [[Token.Let]]:
+   *
+   * {{{
+   *    fn let() -> ()
+   * }}}
+   *
+   * @return A successfully parsed identifier instance [[SoftAST.Identifier]] or a parser error.
+   */
   def identifierOrFail[Unknown: P]: P[SoftAST.Identifier] =
     P {
       Index ~
