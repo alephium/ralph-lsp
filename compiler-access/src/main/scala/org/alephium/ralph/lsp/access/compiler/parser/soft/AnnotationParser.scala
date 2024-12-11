@@ -24,6 +24,18 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
 private object AnnotationParser {
 
+  /**
+   * Parses a single annotation and its trailing space.
+   *
+   * The configuration within an `Annotation` syntax allows for various expressions [[SoftAST.ExpressionAST]].
+   * For example, the following will parse successfully:
+   *
+   * {{{
+   *    @using(a = functionCall(), b = object.getConfig(param), 1 + 1, blah)
+   * }}}
+   *
+   * @return Returns a [[SoftAST.Annotation]] representation the annotation and its documentation.
+   */
   def parseOrFail[Unknown: P]: P[SoftAST.Annotation] =
     P {
       Index ~
