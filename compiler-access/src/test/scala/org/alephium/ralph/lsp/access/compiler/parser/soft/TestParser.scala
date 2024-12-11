@@ -26,6 +26,9 @@ object TestParser {
   def parseSoft(code: String): SoftAST.BlockBody =
     runSoftParser(SoftParser.parse(_))(code)
 
+  def parseAnnotation(code: String): SoftAST.Annotation =
+    runSoftParser(AnnotationParser.parseOrFail(_))(code)
+
   def parseTemplate(code: String): SoftAST.Template =
     runSoftParser(TemplateParser.parseOrFail(_))(code)
 

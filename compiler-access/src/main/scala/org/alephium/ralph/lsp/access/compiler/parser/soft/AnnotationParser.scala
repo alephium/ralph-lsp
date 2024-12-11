@@ -32,16 +32,18 @@ private object AnnotationParser {
         identifier ~
         spaceOrFail.? ~
         TupleParser.parseOrFail.? ~
+        spaceOrFail.? ~
         Index
     } map {
-      case (from, at, preIdentifierSpace, identifier, postIdentifierSpace, tuple, to) =>
+      case (from, at, preIdentifierSpace, identifier, postIdentifierSpace, tuple, postTupleSpace, to) =>
         SoftAST.Annotation(
           index = range(from, to),
           at = at,
           preIdentifierSpace = preIdentifierSpace,
           identifier = identifier,
           postIdentifierSpace = postIdentifierSpace,
-          tuple = tuple
+          tuple = tuple,
+          postTupleSpace = postTupleSpace
         )
     }
 
