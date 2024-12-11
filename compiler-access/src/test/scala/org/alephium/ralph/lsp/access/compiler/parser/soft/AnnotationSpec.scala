@@ -48,6 +48,23 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
         )
     }
 
+    "report missing closing parenthesis" in {
+      val annotation =
+        parseAnnotation("@anno(")
+
+      // opening paren is parsed
+      annotation.tuple.value.openParen shouldBe
+        SoftAST.OpenParen(
+          SoftAST.Code(
+            index = indexOf("@anno>>(<<"),
+            text = Token.OpenParen.lexeme
+          )
+        )
+
+      // closing paren is reported as expected
+      annotation.tuple.value.closeParen shouldBe SoftAST.CloseParenExpected(indexOf("@anno(>><<"))
+    }
+
     "reject reserved keyword as annotation identifier" in {
       val body =
         // `fn` is a reserved keyword and cannot be used as an annotation identifier.
