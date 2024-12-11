@@ -17,56 +17,45 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse.{P, Parsed}
-import org.alephium.ralph.lsp.access.compiler.message.error.FastParseError
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.error.CompilerError
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.scalatest.matchers.should.Matchers._
 
 object TestParser {
 
   def parseSoft(code: String): SoftAST.BlockBody =
-    runParser(SoftParser.parse(_))(code)
+    runSoftParser(SoftParser.parse(_))(code)
 
   def parseTemplate(code: String): SoftAST.Template =
-    runParser(TemplateParser.parseOrFail(_))(code)
+    runSoftParser(TemplateParser.parseOrFail(_))(code)
 
   def parseFunction(code: String): SoftAST.Function =
-    runParser(FunctionParser.parseOrFail(_))(code)
+    runSoftParser(FunctionParser.parseOrFail(_))(code)
 
   def parseTuple(code: String): SoftAST.Tuple =
-    runParser(TupleParser.parse(_))(code)
+    runSoftParser(TupleParser.parse(_))(code)
 
   def parseBlockClause(mandatory: Boolean)(code: String): SoftAST.BlockClause =
-    runParser(BlockParser.clause(mandatory)(_))(code)
+    runSoftParser(BlockParser.clause(mandatory)(_))(code)
 
   def parseBlockBody(code: String): SoftAST.BlockBody =
-    runParser(BlockParser.body(_))(code)
+    runSoftParser(BlockParser.body(_))(code)
 
   def parseComment(code: String): SoftAST.Comments =
-    runParser(CommentParser.parseOrFail(_))(code)
+    runSoftParser(CommentParser.parseOrFail(_))(code)
 
   def parseType(code: String): SoftAST.TypeAST =
-    runParser(TypeParser.parse(_))(code)
+    runSoftParser(TypeParser.parse(_))(code)
 
-  private def runParser[T <: SoftAST](parser: P[_] => P[T])(code: String): T = {
-    // invoke .get to ensure that the parser should NEVER fail
-    val result =
-      fastparse.parse(code, parser) match {
-        case Parsed.Success(ast, _) =>
-          Right(ast)
+  def parseReservedToken(code: String): Token.Reserved =
+    runAnyParser(TokenParser.Reserved(_))(code)
 
-        case failure: Parsed.Failure =>
-          Left(FastParseError(failure))
-      }
+  def parseReservedTokenOrError(code: String): Either[Parsed.Failure, Token.Reserved] =
+    runAnyParserOrError(TokenParser.Reserved(_))(code)
 
+  private def runSoftParser[T <: SoftAST](parser: P[_] => P[T])(code: String): T = {
     val ast =
-      result match {
-        case Left(error) =>
-          // Print a formatted error so it's easier to debug.
-          fail(error.error.toFormatter().format(Some(Console.RED)))
-
-        case Right(ast) =>
-          ast
-      }
+      runAnyParser(parser)(code)
 
     val astToCode =
       ast.toCode()
@@ -87,5 +76,29 @@ object TestParser {
 
     ast
   }
+
+  private def runAnyParser[T](parser: P[_] => P[T])(code: String): T = {
+    val result: Either[Parsed.Failure, T] =
+      runAnyParserOrError(parser)(code)
+
+    // invoke .get to ensure that the parser should NEVER fail
+    result match {
+      case Left(error) =>
+        // Print a formatted error so it's easier to debug.
+        fail(CompilerError.FastParseError(error).toFormatter().format(Some(Console.RED)))
+
+      case Right(ast) =>
+        ast
+    }
+  }
+
+  private def runAnyParserOrError[T](parser: P[_] => P[T])(code: String): Either[Parsed.Failure, T] =
+    fastparse.parse(code, parser) match {
+      case Parsed.Success(ast, _) =>
+        Right(ast)
+
+      case failure: Parsed.Failure =>
+        Left(failure)
+    }
 
 }
