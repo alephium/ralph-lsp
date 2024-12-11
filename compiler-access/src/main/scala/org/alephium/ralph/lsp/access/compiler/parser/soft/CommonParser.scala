@@ -87,6 +87,8 @@ private object CommonParser {
    *    fn let() -> ()
    * }}}
    *
+   * TODO: Handle cases such as `fn letter() -> ()`
+   *
    * @return A successfully parsed identifier instance [[SoftAST.Identifier]] or a parser error.
    */
   def identifierOrFail[Unknown: P]: P[SoftAST.Identifier] =
