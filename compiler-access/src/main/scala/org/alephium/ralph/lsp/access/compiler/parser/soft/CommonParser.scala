@@ -81,6 +81,7 @@ private object CommonParser {
     P {
       Index ~
         CommentParser.parseOrFail.? ~
+        !TokenParser.Reserved ~
         toCodeOrFail(isLetterDigitOrUnderscore.!) ~
         Index
     } map {

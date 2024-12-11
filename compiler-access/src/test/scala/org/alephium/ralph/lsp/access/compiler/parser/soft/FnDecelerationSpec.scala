@@ -135,27 +135,23 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
         }
 
-      val (functions, identifiers) =
+      val functions =
         root
           .toNode()
           .walkDown
           .map(_.data)
           .collect {
             case function: SoftAST.Function =>
-              Left(function)
-
-            case identifier: SoftAST.Identifier if identifier.code.text == "fn" =>
-              Right(identifier)
+              function
           }
           .toList
-          .partitionMap(identity)
+
+      functions should have size 2
 
       /**
-       * Test function
+       * Test first function
        */
-      functions should have size 1
-      val function = functions.head
-      function.signature.fnName shouldBe
+      functions.head.signature.fnName shouldBe
         SoftAST.Identifier(
           SoftAST.Code(
             index = indexOf("fn >>function<<"),
@@ -164,11 +160,10 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
         )
 
       /**
-       * Test Identifiers
+       * Test second function
        */
-      identifiers should have size 1
-      identifiers.head shouldBe
-        SoftAST.Identifier(
+      functions.last.fn shouldBe
+        SoftAST.Fn(
           SoftAST.Code(
             index = indexOf {
               """fn function(
@@ -176,9 +171,20 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
                 |}
                 |""".stripMargin
             },
-            text = "fn"
+            text = Token.Fn.lexeme
           )
         )
+
+      functions.last.signature.fnName shouldBe
+        SoftAST.IdentifierExpected(
+          indexOf {
+            """fn function(
+              |  fn >><<
+              |}
+              |""".stripMargin
+          }
+        )
+
     }
   }
 
