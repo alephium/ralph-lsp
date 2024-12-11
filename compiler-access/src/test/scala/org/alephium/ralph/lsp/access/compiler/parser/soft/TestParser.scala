@@ -60,18 +60,27 @@ object TestParser {
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,
-      body = parseSoft(code)
+      ast = parseSoft(code)
     )
 
   def findAnnotation(
       identifier: String,
-      body: SoftAST.BlockBody): Option[SoftAST.Annotation] =
-    body
+      ast: SoftAST): Option[SoftAST.Annotation] =
+    ast
       .toNode()
       .walkDown
       .collectFirst {
         case Node(annotation @ SoftAST.Annotation(_, _, _, id: SoftAST.Identifier, _, _, _), _) if id.code.text == identifier =>
           annotation
+      }
+
+  def findFirstComment(body: SoftAST): Option[SoftAST.Comments] =
+    body
+      .toNode()
+      .walkDown
+      .collectFirst {
+        case Node(comments @ SoftAST.Comments(_, _, _, _), _) =>
+          comments
       }
 
   private def runSoftParser[T <: SoftAST](parser: P[_] => P[T])(code: String): T = {

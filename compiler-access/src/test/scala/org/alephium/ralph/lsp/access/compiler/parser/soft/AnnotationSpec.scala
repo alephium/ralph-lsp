@@ -82,7 +82,7 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
     }
   }
 
-  "parsed annotation identifier" in {
+  "parse annotation identifier" in {
     val annotation =
       parseAnnotation("@anno")
 
@@ -108,7 +108,7 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
       )
   }
 
-  "parsed annotation tuples" in {
+  "parse annotation tuples" in {
     val annotation =
       parseAnnotation("@anno(a, b, c + d)")
 
@@ -131,6 +131,80 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
         postIdentifierSpace = None,
         // No need to test the AST for the Tuple. Simply test that a tuple is defined
         tuple = Some(annotation.tuple.value),
+        postTupleSpace = None
+      )
+  }
+
+  "parse annotation documentation" in {
+    val code =
+      """// documentation
+        |@anno
+        |""".stripMargin
+
+    val annotation =
+      parseAnnotation(code)
+
+    val expectedComment =
+      findFirstComment(annotation).value
+
+    // Test that the Comment tree's code is parsed.
+    // No need to assert the comments AST here.
+    // These test-cases are for annotations.
+    expectedComment.toCode() shouldBe
+      """// documentation
+        |""".stripMargin
+
+    annotation shouldBe
+      SoftAST.Annotation(
+        index = indexOf {
+          """>>// documentation
+            |@anno
+            |<<""".stripMargin
+        },
+        at = SoftAST.At(
+          indexOf {
+            """>>// documentation
+              |@<<anno
+              |""".stripMargin
+          },
+          documentation =
+            // The actual Comments AST is not tested here.
+            // These test-cases are for annotations.
+            // The behaviour of Comments is tests in CommentsSpec
+            Some(expectedComment),
+          code = SoftAST.Code(
+            index = indexOf {
+              """// documentation
+                |>>@<<anno
+                |""".stripMargin
+            },
+            text = Token.At.lexeme
+          )
+        ),
+        preIdentifierSpace = None,
+        identifier = SoftAST.Identifier(
+          SoftAST.Code(
+            index = indexOf {
+              """// documentation
+                |@>>anno<<
+                |""".stripMargin
+            },
+            text = "anno"
+          )
+        ),
+        postIdentifierSpace = Some(
+          SoftAST.Space(
+            SoftAST.Code(
+              index = indexOf {
+                """// documentation
+                  |@anno>>
+                  |<<""".stripMargin
+              },
+              text = Token.Newline.lexeme
+            )
+          )
+        ),
+        tuple = None,
         postTupleSpace = None
       )
   }
