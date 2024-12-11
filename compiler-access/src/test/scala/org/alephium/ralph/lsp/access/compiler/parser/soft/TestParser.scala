@@ -19,6 +19,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse.{P, Parsed}
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
+import org.alephium.ralph.lsp.utils.Node
 import org.scalatest.matchers.should.Matchers._
 
 object TestParser {
@@ -55,6 +56,23 @@ object TestParser {
 
   def parseReservedTokenOrError(code: String): Either[Parsed.Failure, Token.Reserved] =
     runAnyParserOrError(TokenParser.Reserved(_))(code)
+
+  def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
+    findAnnotation(
+      identifier = identifier,
+      body = parseSoft(code)
+    )
+
+  def findAnnotation(
+      identifier: String,
+      body: SoftAST.BlockBody): Option[SoftAST.Annotation] =
+    body
+      .toNode()
+      .walkDown
+      .collectFirst {
+        case Node(annotation @ SoftAST.Annotation(_, _, _, id: SoftAST.Identifier, _, _, _), _) if id.code.text == identifier =>
+          annotation
+      }
 
   private def runSoftParser[T <: SoftAST](parser: P[_] => P[T])(code: String): T = {
     val ast =

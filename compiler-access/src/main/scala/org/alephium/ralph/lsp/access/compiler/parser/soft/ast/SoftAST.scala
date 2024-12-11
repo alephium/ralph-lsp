@@ -512,7 +512,7 @@ object SoftAST {
 
   case class Function(
       index: SourceIndex,
-      annotation: Option[Annotation],
+      annotations: Seq[Annotation],
       postAnnotationSpace: Option[Space],
       pub: Option[AccessModifier],
       fn: Fn,

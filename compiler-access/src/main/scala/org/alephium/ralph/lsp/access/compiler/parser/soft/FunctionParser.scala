@@ -24,10 +24,16 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
 private object FunctionParser {
 
+  /**
+   * Parses a function.
+   *
+   * @return A parsed [[SoftAST.Function]] containing all function information,
+   *         such as its documentation, name, parameters, return type and block expressions.
+   */
   def parseOrFail[Unknown: P]: P[SoftAST.Function] =
     P {
       Index ~
-        AnnotationParser.parseOrFail.? ~
+        AnnotationParser.parseOrFail.rep ~
         spaceOrFail.? ~
         AccessModifierParser.parseOrFail.? ~
         TokenParser.FnOrFail ~
@@ -40,7 +46,7 @@ private object FunctionParser {
       case (from, annotation, postAnnotationSpace, pub, fnDeceleration, headSpace, signature, tailSpace, block, to) =>
         SoftAST.Function(
           index = range(from, to),
-          annotation = annotation,
+          annotations = annotation,
           postAnnotationSpace = postAnnotationSpace,
           pub = pub,
           fn = fnDeceleration,
@@ -51,6 +57,12 @@ private object FunctionParser {
         )
     }
 
+  /**
+   * Parses a function's signature.
+   *
+   * @return A parsed [[SoftAST.FunctionSignature]] containing the details of the function signature,
+   *         such as its name, parameters and return type.
+   */
   private def signature[Unknown: P]: P[SoftAST.FunctionSignature] =
     P(Index ~ identifier ~ spaceOrFail.? ~ ParameterParser.parse ~ spaceOrFail.? ~ returnSignature ~ Index) map {
       case (from, fnName, headSpace, params, tailSpace, returns, to) =>
@@ -64,6 +76,12 @@ private object FunctionParser {
         )
     }
 
+  /**
+   * Parses a function's return type.
+   *
+   * @return The parsed [[SoftAST.FunctionReturnAST]], either containing the return
+   *         type or an error indicating that the return type is expected.
+   */
   private def returnSignature[Unknown: P]: P[SoftAST.FunctionReturnAST] =
     P(Index ~ (TokenParser.ForwardArrow ~ spaceOrFail.? ~ TypeParser.parse).? ~ Index) map {
       case (from, Some((forwardArrow, space, tpe)), to) =>
