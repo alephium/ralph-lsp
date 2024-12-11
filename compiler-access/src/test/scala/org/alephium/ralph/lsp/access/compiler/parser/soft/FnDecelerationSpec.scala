@@ -179,8 +179,8 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
         SoftAST.IdentifierExpected(
           indexOf {
             """fn function(
-              |  fn >><<
-              |}
+              |  fn
+              |>><<}
               |""".stripMargin
           }
         )
