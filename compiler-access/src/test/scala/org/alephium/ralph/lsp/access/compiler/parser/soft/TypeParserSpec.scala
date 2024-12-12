@@ -2,6 +2,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -16,11 +17,9 @@ class TypeParserSpec extends AnyWordSpec with Matchers {
 
   "type is provided" in {
     parseType("one") shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf(">>one<<"),
-          text = "one"
-        )
+      Identifier(
+        index = indexOf(">>one<<"),
+        text = "one"
       )
   }
 

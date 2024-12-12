@@ -18,6 +18,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.alephium.ralph.lsp.utils.Node
 import org.scalatest.matchers.should.Matchers
@@ -34,12 +35,7 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
       annotation shouldBe
         SoftAST.Annotation(
           index = indexOf(">>@<<"),
-          at = SoftAST.At(
-            SoftAST.Code(
-              index = indexOf(">>@<<"),
-              text = Token.At.lexeme
-            )
-          ),
+          at = At(indexOf(">>@<<")),
           preIdentifierSpace = None,
           identifier = SoftAST.IdentifierExpected(indexOf("@>><<")),
           postIdentifierSpace = None,
@@ -53,14 +49,7 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
         parseAnnotation("@anno(")
 
       // opening paren is parsed
-      annotation.tuple.value.openParen shouldBe
-        SoftAST.OpenParen(
-          SoftAST.Code(
-            index = indexOf("@anno>>(<<"),
-            text = Token.OpenParen.lexeme
-          )
-        )
-
+      annotation.tuple.value.openParen shouldBe OpenParen(indexOf("@anno>>(<<"))
       // closing paren is reported as expected
       annotation.tuple.value.closeParen shouldBe SoftAST.CloseParenExpected(indexOf("@anno(>><<"))
     }
@@ -84,12 +73,7 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
       annotation shouldBe
         SoftAST.Annotation(
           index = indexOf(">>@<<fn function()"),
-          at = SoftAST.At(
-            SoftAST.Code(
-              index = indexOf(">>@<<fn function()"),
-              text = Token.At.lexeme
-            )
-          ),
+          at = At(indexOf(">>@<<fn function()")),
           preIdentifierSpace = None,
           identifier = SoftAST.IdentifierExpected(indexOf("@>><<fn function()")),
           postIdentifierSpace = None,
@@ -106,18 +90,11 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
     annotation shouldBe
       SoftAST.Annotation(
         index = indexOf(">>@anno<<"),
-        at = SoftAST.At(
-          SoftAST.Code(
-            index = indexOf(">>@<<anno"),
-            text = Token.At.lexeme
-          )
-        ),
+        at = At(indexOf(">>@<<anno")),
         preIdentifierSpace = None,
-        identifier = SoftAST.Identifier(
-          SoftAST.Code(
-            index = indexOf("@>>anno<<"),
-            text = "anno"
-          )
+        identifier = Identifier(
+          index = indexOf("@>>anno<<"),
+          text = "anno"
         ),
         postIdentifierSpace = None,
         tuple = None,
@@ -132,18 +109,11 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
     annotation shouldBe
       SoftAST.Annotation(
         index = indexOf(">>@anno(a, b, c + d)<<"),
-        at = SoftAST.At(
-          SoftAST.Code(
-            index = indexOf(">>@<<anno(a, b, c + d)"),
-            text = Token.At.lexeme
-          )
-        ),
+        at = At(indexOf(">>@<<anno(a, b, c + d)")),
         preIdentifierSpace = None,
-        identifier = SoftAST.Identifier(
-          SoftAST.Code(
-            index = indexOf("@>>anno<<(a, b, c + d)"),
-            text = "anno"
-          )
+        identifier = Identifier(
+          index = indexOf("@>>anno<<(a, b, c + d)"),
+          text = "anno"
         ),
         postIdentifierSpace = None,
         // No need to test the AST for the Tuple. Simply test that a tuple is defined
@@ -189,35 +159,33 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
             // These test-cases are for annotations.
             // The behaviour of Comments is tests in CommentsSpec
             Some(expectedComment),
-          code = SoftAST.Code(
+          code = Code(
             index = indexOf {
               """// documentation
                 |>>@<<anno
                 |""".stripMargin
             },
-            text = Token.At.lexeme
+            token = Token.At
           )
         ),
         preIdentifierSpace = None,
-        identifier = SoftAST.Identifier(
-          SoftAST.Code(
-            index = indexOf {
-              """// documentation
-                |@>>anno<<
-                |""".stripMargin
-            },
-            text = "anno"
-          )
+        identifier = Identifier(
+          index = indexOf {
+            """// documentation
+              |@>>anno<<
+              |""".stripMargin
+          },
+          text = "anno"
         ),
         postIdentifierSpace = Some(
           SoftAST.Space(
-            SoftAST.Code(
+            Code(
               index = indexOf {
                 """// documentation
                   |@anno>>
                   |<<""".stripMargin
               },
-              text = Token.Newline.lexeme
+              token = Token.Newline
             )
           )
         ),

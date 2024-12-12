@@ -17,7 +17,8 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -29,32 +30,16 @@ class TupleSpec extends AnyWordSpec with Matchers {
     val tuple =
       parseTuple(")")
 
-    tuple.openParen shouldBe
-      SoftAST.OpenParenExpected(indexOf(">><<)"))
-
-    tuple.closeParen shouldBe
-      SoftAST.CloseParen(
-        SoftAST.Code(
-          index = indexOf(">>)<<"),
-          text = Token.CloseParen.lexeme
-        )
-      )
+    tuple.openParen shouldBe SoftAST.OpenParenExpected(indexOf(">><<)"))
+    tuple.closeParen shouldBe CloseParen(indexOf(">>)<<"))
   }
 
   "missing closing paren" in {
     val tuple =
       parseTuple("(")
 
-    tuple.openParen shouldBe
-      SoftAST.OpenParen(
-        SoftAST.Code(
-          index = indexOf(">>(<<"),
-          text = Token.OpenParen.lexeme
-        )
-      )
-
-    tuple.closeParen shouldBe
-      SoftAST.CloseParenExpected(indexOf("(>><<"))
+    tuple.openParen shouldBe OpenParen(indexOf(">>(<<"))
+    tuple.closeParen shouldBe SoftAST.CloseParenExpected(indexOf("(>><<"))
   }
 
   "empty tuple" when {
@@ -65,22 +50,12 @@ class TupleSpec extends AnyWordSpec with Matchers {
       val expected =
         SoftAST.Tuple(
           index = indexOf(">>()<<"),
-          openParen = SoftAST.OpenParen(
-            SoftAST.Code(
-              index = indexOf(">>(<<)"),
-              text = Token.OpenParen.lexeme
-            )
-          ),
+          openParen = OpenParen(indexOf(">>(<<)")),
           preHeadExpressionSpace = None,
           headExpression = None,
           postHeadExpressionSpace = None,
           tailExpressions = Seq.empty,
-          closeParen = SoftAST.CloseParen(
-            SoftAST.Code(
-              index = indexOf("(>>)<<)"),
-              text = Token.CloseParen.lexeme
-            )
-          )
+          closeParen = CloseParen(indexOf("(>>)<<)"))
         )
 
       tuple shouldBe expected
@@ -93,29 +68,12 @@ class TupleSpec extends AnyWordSpec with Matchers {
       val expected =
         SoftAST.Tuple(
           index = indexOf(">>( )<<"),
-          openParen = SoftAST.OpenParen(
-            SoftAST.Code(
-              index = indexOf(">>(<< )"),
-              text = Token.OpenParen.lexeme
-            )
-          ),
-          preHeadExpressionSpace = Some(
-            SoftAST.Space(
-              SoftAST.Code(
-                index = indexOf("(>> <<)"),
-                text = " "
-              )
-            )
-          ),
+          openParen = OpenParen(indexOf(">>(<< )")),
+          preHeadExpressionSpace = Some(SpaceOne(indexOf("(>> <<)"))),
           headExpression = None,
           postHeadExpressionSpace = None,
           tailExpressions = Seq.empty,
-          closeParen = SoftAST.CloseParen(
-            SoftAST.Code(
-              index = indexOf("( >>)<<)"),
-              text = Token.CloseParen.lexeme
-            )
-          )
+          closeParen = CloseParen(indexOf("( >>)<<)"))
         )
 
       tuple shouldBe expected
@@ -132,20 +90,12 @@ class TupleSpec extends AnyWordSpec with Matchers {
     val tuple =
       body.parts.head.part.asInstanceOf[SoftAST.Tuple]
 
-    tuple.openParen shouldBe
-      SoftAST.OpenParen(
-        SoftAST.Code(
-          index = indexOf(">>(<<aaa typename"),
-          text = Token.OpenParen.lexeme
-        )
-      )
+    tuple.openParen shouldBe OpenParen(indexOf(">>(<<aaa typename"))
 
     tuple.headExpression.value.asInstanceOf[SoftAST.Identifier] shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("(>>aaa<< typename"),
-          text = "aaa"
-        )
+      Identifier(
+        index = indexOf("(>>aaa<< typename"),
+        text = "aaa"
       )
 
     tuple.closeParen shouldBe SoftAST.CloseParenExpected(indexOf("(aaa >><<typename"))
@@ -157,67 +107,37 @@ class TupleSpec extends AnyWordSpec with Matchers {
       body.parts.last.part.asInstanceOf[SoftAST.Identifier]
 
     identifier shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("(aaa >>typename<<"),
-          text = "typename"
-        )
+      Identifier(
+        index = indexOf("(aaa >>typename<<"),
+        text = "typename"
       )
   }
 
   "valid type assignment expression exists" in {
     val tuple = parseTuple("(aaa: typename)")
 
-    tuple.openParen shouldBe
-      SoftAST.OpenParen(
-        SoftAST.Code(
-          index = indexOf(">>(<<aaa: typename"),
-          text = Token.OpenParen.lexeme
-        )
-      )
+    tuple.openParen shouldBe OpenParen(indexOf(">>(<<aaa: typename"))
 
     val headExpression =
       tuple.headExpression.value.asInstanceOf[SoftAST.TypeAssignment]
 
     headExpression.name shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("(>>aaa<<: typename"),
-          text = "aaa"
-        )
+      Identifier(
+        index = indexOf("(>>aaa<<: typename"),
+        text = "aaa"
       )
 
-    headExpression.colon shouldBe
-      SoftAST.Colon(
-        SoftAST.Code(
-          index = indexOf("(aaa>>:<< typename"),
-          text = Token.Colon.lexeme
-        )
-      )
+    headExpression.colon shouldBe Colon(indexOf("(aaa>>:<< typename"))
 
-    headExpression.postColonSpace.value shouldBe
-      SoftAST.Space(
-        SoftAST.Code(
-          index = indexOf("(aaa:>> <<typename"),
-          text = " "
-        )
-      )
+    headExpression.postColonSpace.value shouldBe SpaceOne(indexOf("(aaa:>> <<typename"))
 
     headExpression.tpe shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("(aaa: >>typename<<"),
-          text = "typename"
-        )
+      Identifier(
+        index = indexOf("(aaa: >>typename<<"),
+        text = "typename"
       )
 
-    tuple.closeParen shouldBe
-      SoftAST.CloseParen(
-        SoftAST.Code(
-          index = indexOf("(aaa: typename>>)<<"),
-          text = Token.CloseParen.lexeme
-        )
-      )
+    tuple.closeParen shouldBe CloseParen(indexOf("(aaa: typename>>)<<"))
   }
 
   "valid second type assignment expression exists" in {
@@ -226,39 +146,23 @@ class TupleSpec extends AnyWordSpec with Matchers {
     tuple.tailExpressions should have size 1
     val bbb = tuple.tailExpressions.head
 
-    bbb.comma shouldBe
-      SoftAST.Comma(
-        SoftAST.Code(
-          indexOf("(aaa: typename>>,<< bbb: type2)"),
-          Token.Comma.lexeme
-        )
-      )
+    bbb.comma shouldBe Comma(indexOf("(aaa: typename>>,<< bbb: type2)"))
 
-    bbb.preExpressionSpace.value shouldBe
-      SoftAST.Space(
-        SoftAST.Code(
-          index = indexOf("(aaa: typename,>> <<bbb: type2)"),
-          text = " "
-        )
-      )
+    bbb.preExpressionSpace.value shouldBe SpaceOne(indexOf("(aaa: typename,>> <<bbb: type2)"))
 
     val bbbTypeAssignment =
       bbb.expression.asInstanceOf[SoftAST.TypeAssignment]
 
     bbbTypeAssignment.name shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("(aaa: typename, >>bbb<<: type2)"),
-          text = "bbb"
-        )
+      Identifier(
+        index = indexOf("(aaa: typename, >>bbb<<: type2)"),
+        text = "bbb"
       )
 
     bbbTypeAssignment.tpe shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("(aaa: typename, bbb: >>type2<<)"),
-          text = "type2"
-        )
+      Identifier(
+        index = indexOf("(aaa: typename, bbb: >>type2<<)"),
+        text = "type2"
       )
 
     bbb.postExpressionSpace shouldBe empty
@@ -270,30 +174,16 @@ class TupleSpec extends AnyWordSpec with Matchers {
     tuple.tailExpressions should have size 1
     val tupleTail = tuple.tailExpressions.head
 
-    tupleTail.comma shouldBe
-      SoftAST.Comma(
-        SoftAST.Code(
-          index = indexOf("(aaa: typename>>,<< bbb: (tuple1, tuple2))"),
-          text = Token.Comma.lexeme
-        )
-      )
+    tupleTail.comma shouldBe Comma(indexOf("(aaa: typename>>,<< bbb: (tuple1, tuple2))"))
 
-    tupleTail.preExpressionSpace.value shouldBe
-      SoftAST.Space(
-        SoftAST.Code(
-          index = indexOf("(aaa: typename,>> <<bbb: (tuple1, tuple2))"),
-          text = " "
-        )
-      )
+    tupleTail.preExpressionSpace.value shouldBe SpaceOne(indexOf("(aaa: typename,>> <<bbb: (tuple1, tuple2))"))
 
     val bbb = tupleTail.expression.asInstanceOf[SoftAST.TypeAssignment]
 
     bbb.name shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("(aaa: typename, >>bbb<<: (tuple1, tuple2))"),
-          text = "bbb"
-        )
+      Identifier(
+        index = indexOf("(aaa: typename, >>bbb<<: (tuple1, tuple2))"),
+        text = "bbb"
       )
 
     // A quick text to check that the tuple is actually a tuple

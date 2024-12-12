@@ -17,7 +17,8 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -43,31 +44,25 @@ class FnAnnotationSpec extends AnyWordSpec with Matchers {
     function.annotations should have size 1
     function.annotations.head shouldBe
       SoftAST.Annotation(
-        index = indexOf {
+        indexOf {
           """>>@
             |<<fn function() -> ()
             |""".stripMargin
         },
-        at = SoftAST.At(
-          SoftAST.Code(
-            index = indexOf {
-              """>>@<<
-                |fn function() -> ()
-                |""".stripMargin
-            },
-            text = Token.At.lexeme
-          )
+        at = At(
+          indexOf {
+            """>>@<<
+              |fn function() -> ()
+              |""".stripMargin
+          }
         ),
         preIdentifierSpace = Some(
-          SoftAST.Space(
-            SoftAST.Code(
-              index = indexOf {
-                """@>>
-                  |<<fn function() -> ()
-                  |""".stripMargin
-              },
-              text = Token.Newline.lexeme
-            )
+          SpaceNewline(
+            indexOf {
+              """@>>
+                |<<fn function() -> ()
+                |""".stripMargin
+            }
           )
         ),
         identifier = SoftAST.IdentifierExpected(
@@ -94,42 +89,34 @@ class FnAnnotationSpec extends AnyWordSpec with Matchers {
 
       val expected =
         SoftAST.Annotation(
-          index = indexOf {
+          indexOf {
             """>>@annotation
               |<<fn function() -> ()
               |""".stripMargin
           },
-          at = SoftAST.At(
-            SoftAST.Code(
-              indexOf {
-                """>>@<<annotation
-                  |fn function() -> ()
-                  |""".stripMargin
-              },
-              Token.At.lexeme
-            )
+          at = At(
+            indexOf {
+              """>>@<<annotation
+                |fn function() -> ()
+                |""".stripMargin
+            }
           ),
           preIdentifierSpace = None,
-          identifier = SoftAST.Identifier(
-            SoftAST.Code(
-              indexOf {
-                """@>>annotation<<
-                  |fn function() -> ()
-                  |""".stripMargin
-              },
-              "annotation"
-            )
+          identifier = Identifier(
+            index = indexOf {
+              """@>>annotation<<
+                |fn function() -> ()
+                |""".stripMargin
+            },
+            text = "annotation"
           ),
           postIdentifierSpace = Some(
-            SoftAST.Space(
-              code = SoftAST.Code(
-                indexOf {
-                  """@annotation>>
-                    |<<fn function() -> ()
-                    |""".stripMargin
-                },
-                Token.Newline.lexeme
-              )
+            SpaceNewline(
+              indexOf {
+                """@annotation>>
+                  |<<fn function() -> ()
+                  |""".stripMargin
+              }
             )
           ),
           tuple = None,
@@ -154,148 +141,120 @@ class FnAnnotationSpec extends AnyWordSpec with Matchers {
 
       function.annotations.head shouldBe
         SoftAST.Annotation(
-          index = indexOf {
+          indexOf {
             """>>@ annotation (a, b + c, c = 4)
               |<<@ last ()
               |fn function() -> ()
               |""".stripMargin
           },
-          at = SoftAST.At(
-            SoftAST.Code(
-              index = indexOf {
-                """>>@<< annotation (a, b + c, c = 4)
-                  |@ last ()
-                  |fn function() -> ()
-                  |""".stripMargin
-              },
-              text = Token.At.lexeme
-            )
+          at = At(
+            indexOf {
+              """>>@<< annotation (a, b + c, c = 4)
+                |@ last ()
+                |fn function() -> ()
+                |""".stripMargin
+            }
           ),
           preIdentifierSpace = Some(
-            SoftAST.Space(
-              SoftAST.Code(
-                index = indexOf {
-                  """@>> <<annotation (a, b + c, c = 4)
-                    |@ last ()
-                    |fn function() -> ()
-                    |""".stripMargin
-                },
-                text = " "
-              )
-            )
-          ),
-          identifier = SoftAST.Identifier(
-            SoftAST.Code(
-              index = indexOf {
-                """@ >>annotation<< (a, b + c, c = 4)
+            SpaceOne(
+              indexOf {
+                """@>> <<annotation (a, b + c, c = 4)
                   |@ last ()
                   |fn function() -> ()
                   |""".stripMargin
-              },
-              text = "annotation"
+              }
             )
           ),
+          identifier = Identifier(
+            index = indexOf {
+              """@ >>annotation<< (a, b + c, c = 4)
+                |@ last ()
+                |fn function() -> ()
+                |""".stripMargin
+            },
+            text = "annotation"
+          ),
           postIdentifierSpace = Some(
-            SoftAST.Space(
-              code = SoftAST.Code(
-                index = indexOf {
-                  """@ annotation>> <<(a, b + c, c = 4)
-                    |@ last ()
-                    |fn function() -> ()
-                    |""".stripMargin
-                },
-                text = " "
-              )
+            SpaceOne(
+              index = indexOf {
+                """@ annotation>> <<(a, b + c, c = 4)
+                  |@ last ()
+                  |fn function() -> ()
+                  |""".stripMargin
+              }
             )
           ),
           tuple =
             // This test case is not targeting Tuples AST, simply parse it.
             Some(findAnnotation("annotation")(code).flatMap(_.tuple).value),
           postTupleSpace = Some(
-            SoftAST.Space(
-              SoftAST.Code(
-                index = indexOf {
-                  """@ annotation (a, b + c, c = 4)>>
-                    |<<@ last ()
-                    |fn function() -> ()
-                    |""".stripMargin
-                },
-                text = Token.Newline.lexeme
-              )
+            SpaceNewline(
+              index = indexOf {
+                """@ annotation (a, b + c, c = 4)>>
+                  |<<@ last ()
+                  |fn function() -> ()
+                  |""".stripMargin
+              }
             )
           )
         )
 
       function.annotations.last shouldBe
         SoftAST.Annotation(
-          index = indexOf {
+          indexOf {
             """@ annotation (a, b + c, c = 4)
               |>>@ last ()
               |<<fn function() -> ()
               |""".stripMargin
           },
-          at = SoftAST.At(
-            SoftAST.Code(
-              index = indexOf {
-                """@ annotation (a, b + c, c = 4)
-                  |>>@<< last ()
-                  |fn function() -> ()
-                  |""".stripMargin
-              },
-              text = Token.At.lexeme
-            )
+          at = At(
+            indexOf {
+              """@ annotation (a, b + c, c = 4)
+                |>>@<< last ()
+                |fn function() -> ()
+                |""".stripMargin
+            }
           ),
           preIdentifierSpace = Some(
-            SoftAST.Space(
-              SoftAST.Code(
-                index = indexOf {
-                  """@ annotation (a, b + c, c = 4)
-                    |@>> <<last ()
-                    |fn function() -> ()
-                    |""".stripMargin
-                },
-                text = " "
-              )
-            )
-          ),
-          identifier = SoftAST.Identifier(
-            SoftAST.Code(
+            SpaceOne(
               index = indexOf {
                 """@ annotation (a, b + c, c = 4)
-                  |@ >>last<< ()
+                  |@>> <<last ()
                   |fn function() -> ()
                   |""".stripMargin
-              },
-              text = "last"
+              }
             )
           ),
+          identifier = Identifier(
+            index = indexOf {
+              """@ annotation (a, b + c, c = 4)
+                |@ >>last<< ()
+                |fn function() -> ()
+                |""".stripMargin
+            },
+            text = "last"
+          ),
           postIdentifierSpace = Some(
-            SoftAST.Space(
-              code = SoftAST.Code(
-                index = indexOf {
-                  """@ annotation (a, b + c, c = 4)
-                    |@ last>> <<()
-                    |fn function() -> ()
-                    |""".stripMargin
-                },
-                text = " "
-              )
+            SpaceOne(
+              index = indexOf {
+                """@ annotation (a, b + c, c = 4)
+                  |@ last>> <<()
+                  |fn function() -> ()
+                  |""".stripMargin
+              }
             )
           ),
           tuple =
             // This test case is not targeting Tuples AST, simply parse it.
             Some(findAnnotation("last")(code).flatMap(_.tuple).value),
           postTupleSpace = Some(
-            SoftAST.Space(
-              SoftAST.Code(
-                index = indexOf {
-                  """@ annotation (a, b + c, c = 4)
-                    |@ last ()>>
-                    |<<fn function() -> ()
-                    |""".stripMargin
-                },
-                text = Token.Newline.lexeme
-              )
+            SpaceNewline(
+              indexOf {
+                """@ annotation (a, b + c, c = 4)
+                  |@ last ()>>
+                  |<<fn function() -> ()
+                  |""".stripMargin
+              }
             )
           )
         )

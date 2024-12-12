@@ -1,7 +1,8 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser.parseComment
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -11,8 +12,8 @@ class CommentsSpec extends AnyWordSpec with Matchers {
   "text comment exist" in {
     val code =
       """// one
-          |// two
-          |""".stripMargin
+        |// two
+        |""".stripMargin
 
     val comment =
       parseComment(code)
@@ -21,51 +22,42 @@ class CommentsSpec extends AnyWordSpec with Matchers {
       SoftAST.Comment(
         index = indexOf {
           """>>// one
-              |<<// two
-              |""".stripMargin
+            |<<// two
+            |""".stripMargin
         },
-        doubleForwardSlash = SoftAST.DoubleForwardSlash(
-          SoftAST.Code(
-            index = indexOf {
-              """>>//<< one
-                |// two
-                |""".stripMargin
-            },
-            text = Token.DoubleForwardSlash.lexeme
-          )
+        doubleForwardSlash = DoubleForwardSlash(
+          indexOf {
+            """>>//<< one
+              |// two
+              |""".stripMargin
+          }
         ),
         preTextSpace = Some(
-          SoftAST.Space(
-            SoftAST.Code(
-              indexOf {
-                """//>> <<one
-                  |// two
-                  |""".stripMargin
-              },
-              " "
-            )
+          SpaceOne(
+            indexOf {
+              """//>> <<one
+                |// two
+                |""".stripMargin
+            }
           )
         ),
         text = Some(
           SoftAST.Code(
             index = indexOf {
               """// >>one<<
-                  |// two
-                  |""".stripMargin
+                |// two
+                |""".stripMargin
             },
             text = "one"
           )
         ),
         postTextSpace = Some(
-          SoftAST.Space(
-            SoftAST.Code(
-              index = indexOf {
-                """// one>>
-                  |<<// two
-                  |""".stripMargin
-              },
-              text = Token.Newline.lexeme
-            )
+          SpaceNewline(
+            indexOf {
+              """// one>>
+                |<<// two
+                |""".stripMargin
+            }
           )
         )
       )
@@ -77,51 +69,42 @@ class CommentsSpec extends AnyWordSpec with Matchers {
       SoftAST.Comment(
         index = indexOf {
           """// one
-              |>>// two
-              |<<""".stripMargin
+            |>>// two
+            |<<""".stripMargin
         },
-        doubleForwardSlash = SoftAST.DoubleForwardSlash(
-          SoftAST.Code(
-            index = indexOf {
-              """// one
-                |>>//<< two
-                |""".stripMargin
-            },
-            text = Token.DoubleForwardSlash.lexeme
-          )
+        doubleForwardSlash = DoubleForwardSlash(
+          index = indexOf {
+            """// one
+              |>>//<< two
+              |""".stripMargin
+          }
         ),
         preTextSpace = Some(
-          SoftAST.Space(
-            SoftAST.Code(
-              indexOf {
-                """// one
-                  |//>> <<two
-                  |""".stripMargin
-              },
-              text = " "
-            )
+          SpaceOne(
+            indexOf {
+              """// one
+                |//>> <<two
+                |""".stripMargin
+            }
           )
         ),
         text = Some(
           SoftAST.Code(
             index = indexOf {
               """// one
-                  |// >>two<<
-                  |""".stripMargin
+                |// >>two<<
+                |""".stripMargin
             },
             text = "two"
           )
         ),
         postTextSpace = Some(
-          SoftAST.Space(
-            SoftAST.Code(
-              index = indexOf {
-                """// one
-                  |// two>>
-                  |<<""".stripMargin
-              },
-              text = Token.Newline.lexeme
-            )
+          SpaceNewline(
+            index = indexOf {
+              """// one
+                |// two>>
+                |<<""".stripMargin
+            }
           )
         )
       )
@@ -158,20 +141,8 @@ class CommentsSpec extends AnyWordSpec with Matchers {
             comments = Seq(
               SoftAST.Comment(
                 index = indexOf(s">>$code<<"),
-                doubleForwardSlash = SoftAST.DoubleForwardSlash(
-                  SoftAST.Code(
-                    index = indexOf(s">>//<< //"),
-                    text = Token.DoubleForwardSlash.lexeme
-                  )
-                ),
-                preTextSpace = Some(
-                  SoftAST.Space(
-                    SoftAST.Code(
-                      index = indexOf(s"//>> <<//"),
-                      text = " "
-                    )
-                  )
-                ),
+                doubleForwardSlash = DoubleForwardSlash(indexOf(s">>//<< //")),
+                preTextSpace = Some(SpaceOne(indexOf(s"//>> <<//"))),
                 text = Some(
                   SoftAST.Code(
                     index = indexOf(s"// >>//<<"),
@@ -190,7 +161,7 @@ class CommentsSpec extends AnyWordSpec with Matchers {
       "// is on a new line" in {
         val code =
           """//
-              |//""".stripMargin
+            |//""".stripMargin
 
         val comment =
           parseComment(code)
@@ -202,31 +173,25 @@ class CommentsSpec extends AnyWordSpec with Matchers {
             comments = Seq(
               SoftAST.Comment(
                 index = indexOf(s">>$code<<"),
-                doubleForwardSlash = SoftAST.DoubleForwardSlash(
-                  SoftAST.Code(
-                    index = indexOf {
-                      """>>//<<
-                        |//""".stripMargin
-                    },
-                    text = Token.DoubleForwardSlash.lexeme
-                  )
+                doubleForwardSlash = DoubleForwardSlash(
+                  indexOf {
+                    """>>//<<
+                      |//""".stripMargin
+                  }
                 ),
                 preTextSpace = Some(
-                  SoftAST.Space(
-                    SoftAST.Code(
-                      index = indexOf {
-                        """//>>
-                          |<<//""".stripMargin
-                      },
-                      text = Token.Newline.lexeme
-                    )
+                  SpaceNewline(
+                    indexOf {
+                      """//>>
+                        |<<//""".stripMargin
+                    }
                   )
                 ),
                 text = Some(
                   SoftAST.Code(
                     index = indexOf {
                       """//
-                          |>>//<<""".stripMargin
+                        |>>//<<""".stripMargin
                     },
                     text = "//"
                   )
