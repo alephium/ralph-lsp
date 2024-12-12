@@ -103,17 +103,6 @@ object SoftAST {
   abstract class ExpectedErrorAST(element: String)   extends ErrorAST(s"$element expected")
   abstract class TokenExpectedErrorAST(token: Token) extends ExpectedErrorAST(s"'${token.lexeme}'")
 
-  object Fn {
-
-    def apply(code: Code): Fn =
-      Fn(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
-
   case class Fn(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -125,17 +114,6 @@ object SoftAST {
       documentation: Option[Comments],
       code: Code)
     extends TokenDocumentedAST
-
-  object Comma {
-
-    def apply(code: Code): Comma =
-      Comma(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
 
   case class Comma(
       index: SourceIndex,
@@ -186,17 +164,6 @@ object SoftAST {
       code: Code)
     extends TokenDocumentedAST
 
-  object At {
-
-    def apply(code: Code): At =
-      At(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
-
   case class At(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -227,33 +194,11 @@ object SoftAST {
 
   sealed trait TemplateToken extends TokenDocumentedAST
 
-  object Contract {
-
-    def apply(code: Code): Contract =
-      Contract(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
-
   case class Contract(
       index: SourceIndex,
       documentation: Option[Comments],
       code: Code)
     extends TemplateToken
-
-  object TxScript {
-
-    def apply(code: Code): TxScript =
-      TxScript(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
 
   case class TxScript(
       index: SourceIndex,
@@ -283,17 +228,6 @@ object SoftAST {
 
   sealed trait ColonAST extends SoftAST
 
-  object Colon {
-
-    def apply(code: Code): Colon =
-      Colon(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
-
   case class Colon(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -307,17 +241,6 @@ object SoftAST {
        with ColonAST
 
   sealed trait ForwardArrowAST extends SoftAST
-
-  object ForwardArrow {
-
-    def apply(code: Code): ForwardArrow =
-      ForwardArrow(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
 
   case class ForwardArrow(
       index: SourceIndex,
@@ -333,17 +256,6 @@ object SoftAST {
 
   sealed trait OpenParenAST extends SoftAST
 
-  object OpenParen {
-
-    def apply(code: Code): OpenParen =
-      OpenParen(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
-
   case class OpenParen(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -357,17 +269,6 @@ object SoftAST {
        with OpenParenAST
 
   sealed trait CloseParenAST extends SoftAST
-
-  object CloseParen {
-
-    def apply(code: Code): CloseParen =
-      CloseParen(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
 
   case class CloseParen(
       index: SourceIndex,
@@ -383,17 +284,6 @@ object SoftAST {
 
   sealed trait OpenCurlyAST extends SoftAST
 
-  object OpenCurly {
-
-    def apply(code: Code): OpenCurly =
-      OpenCurly(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
-
   case class OpenCurly(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -407,17 +297,6 @@ object SoftAST {
        with OpenCurlyAST
 
   sealed trait CloseCurlyAST extends SoftAST
-
-  object CloseCurly {
-
-    def apply(code: Code): CloseCurly =
-      CloseCurly(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
 
   case class CloseCurly(
       index: SourceIndex,
@@ -570,17 +449,6 @@ object SoftAST {
 
   sealed trait IdentifierAST extends TypeAST with ReferenceCallOrIdentifier
 
-  object Identifier {
-
-    def apply(code: Code): Identifier =
-      Identifier(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
-
   case class Identifier(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -608,17 +476,6 @@ object SoftAST {
       text: Option[Code],
       postTextSpace: Option[Space])
     extends BodyPartAST
-
-  object Unresolved {
-
-    def apply(code: Code): Unresolved =
-      Unresolved(
-        index = code.index,
-        documentation = None,
-        code = code
-      )
-
-  }
 
   case class Unresolved(
       index: SourceIndex,

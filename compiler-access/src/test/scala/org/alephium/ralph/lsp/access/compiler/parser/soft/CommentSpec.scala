@@ -18,6 +18,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -36,12 +37,7 @@ class CommentSpec extends AnyWordSpec with Matchers {
           comments = Seq(
             SoftAST.Comment(
               index = indexOf(">>//<<"),
-              doubleForwardSlash = SoftAST.DoubleForwardSlash(
-                code = SoftAST.Code(
-                  index = indexOf(">>//<<"),
-                  text = "//"
-                )
-              ),
+              doubleForwardSlash = DoubleForwardSlash(indexOf(">>//<<")),
               preTextSpace = None,
               text = None,
               postTextSpace = None
@@ -66,20 +62,8 @@ class CommentSpec extends AnyWordSpec with Matchers {
           comments = Seq(
             SoftAST.Comment(
               index = indexOf(">>// <<"),
-              doubleForwardSlash = SoftAST.DoubleForwardSlash(
-                code = SoftAST.Code(
-                  index = indexOf(">>//<< "),
-                  text = Token.DoubleForwardSlash.lexeme
-                )
-              ),
-              Some(
-                SoftAST.Space(
-                  code = SoftAST.Code(
-                    index = indexOf("//>> <<"),
-                    text = " "
-                  )
-                )
-              ),
+              doubleForwardSlash = DoubleForwardSlash(indexOf(">>//<< ")),
+              preTextSpace = Some(SpaceOne(indexOf("//>> <<"))),
               text = None,
               postTextSpace = None
             )
@@ -106,34 +90,15 @@ class CommentSpec extends AnyWordSpec with Matchers {
           comments = Seq(
             SoftAST.Comment(
               index = indexOf(s">>// my comment $newLine<<"),
-              doubleForwardSlash = SoftAST.DoubleForwardSlash(
-                code = SoftAST.Code(
-                  index = indexOf(s">>//<< my comment $newLine"),
-                  text = "//"
-                )
-              ),
-              preTextSpace = Some(
-                SoftAST.Space(
-                  code = SoftAST.Code(
-                    index = indexOf(s"//>> <<my comment $newLine"),
-                    text = " "
-                  )
-                )
-              ),
+              doubleForwardSlash = DoubleForwardSlash(indexOf(s">>//<< my comment $newLine")),
+              preTextSpace = Some(SpaceOne(indexOf(s"//>> <<my comment $newLine"))),
               text = Some(
                 SoftAST.Code(
                   index = indexOf(s"// >>my comment <<$newLine"),
                   text = "my comment "
                 )
               ),
-              postTextSpace = Some(
-                SoftAST.Space(
-                  code = SoftAST.Code(
-                    index = indexOf(s"// my comment >>$newLine<<"),
-                    text = newLine
-                  )
-                )
-              )
+              postTextSpace = Some(SpaceNewline(indexOf(s"// my comment >>$newLine<<")))
             )
           ),
           postCommentSpace = None
@@ -158,20 +123,8 @@ class CommentSpec extends AnyWordSpec with Matchers {
           comments = Seq(
             SoftAST.Comment(
               index = indexOf(s">>$code<<"),
-              doubleForwardSlash = SoftAST.DoubleForwardSlash(
-                code = SoftAST.Code(
-                  index = indexOf(">>//<< fn function()"),
-                  text = "//"
-                )
-              ),
-              preTextSpace = Some(
-                SoftAST.Space(
-                  code = SoftAST.Code(
-                    index = indexOf("//>> <<fn function()"),
-                    text = " "
-                  )
-                )
-              ),
+              doubleForwardSlash = DoubleForwardSlash(indexOf(">>//<< fn function()")),
+              preTextSpace = Some(SpaceOne(indexOf("//>> <<fn function()"))),
               text = Some(
                 SoftAST.Code(
                   index = indexOf("// >>fn function()<<"),

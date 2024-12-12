@@ -18,6 +18,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -29,11 +30,9 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
       parseFunction("fn function")
 
     function.signature.fnName shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("fn >>function<<"),
-          text = "function"
-        )
+      Identifier(
+        index = indexOf("fn >>function<<"),
+        text = "function"
       )
   }
 
@@ -42,11 +41,9 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
       parseFunction("fn _FnUc_TiOn_")
 
     function.signature.fnName shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("fn >>_FnUc_TiOn_<<"),
-          text = "_FnUc_TiOn_"
-        )
+      Identifier(
+        index = indexOf("fn >>_FnUc_TiOn_<<"),
+        text = "_FnUc_TiOn_"
       )
   }
 
@@ -55,28 +52,22 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
       parseFunction("fn       _FnUc_TiOn_        ")
 
     function.preSignatureSpace shouldBe
-      SoftAST.Space(
-        SoftAST.Code(
-          index = indexOf("fn>>       <<_FnUc_TiOn_        "),
-          text = "       "
-        )
+      Space(
+        index = indexOf("fn>>       <<_FnUc_TiOn_        "),
+        text = "       "
       )
 
     function.signature.fnName shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("fn       >>_FnUc_TiOn_<<        "),
-          text = "_FnUc_TiOn_"
-        )
+      Identifier(
+        index = indexOf("fn       >>_FnUc_TiOn_<<        "),
+        text = "_FnUc_TiOn_"
       )
 
     function.signature.preParamSpace should
       contain(
-        SoftAST.Space(
-          SoftAST.Code(
-            index = indexOf("fn       _FnUc_TiOn_>>        <<"),
-            text = "        "
-          )
+        Space(
+          index = indexOf("fn       _FnUc_TiOn_>>        <<"),
+          text = "        "
         )
       )
   }
@@ -86,11 +77,9 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
       parseFunction("fn abcd efgh ijk")
 
     val expected =
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("fn >>abcd<< efgh ijk"),
-          text = "abcd"
-        )
+      Identifier(
+        index = indexOf("fn >>abcd<< efgh ijk"),
+        text = "abcd"
       )
 
     function.signature.fnName shouldBe expected
@@ -119,11 +108,9 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
     functions should have size 1
     val function = functions.head
     function.signature.fnName shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("fn >>abcd<< *YNKJ *BUPP"),
-          text = "abcd"
-        )
+      Identifier(
+        index = indexOf("fn >>abcd<< *YNKJ *BUPP"),
+        text = "abcd"
       )
 
     /**
@@ -132,19 +119,15 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
     unresolved should have size 2
     // head unresolved
     unresolved.head shouldBe
-      SoftAST.Unresolved(
-        SoftAST.Code(
-          index = indexOf("fn abcd >>*YNKJ<< *BUPP"),
-          text = "*YNKJ"
-        )
+      Unresolved(
+        index = indexOf("fn abcd >>*YNKJ<< *BUPP"),
+        text = "*YNKJ"
       )
     // last unresolved
     unresolved.last shouldBe
-      SoftAST.Unresolved(
-        SoftAST.Code(
-          index = indexOf("fn abcd *YNKJ >>*BUPP<<"),
-          text = "*BUPP"
-        )
+      Unresolved(
+        index = indexOf("fn abcd *YNKJ >>*BUPP<<"),
+        text = "*BUPP"
       )
   }
 
@@ -161,14 +144,12 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
       }
 
     function.signature.fnName shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("""fn
-              |
-              |>>abcd<<
-              |""".stripMargin),
-          text = "abcd"
-        )
+      Identifier(
+        index = indexOf("""fn
+            |
+            |>>abcd<<
+            |""".stripMargin),
+        text = "abcd"
       )
 
   }
@@ -178,11 +159,9 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
       parseFunction("fn abcd(")
 
     function.signature.fnName shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("fn >>abcd<<("),
-          text = "abcd"
-        )
+      Identifier(
+        index = indexOf("fn >>abcd<<("),
+        text = "abcd"
       )
 
     function
@@ -196,11 +175,9 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
       parseFunction("fn abcd)")
 
     function.signature.fnName shouldBe
-      SoftAST.Identifier(
-        SoftAST.Code(
-          index = indexOf("fn >>abcd<<)"),
-          text = "abcd"
-        )
+      Identifier(
+        index = indexOf("fn >>abcd<<)"),
+        text = "abcd"
       )
 
     function
