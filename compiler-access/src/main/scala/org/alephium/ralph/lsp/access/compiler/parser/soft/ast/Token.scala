@@ -18,9 +18,24 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft.ast
 
 import org.alephium.macros.EnumerationMacros
 
-sealed trait Token { self =>
+sealed trait Token extends Ordered[Token] { self =>
 
   def lexeme: String
+
+  /**
+   * Order such that tokens such as:
+   *  - `||` comes before `|`
+   *  - `+=` comes before `+` and `=`
+   */
+  override def compare(that: Token): Int = {
+    val lengthCompare =
+      that.lexeme.length compare this.lexeme.length
+
+    if (lengthCompare == 0)
+      that.lexeme compare this.lexeme
+    else
+      lengthCompare
+  }
 
 }
 
@@ -31,30 +46,31 @@ object Token {
    *
    * These tokens cannot be used as identifier [[SoftAST.Identifier]].
    */
-  sealed trait Reserved extends Token
+  sealed trait Reserved      extends Token
+  sealed trait InfixOperator extends Token
 
   sealed abstract class Operator(override val lexeme: String) extends Token
-  case object Equality                                        extends Operator("==") with Reserved
-  case object GreaterThanOrEqual                              extends Operator(">=") with Reserved
-  case object PlusEquals                                      extends Operator("+=") with Reserved
-  case object MinusEquals                                     extends Operator("-=") with Reserved
-  case object LessThanOrEqual                                 extends Operator("<=") with Reserved
-  case object NotEqual                                        extends Operator("!=") with Reserved
+  case object Equality                                        extends Operator("==") with Reserved with InfixOperator
+  case object GreaterThanOrEqual                              extends Operator(">=") with Reserved with InfixOperator
+  case object PlusEquals                                      extends Operator("+=") with Reserved with InfixOperator
+  case object MinusEquals                                     extends Operator("-=") with Reserved with InfixOperator
+  case object LessThanOrEqual                                 extends Operator("<=") with Reserved with InfixOperator
+  case object NotEqual                                        extends Operator("!=") with Reserved with InfixOperator
   case object ForwardArrow                                    extends Operator("->") with Reserved
-  case object Or                                              extends Operator("||") with Reserved
-  case object And                                             extends Operator("&&") with Reserved
-  case object Minus                                           extends Operator("-") with Reserved
-  case object Plus                                            extends Operator("+") with Reserved
-  case object Asterisk                                        extends Operator("*") with Reserved
-  case object ForwardSlash                                    extends Operator("/") with Reserved
-  case object GreaterThan                                     extends Operator(">") with Reserved
-  case object LessThan                                        extends Operator("<") with Reserved
+  case object Or                                              extends Operator("||") with Reserved with InfixOperator
+  case object And                                             extends Operator("&&") with Reserved with InfixOperator
+  case object Minus                                           extends Operator("-") with Reserved with InfixOperator
+  case object Plus                                            extends Operator("+") with Reserved with InfixOperator
+  case object Asterisk                                        extends Operator("*") with Reserved with InfixOperator
+  case object ForwardSlash                                    extends Operator("/") with Reserved with InfixOperator
+  case object GreaterThan                                     extends Operator(">") with Reserved with InfixOperator
+  case object LessThan                                        extends Operator("<") with Reserved with InfixOperator
   case object Equal                                           extends Operator("=") with Reserved
   case object Exclamation                                     extends Operator("!") with Reserved
-  case object Bar                                             extends Operator("|") with Reserved
-  case object Ampersand                                       extends Operator("&") with Reserved
-  case object Caret                                           extends Operator("^") with Reserved
-  case object Percent                                         extends Operator("%") with Reserved
+  case object Bar                                             extends Operator("|") with Reserved with InfixOperator
+  case object Ampersand                                       extends Operator("&") with Reserved with InfixOperator
+  case object Caret                                           extends Operator("^") with Reserved with InfixOperator
+  case object Percent                                         extends Operator("%") with Reserved with InfixOperator
 
   sealed abstract class Delimiter(override val lexeme: String) extends Token
   case object OpenParen                                        extends Delimiter("(") with Reserved
@@ -125,25 +141,15 @@ object Token {
   case class NumberLiteral(lexeme: String) extends Term
   case class StringLiteral(lexeme: String) extends Term
 
-  /**
-   * Order such that tokens such as:
-   *  - `||` come before `|`
-   *  - `+=` come before `+` and `=`
-   */
-  implicit val reservedDescendingOrdering: Ordering[Reserved] = {
-    case (x: Reserved, y: Reserved) =>
-      val lengthCompare =
-        y.lexeme.length compare x.lexeme.length
-
-      if (lengthCompare == 0)
-        y.lexeme compare x.lexeme
-      else
-        lengthCompare
-  }
-
   val reserved: Array[Reserved] =
     EnumerationMacros
       .sealedInstancesOf[Reserved]
+      .toArray
+      .sorted
+
+  val infix: Array[InfixOperator] =
+    EnumerationMacros
+      .sealedInstancesOf[InfixOperator]
       .toArray
       .sorted
 
