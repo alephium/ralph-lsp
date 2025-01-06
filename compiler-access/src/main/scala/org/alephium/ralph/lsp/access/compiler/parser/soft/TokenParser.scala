@@ -20,7 +20,8 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
-import CommonParser._
+import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
+import org.alephium.ralph.lsp.access.util.ParserUtil
 
 private object TokenParser {
 
@@ -358,52 +359,31 @@ private object TokenParser {
   /**
    * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.
    */
-  def Reserved[Unknown: P]: P[Token.Reserved] = {
-    val it =
-      Token.reserved.iterator
+  def Reserved[Unknown: P]: P[Token.Reserved] =
+    ParserUtil.orTokenCombinator(Token.reserved.iterator)
 
-    val head =
-      P(it.next().lexeme) map {
-        _ =>
-          Token.reserved.head
-      }
+  /**
+   * Parses all tokens of type [[Token.InfixOperator]] and also their comments.
+   *
+   * TODO: Restrict the output type to [[SoftAST.InfixOperator]]
+   */
+  def InfixOperatorOrFail[Unknown: P]: P[SoftAST.Operator] = {
+    val infixOps =
+      ParserUtil
+        .orCombinator(
+          items = Token.infix.iterator.filter(_ != Token.ForwardSlash), // remove forward-slash
+          parser = buildInfixOperatorParser(_: Token.InfixOperator)
+        )
 
-    it.foldLeft(head) {
-      case (parser, keyword) =>
-        def nextParser =
-          P(keyword.lexeme) map {
-            _ =>
-              keyword
-          }
+    // Forward-slash followed by another forward-slash is not an Operator.
+    // `//` is reserved as a comment prefix.
+    def forwardSlashOperator =
+      P(buildInfixOperatorParser(Token.ForwardSlash) ~ !Token.ForwardSlash.lexeme)
 
-        parser | nextParser
-    }
+    infixOps | forwardSlashOperator
   }
 
-  def OperatorOrFail[Unknown: P]: P[SoftAST.Operator] =
-    P {
-      buildOperatorParser(Token.Or) |
-        buildOperatorParser(Token.And) |
-        buildOperatorParser(Token.GreaterThanOrEqual) |
-        buildOperatorParser(Token.LessThanOrEqual) |
-        buildOperatorParser(Token.PlusEquals) |
-        buildOperatorParser(Token.MinusEquals) |
-        buildOperatorParser(Token.Equality) |
-        buildOperatorParser(Token.Asterisk) |
-        buildOperatorParser(Token.GreaterThan) |
-        buildOperatorParser(Token.LessThan) |
-        buildOperatorParser(Token.NotEqual) |
-        buildOperatorParser(Token.Bar) |
-        buildOperatorParser(Token.Ampersand) |
-        buildOperatorParser(Token.Caret) |
-        buildOperatorParser(Token.Percent) |
-        buildOperatorParser(Token.Minus) |
-        buildOperatorParser(Token.Plus) |
-        // Forward-slash followed by another forward-slash is not an Operator. `//` is reserved for comment prefix.
-        P(buildOperatorParser(Token.ForwardSlash) ~ !Token.ForwardSlash.lexeme)
-    }
-
-  private def buildOperatorParser[Unknown: P](operator: Token.Operator): P[SoftAST.Operator] =
+  private def buildInfixOperatorParser[Unknown: P](operator: Token.InfixOperator): P[SoftAST.Operator] =
     P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(operator.lexeme.!) ~ Index) map {
       case (from, documentation, text, to) =>
         SoftAST.Operator(

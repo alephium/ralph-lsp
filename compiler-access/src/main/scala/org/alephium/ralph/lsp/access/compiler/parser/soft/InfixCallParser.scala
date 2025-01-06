@@ -13,7 +13,7 @@ case object InfixCallParser {
       Index ~
         ExpressionParser.parseOrFailSelective(parseInfix = false, parseMethodCall = true) ~
         spaceOrFail.? ~
-        TokenParser.OperatorOrFail ~
+        TokenParser.InfixOperatorOrFail ~
         spaceOrFail.? ~
         ExpressionParser.parse ~
         Index
