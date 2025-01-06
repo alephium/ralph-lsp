@@ -28,7 +28,22 @@ class AnnotationCompleterSpec extends AnyWordSpec with Matchers {
         """
           |Contract Test() {
           |
-          |  @usi@@
+          |  @using@@
+          |  fn function() -> () { }
+          |}
+          |""".stripMargin
+      }
+
+    suggestions should contain allElementsOf AnnotationCompleter.suggestAnnotationNames().toList
+  }
+
+  "suggest `inline` annotation name" in {
+    val suggestions =
+      suggest {
+        """
+          |Contract Test() {
+          |
+          |  @inline@@
           |  fn function() -> () { }
           |}
           |""".stripMargin

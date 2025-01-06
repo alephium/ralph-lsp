@@ -34,6 +34,11 @@ object AnnotationCompleter {
         label = Parser.FunctionUsingAnnotation.id,
         insert = Parser.FunctionUsingAnnotation.id,
         detail = ""
+      ),
+      Suggestion.Keyword(
+        label = Parser.FunctionInlineAnnotation.id,
+        insert = Parser.FunctionInlineAnnotation.id,
+        detail = ""
       )
     )
 
