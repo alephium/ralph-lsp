@@ -25,6 +25,25 @@ import org.alephium.ralph.lsp.access.util.ParserUtil
 
 private object TokenParser {
 
+  def parse[Unknown: P, T <: Token](token: T): P[SoftAST.TokenExpectedAST[T]] =
+    P(Index ~ parseOrFail(token).?) map {
+      case (_, Some(token)) =>
+        token
+
+      case (from, None) =>
+        SoftAST.TokenExpected(SoftAST.CodeToken(point(from), token))
+    }
+
+  def parseOrFail[Unknown: P, T <: Token](token: T): P[SoftAST.TokenDocumented[T]] =
+    P(Index ~ CommentParser.parseOrFail.? ~ CodeParser.parseOrFail(token) ~ Index) map {
+      case (from, documentation, token, to) =>
+        SoftAST.TokenDocumented(
+          index = range(from, to),
+          documentation = documentation,
+          code = token
+        )
+    }
+
   def Colon[Unknown: P]: P[SoftAST.ColonAST] =
     P(Index ~ ColonOrFail.?) map {
       case (_, Some(colon)) =>
