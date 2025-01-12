@@ -138,12 +138,6 @@ object SoftAST {
 
   }
 
-  case class Return(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-
   case class For(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -537,7 +531,7 @@ object SoftAST {
 
   case class ReturnStatement(
       index: SourceIndex,
-      returnToken: Return,
+      returnToken: TokenDocumented[Token.Return.type],
       preExpressionSpace: SpaceAST,
       rightExpression: ExpressionAST)
     extends ExpressionAST
