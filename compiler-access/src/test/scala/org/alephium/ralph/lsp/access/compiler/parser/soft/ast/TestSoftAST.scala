@@ -5,23 +5,15 @@ import org.alephium.ralph.SourceIndex
 object TestSoftAST {
 
   def Fn(index: SourceIndex): SoftAST.TokenDocumented[Token.Fn.type] =
-    SoftAST.TokenDocumented(
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = SoftAST.CodeToken(
-        index = index,
-        token = Token.Fn
-      )
+      token = Token.Fn
     )
 
-  def Comma(index: SourceIndex): SoftAST.Comma =
-    SoftAST.Comma(
+  def Comma(index: SourceIndex): SoftAST.TokenDocumented[Token.Comma.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.Comma
-      )
+      token = Token.Comma
     )
 
   def DoubleForwardSlash(index: SourceIndex): SoftAST.DoubleForwardSlash =
@@ -190,6 +182,18 @@ object TestSoftAST {
     SoftAST.CodeString(
       index = index,
       text = token.lexeme
+    )
+
+  def TokenDocumented[T <: Token](
+      index: SourceIndex,
+      token: T): SoftAST.TokenDocumented[T] =
+    SoftAST.TokenDocumented(
+      index = index,
+      documentation = None,
+      code = SoftAST.CodeToken(
+        index = index,
+        token = token
+      )
     )
 
 }

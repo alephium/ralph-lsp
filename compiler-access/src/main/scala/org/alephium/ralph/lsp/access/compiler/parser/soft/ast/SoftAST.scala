@@ -138,12 +138,6 @@ object SoftAST {
 
   }
 
-  case class Comma(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-
   case class Return(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -450,7 +444,7 @@ object SoftAST {
   /** Syntax: (arg1, >>arg2, (arg3, arg4)<<) */
   case class TupleTail(
       index: SourceIndex,
-      comma: Comma,
+      comma: TokenDocumented[Token.Comma.type],
       preExpressionSpace: Option[Space],
       expression: ExpressionAST,
       postExpressionSpace: Option[Space])

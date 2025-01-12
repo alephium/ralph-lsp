@@ -170,16 +170,6 @@ private object TokenParser {
         )
     }
 
-  def CommaOrFail[Unknown: P]: P[SoftAST.Comma] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Comma.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Comma(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
   def ForwardArrow[Unknown: P]: P[SoftAST.ForwardArrowAST] =
     P(Index ~ ForwardArrowOrFail.?) map {
       case (_, Some(forwardArrow)) =>
