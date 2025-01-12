@@ -275,16 +275,6 @@ private object TokenParser {
         )
     }
 
-  def DotOrFail[Unknown: P]: P[SoftAST.Dot] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Dot.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Dot(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
   def ReturnOrFail[Unknown: P]: P[SoftAST.Return] =
     P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Return.lexeme.!) ~ Index) map {
       case (from, documentation, text, to) =>

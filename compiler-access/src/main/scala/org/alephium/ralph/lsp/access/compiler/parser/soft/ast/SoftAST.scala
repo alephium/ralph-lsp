@@ -138,12 +138,6 @@ object SoftAST {
 
   }
 
-  case class Dot(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-
   case class Comma(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -542,7 +536,7 @@ object SoftAST {
 
   case class DotCall(
       index: SourceIndex,
-      dot: Dot,
+      dot: TokenDocumented[Token.Dot.type],
       postDotSpace: Option[Space],
       rightExpression: ReferenceCall)
     extends SoftAST
