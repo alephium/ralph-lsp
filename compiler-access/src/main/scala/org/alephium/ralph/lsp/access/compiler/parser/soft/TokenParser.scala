@@ -255,16 +255,6 @@ private object TokenParser {
         )
     }
 
-  def FnOrFail[Unknown: P]: P[SoftAST.Fn] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Fn.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Fn(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
   def ImplementsOrFail[Unknown: P]: P[SoftAST.Implements] =
     P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Implements.lexeme.!) ~ Index) map {
       case (from, documentation, text, to) =>

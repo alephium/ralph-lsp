@@ -4,11 +4,11 @@ import org.alephium.ralph.SourceIndex
 
 object TestSoftAST {
 
-  def Fn(index: SourceIndex): SoftAST.Fn =
-    SoftAST.Fn(
+  def Fn(index: SourceIndex): SoftAST.TokenDocumented[Token.Fn.type] =
+    SoftAST.TokenDocumented(
       index = index,
       documentation = None,
-      code = Code(
+      code = SoftAST.CodeToken(
         index = index,
         token = Token.Fn
       )

@@ -138,12 +138,6 @@ object SoftAST {
 
   }
 
-  case class Fn(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-
   case class Dot(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -429,7 +423,7 @@ object SoftAST {
       annotations: Seq[Annotation],
       postAnnotationSpace: Option[Space],
       pub: Option[AccessModifier],
-      fn: Fn,
+      fn: TokenDocumented[Token.Fn.type],
       preSignatureSpace: SpaceAST,
       signature: FunctionSignature,
       postSignatureSpace: Option[Space],
