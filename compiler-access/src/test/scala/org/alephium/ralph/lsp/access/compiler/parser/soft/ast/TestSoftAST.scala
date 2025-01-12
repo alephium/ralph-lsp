@@ -140,7 +140,7 @@ object TestSoftAST {
     SoftAST.Identifier(
       index = index,
       documentation = None,
-      code = SoftAST.Code(
+      code = SoftAST.CodeString(
         index = index,
         text = text
       )
@@ -152,7 +152,7 @@ object TestSoftAST {
     SoftAST.Unresolved(
       index = index,
       documentation = None,
-      code = SoftAST.Code(
+      code = SoftAST.CodeString(
         index = index,
         text = text
       )
@@ -162,7 +162,7 @@ object TestSoftAST {
       index: SourceIndex,
       text: String): SoftAST.Space =
     SoftAST.Space(
-      code = SoftAST.Code(
+      code = SoftAST.CodeString(
         index = index,
         text = text
       )
@@ -170,7 +170,7 @@ object TestSoftAST {
 
   def SpaceOne(index: SourceIndex): SoftAST.Space =
     SoftAST.Space(
-      code = SoftAST.Code(
+      code = SoftAST.CodeString(
         index = index,
         text = " "
       )
@@ -186,8 +186,8 @@ object TestSoftAST {
 
   def Code(
       index: SourceIndex,
-      token: Token): SoftAST.Code =
-    SoftAST.Code(
+      token: Token): SoftAST.CodeString =
+    SoftAST.CodeString(
       index = index,
       text = token.lexeme
     )

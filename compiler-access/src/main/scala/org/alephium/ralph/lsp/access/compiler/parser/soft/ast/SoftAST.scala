@@ -92,7 +92,11 @@ object SoftAST {
   /**
    * Has an [[Token]] type associates with it.
    */
-  sealed trait TokenAST extends CodeAST
+  sealed trait TokenAST extends CodeAST {
+
+    // def code: CodeToken[T]
+
+  }
 
   /**
    * [[TokenAST]] instances that can contain documentation.
@@ -103,49 +107,80 @@ object SoftAST {
   abstract class ExpectedErrorAST(element: String)   extends ErrorAST(s"$element expected")
   abstract class TokenExpectedErrorAST(token: Token) extends ExpectedErrorAST(s"'${token.lexeme}'")
 
+  sealed trait TokenExpectedAST[T <: Token] extends TokenAST
+
+  /**
+   * Represents a token that may code comments or documentation.
+   *
+   * @param index         Source index of the token, including its documentation.
+   * @param documentation Optional documentation (e.g. comments) preceding the token
+   * @param code          The token itself.
+   * @tparam T The specific type of token.
+   */
+  case class TokenDocumented[T <: Token](
+      index: SourceIndex,
+      documentation: Option[Comments],
+      code: CodeToken[T])
+    extends TokenExpectedAST[T]
+       with CodeDocumentedAST
+
+  case class TokenUndocumented[T <: Token](code: CodeToken[T]) extends TokenAST {
+
+    override def index: SourceIndex =
+      code.index
+
+  }
+
+  case class TokenExpected[T <: Token](code: CodeToken[T]) extends TokenExpectedErrorAST(code.token) with TokenExpectedAST[T] {
+
+    override def index: SourceIndex =
+      code.index
+
+  }
+
   case class Fn(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
 
   case class Dot(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
 
   case class Comma(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
 
   case class Return(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
 
   case class For(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
 
   case class While(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
 
   case class Equal(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
 
-  case class DoubleForwardSlash(code: Code) extends TokenAST {
+  case class DoubleForwardSlash(code: CodeString) extends TokenAST {
 
     override def index: SourceIndex =
       code.index
@@ -155,25 +190,25 @@ object SoftAST {
   case class Const(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
 
   case class Pub(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
 
   case class At(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
 
   case class Operator(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
 
   sealed trait InheritanceType extends SoftAST
@@ -181,14 +216,14 @@ object SoftAST {
   case class Implements(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
        with InheritanceType
 
   case class Extends(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
        with InheritanceType
 
@@ -197,13 +232,13 @@ object SoftAST {
   case class Contract(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TemplateToken
 
   case class TxScript(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TemplateToken
 
   sealed trait DataTemplateToken extends TokenDocumentedAST
@@ -211,19 +246,19 @@ object SoftAST {
   case class Struct(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends DataTemplateToken
 
   case class Enum(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends DataTemplateToken
 
   case class Event(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends DataTemplateToken
 
   sealed trait ColonAST extends SoftAST
@@ -231,7 +266,7 @@ object SoftAST {
   case class Colon(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
        with ColonAST
 
@@ -245,7 +280,7 @@ object SoftAST {
   case class ForwardArrow(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
        with ForwardArrowAST
 
@@ -259,7 +294,7 @@ object SoftAST {
   case class OpenParen(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
        with OpenParenAST
 
@@ -273,7 +308,7 @@ object SoftAST {
   case class CloseParen(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
        with CloseParenAST
 
@@ -287,7 +322,7 @@ object SoftAST {
   case class OpenCurly(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
        with OpenCurlyAST
 
@@ -301,7 +336,7 @@ object SoftAST {
   case class CloseCurly(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
        with CloseCurlyAST
 
@@ -315,7 +350,7 @@ object SoftAST {
   case class Semicolon(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends TokenDocumentedAST
        with SemicolonAST
 
@@ -329,13 +364,13 @@ object SoftAST {
   case class Let(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends AssignmentControlToken
 
   case class Mut(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends AssignmentControlToken
 
   case class Template(
@@ -452,7 +487,7 @@ object SoftAST {
   case class Identifier(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends IdentifierAST
        with CodeDocumentedAST
        with ExpressionAST
@@ -473,14 +508,14 @@ object SoftAST {
       index: SourceIndex,
       doubleForwardSlash: DoubleForwardSlash,
       preTextSpace: Option[Space],
-      text: Option[Code],
+      text: Option[CodeString],
       postTextSpace: Option[Space])
     extends BodyPartAST
 
   case class Unresolved(
       index: SourceIndex,
       documentation: Option[Comments],
-      code: Code)
+      code: CodeString)
     extends ErrorAST(s"Cannot resolve '$code'")
        with CodeDocumentedAST
        with BodyPartAST
@@ -604,7 +639,7 @@ object SoftAST {
   sealed trait SpaceAST extends SoftAST
 
   case class Space(
-      code: Code)
+      code: CodeString)
     extends SpaceAST
        with CodeAST {
 
@@ -618,10 +653,9 @@ object SoftAST {
     extends ExpectedErrorAST("Space")
        with SpaceAST
 
-  case class Code(
-      index: SourceIndex,
-      text: String)
-    extends SoftAST {
+  sealed trait Code extends SoftAST {
+
+    def text: String
 
     private def textPretty: String =
       text
@@ -631,6 +665,34 @@ object SoftAST {
 
     override def toStringPretty(): String =
       s"${getClass.getSimpleName}(\"$textPretty\"): $index"
+
+  }
+
+  /**
+   * Represents a segment of code that is not tokenised.
+   *
+   * @param index Source index of the code string.
+   * @param text  String content of the code
+   */
+  case class CodeString(
+      index: SourceIndex,
+      text: String)
+    extends Code
+
+  /**
+   * Represents a tokenised segment of code.
+   *
+   * @param index Source index of the token
+   * @param token Token instance representing the parsed code
+   * @tparam T Specific type of token.
+   */
+  case class CodeToken[+T <: Token](
+      index: SourceIndex,
+      token: T)
+    extends Code {
+
+    override def text: String =
+      token.lexeme
 
   }
 

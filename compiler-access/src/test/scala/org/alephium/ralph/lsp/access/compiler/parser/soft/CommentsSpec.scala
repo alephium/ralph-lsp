@@ -42,7 +42,7 @@ class CommentsSpec extends AnyWordSpec with Matchers {
           )
         ),
         text = Some(
-          SoftAST.Code(
+          SoftAST.CodeString(
             index = indexOf {
               """// >>one<<
                 |// two
@@ -89,7 +89,7 @@ class CommentsSpec extends AnyWordSpec with Matchers {
           )
         ),
         text = Some(
-          SoftAST.Code(
+          SoftAST.CodeString(
             index = indexOf {
               """// one
                 |// >>two<<
@@ -144,7 +144,7 @@ class CommentsSpec extends AnyWordSpec with Matchers {
                 doubleForwardSlash = DoubleForwardSlash(indexOf(s">>//<< //")),
                 preTextSpace = Some(SpaceOne(indexOf(s"//>> <<//"))),
                 text = Some(
-                  SoftAST.Code(
+                  SoftAST.CodeString(
                     index = indexOf(s"// >>//<<"),
                     text = "//"
                   )
@@ -188,7 +188,7 @@ class CommentsSpec extends AnyWordSpec with Matchers {
                   )
                 ),
                 text = Some(
-                  SoftAST.Code(
+                  SoftAST.CodeString(
                     index = indexOf {
                       """//
                         |>>//<<""".stripMargin

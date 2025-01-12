@@ -49,7 +49,7 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
           forwardArrow = ForwardArrow(indexOf("fn >>-><< type")),
           space = Some(
             SoftAST.Space(
-              SoftAST.Code(
+              SoftAST.CodeString(
                 index = indexOf("fn __>> <<type"),
                 text = " "
               )
