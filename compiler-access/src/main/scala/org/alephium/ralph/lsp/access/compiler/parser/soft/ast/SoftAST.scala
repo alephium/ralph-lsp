@@ -138,12 +138,6 @@ object SoftAST {
 
   }
 
-  case class While(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-
   case class Equal(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -553,7 +547,7 @@ object SoftAST {
 
   case class WhileStatement(
       index: SourceIndex,
-      whileToken: While,
+      whileToken: TokenDocumented[Token.While.type],
       postWhileSpace: Option[Space],
       openParen: OpenParenAST,
       postOpenParenSpace: Option[Space],
