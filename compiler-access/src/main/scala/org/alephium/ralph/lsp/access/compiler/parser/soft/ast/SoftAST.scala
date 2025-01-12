@@ -138,12 +138,6 @@ object SoftAST {
 
   }
 
-  case class For(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-
   case class While(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -538,7 +532,7 @@ object SoftAST {
 
   case class ForStatement(
       index: SourceIndex,
-      forToken: For,
+      forToken: TokenDocumented[Token.For.type],
       postForSpace: Option[Space],
       openParen: OpenParenAST,
       postOpenParenSpace: Option[Space],

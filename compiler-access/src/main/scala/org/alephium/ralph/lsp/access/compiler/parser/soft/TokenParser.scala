@@ -265,16 +265,6 @@ private object TokenParser {
         )
     }
 
-  def ForOrFail[Unknown: P]: P[SoftAST.For] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.For.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.For(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
   def WhileOrFail[Unknown: P]: P[SoftAST.While] =
     P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.While.lexeme.!) ~ Index) map {
       case (from, documentation, text, to) =>

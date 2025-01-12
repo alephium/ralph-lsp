@@ -4,14 +4,14 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object ForLoopParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.ForStatement] =
     P {
       Index ~
-        TokenParser.ForOrFail ~
+        TokenParser.parseOrFail(Token.For) ~
         spaceOrFail.? ~
         TokenParser.OpenParen ~
         spaceOrFail.? ~
