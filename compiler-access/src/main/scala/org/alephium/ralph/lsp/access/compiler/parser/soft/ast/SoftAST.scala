@@ -408,6 +408,14 @@ object SoftAST {
       postTupleSpace: Option[Space])
     extends ExpressionAST
 
+  case class Number(
+      index: SourceIndex,
+      documentation: Option[Comments],
+      number: CodeString,
+      space: Option[Space],
+      unit: Option[TokenDocumented[Token.AlphLowercase.type]])
+    extends ExpressionAST
+
   sealed trait SpaceAST extends SoftAST
 
   case class Space(

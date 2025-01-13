@@ -66,6 +66,9 @@ object TestParser {
   def parseBoolean(code: String): SoftAST.TokenDocumented[Token.PrimitiveBoolean] =
     runSoftParser(BooleanParser.parseOrFail(_))(code)
 
+  def parseNumber(code: String): SoftAST.Number =
+    runSoftParser(NumberParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,
