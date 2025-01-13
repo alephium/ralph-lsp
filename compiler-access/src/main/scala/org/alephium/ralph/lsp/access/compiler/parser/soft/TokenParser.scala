@@ -26,13 +26,13 @@ private object TokenParser {
 
   def parse[Unknown: P, T <: Token](
       required: Boolean,
-      token: T): P[SoftAST.TokenExpectedAST[T]] =
+      token: T): P[SoftAST.TokenDocExpectedAST[T]] =
     if (required)
       parse(token)
     else
       parseOrFail(token)
 
-  def parse[Unknown: P, T <: Token](token: T): P[SoftAST.TokenExpectedAST[T]] =
+  def parse[Unknown: P, T <: Token](token: T): P[SoftAST.TokenDocExpectedAST[T]] =
     P(Index ~ parseOrFail(token).?) map {
       case (_, Some(token)) =>
         token
