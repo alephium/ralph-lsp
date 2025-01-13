@@ -192,26 +192,6 @@ private object TokenParser {
         )
     }
 
-  def ContractOrFail[Unknown: P]: P[SoftAST.Contract] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Contract.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Contract(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def TxScriptOrFail[Unknown: P]: P[SoftAST.TxScript] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.TxScript.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.TxScript(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
   def StructOrFail[Unknown: P]: P[SoftAST.Struct] =
     P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Struct.lexeme.!) ~ Index) map {
       case (from, documentation, text, to) =>

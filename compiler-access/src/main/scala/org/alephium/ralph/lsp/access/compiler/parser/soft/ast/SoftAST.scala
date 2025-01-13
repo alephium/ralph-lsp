@@ -138,20 +138,6 @@ object SoftAST {
 
   }
 
-  sealed trait TemplateToken extends TokenDocumentedAST[Token]
-
-  case class Contract(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TemplateToken
-
-  case class TxScript(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TemplateToken
-
   sealed trait DataTemplateToken extends TokenDocumentedAST[Token]
 
   case class Struct(
@@ -286,7 +272,7 @@ object SoftAST {
 
   case class Template(
       index: SourceIndex,
-      templateType: TemplateToken,
+      templateType: TokenDocumented[Token.TemplateDefinition],
       preIdentifierSpace: SpaceAST,
       identifier: IdentifierAST,
       preParamSpace: Option[Space],

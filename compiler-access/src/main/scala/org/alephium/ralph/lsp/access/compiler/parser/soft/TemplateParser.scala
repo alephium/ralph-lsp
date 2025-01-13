@@ -11,7 +11,7 @@ private object TemplateParser {
   def parseOrFail[Unknown: P]: P[SoftAST.Template] =
     P {
       Index ~
-        (TokenParser.ContractOrFail | TokenParser.TxScriptOrFail) ~
+        (TokenParser.parseOrFail(Token.Contract) | TokenParser.parseOrFail(Token.TxScript) | TokenParser.parseOrFail(Token.AssetScript)) ~
         space ~
         identifier ~
         spaceOrFail.? ~

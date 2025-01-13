@@ -30,24 +30,16 @@ object TestSoftAST {
       token = Token.At
     )
 
-  def Contract(index: SourceIndex): SoftAST.Contract =
-    SoftAST.Contract(
+  def Contract(index: SourceIndex): SoftAST.TokenDocumented[Token.Contract.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.Contract
-      )
+      token = Token.Contract
     )
 
-  def TxScript(index: SourceIndex): SoftAST.TxScript =
-    SoftAST.TxScript(
+  def TxScript(index: SourceIndex): SoftAST.TokenDocumented[Token.TxScript.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.TxScript
-      )
+      token = Token.TxScript
     )
 
   def Colon(index: SourceIndex): SoftAST.Colon =
