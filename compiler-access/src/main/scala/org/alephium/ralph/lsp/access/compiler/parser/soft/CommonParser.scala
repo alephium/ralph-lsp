@@ -38,8 +38,8 @@ private object CommonParser {
         SoftAST.Space(text)
     }
 
-  def text[Unknown: P]: P[SoftAST.CodeString] =
-    P(Index ~ CharsWhileNot(Token.Newline.lexeme).! ~ Index) map {
+  def text[Unknown: P](stop: Token*): P[SoftAST.CodeString] =
+    P(Index ~ TokenParser.WhileNotOrFail(stop: _*).! ~ Index) map {
       case (from, text, to) =>
         SoftAST.CodeString(
           text = text,
@@ -47,10 +47,10 @@ private object CommonParser {
         )
     }
 
-  def unresolved[Unknown: P](stopChars: Option[String]): P[SoftAST.Unresolved] =
+  def unresolved[Unknown: P](stop: Option[Token]): P[SoftAST.Unresolved] =
     P {
       Index ~
-        toCodeOrFail(CharsWhileNot(Token.Space.lexeme ++ Token.Newline.lexeme ++ stopChars.getOrElse("")).!) ~
+        CodeParser.parseOrFail(TokenParser.WhileNotOrFail(Seq(Token.Space, Token.Newline) ++ stop: _*).!) ~
         CommentParser.parseOrFail.? ~
         Index
     } map {
@@ -114,12 +114,6 @@ private object CommonParser {
           text = code,
           index = range(from, to)
         )
-    }
-
-  private def CharsWhileNot[Unknown: P](chars: String): P[Unit] =
-    CharsWhile {
-      char =>
-        !(chars contains char)
     }
 
   private def isLetterDigitOrUnderscore[Unknown: P]: P[Unit] =

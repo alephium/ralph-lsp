@@ -78,4 +78,14 @@ private object TokenParser {
     infixOps | forwardSlashOperator
   }
 
+  /**
+   * Reads characters until at least one of the input tokens is matched.
+   *
+   * If none of the tokens are found, the parser fails.
+   *
+   * @param tokens the token to check for.
+   */
+  def WhileNotOrFail[Unknown: P](tokens: Token*): P[Unit] =
+    P((!ParserUtil.orTokenCombinator(tokens.iterator) ~ AnyChar).rep(1))
+
 }

@@ -65,7 +65,7 @@ private object CommentParser {
       Index ~
         TokenParser.parseOrFailUndocumented(Token.DoubleForwardSlash) ~
         spaceOrFail.? ~
-        text.? ~
+        text(Token.Newline).? ~
         spaceOrFail.? ~
         Index
     } map {

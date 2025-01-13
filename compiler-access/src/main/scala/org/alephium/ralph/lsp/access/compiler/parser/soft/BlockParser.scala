@@ -29,7 +29,7 @@ private object BlockParser {
       Index ~
         TokenParser.parse(required, Token.OpenCurly) ~
         spaceOrFail.? ~
-        body(Some(Token.CloseCurly.lexeme)) ~
+        body(Some(Token.CloseCurly)) ~
         spaceOrFail.? ~
         TokenParser.parse(Token.CloseCurly) ~
         Index
@@ -46,13 +46,13 @@ private object BlockParser {
     }
 
   def body[Unknown: P]: P[SoftAST.BlockBody] =
-    body(stopChars = None)
+    body(stop = None)
 
-  private def body[Unknown: P](stopChars: Option[String]): P[SoftAST.BlockBody] =
+  private def body[Unknown: P](stop: Option[Token]): P[SoftAST.BlockBody] =
     P {
       Index ~
         spaceOrFail.? ~
-        bodyPart(stopChars).rep ~
+        bodyPart(stop).rep ~
         Index
     } map {
       case (from, headSpace, parts, to) =>
@@ -63,10 +63,10 @@ private object BlockParser {
         )
     }
 
-  private def bodyPart[Unknown: P](stopChars: Option[String]): P[SoftAST.BlockBodyPart] =
+  private def bodyPart[Unknown: P](stop: Option[Token]): P[SoftAST.BlockBodyPart] =
     P {
       Index ~
-        part(stopChars) ~
+        part(stop) ~
         spaceOrFail.? ~
         Index
     } map {
@@ -78,14 +78,14 @@ private object BlockParser {
         )
     }
 
-  private def part[Unknown: P](stopChars: Option[String]): P[SoftAST.BodyPartAST] =
+  private def part[Unknown: P](stop: Option[Token]): P[SoftAST.BodyPartAST] =
     P {
       TemplateParser.parseOrFail |
         DataTemplateParser.parseOrFail |
         FunctionParser.parseOrFail |
         ExpressionParser.parseOrFail |
         CommentParser.parseOrFail |
-        unresolved(stopChars)
+        unresolved(stop)
     }
 
 }
