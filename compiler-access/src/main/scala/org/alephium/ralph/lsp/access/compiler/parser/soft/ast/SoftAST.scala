@@ -138,24 +138,6 @@ object SoftAST {
 
   }
 
-  case class Const(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-
-  case class Pub(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-
-  case class At(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-
   case class Operator(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -573,13 +555,13 @@ object SoftAST {
 
   case class AccessModifier(
       index: SourceIndex,
-      pub: Pub,
+      pub: TokenDocumented[Token.Pub.type],
       postTokenSpace: Option[Space])
     extends ExpressionAST
 
   case class Annotation(
       index: SourceIndex,
-      at: At,
+      at: TokenDocumented[Token.At.type],
       preIdentifierSpace: Option[Space],
       identifier: IdentifierAST,
       postIdentifierSpace: Option[Space],

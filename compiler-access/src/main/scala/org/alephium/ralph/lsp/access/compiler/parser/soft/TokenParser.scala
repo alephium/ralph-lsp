@@ -282,26 +282,6 @@ private object TokenParser {
         )
     }
 
-  def PubOrFail[Unknown: P]: P[SoftAST.Pub] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Pub.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Pub(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def AtOrFail[Unknown: P]: P[SoftAST.At] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.At.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.At(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
   /**
    * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.
    */

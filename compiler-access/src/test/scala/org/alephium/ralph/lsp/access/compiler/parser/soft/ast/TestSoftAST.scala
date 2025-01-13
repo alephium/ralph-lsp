@@ -24,14 +24,10 @@ object TestSoftAST {
       )
     )
 
-  def At(index: SourceIndex): SoftAST.At =
-    SoftAST.At(
+  def At(index: SourceIndex): SoftAST.TokenDocumented[Token.At.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.At
-      )
+      token = Token.At
     )
 
   def InfixOperator(
