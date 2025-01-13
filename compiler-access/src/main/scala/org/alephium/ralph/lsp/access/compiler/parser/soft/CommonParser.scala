@@ -18,8 +18,8 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
 private object CommonParser {
 
@@ -38,51 +38,6 @@ private object CommonParser {
         SoftAST.Space(text)
     }
 
-  def identifier[Unknown: P](required: Boolean): P[SoftAST.IdentifierAST] =
-    if (required)
-      identifier
-    else
-      identifierOrFail
-
-  def identifier[Unknown: P]: P[SoftAST.IdentifierAST] =
-    P(Index ~ identifierOrFail.?) map {
-      case (_, Some(identifier)) =>
-        identifier
-
-      case (from, None) =>
-        SoftAST.IdentifierExpected(point(from))
-    }
-
-  /**
-   * Parses identifiers as long as they are not reserved tokens [[Token.Reserved]].
-   *
-   * For example, the following code will result in an [[SoftAST.IdentifierExpected]] error
-   * because `let` is a reserved token [[Token.Let]]:
-   *
-   * {{{
-   *    fn let() -> ()
-   * }}}
-   *
-   * TODO: Handle cases such as `fn letter() -> ()`
-   *
-   * @return A successfully parsed identifier instance [[SoftAST.Identifier]] or a parser error.
-   */
-  def identifierOrFail[Unknown: P]: P[SoftAST.Identifier] =
-    P {
-      Index ~
-        CommentParser.parseOrFail.? ~
-        !TokenParser.Reserved ~
-        toCodeOrFail(isLetterDigitOrUnderscore.!) ~
-        Index
-    } map {
-      case (from, documentation, code, to) =>
-        SoftAST.Identifier(
-          index = range(from, to),
-          code = code,
-          documentation = documentation
-        )
-    }
-
   def toCodeOrFail[Unknown: P](parser: => P[String]): P[SoftAST.CodeString] =
     P(Index ~ parser ~ Index) map {
       case (from, code, to) =>
@@ -90,12 +45,6 @@ private object CommonParser {
           text = code,
           index = range(from, to)
         )
-    }
-
-  private def isLetterDigitOrUnderscore[Unknown: P]: P[Unit] =
-    CharsWhile {
-      char =>
-        char.isLetterOrDigit || Token.Underscore.lexeme.contains(char)
     }
 
 }

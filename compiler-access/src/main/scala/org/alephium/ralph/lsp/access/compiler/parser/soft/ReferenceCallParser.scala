@@ -26,7 +26,7 @@ private object ReferenceCallParser {
   private def parse[Unknown: P](required: Boolean): P[SoftAST.ReferenceCall] =
     P {
       Index ~
-        identifier(required) ~
+        IdentifierParser.parse(required) ~
         spaceOrFail.? ~
         TupleParser.parse(required) ~
         Index

@@ -41,7 +41,7 @@ private object AnnotationParser {
       Index ~
         TokenParser.parseOrFail(Token.At) ~
         spaceOrFail.? ~
-        identifier ~
+        IdentifierParser.parse ~
         spaceOrFail.? ~
         TupleParser.parseOrFail.? ~
         spaceOrFail.? ~

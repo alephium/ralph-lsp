@@ -57,8 +57,8 @@ private object TokenParser {
   /**
    * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.
    */
-  def Reserved[Unknown: P]: P[Token.Reserved] =
-    ParserUtil.orTokenCombinator(Token.reserved.iterator)
+  def Reserved[Unknown: P](remove: Token.Reserved*): P[Token.Reserved] =
+    ParserUtil.orTokenCombinator(Token.reserved.diff(remove).iterator)
 
   /**
    * Parses all tokens of type [[Token.InfixOperator]] and also their comments.

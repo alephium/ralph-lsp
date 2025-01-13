@@ -66,7 +66,7 @@ private object FunctionParser {
   private def signature[Unknown: P]: P[SoftAST.FunctionSignature] =
     P {
       Index ~
-        identifier ~
+        IdentifierParser.parse ~
         spaceOrFail.? ~
         ParameterParser.parse ~
         spaceOrFail.? ~

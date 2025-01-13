@@ -12,7 +12,7 @@ private object AssignmentParser {
     P {
       Index ~
         AssignmentAccessModifierParser.parseOrFail.rep ~
-        identifierOrFail ~
+        IdentifierParser.parseOrFail ~
         spaceOrFail.? ~
         TokenParser.parseOrFail(Token.Equal) ~
         spaceOrFail.? ~

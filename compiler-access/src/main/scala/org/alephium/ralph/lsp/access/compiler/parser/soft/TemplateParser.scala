@@ -13,7 +13,7 @@ private object TemplateParser {
       Index ~
         (TokenParser.parseOrFail(Token.Contract) | TokenParser.parseOrFail(Token.TxScript) | TokenParser.parseOrFail(Token.AssetScript)) ~
         space ~
-        identifier ~
+        IdentifierParser.parse ~
         spaceOrFail.? ~
         ParameterParser.parseOrFail.? ~
         spaceOrFail.? ~
@@ -41,7 +41,7 @@ private object TemplateParser {
       Index ~
         (TokenParser.parseOrFail(Token.Implements) | TokenParser.parseOrFail(Token.Extends)) ~
         space ~
-        (ReferenceCallParser.parseOrFail | identifier) ~
+        (ReferenceCallParser.parseOrFail | IdentifierParser.parse) ~
         spaceOrFail.? ~
         Index
     } map {

@@ -13,7 +13,7 @@ private object DataTemplateParser {
       Index ~
         (TokenParser.parseOrFail(Token.Struct) | TokenParser.parseOrFail(Token.Enum) | TokenParser.parseOrFail(Token.Event)) ~
         space ~
-        identifier ~
+        IdentifierParser.parse ~
         spaceOrFail.? ~
         ParameterParser.parse ~
         Index

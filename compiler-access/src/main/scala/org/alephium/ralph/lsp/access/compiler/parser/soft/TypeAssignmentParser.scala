@@ -12,7 +12,7 @@ private object TypeAssignmentParser {
     P {
       Index ~
         AssignmentAccessModifierParser.parseOrFail.rep ~
-        identifierOrFail ~
+        IdentifierParser.parseOrFail ~
         spaceOrFail.? ~
         TokenParser.parseOrFail(Token.Colon) ~
         spaceOrFail.? ~

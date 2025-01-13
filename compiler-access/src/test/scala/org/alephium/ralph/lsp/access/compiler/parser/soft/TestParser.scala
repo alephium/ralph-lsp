@@ -51,14 +51,14 @@ object TestParser {
   def parseType(code: String): SoftAST.TypeAST =
     runSoftParser(TypeParser.parse(_))(code)
 
-  def parseReservedToken(code: String): Token.Reserved =
-    runAnyParser(TokenParser.Reserved(_))(code)
+  def parseReservedToken(remove: Token.Reserved*)(code: String): Token.Reserved =
+    runAnyParser(TokenParser.Reserved(remove: _*)(_))(code)
 
   def parseInfixOperatorOrFail(code: String): SoftAST.TokenDocumented[Token.InfixOperator] =
     runAnyParser(TokenParser.InfixOperatorOrFail(_))(code)
 
-  def parseReservedTokenOrError(code: String): Either[Parsed.Failure, Token.Reserved] =
-    runAnyParserOrError(TokenParser.Reserved(_))(code)
+  def parseReservedTokenOrError(remove: Token.Reserved*)(code: String): Either[Parsed.Failure, Token.Reserved] =
+    runAnyParserOrError(TokenParser.Reserved(remove: _*)(_))(code)
 
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
@@ -96,7 +96,7 @@ object TestParser {
     // AST returned by the parser should ALWAYS emit code identical to the inputted code.
     // Always assert this for each test case.
     try
-      code shouldBe astToCode
+      astToCode shouldBe code
     catch {
       case throwable: Throwable =>
         // Print debug info for cases where the emitted code differs from the input code.

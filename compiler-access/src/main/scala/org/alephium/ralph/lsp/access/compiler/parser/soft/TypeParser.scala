@@ -17,12 +17,11 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
 private object TypeParser {
 
   def parse[Unknown: P]: P[SoftAST.TypeAST] =
-    P(TupleParser.parseOrFail | identifier)
+    P(TupleParser.parseOrFail | IdentifierParser.parse)
 
 }
