@@ -25,6 +25,14 @@ import org.alephium.ralph.lsp.access.util.ParserUtil
 
 private object TokenParser {
 
+  def parse[Unknown: P, T <: Token](
+      required: Boolean,
+      token: T): P[SoftAST.TokenExpectedAST[T]] =
+    if (required)
+      parse(token)
+    else
+      parseOrFail(token)
+
   def parse[Unknown: P, T <: Token](token: T): P[SoftAST.TokenExpectedAST[T]] =
     P(Index ~ parseOrFail(token).?) map {
       case (_, Some(token)) =>
@@ -60,50 +68,6 @@ private object TokenParser {
     P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Semicolon.lexeme.!) ~ Index) map {
       case (from, documentation, text, to) =>
         SoftAST.Semicolon(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def OpenParen[Unknown: P](required: Boolean): P[SoftAST.OpenParenAST] =
-    if (required)
-      OpenParen
-    else
-      OpenParenOrFail
-
-  def OpenParen[Unknown: P]: P[SoftAST.OpenParenAST] =
-    P(Index ~ OpenParenOrFail.?) map {
-      case (_, Some(openParen)) =>
-        openParen
-
-      case (from, None) =>
-        SoftAST.OpenParenExpected(point(from))
-    }
-
-  def OpenParenOrFail[Unknown: P]: P[SoftAST.OpenParen] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.OpenParen.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.OpenParen(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def CloseParen[Unknown: P]: P[SoftAST.CloseParenAST] =
-    P(Index ~ CloseParenOrFail.?) map {
-      case (_, Some(closeParen)) =>
-        closeParen
-
-      case (from, None) =>
-        SoftAST.CloseParenExpected(point(from))
-    }
-
-  def CloseParenOrFail[Unknown: P]: P[SoftAST.CloseParenAST] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.CloseParen.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.CloseParen(
           index = range(from, to),
           documentation = documentation,
           code = text

@@ -137,34 +137,6 @@ object SoftAST {
     extends TokenExpectedErrorAST(token)
        with TokenExpectedAST[T]
 
-  sealed trait OpenParenAST extends SoftAST
-
-  case class OpenParen(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-       with OpenParenAST
-
-  case class OpenParenExpected(
-      index: SourceIndex)
-    extends TokenExpectedErrorAST(Token.OpenParen)
-       with OpenParenAST
-
-  sealed trait CloseParenAST extends SoftAST
-
-  case class CloseParen(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-       with CloseParenAST
-
-  case class CloseParenExpected(
-      index: SourceIndex)
-    extends TokenExpectedErrorAST(Token.CloseParen)
-       with CloseParenAST
-
   sealed trait OpenCurlyAST extends SoftAST
 
   case class OpenCurly(
@@ -298,12 +270,12 @@ object SoftAST {
   /** Multiple arguments. Syntax: (arg1, (arg2, arg3)) */
   case class Tuple(
       index: SourceIndex,
-      openParen: OpenParenAST,
+      openParen: TokenExpectedAST[Token.OpenParen.type],
       preHeadExpressionSpace: Option[Space],
       headExpression: Option[ExpressionAST],
       postHeadExpressionSpace: Option[Space],
       tailExpressions: Seq[TupleTail],
-      closeParen: CloseParenAST)
+      closeParen: TokenExpectedAST[Token.CloseParen.type])
     extends ExpressionAST
        with TypeAST
 
@@ -412,7 +384,7 @@ object SoftAST {
       index: SourceIndex,
       forToken: TokenDocumented[Token.For.type],
       postForSpace: Option[Space],
-      openParen: OpenParenAST,
+      openParen: TokenExpectedAST[Token.OpenParen.type],
       postOpenParenSpace: Option[Space],
       expression1: ExpressionAST,
       postExpression1Space: Option[Space],
@@ -424,7 +396,7 @@ object SoftAST {
       postExpression2SemicolonSpace: Option[Space],
       expression3: ExpressionAST,
       postExpression3Space: Option[Space],
-      closeParen: CloseParenAST,
+      closeParen: TokenExpectedAST[Token.CloseParen.type],
       postCloseParenSpace: Option[SoftAST.Space],
       block: SoftAST.BlockClause)
     extends ExpressionAST
@@ -433,11 +405,11 @@ object SoftAST {
       index: SourceIndex,
       whileToken: TokenDocumented[Token.While.type],
       postWhileSpace: Option[Space],
-      openParen: OpenParenAST,
+      openParen: TokenExpectedAST[Token.OpenParen.type],
       postOpenParenSpace: Option[Space],
       expression: ExpressionAST,
       postExpressionSpace: Option[Space],
-      closeParen: CloseParenAST,
+      closeParen: TokenExpectedAST[Token.CloseParen.type],
       postCloseParenSpace: Option[SoftAST.Space],
       block: SoftAST.BlockClause)
     extends ExpressionAST

@@ -54,24 +54,16 @@ object TestSoftAST {
       token = Token.ForwardArrow
     )
 
-  def OpenParen(index: SourceIndex): SoftAST.OpenParen =
-    SoftAST.OpenParen(
+  def OpenParen(index: SourceIndex): SoftAST.TokenDocumented[Token.OpenParen.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.OpenParen
-      )
+      token = Token.OpenParen
     )
 
-  def CloseParen(index: SourceIndex): SoftAST.CloseParen =
-    SoftAST.CloseParen(
+  def CloseParen(index: SourceIndex): SoftAST.TokenDocumented[Token.CloseParen.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.CloseParen
-      )
+      token = Token.CloseParen
     )
 
   def OpenCurly(index: SourceIndex): SoftAST.OpenCurly =

@@ -13,7 +13,7 @@ private object ForLoopParser {
       Index ~
         TokenParser.parseOrFail(Token.For) ~
         spaceOrFail.? ~
-        TokenParser.OpenParen ~
+        TokenParser.parse(Token.OpenParen) ~
         spaceOrFail.? ~
         ExpressionParser.parse ~
         spaceOrFail.? ~
@@ -25,7 +25,7 @@ private object ForLoopParser {
         spaceOrFail.? ~
         ExpressionParser.parse ~
         spaceOrFail.? ~
-        TokenParser.CloseParen ~
+        TokenParser.parse(Token.CloseParen) ~
         spaceOrFail.? ~
         BlockParser.clause(required = true) ~
         Index

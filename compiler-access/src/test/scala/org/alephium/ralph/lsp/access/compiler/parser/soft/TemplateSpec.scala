@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
@@ -116,7 +116,7 @@ class TemplateSpec extends AnyWordSpec with Matchers {
 
       val params = template.params.value
       params.openParen shouldBe OpenParen(indexOf("Contract mycontract>>(<<"))
-      params.closeParen shouldBe SoftAST.CloseParenExpected(indexOf("Contract mycontract(>><<"))
+      params.closeParen shouldBe SoftAST.TokenExpected(indexOf("Contract mycontract(>><<"), Token.CloseParen)
     }
 
     "params are empty" in {

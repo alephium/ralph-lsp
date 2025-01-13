@@ -44,13 +44,13 @@ private object TupleParser {
   private def tuple[Unknown: P](required: Boolean): P[SoftAST.Tuple] =
     P {
       Index ~
-        TokenParser.OpenParen(required) ~
+        TokenParser.parse(required, Token.OpenParen) ~
         spaceOrFail.? ~
         Index ~
         ExpressionParser.parseOrFail.? ~
         spaceOrFail.? ~
         tailParams.rep ~
-        TokenParser.CloseParen ~
+        TokenParser.parse(Token.CloseParen) ~
         Index
     } map {
       case (from, openParen, preHeadSpace, headParamIndex, headExpression, postHeadSpace, tailParams, closeParen, to) =>

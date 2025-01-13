@@ -13,11 +13,11 @@ private object WhileLoopParser {
       Index ~
         TokenParser.parseOrFail(Token.While) ~
         spaceOrFail.? ~
-        TokenParser.OpenParen ~
+        TokenParser.parse(Token.OpenParen) ~
         spaceOrFail.? ~
         ExpressionParser.parse ~
         spaceOrFail.? ~
-        TokenParser.CloseParen ~
+        TokenParser.parse(Token.CloseParen) ~
         spaceOrFail.? ~
         BlockParser.clause(required = true) ~
         Index
