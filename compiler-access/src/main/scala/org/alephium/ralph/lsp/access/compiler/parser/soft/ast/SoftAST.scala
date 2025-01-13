@@ -137,34 +137,6 @@ object SoftAST {
     extends TokenExpectedErrorAST(token)
        with TokenExpectedAST[T]
 
-  sealed trait OpenCurlyAST extends SoftAST
-
-  case class OpenCurly(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-       with OpenCurlyAST
-
-  case class OpenCurlyExpected(
-      index: SourceIndex)
-    extends TokenExpectedErrorAST(Token.OpenCurly)
-       with OpenCurlyAST
-
-  sealed trait CloseCurlyAST extends SoftAST
-
-  case class CloseCurly(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-       with CloseCurlyAST
-
-  case class CloseCurlyExpected(
-      index: SourceIndex)
-    extends TokenExpectedErrorAST(Token.CloseCurly)
-       with CloseCurlyAST
-
   sealed trait SemicolonAST extends SoftAST
 
   case class Semicolon(
@@ -225,11 +197,11 @@ object SoftAST {
 
   case class BlockClause(
       index: SourceIndex,
-      openCurly: OpenCurlyAST,
+      openCurly: TokenExpectedAST[Token.OpenCurly.type],
       preBodySpace: Option[Space],
       body: BlockBody,
       postBodySpace: Option[Space],
-      closeCurly: CloseCurlyAST)
+      closeCurly: TokenExpectedAST[Token.CloseCurly.type])
     extends ExpressionAST
 
   case class BlockBody(

@@ -66,24 +66,16 @@ object TestSoftAST {
       token = Token.CloseParen
     )
 
-  def OpenCurly(index: SourceIndex): SoftAST.OpenCurly =
-    SoftAST.OpenCurly(
+  def OpenCurly(index: SourceIndex): SoftAST.TokenDocumented[Token.OpenCurly.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.OpenCurly
-      )
+      token = Token.OpenCurly
     )
 
-  def CloseCurly(index: SourceIndex): SoftAST.CloseCurly =
-    SoftAST.CloseCurly(
+  def CloseCurly(index: SourceIndex): SoftAST.TokenDocumented[Token.CloseCurly.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.CloseCurly
-      )
+      token = Token.CloseCurly
     )
 
   def Identifier(

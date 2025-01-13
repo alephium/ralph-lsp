@@ -27,11 +27,11 @@ private object BlockParser {
   def clause[Unknown: P](required: Boolean): P[SoftAST.BlockClause] =
     P {
       Index ~
-        TokenParser.OpenCurly(required) ~
+        TokenParser.parse(required, Token.OpenCurly) ~
         spaceOrFail.? ~
         body(Some(Token.CloseCurly.lexeme)) ~
         spaceOrFail.? ~
-        TokenParser.CloseCurly ~
+        TokenParser.parse(Token.CloseCurly) ~
         Index
     } map {
       case (from, openCurly, preBodySpace, body, postBodySpace, closeCurly, to) =>

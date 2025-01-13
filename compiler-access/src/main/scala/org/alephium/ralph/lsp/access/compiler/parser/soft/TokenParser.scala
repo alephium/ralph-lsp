@@ -74,50 +74,6 @@ private object TokenParser {
         )
     }
 
-  def OpenCurly[Unknown: P](required: Boolean): P[SoftAST.OpenCurlyAST] =
-    if (required)
-      OpenCurly
-    else
-      OpenCurlyOrFail
-
-  def OpenCurly[Unknown: P]: P[SoftAST.OpenCurlyAST] =
-    P(Index ~ OpenCurlyOrFail.?) map {
-      case (_, Some(openCurly)) =>
-        openCurly
-
-      case (from, None) =>
-        SoftAST.OpenCurlyExpected(point(from))
-    }
-
-  def OpenCurlyOrFail[Unknown: P]: P[SoftAST.OpenCurly] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.OpenCurly.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.OpenCurly(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def CloseCurly[Unknown: P]: P[SoftAST.CloseCurlyAST] =
-    P(Index ~ CloseCurlyOrFail.?) map {
-      case (_, Some(closeCurly)) =>
-        closeCurly
-
-      case (from, None) =>
-        SoftAST.CloseCurlyExpected(point(from))
-    }
-
-  def CloseCurlyOrFail[Unknown: P]: P[SoftAST.CloseCurlyAST] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.CloseCurly.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.CloseCurly(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
   def LetOrFail[Unknown: P]: P[SoftAST.Let] =
     P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Let.lexeme.!) ~ Index) map {
       case (from, documentation, text, to) =>
@@ -149,11 +105,10 @@ private object TokenParser {
    */
   def InfixOperatorOrFail[Unknown: P]: P[SoftAST.TokenDocumented[Token.InfixOperator]] = {
     val infixOps =
-      ParserUtil
-        .orCombinator(
-          items = Token.infix.iterator.filter(_ != Token.ForwardSlash), // remove forward-slash
-          parser = TokenParser.parseOrFail(_: Token.InfixOperator)
-        )
+      ParserUtil.orCombinator(
+        items = Token.infix.iterator.filter(_ != Token.ForwardSlash), // remove forward-slash
+        parser = TokenParser.parseOrFail(_: Token.InfixOperator)
+      )
 
     // Forward-slash followed by another forward-slash is not an Operator.
     // `//` is reserved as a comment prefix.
