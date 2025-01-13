@@ -66,7 +66,7 @@ private object TokenParser {
   def InfixOperatorOrFail[Unknown: P]: P[SoftAST.TokenDocumented[Token.InfixOperator]] = {
     val infixOps =
       ParserUtil.orCombinator(
-        items = Token.infix.iterator.filter(_ != Token.ForwardSlash), // remove forward-slash
+        items = Token.infix.diff(Seq(Token.ForwardSlash)).iterator, // remove forward-slash
         parser = TokenParser.parseOrFail(_: Token.InfixOperator)
       )
 
