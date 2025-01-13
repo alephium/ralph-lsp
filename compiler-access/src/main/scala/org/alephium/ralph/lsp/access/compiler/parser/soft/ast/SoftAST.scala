@@ -138,22 +138,6 @@ object SoftAST {
 
   }
 
-  sealed trait InheritanceType extends SoftAST
-
-  case class Implements(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-       with InheritanceType
-
-  case class Extends(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-       with InheritanceType
-
   sealed trait TemplateToken extends TokenDocumentedAST[Token]
 
   case class Contract(
@@ -324,7 +308,7 @@ object SoftAST {
   /** Syntax: `implements or extends contract(arg1, arg2 ...)` */
   case class TemplateInheritance(
       index: SourceIndex,
-      inheritanceType: InheritanceType,
+      inheritanceType: TokenDocumented[Token.Inheritance],
       preConstructorCallSpace: SpaceAST,
       reference: ReferenceCallOrIdentifier,
       postConstructorCallSpace: Option[Space])

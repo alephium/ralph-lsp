@@ -242,26 +242,6 @@ private object TokenParser {
         )
     }
 
-  def ImplementsOrFail[Unknown: P]: P[SoftAST.Implements] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Implements.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Implements(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def ExtendsOrFail[Unknown: P]: P[SoftAST.Extends] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Extends.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Extends(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
   def LetOrFail[Unknown: P]: P[SoftAST.Let] =
     P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Let.lexeme.!) ~ Index) map {
       case (from, documentation, text, to) =>
