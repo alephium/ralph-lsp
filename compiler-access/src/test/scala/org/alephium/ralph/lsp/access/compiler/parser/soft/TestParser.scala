@@ -63,7 +63,7 @@ object TestParser {
   def parseIdentifier(code: String): SoftAST.IdentifierAST =
     runSoftParser(IdentifierParser.parseOrFail(_))(code)
 
-  def parseBoolean(code: String): SoftAST.TokenDocumented[Token.PrimitiveBoolean] =
+  def parseBoolean(code: String): SoftAST.TokenExpression[Token.PrimitiveBoolean] =
     runSoftParser(BooleanParser.parseOrFail(_))(code)
 
   def parseNumber(code: String): SoftAST.Number =

@@ -84,7 +84,7 @@ private object ExpressionParser {
         AnnotationParser.parseOrFail |
         TupleParser.parseOrFail |
         NumberParser.parseOrFail |
-        BooleanParser.parseOrFailExpression |
+        BooleanParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 
