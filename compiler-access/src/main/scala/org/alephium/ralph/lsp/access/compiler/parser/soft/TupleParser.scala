@@ -19,7 +19,6 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object TupleParser {
@@ -45,10 +44,10 @@ private object TupleParser {
     P {
       Index ~
         TokenParser.parse(required, Token.OpenParen) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         Index ~
         ExpressionParser.parseOrFail.? ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         tailParams.rep ~
         TokenParser.parse(Token.CloseParen) ~
         Index
@@ -85,9 +84,9 @@ private object TupleParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.Comma) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         ExpressionParser.parse ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         Index
     } map {
       case (from, comma, preParamNameSpace, argumentName, postParamNameSpace, to) =>

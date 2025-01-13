@@ -19,7 +19,6 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object FunctionParser {
@@ -34,12 +33,12 @@ private object FunctionParser {
     P {
       Index ~
         AnnotationParser.parseOrFail.rep ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         AccessModifierParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Fn) ~
-        space ~
+        SpaceParser.parse ~
         signature ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         BlockParser.clause(required = false).? ~
         Index
     } map {
@@ -67,9 +66,9 @@ private object FunctionParser {
     P {
       Index ~
         IdentifierParser.parse ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         ParameterParser.parse ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         returnSignature ~
         Index
     } map {
@@ -93,7 +92,7 @@ private object FunctionParser {
   private def returnSignature[Unknown: P]: P[SoftAST.FunctionReturnAST] =
     P {
       Index ~
-        (TokenParser.parse(Token.ForwardArrow) ~ spaceOrFail.? ~ TypeParser.parse).? ~
+        (TokenParser.parse(Token.ForwardArrow) ~ SpaceParser.parseOrFail.? ~ TypeParser.parse).? ~
         Index
     } map {
       case (from, Some((forwardArrow, space, tpe)), to) =>

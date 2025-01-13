@@ -21,10 +21,10 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
-private object CommonParser {
+object SpaceParser {
 
-  def space[Unknown: P]: P[SoftAST.SpaceAST] =
-    P(Index ~ spaceOrFail.?) map {
+  def parse[Unknown: P]: P[SoftAST.SpaceAST] =
+    P(Index ~ parseOrFail.?) map {
       case (_, Some(space)) =>
         space
 
@@ -32,13 +32,13 @@ private object CommonParser {
         SoftAST.SpaceExpected(range(from, from))
     }
 
-  def spaceOrFail[Unknown: P]: P[SoftAST.Space] =
+  def parseOrFail[Unknown: P]: P[SoftAST.Space] =
     P(toCodeOrFail(CharsWhileIn(" \t\r\n").!)) map {
       text =>
         SoftAST.Space(text)
     }
 
-  def toCodeOrFail[Unknown: P](parser: => P[String]): P[SoftAST.CodeString] =
+  private def toCodeOrFail[Unknown: P](parser: => P[String]): P[SoftAST.CodeString] =
     P(Index ~ parser ~ Index) map {
       case (from, code, to) =>
         SoftAST.CodeString(

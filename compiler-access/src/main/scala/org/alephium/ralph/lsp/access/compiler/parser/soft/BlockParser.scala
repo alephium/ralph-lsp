@@ -19,7 +19,6 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object BlockParser {
@@ -28,9 +27,9 @@ private object BlockParser {
     P {
       Index ~
         TokenParser.parse(required, Token.OpenCurly) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         body(Some(Token.CloseCurly)) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseCurly) ~
         Index
     } map {
@@ -51,7 +50,7 @@ private object BlockParser {
   private def body[Unknown: P](stop: Option[Token]): P[SoftAST.BlockBody] =
     P {
       Index ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         bodyPart(stop).rep ~
         Index
     } map {
@@ -67,7 +66,7 @@ private object BlockParser {
     P {
       Index ~
         part(stop) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         Index
     } map {
       case (from, ast, space, to) =>

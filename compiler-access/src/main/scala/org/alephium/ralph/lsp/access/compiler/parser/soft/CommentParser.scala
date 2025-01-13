@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
+import org.alephium.ralph.lsp.access.compiler.parser.soft.SpaceParser
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object CommentParser {
@@ -39,9 +39,9 @@ private object CommentParser {
   def parseOrFail[Unknown: P]: P[SoftAST.Comments] =
     P {
       Index ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         one.rep(1) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         Index
     } map {
       case (from, preSpace, comments, postSpace, to) =>
@@ -64,9 +64,9 @@ private object CommentParser {
     P {
       Index ~
         TokenParser.parseOrFailUndocumented(Token.DoubleForwardSlash) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         TextParser.parseOrFail(Token.Newline).? ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         Index
     } map {
       case (from, doubleForwardSlash, preTextSpace, text, postTextSpace, to) =>

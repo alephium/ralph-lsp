@@ -4,7 +4,6 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
-import CommonParser._
 
 object IdentifierParser {
 
@@ -42,8 +41,8 @@ object IdentifierParser {
     P {
       Index ~
         CommentParser.parseOrFail.? ~
-        !(reserved() ~ spaceOrFail) ~ // disallow reserved names such as `let mut = 1`.
-        !(reserved() ~ End) ~         // also handle cases where tail is the end of file `let mut`.
+        !(reserved() ~ SpaceParser.parseOrFail) ~ // disallow reserved names such as `let mut = 1`.
+        !(reserved() ~ End) ~                     // also handle cases where tail is the end of file `let mut`.
         CodeParser.parseOrFail(isDevDefinedName.!) ~
         Index
     } map {
