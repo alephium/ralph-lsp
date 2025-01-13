@@ -38,15 +38,6 @@ private object CommonParser {
         SoftAST.Space(text)
     }
 
-  def text[Unknown: P](stop: Token*): P[SoftAST.CodeString] =
-    P(Index ~ TokenParser.WhileNotOrFail(stop: _*).! ~ Index) map {
-      case (from, text, to) =>
-        SoftAST.CodeString(
-          text = text,
-          index = range(from, to)
-        )
-    }
-
   def unresolved[Unknown: P](stop: Option[Token]): P[SoftAST.Unresolved] =
     P {
       Index ~
