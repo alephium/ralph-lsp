@@ -86,6 +86,7 @@ object Token {
   case object Semicolon                                        extends Delimiter(";") with Reserved
   case object Newline                                          extends Delimiter(System.lineSeparator())
   case object Space                                            extends Delimiter(" ")
+  case object Tab                                              extends Delimiter("\t")
   case object DoubleForwardSlash                               extends Delimiter("//") with Reserved
 
   sealed abstract class Punctuator(override val lexeme: String) extends Token

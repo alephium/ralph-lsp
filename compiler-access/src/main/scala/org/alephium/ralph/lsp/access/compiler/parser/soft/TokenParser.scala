@@ -88,4 +88,7 @@ private object TokenParser {
   def WhileNotOrFail[Unknown: P](tokens: Token*): P[Unit] =
     P((!ParserUtil.orTokenCombinator(tokens.iterator) ~ AnyChar).rep(1))
 
+  def WhileInOrFail[Unknown: P](tokens: Token*): P[Unit] =
+    P(ParserUtil.orTokenCombinator(tokens.iterator).rep(1))
+
 }
