@@ -20,7 +20,7 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object CommentParser {
 
@@ -63,7 +63,7 @@ private object CommentParser {
   private def one[Unknown: P]: P[SoftAST.Comment] =
     P {
       Index ~
-        TokenParser.DoubleForwardSlashOrFail ~
+        TokenParser.parseOrFailUndocumented(Token.DoubleForwardSlash) ~
         spaceOrFail.? ~
         text.? ~
         spaceOrFail.? ~

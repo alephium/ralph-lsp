@@ -138,19 +138,6 @@ object SoftAST {
 
   }
 
-  case class Equal(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-
-  case class DoubleForwardSlash(code: CodeString) extends TokenAST[Token] {
-
-    override def index: SourceIndex =
-      code.index
-
-  }
-
   case class Const(
       index: SourceIndex,
       documentation: Option[Comments],
@@ -470,7 +457,7 @@ object SoftAST {
 
   case class Comment(
       index: SourceIndex,
-      doubleForwardSlash: DoubleForwardSlash,
+      doubleForwardSlash: TokenUndocumented[Token.DoubleForwardSlash.type],
       preTextSpace: Option[Space],
       text: Option[CodeString],
       postTextSpace: Option[Space])
@@ -563,7 +550,7 @@ object SoftAST {
       modifiers: Seq[SoftAST.AssignmentAccessModifier],
       identifier: Identifier,
       postIdentifierSpace: Option[Space],
-      equalToken: Equal,
+      equalToken: TokenDocumented[Token.Equal.type],
       postEqualSpace: Option[Space],
       expression: ExpressionAST)
     extends ExpressionAST

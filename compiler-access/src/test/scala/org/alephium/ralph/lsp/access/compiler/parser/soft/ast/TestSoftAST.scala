@@ -16,9 +16,9 @@ object TestSoftAST {
       token = Token.Comma
     )
 
-  def DoubleForwardSlash(index: SourceIndex): SoftAST.DoubleForwardSlash =
-    SoftAST.DoubleForwardSlash(
-      code = Code(
+  def DoubleForwardSlash(index: SourceIndex): SoftAST.TokenUndocumented[Token.DoubleForwardSlash.type] =
+    SoftAST.TokenUndocumented(
+      SoftAST.CodeToken(
         index = index,
         token = Token.DoubleForwardSlash
       )

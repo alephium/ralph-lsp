@@ -44,6 +44,9 @@ private object TokenParser {
         )
     }
 
+  def parseOrFailUndocumented[Unknown: P, T <: Token](token: T): P[SoftAST.TokenUndocumented[T]] =
+    P(CodeParser.parseOrFail(token)) map (SoftAST.TokenUndocumented(_))
+
   def Colon[Unknown: P]: P[SoftAST.ColonAST] =
     P(Index ~ ColonOrFail.?) map {
       case (_, Some(colon)) =>
@@ -189,12 +192,6 @@ private object TokenParser {
         )
     }
 
-  def DoubleForwardSlashOrFail[Unknown: P]: P[SoftAST.DoubleForwardSlash] =
-    P(toCodeOrFail(Token.DoubleForwardSlash.lexeme.!)) map {
-      text =>
-        SoftAST.DoubleForwardSlash(text)
-    }
-
   def ContractOrFail[Unknown: P]: P[SoftAST.Contract] =
     P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Contract.lexeme.!) ~ Index) map {
       case (from, documentation, text, to) =>
@@ -259,16 +256,6 @@ private object TokenParser {
     P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Extends.lexeme.!) ~ Index) map {
       case (from, documentation, text, to) =>
         SoftAST.Extends(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def EqualOrFail[Unknown: P]: P[SoftAST.Equal] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Equal.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Equal(
           index = range(from, to),
           documentation = documentation,
           code = text
