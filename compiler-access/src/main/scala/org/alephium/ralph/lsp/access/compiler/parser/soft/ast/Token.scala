@@ -48,6 +48,7 @@ object Token {
    */
   sealed trait Reserved      extends Token
   sealed trait InfixOperator extends Token
+  sealed trait Expression    extends Token // A token that is also an expression.
 
   sealed abstract class Operator(override val lexeme: String) extends Token
   case object Equality                                        extends Operator("==") with Reserved with InfixOperator
@@ -139,10 +140,14 @@ object Token {
   case object Embeds                                        extends Native("embeds")
 
   sealed abstract class Primitive(override val lexeme: String) extends Token
-  case object True                                             extends Primitive("true") with Reserved
-  case object False                                            extends Primitive("false") with Reserved
-  case object Alph_Small                                       extends Primitive("alph") with Reserved
-  case object Alph_Big                                         extends Primitive("ALPH") with Reserved
+
+  sealed abstract class PrimitiveBoolean(override val lexeme: String) extends Primitive(lexeme) with Expression
+  case object True                                                    extends PrimitiveBoolean("true") with Reserved
+  case object False                                                   extends PrimitiveBoolean("false") with Reserved
+
+  sealed abstract class PrimitiveUnit(override val lexeme: String) extends Primitive(lexeme)
+  case object Alph_Small                                           extends PrimitiveUnit("alph") with Reserved
+  case object Alph_Big                                             extends PrimitiveUnit("ALPH") with Reserved
 
   sealed trait Term                        extends Token
   case class Name(lexeme: String)          extends Term

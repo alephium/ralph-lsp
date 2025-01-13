@@ -132,6 +132,19 @@ object SoftAST {
     extends TokenExpectedErrorAST(token)
        with TokenDocExpectedAST[T]
 
+  /**
+   * Represents a token that is also an expression, e.g. `true` & `false`.
+   *
+   * @param token A token that is also an expression.
+   * @tparam T Type of token.
+   */
+  case class TokenExpression[+T <: Token.Expression](token: TokenDocumented[T]) extends ExpressionAST {
+
+    override def index: SourceIndex =
+      token.index
+
+  }
+
   case class Template(
       index: SourceIndex,
       templateType: TokenDocumented[Token.TemplateDefinition],
