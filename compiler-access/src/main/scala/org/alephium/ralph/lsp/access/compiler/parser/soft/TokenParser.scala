@@ -192,36 +192,6 @@ private object TokenParser {
         )
     }
 
-  def StructOrFail[Unknown: P]: P[SoftAST.Struct] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Struct.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Struct(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def EnumOrFail[Unknown: P]: P[SoftAST.Enum] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Enum.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Enum(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def EventOrFail[Unknown: P]: P[SoftAST.Event] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Event.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Event(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
   def LetOrFail[Unknown: P]: P[SoftAST.Let] =
     P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Let.lexeme.!) ~ Index) map {
       case (from, documentation, text, to) =>

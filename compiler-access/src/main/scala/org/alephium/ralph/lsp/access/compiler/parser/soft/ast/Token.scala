@@ -97,10 +97,12 @@ object Token {
   sealed abstract class Data(override val lexeme: String) extends Token
   case object Let                                         extends Data("let") with Reserved
   case object Mut                                         extends Data("mut") with Reserved
-  case object Struct                                      extends Data("struct") with Reserved
   case object Const                                       extends Data("const") with Reserved
-  case object Enum                                        extends Data("enum") with Reserved
-  case object Event                                       extends Data("event") with Reserved
+
+  sealed abstract class DataTemplate(override val lexeme: String) extends Data(lexeme)
+  case object Struct                                              extends DataTemplate("struct") with Reserved
+  case object Enum                                                extends DataTemplate("enum") with Reserved
+  case object Event                                               extends DataTemplate("event") with Reserved
 
   sealed abstract class Control(override val lexeme: String) extends Token
   case object If                                             extends Control("if") with Reserved

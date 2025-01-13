@@ -138,26 +138,6 @@ object SoftAST {
 
   }
 
-  sealed trait DataTemplateToken extends TokenDocumentedAST[Token]
-
-  case class Struct(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends DataTemplateToken
-
-  case class Enum(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends DataTemplateToken
-
-  case class Event(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends DataTemplateToken
-
   sealed trait ColonAST extends SoftAST
 
   case class Colon(
@@ -284,7 +264,7 @@ object SoftAST {
 
   case class DataTemplate(
       index: SourceIndex,
-      dataType: DataTemplateToken,
+      dataType: TokenDocumented[Token.DataTemplate],
       preIdentifierSpace: SpaceAST,
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
