@@ -10,11 +10,11 @@ import org.scalatest.OptionValues._
 class BooleanParserSpec extends AnyWordSpec with Matchers {
 
   "true" in {
-    parseBoolean("true") shouldBe True(indexOf(">>true<<"))
+    parseBoolean("true").token shouldBe True(indexOf(">>true<<"))
   }
 
   "false" in {
-    parseBoolean("false") shouldBe False(indexOf(">>false<<"))
+    parseBoolean("false").token shouldBe False(indexOf(">>false<<"))
   }
 
   "boolean with comments" in {
@@ -24,7 +24,7 @@ class BooleanParserSpec extends AnyWordSpec with Matchers {
           parseBoolean {
             s"""// comment
                |$bool""".stripMargin
-          }
+          }.token
 
         // has comment
         result.documentation.value.comments should have size 1
