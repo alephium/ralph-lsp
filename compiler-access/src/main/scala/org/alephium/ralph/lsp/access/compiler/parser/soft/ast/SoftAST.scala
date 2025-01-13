@@ -94,14 +94,9 @@ object SoftAST {
    */
   sealed trait TokenAST[+T <: Token] extends CodeAST {
 
-//    def code: CodeToken[T]
+    def code: CodeToken[T]
 
   }
-
-  /**
-   * [[TokenAST]] instances that can contain documentation.
-   */
-  sealed trait TokenDocumentedAST[T <: Token] extends TokenAST[T] with CodeDocumentedAST
 
   abstract class ErrorAST(val message: String)       extends SoftAST
   abstract class ExpectedErrorAST(element: String)   extends ErrorAST(s"$element expected")
@@ -110,7 +105,7 @@ object SoftAST {
   sealed trait TokenExpectedAST[+T <: Token] extends SoftAST
 
   /**
-   * Represents a token that may code comments or documentation.
+   * Represents a token that may contain code comments or documentation.
    *
    * @param index         Source index of the token, including its documentation.
    * @param documentation Optional documentation (e.g. comments) preceding the token
