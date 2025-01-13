@@ -23,10 +23,10 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object UnresolvedParser {
 
-  def parseOrFail[Unknown: P](stop: Option[Token]): P[SoftAST.Unresolved] =
+  def parseOrFail[Unknown: P](stop: Token*): P[SoftAST.Unresolved] =
     P {
       Index ~
-        CodeParser.parseOrFail(TokenParser.WhileNotOrFail(Seq(Token.Space, Token.Newline) ++ stop: _*).!) ~
+        CodeParser.parseOrFail(TokenParser.WhileNotOrFail(stop :+ Token.Space :+ Token.Newline: _*).!) ~
         CommentParser.parseOrFail.? ~
         Index
     } map {

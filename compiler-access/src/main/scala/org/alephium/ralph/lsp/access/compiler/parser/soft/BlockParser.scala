@@ -28,7 +28,7 @@ private object BlockParser {
       Index ~
         TokenParser.parse(required, Token.OpenCurly) ~
         SpaceParser.parseOrFail.? ~
-        body(Some(Token.CloseCurly)) ~
+        body(Token.CloseCurly) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseCurly) ~
         Index
@@ -45,9 +45,9 @@ private object BlockParser {
     }
 
   def body[Unknown: P]: P[SoftAST.BlockBody] =
-    body(stop = None)
+    body()
 
-  private def body[Unknown: P](stop: Option[Token]): P[SoftAST.BlockBody] =
+  private def body[Unknown: P](stop: Token*): P[SoftAST.BlockBody] =
     P {
       Index ~
         SpaceParser.parseOrFail.? ~
@@ -62,7 +62,7 @@ private object BlockParser {
         )
     }
 
-  private def bodyPart[Unknown: P](stop: Option[Token]): P[SoftAST.BlockBodyPart] =
+  private def bodyPart[Unknown: P](stop: Seq[Token]): P[SoftAST.BlockBodyPart] =
     P {
       Index ~
         part(stop) ~
@@ -77,14 +77,14 @@ private object BlockParser {
         )
     }
 
-  private def part[Unknown: P](stop: Option[Token]): P[SoftAST.BodyPartAST] =
+  private def part[Unknown: P](stop: Seq[Token]): P[SoftAST.BodyPartAST] =
     P {
       TemplateParser.parseOrFail |
         DataTemplateParser.parseOrFail |
         FunctionParser.parseOrFail |
         ExpressionParser.parseOrFail |
         CommentParser.parseOrFail |
-        UnresolvedParser.parseOrFail(stop)
+        UnresolvedParser.parseOrFail(stop: _*)
     }
 
 }
