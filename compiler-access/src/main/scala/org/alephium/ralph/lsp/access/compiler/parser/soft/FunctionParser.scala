@@ -64,7 +64,15 @@ private object FunctionParser {
    *         such as its name, parameters and return type.
    */
   private def signature[Unknown: P]: P[SoftAST.FunctionSignature] =
-    P(Index ~ identifier ~ spaceOrFail.? ~ ParameterParser.parse ~ spaceOrFail.? ~ returnSignature ~ Index) map {
+    P {
+      Index ~
+        identifier ~
+        spaceOrFail.? ~
+        ParameterParser.parse ~
+        spaceOrFail.? ~
+        returnSignature ~
+        Index
+    } map {
       case (from, fnName, headSpace, params, tailSpace, returns, to) =>
         SoftAST.FunctionSignature(
           index = range(from, to),
@@ -83,7 +91,11 @@ private object FunctionParser {
    *         type or an error indicating that the return type is expected.
    */
   private def returnSignature[Unknown: P]: P[SoftAST.FunctionReturnAST] =
-    P(Index ~ (TokenParser.parse(Token.ForwardArrow) ~ spaceOrFail.? ~ TypeParser.parse).? ~ Index) map {
+    P {
+      Index ~
+        (TokenParser.parse(Token.ForwardArrow) ~ spaceOrFail.? ~ TypeParser.parse).? ~
+        Index
+    } map {
       case (from, Some((forwardArrow, space, tpe)), to) =>
         SoftAST.FunctionReturn(
           index = range(from, to),
