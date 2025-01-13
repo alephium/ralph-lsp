@@ -138,20 +138,6 @@ object SoftAST {
 
   }
 
-  sealed trait ColonAST extends SoftAST
-
-  case class Colon(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-       with ColonAST
-
-  case class ColonExpected(
-      index: SourceIndex)
-    extends TokenExpectedErrorAST(Token.Colon)
-       with ColonAST
-
   sealed trait ForwardArrowAST extends SoftAST
 
   case class ForwardArrow(
@@ -486,7 +472,7 @@ object SoftAST {
       modifiers: Seq[SoftAST.AssignmentAccessModifier],
       name: IdentifierAST,
       preColonSpace: Option[Space],
-      colon: ColonAST,
+      colon: TokenDocumented[Token.Colon.type],
       postColonSpace: Option[Space],
       tpe: TypeAST)
     extends ExpressionAST

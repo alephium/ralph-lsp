@@ -42,14 +42,10 @@ object TestSoftAST {
       token = Token.TxScript
     )
 
-  def Colon(index: SourceIndex): SoftAST.Colon =
-    SoftAST.Colon(
+  def Colon(index: SourceIndex): SoftAST.TokenDocumented[Token.Colon.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.Colon
-      )
+      token = Token.Colon
     )
 
   def ForwardArrow(index: SourceIndex): SoftAST.ForwardArrow =

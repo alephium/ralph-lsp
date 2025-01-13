@@ -47,25 +47,6 @@ private object TokenParser {
   def parseOrFailUndocumented[Unknown: P, T <: Token](token: T): P[SoftAST.TokenUndocumented[T]] =
     P(CodeParser.parseOrFail(token)) map (SoftAST.TokenUndocumented(_))
 
-  def Colon[Unknown: P]: P[SoftAST.ColonAST] =
-    P(Index ~ ColonOrFail.?) map {
-      case (_, Some(colon)) =>
-        colon
-
-      case (from, None) =>
-        SoftAST.ColonExpected(point(from))
-    }
-
-  def ColonOrFail[Unknown: P]: P[SoftAST.ColonAST] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Colon.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Colon(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
   def Semicolon[Unknown: P]: P[SoftAST.SemicolonAST] =
     P(Index ~ SemicolonOrFail.?) map {
       case (_, Some(semicolon)) =>
