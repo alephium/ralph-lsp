@@ -60,6 +60,9 @@ object TestParser {
   def parseReservedTokenOrError(remove: Token.Reserved*)(code: String): Either[Parsed.Failure, Token.Reserved] =
     runAnyParserOrError(TokenParser.Reserved(remove: _*)(_))(code)
 
+  def parseIdentifier(code: String): SoftAST.IdentifierAST =
+    runSoftParser(IdentifierParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,
@@ -118,7 +121,8 @@ object TestParser {
     result match {
       case Left(error) =>
         // Print a formatted error so it's easier to debug.
-        fail(CompilerError.FastParseError(error).toFormatter().format(Some(Console.RED)))
+        val throwable = CompilerError.FastParseError(error)
+        fail(throwable.toFormatter().format(Some(Console.RED)), throwable)
 
       case Right(ast) =>
         ast
