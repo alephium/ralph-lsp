@@ -92,7 +92,7 @@ object SoftAST {
   /**
    * Has an [[Token]] type associates with it.
    */
-  sealed trait TokenAST[T <: Token] extends CodeAST {
+  sealed trait TokenAST[+T <: Token] extends CodeAST {
 
 //    def code: CodeToken[T]
 
@@ -107,7 +107,7 @@ object SoftAST {
   abstract class ExpectedErrorAST(element: String)   extends ErrorAST(s"$element expected")
   abstract class TokenExpectedErrorAST(token: Token) extends ExpectedErrorAST(s"'${token.lexeme}'")
 
-  sealed trait TokenExpectedAST[T <: Token] extends TokenAST[T]
+  sealed trait TokenExpectedAST[+T <: Token] extends TokenAST[T]
 
   /**
    * Represents a token that may code comments or documentation.
@@ -117,14 +117,14 @@ object SoftAST {
    * @param code          The token itself.
    * @tparam T The specific type of token.
    */
-  case class TokenDocumented[T <: Token](
+  case class TokenDocumented[+T <: Token](
       index: SourceIndex,
       documentation: Option[Comments],
       code: CodeToken[T])
     extends TokenExpectedAST[T]
        with CodeDocumentedAST
 
-  case class TokenUndocumented[T <: Token](code: CodeToken[T]) extends TokenAST[T] {
+  case class TokenUndocumented[+T <: Token](code: CodeToken[T]) extends TokenAST[T] {
 
     override def index: SourceIndex =
       code.index
@@ -137,12 +137,6 @@ object SoftAST {
       code.index
 
   }
-
-  case class Operator(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
 
   sealed trait InheritanceType extends SoftAST
 
@@ -467,7 +461,7 @@ object SoftAST {
       index: SourceIndex,
       leftExpression: ExpressionAST,
       preOperatorSpace: Option[Space],
-      operator: Operator,
+      operator: TokenDocumented[Token.InfixOperator],
       postOperatorSpace: Option[Space],
       rightExpression: ExpressionAST)
     extends ExpressionAST

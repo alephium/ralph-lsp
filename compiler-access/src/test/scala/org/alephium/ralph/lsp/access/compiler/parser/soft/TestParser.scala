@@ -54,7 +54,7 @@ object TestParser {
   def parseReservedToken(code: String): Token.Reserved =
     runAnyParser(TokenParser.Reserved(_))(code)
 
-  def parseInfixOperatorOrFail(code: String): SoftAST.Operator =
+  def parseInfixOperatorOrFail(code: String): SoftAST.TokenDocumented[Token.InfixOperator] =
     runAnyParser(TokenParser.InfixOperatorOrFail(_))(code)
 
   def parseReservedTokenOrError(code: String): Either[Parsed.Failure, Token.Reserved] =

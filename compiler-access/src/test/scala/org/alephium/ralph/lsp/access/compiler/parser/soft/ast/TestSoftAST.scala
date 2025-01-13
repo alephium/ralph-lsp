@@ -30,18 +30,6 @@ object TestSoftAST {
       token = Token.At
     )
 
-  def InfixOperator(
-      index: SourceIndex,
-      token: Token.InfixOperator): SoftAST.Operator =
-    SoftAST.Operator(
-      index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = token
-      )
-    )
-
   def Contract(index: SourceIndex): SoftAST.Contract =
     SoftAST.Contract(
       index = index,
