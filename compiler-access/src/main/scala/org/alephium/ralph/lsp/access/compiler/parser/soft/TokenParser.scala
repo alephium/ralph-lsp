@@ -20,7 +20,6 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.util.ParserUtil
 
 private object TokenParser {
@@ -54,26 +53,6 @@ private object TokenParser {
 
   def parseOrFailUndocumented[Unknown: P, T <: Token](token: T): P[SoftAST.TokenUndocumented[T]] =
     P(CodeParser.parseOrFail(token)) map (SoftAST.TokenUndocumented(_))
-
-  def LetOrFail[Unknown: P]: P[SoftAST.Let] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Let.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Let(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def MutOrFail[Unknown: P]: P[SoftAST.Mut] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Mut.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Mut(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
 
   /**
    * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.

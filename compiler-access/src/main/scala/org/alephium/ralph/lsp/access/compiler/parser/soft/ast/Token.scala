@@ -95,9 +95,11 @@ object Token {
   case object Quote                                             extends Punctuator("\"") with Reserved
 
   sealed abstract class Data(override val lexeme: String) extends Token
-  case object Let                                         extends Data("let") with Reserved
-  case object Mut                                         extends Data("mut") with Reserved
   case object Const                                       extends Data("const") with Reserved
+
+  sealed abstract class DataDefinition(override val lexeme: String) extends Data(lexeme)
+  case object Let                                                   extends DataDefinition("let") with Reserved
+  case object Mut                                                   extends DataDefinition("mut") with Reserved
 
   sealed abstract class DataTemplate(override val lexeme: String) extends Data(lexeme)
   case object Struct                                              extends DataTemplate("struct") with Reserved

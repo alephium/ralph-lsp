@@ -20,21 +20,21 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object AssignmentAccessModifierParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.AssignmentAccessModifier] =
     P {
       Index ~
-        (TokenParser.LetOrFail | TokenParser.MutOrFail) ~
+        (TokenParser.parseOrFail(Token.Let) | TokenParser.parseOrFail(Token.Mut)) ~
         spaceOrFail.? ~
         Index
     } map {
-      case (from, doubleForwardSlash, space, to) =>
+      case (from, dataAssignment, space, to) =>
         SoftAST.AssignmentAccessModifier(
           index = range(from, to),
-          doubleForwardSlash,
+          token = dataAssignment,
           postTokenSpace = space
         )
     }

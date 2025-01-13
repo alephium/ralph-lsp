@@ -137,20 +137,6 @@ object SoftAST {
     extends TokenExpectedErrorAST(token)
        with TokenExpectedAST[T]
 
-  sealed abstract class AssignmentControlToken extends TokenDocumentedAST[Token]
-
-  case class Let(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends AssignmentControlToken
-
-  case class Mut(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends AssignmentControlToken
-
   case class Template(
       index: SourceIndex,
       templateType: TokenDocumented[Token.TemplateDefinition],
@@ -394,7 +380,7 @@ object SoftAST {
 
   case class AssignmentAccessModifier(
       index: SourceIndex,
-      token: AssignmentControlToken,
+      token: TokenDocumented[Token.DataDefinition],
       postTokenSpace: Option[Space])
     extends ExpressionAST
 
@@ -447,7 +433,7 @@ object SoftAST {
   }
 
   /**
-   * Represents a segment of code that is not tokenised.
+   * Represents a string within a segment of code.
    *
    * @param index Source index of the code string.
    * @param text  String content of the code
@@ -458,7 +444,7 @@ object SoftAST {
     extends Code
 
   /**
-   * Represents a tokenised segment of code.
+   * Represents a token within a segment of code.
    *
    * @param index Source index of the token
    * @param token Token instance representing the parsed code
