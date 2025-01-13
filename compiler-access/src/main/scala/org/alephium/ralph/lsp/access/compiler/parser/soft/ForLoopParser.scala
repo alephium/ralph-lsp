@@ -17,11 +17,11 @@ private object ForLoopParser {
         spaceOrFail.? ~
         ExpressionParser.parse ~
         spaceOrFail.? ~
-        TokenParser.Semicolon ~
+        TokenParser.parse(Token.Semicolon) ~
         spaceOrFail.? ~
         ExpressionParser.parse ~
         spaceOrFail.? ~
-        TokenParser.Semicolon ~
+        TokenParser.parse(Token.Semicolon) ~
         spaceOrFail.? ~
         ExpressionParser.parse ~
         spaceOrFail.? ~

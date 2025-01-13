@@ -137,20 +137,6 @@ object SoftAST {
     extends TokenExpectedErrorAST(token)
        with TokenExpectedAST[T]
 
-  sealed trait SemicolonAST extends SoftAST
-
-  case class Semicolon(
-      index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-       with SemicolonAST
-
-  case class SemicolonExpected(
-      index: SourceIndex)
-    extends TokenExpectedErrorAST(Token.Semicolon)
-       with SemicolonAST
-
   sealed abstract class AssignmentControlToken extends TokenDocumentedAST[Token]
 
   case class Let(
@@ -360,11 +346,11 @@ object SoftAST {
       postOpenParenSpace: Option[Space],
       expression1: ExpressionAST,
       postExpression1Space: Option[Space],
-      postExpression1Semicolon: SemicolonAST,
+      postExpression1Semicolon: TokenExpectedAST[Token.Semicolon.type],
       postExpression1SemicolonSpace: Option[Space],
       expression2: ExpressionAST,
       postExpression2Space: Option[Space],
-      postExpression2Semicolon: SemicolonAST,
+      postExpression2Semicolon: TokenExpectedAST[Token.Semicolon.type],
       postExpression2SemicolonSpace: Option[Space],
       expression3: ExpressionAST,
       postExpression3Space: Option[Space],
