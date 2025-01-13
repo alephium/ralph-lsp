@@ -31,7 +31,7 @@ private object TokenParser {
         token
 
       case (from, None) =>
-        SoftAST.TokenExpected(SoftAST.CodeToken(point(from), token))
+        SoftAST.TokenExpected(point(from), token)
     }
 
   def parseOrFail[Unknown: P, T <: Token](token: T): P[SoftAST.TokenDocumented[T]] =
@@ -148,25 +148,6 @@ private object TokenParser {
     P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.CloseCurly.lexeme.!) ~ Index) map {
       case (from, documentation, text, to) =>
         SoftAST.CloseCurly(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def ForwardArrow[Unknown: P]: P[SoftAST.ForwardArrowAST] =
-    P(Index ~ ForwardArrowOrFail.?) map {
-      case (_, Some(forwardArrow)) =>
-        forwardArrow
-
-      case (from, None) =>
-        SoftAST.ForwardArrowExpected(point(from))
-    }
-
-  def ForwardArrowOrFail[Unknown: P]: P[SoftAST.ForwardArrowAST] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.ForwardArrow.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.ForwardArrow(
           index = range(from, to),
           documentation = documentation,
           code = text

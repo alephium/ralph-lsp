@@ -107,7 +107,7 @@ object SoftAST {
   abstract class ExpectedErrorAST(element: String)   extends ErrorAST(s"$element expected")
   abstract class TokenExpectedErrorAST(token: Token) extends ExpectedErrorAST(s"'${token.lexeme}'")
 
-  sealed trait TokenExpectedAST[+T <: Token] extends TokenAST[T]
+  sealed trait TokenExpectedAST[+T <: Token] extends SoftAST
 
   /**
    * Represents a token that may code comments or documentation.
@@ -131,26 +131,11 @@ object SoftAST {
 
   }
 
-  case class TokenExpected[T <: Token](code: CodeToken[T]) extends TokenExpectedErrorAST(code.token) with TokenExpectedAST[T] {
-
-    override def index: SourceIndex =
-      code.index
-
-  }
-
-  sealed trait ForwardArrowAST extends SoftAST
-
-  case class ForwardArrow(
+  case class TokenExpected[T <: Token](
       index: SourceIndex,
-      documentation: Option[Comments],
-      code: CodeString)
-    extends TokenDocumentedAST[Token]
-       with ForwardArrowAST
-
-  case class ForwardArrowExpected(
-      index: SourceIndex)
-    extends TokenExpectedErrorAST(Token.ForwardArrow)
-       with ForwardArrowAST
+      token: T)
+    extends TokenExpectedErrorAST(token)
+       with TokenExpectedAST[T]
 
   sealed trait OpenParenAST extends SoftAST
 
@@ -335,7 +320,7 @@ object SoftAST {
 
   case class FunctionReturn(
       index: SourceIndex,
-      forwardArrow: ForwardArrowAST,
+      forwardArrow: TokenExpectedAST[Token.ForwardArrow.type],
       space: Option[Space],
       tpe: TypeAST)
     extends FunctionReturnAST

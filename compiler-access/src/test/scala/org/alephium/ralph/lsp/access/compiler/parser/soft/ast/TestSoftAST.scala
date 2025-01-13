@@ -48,14 +48,10 @@ object TestSoftAST {
       token = Token.Colon
     )
 
-  def ForwardArrow(index: SourceIndex): SoftAST.ForwardArrow =
-    SoftAST.ForwardArrow(
+  def ForwardArrow(index: SourceIndex): SoftAST.TokenDocumented[Token.ForwardArrow.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.ForwardArrow
-      )
+      token = Token.ForwardArrow
     )
 
   def OpenParen(index: SourceIndex): SoftAST.OpenParen =
