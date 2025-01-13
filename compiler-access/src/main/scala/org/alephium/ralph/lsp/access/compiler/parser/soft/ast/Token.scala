@@ -52,6 +52,7 @@ object Token {
   sealed abstract class Operator(override val lexeme: String) extends Token
   case object Equality                                        extends Operator("==") with Reserved with InfixOperator
   case object GreaterThanOrEqual                              extends Operator(">=") with Reserved with InfixOperator
+  case object PlusPlus                                        extends Operator("++") with Reserved with InfixOperator
   case object PlusEquals                                      extends Operator("+=") with Reserved with InfixOperator
   case object MinusEquals                                     extends Operator("-=") with Reserved with InfixOperator
   case object LessThanOrEqual                                 extends Operator("<=") with Reserved with InfixOperator
