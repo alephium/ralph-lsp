@@ -85,7 +85,7 @@ private object BlockParser {
         FunctionParser.parseOrFail |
         ExpressionParser.parseOrFail |
         CommentParser.parseOrFail |
-        unresolved(stop)
+        UnresolvedParser.parseOrFail(stop)
     }
 
 }

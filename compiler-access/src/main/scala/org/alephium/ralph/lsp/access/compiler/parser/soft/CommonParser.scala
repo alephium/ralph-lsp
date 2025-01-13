@@ -38,21 +38,6 @@ private object CommonParser {
         SoftAST.Space(text)
     }
 
-  def unresolved[Unknown: P](stop: Option[Token]): P[SoftAST.Unresolved] =
-    P {
-      Index ~
-        CodeParser.parseOrFail(TokenParser.WhileNotOrFail(Seq(Token.Space, Token.Newline) ++ stop: _*).!) ~
-        CommentParser.parseOrFail.? ~
-        Index
-    } map {
-      case (from, text, tailComment, to) =>
-        SoftAST.Unresolved(
-          index = range(from, to),
-          code = text,
-          documentation = tailComment
-        )
-    }
-
   def identifier[Unknown: P](required: Boolean): P[SoftAST.IdentifierAST] =
     if (required)
       identifier
