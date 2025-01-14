@@ -102,6 +102,30 @@ object TestSoftAST {
       token = Token.AlphUppercase
     )
 
+  def Let(index: SourceIndex): SoftAST.TokenDocumented[Token.Let.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Let
+    )
+
+  def Mut(index: SourceIndex): SoftAST.TokenDocumented[Token.Mut.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Mut
+    )
+
+  def Equal(index: SourceIndex): SoftAST.TokenDocumented[Token.Equal.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Equal
+    )
+
+  def Plus(index: SourceIndex): SoftAST.TokenDocumented[Token.Plus.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Plus
+    )
+
   def Identifier(
       index: SourceIndex,
       text: String): SoftAST.Identifier =

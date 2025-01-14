@@ -5,28 +5,26 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object AssignmentParser {
+private case object AssignmentParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.Assignment] =
     P {
       Index ~
-        AssignmentAccessModifierParser.parseOrFail.rep ~
-        IdentifierParser.parseOrFail ~
+        ExpressionParser.parseOrFailSelective(parseInfix = true, parseMethodCall = true, parseAssignment = false) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Equal) ~
         SpaceParser.parseOrFail.? ~
         ExpressionParser.parse ~
         Index
     } map {
-      case (from, control, identifier, postIdentifierSpace, equalToken, postEqualSpace, expression, to) =>
+      case (from, identifier, postIdentifierSpace, equalToken, postEqualSpace, expression, to) =>
         SoftAST.Assignment(
           index = range(from, to),
-          modifiers = control,
-          identifier = identifier,
+          expressionLeft = identifier,
           postIdentifierSpace = postIdentifierSpace,
           equalToken = equalToken,
           postEqualSpace = postEqualSpace,
-          expression = expression
+          expressionRight = expression
         )
     }
 

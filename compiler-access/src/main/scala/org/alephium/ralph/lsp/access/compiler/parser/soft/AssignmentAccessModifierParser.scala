@@ -27,7 +27,7 @@ private object AssignmentAccessModifierParser {
     P {
       Index ~
         (TokenParser.parseOrFail(Token.Let) | TokenParser.parseOrFail(Token.Mut)) ~
-        SpaceParser.parseOrFail.? ~
+        SpaceParser.parseOrFail ~
         Index
     } map {
       case (from, dataAssignment, space, to) =>

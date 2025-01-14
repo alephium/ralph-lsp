@@ -30,6 +30,12 @@ object TestParser {
   def parseAnnotation(code: String): SoftAST.Annotation =
     runSoftParser(AnnotationParser.parseOrFail(_))(code)
 
+  def parseVariableDeclaration(code: String): SoftAST.VariableDeclaration =
+    runSoftParser(VariableDeclarationParser.parseOrFail(_))(code)
+
+  def parseAssignment(code: String): SoftAST.Assignment =
+    runSoftParser(AssignmentParser.parseOrFail(_))(code)
+
   def parseTemplate(code: String): SoftAST.Template =
     runSoftParser(TemplateParser.parseOrFail(_))(code)
 
