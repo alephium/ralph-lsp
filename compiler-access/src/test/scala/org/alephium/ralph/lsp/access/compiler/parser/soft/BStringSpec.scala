@@ -12,7 +12,7 @@ import org.scalatest.OptionValues._
 class BStringSpec extends AnyWordSpec with Matchers {
 
   "b alone" should {
-    "not parser as String literal" in {
+    "not parse as String literal" in {
       // this is because "b" is not a reserved token.
       // "b" followed by tick is required for string literal.
       assertIsFastParseError {
