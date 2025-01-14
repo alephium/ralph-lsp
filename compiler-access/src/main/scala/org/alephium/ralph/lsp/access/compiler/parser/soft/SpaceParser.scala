@@ -17,11 +17,25 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import fastparse.NoWhitespace.noWhitespaceImplicit
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object TypeParser {
+object SpaceParser {
 
-  def parse[Unknown: P]: P[SoftAST.TypeAST] =
-    P(TupleParser.parseOrFail | IdentifierParser.parse)
+  def parse[Unknown: P]: P[SoftAST.SpaceAST] =
+    P(Index ~ parseOrFail.?) map {
+      case (_, Some(space)) =>
+        space
+
+      case (from, None) =>
+        SoftAST.SpaceExpected(range(from, from))
+    }
+
+  def parseOrFail[Unknown: P]: P[SoftAST.Space] =
+    P(CodeParser.parseOrFail(TokenParser.WhileInOrFail(Token.Space, Token.Tab, Token.Newline).!)) map {
+      text =>
+        SoftAST.Space(text)
+    }
 
 }

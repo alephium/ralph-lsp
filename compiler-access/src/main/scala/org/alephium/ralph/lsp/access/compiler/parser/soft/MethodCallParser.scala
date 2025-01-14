@@ -3,7 +3,6 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 case object MethodCallParser {
@@ -12,7 +11,7 @@ case object MethodCallParser {
     P {
       Index ~
         ExpressionParser.parseOrFailSelective(parseInfix = false, parseMethodCall = false) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         dotCall.rep(1) ~
         Index
     } map {
@@ -29,7 +28,7 @@ case object MethodCallParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.Dot) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         ReferenceCallParser.parse ~
         Index
     } map {

@@ -3,7 +3,6 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object TypeAssignmentParser {
@@ -12,10 +11,10 @@ private object TypeAssignmentParser {
     P {
       Index ~
         AssignmentAccessModifierParser.parseOrFail.rep ~
-        identifierOrFail ~
-        spaceOrFail.? ~
+        IdentifierParser.parseOrFail ~
+        SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Colon) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         TypeParser.parse ~
         Index
     } map {

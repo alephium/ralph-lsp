@@ -17,11 +17,25 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import fastparse.NoWhitespace.noWhitespaceImplicit
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object TypeParser {
+private object UnresolvedParser {
 
-  def parse[Unknown: P]: P[SoftAST.TypeAST] =
-    P(TupleParser.parseOrFail | IdentifierParser.parse)
+  def parseOrFail[Unknown: P](stop: Token*): P[SoftAST.Unresolved] =
+    P {
+      Index ~
+        CodeParser.parseOrFail(TokenParser.WhileNotOrFail(stop :+ Token.Space :+ Token.Newline: _*).!) ~
+        CommentParser.parseOrFail.? ~
+        Index
+    } map {
+      case (from, text, tailComment, to) =>
+        SoftAST.Unresolved(
+          index = range(from, to),
+          code = text,
+          documentation = tailComment
+        )
+    }
 
 }

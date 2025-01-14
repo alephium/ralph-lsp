@@ -3,7 +3,6 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object TemplateParser {
@@ -12,11 +11,11 @@ private object TemplateParser {
     P {
       Index ~
         (TokenParser.parseOrFail(Token.Contract) | TokenParser.parseOrFail(Token.TxScript) | TokenParser.parseOrFail(Token.AssetScript)) ~
-        space ~
-        identifier ~
-        spaceOrFail.? ~
+        SpaceParser.parse ~
+        IdentifierParser.parse ~
+        SpaceParser.parseOrFail.? ~
         ParameterParser.parseOrFail.? ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         inheritance.rep ~
         BlockParser.clause(required = true) ~
         Index
@@ -40,9 +39,9 @@ private object TemplateParser {
     P {
       Index ~
         (TokenParser.parseOrFail(Token.Implements) | TokenParser.parseOrFail(Token.Extends)) ~
-        space ~
-        (ReferenceCallParser.parseOrFail | identifier) ~
-        spaceOrFail.? ~
+        SpaceParser.parse ~
+        (ReferenceCallParser.parseOrFail | IdentifierParser.parse) ~
+        SpaceParser.parseOrFail.? ~
         Index
     } map {
       case (from, token, preConstructorCallSpace, constructorCall, postConstructorCallSpace, to) =>

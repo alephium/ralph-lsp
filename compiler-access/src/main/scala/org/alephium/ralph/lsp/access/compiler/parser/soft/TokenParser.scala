@@ -57,8 +57,8 @@ private object TokenParser {
   /**
    * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.
    */
-  def Reserved[Unknown: P]: P[Token.Reserved] =
-    ParserUtil.orTokenCombinator(Token.reserved.iterator)
+  def Reserved[Unknown: P](remove: Token.Reserved*): P[Token.Reserved] =
+    ParserUtil.orTokenCombinator(Token.reserved.diff(remove).iterator)
 
   /**
    * Parses all tokens of type [[Token.InfixOperator]] and also their comments.
@@ -66,7 +66,7 @@ private object TokenParser {
   def InfixOperatorOrFail[Unknown: P]: P[SoftAST.TokenDocumented[Token.InfixOperator]] = {
     val infixOps =
       ParserUtil.orCombinator(
-        items = Token.infix.iterator.filter(_ != Token.ForwardSlash), // remove forward-slash
+        items = Token.infix.diff(Seq(Token.ForwardSlash)).iterator, // remove forward-slash
         parser = TokenParser.parseOrFail(_: Token.InfixOperator)
       )
 
@@ -77,5 +77,18 @@ private object TokenParser {
 
     infixOps | forwardSlashOperator
   }
+
+  /**
+   * Reads characters until at least one of the input tokens is matched.
+   *
+   * If none of the tokens are found, the parser fails.
+   *
+   * @param tokens the token to check for.
+   */
+  def WhileNotOrFail[Unknown: P](tokens: Token*): P[Unit] =
+    P((!ParserUtil.orTokenCombinator(tokens.iterator) ~ AnyChar).rep(1))
+
+  def WhileInOrFail[Unknown: P](tokens: Token*): P[Unit] =
+    P(ParserUtil.orTokenCombinator(tokens.iterator).rep(1))
 
 }

@@ -19,7 +19,6 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object BlockParser {
@@ -28,9 +27,9 @@ private object BlockParser {
     P {
       Index ~
         TokenParser.parse(required, Token.OpenCurly) ~
-        spaceOrFail.? ~
-        body(Some(Token.CloseCurly.lexeme)) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
+        body(Token.CloseCurly) ~
+        SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseCurly) ~
         Index
     } map {
@@ -46,13 +45,13 @@ private object BlockParser {
     }
 
   def body[Unknown: P]: P[SoftAST.BlockBody] =
-    body(stopChars = None)
+    body()
 
-  private def body[Unknown: P](stopChars: Option[String]): P[SoftAST.BlockBody] =
+  private def body[Unknown: P](stop: Token*): P[SoftAST.BlockBody] =
     P {
       Index ~
-        spaceOrFail.? ~
-        bodyPart(stopChars).rep ~
+        SpaceParser.parseOrFail.? ~
+        bodyPart(stop).rep ~
         Index
     } map {
       case (from, headSpace, parts, to) =>
@@ -63,11 +62,11 @@ private object BlockParser {
         )
     }
 
-  private def bodyPart[Unknown: P](stopChars: Option[String]): P[SoftAST.BlockBodyPart] =
+  private def bodyPart[Unknown: P](stop: Seq[Token]): P[SoftAST.BlockBodyPart] =
     P {
       Index ~
-        part(stopChars) ~
-        spaceOrFail.? ~
+        part(stop) ~
+        SpaceParser.parseOrFail.? ~
         Index
     } map {
       case (from, ast, space, to) =>
@@ -78,14 +77,14 @@ private object BlockParser {
         )
     }
 
-  private def part[Unknown: P](stopChars: Option[String]): P[SoftAST.BodyPartAST] =
+  private def part[Unknown: P](stop: Seq[Token]): P[SoftAST.BodyPartAST] =
     P {
       TemplateParser.parseOrFail |
         DataTemplateParser.parseOrFail |
         FunctionParser.parseOrFail |
         ExpressionParser.parseOrFail |
         CommentParser.parseOrFail |
-        unresolved(stopChars)
+        UnresolvedParser.parseOrFail(stop: _*)
     }
 
 }

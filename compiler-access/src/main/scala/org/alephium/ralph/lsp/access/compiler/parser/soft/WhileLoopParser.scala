@@ -3,7 +3,6 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object WhileLoopParser {
@@ -12,13 +11,13 @@ private object WhileLoopParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.While) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.OpenParen) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         ExpressionParser.parse ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseParen) ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         BlockParser.clause(required = true) ~
         Index
     } map {

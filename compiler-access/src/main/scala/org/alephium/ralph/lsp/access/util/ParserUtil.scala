@@ -34,10 +34,10 @@ object ParserUtil {
       parser = createParser(_: T)
     )
 
-  @inline private def createParser[Unknown: P, T <: Token](item: T): P[T] =
-    P(item.lexeme) map {
+  @inline private def createParser[Unknown: P, T <: Token](token: T): P[T] =
+    P(token.lexeme) map {
       _ =>
-        item
+        token
     }
 
 }

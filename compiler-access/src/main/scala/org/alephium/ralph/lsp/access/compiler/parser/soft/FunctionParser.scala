@@ -19,7 +19,6 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object FunctionParser {
@@ -34,12 +33,12 @@ private object FunctionParser {
     P {
       Index ~
         AnnotationParser.parseOrFail.rep ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         AccessModifierParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Fn) ~
-        space ~
+        SpaceParser.parse ~
         signature ~
-        spaceOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         BlockParser.clause(required = false).? ~
         Index
     } map {
@@ -64,7 +63,15 @@ private object FunctionParser {
    *         such as its name, parameters and return type.
    */
   private def signature[Unknown: P]: P[SoftAST.FunctionSignature] =
-    P(Index ~ identifier ~ spaceOrFail.? ~ ParameterParser.parse ~ spaceOrFail.? ~ returnSignature ~ Index) map {
+    P {
+      Index ~
+        IdentifierParser.parse ~
+        SpaceParser.parseOrFail.? ~
+        ParameterParser.parse ~
+        SpaceParser.parseOrFail.? ~
+        returnSignature ~
+        Index
+    } map {
       case (from, fnName, headSpace, params, tailSpace, returns, to) =>
         SoftAST.FunctionSignature(
           index = range(from, to),
@@ -83,7 +90,11 @@ private object FunctionParser {
    *         type or an error indicating that the return type is expected.
    */
   private def returnSignature[Unknown: P]: P[SoftAST.FunctionReturnAST] =
-    P(Index ~ (TokenParser.parse(Token.ForwardArrow) ~ spaceOrFail.? ~ TypeParser.parse).? ~ Index) map {
+    P {
+      Index ~
+        (TokenParser.parse(Token.ForwardArrow) ~ SpaceParser.parseOrFail.? ~ TypeParser.parse).? ~
+        Index
+    } map {
       case (from, Some((forwardArrow, space, tpe)), to) =>
         SoftAST.FunctionReturn(
           index = range(from, to),

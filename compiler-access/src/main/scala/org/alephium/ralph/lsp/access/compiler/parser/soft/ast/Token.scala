@@ -52,6 +52,7 @@ object Token {
   sealed abstract class Operator(override val lexeme: String) extends Token
   case object Equality                                        extends Operator("==") with Reserved with InfixOperator
   case object GreaterThanOrEqual                              extends Operator(">=") with Reserved with InfixOperator
+  case object PlusPlus                                        extends Operator("++") with Reserved with InfixOperator
   case object PlusEquals                                      extends Operator("+=") with Reserved with InfixOperator
   case object MinusEquals                                     extends Operator("-=") with Reserved with InfixOperator
   case object LessThanOrEqual                                 extends Operator("<=") with Reserved with InfixOperator
@@ -85,6 +86,7 @@ object Token {
   case object Semicolon                                        extends Delimiter(";") with Reserved
   case object Newline                                          extends Delimiter(System.lineSeparator())
   case object Space                                            extends Delimiter(" ")
+  case object Tab                                              extends Delimiter("\t")
   case object DoubleForwardSlash                               extends Delimiter("//") with Reserved
 
   sealed abstract class Punctuator(override val lexeme: String) extends Token
