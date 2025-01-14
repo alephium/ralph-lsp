@@ -78,6 +78,18 @@ object TestSoftAST {
       token = Token.CloseCurly
     )
 
+  def True(index: SourceIndex): SoftAST.TokenDocumented[Token.True.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.True
+    )
+
+  def False(index: SourceIndex): SoftAST.TokenDocumented[Token.False.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.False
+    )
+
   def Identifier(
       index: SourceIndex,
       text: String): SoftAST.Identifier =

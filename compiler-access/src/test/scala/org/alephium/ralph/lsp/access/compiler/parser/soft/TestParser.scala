@@ -63,6 +63,9 @@ object TestParser {
   def parseIdentifier(code: String): SoftAST.IdentifierAST =
     runSoftParser(IdentifierParser.parseOrFail(_))(code)
 
+  def parseBoolean(code: String): SoftAST.TokenExpression[Token.PrimitiveBoolean] =
+    runSoftParser(BooleanParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,
