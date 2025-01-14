@@ -41,6 +41,9 @@ object Demo extends App {
         |     while(cache.getValue() == objectB.read().value) {
         |        // do something
         |     }
+        |
+        |     // mutable binding
+        |     let (a, mut b, _) = (1, 2, 3)
         |  }
         |
         |  🚀
