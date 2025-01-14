@@ -36,6 +36,9 @@ object TestParser {
   def parseAssignment(code: String): SoftAST.Assignment =
     runSoftParser(AssignmentParser.parseOrFail(_))(code)
 
+  def parseMutableBinding(code: String): SoftAST.MutableBinding =
+    runSoftParser(MutableBindingParser.parseOrFail(_))(code)
+
   def parseTemplate(code: String): SoftAST.Template =
     runSoftParser(TemplateParser.parseOrFail(_))(code)
 

@@ -93,6 +93,7 @@ private object ExpressionParser {
         ForLoopParser.parseOrFail |
         WhileLoopParser.parseOrFail |
         VariableDeclarationParser.parseOrFail |
+        MutableBindingParser.parseOrFail |
         TypeAssignmentParser.parseOrFail |
         BlockParser.clause(required = false) |
         ReferenceCallParser.parseOrFail |

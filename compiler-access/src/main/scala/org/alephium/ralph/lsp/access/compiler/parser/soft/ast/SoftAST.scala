@@ -403,6 +403,14 @@ object SoftAST {
       assignment: Assignment)
     extends ExpressionAST
 
+  /** Syntax: mut [identifier] */
+  case class MutableBinding(
+      index: SourceIndex,
+      mut: TokenDocumented[Token.Mut.type],
+      space: Space,
+      identifier: Identifier)
+    extends ExpressionAST
+
   case class Annotation(
       index: SourceIndex,
       at: TokenDocumented[Token.At.type],
