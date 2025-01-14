@@ -95,12 +95,16 @@ object Token {
   case object Quote                                             extends Punctuator("\"") with Reserved
 
   sealed abstract class Data(override val lexeme: String) extends Token
-  case object Let                                         extends Data("let") with Reserved
-  case object Mut                                         extends Data("mut") with Reserved
-  case object Struct                                      extends Data("struct") with Reserved
   case object Const                                       extends Data("const") with Reserved
-  case object Enum                                        extends Data("enum") with Reserved
-  case object Event                                       extends Data("event") with Reserved
+
+  sealed abstract class DataDefinition(override val lexeme: String) extends Data(lexeme)
+  case object Let                                                   extends DataDefinition("let") with Reserved
+  case object Mut                                                   extends DataDefinition("mut") with Reserved
+
+  sealed abstract class DataTemplate(override val lexeme: String) extends Data(lexeme)
+  case object Struct                                              extends DataTemplate("struct") with Reserved
+  case object Enum                                                extends DataTemplate("enum") with Reserved
+  case object Event                                               extends DataTemplate("event") with Reserved
 
   sealed abstract class Control(override val lexeme: String) extends Token
   case object If                                             extends Control("if") with Reserved
@@ -115,11 +119,13 @@ object Token {
   sealed abstract class Definition(override val lexeme: String) extends Token
   case object Fn                                                extends Definition("fn") with Reserved
   case object Import                                            extends Definition("import") with Reserved
-  case object Contract                                          extends Definition("Contract") with Reserved
   case object Abstract                                          extends Definition("Abstract") with Reserved
-  case object TxScript                                          extends Definition("TxScript") with Reserved
-  case object AssetScript                                       extends Definition("AssetScript") with Reserved
   case object Interface                                         extends Definition("Interface") with Reserved
+
+  sealed abstract class TemplateDefinition(override val lexeme: String) extends Definition(lexeme)
+  case object Contract                                                  extends TemplateDefinition("Contract") with Reserved
+  case object TxScript                                                  extends TemplateDefinition("TxScript") with Reserved
+  case object AssetScript                                               extends TemplateDefinition("AssetScript") with Reserved
 
   sealed abstract class Inheritance(override val lexeme: String) extends Token
   case object Extends                                            extends Inheritance("extends") with Reserved

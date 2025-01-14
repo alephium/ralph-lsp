@@ -26,7 +26,7 @@ class TokenParserSpec extends AnyWordSpec {
         infixOperators foreach {
           infix =>
             parseInfixOperatorOrFail(infix.lexeme) shouldBe
-              InfixOperator(
+              TokenDocumented(
                 index = range(0, infix.lexeme.length),
                 token = infix
               )

@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
@@ -30,7 +30,7 @@ class TupleSpec extends AnyWordSpec with Matchers {
     val tuple =
       parseTuple(")")
 
-    tuple.openParen shouldBe SoftAST.OpenParenExpected(indexOf(">><<)"))
+    tuple.openParen shouldBe SoftAST.TokenExpected(indexOf(">><<)"), Token.OpenParen)
     tuple.closeParen shouldBe CloseParen(indexOf(">>)<<"))
   }
 
@@ -39,7 +39,7 @@ class TupleSpec extends AnyWordSpec with Matchers {
       parseTuple("(")
 
     tuple.openParen shouldBe OpenParen(indexOf(">>(<<"))
-    tuple.closeParen shouldBe SoftAST.CloseParenExpected(indexOf("(>><<"))
+    tuple.closeParen shouldBe SoftAST.TokenExpected(indexOf("(>><<"), Token.CloseParen)
   }
 
   "empty tuple" when {
@@ -98,7 +98,7 @@ class TupleSpec extends AnyWordSpec with Matchers {
         text = "aaa"
       )
 
-    tuple.closeParen shouldBe SoftAST.CloseParenExpected(indexOf("(aaa >><<typename"))
+    tuple.closeParen shouldBe SoftAST.TokenExpected(indexOf("(aaa >><<typename"), Token.CloseParen)
 
     /**
      * Second body part is an Identifier

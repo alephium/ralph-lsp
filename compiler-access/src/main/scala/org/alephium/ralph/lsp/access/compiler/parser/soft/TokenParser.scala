@@ -20,341 +20,39 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
-import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
 import org.alephium.ralph.lsp.access.util.ParserUtil
 
 private object TokenParser {
 
-  def Colon[Unknown: P]: P[SoftAST.ColonAST] =
-    P(Index ~ ColonOrFail.?) map {
-      case (_, Some(colon)) =>
-        colon
-
-      case (from, None) =>
-        SoftAST.ColonExpected(point(from))
-    }
-
-  def ColonOrFail[Unknown: P]: P[SoftAST.ColonAST] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Colon.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Colon(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def Semicolon[Unknown: P]: P[SoftAST.SemicolonAST] =
-    P(Index ~ SemicolonOrFail.?) map {
-      case (_, Some(semicolon)) =>
-        semicolon
-
-      case (from, None) =>
-        SoftAST.SemicolonExpected(point(from))
-    }
-
-  def SemicolonOrFail[Unknown: P]: P[SoftAST.SemicolonAST] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Semicolon.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Semicolon(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def OpenParen[Unknown: P](required: Boolean): P[SoftAST.OpenParenAST] =
+  def parse[Unknown: P, T <: Token](
+      required: Boolean,
+      token: T): P[SoftAST.TokenDocExpectedAST[T]] =
     if (required)
-      OpenParen
+      parse(token)
     else
-      OpenParenOrFail
+      parseOrFail(token)
 
-  def OpenParen[Unknown: P]: P[SoftAST.OpenParenAST] =
-    P(Index ~ OpenParenOrFail.?) map {
-      case (_, Some(openParen)) =>
-        openParen
-
-      case (from, None) =>
-        SoftAST.OpenParenExpected(point(from))
-    }
-
-  def OpenParenOrFail[Unknown: P]: P[SoftAST.OpenParen] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.OpenParen.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.OpenParen(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def CloseParen[Unknown: P]: P[SoftAST.CloseParenAST] =
-    P(Index ~ CloseParenOrFail.?) map {
-      case (_, Some(closeParen)) =>
-        closeParen
+  def parse[Unknown: P, T <: Token](token: T): P[SoftAST.TokenDocExpectedAST[T]] =
+    P(Index ~ parseOrFail(token).?) map {
+      case (_, Some(token)) =>
+        token
 
       case (from, None) =>
-        SoftAST.CloseParenExpected(point(from))
+        SoftAST.TokenExpected(point(from), token)
     }
 
-  def CloseParenOrFail[Unknown: P]: P[SoftAST.CloseParenAST] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.CloseParen.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.CloseParen(
+  def parseOrFail[Unknown: P, T <: Token](token: T): P[SoftAST.TokenDocumented[T]] =
+    P(Index ~ CommentParser.parseOrFail.? ~ CodeParser.parseOrFail(token) ~ Index) map {
+      case (from, documentation, token, to) =>
+        SoftAST.TokenDocumented(
           index = range(from, to),
           documentation = documentation,
-          code = text
+          code = token
         )
     }
 
-  def OpenCurly[Unknown: P](required: Boolean): P[SoftAST.OpenCurlyAST] =
-    if (required)
-      OpenCurly
-    else
-      OpenCurlyOrFail
-
-  def OpenCurly[Unknown: P]: P[SoftAST.OpenCurlyAST] =
-    P(Index ~ OpenCurlyOrFail.?) map {
-      case (_, Some(openCurly)) =>
-        openCurly
-
-      case (from, None) =>
-        SoftAST.OpenCurlyExpected(point(from))
-    }
-
-  def OpenCurlyOrFail[Unknown: P]: P[SoftAST.OpenCurly] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.OpenCurly.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.OpenCurly(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def CloseCurly[Unknown: P]: P[SoftAST.CloseCurlyAST] =
-    P(Index ~ CloseCurlyOrFail.?) map {
-      case (_, Some(closeCurly)) =>
-        closeCurly
-
-      case (from, None) =>
-        SoftAST.CloseCurlyExpected(point(from))
-    }
-
-  def CloseCurlyOrFail[Unknown: P]: P[SoftAST.CloseCurlyAST] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.CloseCurly.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.CloseCurly(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def CommaOrFail[Unknown: P]: P[SoftAST.Comma] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Comma.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Comma(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def ForwardArrow[Unknown: P]: P[SoftAST.ForwardArrowAST] =
-    P(Index ~ ForwardArrowOrFail.?) map {
-      case (_, Some(forwardArrow)) =>
-        forwardArrow
-
-      case (from, None) =>
-        SoftAST.ForwardArrowExpected(point(from))
-    }
-
-  def ForwardArrowOrFail[Unknown: P]: P[SoftAST.ForwardArrowAST] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.ForwardArrow.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.ForwardArrow(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def DoubleForwardSlashOrFail[Unknown: P]: P[SoftAST.DoubleForwardSlash] =
-    P(toCodeOrFail(Token.DoubleForwardSlash.lexeme.!)) map {
-      text =>
-        SoftAST.DoubleForwardSlash(text)
-    }
-
-  def ContractOrFail[Unknown: P]: P[SoftAST.Contract] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Contract.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Contract(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def TxScriptOrFail[Unknown: P]: P[SoftAST.TxScript] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.TxScript.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.TxScript(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def StructOrFail[Unknown: P]: P[SoftAST.Struct] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Struct.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Struct(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def EnumOrFail[Unknown: P]: P[SoftAST.Enum] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Enum.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Enum(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def EventOrFail[Unknown: P]: P[SoftAST.Event] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Event.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Event(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def FnOrFail[Unknown: P]: P[SoftAST.Fn] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Fn.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Fn(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def ImplementsOrFail[Unknown: P]: P[SoftAST.Implements] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Implements.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Implements(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def ExtendsOrFail[Unknown: P]: P[SoftAST.Extends] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Extends.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Extends(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def DotOrFail[Unknown: P]: P[SoftAST.Dot] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Dot.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Dot(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def ReturnOrFail[Unknown: P]: P[SoftAST.Return] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Return.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Return(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def ForOrFail[Unknown: P]: P[SoftAST.For] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.For.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.For(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def WhileOrFail[Unknown: P]: P[SoftAST.While] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.While.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.While(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def EqualOrFail[Unknown: P]: P[SoftAST.Equal] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Equal.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Equal(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def LetOrFail[Unknown: P]: P[SoftAST.Let] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Let.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Let(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def MutOrFail[Unknown: P]: P[SoftAST.Mut] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Mut.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Mut(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def PubOrFail[Unknown: P]: P[SoftAST.Pub] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.Pub.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Pub(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
-
-  def AtOrFail[Unknown: P]: P[SoftAST.At] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(Token.At.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.At(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
+  def parseOrFailUndocumented[Unknown: P, T <: Token](token: T): P[SoftAST.TokenUndocumented[T]] =
+    P(CodeParser.parseOrFail(token)) map (SoftAST.TokenUndocumented(_))
 
   /**
    * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.
@@ -364,33 +62,20 @@ private object TokenParser {
 
   /**
    * Parses all tokens of type [[Token.InfixOperator]] and also their comments.
-   *
-   * TODO: Restrict the output type to [[SoftAST.InfixOperator]]
    */
-  def InfixOperatorOrFail[Unknown: P]: P[SoftAST.Operator] = {
+  def InfixOperatorOrFail[Unknown: P]: P[SoftAST.TokenDocumented[Token.InfixOperator]] = {
     val infixOps =
-      ParserUtil
-        .orCombinator(
-          items = Token.infix.iterator.filter(_ != Token.ForwardSlash), // remove forward-slash
-          parser = buildInfixOperatorParser(_: Token.InfixOperator)
-        )
+      ParserUtil.orCombinator(
+        items = Token.infix.iterator.filter(_ != Token.ForwardSlash), // remove forward-slash
+        parser = TokenParser.parseOrFail(_: Token.InfixOperator)
+      )
 
     // Forward-slash followed by another forward-slash is not an Operator.
     // `//` is reserved as a comment prefix.
     def forwardSlashOperator =
-      P(buildInfixOperatorParser(Token.ForwardSlash) ~ !Token.ForwardSlash.lexeme)
+      P(TokenParser.parseOrFail(Token.ForwardSlash) ~ !Token.ForwardSlash.lexeme)
 
     infixOps | forwardSlashOperator
   }
-
-  private def buildInfixOperatorParser[Unknown: P](operator: Token.InfixOperator): P[SoftAST.Operator] =
-    P(Index ~ CommentParser.parseOrFail.? ~ toCodeOrFail(operator.lexeme.!) ~ Index) map {
-      case (from, documentation, text, to) =>
-        SoftAST.Operator(
-          index = range(from, to),
-          documentation = documentation,
-          code = text
-        )
-    }
 
 }

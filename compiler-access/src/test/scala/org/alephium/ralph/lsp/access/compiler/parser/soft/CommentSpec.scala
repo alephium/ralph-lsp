@@ -93,7 +93,7 @@ class CommentSpec extends AnyWordSpec with Matchers {
               doubleForwardSlash = DoubleForwardSlash(indexOf(s">>//<< my comment $newLine")),
               preTextSpace = Some(SpaceOne(indexOf(s"//>> <<my comment $newLine"))),
               text = Some(
-                SoftAST.Code(
+                SoftAST.CodeString(
                   index = indexOf(s"// >>my comment <<$newLine"),
                   text = "my comment "
                 )
@@ -126,7 +126,7 @@ class CommentSpec extends AnyWordSpec with Matchers {
               doubleForwardSlash = DoubleForwardSlash(indexOf(">>//<< fn function()")),
               preTextSpace = Some(SpaceOne(indexOf("//>> <<fn function()"))),
               text = Some(
-                SoftAST.Code(
+                SoftAST.CodeString(
                   index = indexOf("// >>fn function()<<"),
                   text = "fn function()"
                 )

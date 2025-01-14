@@ -4,7 +4,7 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 case object MethodCallParser {
 
@@ -28,7 +28,7 @@ case object MethodCallParser {
   private def dotCall[Unknown: P]: P[SoftAST.DotCall] =
     P {
       Index ~
-        TokenParser.DotOrFail ~
+        TokenParser.parseOrFail(Token.Dot) ~
         spaceOrFail.? ~
         ReferenceCallParser.parse ~
         Index

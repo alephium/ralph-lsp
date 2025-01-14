@@ -20,7 +20,7 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object AnnotationParser {
 
@@ -39,7 +39,7 @@ private object AnnotationParser {
   def parseOrFail[Unknown: P]: P[SoftAST.Annotation] =
     P {
       Index ~
-        TokenParser.AtOrFail ~
+        TokenParser.parseOrFail(Token.At) ~
         spaceOrFail.? ~
         identifier ~
         spaceOrFail.? ~

@@ -4,134 +4,78 @@ import org.alephium.ralph.SourceIndex
 
 object TestSoftAST {
 
-  def Fn(index: SourceIndex): SoftAST.Fn =
-    SoftAST.Fn(
+  def Fn(index: SourceIndex): SoftAST.TokenDocumented[Token.Fn.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.Fn
-      )
+      token = Token.Fn
     )
 
-  def Comma(index: SourceIndex): SoftAST.Comma =
-    SoftAST.Comma(
+  def Comma(index: SourceIndex): SoftAST.TokenDocumented[Token.Comma.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.Comma
-      )
+      token = Token.Comma
     )
 
-  def DoubleForwardSlash(index: SourceIndex): SoftAST.DoubleForwardSlash =
-    SoftAST.DoubleForwardSlash(
-      code = Code(
+  def DoubleForwardSlash(index: SourceIndex): SoftAST.TokenUndocumented[Token.DoubleForwardSlash.type] =
+    SoftAST.TokenUndocumented(
+      SoftAST.CodeToken(
         index = index,
         token = Token.DoubleForwardSlash
       )
     )
 
-  def At(index: SourceIndex): SoftAST.At =
-    SoftAST.At(
+  def At(index: SourceIndex): SoftAST.TokenDocumented[Token.At.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.At
-      )
+      token = Token.At
     )
 
-  def InfixOperator(
-      index: SourceIndex,
-      token: Token.InfixOperator): SoftAST.Operator =
-    SoftAST.Operator(
+  def Contract(index: SourceIndex): SoftAST.TokenDocumented[Token.Contract.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = token
-      )
+      token = Token.Contract
     )
 
-  def Contract(index: SourceIndex): SoftAST.Contract =
-    SoftAST.Contract(
+  def TxScript(index: SourceIndex): SoftAST.TokenDocumented[Token.TxScript.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.Contract
-      )
+      token = Token.TxScript
     )
 
-  def TxScript(index: SourceIndex): SoftAST.TxScript =
-    SoftAST.TxScript(
+  def Colon(index: SourceIndex): SoftAST.TokenDocumented[Token.Colon.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.TxScript
-      )
+      token = Token.Colon
     )
 
-  def Colon(index: SourceIndex): SoftAST.Colon =
-    SoftAST.Colon(
+  def ForwardArrow(index: SourceIndex): SoftAST.TokenDocumented[Token.ForwardArrow.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.Colon
-      )
+      token = Token.ForwardArrow
     )
 
-  def ForwardArrow(index: SourceIndex): SoftAST.ForwardArrow =
-    SoftAST.ForwardArrow(
+  def OpenParen(index: SourceIndex): SoftAST.TokenDocumented[Token.OpenParen.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.ForwardArrow
-      )
+      token = Token.OpenParen
     )
 
-  def OpenParen(index: SourceIndex): SoftAST.OpenParen =
-    SoftAST.OpenParen(
+  def CloseParen(index: SourceIndex): SoftAST.TokenDocumented[Token.CloseParen.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.OpenParen
-      )
+      token = Token.CloseParen
     )
 
-  def CloseParen(index: SourceIndex): SoftAST.CloseParen =
-    SoftAST.CloseParen(
+  def OpenCurly(index: SourceIndex): SoftAST.TokenDocumented[Token.OpenCurly.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.CloseParen
-      )
+      token = Token.OpenCurly
     )
 
-  def OpenCurly(index: SourceIndex): SoftAST.OpenCurly =
-    SoftAST.OpenCurly(
+  def CloseCurly(index: SourceIndex): SoftAST.TokenDocumented[Token.CloseCurly.type] =
+    TokenDocumented(
       index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.OpenCurly
-      )
-    )
-
-  def CloseCurly(index: SourceIndex): SoftAST.CloseCurly =
-    SoftAST.CloseCurly(
-      index = index,
-      documentation = None,
-      code = Code(
-        index = index,
-        token = Token.CloseCurly
-      )
+      token = Token.CloseCurly
     )
 
   def Identifier(
@@ -140,7 +84,7 @@ object TestSoftAST {
     SoftAST.Identifier(
       index = index,
       documentation = None,
-      code = SoftAST.Code(
+      code = SoftAST.CodeString(
         index = index,
         text = text
       )
@@ -152,7 +96,7 @@ object TestSoftAST {
     SoftAST.Unresolved(
       index = index,
       documentation = None,
-      code = SoftAST.Code(
+      code = SoftAST.CodeString(
         index = index,
         text = text
       )
@@ -162,7 +106,7 @@ object TestSoftAST {
       index: SourceIndex,
       text: String): SoftAST.Space =
     SoftAST.Space(
-      code = SoftAST.Code(
+      code = SoftAST.CodeString(
         index = index,
         text = text
       )
@@ -170,7 +114,7 @@ object TestSoftAST {
 
   def SpaceOne(index: SourceIndex): SoftAST.Space =
     SoftAST.Space(
-      code = SoftAST.Code(
+      code = SoftAST.CodeString(
         index = index,
         text = " "
       )
@@ -186,10 +130,22 @@ object TestSoftAST {
 
   def Code(
       index: SourceIndex,
-      token: Token): SoftAST.Code =
-    SoftAST.Code(
+      token: Token): SoftAST.CodeString =
+    SoftAST.CodeString(
       index = index,
       text = token.lexeme
+    )
+
+  def TokenDocumented[T <: Token](
+      index: SourceIndex,
+      token: T): SoftAST.TokenDocumented[T] =
+    SoftAST.TokenDocumented(
+      index = index,
+      documentation = None,
+      code = SoftAST.CodeToken(
+        index = index,
+        token = token
+      )
     )
 
 }

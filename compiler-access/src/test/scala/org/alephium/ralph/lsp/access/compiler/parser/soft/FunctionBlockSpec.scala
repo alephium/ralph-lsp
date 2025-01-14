@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -74,7 +74,7 @@ class FunctionBlockSpec extends AnyWordSpec with Matchers {
         )
 
       block.closeCurly shouldBe
-        SoftAST.CloseCurlyExpected(indexOf("fn -> {>><<"))
+        SoftAST.TokenExpected(indexOf("fn -> {>><<"), Token.CloseCurly)
     }
 
   }

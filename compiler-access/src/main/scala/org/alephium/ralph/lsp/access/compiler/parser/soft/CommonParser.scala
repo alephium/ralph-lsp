@@ -38,10 +38,10 @@ private object CommonParser {
         SoftAST.Space(text)
     }
 
-  def text[Unknown: P]: P[SoftAST.Code] =
+  def text[Unknown: P]: P[SoftAST.CodeString] =
     P(Index ~ CharsWhileNot(Token.Newline.lexeme).! ~ Index) map {
       case (from, text, to) =>
-        SoftAST.Code(
+        SoftAST.CodeString(
           text = text,
           index = range(from, to)
         )
@@ -107,10 +107,10 @@ private object CommonParser {
         )
     }
 
-  def toCodeOrFail[Unknown: P](parser: => P[String]): P[SoftAST.Code] =
+  def toCodeOrFail[Unknown: P](parser: => P[String]): P[SoftAST.CodeString] =
     P(Index ~ parser ~ Index) map {
       case (from, code, to) =>
-        SoftAST.Code(
+        SoftAST.CodeString(
           text = code,
           index = range(from, to)
         )

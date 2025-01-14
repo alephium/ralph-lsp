@@ -4,14 +4,14 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object DataTemplateParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.DataTemplate] =
     P {
       Index ~
-        (TokenParser.StructOrFail | TokenParser.EnumOrFail | TokenParser.EventOrFail) ~
+        (TokenParser.parseOrFail(Token.Struct) | TokenParser.parseOrFail(Token.Enum) | TokenParser.parseOrFail(Token.Event)) ~
         space ~
         identifier ~
         spaceOrFail.? ~

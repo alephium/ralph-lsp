@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
@@ -64,8 +64,8 @@ class TemplateSpec extends AnyWordSpec with Matchers {
         template.preParamSpace shouldBe None
         template.params shouldBe empty
         template.postParamSpace shouldBe None
-        template.block.openCurly shouldBe SoftAST.OpenCurlyExpected(indexOf(s"$templateToken>><<"))
-        template.block.closeCurly shouldBe SoftAST.CloseCurlyExpected(indexOf(s"$templateToken>><<"))
+        template.block.openCurly shouldBe SoftAST.TokenExpected(indexOf(s"$templateToken>><<"), Token.OpenCurly)
+        template.block.closeCurly shouldBe SoftAST.TokenExpected(indexOf(s"$templateToken>><<"), Token.CloseCurly)
       }
 
       "lowercase" in {
@@ -88,8 +88,8 @@ class TemplateSpec extends AnyWordSpec with Matchers {
         template.preParamSpace shouldBe empty
         template.params shouldBe empty
         template.postParamSpace shouldBe empty
-        template.block.openCurly shouldBe SoftAST.OpenCurlyExpected(indexOf(s"$templateToken>><<"))
-        template.block.closeCurly shouldBe SoftAST.CloseCurlyExpected(indexOf(s"$templateToken>><<"))
+        template.block.openCurly shouldBe SoftAST.TokenExpected(indexOf(s"$templateToken>><<"), Token.OpenCurly)
+        template.block.closeCurly shouldBe SoftAST.TokenExpected(indexOf(s"$templateToken>><<"), Token.CloseCurly)
       }
 
       "lowercase" in {
@@ -116,7 +116,7 @@ class TemplateSpec extends AnyWordSpec with Matchers {
 
       val params = template.params.value
       params.openParen shouldBe OpenParen(indexOf("Contract mycontract>>(<<"))
-      params.closeParen shouldBe SoftAST.CloseParenExpected(indexOf("Contract mycontract(>><<"))
+      params.closeParen shouldBe SoftAST.TokenExpected(indexOf("Contract mycontract(>><<"), Token.CloseParen)
     }
 
     "params are empty" in {
@@ -135,7 +135,7 @@ class TemplateSpec extends AnyWordSpec with Matchers {
         parseTemplate("Contract mycontract }")
 
       template.block.closeCurly shouldBe CloseCurly(indexOf("Contract mycontract >>}<<"))
-      template.block.openCurly shouldBe SoftAST.OpenCurlyExpected(indexOf("Contract mycontract >><<}"))
+      template.block.openCurly shouldBe SoftAST.TokenExpected(indexOf("Contract mycontract >><<}"), Token.OpenCurly)
     }
 
     "close brace and identifier are missing" in {
@@ -147,7 +147,7 @@ class TemplateSpec extends AnyWordSpec with Matchers {
       template.preIdentifierSpace shouldBe SpaceOne(indexOf("Contract>> <<{"))
 
       template.block.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
-      template.block.closeCurly shouldBe SoftAST.CloseCurlyExpected(indexOf("Contract {>><<"))
+      template.block.closeCurly shouldBe SoftAST.TokenExpected(indexOf("Contract {>><<"), Token.CloseCurly)
     }
 
     "a function is defined" in {
@@ -165,13 +165,14 @@ class TemplateSpec extends AnyWordSpec with Matchers {
       template.block.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
 
       template.block.closeCurly shouldBe
-        SoftAST.CloseCurlyExpected(
-          indexOf {
+        SoftAST.TokenExpected(
+          index = indexOf {
             """Contract {
               |  fn function( ->
               |
               |>><<""".stripMargin
-          }
+          },
+          token = Token.CloseCurly
         )
 
       /**
@@ -217,13 +218,14 @@ class TemplateSpec extends AnyWordSpec with Matchers {
       template.block.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
 
       template.block.closeCurly shouldBe
-        SoftAST.CloseCurlyExpected(
-          indexOf {
+        SoftAST.TokenExpected(
+          index = indexOf {
             """Contract {
               |  TxScript myScript
               |
               |>><<""".stripMargin
-          }
+          },
+          token = Token.CloseCurly
         )
 
       /**

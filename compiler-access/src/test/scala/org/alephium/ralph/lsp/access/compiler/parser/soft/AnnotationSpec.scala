@@ -51,7 +51,7 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
       // opening paren is parsed
       annotation.tuple.value.openParen shouldBe OpenParen(indexOf("@anno>>(<<"))
       // closing paren is reported as expected
-      annotation.tuple.value.closeParen shouldBe SoftAST.CloseParenExpected(indexOf("@anno(>><<"))
+      annotation.tuple.value.closeParen shouldBe SoftAST.TokenExpected(indexOf("@anno(>><<"), Token.CloseParen)
     }
 
     "reject reserved keyword as annotation identifier" in {
@@ -148,7 +148,7 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
             |@anno
             |<<""".stripMargin
         },
-        at = SoftAST.At(
+        at = SoftAST.TokenDocumented(
           indexOf {
             """>>// documentation
               |@<<anno
@@ -157,9 +157,9 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
           documentation =
             // The actual Comments AST is not tested here.
             // These test-cases are for annotations.
-            // The behaviour of Comments is tests in CommentsSpec
+            // The behaviour of Comments is tested in CommentsSpec
             Some(expectedComment),
-          code = Code(
+          code = SoftAST.CodeToken(
             index = indexOf {
               """// documentation
                 |>>@<<anno

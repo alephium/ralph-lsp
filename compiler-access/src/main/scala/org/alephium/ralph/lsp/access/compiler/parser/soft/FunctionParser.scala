@@ -20,7 +20,7 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object FunctionParser {
 
@@ -36,7 +36,7 @@ private object FunctionParser {
         AnnotationParser.parseOrFail.rep ~
         spaceOrFail.? ~
         AccessModifierParser.parseOrFail.? ~
-        TokenParser.FnOrFail ~
+        TokenParser.parseOrFail(Token.Fn) ~
         space ~
         signature ~
         spaceOrFail.? ~
@@ -83,7 +83,7 @@ private object FunctionParser {
    *         type or an error indicating that the return type is expected.
    */
   private def returnSignature[Unknown: P]: P[SoftAST.FunctionReturnAST] =
-    P(Index ~ (TokenParser.ForwardArrow ~ spaceOrFail.? ~ TypeParser.parse).? ~ Index) map {
+    P(Index ~ (TokenParser.parse(Token.ForwardArrow) ~ spaceOrFail.? ~ TypeParser.parse).? ~ Index) map {
       case (from, Some((forwardArrow, space, tpe)), to) =>
         SoftAST.FunctionReturn(
           index = range(from, to),

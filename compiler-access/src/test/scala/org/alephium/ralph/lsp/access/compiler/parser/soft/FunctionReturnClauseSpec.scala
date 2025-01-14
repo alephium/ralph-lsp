@@ -17,7 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
@@ -49,7 +49,7 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
           forwardArrow = ForwardArrow(indexOf("fn >>-><< type")),
           space = Some(
             SoftAST.Space(
-              SoftAST.Code(
+              SoftAST.CodeString(
                 index = indexOf("fn __>> <<type"),
                 text = " "
               )
@@ -120,7 +120,7 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
       function.signature.params.openParen shouldBe OpenParen(indexOf("fn function>>(<<-> "))
 
       function.signature.params.closeParen shouldBe
-        SoftAST.CloseParenExpected(indexOf("fn function(>><<-> "))
+        SoftAST.TokenExpected(indexOf("fn function(>><<-> "), Token.CloseParen)
 
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(
@@ -142,7 +142,7 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
         )
 
       function.signature.params.openParen shouldBe OpenParen(indexOf("fn function>>(<<-> Type"))
-      function.signature.params.closeParen shouldBe SoftAST.CloseParenExpected(indexOf("fn function(>><<-> Type"))
+      function.signature.params.closeParen shouldBe SoftAST.TokenExpected(indexOf("fn function(>><<-> Type"), Token.CloseParen)
 
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(

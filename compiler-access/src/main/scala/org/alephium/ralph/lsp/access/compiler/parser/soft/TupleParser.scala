@@ -20,7 +20,7 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object TupleParser {
 
@@ -44,13 +44,13 @@ private object TupleParser {
   private def tuple[Unknown: P](required: Boolean): P[SoftAST.Tuple] =
     P {
       Index ~
-        TokenParser.OpenParen(required) ~
+        TokenParser.parse(required, Token.OpenParen) ~
         spaceOrFail.? ~
         Index ~
         ExpressionParser.parseOrFail.? ~
         spaceOrFail.? ~
         tailParams.rep ~
-        TokenParser.CloseParen ~
+        TokenParser.parse(Token.CloseParen) ~
         Index
     } map {
       case (from, openParen, preHeadSpace, headParamIndex, headExpression, postHeadSpace, tailParams, closeParen, to) =>
@@ -84,7 +84,7 @@ private object TupleParser {
   private def tailParams[Unknown: P]: P[SoftAST.TupleTail] =
     P {
       Index ~
-        TokenParser.CommaOrFail ~
+        TokenParser.parseOrFail(Token.Comma) ~
         spaceOrFail.? ~
         ExpressionParser.parse ~
         spaceOrFail.? ~

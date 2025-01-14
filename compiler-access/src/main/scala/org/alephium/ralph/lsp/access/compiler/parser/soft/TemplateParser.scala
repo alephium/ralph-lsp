@@ -4,14 +4,14 @@ import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.CommonParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object TemplateParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.Template] =
     P {
       Index ~
-        (TokenParser.ContractOrFail | TokenParser.TxScriptOrFail) ~
+        (TokenParser.parseOrFail(Token.Contract) | TokenParser.parseOrFail(Token.TxScript) | TokenParser.parseOrFail(Token.AssetScript)) ~
         space ~
         identifier ~
         spaceOrFail.? ~
@@ -39,7 +39,7 @@ private object TemplateParser {
   private def inheritance[Unknown: P]: P[SoftAST.TemplateInheritance] =
     P {
       Index ~
-        (TokenParser.ImplementsOrFail | TokenParser.ExtendsOrFail) ~
+        (TokenParser.parseOrFail(Token.Implements) | TokenParser.parseOrFail(Token.Extends)) ~
         space ~
         (ReferenceCallParser.parseOrFail | identifier) ~
         spaceOrFail.? ~
