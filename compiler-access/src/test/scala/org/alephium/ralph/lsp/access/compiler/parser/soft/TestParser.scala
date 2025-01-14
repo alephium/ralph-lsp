@@ -78,6 +78,9 @@ object TestParser {
   def parseNumber(code: String): SoftAST.Number =
     runSoftParser(NumberParser.parseOrFail(_))(code)
 
+  def parseBString(code: String): SoftAST.BString =
+    runSoftParser(BStringParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,

@@ -44,6 +44,11 @@ object Demo extends App {
         |
         |     // mutable binding
         |     let (a, mut b, _) = (1, 2, 3)
+        |
+        |     let string =
+        |       b`some text 🎸
+        |         some text in the middle
+        |         some more text 🤙`
         |  }
         |
         |  🚀

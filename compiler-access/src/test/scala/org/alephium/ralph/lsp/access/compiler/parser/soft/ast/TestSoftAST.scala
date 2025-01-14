@@ -126,6 +126,18 @@ object TestSoftAST {
       token = Token.Plus
     )
 
+  def B(index: SourceIndex): SoftAST.TokenDocumented[Token.B.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.B
+    )
+
+  def Tick(index: SourceIndex): SoftAST.TokenDocumented[Token.Tick.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Tick
+    )
+
   def Identifier(
       index: SourceIndex,
       text: String): SoftAST.Identifier =
