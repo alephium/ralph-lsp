@@ -90,6 +90,18 @@ object TestSoftAST {
       token = Token.False
     )
 
+  def AlphLowercase(index: SourceIndex): SoftAST.TokenDocumented[Token.AlphLowercase.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.AlphLowercase
+    )
+
+  def AlphUppercase(index: SourceIndex): SoftAST.TokenDocumented[Token.AlphUppercase.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.AlphUppercase
+    )
+
   def Identifier(
       index: SourceIndex,
       text: String): SoftAST.Identifier =
@@ -100,6 +112,20 @@ object TestSoftAST {
         index = index,
         text = text
       )
+    )
+
+  def Number(
+      index: SourceIndex,
+      text: String): SoftAST.Number =
+    SoftAST.Number(
+      index = index,
+      documentation = None,
+      number = SoftAST.CodeString(
+        index = index,
+        text = text
+      ),
+      space = None,
+      unit = None
     )
 
   def Unresolved(
