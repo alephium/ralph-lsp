@@ -33,6 +33,14 @@ object Demo extends App {
         |       // infix assignment
         |       let sum = 1 + 2
         |     }
+        |
+        |     // complex assignment
+        |     object.function(1).value = cache.getValue()
+        |
+        |     // complex equality check
+        |     while(cache.getValue() == objectB.read().value) {
+        |        // do something
+        |     }
         |  }
         |
         |  🚀

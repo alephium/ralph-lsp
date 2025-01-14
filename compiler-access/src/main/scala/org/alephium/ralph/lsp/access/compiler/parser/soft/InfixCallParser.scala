@@ -10,7 +10,7 @@ case object InfixCallParser {
   def parseOrFail[Unknown: P]: P[SoftAST.InfixExpression] =
     P {
       Index ~
-        ExpressionParser.parseOrFailSelective(parseInfix = false, parseMethodCall = true) ~
+        ExpressionParser.parseOrFailSelective(parseInfix = false, parseMethodCall = true, parseAssignment = false) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.InfixOperatorOrFail ~
         SpaceParser.parseOrFail.? ~

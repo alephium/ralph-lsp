@@ -5,12 +5,12 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object AssignmentParser {
+private case object AssignmentParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.Assignment] =
     P {
       Index ~
-        IdentifierParser.parseOrFail ~
+        ExpressionParser.parseOrFailSelective(parseInfix = true, parseMethodCall = true, parseAssignment = false) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Equal) ~
         SpaceParser.parseOrFail.? ~
@@ -20,11 +20,11 @@ private object AssignmentParser {
       case (from, identifier, postIdentifierSpace, equalToken, postEqualSpace, expression, to) =>
         SoftAST.Assignment(
           index = range(from, to),
-          identifier = identifier,
+          expressionLeft = identifier,
           postIdentifierSpace = postIdentifierSpace,
           equalToken = equalToken,
           postEqualSpace = postEqualSpace,
-          expression = expression
+          expressionRight = expression
         )
     }
 

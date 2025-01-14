@@ -322,7 +322,7 @@ object SoftAST {
       index: SourceIndex,
       dot: TokenDocumented[Token.Dot.type],
       postDotSpace: Option[Space],
-      rightExpression: ReferenceCall)
+      rightExpression: ReferenceCallOrIdentifier)
     extends SoftAST
 
   case class ReturnStatement(
@@ -368,11 +368,11 @@ object SoftAST {
 
   case class Assignment(
       index: SourceIndex,
-      identifier: Identifier,
+      expressionLeft: ExpressionAST,
       postIdentifierSpace: Option[Space],
       equalToken: TokenDocumented[Token.Equal.type],
       postEqualSpace: Option[Space],
-      expression: ExpressionAST)
+      expressionRight: ExpressionAST)
     extends ExpressionAST
 
   case class TypeAssignment(

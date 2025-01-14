@@ -26,21 +26,28 @@ private object ExpressionParser {
   def parse[Unknown: P]: P[SoftAST.ExpressionAST] =
     parseSelective(
       parseInfix = true,
-      parseMethodCall = true
+      parseMethodCall = true,
+      parseAssignment = true
     )
 
   def parseOrFail[Unknown: P]: P[SoftAST.ExpressionAST] =
     parseOrFailSelective(
       parseInfix = true,
-      parseMethodCall = true
+      parseMethodCall = true,
+      parseAssignment = true
     )
 
   def parseSelective[Unknown: P](
       parseInfix: Boolean,
-      parseMethodCall: Boolean): P[SoftAST.ExpressionAST] =
+      parseMethodCall: Boolean,
+      parseAssignment: Boolean): P[SoftAST.ExpressionAST] =
     P {
       Index ~
-        parseOrFailSelective(parseInfix = parseInfix, parseMethodCall = parseMethodCall).? ~
+        parseOrFailSelective(
+          parseInfix = parseInfix,
+          parseMethodCall = parseMethodCall,
+          parseAssignment = parseAssignment
+        ).? ~
         Index
     } map {
       case (_, Some(expression), _) =>
@@ -52,7 +59,8 @@ private object ExpressionParser {
 
   def parseOrFailSelective[Unknown: P](
       parseInfix: Boolean,
-      parseMethodCall: Boolean): P[SoftAST.ExpressionAST] = {
+      parseMethodCall: Boolean,
+      parseAssignment: Boolean): P[SoftAST.ExpressionAST] = {
     def infixOrFail() =
       if (parseInfix)
         InfixCallParser.parseOrFail
@@ -65,8 +73,15 @@ private object ExpressionParser {
       else
         Fail(s"${MethodCallParser.productPrefix} ignored")
 
+    def assignmentOrFail() =
+      if (parseAssignment)
+        AssignmentParser.parseOrFail
+      else
+        Fail(s"${AssignmentParser.productPrefix} ignored")
+
     P {
-      infixOrFail() |
+      assignmentOrFail() |
+        infixOrFail() |
         methodCallOrFail() |
         common
     }
@@ -78,7 +93,6 @@ private object ExpressionParser {
         ForLoopParser.parseOrFail |
         WhileLoopParser.parseOrFail |
         VariableDeclarationParser.parseOrFail |
-        AssignmentParser.parseOrFail |
         TypeAssignmentParser.parseOrFail |
         BlockParser.clause(required = false) |
         ReferenceCallParser.parseOrFail |

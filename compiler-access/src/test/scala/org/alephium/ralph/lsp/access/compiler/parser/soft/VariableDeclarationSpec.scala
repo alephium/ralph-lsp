@@ -51,11 +51,11 @@ class VariableDeclarationSpec extends AnyWordSpec with Matchers {
           ),
           assignment = SoftAST.Assignment(
             index = indexOf("let mut >>variable = 1<<"),
-            identifier = Identifier(indexOf("let mut >>variable<< = 1"), "variable"),
+            expressionLeft = Identifier(indexOf("let mut >>variable<< = 1"), "variable"),
             postIdentifierSpace = Some(SpaceOne(indexOf("let mut variable>> <<= 1"))),
             equalToken = Equal(indexOf("let mut variable >>=<< 1")),
             postEqualSpace = Some(SpaceOne(indexOf("let mut variable =>> <<1"))),
-            expression = Number(indexOf("let mut variable = >>1<<"), "1")
+            expressionRight = Number(indexOf("let mut variable = >>1<<"), "1")
           )
         )
     }
@@ -83,11 +83,11 @@ class VariableDeclarationSpec extends AnyWordSpec with Matchers {
           ),
           assignment = SoftAST.Assignment(
             index = indexOf("let mut >>variable = <<"),
-            identifier = Identifier(indexOf("let mut >>variable<< = "), "variable"),
+            expressionLeft = Identifier(indexOf("let mut >>variable<< = "), "variable"),
             postIdentifierSpace = Some(SpaceOne(indexOf("let mut variable>> <<= "))),
             equalToken = Equal(indexOf("let mut variable >>=<< ")),
             postEqualSpace = Some(SpaceOne(indexOf("let mut variable =>> << "))),
-            expression = SoftAST.ExpressionExpected(indexOf("let mut variable = >><<"))
+            expressionRight = SoftAST.ExpressionExpected(indexOf("let mut variable = >><<"))
           )
         )
     }
@@ -105,7 +105,33 @@ class VariableDeclarationSpec extends AnyWordSpec with Matchers {
       val varDec =
         parseVariableDeclaration("let letter = 1")
 
-      varDec.assignment.identifier.code.text shouldBe "letter"
+      varDec.assignment.expressionLeft.asInstanceOf[SoftAST.Identifier].code.text shouldBe "letter"
+    }
+  }
+
+  "allow expressions as assignment identifiers" when {
+    "the identifier is a tuple" in {
+      val tupleDecl =
+        parseVariableDeclaration("let (a, b, c) = blah")
+
+      tupleDecl.modifiers should contain only
+        SoftAST.AssignmentAccessModifier(
+          indexOf(">>let <<(a, b, c) = blah"),
+          Let(indexOf(">>let<< (a, b, c) = blah")),
+          SpaceOne(indexOf("let>> <<(a, b, c) = blah"))
+        )
+
+      // left is a tuple
+      val left = tupleDecl.assignment.expressionLeft.asInstanceOf[SoftAST.Tuple]
+      left.index shouldBe indexOf("let >>(a, b, c)<< = blah")
+      left.toCode() shouldBe "(a, b, c)"
+
+      // right is an assignment
+      tupleDecl.assignment.expressionRight shouldBe
+        Identifier(
+          index = indexOf("let (a, b, c) = >>blah<<"),
+          text = "blah"
+        )
     }
   }
 
