@@ -368,7 +368,6 @@ object SoftAST {
 
   case class Assignment(
       index: SourceIndex,
-      modifiers: Seq[SoftAST.AssignmentAccessModifier],
       identifier: Identifier,
       postIdentifierSpace: Option[Space],
       equalToken: TokenDocumented[Token.Equal.type],
@@ -389,13 +388,19 @@ object SoftAST {
   case class AssignmentAccessModifier(
       index: SourceIndex,
       token: TokenDocumented[Token.DataDefinition],
-      postTokenSpace: Option[Space])
+      postTokenSpace: Space)
     extends ExpressionAST
 
   case class AccessModifier(
       index: SourceIndex,
       pub: TokenDocumented[Token.Pub.type],
       postTokenSpace: Option[Space])
+    extends ExpressionAST
+
+  case class VariableDeclaration(
+      index: SourceIndex,
+      modifiers: Seq[AssignmentAccessModifier],
+      assignment: Assignment)
     extends ExpressionAST
 
   case class Annotation(

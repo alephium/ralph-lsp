@@ -33,8 +33,8 @@ private object UnresolvedParser {
       case (from, text, tailComment, to) =>
         SoftAST.Unresolved(
           index = range(from, to),
-          code = text,
-          documentation = tailComment
+          documentation = tailComment,
+          code = text
         )
     }
 

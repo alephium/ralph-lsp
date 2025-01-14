@@ -10,7 +10,6 @@ private object AssignmentParser {
   def parseOrFail[Unknown: P]: P[SoftAST.Assignment] =
     P {
       Index ~
-        AssignmentAccessModifierParser.parseOrFail.rep ~
         IdentifierParser.parseOrFail ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Equal) ~
@@ -18,10 +17,9 @@ private object AssignmentParser {
         ExpressionParser.parse ~
         Index
     } map {
-      case (from, control, identifier, postIdentifierSpace, equalToken, postEqualSpace, expression, to) =>
+      case (from, identifier, postIdentifierSpace, equalToken, postEqualSpace, expression, to) =>
         SoftAST.Assignment(
           index = range(from, to),
-          modifiers = control,
           identifier = identifier,
           postIdentifierSpace = postIdentifierSpace,
           equalToken = equalToken,

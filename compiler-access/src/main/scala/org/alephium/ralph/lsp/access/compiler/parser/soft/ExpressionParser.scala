@@ -77,6 +77,7 @@ private object ExpressionParser {
       ReturnStatementParser.parseOrFail |
         ForLoopParser.parseOrFail |
         WhileLoopParser.parseOrFail |
+        VariableDeclarationParser.parseOrFail |
         AssignmentParser.parseOrFail |
         TypeAssignmentParser.parseOrFail |
         BlockParser.clause(required = false) |
