@@ -429,6 +429,15 @@ object SoftAST {
       unit: Option[TokenDocumented[Token.AlphLowercase.type]])
     extends ExpressionAST
 
+  case class BString(
+      index: SourceIndex,
+      b: TokenDocumented[Token.B.type],
+      postBSpace: Option[Space],
+      startTick: TokenDocumented[Token.Tick.type],
+      text: Option[CodeString],
+      endTick: TokenDocExpectedAST[Token.Tick.type])
+    extends ExpressionAST
+
   sealed trait SpaceAST extends SoftAST
 
   case class Space(

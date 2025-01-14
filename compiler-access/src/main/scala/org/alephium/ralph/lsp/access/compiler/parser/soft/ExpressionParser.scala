@@ -101,6 +101,7 @@ private object ExpressionParser {
         TupleParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
+        BStringParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 
