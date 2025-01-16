@@ -78,6 +78,10 @@ object TestParser {
   def parseNumber(code: String): SoftAST.Number =
     runSoftParser(NumberParser.parseOrFail(_))(code)
 
+  /** Run the parser but perform no input code check */
+  def parseNumberNoCodeCheck(code: String): SoftAST.Number =
+    runAnyParser(NumberParser.parseOrFail(_))(code)
+
   def parseBString(code: String): SoftAST.BString =
     runSoftParser(BStringParser.parseOrFail(_))(code)
 

@@ -208,9 +208,43 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
               )
           }
         }
-
       }
     }
+  }
+
+  "infix numbers with tail negative signs" should {
+    "not be parsed as a number, they are infix operations" in {
+      // These are not numbers, they are infix operations.
+      // The minus sign within the number is for scientific numbers `e-` only.
+      Seq(
+        "1-1",
+        "1- 1"
+      ) foreach {
+        infixOperation =>
+          // it only parses the first number 1, ignoring the sign and the tail number.
+          parseNumberNoCodeCheck(infixOperation) shouldBe
+            Number(
+              index = indexOf(">>1<<"),
+              text = "1"
+            )
+
+          // parser it from the root SoftParser parses it as an infix operation and not a number.
+          val infix = parseSoft(infixOperation)
+          infix.parts should have size 1
+          infix.parts.head.part shouldBe a[SoftAST.InfixExpression]
+      }
+    }
+  }
+
+  "special cases" in {
+
+    /**
+     * See documentation of [[NumberParser.numberOrHex]]
+     */
+    assertSimpleNumber("1_")
+    assertSimpleNumber("1_._")
+    assertSimpleNumber("1_.____0")
+    assertSimpleNumber("1_._0___0")
   }
 
 }

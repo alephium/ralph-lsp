@@ -29,8 +29,7 @@ object NumberParser {
   private def number[Unknown: P]: P[SoftAST.CodeString] =
     P {
       Index ~
-        isNumber ~
-        (!Token.AlphLowercase.lexeme ~ CharIn("[0-9a-zA-Z]._+\\-")).rep(1).! ~
+        numberOrHex.! ~
         Index
     } map {
       case (from, number, to) =>
@@ -40,7 +39,34 @@ object NumberParser {
         )
     }
 
-  private def isNumber[Unknown: P]: P[Unit] =
-    P(&(CharIn("+\\-").? ~ CharIn("[0-9]")))
+  /**
+   * Parses characters that <u><b>could</b></u> (not strict) form a number.
+   *
+   * Follows rules defined by the parser [[org.alephium.ralph.Lexer.integer]].
+   * This is to handle all cases that are compiled successfully in ralphc.
+   *
+   * For example, the following are valid numbers in ralphc:
+   *
+   * {{{
+   *   let num0 = 1_
+   *   let num1 = 1_._
+   *   let num2 = 1_.____0
+   *   let num3 = 1_._0___0
+   * }}}
+   *
+   * Current parser code in [[org.alephium.ralph.Lexer.integer]], update accordingly:
+   * {{{
+   *   Index ~ (CharsWhileIn("0-9_") ~ ("." ~ CharsWhileIn("0-9_")).? ~
+   *     ("e" ~ "-".? ~ CharsWhileIn("0-9")).?).! ~
+   *     CharsWhileIn(" ", 0).! ~ token(Keyword.alph).?.!
+   * }}}
+   */
+  private def numberOrHex[Unknown: P]: P[Unit] =
+    P {
+      CharIn("\\+", "\\-").? ~
+        CharsWhileIn("0-9_") ~
+        ("." ~ CharsWhileIn("0-9_")).? ~
+        (!Token.AlphLowercase.lexeme ~ (StringIn("e-", "E-") | CharIn("0-9a-zA-Z_"))).rep
+    }
 
 }
