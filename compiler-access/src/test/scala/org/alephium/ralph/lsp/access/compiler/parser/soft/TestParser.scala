@@ -48,8 +48,8 @@ object TestParser {
   def parseTuple(code: String): SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type] =
     runSoftParser(ParameterParser.parse(_))(code)
 
-  def parseBlockClause(mandatory: Boolean)(code: String): SoftAST.BlockClause =
-    runSoftParser(BlockParser.clause(mandatory)(_))(code)
+  def parseBlockClause(required: Boolean)(code: String): SoftAST.BlockClause =
+    runSoftParser(BlockParser.parse(required)(_))(code)
 
   def parseBlockBody(code: String): SoftAST.BlockBody =
     runSoftParser(BlockParser.body(_))(code)

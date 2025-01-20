@@ -18,7 +18,7 @@ private object WhileLoopParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseParen) ~
         SpaceParser.parseOrFail.? ~
-        BlockParser.clause(required = true) ~
+        BlockParser.parse ~
         Index
     } map {
       case (from, whileToken, postWhileSpace, openParen, postOpenParenSpace, expression, postExpressionSpace, closeParen, postCloseParenSpace, block, to) =>
