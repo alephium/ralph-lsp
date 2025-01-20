@@ -98,7 +98,14 @@ object SoftAST {
 
   }
 
-  abstract class ErrorAST(val message: String)       extends SoftAST
+  abstract class ErrorAST(val message: String) extends SoftAST {
+
+    // Also display the error message in the Tree representation
+    final override def toStringPretty(): String =
+      s"""${this.getClass.getSimpleName}("$message"): ${this.index}"""
+
+  }
+
   abstract class ExpectedErrorAST(element: String)   extends ErrorAST(s"$element expected")
   abstract class TokenExpectedErrorAST(token: Token) extends ExpectedErrorAST(s"'${token.lexeme}'")
 
