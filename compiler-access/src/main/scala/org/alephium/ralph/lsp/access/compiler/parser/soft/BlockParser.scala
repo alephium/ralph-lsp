@@ -23,11 +23,11 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object BlockParser {
 
-  def parseOrFail[Unknown: P]: P[SoftAST.BlockClause] =
-    parse(required = false)
-
   def parse[Unknown: P]: P[SoftAST.BlockClause] =
     parse(required = true)
+
+  def parseOrFail[Unknown: P]: P[SoftAST.BlockClause] =
+    parse(required = false)
 
   def body[Unknown: P]: P[SoftAST.BlockBody] =
     body()

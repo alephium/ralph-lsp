@@ -192,4 +192,39 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
     bbb.tpe.toCode() shouldBe "(tuple1, tuple2)"
   }
 
+  "nested tuples" in {
+    val tuple = parseTuple("(a, (b, c))")
+
+    tuple.headExpression.value shouldBe a[SoftAST.Identifier]
+
+    tuple.tailExpressions should have size 1
+    val lastTuple = tuple.tailExpressions.head
+
+    lastTuple shouldBe
+      SoftAST.GroupTail(
+        index = indexOf("(a>>, (b, c)<<)"),
+        comma = Comma(indexOf("(a>>,<< (b, c))")),
+        preExpressionSpace = Some(SpaceOne(indexOf("(a,>> <<(b, c))"))),
+        expression = SoftAST.Group(
+          index = indexOf("(a, >>(b, c)<<)"),
+          openToken = OpenParen(indexOf("(a, >>(<<b, c))")),
+          preHeadExpressionSpace = None,
+          headExpression = Some(Identifier(indexOf("(a, (>>b<<, c))"), "b")),
+          postHeadExpressionSpace = None,
+          tailExpressions = Seq(
+            SoftAST.GroupTail(
+              index = indexOf("(a, (b>>, c<<))"),
+              comma = Comma(indexOf("(a, (b>>,<< c))")),
+              preExpressionSpace = Some(SpaceOne(indexOf("(a, (b,>> <<c))"))),
+              expression = Identifier(indexOf("(a, (b, >>c<<))"), "c"),
+              postExpressionSpace = None
+            )
+          ),
+          closeToken = CloseParen(indexOf("(a, (b, c>>)<<)"))
+        ),
+        postExpressionSpace = None
+      )
+
+  }
+
 }
