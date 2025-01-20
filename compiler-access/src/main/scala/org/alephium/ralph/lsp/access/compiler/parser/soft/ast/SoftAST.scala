@@ -237,11 +237,11 @@ object SoftAST {
    * Represents a comma separated list of expressions.
    *
    * This list of expressions is parsed by the following syntax:
-   * - Struct `{ a, b: Type, mut c: C }`
-   * - Annotation `@using(a = b)`
-   * - Contract & TxScript etc `(a, b, c)`
-   * - fn `(a: Type, b: Type, c)`
-   * - `enum` etc
+   *  - Struct `{ a, b: Type, mut c: C }`
+   *  - Annotation `@using(a = b)`
+   *  - Contract & TxScript etc `(a, b, c)`
+   *  - fn `(a: Type, b: Type, c)`
+   *  - `enum` etc
    */
   case class Group[O <: Token, C <: Token](
       index: SourceIndex,
