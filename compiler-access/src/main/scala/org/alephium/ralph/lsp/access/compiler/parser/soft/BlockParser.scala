@@ -29,7 +29,10 @@ private object BlockParser {
   def parse[Unknown: P]: P[SoftAST.BlockClause] =
     parse(required = true)
 
-  def parse[Unknown: P](required: Boolean): P[SoftAST.BlockClause] =
+  def body[Unknown: P]: P[SoftAST.BlockBody] =
+    body()
+
+  private def parse[Unknown: P](required: Boolean): P[SoftAST.BlockClause] =
     P {
       Index ~
         TokenParser.parse(required, Token.OpenCurly) ~
@@ -49,9 +52,6 @@ private object BlockParser {
           closeCurly = closeCurly
         )
     }
-
-  def body[Unknown: P]: P[SoftAST.BlockBody] =
-    body()
 
   private def body[Unknown: P](stop: Token*): P[SoftAST.BlockBody] =
     P {
