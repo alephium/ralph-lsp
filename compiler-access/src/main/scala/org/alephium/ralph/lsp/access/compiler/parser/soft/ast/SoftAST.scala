@@ -288,7 +288,7 @@ object SoftAST {
       index: SourceIndex,
       documentation: Option[Comments],
       code: CodeString)
-    extends ErrorAST(s"Cannot resolve '$code'")
+    extends ErrorAST(s"Cannot resolve '${code.text}'")
        with CodeDocumentedAST
        with BodyPartAST
 
