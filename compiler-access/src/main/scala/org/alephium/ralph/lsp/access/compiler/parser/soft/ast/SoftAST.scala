@@ -390,8 +390,7 @@ object SoftAST {
 
   case class TypeAssignment(
       index: SourceIndex,
-      modifiers: Seq[SoftAST.AssignmentAccessModifier],
-      name: IdentifierAST,
+      name: ExpressionAST,
       preColonSpace: Option[Space],
       colon: TokenDocumented[Token.Colon.type],
       postColonSpace: Option[Space],

@@ -88,6 +88,9 @@ object TestParser {
   def parseStructTemplate(code: String): SoftAST.StructTemplate =
     runSoftParser(StructTemplateParser.parseOrFail(_))(code)
 
+  def parseTypeAssignment(code: String): SoftAST.TypeAssignment =
+    runSoftParser(TypeAssignmentParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,
