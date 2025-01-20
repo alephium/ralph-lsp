@@ -95,7 +95,7 @@ private object ExpressionParser {
         VariableDeclarationParser.parseOrFail |
         MutableBindingParser.parseOrFail |
         TypeAssignmentParser.parseOrFail |
-        BlockParser.clause(required = false) |
+        BlockParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
         ParameterParser.parseOrFail |

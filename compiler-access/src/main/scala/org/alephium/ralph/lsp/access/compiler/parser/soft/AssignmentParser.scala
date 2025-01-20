@@ -32,7 +32,7 @@ private case object AssignmentParser {
     P {
       InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |
-        BlockParser.clause(required = false) |
+        BlockParser.parseOrFail |
         VariableDeclarationParser.parseOrFail |
         MutableBindingParser.parseOrFail |
         ReferenceCallParser.parseOrFail |

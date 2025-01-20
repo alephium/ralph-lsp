@@ -39,7 +39,7 @@ private object FunctionParser {
         SpaceParser.parse ~
         signature ~
         SpaceParser.parseOrFail.? ~
-        BlockParser.clause(required = false).? ~
+        BlockParser.parseOrFail.? ~
         Index
     } map {
       case (from, annotation, postAnnotationSpace, pub, fnDeceleration, headSpace, signature, tailSpace, block, to) =>
