@@ -5,7 +5,7 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
-case object InfixCallParser {
+private case object InfixCallParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.InfixExpression] =
     P {

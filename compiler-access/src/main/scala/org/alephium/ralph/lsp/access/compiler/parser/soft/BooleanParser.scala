@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-object BooleanParser {
+private object BooleanParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.TokenExpression[Token.PrimitiveBoolean]] =
     P(boolean) map (SoftAST.TokenExpression(_))

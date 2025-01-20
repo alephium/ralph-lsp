@@ -5,7 +5,7 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-object NumberParser {
+private object NumberParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.Number] =
     P {

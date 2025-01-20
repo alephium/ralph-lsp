@@ -21,7 +21,7 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-object GroupParser {
+private object GroupParser {
 
   def parse[Unknown: P, O <: Token, C <: Token](
       open: O,

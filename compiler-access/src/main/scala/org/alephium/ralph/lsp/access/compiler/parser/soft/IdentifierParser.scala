@@ -5,7 +5,7 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-object IdentifierParser {
+private object IdentifierParser {
 
   def parse[Unknown: P](required: Boolean): P[SoftAST.IdentifierAST] =
     if (required)
