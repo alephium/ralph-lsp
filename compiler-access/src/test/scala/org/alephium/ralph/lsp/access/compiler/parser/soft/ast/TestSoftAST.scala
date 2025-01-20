@@ -144,6 +144,12 @@ object TestSoftAST {
       token = Token.Event
     )
 
+  def Struct(index: SourceIndex): SoftAST.TokenDocumented[Token.Struct.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Struct
+    )
+
   def Identifier(
       index: SourceIndex,
       text: String): SoftAST.Identifier =

@@ -81,6 +81,7 @@ private object BlockParser {
     P {
       TemplateParser.parseOrFail |
         EventTemplateParser.parseOrFail |
+        StructTemplateParser.parseOrFail |
         FunctionParser.parseOrFail |
         ExpressionParser.parseOrFail |
         CommentParser.parseOrFail |

@@ -173,6 +173,15 @@ object SoftAST {
       params: Group[Token.OpenParen.type, Token.CloseParen.type])
     extends BodyPartAST
 
+  case class StructTemplate(
+      index: SourceIndex,
+      structToken: TokenDocumented[Token.Struct.type],
+      preIdentifierSpace: SpaceAST,
+      identifier: IdentifierAST,
+      preParamSpace: Option[Space],
+      params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
+    extends BodyPartAST
+
   /** Syntax: `implements or extends contract(arg1, arg2 ...)` */
   case class TemplateInheritance(
       index: SourceIndex,
