@@ -14,7 +14,7 @@ private object ReferenceCallParser {
     parse(required = false)
 
   /**
-   * Parses a function or object call along with its arguments [[TupleParser]].
+   * Parses a function or object call along with its arguments [[GroupParser]].
    *
    * Syntax: reference(arg1, arg2, (arg3, arg4))
    *
@@ -27,7 +27,7 @@ private object ReferenceCallParser {
       Index ~
         IdentifierParser.parse(required) ~
         SpaceParser.parseOrFail.? ~
-        TupleParser.parse(required) ~
+        ParameterParser.parse(required) ~
         Index
     } map {
       case (from, identifier, space, arguments, to) =>

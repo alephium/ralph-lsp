@@ -24,22 +24,22 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
-class TupleSpec extends AnyWordSpec with Matchers {
+class GroupSpec extends AnyWordSpec with Matchers {
 
   "missing opening paren" in {
     val tuple =
       parseTuple(")")
 
-    tuple.openParen shouldBe SoftAST.TokenExpected(indexOf(">><<)"), Token.OpenParen)
-    tuple.closeParen shouldBe CloseParen(indexOf(">>)<<"))
+    tuple.openToken shouldBe SoftAST.TokenExpected(indexOf(">><<)"), Token.OpenParen)
+    tuple.closeToken shouldBe CloseParen(indexOf(">>)<<"))
   }
 
   "missing closing paren" in {
     val tuple =
       parseTuple("(")
 
-    tuple.openParen shouldBe OpenParen(indexOf(">>(<<"))
-    tuple.closeParen shouldBe SoftAST.TokenExpected(indexOf("(>><<"), Token.CloseParen)
+    tuple.openToken shouldBe OpenParen(indexOf(">>(<<"))
+    tuple.closeToken shouldBe SoftAST.TokenExpected(indexOf("(>><<"), Token.CloseParen)
   }
 
   "empty tuple" when {
@@ -48,14 +48,14 @@ class TupleSpec extends AnyWordSpec with Matchers {
         parseTuple("()")
 
       val expected =
-        SoftAST.Tuple(
+        SoftAST.Group(
           index = indexOf(">>()<<"),
-          openParen = OpenParen(indexOf(">>(<<)")),
+          openToken = OpenParen(indexOf(">>(<<)")),
           preHeadExpressionSpace = None,
           headExpression = None,
           postHeadExpressionSpace = None,
           tailExpressions = Seq.empty,
-          closeParen = CloseParen(indexOf("(>>)<<)"))
+          closeToken = CloseParen(indexOf("(>>)<<)"))
         )
 
       tuple shouldBe expected
@@ -66,14 +66,14 @@ class TupleSpec extends AnyWordSpec with Matchers {
         parseTuple("( )")
 
       val expected =
-        SoftAST.Tuple(
+        SoftAST.Group(
           index = indexOf(">>( )<<"),
-          openParen = OpenParen(indexOf(">>(<< )")),
+          openToken = OpenParen(indexOf(">>(<< )")),
           preHeadExpressionSpace = Some(SpaceOne(indexOf("(>> <<)"))),
           headExpression = None,
           postHeadExpressionSpace = None,
           tailExpressions = Seq.empty,
-          closeParen = CloseParen(indexOf("( >>)<<)"))
+          closeToken = CloseParen(indexOf("( >>)<<)"))
         )
 
       tuple shouldBe expected
@@ -88,9 +88,9 @@ class TupleSpec extends AnyWordSpec with Matchers {
      * First body part is Tuple
      */
     val tuple =
-      body.parts.head.part.asInstanceOf[SoftAST.Tuple]
+      body.parts.head.part.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
 
-    tuple.openParen shouldBe OpenParen(indexOf(">>(<<aaa typename"))
+    tuple.openToken shouldBe OpenParen(indexOf(">>(<<aaa typename"))
 
     tuple.headExpression.value.asInstanceOf[SoftAST.Identifier] shouldBe
       Identifier(
@@ -98,7 +98,7 @@ class TupleSpec extends AnyWordSpec with Matchers {
         text = "aaa"
       )
 
-    tuple.closeParen shouldBe SoftAST.TokenExpected(indexOf("(aaa >><<typename"), Token.CloseParen)
+    tuple.closeToken shouldBe SoftAST.TokenExpected(indexOf("(aaa >><<typename"), Token.CloseParen)
 
     /**
      * Second body part is an Identifier
@@ -116,7 +116,7 @@ class TupleSpec extends AnyWordSpec with Matchers {
   "valid type assignment expression exists" in {
     val tuple = parseTuple("(aaa: typename)")
 
-    tuple.openParen shouldBe OpenParen(indexOf(">>(<<aaa: typename"))
+    tuple.openToken shouldBe OpenParen(indexOf(">>(<<aaa: typename"))
 
     val headExpression =
       tuple.headExpression.value.asInstanceOf[SoftAST.TypeAssignment]
@@ -137,7 +137,7 @@ class TupleSpec extends AnyWordSpec with Matchers {
         text = "typename"
       )
 
-    tuple.closeParen shouldBe CloseParen(indexOf("(aaa: typename>>)<<"))
+    tuple.closeToken shouldBe CloseParen(indexOf("(aaa: typename>>)<<"))
   }
 
   "valid second type assignment expression exists" in {
@@ -187,7 +187,7 @@ class TupleSpec extends AnyWordSpec with Matchers {
       )
 
     // A quick text to check that the tuple is actually a tuple
-    bbb.tpe shouldBe a[SoftAST.Tuple]
+    bbb.tpe shouldBe a[SoftAST.Group[_, _]]
     // Convert the tpe to code and it should be the tuple
     bbb.tpe.toCode() shouldBe "(tuple1, tuple2)"
   }

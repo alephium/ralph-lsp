@@ -15,7 +15,7 @@ private object TypeAssignmentParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Colon) ~
         SpaceParser.parseOrFail.? ~
-        TypeParser.parse ~
+        ExpressionParser.parse ~
         Index
     } map {
       case (from, access, identifier, postIdentifierSpace, equalToken, postEqualSpace, expression, to) =>

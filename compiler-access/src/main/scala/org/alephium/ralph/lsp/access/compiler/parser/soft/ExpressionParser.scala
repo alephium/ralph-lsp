@@ -98,7 +98,7 @@ private object ExpressionParser {
         BlockParser.clause(required = false) |
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
-        TupleParser.parseOrFail |
+        ParameterParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
