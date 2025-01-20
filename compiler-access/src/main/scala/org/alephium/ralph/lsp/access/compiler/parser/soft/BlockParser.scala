@@ -23,6 +23,9 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object BlockParser {
 
+  def parseOrFail[Unknown: P]: P[SoftAST.BlockClause] =
+    BlockParser.clause(required = false)
+
   def clause[Unknown: P](required: Boolean): P[SoftAST.BlockClause] =
     P {
       Index ~
