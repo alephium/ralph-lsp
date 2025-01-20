@@ -58,7 +58,7 @@ private object IdentifierParser {
   private def isDevDefinedName[Unknown: P]: P[Unit] =
     CharsWhile {
       char =>
-        char.isLetterOrDigit || Token.Underscore.lexeme.contains(char)
+        char.isLetterOrDigit || Token.Underscore.lexeme.contains(char) || Token.Exclamation.lexeme.contains(char)
     }
 
 }
