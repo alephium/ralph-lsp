@@ -10,7 +10,7 @@ private case object AssignmentParser {
   def parseOrFail[Unknown: P]: P[SoftAST.Assignment] =
     P {
       Index ~
-        ExpressionParser.parseOrFailSelective(parseInfix = true, parseMethodCall = true, parseAssignment = false) ~
+        leftExpression ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Equal) ~
         SpaceParser.parseOrFail.? ~
@@ -26,6 +26,22 @@ private case object AssignmentParser {
           postEqualSpace = postEqualSpace,
           expressionRight = expression
         )
+    }
+
+  private def leftExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
+    P {
+      InfixCallParser.parseOrFail |
+        MethodCallParser.parseOrFail |
+        BlockParser.clause(required = false) |
+        VariableDeclarationParser.parseOrFail |
+        MutableBindingParser.parseOrFail |
+        ReferenceCallParser.parseOrFail |
+        AnnotationParser.parseOrFail |
+        ParameterParser.parseOrFail |
+        NumberParser.parseOrFail |
+        BooleanParser.parseOrFail |
+        BStringParser.parseOrFail |
+        IdentifierParser.parseOrFail
     }
 
 }
