@@ -138,6 +138,12 @@ object TestSoftAST {
       token = Token.Tick
     )
 
+  def Event(index: SourceIndex): SoftAST.TokenDocumented[Token.Event.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Event
+    )
+
   def Identifier(
       index: SourceIndex,
       text: String): SoftAST.Identifier =
