@@ -239,7 +239,7 @@ object SoftAST {
    * This list of expressions is parsed by the following syntax:
    *  - Struct `{ a, b: Type, mut c: C }`
    *  - Annotation `@using(a = b)`
-   *  - Contract & TxScript etc `(a, b, c)`
+   *  - Contract | TxScript`(a, b, c)`
    *  - fn `(a: Type, b: Type, c)`
    *  - `enum` etc
    */
