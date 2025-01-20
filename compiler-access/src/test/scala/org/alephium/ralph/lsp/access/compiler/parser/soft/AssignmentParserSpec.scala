@@ -23,7 +23,7 @@ import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class AssignmentSpec extends AnyWordSpec with Matchers {
+class AssignmentParserSpec extends AnyWordSpec with Matchers {
 
   "assignments to an identifier" should {
     "report ExpressionExpected" when {

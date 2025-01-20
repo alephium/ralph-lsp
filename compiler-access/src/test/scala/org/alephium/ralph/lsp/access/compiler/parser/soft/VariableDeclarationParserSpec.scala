@@ -27,7 +27,7 @@ import org.scalatest.TryValues.convertTryToSuccessOrFailure
 
 import scala.util.Try
 
-class VariableDeclarationSpec extends AnyWordSpec with Matchers {
+class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
 
   "succeed" when {
     "full valid variable declaration is defined" in {

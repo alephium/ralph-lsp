@@ -24,7 +24,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
-class MutableBindingSpec extends AnyWordSpec with Matchers {
+class MutableBindingParserSpec extends AnyWordSpec with Matchers {
 
   "succeed" when {
     "an identifier is set a mut" in {

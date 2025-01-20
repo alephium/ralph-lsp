@@ -25,7 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
-class AnnotationSpec extends AnyWordSpec with Matchers {
+class AnnotationParserSpec extends AnyWordSpec with Matchers {
 
   "error cases" should {
     "report missing identifier" in {

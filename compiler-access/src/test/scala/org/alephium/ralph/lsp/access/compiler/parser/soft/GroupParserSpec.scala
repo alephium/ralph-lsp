@@ -24,7 +24,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
-class GroupSpec extends AnyWordSpec with Matchers {
+class GroupParserSpec extends AnyWordSpec with Matchers {
 
   "missing opening paren" in {
     val tuple =

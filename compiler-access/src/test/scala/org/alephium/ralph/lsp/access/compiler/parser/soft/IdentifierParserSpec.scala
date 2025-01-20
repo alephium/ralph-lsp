@@ -6,7 +6,7 @@ import org.alephium.ralph.lsp.access.util.TestFastParse._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class IdentifierSpec extends AnyWordSpec with Matchers {
+class IdentifierParserSpec extends AnyWordSpec with Matchers {
 
   "disallow reserved tokens to be used as identifier" when {
     val reserved =
