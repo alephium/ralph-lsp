@@ -10,6 +10,9 @@ object Demo extends App {
   val ast =
     compiler.parseSoft {
       """
+        |event Event(a: Type)
+        |struct Struct { a: Type }
+        |
         |Contract HelloWorld(type: SomeType, tuple: (A, B)) extends Class implements Trait {
         |
         |  // This multiline comment

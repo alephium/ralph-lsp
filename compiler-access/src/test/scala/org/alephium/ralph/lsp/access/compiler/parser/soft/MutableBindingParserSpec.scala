@@ -17,14 +17,14 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
-class MutableBindingSpec extends AnyWordSpec with Matchers {
+class MutableBindingParserSpec extends AnyWordSpec with Matchers {
 
   "succeed" when {
     "an identifier is set a mut" in {
@@ -45,7 +45,7 @@ class MutableBindingSpec extends AnyWordSpec with Matchers {
         parseSoft("(a, b, mut variable)")
 
       body.parts should have size 1
-      val tuple = body.parts.head.part.asInstanceOf[SoftAST.Tuple]
+      val tuple = body.parts.head.part.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
 
       tuple.headExpression shouldBe defined
       tuple.tailExpressions should have size 2 // there are two tail expressions
@@ -75,7 +75,7 @@ class MutableBindingSpec extends AnyWordSpec with Matchers {
           }
 
         body.parts should have size 1
-        val tuple = body.parts.head.part.asInstanceOf[SoftAST.Tuple]
+        val tuple = body.parts.head.part.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
 
         tuple.headExpression shouldBe defined
         tuple.tailExpressions should have size 2 // there are two tail expressions

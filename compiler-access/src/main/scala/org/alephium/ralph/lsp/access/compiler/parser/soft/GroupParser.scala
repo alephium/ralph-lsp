@@ -21,16 +21,41 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object TupleParser {
+private object GroupParser {
 
-  def parseOrFail[Unknown: P]: P[SoftAST.Tuple] =
-    P(tuple(required = false))
+  def parse[Unknown: P, O <: Token, C <: Token](
+      open: O,
+      close: C): P[SoftAST.Group[O, C]] =
+    P {
+      group(
+        required = true,
+        open = open,
+        close = close
+      )
+    }
 
-  def parse[Unknown: P]: P[SoftAST.Tuple] =
-    P(tuple(required = true))
+  def parse[Unknown: P, O <: Token, C <: Token](
+      required: Boolean,
+      open: O,
+      close: C): P[SoftAST.Group[O, C]] =
+    P {
+      group(
+        required,
+        open = open,
+        close = close
+      )
+    }
 
-  def parse[Unknown: P](required: Boolean): P[SoftAST.Tuple] =
-    P(tuple(required))
+  def parseOrFail[Unknown: P, O <: Token, C <: Token](
+      open: O,
+      close: C): P[SoftAST.Group[O, C]] =
+    P {
+      group(
+        required = false,
+        open = open,
+        close = close
+      )
+    }
 
   /**
    * Parses a sequence of arguments enclosed within parentheses.
@@ -38,18 +63,21 @@ private object TupleParser {
    * Syntax: (arg1, arg2, (arg3, arg4), arg5)
    *
    * @param required Determines if the parser should fail when the opening parenthesis is missing.
-   * @return An instance of [[SoftAST.Tuple]].
+   * @return An instance of [[SoftAST.Group]].
    */
-  private def tuple[Unknown: P](required: Boolean): P[SoftAST.Tuple] =
+  private def group[Unknown: P, O <: Token, C <: Token](
+      required: Boolean,
+      open: O,
+      close: C): P[SoftAST.Group[O, C]] =
     P {
       Index ~
-        TokenParser.parse(required, Token.OpenParen) ~
+        TokenParser.parse(required, open) ~
         SpaceParser.parseOrFail.? ~
         Index ~
-        ExpressionParser.parseOrFail.? ~
+        expression(open, close).? ~
         SpaceParser.parseOrFail.? ~
-        tailParams.rep ~
-        TokenParser.parse(Token.CloseParen) ~
+        tail(open, close).rep ~
+        TokenParser.parse(close) ~
         Index
     } map {
       case (from, openParen, preHeadSpace, headParamIndex, headExpression, postHeadSpace, tailParams, closeParen, to) =>
@@ -61,14 +89,14 @@ private object TupleParser {
           else
             headExpression
 
-        SoftAST.Tuple(
+        SoftAST.Group(
           index = range(from, to),
-          openParen = openParen,
+          openToken = openParen,
           preHeadExpressionSpace = preHeadSpace,
           headExpression = headExpressionAdjusted,
           postHeadExpressionSpace = postHeadSpace,
           tailExpressions = tailParams,
-          closeParen = closeParen
+          closeToken = closeParen
         )
 
     }
@@ -78,25 +106,44 @@ private object TupleParser {
    *
    * Syntax: (arg1>>, arg2, (arg3, arg4), arg5<<)
    *
-   * @return An instance of [[SoftAST.TupleTail]].
+   * @return An instance of [[SoftAST.GroupTail]].
    */
-  private def tailParams[Unknown: P]: P[SoftAST.TupleTail] =
+  private def tail[Unknown: P, O <: Token, C <: Token](
+      open: O,
+      close: C): P[SoftAST.GroupTail] =
     P {
       Index ~
         TokenParser.parseOrFail(Token.Comma) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parse ~
+        expression(open, close) ~
         SpaceParser.parseOrFail.? ~
         Index
     } map {
       case (from, comma, preParamNameSpace, argumentName, postParamNameSpace, to) =>
-        SoftAST.TupleTail(
+        SoftAST.GroupTail(
           index = range(from, to),
           comma = comma,
           preExpressionSpace = preParamNameSpace,
           expression = argumentName,
           postExpressionSpace = postParamNameSpace
         )
+    }
+
+  private def expression[Unknown: P, O <: Token, C <: Token](
+      open: O,
+      close: C): P[SoftAST.ExpressionAST] =
+    P {
+      GroupParser.parseOrFail(open, close) |
+        TypeAssignmentParser.parseOrFail |
+        AssignmentParser.parseOrFail |
+        InfixCallParser.parseOrFail |
+        MethodCallParser.parseOrFail |
+        MutableBindingParser.parseOrFail |
+        ReferenceCallParser.parseOrFail |
+        NumberParser.parseOrFail |
+        BooleanParser.parseOrFail |
+        BStringParser.parseOrFail |
+        IdentifierParser.parseOrFail
     }
 
 }

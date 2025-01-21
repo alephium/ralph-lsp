@@ -5,7 +5,7 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-object CodeParser {
+private object CodeParser {
 
   def parseOrFail[Unknown: P, T <: Token](token: T): P[SoftAST.CodeToken[T]] =
     P(Index ~ token.lexeme ~ Index) map {

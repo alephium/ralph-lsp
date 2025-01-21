@@ -17,14 +17,27 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object ParameterParser {
+private case object ParameterParser {
 
-  def parse[Unknown: P]: P[SoftAST.Tuple] =
-    TupleParser.parse
+  def parse[Unknown: P]: P[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]] =
+    GroupParser.parse(
+      open = Token.OpenParen,
+      close = Token.CloseParen
+    )
 
-  def parseOrFail[Unknown: P]: P[SoftAST.Tuple] =
-    TupleParser.parseOrFail
+  def parse[Unknown: P](required: Boolean): P[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]] =
+    GroupParser.parse(
+      required = required,
+      open = Token.OpenParen,
+      close = Token.CloseParen
+    )
+
+  def parseOrFail[Unknown: P]: P[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]] =
+    GroupParser.parseOrFail(
+      open = Token.OpenParen,
+      close = Token.CloseParen
+    )
 
 }

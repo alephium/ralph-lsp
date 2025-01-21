@@ -23,7 +23,16 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object BlockParser {
 
-  def clause[Unknown: P](required: Boolean): P[SoftAST.BlockClause] =
+  def parse[Unknown: P]: P[SoftAST.BlockClause] =
+    parse(required = true)
+
+  def parseOrFail[Unknown: P]: P[SoftAST.BlockClause] =
+    parse(required = false)
+
+  def body[Unknown: P]: P[SoftAST.BlockBody] =
+    body()
+
+  private def parse[Unknown: P](required: Boolean): P[SoftAST.BlockClause] =
     P {
       Index ~
         TokenParser.parse(required, Token.OpenCurly) ~
@@ -43,9 +52,6 @@ private object BlockParser {
           closeCurly = closeCurly
         )
     }
-
-  def body[Unknown: P]: P[SoftAST.BlockBody] =
-    body()
 
   private def body[Unknown: P](stop: Token*): P[SoftAST.BlockBody] =
     P {
@@ -80,7 +86,8 @@ private object BlockParser {
   private def part[Unknown: P](stop: Seq[Token]): P[SoftAST.BodyPartAST] =
     P {
       TemplateParser.parseOrFail |
-        DataTemplateParser.parseOrFail |
+        EventTemplateParser.parseOrFail |
+        StructTemplateParser.parseOrFail |
         FunctionParser.parseOrFail |
         ExpressionParser.parseOrFail |
         CommentParser.parseOrFail |

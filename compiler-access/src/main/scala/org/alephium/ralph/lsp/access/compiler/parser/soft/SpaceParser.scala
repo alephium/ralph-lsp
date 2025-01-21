@@ -21,7 +21,7 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-object SpaceParser {
+private object SpaceParser {
 
   def parse[Unknown: P]: P[SoftAST.SpaceAST] =
     P(Index ~ parseOrFail.?) map {

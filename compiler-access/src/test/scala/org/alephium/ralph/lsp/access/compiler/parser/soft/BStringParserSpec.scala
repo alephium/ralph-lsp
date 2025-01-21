@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
-class BStringSpec extends AnyWordSpec with Matchers {
+class BStringParserSpec extends AnyWordSpec with Matchers {
 
   "b alone" should {
     "not parse as String literal" in {

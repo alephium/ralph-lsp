@@ -167,7 +167,7 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
     function
       .signature
       .params
-      .closeParen shouldBe SoftAST.TokenExpected(indexOf("fn abcd(>><<"), Token.CloseParen)
+      .closeToken shouldBe SoftAST.TokenExpected(indexOf("fn abcd(>><<"), Token.CloseParen)
   }
 
   "missing opening parentheses" in {
@@ -183,7 +183,7 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
     function
       .signature
       .params
-      .openParen shouldBe SoftAST.TokenExpected(indexOf("fn abcd>><<)"), Token.OpenParen)
+      .openToken shouldBe SoftAST.TokenExpected(indexOf("fn abcd>><<)"), Token.OpenParen)
   }
 
 }

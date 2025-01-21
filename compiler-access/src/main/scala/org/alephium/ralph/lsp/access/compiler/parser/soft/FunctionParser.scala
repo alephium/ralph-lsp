@@ -18,7 +18,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object FunctionParser {
@@ -39,7 +39,7 @@ private object FunctionParser {
         SpaceParser.parse ~
         signature ~
         SpaceParser.parseOrFail.? ~
-        BlockParser.clause(required = false).? ~
+        BlockParser.parseOrFail.? ~
         Index
     } map {
       case (from, annotation, postAnnotationSpace, pub, fnDeceleration, headSpace, signature, tailSpace, block, to) =>
@@ -92,7 +92,9 @@ private object FunctionParser {
   private def returnSignature[Unknown: P]: P[SoftAST.FunctionReturnAST] =
     P {
       Index ~
-        (TokenParser.parse(Token.ForwardArrow) ~ SpaceParser.parseOrFail.? ~ TypeParser.parse).? ~
+        (TokenParser.parse(Token.ForwardArrow) ~
+          SpaceParser.parseOrFail.? ~
+          returnExpression).? ~
         Index
     } map {
       case (from, Some((forwardArrow, space, tpe)), to) =>
@@ -105,6 +107,22 @@ private object FunctionParser {
 
       case (from, None, to) =>
         SoftAST.FunctionReturnExpected(range(from, to))
+    }
+
+  private def returnExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
+    P(Index ~ returnExpressionParserOrFail.?) map {
+      case (_, Some(expression)) =>
+        expression
+
+      case (from, None) =>
+        SoftAST.ExpressionExpected(point(from))
+    }
+
+  private def returnExpressionParserOrFail[Unknown: P]: P[SoftAST.ExpressionAST] =
+    P {
+      ParameterParser.parseOrFail |
+        NumberParser.parseOrFail |
+        IdentifierParser.parseOrFail
     }
 
 }

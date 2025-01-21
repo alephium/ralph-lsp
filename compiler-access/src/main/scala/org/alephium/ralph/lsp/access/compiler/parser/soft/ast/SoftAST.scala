@@ -98,7 +98,14 @@ object SoftAST {
 
   }
 
-  abstract class ErrorAST(val message: String)       extends SoftAST
+  abstract class ErrorAST(val message: String) extends SoftAST {
+
+    // Also display the error message in the Tree representation
+    final override def toStringPretty(): String =
+      s"""${this.getClass.getSimpleName}("$message"): ${this.index}"""
+
+  }
+
   abstract class ExpectedErrorAST(element: String)   extends ErrorAST(s"$element expected")
   abstract class TokenExpectedErrorAST(token: Token) extends ExpectedErrorAST(s"'${token.lexeme}'")
 
@@ -151,19 +158,28 @@ object SoftAST {
       preIdentifierSpace: SpaceAST,
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
-      params: Option[Tuple],
+      params: Option[Group[Token.OpenParen.type, Token.CloseParen.type]],
       postParamSpace: Option[Space],
       inheritance: Seq[TemplateInheritance],
       block: BlockClause)
     extends BodyPartAST
 
-  case class DataTemplate(
+  case class EventTemplate(
       index: SourceIndex,
-      dataType: TokenDocumented[Token.DataTemplate],
+      eventToken: TokenDocumented[Token.Event.type],
       preIdentifierSpace: SpaceAST,
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
-      params: Tuple)
+      params: Group[Token.OpenParen.type, Token.CloseParen.type])
+    extends BodyPartAST
+
+  case class StructTemplate(
+      index: SourceIndex,
+      structToken: TokenDocumented[Token.Struct.type],
+      preIdentifierSpace: SpaceAST,
+      identifier: IdentifierAST,
+      preParamSpace: Option[Space],
+      params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
     extends BodyPartAST
 
   /** Syntax: `implements or extends contract(arg1, arg2 ...)` */
@@ -212,27 +228,33 @@ object SoftAST {
       index: SourceIndex,
       fnName: IdentifierAST,
       preParamSpace: Option[Space],
-      params: Tuple,
+      params: Group[Token.OpenParen.type, Token.CloseParen.type],
       postParamSpace: Option[Space],
       returned: FunctionReturnAST)
     extends SoftAST
 
-  sealed trait TypeAST extends SoftAST
-
-  /** Multiple arguments. Syntax: (arg1, (arg2, arg3)) */
-  case class Tuple(
+  /**
+   * Represents a comma separated list of expressions.
+   *
+   * This list of expressions is parsed by the following syntax:
+   *  - Struct `{ a, b: Type, mut c: C }`
+   *  - Annotation `@using(a = b)`
+   *  - Contract | TxScript`(a, b, c)`
+   *  - fn `(a: Type, b: Type, c)`
+   *  - `enum` etc
+   */
+  case class Group[O <: Token, C <: Token](
       index: SourceIndex,
-      openParen: TokenDocExpectedAST[Token.OpenParen.type],
+      openToken: TokenDocExpectedAST[O],
       preHeadExpressionSpace: Option[Space],
       headExpression: Option[ExpressionAST],
       postHeadExpressionSpace: Option[Space],
-      tailExpressions: Seq[TupleTail],
-      closeParen: TokenDocExpectedAST[Token.CloseParen.type])
+      tailExpressions: Seq[GroupTail],
+      closeToken: TokenDocExpectedAST[C])
     extends ExpressionAST
-       with TypeAST
 
-  /** Syntax: (arg1, >>arg2, (arg3, arg4)<<) */
-  case class TupleTail(
+  /** Comma separated tail expressions of a [[Group]] */
+  case class GroupTail(
       index: SourceIndex,
       comma: TokenDocumented[Token.Comma.type],
       preExpressionSpace: Option[Space],
@@ -246,7 +268,7 @@ object SoftAST {
       index: SourceIndex,
       forwardArrow: TokenDocExpectedAST[Token.ForwardArrow.type],
       space: Option[Space],
-      tpe: TypeAST)
+      tpe: ExpressionAST)
     extends FunctionReturnAST
 
   case class FunctionReturnExpected(
@@ -254,7 +276,7 @@ object SoftAST {
     extends TokenExpectedErrorAST(Token.ForwardArrow)
        with FunctionReturnAST
 
-  sealed trait IdentifierAST extends TypeAST with ReferenceCallOrIdentifier
+  sealed trait IdentifierAST extends ReferenceCallOrIdentifier
 
   case class Identifier(
       index: SourceIndex,
@@ -288,7 +310,7 @@ object SoftAST {
       index: SourceIndex,
       documentation: Option[Comments],
       code: CodeString)
-    extends ErrorAST(s"Cannot resolve '$code'")
+    extends ErrorAST(s"Cannot resolve '${code.text}'")
        with CodeDocumentedAST
        with BodyPartAST
 
@@ -298,7 +320,7 @@ object SoftAST {
       index: SourceIndex,
       reference: IdentifierAST,
       preArgumentsSpace: Option[Space],
-      arguments: Tuple)
+      arguments: Group[Token.OpenParen.type, Token.CloseParen.type])
     extends ExpressionAST
        with ReferenceCallOrIdentifier
 
@@ -377,12 +399,11 @@ object SoftAST {
 
   case class TypeAssignment(
       index: SourceIndex,
-      modifiers: Seq[SoftAST.AssignmentAccessModifier],
-      name: IdentifierAST,
+      name: ExpressionAST,
       preColonSpace: Option[Space],
       colon: TokenDocumented[Token.Colon.type],
       postColonSpace: Option[Space],
-      tpe: TypeAST)
+      tpe: ExpressionAST)
     extends ExpressionAST
 
   case class AssignmentAccessModifier(
@@ -417,7 +438,7 @@ object SoftAST {
       preIdentifierSpace: Option[Space],
       identifier: IdentifierAST,
       postIdentifierSpace: Option[Space],
-      tuple: Option[Tuple],
+      tuple: Option[Group[Token.OpenParen.type, Token.CloseParen.type]],
       postTupleSpace: Option[Space])
     extends ExpressionAST
 

@@ -5,12 +5,12 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
-case object InfixCallParser {
+private case object InfixCallParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.InfixExpression] =
     P {
       Index ~
-        ExpressionParser.parseOrFailSelective(parseInfix = false, parseMethodCall = true, parseAssignment = false) ~
+        leftExpression ~
         SpaceParser.parseOrFail.? ~
         TokenParser.InfixOperatorOrFail ~
         SpaceParser.parseOrFail.? ~
@@ -26,6 +26,20 @@ case object InfixCallParser {
           postOperatorSpace = postOperatorSpace,
           rightExpression = rightExpression
         )
+    }
+
+  private def leftExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
+    P {
+      MethodCallParser.parseOrFail |
+        BlockParser.parseOrFail |
+        VariableDeclarationParser.parseOrFail |
+        MutableBindingParser.parseOrFail |
+        ReferenceCallParser.parseOrFail |
+        ParameterParser.parseOrFail |
+        NumberParser.parseOrFail |
+        BooleanParser.parseOrFail |
+        BStringParser.parseOrFail |
+        IdentifierParser.parseOrFail
     }
 
 }

@@ -18,7 +18,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
@@ -27,7 +27,7 @@ import org.scalatest.TryValues.convertTryToSuccessOrFailure
 
 import scala.util.Try
 
-class VariableDeclarationSpec extends AnyWordSpec with Matchers {
+class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
 
   "succeed" when {
     "full valid variable declaration is defined" in {
@@ -122,7 +122,7 @@ class VariableDeclarationSpec extends AnyWordSpec with Matchers {
         )
 
       // left is a tuple
-      val left = tupleDecl.assignment.expressionLeft.asInstanceOf[SoftAST.Tuple]
+      val left = tupleDecl.assignment.expressionLeft.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
       left.index shouldBe indexOf("let >>(a, b, c)<< = blah")
       left.toCode() shouldBe "(a, b, c)"
 

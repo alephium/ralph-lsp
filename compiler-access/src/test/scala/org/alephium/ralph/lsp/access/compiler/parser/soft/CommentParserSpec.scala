@@ -23,7 +23,7 @@ import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class CommentSpec extends AnyWordSpec with Matchers {
+class CommentParserSpec extends AnyWordSpec with Matchers {
 
   "no text comment" should {
     "store empty comment" in {

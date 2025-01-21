@@ -24,30 +24,9 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 private object ExpressionParser {
 
   def parse[Unknown: P]: P[SoftAST.ExpressionAST] =
-    parseSelective(
-      parseInfix = true,
-      parseMethodCall = true,
-      parseAssignment = true
-    )
-
-  def parseOrFail[Unknown: P]: P[SoftAST.ExpressionAST] =
-    parseOrFailSelective(
-      parseInfix = true,
-      parseMethodCall = true,
-      parseAssignment = true
-    )
-
-  def parseSelective[Unknown: P](
-      parseInfix: Boolean,
-      parseMethodCall: Boolean,
-      parseAssignment: Boolean): P[SoftAST.ExpressionAST] =
     P {
       Index ~
-        parseOrFailSelective(
-          parseInfix = parseInfix,
-          parseMethodCall = parseMethodCall,
-          parseAssignment = parseAssignment
-        ).? ~
+        parseOrFail.? ~
         Index
     } map {
       case (_, Some(expression), _) =>
@@ -57,48 +36,21 @@ private object ExpressionParser {
         SoftAST.ExpressionExpected(range(from, to))
     }
 
-  def parseOrFailSelective[Unknown: P](
-      parseInfix: Boolean,
-      parseMethodCall: Boolean,
-      parseAssignment: Boolean): P[SoftAST.ExpressionAST] = {
-    def infixOrFail() =
-      if (parseInfix)
-        InfixCallParser.parseOrFail
-      else
-        Fail(s"${InfixCallParser.productPrefix} ignored")
-
-    def methodCallOrFail() =
-      if (parseMethodCall)
-        MethodCallParser.parseOrFail
-      else
-        Fail(s"${MethodCallParser.productPrefix} ignored")
-
-    def assignmentOrFail() =
-      if (parseAssignment)
-        AssignmentParser.parseOrFail
-      else
-        Fail(s"${AssignmentParser.productPrefix} ignored")
-
+  def parseOrFail[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
-      assignmentOrFail() |
-        infixOrFail() |
-        methodCallOrFail() |
-        common
-    }
-  }
-
-  private def common[Unknown: P]: P[SoftAST.ExpressionAST] =
-    P {
-      ReturnStatementParser.parseOrFail |
+      TypeAssignmentParser.parseOrFail |
+        AssignmentParser.parseOrFail |
+        InfixCallParser.parseOrFail |
+        MethodCallParser.parseOrFail |
+        BlockParser.parseOrFail |
+        ReturnStatementParser.parseOrFail |
         ForLoopParser.parseOrFail |
         WhileLoopParser.parseOrFail |
         VariableDeclarationParser.parseOrFail |
         MutableBindingParser.parseOrFail |
-        TypeAssignmentParser.parseOrFail |
-        BlockParser.clause(required = false) |
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
-        TupleParser.parseOrFail |
+        ParameterParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |

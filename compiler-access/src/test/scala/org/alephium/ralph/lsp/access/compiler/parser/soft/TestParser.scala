@@ -45,20 +45,14 @@ object TestParser {
   def parseFunction(code: String): SoftAST.Function =
     runSoftParser(FunctionParser.parseOrFail(_))(code)
 
-  def parseTuple(code: String): SoftAST.Tuple =
-    runSoftParser(TupleParser.parse(_))(code)
-
-  def parseBlockClause(mandatory: Boolean)(code: String): SoftAST.BlockClause =
-    runSoftParser(BlockParser.clause(mandatory)(_))(code)
+  def parseTuple(code: String): SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type] =
+    runSoftParser(ParameterParser.parse(_))(code)
 
   def parseBlockBody(code: String): SoftAST.BlockBody =
     runSoftParser(BlockParser.body(_))(code)
 
   def parseComment(code: String): SoftAST.Comments =
     runSoftParser(CommentParser.parseOrFail(_))(code)
-
-  def parseType(code: String): SoftAST.TypeAST =
-    runSoftParser(TypeParser.parse(_))(code)
 
   def parseReservedToken(remove: Token.Reserved*)(code: String): Token.Reserved =
     runAnyParser(TokenParser.Reserved(remove: _*)(_))(code)
@@ -84,6 +78,15 @@ object TestParser {
 
   def parseBString(code: String): SoftAST.BString =
     runSoftParser(BStringParser.parseOrFail(_))(code)
+
+  def parseEventTemplate(code: String): SoftAST.EventTemplate =
+    runSoftParser(EventTemplateParser.parseOrFail(_))(code)
+
+  def parseStructTemplate(code: String): SoftAST.StructTemplate =
+    runSoftParser(StructTemplateParser.parseOrFail(_))(code)
+
+  def parseTypeAssignment(code: String): SoftAST.TypeAssignment =
+    runSoftParser(TypeAssignmentParser.parseOrFail(_))(code)
 
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(

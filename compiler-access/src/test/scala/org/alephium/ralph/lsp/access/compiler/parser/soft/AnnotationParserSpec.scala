@@ -25,7 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
-class AnnotationSpec extends AnyWordSpec with Matchers {
+class AnnotationParserSpec extends AnyWordSpec with Matchers {
 
   "error cases" should {
     "report missing identifier" in {
@@ -49,9 +49,9 @@ class AnnotationSpec extends AnyWordSpec with Matchers {
         parseAnnotation("@anno(")
 
       // opening paren is parsed
-      annotation.tuple.value.openParen shouldBe OpenParen(indexOf("@anno>>(<<"))
+      annotation.tuple.value.openToken shouldBe OpenParen(indexOf("@anno>>(<<"))
       // closing paren is reported as expected
-      annotation.tuple.value.closeParen shouldBe SoftAST.TokenExpected(indexOf("@anno(>><<"), Token.CloseParen)
+      annotation.tuple.value.closeToken shouldBe SoftAST.TokenExpected(indexOf("@anno(>><<"), Token.CloseParen)
     }
 
     "reject reserved keyword as annotation identifier" in {
