@@ -35,7 +35,7 @@ private object TemplateParser {
     }
 
   /** Syntax: `implements or extends contract(arg1, arg2 ...)` */
-  private def inheritance[Unknown: P]: P[SoftAST.TemplateInheritance] =
+  private def inheritance[Unknown: P]: P[SoftAST.Inheritance] =
     P {
       Index ~
         (TokenParser.parseOrFail(Token.Implements) | TokenParser.parseOrFail(Token.Extends)) ~
@@ -45,7 +45,7 @@ private object TemplateParser {
         Index
     } map {
       case (from, token, preConstructorCallSpace, constructorCall, postConstructorCallSpace, to) =>
-        SoftAST.TemplateInheritance(
+        SoftAST.Inheritance(
           index = range(from, to),
           inheritanceType = token,
           preConstructorCallSpace = preConstructorCallSpace,

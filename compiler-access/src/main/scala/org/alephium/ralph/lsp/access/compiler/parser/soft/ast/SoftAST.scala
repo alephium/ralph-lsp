@@ -160,7 +160,7 @@ object SoftAST {
       preParamSpace: Option[Space],
       params: Option[Group[Token.OpenParen.type, Token.CloseParen.type]],
       postParamSpace: Option[Space],
-      inheritance: Seq[TemplateInheritance],
+      inheritance: Seq[Inheritance],
       block: BlockClause)
     extends BodyPartAST
 
@@ -183,7 +183,7 @@ object SoftAST {
     extends BodyPartAST
 
   /** Syntax: `implements or extends contract(arg1, arg2 ...)` */
-  case class TemplateInheritance(
+  case class Inheritance(
       index: SourceIndex,
       inheritanceType: TokenDocumented[Token.Inheritance],
       preConstructorCallSpace: SpaceAST,
