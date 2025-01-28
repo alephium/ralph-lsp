@@ -43,9 +43,25 @@ object WorkspaceSearcher {
       fileURI: URI,
       workspace: WorkspaceState.IsSourceAware): Option[Either[CompilerMessage.Error, SourceCodeState.Parsed]] =
     // file must belong to the workspace contractURI and must be a ralph source file
-    if (URIUtil.contains(workspace.build.contractURI, fileURI) && CompilerAccess.isRalphFileExtension(fileURI)) {
+    if (isWorkspaceSourceFile(fileURI, workspace)) {
       val parsedOrError =
         SourceCodeSearcher.findParsed(
+          fileURI = fileURI,
+          sourceCode = workspace.sourceCode
+        )
+
+      Some(parsedOrError)
+    } else {
+      None
+    }
+
+  def findIsParsed(
+      fileURI: URI,
+      workspace: WorkspaceState.IsSourceAware): Option[Either[CompilerMessage.Error, SourceCodeState.IsParsed]] =
+    // file must belong to the workspace contractURI and must be a ralph source file
+    if (isWorkspaceSourceFile(fileURI, workspace)) {
+      val parsedOrError =
+        SourceCodeSearcher.findIsParsed(
           fileURI = fileURI,
           sourceCode = workspace.sourceCode
         )
@@ -316,5 +332,18 @@ object WorkspaceSearcher {
 
     workspaceTrees ++ allImportedCode
   }
+
+  /**
+   * Checks whether the given file URI belongs to the given workspace and is a Ralph source file.
+   *
+   * @param fileURI   The URI of the file to check.
+   * @param workspace The workspace to verify.
+   * @return `true` if the file is a Ralph source file and belongs to the workspace, else `false`.
+   */
+  private def isWorkspaceSourceFile(
+      fileURI: URI,
+      workspace: WorkspaceState.IsSourceAware): Boolean =
+    URIUtil.contains(workspace.build.contractURI, fileURI) &&
+      CompilerAccess.isRalphFileExtension(fileURI)
 
 }

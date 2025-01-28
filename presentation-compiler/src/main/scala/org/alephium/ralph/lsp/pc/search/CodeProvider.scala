@@ -17,11 +17,13 @@
 package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.search.completion.{CodeCompletionProvider, Suggestion}
 import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefinitionProvider, GoToDefSetting}
 import org.alephium.ralph.lsp.pc.search.gotoref.{GoToReferenceProvider, GoToRefSetting}
 import org.alephium.ralph.lsp.pc.search.rename.GoToRenameProvider
+import org.alephium.ralph.lsp.pc.search.soft.gotodef.GoToDefinitionProviderSoft
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
@@ -64,6 +66,9 @@ object CodeProvider {
   /** The go-to definition implementation of [[CodeProvider]]. */
   implicit val goToDefinition: CodeProvider[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict] =
     GoToDefinitionProvider
+
+  implicit val softGoToDefinition: CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] =
+    GoToDefinitionProviderSoft
 
   /** The go-to references implementation of [[CodeProvider]]. */
   implicit val goToReferences: CodeProvider[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict] =
@@ -182,31 +187,59 @@ object CodeProvider {
       searchSettings: I
     )(implicit provider: CodeProvider[S, I, O],
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
-    WorkspaceSearcher
-      .findParsed( // find the parsed file where this search was executed.
-        fileURI = fileURI,
-        workspace = workspace
-      )
-      .map {
-        parsedOpt =>
-          parsedOpt map {
-            parsed =>
-              // fetch the requested index from line number and character number.
-              val cursorIndex =
-                StringUtil.computeIndex(
-                  code = parsed.code,
-                  line = line,
-                  character = character
-                )
-
-              // execute the search
-              provider.search(
-                cursorIndex = cursorIndex,
-                sourceCode = parsed.asInstanceOf[S],
-                workspace = workspace,
-                searchSettings = searchSettings
+    getParsedStateForCodeProvider(
+      fileURI = fileURI,
+      workspace = workspace,
+      searchSettings = searchSettings
+    ) map {
+      parsedOpt =>
+        parsedOpt map {
+          parsed =>
+            // fetch the requested index from line number and character number.
+            val cursorIndex =
+              StringUtil.computeIndex(
+                code = parsed.code,
+                line = line,
+                character = character
               )
-          }
-      }
+
+            // execute the search
+            provider.search(
+              cursorIndex = cursorIndex,
+              sourceCode = parsed.asInstanceOf[S],
+              workspace = workspace,
+              searchSettings = searchSettings
+            )
+        }
+    }
+
+  /**
+   * Finds the parsed state of the given file URI, based on the type of code provider being executed.
+   *
+   * This function is temporary until [[SoftAST]] fully replaces StrictAST within the [[CodeProvider]]s.
+   *
+   * @param fileURI        The URI of the file whose parsed state is to be fetched.
+   * @param workspace      The current workspace state.
+   * @param searchSettings The search settings for this request.
+   * @tparam I The type of the search settings used by the provider.
+   * @return The current parsed state of the FileURI.
+   */
+  private def getParsedStateForCodeProvider[I](
+      fileURI: URI,
+      workspace: WorkspaceState.IsSourceAware,
+      searchSettings: I): Option[Either[CompilerMessage.Error, SourceCodeState.IsParsed]] =
+    searchSettings match {
+      case (SoftAST, _) => // This is a SoftParser, fetch the IsParsed
+        WorkspaceSearcher.findIsParsed(
+          fileURI = fileURI,
+          workspace = workspace
+        )
+
+      case _ => // This is a StrictParser, fetch the Parsed
+        WorkspaceSearcher.findParsed(
+          fileURI = fileURI,
+          workspace = workspace
+        )
+    }
 
 }

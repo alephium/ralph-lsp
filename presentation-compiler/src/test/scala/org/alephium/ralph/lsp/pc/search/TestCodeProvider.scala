@@ -19,6 +19,7 @@ package org.alephium.ralph.lsp.pc.search
 import org.alephium.ralph.lsp.TestCommon
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.access.util.{StringUtil, TestCodeUtil}
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
@@ -80,6 +81,18 @@ object TestCodeProvider {
       code = code,
       searchSettings = settings
     )
+
+  def goToDefinitionSoft(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] =
+    goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
+      code = code,
+      searchSettings = (SoftAST, settings)
+    )
+
+  /** Executes go-to-definition providers for both StrictAST and [[SoftAST]] */
+  def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] = {
+    goToDefinitionStrict(settings)(code)
+    goToDefinitionSoft(settings)(code)
+  }
 
   def goToDefinitionForAll(
       referencesFinder: Regex,
