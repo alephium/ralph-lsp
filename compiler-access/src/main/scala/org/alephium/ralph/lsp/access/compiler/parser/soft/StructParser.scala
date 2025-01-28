@@ -5,9 +5,9 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object StructTemplateParser {
+private object StructParser {
 
-  def parseOrFail[Unknown: P]: P[SoftAST.StructTemplate] =
+  def parseOrFail[Unknown: P]: P[SoftAST.Struct] =
     P {
       Index ~
         TokenParser.parseOrFail(Token.Struct) ~
@@ -18,7 +18,7 @@ private object StructTemplateParser {
         Index
     } map {
       case (from, structToken, preIdentifierSpace, identifier, preParamSpace, params, to) =>
-        SoftAST.StructTemplate(
+        SoftAST.Struct(
           index = range(from, to),
           structToken = structToken,
           preIdentifierSpace = preIdentifierSpace,

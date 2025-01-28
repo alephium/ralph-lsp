@@ -7,10 +7,10 @@ import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpec
 
-class StructTemplateParserSpec extends AnyWordSpec {
+class StructParserSpec extends AnyWordSpec {
 
   "closing curly is missing" in {
-    val struct = parseStructTemplate("struct MyStruct{varName: TypeName")
+    val struct = parseStruct("struct MyStruct{varName: TypeName")
 
     struct.structToken shouldBe Struct(indexOf(">>struct<< MyStruct{varName: TypeName"))
     struct.identifier shouldBe Identifier(indexOf("struct >>MyStruct<<{varName: TypeName"), "MyStruct")
@@ -22,7 +22,7 @@ class StructTemplateParserSpec extends AnyWordSpec {
   }
 
   "well defined struct" in {
-    val struct = parseStructTemplate("struct Bar { z: U256, mut foo: Foo }")
+    val struct = parseStruct("struct Bar { z: U256, mut foo: Foo }")
 
     struct.structToken shouldBe Struct(indexOf(">>struct<< Bar { z: U256, mut foo: Foo }"))
     struct.identifier shouldBe Identifier(indexOf("struct >>Bar<< { z: U256, mut foo: Foo }"), "Bar")

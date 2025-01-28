@@ -173,7 +173,7 @@ object SoftAST {
       params: Group[Token.OpenParen.type, Token.CloseParen.type])
     extends BodyPartAST
 
-  case class StructTemplate(
+  case class Struct(
       index: SourceIndex,
       structToken: TokenDocumented[Token.Struct.type],
       preIdentifierSpace: SpaceAST,
