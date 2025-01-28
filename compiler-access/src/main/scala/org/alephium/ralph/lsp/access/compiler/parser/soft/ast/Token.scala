@@ -150,11 +150,6 @@ object Token {
   case object AlphLowercase                                        extends PrimitiveUnit("alph") with Reserved
   case object AlphUppercase                                        extends PrimitiveUnit("ALPH") with Reserved
 
-  sealed trait Term                        extends Token
-  case class Name(lexeme: String)          extends Term
-  case class NumberLiteral(lexeme: String) extends Term
-  case class StringLiteral(lexeme: String) extends Term
-
   val reserved: Array[Reserved] =
     EnumerationMacros
       .sealedInstancesOf[Reserved]
