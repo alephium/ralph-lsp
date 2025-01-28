@@ -24,6 +24,7 @@ import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode._
 import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc
 import org.alephium.ralph.lsp.{TestCode, TestFile}
+import org.alephium.ralph.lsp.utils.LazyVal
 import org.scalatest.EitherValues._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -163,7 +164,8 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
                   SourceCodeState.Parsed(
                     fileURI = currentState.fileURI,
                     code = goodCode,
-                    astStrict = compiler.parseContracts(currentState.fileURI, goodCode).value
+                    astStrict = compiler.parseContracts(currentState.fileURI, goodCode).value,
+                    astSoft = LazyVal(compiler.parseSoft(goodCode))
                   )
 
                 // read the code written on disk
@@ -211,7 +213,8 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
             SourceCodeState.ErrorParser(
               fileURI = onDisk.fileURI,
               code = code,
-              errors = Seq(compiler.parseContracts(onDisk.fileURI, code).left.value)
+              errors = Seq(compiler.parseContracts(onDisk.fileURI, code).left.value),
+              astSoft = LazyVal(compiler.parseSoft(code))
             )
 
           TestSourceCode.delete(onDisk)

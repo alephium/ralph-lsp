@@ -20,8 +20,10 @@ import org.alephium.ralph.{CompiledContract, CompiledScript}
 import org.alephium.ralph.lsp.access.compiler.RalphParserExtension
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.error.FastParseError
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.sourcecode.warning.StringWarning
-import org.alephium.ralph.lsp.utils.URIUtil
+import org.alephium.ralph.lsp.utils.{LazyVal, URIUtil}
 
 import java.net.URI
 
@@ -67,10 +69,13 @@ object SourceCodeState {
 
   }
 
-  /** Represents: Code that is parsed and compiled. */
-  sealed trait IsParsedAndCompiled extends IsCodeAware
-
   /** Represents: Code that is parsed. */
+  sealed trait IsParsedAndCompiled extends IsCodeAware {
+
+    def astSoft: LazyVal[Either[FastParseError, SoftAST.BlockBody]]
+
+  }
+
   sealed trait IsParsed extends IsParsedAndCompiled
 
   /** Represents: Code that is compiled. */
@@ -85,6 +90,9 @@ object SourceCodeState {
 
     override def code: String =
       parsed.code
+
+    override def astSoft: LazyVal[Either[FastParseError, SoftAST.BlockBody]] =
+      parsed.astSoft
 
   }
 
@@ -120,16 +128,20 @@ object SourceCodeState {
   case class Parsed(
       fileURI: URI,
       code: String,
-      astStrict: Tree.Root)
+      astStrict: Tree.Root,
+      astSoft: LazyVal[Either[FastParseError, SoftAST.BlockBody]])
     extends IsParsedAndCompiled
+       with IsParsed
 
   /** Represents: Error during the parser phase. */
   case class ErrorParser(
       fileURI: URI,
       code: String,
-      errors: Seq[CompilerMessage.AnyError])
+      errors: Seq[CompilerMessage.AnyError],
+      astSoft: LazyVal[Either[FastParseError, SoftAST.BlockBody]])
     extends IsParserOrCompilationError
        with IsParsedAndCompiled
+       with IsParsed
 
   /** Represents: Code is successfully compiled */
   case class Compiled(
