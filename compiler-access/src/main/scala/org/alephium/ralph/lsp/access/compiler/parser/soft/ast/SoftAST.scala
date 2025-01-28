@@ -27,17 +27,23 @@ sealed trait SoftAST extends Product { self =>
   final def children(): Iterator[SoftAST] =
     productIterator flatMap collectASTs
 
-  final def toNode(): Node[this.type, SoftAST] =
+  /**
+   * Similar to [[org.alephium.ralph.lsp.access.compiler.ast.Tree.Source.rootNode]],
+   * this tree creation is also lazily evaluated and expected to have concurrent access.
+   *
+   * TODO: Move these caches to solutions like Caffeine.
+   */
+  final lazy val toNode: Node[this.type, SoftAST] =
     Node(
       data = self,
-      children = children().map(_.toNode()).toSeq
+      children = children().map(_.toNode).toSeq
     )
 
   final def toCode(): String =
-    toNode().toCode()
+    toNode.toCode()
 
   final def toStringTree(): String =
-    toNode().toStringTree()
+    toNode.toStringTree()
 
   def toStringPretty(): String =
     s"${self.getClass.getSimpleName}: ${self.index}"

@@ -114,7 +114,7 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
 
       val functions =
         root
-          .toNode()
+          .toNode
           .walkDown
           .map(_.data)
           .collect {
