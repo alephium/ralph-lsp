@@ -39,7 +39,7 @@ private object GoToRefSource extends StrictImplicitLogging {
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToRefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     CodeProvider
       .goToDefinition
       .search( // find definitions for the token at the given cursorIndex.
@@ -52,7 +52,7 @@ private object GoToRefSource extends StrictImplicitLogging {
         case SourceLocation.File(_) =>
           Iterator.empty
 
-        case location @ SourceLocation.Node(_, _) =>
+        case location @ SourceLocation.NodeStrict(_, _) =>
           // find references for the definitions
           goTo(
             defLocation = location,
@@ -74,10 +74,10 @@ private object GoToRefSource extends StrictImplicitLogging {
    * @return An iterator reference location(s).
    */
   def goTo(
-      defLocation: SourceLocation.Node[Ast.Positioned],
+      defLocation: SourceLocation.NodeStrict[Ast.Positioned],
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToRefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] = {
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] = {
     val defNode =
       defLocation
         .source

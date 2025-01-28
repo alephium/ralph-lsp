@@ -27,7 +27,7 @@ object FuncIdCompleter {
   def suggest(
       cursorIndex: Int,
       funcId: Node[Ast.FuncId, Ast.Positioned],
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): Iterator[Suggestion] =
     funcId.parent match {

@@ -34,7 +34,7 @@ object EnumFieldCompleter {
    */
   def suggest(
       enumId: Ast.TypeId,
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.EnumFields] = {
     val trees =
       WorkspaceSearcher.collectInheritedParents(
@@ -54,7 +54,7 @@ object EnumFieldCompleter {
         sourceCode =>
           sourceCode.tree.rootNode.walkDown.collect {
             case Node(enumDef: ralph.Ast.EnumDef[_], _) if enumDef.id == enumId =>
-              Suggestion.EnumFields(SourceLocation.Node(enumDef, sourceCode))
+              Suggestion.EnumFields(SourceLocation.NodeStrict(enumDef, sourceCode))
           }
       }
   }

@@ -103,7 +103,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
     val file1Trees =
       sourceFile1.astStrict.statements.collect {
         case source: Tree.Source =>
-          SourceLocation.Code(source, sourceFile1)
+          SourceLocation.CodeStrict(source, sourceFile1)
       }
 
     // We need to test to find in-scope inheritance for the Child contract.
@@ -114,7 +114,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
     val file2Trees =
       sourceFile2.astStrict.statements.collect {
         case source: Tree.Source =>
-          SourceLocation.Code(source, sourceFile2)
+          SourceLocation.CodeStrict(source, sourceFile2)
       }
 
     // std interfaces with the following import identifiers should get included.
@@ -134,7 +134,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
           case source if expectedImports.contains(source.importIdentifier.value.string.value) =>
             source.parsed.astStrict.statements.collect {
               case tree: Tree.Source =>
-                SourceLocation.Code(
+                SourceLocation.CodeStrict(
                   tree = tree,
                   parsed = source.parsed
                 )
@@ -151,7 +151,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
     // execute the function
     val actual =
       WorkspaceSearcher.collectInheritedParents(
-        sourceCode = SourceLocation.Code(
+        sourceCode = SourceLocation.CodeStrict(
           tree = childTree.tree,
           parsed = sourceFile1
         ),

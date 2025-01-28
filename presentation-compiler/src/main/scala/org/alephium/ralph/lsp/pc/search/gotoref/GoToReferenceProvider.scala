@@ -24,11 +24,11 @@ import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 /**
- * Implements [[CodeProvider]] that provides go-to references results of type [[SourceLocation.GoToRef]].
+ * Implements [[CodeProvider]] that provides go-to references results of type [[SourceLocation.GoToRefStrict]].
  *
- * To execution this function invoke [[CodeProvider.search]] with [[Boolean]] and [[SourceLocation.GoToRef]] as type parameter.
+ * To execution this function invoke [[CodeProvider.search]] with [[Boolean]] and [[SourceLocation.GoToRefStrict]] as type parameter.
  */
-private[search] case object GoToReferenceProvider extends CodeProvider[GoToRefSetting, SourceLocation.GoToRef] with StrictImplicitLogging {
+private[search] case object GoToReferenceProvider extends CodeProvider[GoToRefSetting, SourceLocation.GoToRefStrict] with StrictImplicitLogging {
 
   /** @inheritdoc */
   override def search(
@@ -36,7 +36,7 @@ private[search] case object GoToReferenceProvider extends CodeProvider[GoToRefSe
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: GoToRefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToRef] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToRefStrict] =
     // find the statement where this cursorIndex sits.
     sourceCode.astStrict.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>

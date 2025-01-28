@@ -63,7 +63,7 @@ object WorkspaceSearcher {
    * @return The source trees within the scope.
    */
   def collectInheritanceHierarchy(
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware): InheritanceHierarchyResult = {
     val allInScopeCode =
       collectTrees(workspace = workspace, includeNonImportedCode = false)
@@ -96,7 +96,7 @@ object WorkspaceSearcher {
    * @return The source trees within the scope.
    */
   def collectInheritedParents(
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware): InheritedParentsResult = {
     val allInScopeCode =
       collectTrees(workspace = workspace, includeNonImportedCode = false)
@@ -126,7 +126,7 @@ object WorkspaceSearcher {
    *         child source trees and all trees in scope of the current workspace.
    */
   def collectImplementingChildren(
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware): ImplementingChildrenResult = {
     val allInScopeCode =
       collectTrees(workspace, includeNonImportedCode = false)
@@ -154,7 +154,7 @@ object WorkspaceSearcher {
    */
   def collectFunctions(
       types: Seq[Type],
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] = {
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.FuncDef[StatefulContext]]] = {
     val workspaceTrees =
       collectTrees(workspace, includeNonImportedCode = false)
 
@@ -173,7 +173,7 @@ object WorkspaceSearcher {
    *       because all built-in functions are available throughout the workspace.
    *       Consider using other [[collectFunctions]] functions for more targeted collections.
    */
-  def collectFunctions(workspace: WorkspaceState.Parsed): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+  def collectFunctions(workspace: WorkspaceState.Parsed): Iterator[SourceLocation.NodeStrict[Ast.FuncDef[StatefulContext]]] =
     collectAllFunctions(workspace)
 
   /**
@@ -184,7 +184,7 @@ object WorkspaceSearcher {
    * @param workspace The parsed workspace state from which to collect function definitions.
    * @return An iterator containing all function implementations.
    */
-  def collectAllFunctions(workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+  def collectAllFunctions(workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.FuncDef[StatefulContext]]] =
     collectTrees(workspace, includeNonImportedCode = false)
       .iterator
       .flatMap(SourceCodeSearcher.collectFunctions)
@@ -197,8 +197,8 @@ object WorkspaceSearcher {
    * @return An iterator containing all function implementations, including inherited ones.
    */
   def collectFunctions(
-      sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+      sourceCode: SourceLocation.CodeStrict,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.FuncDef[StatefulContext]]] =
     collectInheritedParents(sourceCode, workspace)
       .parentTrees
       .iterator
@@ -212,7 +212,7 @@ object WorkspaceSearcher {
    */
   def collectTypes(
       workspace: WorkspaceState.IsSourceAware,
-      includeNonImportedCode: Boolean): Iterator[SourceLocation.Node[Ast.TypeId]] = {
+      includeNonImportedCode: Boolean): Iterator[SourceLocation.NodeStrict[Ast.TypeId]] = {
     val trees = collectTrees(workspace, includeNonImportedCode)
     SourceCodeSearcher.collectTypes(trees.iterator)
   }
@@ -223,7 +223,7 @@ object WorkspaceSearcher {
    * @param workspace The parsed workspace state from which to collect global constants.
    * @return An iterator containing all global constants.
    */
-  def collectGlobalConstants(workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.ConstantVarDef[_]]] = {
+  def collectGlobalConstants(workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.ConstantVarDef[_]]] = {
     val trees = collectTrees(workspace, includeNonImportedCode = false)
     SourceCodeSearcher.collectGlobalConstants(trees.iterator)
   }
@@ -234,7 +234,7 @@ object WorkspaceSearcher {
    * @param workspace The workspace to collect source trees for.
    * @return Parsed source files in scope.
    */
-  def collectAllTrees(workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.Code] =
+  def collectAllTrees(workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.CodeStrict] =
     collectTrees(
       workspace = workspace,
       includeNonImportedCode = false
@@ -264,7 +264,7 @@ object WorkspaceSearcher {
    */
   private def collectTrees(
       workspace: WorkspaceState.IsSourceAware,
-      includeNonImportedCode: Boolean): ArraySeq[SourceLocation.Code] = {
+      includeNonImportedCode: Boolean): ArraySeq[SourceLocation.CodeStrict] = {
     // fetch the `std` dependency
     val stdSourceParsedCode =
       workspace

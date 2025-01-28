@@ -37,9 +37,9 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
    */
   def goTo(
       identNode: Node[Ast.Ident, Ast.Positioned],
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Ident]] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
     identNode.parent match { // take one step up to check the type of ident node.
       case Some(parent) =>
         parent match {
@@ -91,7 +91,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
 
           case Node(field: Ast.EnumField[_], _) if field.ident == identNode.data =>
             Iterator(
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = field.ident,
                 source = sourceCode
               )
@@ -99,7 +99,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
 
           case Node(field: Ast.EventField, _) if field.ident == identNode.data =>
             Iterator(
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = field.ident,
                 source = sourceCode
               )
@@ -107,7 +107,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
 
           case Node(constantDef: Ast.ConstantVarDef[_], _) if constantDef.ident == identNode.data =>
             Iterator(
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = constantDef.ident,
                 source = sourceCode
               )
@@ -116,7 +116,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
           case Node(namedVar: Ast.NamedVar, _) if namedVar.ident == identNode.data =>
             // User selected a named variable. Find its usages.
             Iterator(
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = namedVar.ident,
                 source = sourceCode
               )
@@ -125,7 +125,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
           case Node(argument: Ast.Argument, _) if argument.ident == identNode.data =>
             // They selected an argument. Take 'em there!
             Iterator(
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = argument.ident,
                 source = sourceCode
               )
@@ -133,7 +133,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
 
           case Node(mapDef: Ast.MapDef, _) if mapDef.ident == identNode.data =>
             Iterator(
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = mapDef.ident,
                 source = sourceCode
               )
@@ -159,8 +159,8 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
    */
   private def goToEnumField(
       fieldSelector: Ast.EnumFieldSelector[_],
-      sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] = {
+      sourceCode: SourceLocation.CodeStrict,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.Ident]] = {
     val trees =
       WorkspaceSearcher.collectInheritedParents(
         sourceCode = sourceCode,
@@ -185,7 +185,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
       .flatMap(goToEnumField(fieldSelector, _))
       .map {
         node =>
-          SourceLocation.Node(
+          SourceLocation.NodeStrict(
             ast = node.ast.ident,
             source = node.source
           )
@@ -202,8 +202,8 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
    */
   private def goToScopeDefinitions(
       identNode: Node[Ast.Ident, Ast.Positioned],
-      sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] = {
+      sourceCode: SourceLocation.CodeStrict,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.Ident]] = {
     val inheritedParents =
       WorkspaceSearcher.collectInheritedParents(sourceCode, workspace)
 
@@ -223,7 +223,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
       goToNearestFunctionArguments(identNode) map {
         argument =>
           // collect identities
-          SourceLocation.Node(
+          SourceLocation.NodeStrict(
             ast = argument.ident,
             source = sourceCode
           )
@@ -238,7 +238,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
           // collect identities
           node.ast.vars collect {
             case namedVar: Ast.NamedVar if namedVar.ident == identNode.data =>
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = namedVar.ident,
                 source = sourceCode
               )
@@ -257,13 +257,13 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
    */
   private def goToGlobalConstants(
       ident: Ast.Ident,
-      trees: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.Ident]] =
+      trees: ArraySeq[SourceLocation.CodeStrict]): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
     trees
       .iterator
       .collect {
         // Global constants are source trees with only one node of type `Ast.ConstantVarDef`
-        case source @ SourceLocation.Code(Tree.Source(constant @ Ast.ConstantVarDef(thisIdent, _), _), _) if thisIdent == ident =>
-          SourceLocation.Node(
+        case source @ SourceLocation.CodeStrict(Tree.Source(constant @ Ast.ConstantVarDef(thisIdent, _), _), _) if thisIdent == ident =>
+          SourceLocation.NodeStrict(
             ast = constant.ident,
             source = source
           )
@@ -278,7 +278,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
    */
   private def goToTemplateDefinitionsAndArguments(
       ident: Ast.Ident,
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] = {
+      sourceCode: SourceLocation.CodeStrict): Iterator[SourceLocation.NodeStrict[Ast.Ident]] = {
     val constantsAndMaps =
       goToTemplateLevelDefinitions(
         ident = ident,
@@ -303,7 +303,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
    */
   private def goToTemplateLevelDefinitions(
       ident: Ast.Ident,
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] =
+      sourceCode: SourceLocation.CodeStrict): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
     sourceCode
       .tree
       .rootNode
@@ -311,10 +311,10 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
       .map(_.data)
       .collect {
         case constant: Ast.ConstantVarDef[_] if constant.ident == ident =>
-          SourceLocation.Node(constant.ident, sourceCode)
+          SourceLocation.NodeStrict(constant.ident, sourceCode)
 
         case mapDef: Ast.MapDef if mapDef.ident == ident =>
-          SourceLocation.Node(mapDef.ident, sourceCode)
+          SourceLocation.NodeStrict(mapDef.ident, sourceCode)
       }
 
   /**
@@ -326,7 +326,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
    */
   private def goToInScopeVariables(
       identNode: Node[Ast.Ident, Ast.Positioned],
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.VarDef[_]]] =
+      sourceCode: SourceLocation.CodeStrict): Iterator[SourceLocation.NodeStrict[Ast.VarDef[_]]] =
     goToNearestBlockInScope(identNode, sourceCode.tree)
       .iterator
       .flatMap {
@@ -336,7 +336,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
             anchor = identNode.data
           ) {
             case Node(varDef: Ast.VarDef[_], _) if AstExtra.containsNamedVar(varDef, identNode.data) =>
-              SourceLocation.Node(varDef, sourceCode)
+              SourceLocation.NodeStrict(varDef, sourceCode)
           }
       }
 
@@ -349,7 +349,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
    */
   private def goToEnumField(
       fieldSelector: Ast.EnumFieldSelector[_],
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.EnumField[_]]] =
+      sourceCode: SourceLocation.CodeStrict): Iterator[SourceLocation.NodeStrict[Ast.EnumField[_]]] =
     sourceCode.tree.ast match {
       case contract: Ast.Contract =>
         contract
@@ -386,12 +386,12 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
   private def findEnumField(
       fieldSelector: Ast.EnumFieldSelector[_],
       enumDef: Ast.EnumDef[_],
-      sourceCode: SourceLocation.Code): Option[SourceLocation.Node[Ast.EnumField[_]]] =
+      sourceCode: SourceLocation.CodeStrict): Option[SourceLocation.NodeStrict[Ast.EnumField[_]]] =
     if (enumDef.id == fieldSelector.enumId)
       enumDef
         .fields
         .find(_.ident == fieldSelector.field)
-        .map(SourceLocation.Node(_, sourceCode))
+        .map(SourceLocation.NodeStrict(_, sourceCode))
     else
       None
 
@@ -441,7 +441,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
    */
   def goToTemplateArguments(
       ident: Ast.Ident,
-      sourceCode: SourceLocation.Code): Seq[SourceLocation.Node[Ast.Ident]] = {
+      sourceCode: SourceLocation.CodeStrict): Seq[SourceLocation.NodeStrict[Ast.Ident]] = {
     val arguments =
       sourceCode.tree.ast match {
         case ast: Ast.TxScript =>
@@ -458,7 +458,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
       .filter(_.ident == ident)
       .map {
         argument =>
-          SourceLocation.Node(
+          SourceLocation.NodeStrict(
             ast = argument.ident,
             source = sourceCode
           )
@@ -475,8 +475,8 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
    */
   private def goToMapFunction(
       ident: Ast.Ident,
-      sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Ident]] =
+      sourceCode: SourceLocation.CodeStrict,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
     WorkspaceSearcher
       .collectInheritedParents(sourceCode, workspace)
       .parentTrees
@@ -485,7 +485,7 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
         code =>
           code.tree.rootNode.walkDown.collect {
             case Node(mapDef: Ast.MapDef, _) if mapDef.ident == ident =>
-              SourceLocation.Node(mapDef.ident, code)
+              SourceLocation.NodeStrict(mapDef.ident, code)
           }
       }
 
@@ -499,11 +499,11 @@ private[search] object GoToDefIdent extends StrictImplicitLogging {
    */
   private def goToTemplateArgument(
       ident: Ast.Ident,
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Ident]] =
+      sourceCode: SourceLocation.CodeStrict): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
     sourceCode.tree.rootNode.walkDown.collect {
       // ident should match and that argument's parent must be a top level object i.e. a Contract, Abstract Contract etc
       case node @ Node(ast: Ast.Argument, _) if ast.ident == ident && node.parent.exists(_.data == sourceCode.tree.rootNode.data) =>
-        SourceLocation.Node(ast.ident, sourceCode)
+        SourceLocation.NodeStrict(ast.ident, sourceCode)
     }
 
 }

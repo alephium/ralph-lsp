@@ -62,15 +62,15 @@ object CodeProvider {
     CodeCompletionProvider
 
   /** The go-to definition implementation of [[CodeProvider]]. */
-  implicit val goToDefinition: CodeProvider[GoToDefSetting, SourceLocation.GoToDef] =
+  implicit val goToDefinition: CodeProvider[GoToDefSetting, SourceLocation.GoToDefStrict] =
     GoToDefinitionProvider
 
   /** The go-to references implementation of [[CodeProvider]]. */
-  implicit val goToReferences: CodeProvider[GoToRefSetting, SourceLocation.GoToRef] =
+  implicit val goToReferences: CodeProvider[GoToRefSetting, SourceLocation.GoToRefStrict] =
     GoToReferenceProvider
 
   /** The rename request implementation of [[CodeProvider]]. */
-  implicit val goToRename: CodeProvider[Unit, SourceLocation.GoToRename] =
+  implicit val goToRename: CodeProvider[Unit, SourceLocation.GoToRenameStrict] =
     GoToRenameProvider
 
   /**

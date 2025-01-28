@@ -48,7 +48,7 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
         parsed.astStrict.statements.head.asInstanceOf[Tree.Source]
 
       SourceCodeSearcher.collectImplementingChildren(
-        source = SourceLocation.Code(tree, parsed),
+        source = SourceLocation.CodeStrict(tree, parsed),
         allSource = ArraySeq.empty
       ) shouldBe empty
 
@@ -79,14 +79,14 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
 
       // expect parent to be returned
       val expected =
-        SourceLocation.Code(
+        SourceLocation.CodeStrict(
           tree = child,
           parsed = parsed
         )
 
       val actual =
         SourceCodeSearcher.collectImplementingChildren(
-          source = SourceLocation.Code(parent, parsed),
+          source = SourceLocation.CodeStrict(parent, parsed),
           allSource = parsedTrees
         )
 
@@ -188,7 +188,7 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
           }
           .map {
             child =>
-              SourceLocation.Code(
+              SourceLocation.CodeStrict(
                 tree = child,
                 parsed = file1 // file1 is in scope
               )
@@ -202,7 +202,7 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
           }
           .map {
             child =>
-              SourceLocation.Code(
+              SourceLocation.CodeStrict(
                 tree = child,
                 parsed = file2 // file2 is in scope
               )
@@ -218,7 +218,7 @@ class SourceCodeSearcherCollectImplementingChildrenSpec extends AnyWordSpec with
       // actual trees returned
       val actual =
         SourceCodeSearcher.collectImplementingChildren(
-          source = SourceLocation.Code(parent, file2),
+          source = SourceLocation.CodeStrict(parent, file2),
           allSource = allTrees
         )
 

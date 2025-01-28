@@ -56,7 +56,7 @@ private[search] case object CodeCompletionProvider extends CodeProvider[Unit, Su
             // request is within a contract source-code
             SourceCodeCompleter.complete(
               cursorIndex = cursorIndex,
-              sourceCode = SourceLocation.Code(tree, sourceCode),
+              sourceCode = SourceLocation.CodeStrict(tree, sourceCode),
               workspace = workspace
             )
         }

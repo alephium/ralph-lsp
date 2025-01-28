@@ -76,7 +76,7 @@ object TestCodeProvider {
    * @param code The containing `@@` and `>>...<<` symbols.
    */
   def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] =
-    goTo[GoToDefSetting, SourceLocation.GoToDef](
+    goTo[GoToDefSetting, SourceLocation.GoToDefStrict](
       code = code,
       searchSettings = settings
     )
@@ -86,7 +86,7 @@ object TestCodeProvider {
       referenceReplacement: String,
       settings: GoToDefSetting = testGoToDefSetting
     )(code: String): Unit =
-    goToForAll[GoToDefSetting, SourceLocation.GoToDef](
+    goToForAll[GoToDefSetting, SourceLocation.GoToDefStrict](
       finder = referencesFinder,
       replacer = referenceReplacement,
       settings = settings,
@@ -94,13 +94,13 @@ object TestCodeProvider {
     )
 
   def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String): List[(URI, LineRange)] =
-    goTo[GoToRefSetting, SourceLocation.GoToRef](
+    goTo[GoToRefSetting, SourceLocation.GoToRefStrict](
       code = code,
       searchSettings = settings
     )
 
   def goToRename(code: String): List[(URI, LineRange)] =
-    goTo[Unit, SourceLocation.GoToRename](
+    goTo[Unit, SourceLocation.GoToRenameStrict](
       code = code,
       searchSettings = ()
     )
@@ -122,7 +122,7 @@ object TestCodeProvider {
       referenceReplacement: String,
       settings: GoToRefSetting = testGoToRefSetting
     )(code: String): Unit =
-    goToForAll[GoToRefSetting, SourceLocation.GoToRef](
+    goToForAll[GoToRefSetting, SourceLocation.GoToRefStrict](
       finder = referencesFinder,
       replacer = referenceReplacement,
       settings = settings,
@@ -133,7 +133,7 @@ object TestCodeProvider {
       renameFinder: Regex,
       renameReplacer: String
     )(code: String): Unit =
-    goToForAll[Unit, SourceLocation.GoToRename](
+    goToForAll[Unit, SourceLocation.GoToRenameStrict](
       finder = renameFinder,
       replacer = renameReplacer,
       settings = (),
@@ -321,7 +321,7 @@ object TestCodeProvider {
       dependency: String,
       workspace: String,
       settings: GoToRefSetting = testGoToRefSetting): Unit =
-    goTo[GoToRefSetting, SourceLocation.GoToRef](
+    goTo[GoToRefSetting, SourceLocation.GoToRefStrict](
       dependencyId = dependencyId,
       dependency = dependency,
       workspace = workspace,
@@ -333,7 +333,7 @@ object TestCodeProvider {
       dependency: String,
       workspace: String,
       setting: GoToDefSetting = testGoToDefSetting): Unit =
-    goTo[GoToDefSetting, SourceLocation.GoToDef](
+    goTo[GoToDefSetting, SourceLocation.GoToDefStrict](
       dependencyId = dependencyId,
       dependency = dependency,
       workspace = workspace,
@@ -476,7 +476,7 @@ object TestCodeProvider {
 
     // Execute go-to definition.
     val (searchResult, _, workspace) =
-      TestCodeProvider[GoToDefSetting, SourceLocation.GoToDef](
+      TestCodeProvider[GoToDefSetting, SourceLocation.GoToDefStrict](
         code = codeWithoutGoToSymbols,
         searchSettings = testGoToDefSetting,
         dependencyDownloaders = ArraySeq(downloader)

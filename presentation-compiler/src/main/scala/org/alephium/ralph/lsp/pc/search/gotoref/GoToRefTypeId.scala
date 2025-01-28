@@ -36,10 +36,10 @@ private object GoToRefTypeId extends StrictImplicitLogging {
    */
   def goTo(
       definition: Node[Ast.TypeId, Ast.Positioned],
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToRefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     definition.parent match {
       case Some(parent) =>
         parent match {
@@ -133,8 +133,8 @@ private object GoToRefTypeId extends StrictImplicitLogging {
    */
   private def goToEnumDefUsage(
       enumDef: Ast.EnumDef[_],
-      sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] = {
+      sourceCode: SourceLocation.CodeStrict,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.TypeId]] = {
     val trees =
       if (sourceCode.tree.ast == enumDef)
         WorkspaceSearcher.collectAllTrees(workspace) // It's a global enum, search all workspace trees
@@ -157,20 +157,20 @@ private object GoToRefTypeId extends StrictImplicitLogging {
    */
   private def goToEnumTypeUsage(
       enumDef: Ast.EnumDef[_],
-      source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
+      source: SourceLocation.CodeStrict): Iterator[SourceLocation.NodeStrict[Ast.TypeId]] =
     source
       .tree
       .rootNode
       .walkDown
       .collect {
         case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumDef.id =>
-          SourceLocation.Node(selector.enumId, source)
+          SourceLocation.NodeStrict(selector.enumId, source)
       }
 
   private def goToEventDefUsage(
       eventDef: Ast.EventDef,
-      sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] =
+      sourceCode: SourceLocation.CodeStrict,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.TypeId]] =
     // They selected an event definition. Find event usages.
     WorkspaceSearcher
       .collectImplementingChildren(sourceCode, workspace)
@@ -187,19 +187,19 @@ private object GoToRefTypeId extends StrictImplicitLogging {
    */
   private def goToEventDefUsage(
       eventDef: Ast.EventDef,
-      source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
+      source: SourceLocation.CodeStrict): Iterator[SourceLocation.NodeStrict[Ast.TypeId]] =
     source
       .tree
       .rootNode
       .walkDown
       .collect {
         case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == eventDef.id =>
-          SourceLocation.Node(emitEvent.id, source)
+          SourceLocation.NodeStrict(emitEvent.id, source)
       }
 
   private def goToTypeIdUsage(
       globalDef: Ast.GlobalDefinition,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] =
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.TypeId]] =
     AstExtra.getTypeId(globalDef) match {
       case Some(typeId) =>
         goToTypeIdUsage(
@@ -221,7 +221,7 @@ private object GoToRefTypeId extends StrictImplicitLogging {
    */
   private def goToTypeIdUsage(
       selectedTypId: Ast.TypeId,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] =
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.TypeId]] =
     WorkspaceSearcher
       .collectAllTrees(workspace)
       .iterator
@@ -230,7 +230,7 @@ private object GoToRefTypeId extends StrictImplicitLogging {
           code.tree.rootNode.walkDown.collect {
             // this typeId should equal the searched typeId and a different object then itself.
             case Node(typeId: Ast.TypeId, _) if typeId == selectedTypId && typeId.ne(selectedTypId) =>
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = typeId,
                 source = code
               )

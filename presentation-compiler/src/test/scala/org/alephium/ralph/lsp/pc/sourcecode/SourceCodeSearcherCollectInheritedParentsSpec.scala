@@ -48,7 +48,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
         parsed.astStrict.statements.head.asInstanceOf[Tree.Source]
 
       SourceCodeSearcher.collectInheritedParents(
-        source = SourceLocation.Code(tree, parsed),
+        source = SourceLocation.CodeStrict(tree, parsed),
         allSource = ArraySeq.empty
       ) shouldBe empty
 
@@ -74,7 +74,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
 
       // expect parent to be returned
       val expected =
-        SourceLocation.Code(
+        SourceLocation.CodeStrict(
           tree = parent,
           parsed = parsed
         )
@@ -87,7 +87,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
 
       val actual =
         SourceCodeSearcher.collectInheritedParents(
-          source = SourceLocation.Code(child, parsed),
+          source = SourceLocation.CodeStrict(child, parsed),
           allSource = allTrees
         )
 
@@ -189,7 +189,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
           }
           .map {
             parent =>
-              SourceLocation.Code(
+              SourceLocation.CodeStrict(
                 tree = parent,
                 parsed = file1 // file1 is in scope
               )
@@ -199,7 +199,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
         treesFromFile2
           .map {
             parent =>
-              SourceLocation.Code(
+              SourceLocation.CodeStrict(
                 tree = parent,
                 parsed = file2 // file2 is in scope
               )
@@ -216,7 +216,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
       // actual trees returned
       val actual =
         SourceCodeSearcher.collectInheritedParents(
-          source = SourceLocation.Code(child, file1),
+          source = SourceLocation.CodeStrict(child, file1),
           allSource = allTrees
         )
 

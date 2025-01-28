@@ -29,10 +29,10 @@ private object GoToRefFuncId extends StrictImplicitLogging {
 
   def goTo(
       definition: Node[Ast.FuncId, Ast.Positioned],
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToRefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     definition.parent match {
       case Some(parent) =>
         parent match {
@@ -71,8 +71,8 @@ private object GoToRefFuncId extends StrictImplicitLogging {
    */
   private def goToFunctionUsage(
       funcId: Ast.FuncId,
-      sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      sourceCode: SourceLocation.CodeStrict,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     if (funcId.isBuiltIn) {
       val allTrees =
         WorkspaceSearcher.collectAllTrees(workspace)
@@ -114,7 +114,7 @@ private object GoToRefFuncId extends StrictImplicitLogging {
    */
   private def goToDirectCallFunctionUsage(
       funcId: Ast.FuncId,
-      children: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      children: ArraySeq[SourceLocation.CodeStrict]): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     children
       .iterator
       .flatMap {
@@ -135,17 +135,17 @@ private object GoToRefFuncId extends StrictImplicitLogging {
    */
   private def goToFunctionUsage(
       funcId: Ast.FuncId,
-      sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      sourceCode: SourceLocation.CodeStrict): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     sourceCode
       .tree
       .rootNode
       .walkDown
       .collect {
         case Node(exp: Ast.CallExpr[_], _) if exp.id == funcId =>
-          SourceLocation.Node(exp.id, sourceCode)
+          SourceLocation.NodeStrict(exp.id, sourceCode)
 
         case Node(funcCall: Ast.FuncCall[_], _) if funcCall.id == funcId =>
-          SourceLocation.Node(funcCall.id, sourceCode)
+          SourceLocation.NodeStrict(funcCall.id, sourceCode)
       }
 
   /**
@@ -157,7 +157,7 @@ private object GoToRefFuncId extends StrictImplicitLogging {
    */
   private def goToContractCallFunctionUsage(
       funcId: Ast.FuncId,
-      children: ImplementingChildrenResult): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      children: ImplementingChildrenResult): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     children
       .allTrees // traverse all trees to find contract call usages, eg: `myContract.function()` or `MyContract().function()`
       .iterator
@@ -178,7 +178,7 @@ private object GoToRefFuncId extends StrictImplicitLogging {
                       .flatMap {
                         childCode =>
                           if (childCode.tree.typeId() exists thisCallTypes.contains)
-                            Some(SourceLocation.Node(call.callId, code)) // Matched! Both the `funcId` and `typeId` are a match.
+                            Some(SourceLocation.NodeStrict(call.callId, code)) // Matched! Both the `funcId` and `typeId` are a match.
                           else
                             None
                       }
