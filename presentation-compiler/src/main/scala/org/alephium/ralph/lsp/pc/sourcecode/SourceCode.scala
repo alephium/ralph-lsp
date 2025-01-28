@@ -96,7 +96,7 @@ private[pc] object SourceCode {
             SourceCodeState.Parsed(
               fileURI = fileURI,
               code = code,
-              ast = parsedCode
+              astStrict = parsedCode
             )
         }
 

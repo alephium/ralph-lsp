@@ -36,7 +36,7 @@ private object GoToRefImport {
             .collectAllParsed(workspace)
             .flatMap {
               parsed =>
-                parsed.ast.statements.collect {
+                parsed.astStrict.statements.collect {
                   case Tree.Import(_, Some(thisPath), _) if importPath.folder.value == thisPath.folder.value =>
                     SourceLocation.ImportName(thisPath.folder, parsed)
                 }
@@ -46,7 +46,7 @@ private object GoToRefImport {
             .collectAllParsed(workspace)
             .flatMap {
               parsed =>
-                parsed.ast.statements.collect {
+                parsed.astStrict.statements.collect {
                   case Tree.Import(_, Some(thisPath), _) if importPath.folder.value == thisPath.folder.value && importPath.file.value == thisPath.file.value =>
                     SourceLocation.ImportName(thisPath.file, parsed)
                 }

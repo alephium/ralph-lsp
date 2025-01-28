@@ -39,7 +39,7 @@ private[search] case object GoToDefinitionProvider extends CodeProvider[GoToDefS
       searchSettings: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDef] =
     // find the statement where this cursorIndex sits.
-    sourceCode.ast.statements.find(_.index contains cursorIndex) match {
+    sourceCode.astStrict.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>
         statement match {
           case importStatement: Tree.Import =>

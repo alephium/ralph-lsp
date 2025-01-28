@@ -181,7 +181,7 @@ private object SourceCodeStateBuilder {
       compiledScripts: Array[CompiledScript],
       workspaceErrorURI: URI): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
     sourceCodeState
-      .ast
+      .astStrict
       .statements
       .collect {
         case statement: Tree.Source => // collect only the source-code, ignoring import statements.

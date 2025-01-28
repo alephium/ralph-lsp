@@ -97,7 +97,7 @@ object SourceCodeSearcher {
     sourceCode
       .flatMap {
         parsed =>
-          parsed.ast.statements.collect {
+          parsed.astStrict.statements.collect {
             case imported: Tree.Import =>
               imported
           }
@@ -177,7 +177,7 @@ object SourceCodeSearcher {
    */
   def collectSourceTrees(
       sourceCode: SourceCodeState.Parsed): Seq[SourceLocation.Code] =
-    sourceCode.ast.statements.collect {
+    sourceCode.astStrict.statements.collect {
       case tree: Tree.Source =>
         SourceLocation.Code(
           tree = tree,
@@ -394,7 +394,7 @@ object SourceCodeSearcher {
    */
   def collectFunctions(source: SourceCodeState.Parsed): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
     source
-      .ast
+      .astStrict
       .statements
       .iterator
       .flatMap {

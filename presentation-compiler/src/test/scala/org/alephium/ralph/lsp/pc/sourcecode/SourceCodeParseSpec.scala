@@ -163,7 +163,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
                   SourceCodeState.Parsed(
                     fileURI = currentState.fileURI,
                     code = goodCode,
-                    ast = compiler.parseContracts(currentState.fileURI, goodCode).value
+                    astStrict = compiler.parseContracts(currentState.fileURI, goodCode).value
                   )
 
                 // read the code written on disk

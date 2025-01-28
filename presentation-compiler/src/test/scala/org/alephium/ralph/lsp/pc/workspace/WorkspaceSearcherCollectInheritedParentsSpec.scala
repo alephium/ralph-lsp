@@ -101,7 +101,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
 
     // collect all trees from file1
     val file1Trees =
-      sourceFile1.ast.statements.collect {
+      sourceFile1.astStrict.statements.collect {
         case source: Tree.Source =>
           SourceLocation.Code(source, sourceFile1)
       }
@@ -112,7 +112,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
 
     // collect all trees from file2
     val file2Trees =
-      sourceFile2.ast.statements.collect {
+      sourceFile2.astStrict.statements.collect {
         case source: Tree.Source =>
           SourceLocation.Code(source, sourceFile2)
       }
@@ -132,7 +132,7 @@ class WorkspaceSearcherCollectInheritedParentsSpec extends AnyWordSpec with Matc
         .flatMap(_.sourceCode)
         .collect {
           case source if expectedImports.contains(source.importIdentifier.value.string.value) =>
-            source.parsed.ast.statements.collect {
+            source.parsed.astStrict.statements.collect {
               case tree: Tree.Source =>
                 SourceLocation.Code(
                   tree = tree,

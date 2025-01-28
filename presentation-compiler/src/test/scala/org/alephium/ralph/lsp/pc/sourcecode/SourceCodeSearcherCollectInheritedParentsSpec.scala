@@ -45,7 +45,7 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
           .get
 
       val tree =
-        parsed.ast.statements.head.asInstanceOf[Tree.Source]
+        parsed.astStrict.statements.head.asInstanceOf[Tree.Source]
 
       SourceCodeSearcher.collectInheritedParents(
         source = SourceLocation.Code(tree, parsed),
@@ -65,11 +65,11 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
           .get
 
       // first statement is Parent()
-      val parent = parsed.ast.statements.head.asInstanceOf[Tree.Source]
+      val parent = parsed.astStrict.statements.head.asInstanceOf[Tree.Source]
       parent.ast.name shouldBe "Parent"
 
       // second statement is Child()
-      val child = parsed.ast.statements.last.asInstanceOf[Tree.Source]
+      val child = parsed.astStrict.statements.last.asInstanceOf[Tree.Source]
       child.ast.name shouldBe "Child"
 
       // expect parent to be returned
@@ -170,11 +170,11 @@ class SourceCodeSearcherCollectInheritedParentsSpec extends AnyWordSpec with Mat
 
       // collect all tree from file1
       val treesFromFile1 =
-        file1.ast.statements.map(_.asInstanceOf[Tree.Source])
+        file1.astStrict.statements.map(_.asInstanceOf[Tree.Source])
 
       // collect all tree from file2
       val treesFromFile2 =
-        file2.ast.statements.map(_.asInstanceOf[Tree.Source])
+        file2.astStrict.statements.map(_.asInstanceOf[Tree.Source])
 
       // the last statement in file1 is Child()
       val child = treesFromFile1.last

@@ -117,7 +117,7 @@ object SourceCodeState {
   case class Parsed(
       fileURI: URI,
       code: String,
-      ast: Tree.Root)
+      astStrict: Tree.Root)
     extends IsParsed
 
   /** Represents: Error during the parser phase. */
