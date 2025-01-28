@@ -26,7 +26,7 @@ private object WorkspaceStateBuilder {
   /** @see [[org.alephium.ralph.lsp.pc.sourcecode.SourceCodeStateBuilder.toSourceCodeState]] */
   def toWorkspaceState(
       currentState: WorkspaceState.Parsed,
-      compilationResult: Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]]): WorkspaceState.IsCompiled =
+      compilationResult: Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsedAndCompiled]]): WorkspaceState.IsCompiled =
     compilationResult match {
       case Left(workspaceError) =>
         // File or sourcePosition position information is not available for this error,

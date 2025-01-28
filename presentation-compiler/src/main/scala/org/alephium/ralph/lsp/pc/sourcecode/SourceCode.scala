@@ -192,7 +192,7 @@ private[pc] object SourceCode {
       compilerOptions: CompilerOptions,
       workspaceErrorURI: URI
     )(implicit compiler: CompilerAccess,
-      logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
+      logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsedAndCompiled]] =
     Importer.typeCheck(
       sourceCode = sourceCode,
       dependency = dependency
@@ -244,7 +244,7 @@ private[pc] object SourceCode {
       compilerOptions: CompilerOptions,
       workspaceErrorURI: URI
     )(implicit compiler: CompilerAccess,
-      logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] = {
+      logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsedAndCompiled]] = {
     val sourceTreesOnly =
       sourceTrees.map(_.tree)
 

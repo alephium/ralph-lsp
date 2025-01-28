@@ -25,7 +25,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 /** Represents a position within a source-file in parsed state. */
 sealed trait SourceLocation {
 
-  def parsed: SourceCodeState.IsParsed
+  def parsed: SourceCodeState.IsParsedAndCompiled
 
 }
 
@@ -68,7 +68,7 @@ object SourceLocation {
    * @param parsed The source file containing the positioned node.
    */
   case class File(
-      parsed: SourceCodeState.IsParsed)
+      parsed: SourceCodeState.IsParsedAndCompiled)
     extends GoToDefStrict
        with GoToDefSoft {
 
@@ -134,14 +134,14 @@ object SourceLocation {
     def toLineRange(): Option[LineRange] =
       Some(ast.index.toLineRange(source.parsed.code))
 
-    override def parsed: SourceCodeState.IsParsed =
+    override def parsed: SourceCodeState.IsParsedAndCompiled =
       source.parsed
 
   }
 
   sealed trait Code extends SourceLocation {
 
-    def parsed: SourceCodeState.IsParsed
+    def parsed: SourceCodeState.IsParsedAndCompiled
 
   }
 
@@ -159,7 +159,7 @@ object SourceLocation {
 
   case class CodeSoft(
       body: SoftAST.BlockBodyPart,
-      parsed: SourceCodeState.IsParsed)
+      parsed: SourceCodeState.IsParsedAndCompiled)
     extends Code
 
 }

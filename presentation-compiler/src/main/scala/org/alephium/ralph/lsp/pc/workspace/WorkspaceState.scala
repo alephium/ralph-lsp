@@ -91,7 +91,7 @@ object WorkspaceState {
    * @param parsed          Previous valid parsed state (used for code completion in-case the file has error)
    */
   case class Errored(
-      sourceCode: ArraySeq[SourceCodeState.IsParsed],
+      sourceCode: ArraySeq[SourceCodeState.IsParsedAndCompiled],
       workspaceErrors: ArraySeq[CompilerMessage.AnyError],
       parsed: WorkspaceState.Parsed)
     extends IsCompiled

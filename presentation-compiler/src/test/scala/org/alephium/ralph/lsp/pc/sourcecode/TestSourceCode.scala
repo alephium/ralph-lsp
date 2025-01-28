@@ -216,7 +216,7 @@ object TestSourceCode {
       fileURI: Gen[URI] = genFileURI()
     )(implicit file: FileAccess,
       compiler: CompilerAccess,
-      logger: ClientLogger): Gen[SourceCodeState.IsParsed] = {
+      logger: ClientLogger): Gen[SourceCodeState.IsParsedAndCompiled] = {
     val parsed =
       genParsedOK(
         code = code,
@@ -229,13 +229,13 @@ object TestSourceCode {
   def genCompiled(
       parsed: Gen[SourceCodeState.Parsed]
     )(implicit compiler: CompilerAccess,
-      logger: ClientLogger): Gen[SourceCodeState.IsParsed] =
+      logger: ClientLogger): Gen[SourceCodeState.IsParsedAndCompiled] =
     parsed map compile
 
   def compile(
       parsed: SourceCodeState.Parsed
     )(implicit compiler: CompilerAccess,
-      logger: ClientLogger): SourceCodeState.IsParsed = {
+      logger: ClientLogger): SourceCodeState.IsParsedAndCompiled = {
     val result =
       SourceCode.compile(
         sourceCode = ArraySeq(parsed),

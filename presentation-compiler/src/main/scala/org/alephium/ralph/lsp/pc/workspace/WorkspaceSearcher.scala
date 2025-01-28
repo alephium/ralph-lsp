@@ -310,7 +310,7 @@ object WorkspaceSearcher {
     val allImportedCode =
       (SourceCodeSearcher.collectSourceTrees(importedCode) ++ importedInheritedParentTrees).distinct
 
-    // The entire local local dev workspace source-code is available.
+    // The entire local dev workspace source-code is available.
     val workspaceTrees =
       SourceCodeSearcher.collectSourceTrees(workspaceCode)
 
