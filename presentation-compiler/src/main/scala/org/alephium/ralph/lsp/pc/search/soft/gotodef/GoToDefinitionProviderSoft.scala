@@ -33,11 +33,8 @@ case object GoToDefinitionProviderSoft extends CodeProvider[SourceCodeState.IsPa
         Iterator.empty
 
       case Right(softAST) =>
-        /**
-         * First, find the first code block where the cursorIndex belongs, i.e. [[SoftAST.BodyPartAST]].
-         *
-         * In a well-defined code, this is expected to be a top level Contract [[SoftAST.Template]].
-         */
+        // First, find the first code block where the cursorIndex belongs, i.e. [[SoftAST.BodyPartAST]].
+        // In a well-defined code, this is expected to be a top level Contract [[SoftAST.Template]].
         softAST.toNode.data.parts.find(_.index contains cursorIndex) match {
           case Some(bodyPart) =>
             searchBodyPart(
