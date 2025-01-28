@@ -86,7 +86,7 @@ private object BlockParser {
   private def part[Unknown: P](stop: Seq[Token]): P[SoftAST.BodyPartAST] =
     P {
       TemplateParser.parseOrFail |
-        EventTemplateParser.parseOrFail |
+        EventParser.parseOrFail |
         StructTemplateParser.parseOrFail |
         FunctionParser.parseOrFail |
         ExpressionParser.parseOrFail |

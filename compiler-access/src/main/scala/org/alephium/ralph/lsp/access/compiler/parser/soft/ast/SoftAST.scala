@@ -164,7 +164,7 @@ object SoftAST {
       block: BlockClause)
     extends BodyPartAST
 
-  case class EventTemplate(
+  case class Event(
       index: SourceIndex,
       eventToken: TokenDocumented[Token.Event.type],
       preIdentifierSpace: SpaceAST,

@@ -5,9 +5,9 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object EventTemplateParser {
+private object EventParser {
 
-  def parseOrFail[Unknown: P]: P[SoftAST.EventTemplate] =
+  def parseOrFail[Unknown: P]: P[SoftAST.Event] =
     P {
       Index ~
         TokenParser.parseOrFail(Token.Event) ~
@@ -18,7 +18,7 @@ private object EventTemplateParser {
         Index
     } map {
       case (from, eventToken, preIdentifierSpace, identifier, preParamSpace, params, to) =>
-        SoftAST.EventTemplate(
+        SoftAST.Event(
           index = range(from, to),
           eventToken = eventToken,
           preIdentifierSpace = preIdentifierSpace,

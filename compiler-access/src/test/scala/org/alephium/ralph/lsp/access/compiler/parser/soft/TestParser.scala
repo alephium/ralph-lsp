@@ -79,8 +79,8 @@ object TestParser {
   def parseBString(code: String): SoftAST.BString =
     runSoftParser(BStringParser.parseOrFail(_))(code)
 
-  def parseEventTemplate(code: String): SoftAST.EventTemplate =
-    runSoftParser(EventTemplateParser.parseOrFail(_))(code)
+  def parseEvent(code: String): SoftAST.Event =
+    runSoftParser(EventParser.parseOrFail(_))(code)
 
   def parseStructTemplate(code: String): SoftAST.StructTemplate =
     runSoftParser(StructTemplateParser.parseOrFail(_))(code)
