@@ -29,7 +29,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
  *
  * To execution this function invoke [[CodeProvider.search]] with [[Suggestion]] as type parameter.
  */
-private[search] case object CodeCompletionProvider extends CodeProvider[Unit, Suggestion] with StrictImplicitLogging {
+private[search] case object CodeCompletionProvider extends CodeProvider[SourceCodeState.Parsed, Unit, Suggestion] with StrictImplicitLogging {
 
   /** @inheritdoc */
   override def search(

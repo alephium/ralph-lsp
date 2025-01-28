@@ -24,7 +24,7 @@ import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
@@ -143,14 +143,14 @@ object RalphLangServer extends StrictImplicitLogging {
    * @tparam O The type of [[CodeProvider]] function output.
    * @return Go-to search results.
    */
-  def goTo[I, O <: SourceLocation.GoTo](
+  def goTo[S, I, O <: SourceLocation.GoTo](
       fileURI: URI,
       line: Int,
       character: Int,
       searchSettings: I,
       cancelChecker: CancelChecker,
       currentState: PCState
-    )(implicit codeProvider: CodeProvider[I, O],
+    )(implicit codeProvider: CodeProvider[S, I, O],
       logger: ClientLogger): Iterator[O] =
     if (!isFileScheme(fileURI)) {
       Iterator.empty
@@ -160,7 +160,7 @@ object RalphLangServer extends StrictImplicitLogging {
       currentState.workspace match {
         case sourceAware: WorkspaceState.IsSourceAware =>
           val goToResult =
-            CodeProvider.search[I, O](
+            CodeProvider.search[S, I, O](
               line = line,
               character = character,
               fileURI = fileURI,
@@ -438,7 +438,7 @@ class RalphLangServer private (
           getPCState().workspace match {
             case sourceAware: WorkspaceState.IsSourceAware =>
               val completionResult =
-                CodeProvider.search[Unit, Suggestion](
+                CodeProvider.search[SourceCodeState.Parsed, Unit, Suggestion](
                   line = line,
                   character = character,
                   fileURI = fileURI,
@@ -486,7 +486,7 @@ class RalphLangServer private (
         val character = params.getPosition.getCharacter
 
         val locations =
-          goTo[GoToDefSetting, SourceLocation.GoToDefStrict](
+          goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
             fileURI = fileURI,
             line = line,
             character = character,
@@ -518,7 +518,7 @@ class RalphLangServer private (
           )
 
         val locations =
-          goTo[GoToRefSetting, SourceLocation.GoToRefStrict](
+          goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
             fileURI = fileURI,
             line = line,
             character = character,
@@ -541,7 +541,7 @@ class RalphLangServer private (
         val character = params.getPosition.getCharacter
 
         val locations =
-          goTo[Unit, SourceLocation.GoToRenameStrict](
+          goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
             fileURI = fileURI,
             line = line,
             character = character,

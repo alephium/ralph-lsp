@@ -36,7 +36,7 @@ import java.net.URI
  * @tparam I The type of search settings.
  * @tparam O The type of search results.
  */
-trait CodeProvider[I, O] extends Product {
+trait CodeProvider[S, I, O] extends Product {
 
   /**
    * Performs a search operation at the cursor index within the source-code of a workspace.
@@ -48,7 +48,7 @@ trait CodeProvider[I, O] extends Product {
    */
   def search(
       cursorIndex: Int,
-      sourceCode: SourceCodeState.Parsed,
+      sourceCode: S,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: I
     )(implicit logger: ClientLogger): Iterator[O]
@@ -58,19 +58,19 @@ trait CodeProvider[I, O] extends Product {
 object CodeProvider {
 
   /** The code-completer implementation of [[CodeProvider]]. */
-  implicit val codeCompleter: CodeProvider[Unit, Suggestion] =
+  implicit val codeCompleter: CodeProvider[SourceCodeState.Parsed, Unit, Suggestion] =
     CodeCompletionProvider
 
   /** The go-to definition implementation of [[CodeProvider]]. */
-  implicit val goToDefinition: CodeProvider[GoToDefSetting, SourceLocation.GoToDefStrict] =
+  implicit val goToDefinition: CodeProvider[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict] =
     GoToDefinitionProvider
 
   /** The go-to references implementation of [[CodeProvider]]. */
-  implicit val goToReferences: CodeProvider[GoToRefSetting, SourceLocation.GoToRefStrict] =
+  implicit val goToReferences: CodeProvider[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict] =
     GoToReferenceProvider
 
   /** The rename request implementation of [[CodeProvider]]. */
-  implicit val goToRename: CodeProvider[Unit, SourceLocation.GoToRenameStrict] =
+  implicit val goToRename: CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict] =
     GoToRenameProvider
 
   /**
@@ -82,17 +82,17 @@ object CodeProvider {
    * @param workspace Current workspace state.
    * @tparam O The type to search.
    */
-  def search[I, O](
+  def search[S, I, O](
       line: Int,
       character: Int,
       fileURI: URI,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: I
-    )(implicit provider: CodeProvider[I, O],
+    )(implicit provider: CodeProvider[S, I, O],
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     // if the fileURI belongs to the workspace, then search just within that workspace
     if (URIUtil.contains(workspace.build.contractURI, fileURI))
-      searchWorkspace[I, O](
+      searchWorkspace[S, I, O](
         line = line,
         character = character,
         fileURI = fileURI,
@@ -100,7 +100,7 @@ object CodeProvider {
         searchSettings = searchSettings
       )
     else // else search all source files
-      searchWorkspaceAndDependencies[I, O](
+      searchWorkspaceAndDependencies[S, I, O](
         line = line,
         character = character,
         fileURI = fileURI,
@@ -116,13 +116,13 @@ object CodeProvider {
    * @param workspace Current workspace state.
    * @tparam O The type to search.
    */
-  private def searchWorkspaceAndDependencies[I, O](
+  private def searchWorkspaceAndDependencies[S, I, O](
       line: Int,
       character: Int,
       fileURI: URI,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: I
-    )(implicit provider: CodeProvider[I, O],
+    )(implicit provider: CodeProvider[S, I, O],
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     // Search on dependencies should only run for go-to definitions requests. Code-completion is ignored.
     if (provider == CodeProvider.goToDefinition || provider == CodeProvider.goToReferences)
@@ -154,7 +154,7 @@ object CodeProvider {
               )
 
             // execute search on that one workspace
-            searchWorkspace[I, O](
+            searchWorkspace[S, I, O](
               line = line,
               character = character,
               fileURI = fileURI,
@@ -174,13 +174,13 @@ object CodeProvider {
    * @param workspace Current workspace state.
    * @tparam O The type to search.
    */
-  private def searchWorkspace[I, O](
+  private def searchWorkspace[S, I, O](
       line: Int,
       character: Int,
       fileURI: URI,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: I
-    )(implicit provider: CodeProvider[I, O],
+    )(implicit provider: CodeProvider[S, I, O],
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     WorkspaceSearcher
       .findParsed( // find the parsed file where this search was executed.
@@ -202,7 +202,7 @@ object CodeProvider {
               // execute the search
               provider.search(
                 cursorIndex = cursorIndex,
-                sourceCode = parsed,
+                sourceCode = parsed.asInstanceOf[S],
                 workspace = workspace,
                 searchSettings = searchSettings
               )

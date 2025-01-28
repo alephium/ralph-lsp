@@ -28,7 +28,7 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
  *
  * To execution this function invoke [[CodeProvider.search]] with [[Boolean]] and [[SourceLocation.GoToRefStrict]] as type parameter.
  */
-private[search] case object GoToReferenceProvider extends CodeProvider[GoToRefSetting, SourceLocation.GoToRefStrict] with StrictImplicitLogging {
+private[search] case object GoToReferenceProvider extends CodeProvider[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict] with StrictImplicitLogging {
 
   /** @inheritdoc */
   override def search(
