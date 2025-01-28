@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.{PC, PCState}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
@@ -211,6 +212,21 @@ class RalphLangServer private (
      with StrictImplicitLogging { thisServer =>
 
   import org.alephium.ralph.lsp.server.RalphLangServer._
+
+  /**
+   * If true, allows go-to-definition API to
+   * use [[org.alephium.ralph.lsp.access.compiler.parser.soft.SoftParser]]
+   * for more syntax-error tolerant responses.
+   *
+   * TODO: Moved to `ralph.json` as a build configuration.
+   *       {{{
+   *         "experimental": {
+   *            "enableSoftParser": true
+   *          }
+   *       }}}
+   */
+  private val enableSoftParser: Boolean =
+    false
 
   def getState(): ServerState =
     thisServer.state
@@ -485,7 +501,25 @@ class RalphLangServer private (
         val line      = params.getPosition.getLine
         val character = params.getPosition.getCharacter
 
-        val locations =
+        // Compute soft AST locations asynchronously
+        val softASTLocationsFuture =
+          if (enableSoftParser)
+            CompletableFuture.supplyAsync {
+              () =>
+                goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
+                  fileURI = fileURI,
+                  line = line,
+                  character = character,
+                  searchSettings = (SoftAST, GoToDefSetting(includeAbstractFuncDef = false)),
+                  cancelChecker = cancelChecker,
+                  currentState = getPCState()
+                )
+            }
+          else
+            CompletableFuture.completedFuture(Iterator.empty)
+
+        // Compute strict AST locations within the current thread
+        val strictASTLocations =
           goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
             fileURI = fileURI,
             line = line,
@@ -495,11 +529,21 @@ class RalphLangServer private (
             currentState = getPCState()
           )
 
-        val javaLocations =
-          CollectionUtil.toJavaList(GoToConverter.toLocations(locations))
+        // Combine the results asynchronously
+        softASTLocationsFuture.thenApply {
+          softASTLocations =>
+            val allLocations =
+              strictASTLocations ++ softASTLocations
 
-        messages.Either.forLeft(javaLocations)
-    }
+            val uniqueLocations =
+              GoToConverter.toLocations(allLocations.iterator).distinct
+
+            val javaLocations =
+              CollectionUtil.toJavaList(uniqueLocations)
+
+            messages.Either.forLeft[util.List[_ <: Location], util.List[_ <: LocationLink]](javaLocations)
+        }
+    }.thenCompose(java.util.function.Function.identity())
 
   override def references(params: ReferenceParams): CompletableFuture[util.List[_ <: Location]] =
     runAsync {
