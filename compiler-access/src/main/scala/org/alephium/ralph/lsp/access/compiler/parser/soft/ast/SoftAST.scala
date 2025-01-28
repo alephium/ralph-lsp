@@ -284,7 +284,6 @@ object SoftAST {
       code: CodeString)
     extends IdentifierAST
        with CodeDocumentedAST
-       with ExpressionAST
 
   case class IdentifierExpected(
       index: SourceIndex)
@@ -314,15 +313,14 @@ object SoftAST {
        with CodeDocumentedAST
        with BodyPartAST
 
-  sealed trait ReferenceCallOrIdentifier extends SoftAST
+  sealed trait ReferenceCallOrIdentifier extends ExpressionAST
 
   case class ReferenceCall(
       index: SourceIndex,
       reference: IdentifierAST,
       preArgumentsSpace: Option[Space],
       arguments: Group[Token.OpenParen.type, Token.CloseParen.type])
-    extends ExpressionAST
-       with ReferenceCallOrIdentifier
+    extends ReferenceCallOrIdentifier
 
   case class InfixExpression(
       index: SourceIndex,
