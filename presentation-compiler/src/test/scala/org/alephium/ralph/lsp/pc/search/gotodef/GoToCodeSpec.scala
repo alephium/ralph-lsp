@@ -8,7 +8,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "typeId does not exist" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Contract GoToConstant() {
           |
@@ -23,7 +23,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
 
   "return self" when {
     "type definition is selected" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Contract >>Te@@st<<() {
           |
@@ -36,7 +36,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
 
     "duplicate type definition exists" when {
       "second duplicate is selected" in {
-        goToDefinition()(
+        goToDefinitionStrict()(
           """
             |Contract Test() {
             |  pub fn function() -> () { }
@@ -78,7 +78,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
         |""".stripMargin
 
     "type is an inheritance" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         s"""
           |$types
           |
@@ -90,7 +90,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
     }
 
     "type is a function parameter" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         s"""
            |$types
            |
@@ -102,7 +102,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
     }
 
     "type is a template parameter" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         s"""
            |$types
            |
@@ -114,7 +114,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
     }
 
     "type is a constructor" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         s"""
            |$types
            |

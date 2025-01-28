@@ -24,7 +24,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "external function does not exist" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Contract Main(action: Action) {
           |  pub fn main() -> () {
@@ -39,7 +39,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
   "return non-empty" when {
     "external abstract function exists" should {
       "go from template parameter" in {
-        goToDefinition()(
+        goToDefinitionStrict()(
           """
             |Abstract Contract Action() {
             |  fn >>function<<() -> Bool
@@ -55,7 +55,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
       }
 
       "go from function parameter" in {
-        goToDefinition()(
+        goToDefinitionStrict()(
           """
             |Abstract Contract Action() {
             |  fn >>function<<() -> Bool
@@ -73,7 +73,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
 
     "external function exists" should {
       "go from template parameter" in {
-        goToDefinition()(
+        goToDefinitionStrict()(
           """
             |Contract Action() {
             |  fn >>function<<() -> Bool {
@@ -91,7 +91,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
       }
 
       "go from function parameter" in {
-        goToDefinition()(
+        goToDefinitionStrict()(
           """
             |Contract Action() {
             |  fn >>function<<() -> Bool {
@@ -110,7 +110,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
     }
 
     "external function exists in nested hierarchy" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
             |Interface Parent2 {
             |  fn not_used2() -> ()

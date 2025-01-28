@@ -75,7 +75,7 @@ object TestCodeProvider {
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
-  def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] =
+  def goToDefinitionStrict(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] =
     goTo[GoToDefSetting, SourceLocation.GoToDefStrict](
       code = code,
       searchSettings = settings
