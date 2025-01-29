@@ -130,8 +130,7 @@ object SourceCodeState {
       code: String,
       astStrict: Tree.Root,
       astSoft: LazyVal[Either[FastParseError, SoftAST.BlockBody]])
-    extends IsParsedAndCompiled
-       with IsParsed
+    extends IsParsed
 
   /** Represents: Error during the parser phase. */
   case class ErrorParser(
@@ -140,7 +139,6 @@ object SourceCodeState {
       errors: Seq[CompilerMessage.AnyError],
       astSoft: LazyVal[Either[FastParseError, SoftAST.BlockBody]])
     extends IsParserOrCompilationError
-       with IsParsedAndCompiled
        with IsParsed
 
   /** Represents: Code is successfully compiled */
