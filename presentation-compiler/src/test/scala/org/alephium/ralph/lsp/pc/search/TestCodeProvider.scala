@@ -90,8 +90,16 @@ object TestCodeProvider {
 
   /** Executes go-to-definition providers for both StrictAST and [[SoftAST]] */
   def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] = {
-    goToDefinitionStrict(settings)(code)
-    goToDefinitionSoft(settings)(code)
+    val resultStrict       = goToDefinitionStrict(settings)(code)
+    val resultStrictRanges = resultStrict.map(_._2)
+
+    val resultSoft       = goToDefinitionSoft(settings)(code)
+    val resultSoftRanges = resultSoft.map(_._2)
+
+    // Assert that both go-to-def services (Strict & Soft) return the same result.
+    resultSoftRanges should contain theSameElementsAs resultStrictRanges
+    // return either one of the results because they both contain the same result
+    resultSoft
   }
 
   def goToDefinitionForAll(
