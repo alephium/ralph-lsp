@@ -10,6 +10,8 @@ object Demo extends App {
   val ast =
     compiler.parseSoft {
       """
+        |import "a/b"
+        |
         |event Event(a: Type)
         |struct Struct { a: Type }
         |

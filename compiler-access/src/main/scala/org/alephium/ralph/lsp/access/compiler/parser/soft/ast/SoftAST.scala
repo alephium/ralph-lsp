@@ -188,6 +188,13 @@ object SoftAST {
       params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
     extends BodyPartAST
 
+  case class Import(
+      index: SourceIndex,
+      importToken: TokenDocumented[Token.Import.type],
+      postImportSpace: Option[Space],
+      string: Option[StringLiteral])
+    extends BodyPartAST
+
   /** Syntax: `implements or extends contract(arg1, arg2 ...)` */
   case class Inheritance(
       index: SourceIndex,
@@ -463,6 +470,20 @@ object SoftAST {
       endTick: TokenDocExpectedAST[Token.Tick.type])
     extends ExpressionAST
 
+  case class StringLiteral(
+      index: SourceIndex,
+      startQuote: TokenDocumented[Token.Quote.type],
+      head: Option[CodeStringAST],
+      tail: Seq[Path],
+      endQuote: TokenDocExpectedAST[Token.Quote.type])
+    extends ExpressionAST
+
+  case class Path(
+      index: SourceIndex,
+      slash: TokenDocumented[Token.ForwardSlash.type],
+      text: CodeStringAST)
+    extends SoftAST
+
   sealed trait SpaceAST extends SoftAST
 
   case class Space(
@@ -495,6 +516,8 @@ object SoftAST {
 
   }
 
+  sealed trait CodeStringAST extends SoftAST
+
   /**
    * Represents a string within a segment of code.
    *
@@ -504,7 +527,14 @@ object SoftAST {
   case class CodeString(
       index: SourceIndex,
       text: String)
-    extends Code
+    extends CodeStringAST
+       with Code
+
+  /** Represents a location where a code symbol is expected, but an empty value was provided. */
+  case class CodeStringExpected(
+      index: SourceIndex)
+    extends ExpectedErrorAST("Symbol")
+       with CodeStringAST
 
   /**
    * Represents a token within a segment of code.
