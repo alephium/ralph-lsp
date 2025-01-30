@@ -495,6 +495,8 @@ object SoftAST {
 
   }
 
+  sealed trait CodeStringAST extends SoftAST
+
   /**
    * Represents a string within a segment of code.
    *
@@ -504,7 +506,14 @@ object SoftAST {
   case class CodeString(
       index: SourceIndex,
       text: String)
-    extends Code
+    extends CodeStringAST
+       with Code
+
+  /** Represents a location where a code symbol is expected, but an empty value was provided. */
+  case class CodeStringExpected(
+      index: SourceIndex)
+    extends ExpectedErrorAST("Symbol")
+       with CodeStringAST
 
   /**
    * Represents a token within a segment of code.
