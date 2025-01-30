@@ -463,6 +463,13 @@ object SoftAST {
       endTick: TokenDocExpectedAST[Token.Tick.type])
     extends ExpressionAST
 
+  case class Import(
+      index: SourceIndex,
+      importToken: TokenDocumented[Token.Import.type],
+      postImportSpace: Option[Space],
+      string: Option[StringLiteral])
+    extends ExpressionAST
+
   case class StringLiteral(
       index: SourceIndex,
       startQuote: TokenDocumented[Token.Quote.type],

@@ -82,6 +82,9 @@ object TestParser {
   def parseStringLiteral(code: String): SoftAST.StringLiteral =
     runSoftParser(StringLiteralParser.parseOrFail(_))(code)
 
+  def parseImport(code: String): SoftAST.Import =
+    runSoftParser(ImportParser.parseOrFail(_))(code)
+
   def parseEvent(code: String): SoftAST.Event =
     runSoftParser(EventParser.parseOrFail(_))(code)
 

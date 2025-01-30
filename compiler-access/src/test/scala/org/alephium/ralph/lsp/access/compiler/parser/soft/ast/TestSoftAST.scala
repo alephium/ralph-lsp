@@ -150,6 +150,12 @@ object TestSoftAST {
       token = Token.Quote
     )
 
+  def Import(index: SourceIndex): SoftAST.TokenDocumented[Token.Import.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Import
+    )
+
   def Event(index: SourceIndex): SoftAST.TokenDocumented[Token.Event.type] =
     TokenDocumented(
       index = index,
