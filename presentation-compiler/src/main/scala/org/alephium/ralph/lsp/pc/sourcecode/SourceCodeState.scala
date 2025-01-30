@@ -69,7 +69,10 @@ object SourceCodeState {
 
   }
 
-  /** Represents: Code that is parsed. */
+  /**
+   * Represents: Code that is parsed and compiled
+   * and is the co-domain for [[IsParsed]] and [[IsCompiled]].
+   */
   sealed trait IsParsedAndCompiled extends IsCodeAware {
 
     def astSoft: LazyVal[Either[FastParseError, SoftAST.BlockBody]]
