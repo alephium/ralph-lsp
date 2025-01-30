@@ -25,11 +25,11 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 /**
- * Implements [[CodeProvider]] that provides go-to definition results of type [[SourceLocation.GoToDef]].
+ * Implements [[CodeProvider]] that provides go-to definition results of type [[SourceLocation.GoToDefStrict]].
  *
- * To execution this function invoke [[CodeProvider.search]] with [[SourceLocation.GoToDef]] as type parameter.
+ * To execution this function invoke [[CodeProvider.search]] with [[SourceLocation.GoToDefStrict]] as type parameter.
  */
-private[search] case object GoToDefinitionProvider extends CodeProvider[GoToDefSetting, SourceLocation.GoToDef] with StrictImplicitLogging {
+private[search] case object GoToDefinitionProvider extends CodeProvider[GoToDefSetting, SourceLocation.GoToDefStrict] with StrictImplicitLogging {
 
   /** @inheritdoc */
   override def search(
@@ -37,9 +37,9 @@ private[search] case object GoToDefinitionProvider extends CodeProvider[GoToDefS
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: GoToDefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDef] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefStrict] =
     // find the statement where this cursorIndex sits.
-    sourceCode.ast.statements.find(_.index contains cursorIndex) match {
+    sourceCode.astStrict.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>
         statement match {
           case importStatement: Tree.Import =>
@@ -56,7 +56,7 @@ private[search] case object GoToDefinitionProvider extends CodeProvider[GoToDefS
             // request is for source-code go-to definition
             GoToDefSource.goTo(
               cursorIndex = cursorIndex,
-              sourceCode = SourceLocation.Code(tree, sourceCode),
+              sourceCode = SourceLocation.CodeStrict(tree, sourceCode),
               workspace = workspace,
               settings = searchSettings
             )

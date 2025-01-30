@@ -42,7 +42,7 @@ private object SourceCodeStateBuilder {
       parsedCode: ArraySeq[SourceCodeState.Parsed],
       workspaceErrorURI: URI,
       compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript], Array[Warning])]
-    )(implicit logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
+    )(implicit logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsedAndCompiled]] =
     compilationResult match {
       case Left(error) =>
         // update the error to SourceCodeState
@@ -82,7 +82,7 @@ private object SourceCodeStateBuilder {
    */
   private def toCompilationError(
       parsedCode: ArraySeq[SourceCodeState.Parsed],
-      error: CompilerMessage.AnyError): Option[ArraySeq[SourceCodeState.IsParsed]] =
+      error: CompilerMessage.AnyError): Option[ArraySeq[SourceCodeState.IsParsedAndCompiled]] =
     error
       .index
       .fileURI
@@ -181,7 +181,7 @@ private object SourceCodeStateBuilder {
       compiledScripts: Array[CompiledScript],
       workspaceErrorURI: URI): Seq[Either[StringError, Either[CompiledContract, CompiledScript]]] =
     sourceCodeState
-      .ast
+      .astStrict
       .statements
       .collect {
         case statement: Tree.Source => // collect only the source-code, ignoring import statements.

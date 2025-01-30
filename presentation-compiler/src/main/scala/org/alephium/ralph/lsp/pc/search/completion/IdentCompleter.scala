@@ -37,7 +37,7 @@ object IdentCompleter {
   def suggest(
       cursorIndex: Int,
       ident: Node[Ast.Ident, Ast.Positioned],
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): Iterator[Suggestion] =
     ident.parent match {

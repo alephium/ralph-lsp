@@ -67,11 +67,17 @@ object SourceCodeState {
 
   }
 
+  /**
+   * Represents: Code that is parsed and compiled
+   * and is the co-domain for [[IsParsed]] and [[IsCompiled]].
+   */
+  sealed trait IsParsedAndCompiled extends IsCodeAware
+
   /** Represents: Code that is parsed. */
-  sealed trait IsParsed extends IsCodeAware
+  sealed trait IsParsed extends IsParsedAndCompiled
 
   /** Represents: Code that is compiled. */
-  sealed trait IsCompiled extends IsParsed {
+  sealed trait IsCompiled extends IsParsedAndCompiled {
 
     // Compilation can only be executed if a parsed state was successfully created.
     // Therefore, the parsed states is always known during compilation.
@@ -117,8 +123,8 @@ object SourceCodeState {
   case class Parsed(
       fileURI: URI,
       code: String,
-      ast: Tree.Root)
-    extends IsParsed
+      astStrict: Tree.Root)
+    extends IsParsedAndCompiled
 
   /** Represents: Error during the parser phase. */
   case class ErrorParser(
@@ -126,7 +132,7 @@ object SourceCodeState {
       code: String,
       errors: Seq[CompilerMessage.AnyError])
     extends IsParserOrCompilationError
-       with IsParsed
+       with IsParsedAndCompiled
 
   /** Represents: Code is successfully compiled */
   case class Compiled(

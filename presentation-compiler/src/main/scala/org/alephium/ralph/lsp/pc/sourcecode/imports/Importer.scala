@@ -72,7 +72,7 @@ object Importer {
       sourceCode: SourceCodeState.Parsed,
       dependency: ArraySeq[SourceCodeState.Compiled]): Either[SourceCodeState.ErrorCompilation, Seq[SourceCodeState.Compiled]] = {
     val imported =
-      sourceCode.ast.statements collect {
+      sourceCode.astStrict.statements collect {
         case imported: Tree.Import => // type all import statements
           // TODO: Build a cached Map stored in BuildState instead of doing this linear search.
           // import statement should exists in dependant code.

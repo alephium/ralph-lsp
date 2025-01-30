@@ -35,10 +35,10 @@ private object GoToDefSource extends StrictImplicitLogging {
    */
   def goTo(
       cursorIndex: Int,
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
       case Some(closest) =>
         closest match {

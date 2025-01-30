@@ -23,9 +23,9 @@ private object IncludeDeclaration {
 
   def add(
       definitionAST: Ast.TypeId,
-      definitionSource: SourceLocation.Code,
-      result: Iterator[SourceLocation.Node[Ast.Positioned]],
-      isIncludeDeclaration: Boolean): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      definitionSource: SourceLocation.CodeStrict,
+      result: Iterator[SourceLocation.NodeStrict[Ast.Positioned]],
+      isIncludeDeclaration: Boolean): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     __addIDDefinition(
       definitionAST = definitionAST,
       definitionSource = definitionSource,
@@ -35,9 +35,9 @@ private object IncludeDeclaration {
 
   def add(
       definitionAST: Ast.Ident,
-      definitionSource: SourceLocation.Code,
-      result: Iterator[SourceLocation.Node[Ast.Positioned]],
-      isIncludeDeclaration: Boolean): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      definitionSource: SourceLocation.CodeStrict,
+      result: Iterator[SourceLocation.NodeStrict[Ast.Positioned]],
+      isIncludeDeclaration: Boolean): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     __addIDDefinition(
       definitionAST = definitionAST,
       definitionSource = definitionSource,
@@ -47,9 +47,9 @@ private object IncludeDeclaration {
 
   def add(
       definitionAST: Ast.FuncId,
-      definitionSource: SourceLocation.Code,
-      result: Iterator[SourceLocation.Node[Ast.Positioned]],
-      isIncludeDeclaration: Boolean): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      definitionSource: SourceLocation.CodeStrict,
+      result: Iterator[SourceLocation.NodeStrict[Ast.Positioned]],
+      isIncludeDeclaration: Boolean): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     __addIDDefinition(
       definitionAST = definitionAST,
       definitionSource = definitionSource,
@@ -66,12 +66,12 @@ private object IncludeDeclaration {
    */
   @inline private def __addIDDefinition[A <: Ast.Positioned](
       definitionAST: A,
-      definitionSource: SourceLocation.Code,
-      result: Iterator[SourceLocation.Node[Ast.Positioned]],
-      isIncludeDeclaration: Boolean): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      definitionSource: SourceLocation.CodeStrict,
+      result: Iterator[SourceLocation.NodeStrict[Ast.Positioned]],
+      isIncludeDeclaration: Boolean): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     if (isIncludeDeclaration) {
       val definition =
-        SourceLocation.Node(
+        SourceLocation.NodeStrict(
           ast = definitionAST,
           source = definitionSource
         )

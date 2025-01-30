@@ -40,7 +40,7 @@ object FunctionBodyCompleter {
   def suggest(
       cursorIndex: Int,
       closestToCursor: Node[Ast.Positioned, Ast.Positioned],
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion] =
     GoToDefFuncId.goToNearestFuncDef(closestToCursor) match {
       case Some(functionNode) =>
@@ -85,7 +85,7 @@ object FunctionBodyCompleter {
   private def suggestInFunctionBody(
       cursorIndex: Int,
       functionNode: Node[Ast.FuncDef[_], Ast.Positioned],
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion] = {
     // fetch suggestions local to this function
     val localFunctionSuggestions =
@@ -134,19 +134,19 @@ object FunctionBodyCompleter {
   private def suggestLocalFunctionVariables(
       cursorIndex: Int,
       functionNode: Node[Ast.FuncDef[_], Ast.Positioned],
-      sourceCode: SourceLocation.Code): Iterator[Suggestion.NodeAPI] =
+      sourceCode: SourceLocation.CodeStrict): Iterator[Suggestion.NodeAPI] =
     functionNode
       .walkDown
       .filter(_.data.sourceIndex.exists(_.from <= cursorIndex))
       .collect {
         case Node(argument: Ast.Argument, _) =>
           Suggestion.Argument(
-            node = SourceLocation.Node(ast = argument, source = sourceCode),
+            node = SourceLocation.NodeStrict(ast = argument, source = sourceCode),
             isTemplateArgument = false
           )
 
         case Node(data: Ast.VarDef[_], _) =>
-          Suggestion.VarDef(SourceLocation.Node(data, sourceCode))
+          Suggestion.VarDef(SourceLocation.NodeStrict(data, sourceCode))
       }
 
   /**
@@ -157,7 +157,7 @@ object FunctionBodyCompleter {
    * @return An iterator over suggestions from inherited APIs.
    */
   private def suggestInheritedAPIs(
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.InheritedAPI] =
     WorkspaceSearcher
       .collectInheritedParents(
@@ -174,7 +174,7 @@ object FunctionBodyCompleter {
    * @param sourceCode The source code that can be inherited.
    * @return An iterator over public APIs available to inherited code.
    */
-  private def suggestInheritedAPIs(sourceCode: SourceLocation.Code): Iterator[Suggestion.InheritedAPI] =
+  private def suggestInheritedAPIs(sourceCode: SourceLocation.CodeStrict): Iterator[Suggestion.InheritedAPI] =
     sourceCode
       .tree
       .rootNode
@@ -183,32 +183,32 @@ object FunctionBodyCompleter {
         case node @ Node(argument: Ast.Argument, _) if node.parent.exists(_.data.isInstanceOf[Ast.ContractWithState]) =>
           // suggest template level arguments
           Suggestion.Argument(
-            node = SourceLocation.Node(argument, sourceCode),
+            node = SourceLocation.NodeStrict(argument, sourceCode),
             isTemplateArgument = true
           )
 
         case Node(function: Ast.FuncDef[_], _) =>
           // suggest function names
           Suggestion.FuncDef(
-            node = SourceLocation.Node(function, sourceCode),
+            node = SourceLocation.NodeStrict(function, sourceCode),
             isBuiltIn = false
           )
 
         case Node(eventDef: Ast.EventDef, _) =>
           // suggest events
-          Suggestion.EventDef(SourceLocation.Node(eventDef, sourceCode))
+          Suggestion.EventDef(SourceLocation.NodeStrict(eventDef, sourceCode))
 
         case Node(enumDef: Ast.EnumDef[_], _) =>
           // suggest enums
-          Suggestion.EnumDef(SourceLocation.Node(enumDef, sourceCode))
+          Suggestion.EnumDef(SourceLocation.NodeStrict(enumDef, sourceCode))
 
         case Node(constantVarDef: Ast.ConstantVarDef[_], _) =>
           // suggest constants
-          Suggestion.ConstantVarDef(SourceLocation.Node(constantVarDef, sourceCode))
+          Suggestion.ConstantVarDef(SourceLocation.NodeStrict(constantVarDef, sourceCode))
 
         case Node(mapDef: Ast.MapDef, _) =>
           // suggest maps
-          Suggestion.MapDef(SourceLocation.Node(mapDef, sourceCode))
+          Suggestion.MapDef(SourceLocation.NodeStrict(mapDef, sourceCode))
       }
 
   /**

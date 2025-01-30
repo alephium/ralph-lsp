@@ -486,7 +486,7 @@ class RalphLangServer private (
         val character = params.getPosition.getCharacter
 
         val locations =
-          goTo[GoToDefSetting, SourceLocation.GoToDef](
+          goTo[GoToDefSetting, SourceLocation.GoToDefStrict](
             fileURI = fileURI,
             line = line,
             character = character,
@@ -518,7 +518,7 @@ class RalphLangServer private (
           )
 
         val locations =
-          goTo[GoToRefSetting, SourceLocation.GoToRef](
+          goTo[GoToRefSetting, SourceLocation.GoToRefStrict](
             fileURI = fileURI,
             line = line,
             character = character,
@@ -541,7 +541,7 @@ class RalphLangServer private (
         val character = params.getPosition.getCharacter
 
         val locations =
-          goTo[Unit, SourceLocation.GoToRename](
+          goTo[Unit, SourceLocation.GoToRenameStrict](
             fileURI = fileURI,
             line = line,
             character = character,

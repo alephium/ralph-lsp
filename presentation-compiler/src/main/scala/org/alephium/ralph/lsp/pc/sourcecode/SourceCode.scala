@@ -96,7 +96,7 @@ private[pc] object SourceCode {
             SourceCodeState.Parsed(
               fileURI = fileURI,
               code = code,
-              ast = parsedCode
+              astStrict = parsedCode
             )
         }
 
@@ -192,7 +192,7 @@ private[pc] object SourceCode {
       compilerOptions: CompilerOptions,
       workspaceErrorURI: URI
     )(implicit compiler: CompilerAccess,
-      logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] =
+      logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsedAndCompiled]] =
     Importer.typeCheck(
       sourceCode = sourceCode,
       dependency = dependency
@@ -239,12 +239,12 @@ private[pc] object SourceCode {
    * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
    */
   private def compileSource(
-      sourceTrees: ArraySeq[SourceLocation.Code],
-      importedTrees: ArraySeq[SourceLocation.Code],
+      sourceTrees: ArraySeq[SourceLocation.CodeStrict],
+      importedTrees: ArraySeq[SourceLocation.CodeStrict],
       compilerOptions: CompilerOptions,
       workspaceErrorURI: URI
     )(implicit compiler: CompilerAccess,
-      logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsed]] = {
+      logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsedAndCompiled]] = {
     val sourceTreesOnly =
       sourceTrees.map(_.tree)
 
@@ -295,7 +295,7 @@ private[pc] object SourceCode {
    */
   private def flattenInheritance(
       toFlatten: ArraySeq[SourceCodeState.Parsed],
-      workspace: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.Code] =
+      workspace: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.CodeStrict] =
     if (toFlatten.isEmpty || workspace.isEmpty) {
       ArraySeq.empty
     } else {

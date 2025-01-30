@@ -20,11 +20,12 @@ import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.LineRange
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
 /** Represents a position within a source-file in parsed state. */
 sealed trait SourceLocation {
 
-  def parsed: SourceCodeState.Parsed
+  def parsed: SourceCodeState.IsParsedAndCompiled
 
 }
 
@@ -42,17 +43,23 @@ object SourceLocation {
   /**
    * Result types for GoTo definition location search results.
    */
-  sealed trait GoToDef extends GoTo
+  sealed trait GoToDef       extends GoTo
+  sealed trait GoToDefStrict extends GoToDef
+  sealed trait GoToDefSoft   extends GoToDef
 
   /**
    * Result types for renaming location search results.
    */
-  sealed trait GoToRename extends GoTo
+  sealed trait GoToRename       extends GoTo
+  sealed trait GoToRenameStrict extends GoToRename
+  sealed trait GoToRenameSoft   extends GoToRename
 
   /**
    * Result types for GoTo references location search results.
    */
-  sealed trait GoToRef extends GoTo
+  sealed trait GoToRef       extends GoTo
+  sealed trait GoToRefStrict extends GoToRef
+  sealed trait GoToRefSoft   extends GoToRef
 
   /**
    * Represents a source file ([[SourceCodeState.Parsed]]) without
@@ -60,7 +67,10 @@ object SourceLocation {
    *
    * @param parsed The source file containing the positioned node.
    */
-  case class File(parsed: SourceCodeState.Parsed) extends GoToDef {
+  case class File(
+      parsed: SourceCodeState.IsParsedAndCompiled)
+    extends GoToDefStrict
+       with GoToDefSoft {
 
     def lineRange(): LineRange =
       LineRange.zero
@@ -79,8 +89,8 @@ object SourceLocation {
   case class ImportName(
       name: Tree.Name,
       parsed: SourceCodeState.Parsed)
-    extends GoToRef
-       with GoToRename {
+    extends GoToRefStrict
+       with GoToRenameStrict {
 
     def lineRange(): LineRange =
       name.index.toLineRange(parsed.code)
@@ -92,17 +102,17 @@ object SourceLocation {
 
   /**
    * Represents a single positioned AST ([[org.alephium.ralph.Ast.Positioned]])
-   * within a source tree ([[SourceLocation.Code]]),
+   * within a source tree ([[SourceLocation.CodeStrict]]),
    *
    * @param ast    The positioned node within the parsed source file.
    * @param source The source tree containing the positioned node.
    */
-  case class Node[+A <: Ast.Positioned](
+  case class NodeStrict[+A <: Ast.Positioned](
       ast: A,
-      source: SourceLocation.Code)
-    extends GoToDef
-       with GoToRef
-       with GoToRename {
+      source: CodeStrict)
+    extends GoToDefStrict
+       with GoToRefStrict
+       with GoToRenameStrict {
 
     def toLineRange(): Option[LineRange] =
       ast
@@ -114,6 +124,27 @@ object SourceLocation {
 
   }
 
+  case class NodeSoft[+A <: SoftAST](
+      ast: A,
+      source: CodeSoft)
+    extends GoToDefSoft
+       with GoToRefSoft
+       with GoToRenameSoft {
+
+    def toLineRange(): Option[LineRange] =
+      Some(ast.index.toLineRange(source.parsed.code))
+
+    override def parsed: SourceCodeState.IsParsedAndCompiled =
+      source.parsed
+
+  }
+
+  sealed trait Code extends SourceLocation {
+
+    def parsed: SourceCodeState.IsParsedAndCompiled
+
+  }
+
   /**
    * Represents a single source tree ([[Tree.Source]]) within a source file ([[SourceCodeState.Parsed]]),
    * which can contain multiple source trees such as contracts, scripts etc.
@@ -121,9 +152,14 @@ object SourceLocation {
    * @param tree   The source tree within the parsed source file.
    * @param parsed The source file containing the source tree.
    */
-  case class Code(
+  case class CodeStrict(
       tree: Tree.Source,
       parsed: SourceCodeState.Parsed)
-    extends SourceLocation
+    extends Code
+
+  case class CodeSoft(
+      body: SoftAST.BlockBodyPart,
+      parsed: SourceCodeState.IsParsedAndCompiled)
+    extends Code
 
 }

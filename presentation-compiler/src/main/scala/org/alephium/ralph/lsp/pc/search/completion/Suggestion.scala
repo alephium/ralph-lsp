@@ -33,7 +33,7 @@ object Suggestion {
   /** A suggestion that points to a node within a tree */
   sealed trait NodeAPI extends Suggestion {
 
-    def node: SourceLocation.Node[Ast.Positioned]
+    def node: SourceLocation.NodeStrict[Ast.Positioned]
 
   }
 
@@ -137,7 +137,7 @@ object Suggestion {
    *                            otherwise as a [[Completion.Field]].
    */
   case class Argument private (
-      node: SourceLocation.Node[Ast.Argument],
+      node: SourceLocation.NodeStrict[Ast.Argument],
       isTemplateArgument: Boolean)
     extends Suggestion.InheritedAPI {
 
@@ -178,7 +178,7 @@ object Suggestion {
    *
    * @param node The node representing the location where the variable was created.
    */
-  case class VarDef(node: SourceLocation.Node[Ast.VarDef[_]]) extends NodeAPI {
+  case class VarDef(node: SourceLocation.NodeStrict[Ast.VarDef[_]]) extends NodeAPI {
 
     override def toCompletion(): Seq[Completion.Variable] =
       node.ast.vars flatMap {
@@ -205,7 +205,7 @@ object Suggestion {
   }
 
   case class FuncDef(
-      node: SourceLocation.Node[Ast.FuncDef[_]],
+      node: SourceLocation.NodeStrict[Ast.FuncDef[_]],
       isBuiltIn: Boolean)
     extends Suggestion.InheritedAPI {
 
@@ -268,7 +268,7 @@ object Suggestion {
 
   }
 
-  case class EventDef(node: SourceLocation.Node[Ast.EventDef]) extends Suggestion.InheritedAPI {
+  case class EventDef(node: SourceLocation.NodeStrict[Ast.EventDef]) extends Suggestion.InheritedAPI {
 
     override def toCompletion(): Seq[Completion.Event] =
       Seq(
@@ -281,7 +281,7 @@ object Suggestion {
 
   }
 
-  case class EnumDef(node: SourceLocation.Node[Ast.EnumDef[_]]) extends Suggestion.InheritedAPI {
+  case class EnumDef(node: SourceLocation.NodeStrict[Ast.EnumDef[_]]) extends Suggestion.InheritedAPI {
 
     override def toCompletion(): Seq[Completion.Enum] =
       Seq(
@@ -294,7 +294,7 @@ object Suggestion {
 
   }
 
-  case class ConstantVarDef(node: SourceLocation.Node[Ast.ConstantVarDef[_]]) extends Suggestion.InheritedAPI {
+  case class ConstantVarDef(node: SourceLocation.NodeStrict[Ast.ConstantVarDef[_]]) extends Suggestion.InheritedAPI {
 
     override def toCompletion(): Seq[Completion.Constant] =
       Seq(
@@ -307,7 +307,7 @@ object Suggestion {
 
   }
 
-  case class MapDef(node: SourceLocation.Node[Ast.MapDef]) extends Suggestion.InheritedAPI {
+  case class MapDef(node: SourceLocation.NodeStrict[Ast.MapDef]) extends Suggestion.InheritedAPI {
 
     override def toCompletion(): Seq[Completion.Property] = {
       val label =
@@ -330,7 +330,7 @@ object Suggestion {
    *
    * @param node The node containing the enum definition.
    */
-  case class EnumFields(node: SourceLocation.Node[Ast.EnumDef[_]]) extends Suggestion.NodeAPI {
+  case class EnumFields(node: SourceLocation.NodeStrict[Ast.EnumDef[_]]) extends Suggestion.NodeAPI {
 
     override def toCompletion(): Seq[Completion.EnumMember] =
       node.ast.fields map {
@@ -349,7 +349,7 @@ object Suggestion {
    *
    * @param node The node containing the type identifier.
    */
-  case class CreatedType(node: SourceLocation.Node[Ast.TypeId]) extends Type {
+  case class CreatedType(node: SourceLocation.NodeStrict[Ast.TypeId]) extends Type {
 
     override def toCompletion(): Seq[Completion.Class] =
       Seq(

@@ -37,10 +37,10 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
    */
   def goTo(
       funcIdNode: Node[Ast.FuncId, Ast.Positioned],
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     funcIdNode.parent match { // take one step up to check the type of function call.
       case Some(parent) =>
         parent match {
@@ -122,8 +122,8 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
    */
   private def goToFunction(
       funcId: Ast.FuncId,
-      sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.Positioned]] = {
+      sourceCode: SourceLocation.CodeStrict,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] = {
     val functions =
       if (funcId.isBuiltIn)
         workspace.build.findDependency(DependencyID.BuiltIn) match {
@@ -167,7 +167,7 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
    *    }
    * }}}
    *
-   * The final result will always include at least one [[SourceLocation.Node]] instance,
+   * The final result will always include at least one [[SourceLocation.NodeStrict]] instance,
    * representing the input `funcId`.
    *
    * @param funcId     The [[Ast.FuncId]] of the function to locate.
@@ -177,13 +177,13 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
    */
   private def goToFunctionDefinitions(
       funcId: Ast.FuncId,
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
-      settings: GoToDefSetting): Iterator[SourceLocation.Node[Ast.FuncId]] = {
+      settings: GoToDefSetting): Iterator[SourceLocation.NodeStrict[Ast.FuncId]] = {
     // An iterator with only the input `FuncId` as the result
     def selfOnly() =
       Iterator(
-        SourceLocation.Node(
+        SourceLocation.NodeStrict(
           ast = funcId,
           source = sourceCode
         )
@@ -211,7 +211,7 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
           .iterator
           .map {
             funcDef =>
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = funcDef.ast.id,
                 source = funcDef.source
               )
@@ -235,7 +235,7 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
       functionId: Ast.FuncId,
       typeExpr: Ast.Expr[_],
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     typeExpr.getCachedType() match {
       case Some(types) =>
         val allFunctions =
@@ -263,12 +263,12 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
    */
   private def findFuncSignature(
       funcId: Ast.FuncId,
-      functions: Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]]): Iterator[SourceLocation.Node[Ast.Positioned]] =
+      functions: Iterator[SourceLocation.NodeStrict[Ast.FuncDef[StatefulContext]]]): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     functions
       .filter(_.ast.id == funcId)
       .map {
         funcDef =>
-          SourceLocation.Node(
+          SourceLocation.NodeStrict(
             ast = funcDef.ast.id,
             source = funcDef.source
           )

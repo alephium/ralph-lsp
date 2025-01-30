@@ -97,7 +97,7 @@ object SourceCodeSearcher {
     sourceCode
       .flatMap {
         parsed =>
-          parsed.ast.statements.collect {
+          parsed.astStrict.statements.collect {
             case imported: Tree.Import =>
               imported
           }
@@ -113,7 +113,7 @@ object SourceCodeSearcher {
    */
   def collectInheritedParentsForAll(
       sourceCode: ArraySeq[SourceCodeState.Parsed],
-      workspace: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.Code] = {
+      workspace: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.CodeStrict] = {
     val workspaceTrees = collectSourceTrees(workspace)
 
     val parents =
@@ -138,7 +138,7 @@ object SourceCodeSearcher {
    */
   def collectInheritedParentsForAllTrees(
       sourceCode: SourceCodeState.Parsed,
-      workspace: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.Code] =
+      workspace: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.CodeStrict] =
     collectInheritedParentsForAll(
       sourceCode = sourceCode,
       workspace = collectSourceTrees(workspace)
@@ -153,7 +153,7 @@ object SourceCodeSearcher {
    */
   def collectInheritedParentsForAll(
       sourceCode: SourceCodeState.Parsed,
-      workspace: ArraySeq[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
+      workspace: ArraySeq[SourceLocation.CodeStrict]): ArraySeq[SourceLocation.CodeStrict] =
     collectInheritedParents(
       source = collectSourceTrees(sourceCode).to(ArraySeq),
       allSource = workspace
@@ -166,7 +166,7 @@ object SourceCodeSearcher {
    * @return An sequence of source-tree and its parsed source-file mappings.
    */
   def collectSourceTrees(
-      sourceCode: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.Code] =
+      sourceCode: ArraySeq[SourceCodeState.Parsed]): ArraySeq[SourceLocation.CodeStrict] =
     sourceCode flatMap collectSourceTrees
 
   /**
@@ -176,10 +176,10 @@ object SourceCodeSearcher {
    * @return An sequence of source-tree and the parsed source-file mappings.
    */
   def collectSourceTrees(
-      sourceCode: SourceCodeState.Parsed): Seq[SourceLocation.Code] =
-    sourceCode.ast.statements.collect {
+      sourceCode: SourceCodeState.Parsed): Seq[SourceLocation.CodeStrict] =
+    sourceCode.astStrict.statements.collect {
       case tree: Tree.Source =>
-        SourceLocation.Code(
+        SourceLocation.CodeStrict(
           tree = tree,
           parsed = sourceCode
         )
@@ -191,12 +191,12 @@ object SourceCodeSearcher {
    * @param workspaceSource The source code to search for types.
    * @return An iterator containing type identifiers.
    */
-  def collectTypes(workspaceSource: Iterator[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.TypeId]] =
+  def collectTypes(workspaceSource: Iterator[SourceLocation.CodeStrict]): Iterator[SourceLocation.NodeStrict[Ast.TypeId]] =
     workspaceSource flatMap {
       code =>
         code.tree.typeId() map {
           typeId =>
-            SourceLocation.Node(
+            SourceLocation.NodeStrict(
               ast = typeId,
               source = code
             )
@@ -209,10 +209,10 @@ object SourceCodeSearcher {
    * @param workspaceSource The source code to search for.
    * @return An iterator containing global constants.
    */
-  def collectGlobalConstants(workspaceSource: Iterator[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.ConstantVarDef[_]]] =
+  def collectGlobalConstants(workspaceSource: Iterator[SourceLocation.CodeStrict]): Iterator[SourceLocation.NodeStrict[Ast.ConstantVarDef[_]]] =
     workspaceSource collect {
-      case source @ SourceLocation.Code(Tree.Source(ast: Ast.ConstantVarDef[_], _), _) =>
-        SourceLocation.Node(
+      case source @ SourceLocation.CodeStrict(Tree.Source(ast: Ast.ConstantVarDef[_], _), _) =>
+        SourceLocation.NodeStrict(
           ast = ast,
           source = source
         )
@@ -224,9 +224,9 @@ object SourceCodeSearcher {
    * @param workspaceSource The source code to search for global enums.
    * @return An iterator containing all global enums.
    */
-  def collectGlobalEnumsCode(workspaceSource: Iterator[SourceLocation.Code]): Iterator[SourceLocation.Code] =
+  def collectGlobalEnumsCode(workspaceSource: Iterator[SourceLocation.CodeStrict]): Iterator[SourceLocation.CodeStrict] =
     workspaceSource collect {
-      case code @ SourceLocation.Code(Tree.Source(_: Ast.EnumDef[_], _), _) =>
+      case code @ SourceLocation.CodeStrict(Tree.Source(_: Ast.EnumDef[_], _), _) =>
         code
     }
 
@@ -239,7 +239,7 @@ object SourceCodeSearcher {
    */
   def collectTypes(
       types: Seq[Type],
-      workspaceSource: ArraySeq[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
+      workspaceSource: ArraySeq[SourceLocation.CodeStrict]): ArraySeq[SourceLocation.CodeStrict] =
     workspaceSource flatMap {
       code =>
         collectTypes(
@@ -257,7 +257,7 @@ object SourceCodeSearcher {
    */
   def collectTypes(
       types: Seq[Type],
-      code: SourceLocation.Code): Seq[SourceLocation.Code] =
+      code: SourceLocation.CodeStrict): Seq[SourceLocation.CodeStrict] =
     // collect all trees with matching types
     code.tree.typeId() match {
       case Some(typeId) =>
@@ -285,7 +285,7 @@ object SourceCodeSearcher {
    */
   def collectFunctions(
       types: Seq[Type],
-      workspaceSource: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] = {
+      workspaceSource: ArraySeq[SourceLocation.CodeStrict]): Iterator[SourceLocation.NodeStrict[Ast.FuncDef[StatefulContext]]] = {
     // collect all trees with matching types
     val treesOfMatchingTypes =
       collectTypes(
@@ -308,8 +308,8 @@ object SourceCodeSearcher {
    * @return An iterator containing all function implementations.
    */
   def collectFunctions(
-      trees: ArraySeq[SourceLocation.Code],
-      workspaceSource: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+      trees: ArraySeq[SourceLocation.CodeStrict],
+      workspaceSource: ArraySeq[SourceLocation.CodeStrict]): Iterator[SourceLocation.NodeStrict[Ast.FuncDef[StatefulContext]]] =
     trees
       .iterator
       .flatMap {
@@ -328,8 +328,8 @@ object SourceCodeSearcher {
    * @return An iterator containing all function implementations.
    */
   def collectFunctions(
-      tree: SourceLocation.Code,
-      workspaceSource: ArraySeq[SourceLocation.Code]): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] = {
+      tree: SourceLocation.CodeStrict,
+      workspaceSource: ArraySeq[SourceLocation.CodeStrict]): Iterator[SourceLocation.NodeStrict[Ast.FuncDef[StatefulContext]]] = {
     // the function could be within a nested parent, collect all parents.
     val parents =
       collectInheritedParents(
@@ -349,7 +349,7 @@ object SourceCodeSearcher {
               .funcs
               .map {
                 funcDef =>
-                  SourceLocation.Node(
+                  SourceLocation.NodeStrict(
                     ast = funcDef,
                     source = code
                   )
@@ -367,7 +367,7 @@ object SourceCodeSearcher {
    * @param sourceCode The source code from which to collect function definitions.
    * @return           An iterator containing all function implementations.
    */
-  def collectFunctions(sourceCode: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+  def collectFunctions(sourceCode: SourceLocation.CodeStrict): Iterator[SourceLocation.NodeStrict[Ast.FuncDef[StatefulContext]]] =
     // TODO: Improve selection by checking function argument count and types.
     sourceCode.tree.ast match {
       case ast: Ast.ContractWithState =>
@@ -376,7 +376,7 @@ object SourceCodeSearcher {
           .iterator
           .map {
             funcDef =>
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = funcDef,
                 source = sourceCode
               )
@@ -392,15 +392,15 @@ object SourceCodeSearcher {
    * @param source The parsed source code from which to collect function definitions.
    * @return An iterator containing all function implementations.
    */
-  def collectFunctions(source: SourceCodeState.Parsed): Iterator[SourceLocation.Node[Ast.FuncDef[StatefulContext]]] =
+  def collectFunctions(source: SourceCodeState.Parsed): Iterator[SourceLocation.NodeStrict[Ast.FuncDef[StatefulContext]]] =
     source
-      .ast
+      .astStrict
       .statements
       .iterator
       .flatMap {
         case tree: Tree.Source =>
           // search for the matching functionIds within the built-in source file.
-          collectFunctions(SourceLocation.Code(tree, source))
+          collectFunctions(SourceLocation.CodeStrict(tree, source))
 
         case _: Tree.Import =>
           Iterator.empty
@@ -412,7 +412,7 @@ object SourceCodeSearcher {
    * @param sourceCode The transaction script that may contain a `main` function.
    * @return Node representing the `main` function of the transaction script, if found, else None.
    */
-  def findTxScriptMainFunction(sourceCode: SourceLocation.Code): Option[Node[Ast.FuncDef[_], Ast.Positioned]] =
+  def findTxScriptMainFunction(sourceCode: SourceLocation.CodeStrict): Option[Node[Ast.FuncDef[_], Ast.Positioned]] =
     sourceCode.tree.ast match {
       case _: Ast.TxScript =>
         sourceCode.tree.rootNode.walkDown.collectFirst {
@@ -433,8 +433,8 @@ object SourceCodeSearcher {
    * @return All parent source implementations found.
    */
   def collectInheritedParents(
-      source: ArraySeq[SourceLocation.Code],
-      allSource: ArraySeq[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
+      source: ArraySeq[SourceLocation.CodeStrict],
+      allSource: ArraySeq[SourceLocation.CodeStrict]): ArraySeq[SourceLocation.CodeStrict] =
     source.flatMap {
       source =>
         collectInheritedParents(
@@ -452,8 +452,8 @@ object SourceCodeSearcher {
    * @return All parent source implementations found.
    */
   def collectInheritedParents(
-      source: SourceLocation.Code,
-      allSource: ArraySeq[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
+      source: SourceLocation.CodeStrict,
+      allSource: ArraySeq[SourceLocation.CodeStrict]): ArraySeq[SourceLocation.CodeStrict] =
     source.tree.ast match {
       case contract: Ast.ContractWithState =>
         collectInheritedParents(
@@ -475,8 +475,8 @@ object SourceCodeSearcher {
    * @return All child trees along with their corresponding source files.
    */
   def collectImplementingChildren(
-      source: SourceLocation.Code,
-      allSource: ArraySeq[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
+      source: SourceLocation.CodeStrict,
+      allSource: ArraySeq[SourceLocation.CodeStrict]): ArraySeq[SourceLocation.CodeStrict] =
     source.tree.ast match {
       case contract: Ast.ContractWithState =>
         collectImplementingChildren(
@@ -500,8 +500,8 @@ object SourceCodeSearcher {
    */
   private def collectInheritedParents(
       inheritances: Seq[Ast.Inheritance],
-      allSource: ArraySeq[SourceLocation.Code],
-      processedTrees: mutable.Set[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
+      allSource: ArraySeq[SourceLocation.CodeStrict],
+      processedTrees: mutable.Set[SourceLocation.CodeStrict]): ArraySeq[SourceLocation.CodeStrict] =
     allSource flatMap {
       source =>
         // collect the trees that belong to one of the inheritances
@@ -550,8 +550,8 @@ object SourceCodeSearcher {
    */
   private def collectImplementingChildren(
       contract: Ast.ContractWithState,
-      allSource: ArraySeq[SourceLocation.Code],
-      processedTrees: mutable.Set[SourceLocation.Code]): ArraySeq[SourceLocation.Code] =
+      allSource: ArraySeq[SourceLocation.CodeStrict],
+      processedTrees: mutable.Set[SourceLocation.CodeStrict]): ArraySeq[SourceLocation.CodeStrict] =
     allSource flatMap {
       source =>
         val belongs =

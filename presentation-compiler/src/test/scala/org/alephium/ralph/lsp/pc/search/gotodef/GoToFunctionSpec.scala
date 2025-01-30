@@ -24,7 +24,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
   "return in empty" when {
     "function does not exist" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean: Bool) -> () {
@@ -39,7 +39,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
   "return self" when {
     "the function itself is selected" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Abstract Contract Action() {
           |  fn >>funct@@ion<<() -> Bool
@@ -52,7 +52,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
     "duplicate functions exist" when {
       "second duplicate is selected" should {
         "still select only itself" in {
-          goToDefinition()(
+          goToDefinitionStrict()(
             """
               |Abstract Contract Action() {
               |  fn function() -> Bool
@@ -69,7 +69,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
   "go to the function" when {
     "function exists" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean: Bool) -> () {
@@ -86,7 +86,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
     }
 
     "function and argument have same names" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Abstract Contract Parent2() {
           |
@@ -116,7 +116,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
     "function is an interface function" should {
       "highlight the entire function signature" in {
-        goToDefinition()(
+        goToDefinitionStrict()(
           """
             |Abstract Contract Test() {
             |

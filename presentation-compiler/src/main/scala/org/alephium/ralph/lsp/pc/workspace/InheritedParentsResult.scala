@@ -27,5 +27,5 @@ import scala.collection.immutable.ArraySeq
  * @param allTrees   All trees in scope within the current workspace.
  */
 case class InheritedParentsResult(
-    parentTrees: ArraySeq[SourceLocation.Code],
-    allTrees: ArraySeq[SourceLocation.Code])
+    parentTrees: ArraySeq[SourceLocation.CodeStrict],
+    allTrees: ArraySeq[SourceLocation.CodeStrict])

@@ -7,10 +7,10 @@ import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpec
 
-class EventTemplateParserSpec extends AnyWordSpec {
+class EventParserSpec extends AnyWordSpec {
 
   "successfully parse an event" in {
-    val event = parseEventTemplate("event MyEvent(varName: TypeName")
+    val event = parseEvent("event MyEvent(varName: TypeName")
 
     event.eventToken shouldBe Event(indexOf(">>event<< MyEvent(varName: TypeName"))
     event.identifier shouldBe Identifier(indexOf("event >>MyEvent<<(varName: TypeName"), "MyEvent")

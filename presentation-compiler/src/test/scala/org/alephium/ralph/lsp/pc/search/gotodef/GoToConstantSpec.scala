@@ -24,7 +24,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "constant does not exist" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Contract GoToConstant() {
           |
@@ -39,7 +39,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
 
   "return self" when {
     "constant definition is selected" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Contract Test() {
           |
@@ -52,7 +52,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "duplicate constant definitions exist" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Contract Test() {
           |
@@ -68,7 +68,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "constant exists" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |const >>MyConstant<< = 1
           |
@@ -89,7 +89,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "duplicate constants exists" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |const >>MyConstant<< = 0
           |const >>MyConstant<< = 1
@@ -115,7 +115,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "constant and the Contract have the same name" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Abstract Contract MyConstant() {
           |
@@ -137,7 +137,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "only a global constant exists" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |const >>MyConstant<< = 0
           |
@@ -152,7 +152,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "constants with expression" in {
-      goToDefinition() {
+      goToDefinitionStrict() {
         """
           |const ONE = 1
           |const TWO = 2
@@ -168,7 +168,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "constants is defined after its usage" in {
-      goToDefinition() {
+      goToDefinitionStrict() {
         """
           |Contract Test() {
           |  pub fn main() -> () {
@@ -183,7 +183,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
 
     "Issue #254: Global constant has no tail newline" in {
       // https://github.com/alephium/ralph-lsp/issues/254
-      goToDefinition() {
+      goToDefinitionStrict() {
         """
           |Contract Test() {
           |  pub fn main() -> () {

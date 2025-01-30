@@ -39,7 +39,7 @@ private[search] case object CodeCompletionProvider extends CodeProvider[Unit, Su
       searchSettings: Unit
     )(implicit logger: ClientLogger): Iterator[Suggestion] =
     // find the statement where this cursorIndex sits.
-    sourceCode.ast.statements.find(_.index contains cursorIndex) match {
+    sourceCode.astStrict.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>
         statement match {
           case importStatement: Tree.Import =>
@@ -56,7 +56,7 @@ private[search] case object CodeCompletionProvider extends CodeProvider[Unit, Su
             // request is within a contract source-code
             SourceCodeCompleter.complete(
               cursorIndex = cursorIndex,
-              sourceCode = SourceLocation.Code(tree, sourceCode),
+              sourceCode = SourceLocation.CodeStrict(tree, sourceCode),
               workspace = workspace
             )
         }

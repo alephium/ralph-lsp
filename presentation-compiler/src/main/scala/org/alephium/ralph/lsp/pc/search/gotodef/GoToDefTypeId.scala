@@ -35,9 +35,9 @@ private object GoToDefTypeId extends StrictImplicitLogging {
    */
   def goTo(
       typeIdNode: Node[Ast.TypeId, Ast.Positioned],
-      sourceCode: SourceLocation.Code,
+      sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.Node[Ast.Positioned]] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     typeIdNode.parent match { // take one step up to check the type of TypeId node.
       case Some(parent) =>
         parent match {
@@ -59,7 +59,7 @@ private object GoToDefTypeId extends StrictImplicitLogging {
 
           case Node(enumDef: Ast.EnumDef[_], _) if enumDef.id == typeIdNode.data =>
             Iterator(
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = enumDef.id,
                 source = sourceCode
               )
@@ -67,7 +67,7 @@ private object GoToDefTypeId extends StrictImplicitLogging {
 
           case Node(eventDef: Ast.EventDef, _) if eventDef.id == typeIdNode.data =>
             Iterator(
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = eventDef.id,
                 source = sourceCode
               )
@@ -80,7 +80,7 @@ private object GoToDefTypeId extends StrictImplicitLogging {
                 .merge
 
             Iterator(
-              SourceLocation.Node(
+              SourceLocation.NodeStrict(
                 ast = id,
                 source = sourceCode
               )
@@ -109,8 +109,8 @@ private object GoToDefTypeId extends StrictImplicitLogging {
    */
   private def goToEnumType(
       enumFieldSelector: Ast.EnumFieldSelector[_],
-      sourceCode: SourceLocation.Code,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] = {
+      sourceCode: SourceLocation.CodeStrict,
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.TypeId]] = {
     val trees =
       WorkspaceSearcher.collectInheritedParents(
         sourceCode = sourceCode,
@@ -144,7 +144,7 @@ private object GoToDefTypeId extends StrictImplicitLogging {
    */
   private def goToEnumType(
       enumSelector: Ast.EnumFieldSelector[_],
-      source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
+      source: SourceLocation.CodeStrict): Iterator[SourceLocation.NodeStrict[Ast.TypeId]] =
     source.tree.ast match {
       case contract: Ast.Contract =>
         contract
@@ -153,12 +153,12 @@ private object GoToDefTypeId extends StrictImplicitLogging {
           .filter(_.id == enumSelector.enumId)
           .map {
             enumDef =>
-              SourceLocation.Node(enumDef.id, source)
+              SourceLocation.NodeStrict(enumDef.id, source)
           }
 
       case enumDef: Ast.EnumDef[_] =>
         if (enumDef.id == enumSelector.enumId)
-          Iterator(SourceLocation.Node(enumDef.id, source))
+          Iterator(SourceLocation.NodeStrict(enumDef.id, source))
         else
           Iterator.empty
 
@@ -175,14 +175,14 @@ private object GoToDefTypeId extends StrictImplicitLogging {
    */
   private def goToEventDef(
       emitEvent: Ast.EmitEvent[_],
-      source: SourceLocation.Code): Iterator[SourceLocation.Node[Ast.TypeId]] =
+      source: SourceLocation.CodeStrict): Iterator[SourceLocation.NodeStrict[Ast.TypeId]] =
     source
       .tree
       .rootNode
       .walkDown
       .collect {
         case Node(eventDef: Ast.EventDef, _) if eventDef.id == emitEvent.id =>
-          SourceLocation.Node(eventDef.id, source)
+          SourceLocation.NodeStrict(eventDef.id, source)
       }
 
   /**
@@ -194,7 +194,7 @@ private object GoToDefTypeId extends StrictImplicitLogging {
    */
   private def goToCodeId(
       typeId: Ast.TypeId,
-      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.Node[Ast.TypeId]] =
+      workspace: WorkspaceState.IsSourceAware): Iterator[SourceLocation.NodeStrict[Ast.TypeId]] =
     WorkspaceSearcher
       .collectTypes(workspace, includeNonImportedCode = false)
       .filter(_.ast == typeId)

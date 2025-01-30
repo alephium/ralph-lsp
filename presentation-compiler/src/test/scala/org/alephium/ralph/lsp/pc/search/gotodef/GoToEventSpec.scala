@@ -24,7 +24,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "event does not exists" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Contract Test() {
           |
@@ -40,7 +40,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
   "return self" when {
     "an event definition is selected" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Contract Test() extends Parent() {
           |
@@ -53,7 +53,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
     }
 
     "duplicate event definitions exist" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Contract Test() extends Parent() {
           |
@@ -69,7 +69,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "an event exists" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Abstract Contract Parent() {
           |
@@ -92,7 +92,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
     }
 
     "duplicate events exist" in {
-      goToDefinition()(
+      goToDefinitionStrict()(
         """
           |Abstract Contract Parent() {
           |

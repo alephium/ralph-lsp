@@ -28,7 +28,7 @@ private object GoToDefImport {
   def goTo(
       cursorIndex: Int,
       dependency: Option[WorkspaceState.Compiled],
-      importStatement: Tree.Import): ArraySeq[SourceLocation.GoToDef] =
+      importStatement: Tree.Import): ArraySeq[SourceLocation.GoToDefStrict] =
     dependency match {
       case Some(dependency) =>
         goTo(

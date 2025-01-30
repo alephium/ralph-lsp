@@ -160,11 +160,11 @@ object SoftAST {
       preParamSpace: Option[Space],
       params: Option[Group[Token.OpenParen.type, Token.CloseParen.type]],
       postParamSpace: Option[Space],
-      inheritance: Seq[TemplateInheritance],
+      inheritance: Seq[Inheritance],
       block: BlockClause)
     extends BodyPartAST
 
-  case class EventTemplate(
+  case class Event(
       index: SourceIndex,
       eventToken: TokenDocumented[Token.Event.type],
       preIdentifierSpace: SpaceAST,
@@ -173,7 +173,7 @@ object SoftAST {
       params: Group[Token.OpenParen.type, Token.CloseParen.type])
     extends BodyPartAST
 
-  case class StructTemplate(
+  case class Struct(
       index: SourceIndex,
       structToken: TokenDocumented[Token.Struct.type],
       preIdentifierSpace: SpaceAST,
@@ -183,7 +183,7 @@ object SoftAST {
     extends BodyPartAST
 
   /** Syntax: `implements or extends contract(arg1, arg2 ...)` */
-  case class TemplateInheritance(
+  case class Inheritance(
       index: SourceIndex,
       inheritanceType: TokenDocumented[Token.Inheritance],
       preConstructorCallSpace: SpaceAST,
@@ -284,7 +284,6 @@ object SoftAST {
       code: CodeString)
     extends IdentifierAST
        with CodeDocumentedAST
-       with ExpressionAST
 
   case class IdentifierExpected(
       index: SourceIndex)
@@ -314,15 +313,14 @@ object SoftAST {
        with CodeDocumentedAST
        with BodyPartAST
 
-  sealed trait ReferenceCallOrIdentifier extends SoftAST
+  sealed trait ReferenceCallOrIdentifier extends ExpressionAST
 
   case class ReferenceCall(
       index: SourceIndex,
       reference: IdentifierAST,
       preArgumentsSpace: Option[Space],
       arguments: Group[Token.OpenParen.type, Token.CloseParen.type])
-    extends ExpressionAST
-       with ReferenceCallOrIdentifier
+    extends ReferenceCallOrIdentifier
 
   case class InfixExpression(
       index: SourceIndex,

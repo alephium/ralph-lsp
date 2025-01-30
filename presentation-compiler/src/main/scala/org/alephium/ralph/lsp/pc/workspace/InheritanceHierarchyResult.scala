@@ -22,12 +22,12 @@ import scala.collection.immutable.ArraySeq
 
 /** All inheritance data for the [[self]] */
 case class InheritanceHierarchyResult(
-    parentTrees: ArraySeq[SourceLocation.Code],
-    childTrees: ArraySeq[SourceLocation.Code],
-    allTrees: ArraySeq[SourceLocation.Code],
-    self: SourceLocation.Code) {
+    parentTrees: ArraySeq[SourceLocation.CodeStrict],
+    childTrees: ArraySeq[SourceLocation.CodeStrict],
+    allTrees: ArraySeq[SourceLocation.CodeStrict],
+    self: SourceLocation.CodeStrict) {
 
-  def flatten(): ArraySeq[SourceLocation.Code] =
+  def flatten(): ArraySeq[SourceLocation.CodeStrict] =
     ((parentTrees :+ self) ++ childTrees).distinct
 
 }
