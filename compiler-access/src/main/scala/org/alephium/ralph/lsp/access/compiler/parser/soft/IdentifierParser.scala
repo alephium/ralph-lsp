@@ -34,15 +34,13 @@ private object IdentifierParser {
    *
    * @return A successfully parsed identifier instance [[SoftAST.Identifier]] or a parser error.
    */
-  def parseOrFail[Unknown: P]: P[SoftAST.Identifier] = {
-    @inline def reserved() =
-      TokenParser.Reserved(Token.Hash)
-
+  def parseOrFail[Unknown: P]: P[SoftAST.Identifier] =
     P {
       Index ~
         CommentParser.parseOrFail.? ~
-        !(reserved() ~ SpaceParser.parseOrFail) ~ // disallow reserved names such as `let mut = 1`.
-        !(reserved() ~ End) ~                     // also handle cases where tail is the end of file `let mut`.
+        // disallow reserved names such as `let mut = 1`.
+        // also handle cases where tail is the end of file `let mut`.
+        !(TokenParser.Reserved(Token.Hash) ~ ((SpaceParser.parseOrFail: P[Unit]) | End)) ~
         CodeParser.parseOrFail(isDevDefinedName.!) ~
         Index
     } map {
@@ -53,7 +51,6 @@ private object IdentifierParser {
           documentation = documentation
         )
     }
-  }
 
   private def isDevDefinedName[Unknown: P]: P[Unit] =
     CharsWhile {
