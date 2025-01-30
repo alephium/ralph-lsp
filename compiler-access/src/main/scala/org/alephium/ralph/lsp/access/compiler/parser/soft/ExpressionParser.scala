@@ -54,6 +54,7 @@ private object ExpressionParser {
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
+        StringLiteralParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 

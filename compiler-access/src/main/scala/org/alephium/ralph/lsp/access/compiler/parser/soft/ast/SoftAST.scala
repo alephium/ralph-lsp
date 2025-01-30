@@ -463,6 +463,20 @@ object SoftAST {
       endTick: TokenDocExpectedAST[Token.Tick.type])
     extends ExpressionAST
 
+  case class StringLiteral(
+      index: SourceIndex,
+      startQuote: TokenDocumented[Token.Quote.type],
+      head: Option[CodeStringAST],
+      tail: Seq[Path],
+      endQuote: TokenDocExpectedAST[Token.Quote.type])
+    extends ExpressionAST
+
+  case class Path(
+      index: SourceIndex,
+      slash: TokenDocumented[Token.ForwardSlash.type],
+      text: CodeStringAST)
+    extends SoftAST
+
   sealed trait SpaceAST extends SoftAST
 
   case class Space(

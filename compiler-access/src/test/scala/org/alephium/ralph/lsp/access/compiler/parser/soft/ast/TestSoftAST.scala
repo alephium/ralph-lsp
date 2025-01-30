@@ -138,6 +138,18 @@ object TestSoftAST {
       token = Token.Tick
     )
 
+  def ForwardSlash(index: SourceIndex): SoftAST.TokenDocumented[Token.ForwardSlash.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.ForwardSlash
+    )
+
+  def Quote(index: SourceIndex): SoftAST.TokenDocumented[Token.Quote.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Quote
+    )
+
   def Event(index: SourceIndex): SoftAST.TokenDocumented[Token.Event.type] =
     TokenDocumented(
       index = index,
