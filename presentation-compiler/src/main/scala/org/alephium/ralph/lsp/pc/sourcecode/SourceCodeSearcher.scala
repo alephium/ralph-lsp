@@ -69,6 +69,35 @@ object SourceCodeSearcher {
         Left(SourceCodeNotFound(fileURI))
     }
 
+  def findIsParsed(
+      fileURI: URI,
+      sourceCode: ArraySeq[SourceCodeState]): Either[CompilerMessage.Error, SourceCodeState.IsParsed] =
+    sourceCode.find(_.fileURI == fileURI) match {
+      case Some(source) =>
+        source match {
+          case _: SourceCodeState.OnDisk | _: SourceCodeState.UnCompiled =>
+            Left(SourceCodeIsNotCompiled(fileURI))
+
+          case _: SourceCodeState.ErrorAccess =>
+            Left(SourceCodeAccessFailed(fileURI))
+
+          case parsed: SourceCodeState.Parsed =>
+            Right(parsed)
+
+          case compiled: SourceCodeState.Compiled =>
+            Right(compiled.parsed)
+
+          case error: SourceCodeState.ErrorParser =>
+            Right(error)
+
+          case errored: SourceCodeState.ErrorCompilation =>
+            Right(errored.parsed)
+        }
+
+      case None =>
+        Left(SourceCodeNotFound(fileURI))
+    }
+
   /**
    * Collects all source files with valid parsed syntax.
    *

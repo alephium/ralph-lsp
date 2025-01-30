@@ -19,18 +19,19 @@ package org.alephium.ralph.lsp.pc.search
 import org.alephium.ralph.lsp.TestCommon
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.access.util.{TestCodeUtil, StringUtil}
+import org.alephium.ralph.lsp.access.util.{StringUtil, TestCodeUtil}
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
-import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, TestSourceCode, SourceCodeState}
-import org.alephium.ralph.lsp.pc.workspace.build.{TestRalphc, BuildState, TestBuild}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation, TestSourceCode}
+import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, Workspace, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild, TestRalphc}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.{StdInterfaceDownloader, DependencyDownloader, BuiltInFunctionDownloader}
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace, Workspace}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.{BuiltInFunctionDownloader, DependencyDownloader, StdInterfaceDownloader}
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.scalatest.Assertion
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
@@ -60,7 +61,7 @@ object TestCodeProvider {
    * @return A list of code completion suggestions.
    */
   def suggest(code: String): List[Suggestion] =
-    TestCodeProvider[Unit, Suggestion](
+    TestCodeProvider[SourceCodeState.Parsed, Unit, Suggestion](
       code = code,
       searchSettings = (),
       dependencyDownloaders = DependencyDownloader.natives()
@@ -76,17 +77,37 @@ object TestCodeProvider {
    * @param code The containing `@@` and `>>...<<` symbols.
    */
   def goToDefinitionStrict(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] =
-    goTo[GoToDefSetting, SourceLocation.GoToDefStrict](
+    goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
       code = code,
       searchSettings = settings
     )
+
+  def goToDefinitionSoft(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] =
+    goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
+      code = code,
+      searchSettings = (SoftAST, settings)
+    )
+
+  /** Executes go-to-definition providers for both StrictAST and [[SoftAST]] */
+  def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] = {
+    val resultStrict       = goToDefinitionStrict(settings)(code)
+    val resultStrictRanges = resultStrict.map(_._2)
+
+    val resultSoft       = goToDefinitionSoft(settings)(code)
+    val resultSoftRanges = resultSoft.map(_._2)
+
+    // Assert that both go-to-def services (Strict & Soft) return the same result.
+    resultSoftRanges should contain theSameElementsAs resultStrictRanges
+    // return either one of the results because they both contain the same result
+    resultSoft
+  }
 
   def goToDefinitionForAll(
       referencesFinder: Regex,
       referenceReplacement: String,
       settings: GoToDefSetting = testGoToDefSetting
     )(code: String): Unit =
-    goToForAll[GoToDefSetting, SourceLocation.GoToDefStrict](
+    goToForAll[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
       finder = referencesFinder,
       replacer = referenceReplacement,
       settings = settings,
@@ -94,13 +115,13 @@ object TestCodeProvider {
     )
 
   def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String): List[(URI, LineRange)] =
-    goTo[GoToRefSetting, SourceLocation.GoToRefStrict](
+    goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
       code = code,
       searchSettings = settings
     )
 
   def goToRename(code: String): List[(URI, LineRange)] =
-    goTo[Unit, SourceLocation.GoToRenameStrict](
+    goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
       code = code,
       searchSettings = ()
     )
@@ -122,7 +143,7 @@ object TestCodeProvider {
       referenceReplacement: String,
       settings: GoToRefSetting = testGoToRefSetting
     )(code: String): Unit =
-    goToForAll[GoToRefSetting, SourceLocation.GoToRefStrict](
+    goToForAll[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
       finder = referencesFinder,
       replacer = referenceReplacement,
       settings = settings,
@@ -133,19 +154,19 @@ object TestCodeProvider {
       renameFinder: Regex,
       renameReplacer: String
     )(code: String): Unit =
-    goToForAll[Unit, SourceLocation.GoToRenameStrict](
+    goToForAll[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
       finder = renameFinder,
       replacer = renameReplacer,
       settings = (),
       code = code
     )
 
-  private def goToForAll[I, O <: SourceLocation.GoTo](
+  private def goToForAll[S, I, O <: SourceLocation.GoTo](
       finder: Regex,
       replacer: String,
       settings: I,
       code: String
-    )(implicit codeProvider: CodeProvider[I, O]): Unit = {
+    )(implicit codeProvider: CodeProvider[S, I, O]): Unit = {
     // Initially, execute the test defined.
     // This should be most expressed on the declaration.
     val firstResult =
@@ -216,10 +237,10 @@ object TestCodeProvider {
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
-  def goTo[I, O <: SourceLocation.GoTo](
+  def goTo[S, I, O <: SourceLocation.GoTo](
       code: String,
       searchSettings: I
-    )(implicit codeProvider: CodeProvider[I, O]): List[(URI, LineRange)] = {
+    )(implicit codeProvider: CodeProvider[S, I, O]): List[(URI, LineRange)] = {
     // To find line ranges remove the select indicator @@
     val codeWithoutSelectSymbol =
       code.replace(TestCodeUtil.SEARCH_INDICATOR, "")
@@ -233,7 +254,7 @@ object TestCodeProvider {
 
     // Execute go-to definition.
     val (searchResultIterator, sourceCode, _) =
-      TestCodeProvider[I, O](
+      TestCodeProvider[S, I, O](
         code = codeWithoutLineRangeSymbols,
         searchSettings = searchSettings,
         dependencyDownloaders = ArraySeq.empty
@@ -321,7 +342,7 @@ object TestCodeProvider {
       dependency: String,
       workspace: String,
       settings: GoToRefSetting = testGoToRefSetting): Unit =
-    goTo[GoToRefSetting, SourceLocation.GoToRefStrict](
+    goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
       dependencyId = dependencyId,
       dependency = dependency,
       workspace = workspace,
@@ -333,7 +354,7 @@ object TestCodeProvider {
       dependency: String,
       workspace: String,
       setting: GoToDefSetting = testGoToDefSetting): Unit =
-    goTo[GoToDefSetting, SourceLocation.GoToDefStrict](
+    goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
       dependencyId = dependencyId,
       dependency = dependency,
       workspace = workspace,
@@ -350,12 +371,12 @@ object TestCodeProvider {
    * @param workspace    The developer's workspace code.
    * @return
    */
-  private def goTo[I, O <: SourceLocation.GoTo](
+  private def goTo[S, I, O <: SourceLocation.GoTo](
       dependencyId: DependencyID,
       dependency: String,
       workspace: String,
       searchSettings: I
-    )(implicit codeProvider: CodeProvider[I, O]): Unit = {
+    )(implicit codeProvider: CodeProvider[S, I, O]): Unit = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess           = FileAccess.disk
     implicit val compiler: CompilerAccess   = CompilerAccess.ralphc
@@ -436,7 +457,7 @@ object TestCodeProvider {
 
     // run test
     val (searchResult, testWorkspace) =
-      TestCodeProvider[I, O](
+      TestCodeProvider[S, I, O](
         line = indicatorPosition.line,
         character = indicatorPosition.character,
         selectedFileURI = selectedFileURI,
@@ -476,7 +497,7 @@ object TestCodeProvider {
 
     // Execute go-to definition.
     val (searchResult, _, workspace) =
-      TestCodeProvider[GoToDefSetting, SourceLocation.GoToDefStrict](
+      TestCodeProvider[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
         code = codeWithoutGoToSymbols,
         searchSettings = testGoToDefSetting,
         dependencyDownloaders = ArraySeq(downloader)
@@ -541,11 +562,11 @@ object TestCodeProvider {
    *                              as they can be written to `~/ralph-lsp`.
    *                              We don't want generated libraries being written to `~/ralph-lsp`.
    */
-  private def apply[I, O](
+  private def apply[S, I, O](
       code: String,
       searchSettings: I,
       dependencyDownloaders: ArraySeq[DependencyDownloader.Native]
-    )(implicit provider: CodeProvider[I, O]): (Iterator[O], SourceCodeState.IsCodeAware, WorkspaceState.IsParsedAndCompiled) = {
+    )(implicit provider: CodeProvider[S, I, O]): (Iterator[O], SourceCodeState.IsCodeAware, WorkspaceState.IsParsedAndCompiled) = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess           = FileAccess.disk
     implicit val compiler: CompilerAccess   = CompilerAccess.ralphc
@@ -599,14 +620,14 @@ object TestCodeProvider {
    * @param workspaceSourceCode The source to write to the test workspace.
    * @return Suggestions and the created workspace.
    */
-  private def apply[I, O](
+  private def apply[S, I, O](
       line: Int,
       character: Int,
       selectedFileURI: URI,
       searchSettings: I,
       build: BuildState.Compiled,
       workspaceSourceCode: SourceCodeState.OnDisk
-    )(implicit provider: CodeProvider[I, O],
+    )(implicit provider: CodeProvider[S, I, O],
       client: ClientLogger,
       file: FileAccess,
       compiler: CompilerAccess): (Either[CompilerMessage.Error, Iterator[O]], WorkspaceState.IsParsedAndCompiled) = {

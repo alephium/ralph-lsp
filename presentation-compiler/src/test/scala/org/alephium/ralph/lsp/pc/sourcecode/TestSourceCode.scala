@@ -25,7 +25,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.TestDependency
 import org.alephium.ralph.lsp.utils.log.ClientLogger
-import org.alephium.ralph.lsp.utils.URIUtil
+import org.alephium.ralph.lsp.utils.{LazyVal, URIUtil}
 import org.scalacheck.Gen
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
@@ -133,7 +133,8 @@ object TestSourceCode {
     } yield SourceCodeState.ErrorParser(
       fileURI = _state.fileURI,
       code = _code,
-      errors = errors
+      errors = errors,
+      astSoft = LazyVal(???)
     )
 
   def genUnCompiled(

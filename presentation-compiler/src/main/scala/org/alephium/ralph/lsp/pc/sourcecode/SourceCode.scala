@@ -23,7 +23,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.imports.Importer
 import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.utils.CollectionUtil._
-import org.alephium.ralph.lsp.utils.URIUtil
+import org.alephium.ralph.lsp.utils.{LazyVal, URIUtil}
 
 import java.net.URI
 import scala.annotation.tailrec
@@ -89,14 +89,16 @@ private[pc] object SourceCode {
             SourceCodeState.ErrorParser(
               fileURI = fileURI,
               code = code,
-              errors = Seq(error)
+              errors = Seq(error),
+              astSoft = LazyVal(compiler.parseSoft(code))
             )
 
           case Right(parsedCode) =>
             SourceCodeState.Parsed(
               fileURI = fileURI,
               code = code,
-              astStrict = parsedCode
+              astStrict = parsedCode,
+              astSoft = LazyVal(compiler.parseSoft(code))
             )
         }
 

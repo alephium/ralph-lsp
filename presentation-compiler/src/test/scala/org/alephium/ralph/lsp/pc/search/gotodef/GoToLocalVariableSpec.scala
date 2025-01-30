@@ -23,51 +23,198 @@ import org.scalatest.wordspec.AnyWordSpec
 class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
-    "variable does not exist" in {
-      goToDefinitionStrict()(
-        """
-          |Contract GoToTest() {
-          |
-          |  pub fn function() -> () {
-          |    // varB does not exists
-          |    let varA = v@@arB
-          |  }
-          |
-          |}
-          |""".stripMargin
-      )
-    }
-  }
-
-  "return self" when {
-    "variable itself is selected" in {
-      goToDefinitionStrict()(
-        """
-          |Contract Test() {
-          |
-          |  pub fn function() -> () {
-          |    let >>var@@A<< = 123
-          |  }
-          |
-          |}
-          |""".stripMargin
-      )
-    }
-
-    "duplicate variables exists" when {
-      "first var is selected" in {
-        goToDefinitionStrict()(
+    "variable does not exist" when {
+      "syntax is strict parsable" in {
+        goToDefinition()(
           """
-            |Contract Test() {
+            |Contract GoToTest() {
             |
             |  pub fn function() -> () {
-            |    let >>var@@A<< = 123
-            |    let varA = 123
+            |    // varB does not exists
+            |    let varA = v@@arB
             |  }
             |
             |}
             |""".stripMargin
         )
+      }
+
+      "no Contract" in {
+        goToDefinitionSoft()(
+          """
+            |pub fn function() -> () {
+            |  // varB does not exists
+            |  let varA = v@@arB
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "no function definition" in {
+        goToDefinitionSoft()(
+          """
+            |let varA = v@@arB
+            |""".stripMargin
+        )
+      }
+
+      "let is spelt incorrectly" in {
+        goToDefinitionSoft()(
+          """
+            |le varA = v@@arB
+            |""".stripMargin
+        )
+      }
+    }
+  }
+
+  "return self" when {
+    "variable itself is selected" when {
+      "syntax is strict parsable" in {
+        goToDefinition()(
+          """
+            |Contract Test() {
+            |
+            |  pub fn function() -> () {
+            |    let >>var@@A<< = 123
+            |  }
+            |
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "syntax has errors" when {
+        "Contract is not defined" in {
+          goToDefinitionSoft()(
+            """
+              |pub fn function() -> () {
+              |  let >>var@@A<< = 123
+              |}
+              |
+              |""".stripMargin
+          )
+        }
+
+        "function is not defined" in {
+          goToDefinitionSoft()(
+            """
+              |let >>var@@A<< = 123
+              |""".stripMargin
+          )
+        }
+
+        "let is misspelled" in {
+          goToDefinitionSoft()(
+            """
+              |le >>var@@A<< = 123
+              |""".stripMargin
+          )
+        }
+
+        "assignment does not exist & let is misspelled" in {
+          goToDefinitionSoft()(
+            """
+              |le >>var@@A<< =
+              |""".stripMargin
+          )
+        }
+
+        "let is not defined" in {
+          goToDefinitionSoft()(
+            """
+              |>>var@@A<< =
+              |""".stripMargin
+          )
+        }
+      }
+    }
+
+    "duplicate variables exists" when {
+      "first var is selected" when {
+        "syntax is strict parsable" in {
+          goToDefinition()(
+            """
+              |Contract Test() {
+              |
+              |  pub fn function() -> () {
+              |    let >>var@@A<< = 123
+              |    let varA = 123
+              |  }
+              |
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "source is not well defined" when {
+          "Contract is not defined" in {
+            goToDefinitionSoft()(
+              """
+                |pub fn function() -> () {
+                |  let >>var@@A<< = 123
+                |  let varA = 123
+                |}
+                |""".stripMargin
+            )
+          }
+
+          "function is not defined" in {
+            goToDefinitionSoft()(
+              """
+                |let >>var@@A<< = 123
+                |let varA = 123
+                |""".stripMargin
+            )
+          }
+
+          "let is not defined" when {
+            "for first varA" in {
+              goToDefinitionSoft()(
+                """
+                  |>>var@@A<< = 123
+                  |let varA = 123
+                  |""".stripMargin
+              )
+            }
+
+            "for second varA" in {
+              goToDefinitionSoft()(
+                """
+                  |let >>var@@A<< = 123
+                  |varA = 123
+                  |""".stripMargin
+              )
+            }
+
+            "both varAs" in {
+              goToDefinitionSoft()(
+                """
+                  |>>var@@A<< = 123
+                  |varA = 123
+                  |""".stripMargin
+              )
+            }
+
+            "assignment value is not defined" in {
+              goToDefinitionSoft()(
+                """
+                  |>>var@@A<< =
+                  |varA = 123
+                  |""".stripMargin
+              )
+            }
+
+            "variable initialised value is referencing itself" in {
+              goToDefinitionSoft()(
+                """
+                  |let >>varA<< = var@@A
+                  |""".stripMargin
+              )
+            }
+          }
+
+        }
       }
 
       "second var is selected" in {

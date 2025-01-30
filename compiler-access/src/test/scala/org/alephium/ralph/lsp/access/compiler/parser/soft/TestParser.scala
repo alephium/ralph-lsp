@@ -98,7 +98,7 @@ object TestParser {
       identifier: String,
       ast: SoftAST): Option[SoftAST.Annotation] =
     ast
-      .toNode()
+      .toNode
       .walkDown
       .collectFirst {
         case Node(annotation @ SoftAST.Annotation(_, _, _, id: SoftAST.Identifier, _, _, _), _) if id.code.text == identifier =>
@@ -107,7 +107,7 @@ object TestParser {
 
   def findFirstComment(body: SoftAST): Option[SoftAST.Comments] =
     body
-      .toNode()
+      .toNode
       .walkDown
       .collectFirst {
         case Node(comments @ SoftAST.Comments(_, _, _, _), _) =>
