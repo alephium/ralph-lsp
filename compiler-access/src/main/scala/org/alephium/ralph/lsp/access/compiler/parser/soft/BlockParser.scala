@@ -89,6 +89,7 @@ private object BlockParser {
         EventParser.parseOrFail |
         StructParser.parseOrFail |
         FunctionParser.parseOrFail |
+        ImportParser.parseOrFail |
         ExpressionParser.parseOrFail |
         CommentParser.parseOrFail |
         UnresolvedParser.parseOrFail(stop: _*)

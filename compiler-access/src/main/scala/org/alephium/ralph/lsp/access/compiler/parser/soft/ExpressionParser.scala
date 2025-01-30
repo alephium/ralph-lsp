@@ -38,8 +38,7 @@ private object ExpressionParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
-      ImportParser.parseOrFail |
-        TypeAssignmentParser.parseOrFail |
+      TypeAssignmentParser.parseOrFail |
         AssignmentParser.parseOrFail |
         InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |

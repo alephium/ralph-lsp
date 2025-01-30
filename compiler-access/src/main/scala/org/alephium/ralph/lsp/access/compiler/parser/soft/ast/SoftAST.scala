@@ -188,6 +188,13 @@ object SoftAST {
       params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
     extends BodyPartAST
 
+  case class Import(
+      index: SourceIndex,
+      importToken: TokenDocumented[Token.Import.type],
+      postImportSpace: Option[Space],
+      string: Option[StringLiteral])
+    extends BodyPartAST
+
   /** Syntax: `implements or extends contract(arg1, arg2 ...)` */
   case class Inheritance(
       index: SourceIndex,
@@ -461,13 +468,6 @@ object SoftAST {
       startTick: TokenDocumented[Token.Tick.type],
       text: Option[CodeString],
       endTick: TokenDocExpectedAST[Token.Tick.type])
-    extends ExpressionAST
-
-  case class Import(
-      index: SourceIndex,
-      importToken: TokenDocumented[Token.Import.type],
-      postImportSpace: Option[Space],
-      string: Option[StringLiteral])
     extends ExpressionAST
 
   case class StringLiteral(
