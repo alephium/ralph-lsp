@@ -11,6 +11,9 @@ import org.scalatest.OptionValues._
 
 class StringLiteralParserSpec extends AnyWordSpec with Matchers {
 
+  private val newline =
+    Token.Newline.lexeme
+
   "fail" when {
     "empty" in {
       assertIsFastParseError {
@@ -63,15 +66,15 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
 
       "text is non-empty with newline" in {
         val string =
-          parseStringLiteral("\" \n a b c \n ")
+          parseStringLiteral(s"\" $newline a b c $newline ")
 
         string shouldBe
           SoftAST.StringLiteral(
-            index = indexOf(">>\" \n a b c \n <<"),
-            startQuote = Quote(indexOf(">>\"<< \n a b c \n ")),
-            head = Some(SoftAST.CodeString(indexOf("\">> \n a b c \n <<"), " \n a b c \n ")),
+            index = indexOf(s">>\" $newline a b c $newline <<"),
+            startQuote = Quote(indexOf(s">>\"<< $newline a b c $newline ")),
+            head = Some(SoftAST.CodeString(indexOf(s"\">> $newline a b c $newline <<"), s" $newline a b c $newline ")),
             tail = Seq.empty,
-            endQuote = SoftAST.TokenExpected(indexOf("\" \n a b c \n >><<"), Token.Quote)
+            endQuote = SoftAST.TokenExpected(indexOf(s"\" $newline a b c $newline >><<"), Token.Quote)
           )
       }
     }
@@ -79,15 +82,20 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
     "closing quote is provided" when {
       "text is non-empty with newlines" in {
         val string =
-          parseStringLiteral("\" \n a b c \n \"")
+          parseStringLiteral(s"\" $newline a b c $newline \"")
 
         string shouldBe
           SoftAST.StringLiteral(
-            index = indexOf(">>\" \n a b c \n \"<<"),
-            startQuote = Quote(indexOf(">>\"<< \n a b c \n \"")),
-            head = Some(SoftAST.CodeString(indexOf("\">> \n a b c \n <<\""), " \n a b c \n ")),
+            index = indexOf(s">>\" $newline a b c $newline \"<<"),
+            startQuote = Quote(indexOf(s">>\"<< $newline a b c $newline \"")),
+            head = Some(
+              SoftAST.CodeString(
+                index = indexOf(s"\">> $newline a b c $newline <<\""),
+                text = s" $newline a b c $newline "
+              )
+            ),
             tail = Seq.empty,
-            endQuote = Quote(indexOf("\" \n a b c \n >>\"<<"))
+            endQuote = Quote(indexOf(s"\" $newline a b c $newline >>\"<<"))
           )
       }
     }
@@ -165,15 +173,20 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
       "text is non-empty with newlines" when {
         "it is not a path but a regular String literal" in {
           val string =
-            parseStringLiteral("\" \n a b c \n \"")
+            parseStringLiteral(s"\" $newline a b c $newline \"")
 
           string shouldBe
             SoftAST.StringLiteral(
-              index = indexOf(">>\" \n a b c \n \"<<"),
-              startQuote = Quote(indexOf(">>\"<< \n a b c \n \"")),
-              head = Some(SoftAST.CodeString(indexOf("\">> \n a b c \n <<\""), " \n a b c \n ")),
+              index = indexOf(s">>\" $newline a b c $newline \"<<"),
+              startQuote = Quote(indexOf(s">>\"<< $newline a b c $newline \"")),
+              head = Some(
+                SoftAST.CodeString(
+                  index = indexOf(s"\">> $newline a b c $newline <<\""),
+                  text = s" $newline a b c $newline "
+                )
+              ),
               tail = Seq.empty,
-              endQuote = Quote(indexOf("\" \n a b c \n >>\"<<"))
+              endQuote = Quote(indexOf(s"\" $newline a b c $newline >>\"<<"))
             )
         }
 
@@ -223,7 +236,7 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
       string.parts.head.part shouldBe a[SoftAST.Function]
       // second one is a string-literal
       val stringLit = string.parts.last.part.asInstanceOf[SoftAST.StringLiteral]
-      stringLit.startQuote.documentation.value.toCode() shouldBe "// Some comment\n"
+      stringLit.startQuote.documentation.value.toCode() shouldBe s"// Some comment$newline"
       stringLit.head.value.asInstanceOf[SoftAST.CodeString].text shouldBe "some string"
     }
   }
