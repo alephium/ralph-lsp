@@ -67,7 +67,10 @@ object SourceCodeState {
 
   }
 
-  /** Represents: Code that is parsed and compiled. */
+  /**
+   * Represents: Code that is parsed and compiled
+   * and is the co-domain for [[IsParsed]] and [[IsCompiled]].
+   */
   sealed trait IsParsedAndCompiled extends IsCodeAware
 
   /** Represents: Code that is parsed. */
