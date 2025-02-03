@@ -11,7 +11,8 @@ private object EventParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.Event) ~
-        SpaceParser.parse ~
+        TokenParser.isBoundary() ~
+        SpaceParser.parseOrFail.? ~
         IdentifierParser.parse ~
         SpaceParser.parseOrFail.? ~
         ParameterParser.parse ~

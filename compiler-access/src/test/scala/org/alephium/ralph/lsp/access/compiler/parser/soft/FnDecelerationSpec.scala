@@ -31,7 +31,7 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
         parseFunction("fn")
 
       function.fn shouldBe Fn(indexOf(">>fn<<"))
-      function.preSignatureSpace shouldBe SoftAST.SpaceExpected(indexOf("fn>><<"))
+      function.preSignatureSpace shouldBe None
       function.postSignatureSpace shouldBe empty
       function.block shouldBe empty
     }
@@ -50,7 +50,7 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
       val function = functions.head
 
       function.fn shouldBe Fn(indexOf(" >>fn<<"))
-      function.preSignatureSpace shouldBe SoftAST.SpaceExpected(indexOf(s" fn>><<"))
+      function.preSignatureSpace shouldBe None
       function.postSignatureSpace shouldBe empty
       function.block shouldBe empty
     }
@@ -62,9 +62,11 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
       function.fn shouldBe Fn(indexOf(">>fn<<  "))
 
       function.preSignatureSpace shouldBe
-        Space(
-          index = indexOf(s"fn>>  <<"),
-          text = "  "
+        Some(
+          Space(
+            index = indexOf(s"fn>>  <<"),
+            text = "  "
+          )
         )
 
       function.postSignatureSpace shouldBe empty

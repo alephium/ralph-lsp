@@ -52,9 +52,11 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
       parseFunction("fn       _FnUc_TiOn_        ")
 
     function.preSignatureSpace shouldBe
-      Space(
-        index = indexOf("fn>>       <<_FnUc_TiOn_        "),
-        text = "       "
+      Some(
+        Space(
+          index = indexOf("fn>>       <<_FnUc_TiOn_        "),
+          text = "       "
+        )
       )
 
     function.signature.fnName shouldBe

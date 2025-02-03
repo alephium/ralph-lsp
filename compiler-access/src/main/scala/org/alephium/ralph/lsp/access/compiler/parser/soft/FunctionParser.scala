@@ -36,7 +36,8 @@ private object FunctionParser {
         SpaceParser.parseOrFail.? ~
         AccessModifierParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Fn) ~
-        SpaceParser.parse ~
+        TokenParser.isBoundary() ~
+        SpaceParser.parseOrFail.? ~
         signature ~
         SpaceParser.parseOrFail.? ~
         BlockParser.parseOrFail.? ~

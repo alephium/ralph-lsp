@@ -161,7 +161,7 @@ object SoftAST {
   case class Template(
       index: SourceIndex,
       templateType: TokenDocumented[Token.TemplateDefinition],
-      preIdentifierSpace: SpaceAST,
+      preIdentifierSpace: Option[Space],
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
       params: Option[Group[Token.OpenParen.type, Token.CloseParen.type]],
@@ -173,7 +173,7 @@ object SoftAST {
   case class Event(
       index: SourceIndex,
       eventToken: TokenDocumented[Token.Event.type],
-      preIdentifierSpace: SpaceAST,
+      preIdentifierSpace: Option[Space],
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
       params: Group[Token.OpenParen.type, Token.CloseParen.type])
@@ -182,7 +182,7 @@ object SoftAST {
   case class Struct(
       index: SourceIndex,
       structToken: TokenDocumented[Token.Struct.type],
-      preIdentifierSpace: SpaceAST,
+      preIdentifierSpace: Option[Space],
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
       params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
@@ -199,7 +199,7 @@ object SoftAST {
   case class Inheritance(
       index: SourceIndex,
       inheritanceType: TokenDocumented[Token.Inheritance],
-      preConstructorCallSpace: SpaceAST,
+      postInheritanceTypeSpace: Option[Space],
       reference: ReferenceCallOrIdentifier,
       postConstructorCallSpace: Option[Space])
     extends SoftAST
@@ -231,7 +231,7 @@ object SoftAST {
       postAnnotationSpace: Option[Space],
       pub: Option[AccessModifier],
       fn: TokenDocumented[Token.Fn.type],
-      preSignatureSpace: SpaceAST,
+      preSignatureSpace: Option[Space],
       signature: FunctionSignature,
       postSignatureSpace: Option[Space],
       block: Option[BlockClause])
@@ -361,7 +361,7 @@ object SoftAST {
   case class ReturnStatement(
       index: SourceIndex,
       returnToken: TokenDocumented[Token.Return.type],
-      preExpressionSpace: SpaceAST,
+      preExpressionSpace: Option[Space],
       rightExpression: ExpressionAST)
     extends ExpressionAST
 
@@ -484,22 +484,14 @@ object SoftAST {
       text: CodeStringAST)
     extends SoftAST
 
-  sealed trait SpaceAST extends SoftAST
-
   case class Space(
       code: CodeString)
-    extends SpaceAST
-       with CodeAST {
+    extends CodeAST {
 
     override def index: SourceIndex =
       code.index
 
   }
-
-  case class SpaceExpected(
-      index: SourceIndex)
-    extends ExpectedErrorAST("Space")
-       with SpaceAST
 
   sealed trait Code extends SoftAST {
 

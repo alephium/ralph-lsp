@@ -11,7 +11,8 @@ private object StructParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.Struct) ~
-        SpaceParser.parse ~
+        TokenParser.isBoundary() ~
+        SpaceParser.parseOrFail.? ~
         IdentifierParser.parse ~
         SpaceParser.parseOrFail.? ~
         GroupParser.parse(Token.OpenCurly, Token.CloseCurly) ~
