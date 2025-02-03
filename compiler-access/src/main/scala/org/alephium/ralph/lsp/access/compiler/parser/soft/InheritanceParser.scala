@@ -7,11 +7,12 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object InheritanceParser {
 
-  /** Syntax:
+  /**
+   * Syntax:
    * {{{
    *   extends ContractOne(), Contract2(arg1, arg2) implements AnInterface
    * }}}
-   * */
+   */
   def parseOrFail[Unknown: P]: P[SoftAST.Inheritance] =
     P {
       Index ~
