@@ -59,7 +59,7 @@ class TemplateSpec extends AnyWordSpec with Matchers {
 
         template.index shouldBe indexOf(s">>$templateToken<<")
         template.templateType shouldBe Contract(indexOf(s">>$templateToken<<"))
-        template.preIdentifierSpace shouldBe SoftAST.SpaceExpected(indexOf(s"$templateToken>><<"))
+        template.preIdentifierSpace shouldBe None
         template.identifier shouldBe SoftAST.IdentifierExpected(indexOf(s"$templateToken>><<"))
         template.preParamSpace shouldBe None
         template.params shouldBe empty
@@ -83,7 +83,7 @@ class TemplateSpec extends AnyWordSpec with Matchers {
 
         template.index shouldBe indexOf(s">>$templateToken<<")
         template.templateType shouldBe TxScript(indexOf(s">>$templateToken<<"))
-        template.preIdentifierSpace shouldBe SoftAST.SpaceExpected(indexOf(s"$templateToken>><<"))
+        template.preIdentifierSpace shouldBe None
         template.identifier shouldBe SoftAST.IdentifierExpected(indexOf(s"$templateToken>><<"))
         template.preParamSpace shouldBe empty
         template.params shouldBe empty
@@ -144,7 +144,7 @@ class TemplateSpec extends AnyWordSpec with Matchers {
 
       template.identifier shouldBe SoftAST.IdentifierExpected(indexOf("Contract >><<{"))
 
-      template.preIdentifierSpace shouldBe SpaceOne(indexOf("Contract>> <<{"))
+      template.preIdentifierSpace shouldBe Some(SpaceOne(indexOf("Contract>> <<{")))
 
       template.block.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
       template.block.closeCurly shouldBe SoftAST.TokenExpected(indexOf("Contract {>><<"), Token.CloseCurly)
@@ -160,7 +160,7 @@ class TemplateSpec extends AnyWordSpec with Matchers {
         }
 
       template.identifier shouldBe SoftAST.IdentifierExpected(indexOf("Contract >><<{"))
-      template.preIdentifierSpace shouldBe SpaceOne(indexOf("Contract>> <<{"))
+      template.preIdentifierSpace shouldBe Some(SpaceOne(indexOf("Contract>> <<{")))
       // block
       template.block.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
 
@@ -213,7 +213,7 @@ class TemplateSpec extends AnyWordSpec with Matchers {
         }
 
       template.identifier shouldBe SoftAST.IdentifierExpected(indexOf("Contract >><<{"))
-      template.preIdentifierSpace shouldBe SpaceOne(indexOf("Contract>> <<{"))
+      template.preIdentifierSpace shouldBe Some(SpaceOne(indexOf("Contract>> <<{")))
       // block
       template.block.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
 

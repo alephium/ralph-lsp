@@ -91,4 +91,10 @@ private object TokenParser {
   def WhileInOrFail[Unknown: P](tokens: Token*): P[Unit] =
     P(ParserUtil.orTokenCombinator(tokens.iterator).rep(1))
 
+  /**
+   * Checks if the next character breaks (token boundary) the previously parsed token.
+   */
+  def isBoundary[Unknown: P](breakers: Token*): P[Unit] =
+    P(&(TokenParser.WhileInOrFail(breakers :+ Token.Space :+ Token.Tab :+ Token.Newline: _*) | End))
+
 }

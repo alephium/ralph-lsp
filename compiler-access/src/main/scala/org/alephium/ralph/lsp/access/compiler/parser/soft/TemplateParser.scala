@@ -11,7 +11,8 @@ private object TemplateParser {
     P {
       Index ~
         (TokenParser.parseOrFail(Token.Contract) | TokenParser.parseOrFail(Token.TxScript) | TokenParser.parseOrFail(Token.AssetScript)) ~
-        SpaceParser.parse ~
+        TokenParser.isBoundary() ~
+        SpaceParser.parseOrFail.? ~
         IdentifierParser.parse ~
         SpaceParser.parseOrFail.? ~
         ParameterParser.parseOrFail.? ~
@@ -39,16 +40,17 @@ private object TemplateParser {
     P {
       Index ~
         (TokenParser.parseOrFail(Token.Implements) | TokenParser.parseOrFail(Token.Extends)) ~
-        SpaceParser.parse ~
+        TokenParser.isBoundary() ~
+        SpaceParser.parseOrFail.? ~
         (ReferenceCallParser.parseOrFail | IdentifierParser.parse) ~
         SpaceParser.parseOrFail.? ~
         Index
     } map {
-      case (from, token, preConstructorCallSpace, constructorCall, postConstructorCallSpace, to) =>
+      case (from, token, postInheritanceTypeSpace, constructorCall, postConstructorCallSpace, to) =>
         SoftAST.Inheritance(
           index = range(from, to),
           inheritanceType = token,
-          preConstructorCallSpace = preConstructorCallSpace,
+          postInheritanceTypeSpace = postInheritanceTypeSpace,
           reference = constructorCall,
           postConstructorCallSpace = postConstructorCallSpace
         )

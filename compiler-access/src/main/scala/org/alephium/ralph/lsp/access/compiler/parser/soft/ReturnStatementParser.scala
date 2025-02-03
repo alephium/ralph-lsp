@@ -11,7 +11,8 @@ private object ReturnStatementParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.Return) ~
-        SpaceParser.parse ~
+        TokenParser.isBoundary() ~
+        SpaceParser.parseOrFail.? ~
         ExpressionParser.parse ~
         Index
     } map {
