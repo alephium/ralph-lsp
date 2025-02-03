@@ -124,12 +124,12 @@ object Token {
   case object Fn                                                extends Definition("fn") with Reserved
   case object Import                                            extends Definition("import") with Reserved
   case object Abstract                                          extends Definition("Abstract") with Reserved
-  case object Interface                                         extends Definition("Interface") with Reserved
 
   sealed abstract class TemplateDefinition(override val lexeme: String) extends Definition(lexeme)
   case object Contract                                                  extends TemplateDefinition("Contract") with Reserved
   case object TxScript                                                  extends TemplateDefinition("TxScript") with Reserved
   case object AssetScript                                               extends TemplateDefinition("AssetScript") with Reserved
+  case object Interface                                                 extends TemplateDefinition("Interface") with Reserved
 
   sealed abstract class Inheritance(override val lexeme: String) extends Token
   case object Extends                                            extends Inheritance("extends") with Reserved

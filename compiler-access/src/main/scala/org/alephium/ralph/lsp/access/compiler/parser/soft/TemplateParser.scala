@@ -10,20 +10,21 @@ private object TemplateParser {
   def parseOrFail[Unknown: P]: P[SoftAST.Template] =
     P {
       Index ~
-        (TokenParser.parseOrFail(Token.Contract) | TokenParser.parseOrFail(Token.TxScript) | TokenParser.parseOrFail(Token.AssetScript)) ~
-        TokenParser.isBoundary() ~
+        abstractToken.? ~
+        templateType ~
         SpaceParser.parseOrFail.? ~
         IdentifierParser.parse ~
         SpaceParser.parseOrFail.? ~
         ParameterParser.parseOrFail.? ~
         SpaceParser.parseOrFail.? ~
-        inheritance.rep ~
+        InheritanceParser.parseOrFail.rep ~
         BlockParser.parse ~
         Index
     } map {
-      case (from, templateType, preIdentifierSpace, identifier, preParamSpace, params, postParamSpace, inheritance, block, to) =>
+      case (from, abstractToken, templateType, preIdentifierSpace, identifier, preParamSpace, params, postParamSpace, inheritance, block, to) =>
         SoftAST.Template(
           index = range(from, to),
+          abstracted = abstractToken,
           templateType = templateType,
           preIdentifierSpace = preIdentifierSpace,
           identifier = identifier,
@@ -35,24 +36,28 @@ private object TemplateParser {
         )
     }
 
-  /** Syntax: `implements or extends contract(arg1, arg2 ...)` */
-  private def inheritance[Unknown: P]: P[SoftAST.Inheritance] =
+  private def templateType[Unknown: P]: P[SoftAST.TokenDocumented[Token.TemplateDefinition]] =
+    P {
+      (TokenParser.parseOrFail(Token.Contract) |
+        TokenParser.parseOrFail(Token.TxScript) |
+        TokenParser.parseOrFail(Token.AssetScript) |
+        TokenParser.parseOrFail(Token.Interface)) ~
+        TokenParser.isBoundary()
+    }
+
+  private def abstractToken[Unknown: P]: P[SoftAST.Abstract] =
     P {
       Index ~
-        (TokenParser.parseOrFail(Token.Implements) | TokenParser.parseOrFail(Token.Extends)) ~
+        TokenParser.parseOrFail(Token.Abstract) ~
         TokenParser.isBoundary() ~
-        SpaceParser.parseOrFail.? ~
-        (ReferenceCallParser.parseOrFail | IdentifierParser.parse) ~
         SpaceParser.parseOrFail.? ~
         Index
     } map {
-      case (from, token, postInheritanceTypeSpace, constructorCall, postConstructorCallSpace, to) =>
-        SoftAST.Inheritance(
+      case (from, token, space, to) =>
+        SoftAST.Abstract(
           index = range(from, to),
-          inheritanceType = token,
-          postInheritanceTypeSpace = postInheritanceTypeSpace,
-          reference = constructorCall,
-          postConstructorCallSpace = postConstructorCallSpace
+          abstractToken = token,
+          postAbstractSpace = space
         )
     }
 

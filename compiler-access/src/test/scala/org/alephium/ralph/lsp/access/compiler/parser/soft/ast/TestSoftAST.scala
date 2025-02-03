@@ -168,6 +168,18 @@ object TestSoftAST {
       token = Token.Struct
     )
 
+  def Implements(index: SourceIndex): SoftAST.TokenDocumented[Token.Implements.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Implements
+    )
+
+  def Extends(index: SourceIndex): SoftAST.TokenDocumented[Token.Extends.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Extends
+    )
+
   def Identifier(
       index: SourceIndex,
       text: String): SoftAST.Identifier =

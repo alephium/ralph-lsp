@@ -160,6 +160,7 @@ object SoftAST {
 
   case class Template(
       index: SourceIndex,
+      abstracted: Option[Abstract],
       templateType: TokenDocumented[Token.TemplateDefinition],
       preIdentifierSpace: Option[Space],
       identifier: IdentifierAST,
@@ -169,6 +170,11 @@ object SoftAST {
       inheritance: Seq[Inheritance],
       block: BlockClause)
     extends BodyPartAST
+
+  case class Abstract(
+      index: SourceIndex,
+      abstractToken: TokenDocumented[Token.Abstract.type],
+      postAbstractSpace: Option[Space])
 
   case class Event(
       index: SourceIndex,
@@ -200,8 +206,16 @@ object SoftAST {
       index: SourceIndex,
       inheritanceType: TokenDocumented[Token.Inheritance],
       postInheritanceTypeSpace: Option[Space],
+      headReference: ReferenceCallOrIdentifier,
+      tailReferencesOrSpace: Option[Either[Space, Seq[TailReferences]]])
+    extends BodyPartAST
+
+  case class TailReferences(
+      index: SourceIndex,
+      comma: TokenDocumented[Token.Comma.type],
+      postCommaSpace: Option[Space],
       reference: ReferenceCallOrIdentifier,
-      postConstructorCallSpace: Option[Space])
+      postReferenceSpace: Option[Space])
     extends SoftAST
 
   case class BlockClause(
@@ -550,6 +564,12 @@ object SoftAST {
       Seq(ast)
 
     case Some(any) =>
+      collectASTs(any)
+
+    case Left(any) =>
+      collectASTs(any)
+
+    case Right(any) =>
       collectASTs(any)
 
     case seq: Seq[_] =>
