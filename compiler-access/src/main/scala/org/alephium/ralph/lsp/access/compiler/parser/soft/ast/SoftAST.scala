@@ -208,7 +208,19 @@ object SoftAST {
       postInheritanceTypeSpace: Option[Space],
       headReference: ReferenceCallOrIdentifier,
       tailReferencesOrSpace: Option[Either[Space, Seq[TailReferences]]])
-    extends BodyPartAST
+    extends BodyPartAST {
+
+    /** Collects all inheritance references defined. */
+    def references: Seq[ReferenceCallOrIdentifier] =
+      tailReferencesOrSpace match {
+        case Some(Right(reference)) =>
+          headReference +: reference.map(_.reference)
+
+        case Some(Left(_: Space)) | None =>
+          Seq(headReference)
+      }
+
+  }
 
   case class TailReferences(
       index: SourceIndex,

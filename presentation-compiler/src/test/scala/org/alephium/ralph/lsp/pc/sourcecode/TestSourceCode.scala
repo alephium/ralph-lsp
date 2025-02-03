@@ -171,6 +171,17 @@ object TestSourceCode {
           ).sample.value
       }
 
+  /** Expects the parser to return an error state */
+  def genParsedErr(
+      code: Gen[String] = TestCode.genBadCode(),
+      fileURI: Gen[URI] = genFileURI()
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess): Gen[SourceCodeState.ErrorParser] =
+    genParsed(
+      code = code,
+      fileURI = fileURI
+    ).map(_.asInstanceOf[SourceCodeState.ErrorParser])
+
   def genParsedOK(
       code: Gen[String] = TestCode.genGoodCode(),
       fileURI: Gen[URI] = genFileURI()

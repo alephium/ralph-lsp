@@ -20,8 +20,10 @@ import org.alephium.protocol.vm.StatefulContext
 import org.alephium.ralph.{Ast, Type}
 import org.alephium.ralph.lsp.access.compiler.ast.{AstExtra, Tree}
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.sourcecode.error._
 import org.alephium.ralph.lsp.utils.Node
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -30,7 +32,7 @@ import scala.collection.mutable
 /**
  * Search functions related to [[SourceCodeState]]
  */
-object SourceCodeSearcher {
+object SourceCodeSearcher extends StrictImplicitLogging {
 
   /**
    * Find the parsed state ([[SourceCodeState.Parsed]]) for the given file URI.
@@ -199,10 +201,21 @@ object SourceCodeSearcher {
     sourceCode flatMap collectSourceTrees
 
   /**
+   * Collects all trees within each [[SourceCodeState.IsParsed]] source file.
+   *
+   * @param sourceCode The parsed source files to process.
+   * @return An sequence of source-tree and its parsed source-file mappings.
+   */
+  def collectSourceTreesSoft(
+      sourceCode: ArraySeq[SourceCodeState.IsParsed]
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.CodeSoft] =
+    sourceCode flatMap collectSourceTreesSoft
+
+  /**
    * Collects all trees within a parsed source file.
    *
    * @param sourceCode The parsed source file to process.
-   * @return An sequence of source-tree and the parsed source-file mappings.
+   * @return A sequence of source-tree and the parsed source-file mappings.
    */
   def collectSourceTrees(
       sourceCode: SourceCodeState.Parsed): Seq[SourceLocation.CodeStrict] =
@@ -212,6 +225,32 @@ object SourceCodeSearcher {
           tree = tree,
           parsed = sourceCode
         )
+    }
+
+  /**
+   * Collects all trees within a [[SourceCodeState.IsParsed]] source file.
+   *
+   * @param sourceCode The parsed source file to process.
+   * @return A sequence of source-tree and the parsed source-file mappings.
+   */
+  def collectSourceTreesSoft(
+      sourceCode: SourceCodeState.IsParsed
+    )(implicit logger: ClientLogger): Seq[SourceLocation.CodeSoft] =
+    sourceCode.astSoft.fetch() match {
+      case Left(error) =>
+        // This will not be required here on the SoftAST merge is complete and
+        // failed SoftASTs are a part of the SourceCodeState.ErrorParser.
+        logger.error(s"Failed to soft-parse '${sourceCode.fileURI}'", error.error)
+        Seq.empty
+
+      case Right(block) =>
+        block.parts map {
+          part =>
+            SourceLocation.CodeSoft(
+              body = part,
+              parsed = sourceCode
+            )
+        }
     }
 
   /**
@@ -519,6 +558,29 @@ object SourceCodeSearcher {
     }
 
   /**
+   * Collects all children implementing or extending the given
+   * source tree within the provided source code files.
+   *
+   * @param source    The source tree to search for child implementations.
+   * @param allSource The source code files containing the child implementations.
+   * @return All child trees along with their corresponding source files.
+   */
+  def collectImplementingChildren(
+      source: SourceLocation.CodeSoft,
+      allSource: ArraySeq[SourceLocation.CodeSoft]): ArraySeq[SourceLocation.CodeSoft] =
+    source.body.part match {
+      case contract: SoftAST.Template =>
+        collectImplementingChildren(
+          template = contract,
+          allSource = allSource,
+          processedTrees = mutable.Set(source)
+        )
+
+      case _ =>
+        ArraySeq.empty
+    }
+
+  /**
    * Collects all source-trees representing implementations of the provided inheritances.
    *
    * @param inheritances   The inheritances to search for.
@@ -614,6 +676,121 @@ object SourceCodeSearcher {
         } else {
           ArraySeq.empty
         }
+    }
+
+  /**
+   * Note: This function is [[SoftAST]] version of the above `StrictAST` [[collectImplementingChildren]] implementation.
+   *
+   * TODO: Being a copy, this is more error-tolerant than "StrictAST", but less error-tolerant than it could be.
+   *       To collect implementing children, searching for [[SoftAST.Inheritance]] would yield better results due
+   *       to increased error tolerance. But this improvement will be implemented later after the switch to [[SoftAST]]
+   *       is complete.
+   *
+   * Collects all source-trees representing children that implement or extend the given contract.
+   *
+   * @param template       The contract for which its children are being searched.
+   * @param allSource      The source code files containing the inheritances.
+   * @param processedTrees A buffer to store processed source trees to avoid duplicate processing.
+   *                       This is a mutable collection, so this function must be private.
+   * @return All child trees along with their corresponding source files.
+   */
+  private def collectImplementingChildren(
+      template: SoftAST.Template,
+      allSource: ArraySeq[SourceLocation.CodeSoft],
+      processedTrees: mutable.Set[SourceLocation.CodeSoft]): ArraySeq[SourceLocation.CodeSoft] =
+    allSource flatMap {
+      source =>
+        val belongs =
+          collectInheritanceDeclaration(
+            inheritanceId = template.identifier,
+            target = source
+          ).nonEmpty
+
+        // collect the trees that belong to one of the inheritances and the ones that are not already processed
+        if (belongs && !processedTrees.contains(source)) {
+          processedTrees addOne source
+
+          source.body.part match {
+            case contract: SoftAST.Template =>
+              // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
+              val children =
+                collectImplementingChildren(
+                  template = contract,
+                  allSource = allSource,
+                  processedTrees = processedTrees
+                )
+
+              children :+ source
+
+            case _ =>
+              ArraySeq.empty
+          }
+        } else {
+          ArraySeq.empty
+        }
+    }
+
+  /**
+   * Collects locations of inheritance declarations defined in the target
+   * for the given `inheritanceId`.
+   *
+   * @param inheritanceId The identifier of the inheritance to search for within the target.
+   * @param target        The target being searched.
+   * @return An iterator over the locations where these inheritances are defined.
+   */
+  private def collectInheritanceDeclaration(
+      inheritanceId: SoftAST.IdentifierAST,
+      target: SourceLocation.CodeSoft): Iterator[SoftAST.ReferenceCallOrIdentifier] =
+    inheritanceId match {
+      case inheritanceId: SoftAST.Identifier =>
+        collectInheritanceDeclaration(
+          inheritanceId = inheritanceId,
+          target = target
+        )
+
+      case SoftAST.IdentifierExpected(_) =>
+        Iterator.empty
+    }
+
+  /**
+   * Collects locations of inheritance declarations defined in the target
+   * for the given `inheritanceId`.
+   *
+   * @param inheritanceId The identifier of the inheritance to search for within the target.
+   * @param target        The target being searched.
+   * @return An iterator over the locations where these inheritances are defined.
+   */
+  private def collectInheritanceDeclaration(
+      inheritanceId: SoftAST.Identifier,
+      target: SourceLocation.CodeSoft): Iterator[SoftAST.ReferenceCallOrIdentifier] =
+    target.body.part match {
+      case template: SoftAST.Template =>
+        collectInheritanceDeclaration(
+          inheritanceId = inheritanceId,
+          target = template
+        )
+
+      case _ =>
+        Iterator.empty
+    }
+
+  /**
+   * Collects locations of inheritance declarations defined in the target
+   * for the given `inheritanceId`.
+   *
+   * @param inheritanceId The identifier of the inheritance to search for within the target.
+   * @param target        The target being searched.
+   * @return An iterator over the locations where these inheritances are defined.
+   */
+  private def collectInheritanceDeclaration(
+      inheritanceId: SoftAST.Identifier,
+      target: SoftAST.Template): Iterator[SoftAST.ReferenceCallOrIdentifier] =
+    target.inheritance.iterator.flatMap(_.references).collect {
+      case thisId: SoftAST.Identifier if thisId.code.text == inheritanceId.code.text =>
+        thisId
+
+      case refCall @ SoftAST.ReferenceCall(_, SoftAST.Identifier(_, _, code), _, _) if code.text == inheritanceId.code.text =>
+        refCall
     }
 
 }
