@@ -24,7 +24,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
-class TemplateSpec extends AnyWordSpec with Matchers {
+class TemplateParserSpec extends AnyWordSpec with Matchers {
 
   "parse template type" when {
     def testTokenIsReportedAsIdentifier(templateToken: String) = {
@@ -126,6 +126,114 @@ class TemplateSpec extends AnyWordSpec with Matchers {
       val params = template.params.value
 
       params.preHeadExpressionSpace.value shouldBe SpaceOne(indexOf("Contract mycontract(>> <<)"))
+    }
+  }
+
+  "parse inheritance" when {
+    "implements without defining implementing class" in {
+      val template =
+        parseTemplate("Contract MyContract implements")
+
+      template.inheritance should contain only
+        SoftAST.Inheritance(
+          index = indexOf("Contract MyContract >>implements<<"),
+          inheritanceType = Implements(indexOf("Contract MyContract >>implements<<")),
+          postInheritanceTypeSpace = None,
+          headReference = SoftAST.IdentifierExpected(indexOf("Contract MyContract implements>><<")),
+          tailReferencesOrSpace = None
+        )
+    }
+
+    "implements & extends have single reference" in {
+      val template =
+        parseTemplate("Contract HelloWorld extends Class implements Trait")
+
+      template.inheritance should have size 2
+
+      val extended   = template.inheritance.head
+      val implements = template.inheritance.last
+
+      /** Assert extends */
+      extended shouldBe
+        SoftAST.Inheritance(
+          index = indexOf("Contract HelloWorld >>extends Class <<implements Trait"),
+          inheritanceType = Extends(indexOf("Contract HelloWorld >>extends<< Class implements Trait")),
+          postInheritanceTypeSpace = Some(SpaceOne(indexOf("Contract HelloWorld extends>> <<Class implements Trait"))),
+          headReference = Identifier(indexOf("Contract HelloWorld extends >>Class<< implements Trait"), "Class"),
+          tailReferencesOrSpace = Some(Left(SpaceOne(indexOf("Contract HelloWorld extends Class>> <<implements Trait"))))
+        )
+
+      /** Assert implements */
+      implements shouldBe
+        SoftAST.Inheritance(
+          index = indexOf("Contract HelloWorld extends Class >>implements Trait<<"),
+          inheritanceType = Implements(indexOf("Contract HelloWorld extends Class >>implements<< Trait")),
+          postInheritanceTypeSpace = Some(SpaceOne(indexOf("Contract HelloWorld extends Class implements>> <<Trait"))),
+          headReference = Identifier(indexOf("Contract HelloWorld extends Class implements >>Trait<<"), "Trait"),
+          tailReferencesOrSpace = None
+        )
+    }
+
+    "implements & extends multiple references" in {
+      // Note: The compiler enforces that `extends` be defined before `implements`.
+      //       For LSP order is not important.
+      val template =
+        parseTemplate("Contract MyContract implements A, B, C extends D, E")
+
+      template.inheritance should have size 2
+      val implements = template.inheritance.head
+      val `extends`  = template.inheritance.last
+
+      /** Assert implements */
+      implements shouldBe
+        SoftAST.Inheritance(
+          index = indexOf("Contract MyContract >>implements A, B, C <<extends D, E"),
+          inheritanceType = Implements(indexOf("Contract MyContract >>implements<< A, B, C extends D, E")),
+          postInheritanceTypeSpace = Some(SpaceOne(indexOf("Contract MyContract implements>> <<A, B, C extends D, E"))),
+          headReference = Identifier(indexOf("Contract MyContract implements >>A<<, B, C extends D, E"), "A"),
+          tailReferencesOrSpace = Some(
+            Right(
+              Seq(
+                SoftAST.TailReferences(
+                  index = indexOf("Contract MyContract implements A>>, B<<, C extends D, E"),
+                  comma = Comma(indexOf("Contract MyContract implements A>>,<< B, C extends D, E")),
+                  postCommaSpace = Some(SpaceOne(indexOf("Contract MyContract implements A,>> <<B, C extends D, E"))),
+                  reference = Identifier(indexOf("Contract MyContract implements A, >>B<<, C extends D, E"), "B"),
+                  postReferenceSpace = None
+                ),
+                SoftAST.TailReferences(
+                  index = indexOf("Contract MyContract implements A, B>>, C <<extends D, E"),
+                  comma = Comma(indexOf("Contract MyContract implements A, B>>,<< C extends D, E")),
+                  postCommaSpace = Some(SpaceOne(indexOf("Contract MyContract implements A, B,>> <<C extends D, E"))),
+                  reference = Identifier(indexOf("Contract MyContract implements A, B, >>C<< extends D, E"), "C"),
+                  postReferenceSpace = Some(SpaceOne(indexOf("Contract MyContract implements A, B, C>> <<extends D, E")))
+                )
+              )
+            )
+          )
+        )
+
+      /** Assert extends */
+      `extends` shouldBe
+        SoftAST.Inheritance(
+          index = indexOf("Contract MyContract implements A, B, C >>extends D, E<<"),
+          inheritanceType = Extends(indexOf("Contract MyContract implements A, B, C >>extends<< D, E")),
+          postInheritanceTypeSpace = Some(SpaceOne(indexOf("Contract MyContract implements A, B, C extends>> <<D, E"))),
+          headReference = Identifier(indexOf("Contract MyContract implements A, B, C extends >>D<<, E"), "D"),
+          tailReferencesOrSpace = Some(
+            Right(
+              Seq(
+                SoftAST.TailReferences(
+                  index = indexOf("Contract MyContract implements A, B, C extends D>>, E<<"),
+                  comma = Comma(indexOf("Contract MyContract implements A, B, C extends D>>,<< E")),
+                  postCommaSpace = Some(SpaceOne(indexOf("Contract MyContract implements A, B, C extends D,>> <<E"))),
+                  reference = Identifier(indexOf("Contract MyContract implements A, B, C extends D, >>E<<"), "E"),
+                  postReferenceSpace = None
+                )
+              )
+            )
+          )
+        )
     }
   }
 

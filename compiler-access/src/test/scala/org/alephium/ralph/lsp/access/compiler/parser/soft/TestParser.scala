@@ -94,6 +94,9 @@ object TestParser {
   def parseTypeAssignment(code: String): SoftAST.TypeAssignment =
     runSoftParser(TypeAssignmentParser.parseOrFail(_))(code)
 
+  def parseInheritance(code: String): SoftAST.Inheritance =
+    runSoftParser(InheritanceParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,
