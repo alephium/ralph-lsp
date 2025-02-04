@@ -26,6 +26,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
 
 import scala.collection.immutable.ArraySeq
+import org.scalatest.OptionValues._
 
 /** Copy of [[SourceCodeSearcherCollectImplementingChildrenSpec]] for testing [[SoftAST]] */
 class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec with Matchers {
@@ -79,11 +80,11 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
 
       // first statement is Parent()
       val parent = softAST.parts.head.part.asInstanceOf[SoftAST.Template]
-      parent.identifier.asInstanceOf[SoftAST.Identifier].code.text shouldBe "Parent"
+      parent.identifier.toOption.value.code.text shouldBe "Parent"
 
       // second statement is Child()
       val child = softAST.parts(1).part.asInstanceOf[SoftAST.Template]
-      child.identifier.asInstanceOf[SoftAST.Identifier].code.text shouldBe "Child"
+      child.identifier.toOption.value.code.text shouldBe "Child"
 
       // expect parent to be returned
       val expected =
@@ -184,14 +185,14 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
 
       // the first statement in file2 is Parent6()
       val parent = treesFromFile2.head
-      parent.part.asInstanceOf[SoftAST.Template].identifier.asInstanceOf[SoftAST.Identifier].code.text shouldBe "Parent6"
+      parent.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text shouldBe "Parent6"
 
       // expect children to be returned excluding Parent1() and Parent3()
       val expectedTreesFromFile1 =
         treesFromFile1
           .filterNot {
             tree =>
-              val name = tree.part.asInstanceOf[SoftAST.Template].identifier.asInstanceOf[SoftAST.Identifier].code.text
+              val name = tree.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text
               name == "Parent1" || name == "Parent3"
           }
           .map {
@@ -206,7 +207,7 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
         treesFromFile2
           .filterNot {
             tree =>
-              val name = tree.part.asInstanceOf[SoftAST.Template].identifier.asInstanceOf[SoftAST.Identifier].code.text
+              val name = tree.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text
               name == "Parent6"
           }
           .map {
@@ -234,7 +235,7 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
       actual should contain theSameElementsAs expectedTrees
 
       // Double check: Also assert the names of the parents.
-      val parentNames = actual.map(_.body.part.asInstanceOf[SoftAST.Template].identifier.asInstanceOf[SoftAST.Identifier].code.text)
+      val parentNames = actual.map(_.body.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text)
       // Note: Parent3 and Child are not included.
       parentNames should contain only ("Parent4", "Parent2", "Parent5", "Child")
 
