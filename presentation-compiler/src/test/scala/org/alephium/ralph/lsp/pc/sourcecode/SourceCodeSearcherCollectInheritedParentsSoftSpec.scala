@@ -24,26 +24,27 @@ import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.EitherValues._
-
-import scala.collection.immutable.ArraySeq
 import org.scalatest.OptionValues._
 
-/** Copy of [[SourceCodeSearcherCollectImplementingChildrenSpec]] for testing [[SoftAST]] */
-class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec with Matchers {
+import scala.collection.immutable.ArraySeq
+
+/** Copy of [[SourceCodeSearcherCollectInheritedParentsSpec]] for testing [[SoftAST]] */
+class SourceCodeSearcherCollectInheritedParentsSoftSpec extends AnyWordSpec with Matchers {
 
   implicit val file: FileAccess         = FileAccess.disk
   implicit val compiler: CompilerAccess = CompilerAccess.ralphc
   implicit val logger: ClientLogger     = TestClientLogger
 
   "return empty" when {
-    "input source-code has no inheritance" in {
+    "source-code has no inheritance" in {
       val parsed =
         TestSourceCode
-          .genParsedErr(
+          .genParsedOK(
             """
-              |Interface contract( {
-              |  fn function1( - () {
-              |""".stripMargin
+            |Contract MyContract() {
+            |  fn function1() -> () {}
+            |}
+            |""".stripMargin
           )
           .sample
           .get
@@ -53,7 +54,7 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
       val bodyPart = tree.parts.head
       bodyPart.part shouldBe a[SoftAST.Template]
 
-      SourceCodeSearcher.collectImplementingChildren(
+      SourceCodeSearcher.collectInheritedParents(
         source = SourceLocation.CodeSoft(bodyPart, parsed),
         allSource = ArraySeq.empty
       ) shouldBe empty
@@ -62,7 +63,7 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
     }
   }
 
-  "collect single child implementation" when {
+  "collect single parent implementations" when {
     def doTest(code: String) = {
       val parsed =
         TestSourceCode
@@ -70,33 +71,36 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
           .sample
           .get
 
-      val parsedTrees =
-        SourceCodeSearcher
-          .collectSourceTreesSoft(parsed)
-          .to(ArraySeq)
-
       val softAST =
         parsed.astSoft.fetch().value
 
       // first statement is Parent()
-      val parent = softAST.parts.head.part.asInstanceOf[SoftAST.Template]
+      val parentPart = softAST.parts.head
+      val parent     = parentPart.part.asInstanceOf[SoftAST.Template]
       parent.identifier.toOption.value.code.text shouldBe "Parent"
 
       // second statement is Child()
-      val child = softAST.parts(1).part.asInstanceOf[SoftAST.Template]
+      val childPart = softAST.parts(1)
+      val child     = childPart.part.asInstanceOf[SoftAST.Template]
       child.identifier.toOption.value.code.text shouldBe "Child"
 
       // expect parent to be returned
       val expected =
         SourceLocation.CodeSoft(
-          body = softAST.parts(1),
+          body = parentPart,
           parsed = parsed
         )
 
+      // Collect all trees in the parser source file
+      val allTrees =
+        SourceCodeSearcher
+          .collectSourceTreesSoft(parsed)
+          .to(ArraySeq)
+
       val actual =
-        SourceCodeSearcher.collectImplementingChildren(
-          source = SourceLocation.CodeSoft(softAST.parts.head, parsed),
-          allSource = parsedTrees
+        SourceCodeSearcher.collectInheritedParents(
+          source = SourceLocation.CodeSoft(childPart, parsed),
+          allSource = allTrees
         )
 
       actual should contain only expected
@@ -135,23 +139,25 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
 
   "collect deep inheritance" when {
     "it also contains cyclic and duplicate inheritance" in {
+      // file1 contains the Child() contract for which the parents are collected.
       val file1 =
         TestSourceCode
-          .genParsedErr(
+          .genParsedOK(
             """
               |Abstract Contract Parent2() extends Parent4(), Parent6() implements Parent1 { }
               |
               |// Interface is implemented
               |Interface Parent1 {
-              |  pub f parent() -> U256
+              |  pub fn parent() -> U256
               |}
               |
               |// Parent3 is not extends by Child(), it should not be in the result
-              |Abstract Contract Parent3() extends Parent1(), Parent1() { }
+              |Abstract Contract Parent3() extends Parent4(), Parent4() { }
               |
-              |Contract Child() extends Parent2(), Child(), Parent5() implements Parent1 {
-              |  pu n parent() -> U256 {
-              |    rturn 1
+              |// The child parents to collect
+              |Contract Child() extends Parent2(), Child() implements Parent1 {
+              |  pub fn parent() -> U256 {
+              |    return 1
               |  }
               |}
               |""".stripMargin
@@ -159,12 +165,11 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
           .sample
           .get
 
-      // file2 contains the Parent6() contract for which the children are collected.
+      // file2 contains all other abstract contracts
       val file2 =
         TestSourceCode
           .genParsedOK(
             """
-              |// Parent6's children are being collect in this test
               |Abstract Contract Parent6() extends Parent4() { }
               |
               |Abstract Contract Parent5() extends Parent4(), Parent5() { }
@@ -175,45 +180,40 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
           .sample
           .get
 
-      // collect all trees from file1
+      // collect all tree from file1
       val treesFromFile1 =
         file1.astSoft.fetch().value.parts
 
-      // collect all trees from file2
+      // collect all tree from file2
       val treesFromFile2 =
         file2.astSoft.fetch().value.parts
 
-      // the first statement in file2 is Parent6()
-      val parent = treesFromFile2.head
-      parent.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text shouldBe "Parent6"
+      // the last statement in file1 is Child()
+      val child = treesFromFile1.last
+      child.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text shouldBe "Child"
 
-      // expect children to be returned excluding Parent1() and Parent3()
+      // expect parents to be returned excluding Parent3() and Child()
       val expectedTreesFromFile1 =
         treesFromFile1
           .filterNot {
             tree =>
               val name = tree.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text
-              name == "Parent1" || name == "Parent3"
+              name == "Parent3" || name == "Child"
           }
           .map {
-            child =>
+            parent =>
               SourceLocation.CodeSoft(
-                body = child,
+                body = parent,
                 parsed = file1 // file1 is in scope
               )
           }
 
       val expectedTreesFromFile2 =
         treesFromFile2
-          .filterNot {
-            tree =>
-              val name = tree.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text
-              name == "Parent6"
-          }
           .map {
-            child =>
+            parent =>
               SourceLocation.CodeSoft(
-                body = child,
+                body = parent,
                 parsed = file2 // file2 is in scope
               )
           }
@@ -222,13 +222,14 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
       val expectedTrees =
         expectedTreesFromFile1 ++ expectedTreesFromFile2
 
+      // Collect all trees
       val allTrees =
         SourceCodeSearcher.collectSourceTreesSoft(ArraySeq(file1, file2))
 
       // actual trees returned
       val actual =
-        SourceCodeSearcher.collectImplementingChildren(
-          source = SourceLocation.CodeSoft(parent, file2),
+        SourceCodeSearcher.collectInheritedParents(
+          source = SourceLocation.CodeSoft(child, file1),
           allSource = allTrees
         )
 
@@ -237,7 +238,7 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
       // Double check: Also assert the names of the parents.
       val parentNames = actual.map(_.body.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text)
       // Note: Parent3 and Child are not included.
-      parentNames should contain only ("Parent4", "Parent2", "Parent5", "Child")
+      parentNames should contain only ("Parent1", "Parent2", "Parent4", "Parent5", "Parent6")
 
       TestSourceCode deleteAllIfExists Array(file1, file2)
     }

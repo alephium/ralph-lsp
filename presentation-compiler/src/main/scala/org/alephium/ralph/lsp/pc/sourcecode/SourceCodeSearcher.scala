@@ -535,6 +535,29 @@ object SourceCodeSearcher extends StrictImplicitLogging {
     }
 
   /**
+   * Collects all parent source implementations inherited by the given
+   * source tree within the provided source code files.
+   *
+   * @param source    The source tree to search for parent implementations.
+   * @param allSource The source code files containing the parent implementations.
+   * @return All parent source implementations found.
+   */
+  def collectInheritedParents(
+      source: SourceLocation.CodeSoft,
+      allSource: ArraySeq[SourceLocation.CodeSoft]): ArraySeq[SourceLocation.CodeSoft] =
+    source.body.part match {
+      case contract: SoftAST.Template =>
+        collectInheritedParentsSoft(
+          inheritances = contract.inheritance,
+          allSource = allSource,
+          processedTrees = mutable.Set(source)
+        )
+
+      case _ =>
+        ArraySeq.empty
+    }
+
+  /**
    * Collects all children implementing or extending the given
    * source tree within the provided source code files.
    *
@@ -631,6 +654,72 @@ object SourceCodeSearcher extends StrictImplicitLogging {
     }
 
   /**
+   * Note: This function is [[SoftAST]] version of the above `StrictAST` [[collectInheritedParents]] implementation.
+   *
+   * TODO: Being a copy, this is more error-tolerant than "StrictAST", but less error-tolerant than it could be.
+   *       To collect implementing children, searching for [[SoftAST.Inheritance]] would yield better results due
+   *       to increased error tolerance. But this improvement will be implemented later after the switch to [[SoftAST]]
+   *       is complete.
+   *
+   * Collects all source-trees representing implementations of the provided inheritances.
+   *
+   * @param inheritances   The inheritances to search for.
+   * @param allSource      The source code files containing the inheritance implementations.
+   * @param processedTrees A buffer to store processed source trees to avoid duplicate processing.
+   *                       This is a mutable collection, so this function must be private.
+   * @return All inheritance implementations along with their corresponding source files.
+   */
+  private def collectInheritedParentsSoft(
+      inheritances: Seq[SoftAST.Inheritance],
+      allSource: ArraySeq[SourceLocation.CodeSoft],
+      processedTrees: mutable.Set[SourceLocation.CodeSoft]): ArraySeq[SourceLocation.CodeSoft] = {
+    // collect all names of all inheritance
+    val inheritanceNames =
+      inheritances.flatMap(_.references.flatMap(_.identifier.toOption.map(_.code.text)))
+
+    allSource flatMap {
+      source =>
+        // collect the trees if their name that belong to at least one of the inheritances
+        val belongsToParent =
+          source.body.part match {
+            case template: SoftAST.Template =>
+              // check if the template's name is contained in the inheritance list.
+              template
+                .identifier
+                .toOption
+                .map(_.code.text) exists inheritanceNames.contains
+
+            case _ =>
+              false
+          }
+
+        // collect the trees that belong to one of the inheritances and the ones that are not already processed
+        if (belongsToParent && !processedTrees.contains(source)) {
+          processedTrees addOne source
+
+          source.body.part match {
+            case contract: SoftAST.Template =>
+              // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
+              val parents =
+                collectInheritedParentsSoft(
+                  inheritances = contract.inheritance,
+                  allSource = allSource,
+                  processedTrees = processedTrees
+                )
+
+              parents :+ source
+
+            case _ =>
+              ArraySeq.empty
+          }
+
+        } else {
+          ArraySeq.empty
+        }
+    }
+  }
+
+  /**
    * Collects all source-trees representing children that implement or extend the given contract.
    *
    * @param contract       The contract for which its children are being searched.
@@ -703,7 +792,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
         val belongs =
           collectInheritanceDeclaration(
             inheritanceId = template.identifier,
-            target = source
+            target = source.body.part
           ).nonEmpty
 
         // collect the trees that belong to one of the inheritances and the ones that are not already processed
@@ -740,7 +829,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    */
   private def collectInheritanceDeclaration(
       inheritanceId: SoftAST.IdentifierAST,
-      target: SourceLocation.CodeSoft): Iterator[SoftAST.ReferenceCallOrIdentifier] =
+      target: SoftAST.BodyPartAST): Iterator[SoftAST.ReferenceCallOrIdentifier] =
     inheritanceId match {
       case inheritanceId: SoftAST.Identifier =>
         collectInheritanceDeclaration(
@@ -762,8 +851,8 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    */
   private def collectInheritanceDeclaration(
       inheritanceId: SoftAST.Identifier,
-      target: SourceLocation.CodeSoft): Iterator[SoftAST.ReferenceCallOrIdentifier] =
-    target.body.part match {
+      target: SoftAST.BodyPartAST): Iterator[SoftAST.ReferenceCallOrIdentifier] =
+    target match {
       case template: SoftAST.Template =>
         collectInheritanceDeclaration(
           inheritanceId = inheritanceId,

@@ -315,7 +315,19 @@ object SoftAST {
     extends TokenExpectedErrorAST(Token.ForwardArrow)
        with FunctionReturnAST
 
-  sealed trait IdentifierAST extends ReferenceCallOrIdentifier
+  sealed trait IdentifierAST extends ReferenceCallOrIdentifier {
+
+    /** Converts this instance to an [[Option]], returning the error as [[None]] */
+    def toOption: Option[Identifier] =
+      this match {
+        case id: Identifier =>
+          Some(id)
+
+        case _: IdentifierExpected =>
+          None
+      }
+
+  }
 
   case class Identifier(
       index: SourceIndex,
@@ -352,7 +364,18 @@ object SoftAST {
        with CodeDocumentedAST
        with BodyPartAST
 
-  sealed trait ReferenceCallOrIdentifier extends ExpressionAST
+  sealed trait ReferenceCallOrIdentifier extends ExpressionAST {
+
+    def identifier: IdentifierAST =
+      this match {
+        case id: IdentifierAST =>
+          id
+
+        case call: ReferenceCall =>
+          call.reference
+      }
+
+  }
 
   case class ReferenceCall(
       index: SourceIndex,
