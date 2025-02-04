@@ -792,7 +792,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
         val belongs =
           collectInheritanceDeclaration(
             inheritanceId = template.identifier,
-            target = source
+            target = source.body.part
           ).nonEmpty
 
         // collect the trees that belong to one of the inheritances and the ones that are not already processed
@@ -829,7 +829,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    */
   private def collectInheritanceDeclaration(
       inheritanceId: SoftAST.IdentifierAST,
-      target: SourceLocation.CodeSoft): Iterator[SoftAST.ReferenceCallOrIdentifier] =
+      target: SoftAST.BodyPartAST): Iterator[SoftAST.ReferenceCallOrIdentifier] =
     inheritanceId match {
       case inheritanceId: SoftAST.Identifier =>
         collectInheritanceDeclaration(
@@ -851,8 +851,8 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    */
   private def collectInheritanceDeclaration(
       inheritanceId: SoftAST.Identifier,
-      target: SourceLocation.CodeSoft): Iterator[SoftAST.ReferenceCallOrIdentifier] =
-    target.body.part match {
+      target: SoftAST.BodyPartAST): Iterator[SoftAST.ReferenceCallOrIdentifier] =
+    target match {
       case template: SoftAST.Template =>
         collectInheritanceDeclaration(
           inheritanceId = inheritanceId,
