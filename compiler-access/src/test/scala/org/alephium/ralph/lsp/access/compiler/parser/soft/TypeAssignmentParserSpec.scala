@@ -17,11 +17,11 @@ class TypeAssignmentParserSpec extends AnyWordSpec {
       assignment shouldBe
         SoftAST.TypeAssignment(
           index = indexOf(">>: Type<<"),
-          name = SoftAST.ExpressionExpected(indexOf(">><<: Type")),
+          expressionLeft = SoftAST.ExpressionExpected(indexOf(">><<: Type")),
           preColonSpace = None,
           colon = Colon(indexOf(">>:<< Type")),
           postColonSpace = Some(SpaceOne(indexOf(":>> <<Type"))),
-          tpe = Identifier(indexOf(": >>Type<<"), "Type")
+          expressionRight = Identifier(indexOf(": >>Type<<"), "Type")
         )
     }
   }
@@ -35,11 +35,11 @@ class TypeAssignmentParserSpec extends AnyWordSpec {
         assignment shouldBe
           SoftAST.TypeAssignment(
             index = indexOf(">>name : Type<<"),
-            name = Identifier(indexOf(">>name<< : Type"), "name"),
+            expressionLeft = Identifier(indexOf(">>name<< : Type"), "name"),
             preColonSpace = Some(SpaceOne(indexOf("name>> <<: Type"))),
             colon = Colon(indexOf("name >>:<< Type")),
             postColonSpace = Some(SpaceOne(indexOf("name :>> <<Type"))),
-            tpe = Identifier(indexOf("name : >>Type<<"), "Type")
+            expressionRight = Identifier(indexOf("name : >>Type<<"), "Type")
           )
       }
     }

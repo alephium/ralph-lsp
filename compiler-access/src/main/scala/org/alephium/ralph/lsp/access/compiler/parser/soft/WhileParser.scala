@@ -5,9 +5,9 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object WhileLoopParser {
+private object WhileParser {
 
-  def parseOrFail[Unknown: P]: P[SoftAST.WhileStatement] =
+  def parseOrFail[Unknown: P]: P[SoftAST.While] =
     P {
       Index ~
         TokenParser.parseOrFail(Token.While) ~
@@ -18,11 +18,11 @@ private object WhileLoopParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseParen) ~
         SpaceParser.parseOrFail.? ~
-        BlockParser.parse ~
+        BlockParser.parseOrFail.? ~
         Index
     } map {
       case (from, whileToken, postWhileSpace, openParen, postOpenParenSpace, expression, postExpressionSpace, closeParen, postCloseParenSpace, block, to) =>
-        SoftAST.WhileStatement(
+        SoftAST.While(
           index = range(from, to),
           whileToken = whileToken,
           postWhileSpace = postWhileSpace,

@@ -24,7 +24,7 @@ class GoToNamedVarSpec extends AnyWordSpec with Matchers {
 
   "return self" when {
     "variable definition is selected" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract Test() {
           |
@@ -38,7 +38,7 @@ class GoToNamedVarSpec extends AnyWordSpec with Matchers {
 
     "duplicates exist" when {
       "first duplicate is selected" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |
@@ -52,7 +52,7 @@ class GoToNamedVarSpec extends AnyWordSpec with Matchers {
       }
 
       "second duplicate is selected" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |

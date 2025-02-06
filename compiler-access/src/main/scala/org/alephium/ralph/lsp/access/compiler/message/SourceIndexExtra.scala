@@ -94,7 +94,7 @@ object SourceIndexExtra {
       child: Option[SourceIndex]): Boolean =
     (parent, child) match {
       case (Some(parent), Some(child)) =>
-        parent contains child
+        parent containsStrict child
 
       case (_, _) =>
         false
@@ -149,7 +149,8 @@ object SourceIndexExtra {
     def contains(index: Int): Boolean =
       index >= from && index <= to
 
-    def contains(child: SourceIndex): Boolean =
+    /** Strict AST also checks if the fileURIs are matching */
+    def containsStrict(child: SourceIndex): Boolean =
       (sourceIndex.fileURI, child.fileURI) match {
         case (Some(parentURI), Some(childURI)) if parentURI == childURI =>
           sourceIndex contains child.from
@@ -157,6 +158,9 @@ object SourceIndexExtra {
         case (_, _) =>
           false
       }
+
+    def containsSoft(child: SourceIndex): Boolean =
+      sourceIndex.from >= child.from && child.to <= sourceIndex.to
 
     def isBehind(that: SourceIndex): Boolean =
       isBehind(that.from)

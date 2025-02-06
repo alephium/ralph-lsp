@@ -24,7 +24,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "argument does not exists" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract GoToField(interface: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -38,9 +38,10 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
   }
 
   "return self" when {
-    "template argument is selected" in {
-      goToDefinitionStrict()(
-        """
+    "template argument is selected" when {
+      "code is well defined" in {
+        goToDefinition()(
+          """
             |Contract Test(>>interfa@@ce<<: MyInterface,
             |              interface2: MyInterface) {
             |
@@ -48,25 +49,64 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-      )
+        )
+      }
+
+      "Contract block does not exist" when {
+        "first param is selected" in {
+          goToDefinitionSoft()(
+            """
+              |Contract Test(>>interfa@@ce<<: MyInterface,
+              |              interface2: MyInterface)
+              |""".stripMargin
+          )
+        }
+
+        "second param is selected" in {
+          goToDefinitionSoft()(
+            """
+              |Contract Test(interface: MyInterface,
+              |              >>interfa@@ce2<<: MyInterface)
+              |""".stripMargin
+          )
+        }
+      }
     }
 
-    "function argument  is selected" in {
-      goToDefinitionStrict()(
-        """
+    "function argument  is selected" when {
+      "code is well defined" in {
+        goToDefinition()(
+          """
             |Contract Test(interface2: MyInterface) {
             |
             |  fn test(>>interfa@@ce<<: MyInterface) -> () { }
             |
             |}
             |""".stripMargin
-      )
+        )
+      }
+
+      "Contract block does not exist" in {
+        goToDefinitionSoft()(
+          """
+            |fn test(>>interfa@@ce<<: MyInterface) -> () { }
+            |""".stripMargin
+        )
+      }
+
+      "function has syntax errors" in {
+        goToDefinitionSoft()(
+          """
+            |fn test(>>interfa@@ce<<: MyInterface -> ( {
+            |""".stripMargin
+        )
+      }
     }
 
     "function and template argument exist with duplicate names" should {
       "select only itself" when {
         "function argument is selected" in {
-          goToDefinitionStrict()(
+          goToDefinition()(
             """
                 |Contract Test(interface: MyInterface) {
                 |
@@ -78,7 +118,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         }
 
         "template argument is selected" in {
-          goToDefinitionStrict()(
+          goToDefinition()(
             """
                 |Contract Test(>>interfa@@ce<<: MyInterface) {
                 |
@@ -87,6 +127,130 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
                 |}
                 |""".stripMargin
           )
+        }
+      }
+    }
+
+    "no enclosing blocks" when {
+      "type name is defined" in {
+        goToDefinitionSoft()(
+          """
+            |>>variab@@le<<: SomeType
+            |""".stripMargin
+        )
+      }
+
+      "type name is not defined" in {
+        goToDefinitionSoft()(
+          """
+            |>>variab@@le<<:
+            |""".stripMargin
+        )
+      }
+
+      "type name is defined for another variable" in {
+        goToDefinitionSoft()(
+          """
+            |{
+            |  >>variab@@le<<:
+            |  anotherVariable: SomeType
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "type name is defined for duplicate variable" in {
+        goToDefinitionSoft()(
+          """
+            |{
+            |  >>variab@@le<<:
+            |  variable: SomeType
+            |}
+            |""".stripMargin
+        )
+      }
+    }
+
+    "mutable arguments" when {
+      "defined as a Contract parameter" when {
+        "single param exists" in {
+          goToDefinitionSoft() {
+            """
+              |Contract contract(mut >>para@@m<<: Type)
+              |""".stripMargin
+          }
+        }
+
+        "duplicate params exist" when {
+          "first param is selected" in {
+            goToDefinitionSoft() {
+              """
+                |Contract contract(mut >>para@@m<<: Type,
+                |                  mut param: Type)
+                |""".stripMargin
+            }
+          }
+
+          "but types are not defined" when {
+            "first param is selected" in {
+              goToDefinitionSoft() {
+                """
+                  |Contract contract(mut >>para@@m<<,
+                  |                  mut param:)
+                  |""".stripMargin
+              }
+            }
+
+            "second param is selected" in {
+              goToDefinitionSoft() {
+                """
+                  |Contract contract(mut param,
+                  |                  mut >>para@@m<<)
+                  |""".stripMargin
+              }
+            }
+          }
+        }
+      }
+
+      "defined as a function parameter" when {
+        "single param exists" in {
+          goToDefinitionSoft() {
+            """
+              |fn function(mut >>para@@m<<: Type)
+              |""".stripMargin
+          }
+        }
+
+        "duplicate params exist" when {
+          "first param is selected" in {
+            goToDefinitionSoft() {
+              """
+                |fn function(mut >>para@@m<<: Type,
+                |            mut param: Type)
+                |""".stripMargin
+            }
+          }
+
+          "but types are not defined" when {
+            "first param is selected" in {
+              goToDefinitionSoft() {
+                """
+                  |fn function(mut >>para@@m<<,
+                  |            mut param:)
+                  |""".stripMargin
+              }
+            }
+
+            "second param is selected" in {
+              goToDefinitionSoft() {
+                """
+                  |fn function(mut param,
+                  |            mut >>para@@m<<)
+                  |""".stripMargin
+              }
+            }
+          }
         }
       }
     }

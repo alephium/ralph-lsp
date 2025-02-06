@@ -121,7 +121,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
     val headExpression =
       tuple.headExpression.value.asInstanceOf[SoftAST.TypeAssignment]
 
-    headExpression.name shouldBe
+    headExpression.expressionLeft shouldBe
       Identifier(
         index = indexOf("(>>aaa<<: typename"),
         text = "aaa"
@@ -131,7 +131,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
 
     headExpression.postColonSpace.value shouldBe SpaceOne(indexOf("(aaa:>> <<typename"))
 
-    headExpression.tpe shouldBe
+    headExpression.expressionRight shouldBe
       Identifier(
         index = indexOf("(aaa: >>typename<<"),
         text = "typename"
@@ -153,13 +153,13 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
     val bbbTypeAssignment =
       bbb.expression.asInstanceOf[SoftAST.TypeAssignment]
 
-    bbbTypeAssignment.name shouldBe
+    bbbTypeAssignment.expressionLeft shouldBe
       Identifier(
         index = indexOf("(aaa: typename, >>bbb<<: type2)"),
         text = "bbb"
       )
 
-    bbbTypeAssignment.tpe shouldBe
+    bbbTypeAssignment.expressionRight shouldBe
       Identifier(
         index = indexOf("(aaa: typename, bbb: >>type2<<)"),
         text = "type2"
@@ -180,16 +180,16 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
 
     val bbb = tupleTail.expression.asInstanceOf[SoftAST.TypeAssignment]
 
-    bbb.name shouldBe
+    bbb.expressionLeft shouldBe
       Identifier(
         index = indexOf("(aaa: typename, >>bbb<<: (tuple1, tuple2))"),
         text = "bbb"
       )
 
     // A quick text to check that the tuple is actually a tuple
-    bbb.tpe shouldBe a[SoftAST.Group[_, _]]
+    bbb.expressionRight shouldBe a[SoftAST.Group[_, _]]
     // Convert the tpe to code and it should be the tuple
-    bbb.tpe.toCode() shouldBe "(tuple1, tuple2)"
+    bbb.expressionRight.toCode() shouldBe "(tuple1, tuple2)"
   }
 
   "nested tuples" in {

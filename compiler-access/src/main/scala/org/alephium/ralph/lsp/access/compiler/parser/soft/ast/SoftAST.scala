@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft.ast
 
 import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST.collectASTs
 import org.alephium.ralph.lsp.utils.Node
 
@@ -48,6 +49,21 @@ sealed trait SoftAST extends Product { self =>
   def toStringPretty(): String =
     s"${self.getClass.getSimpleName}: ${self.index}"
 
+  /**
+   * Checks if `this` AST's position is before the `anchor` AST's position.
+   *
+   * @param anchor The AST with which the position of `current` is compared.
+   * @return `true` if `current`'s position is before `anchor`'s position, `false` otherwise.
+   */
+  def isBehind(anchor: SoftAST): Boolean =
+    this.index isBehind anchor.index
+
+  def contains(anchor: SoftAST): Boolean =
+    contains(anchor.index)
+
+  def contains(anchor: SourceIndex): Boolean =
+    this.index containsSoft anchor
+
 }
 
 object SoftAST {
@@ -65,6 +81,9 @@ object SoftAST {
 
     def toStringTree(): String =
       node.toStringTree(_.toStringPretty())
+
+    def contains(anchor: Node[SoftAST, SoftAST]): Boolean =
+      node.data contains anchor.data
 
   }
 
@@ -168,7 +187,7 @@ object SoftAST {
       params: Option[Group[Token.OpenParen.type, Token.CloseParen.type]],
       postParamSpace: Option[Space],
       inheritance: Seq[Inheritance],
-      block: BlockClause)
+      block: Option[Block])
     extends BodyPartAST
 
   case class Abstract(
@@ -230,7 +249,7 @@ object SoftAST {
       postReferenceSpace: Option[Space])
     extends SoftAST
 
-  case class BlockClause(
+  case class Block(
       index: SourceIndex,
       openCurly: TokenDocExpectedAST[Token.OpenCurly.type],
       preBodySpace: Option[Space],
@@ -260,7 +279,7 @@ object SoftAST {
       preSignatureSpace: Option[Space],
       signature: FunctionSignature,
       postSignatureSpace: Option[Space],
-      block: Option[BlockClause])
+      block: Option[Block])
     extends BodyPartAST
 
   case class FunctionSignature(
@@ -290,7 +309,13 @@ object SoftAST {
       postHeadExpressionSpace: Option[Space],
       tailExpressions: Seq[GroupTail],
       closeToken: TokenDocExpectedAST[C])
-    extends ExpressionAST
+    extends ExpressionAST {
+
+    /** Collects all expressions defined in this group */
+    def expressions: Iterable[ExpressionAST] =
+      headExpression ++ tailExpressions.map(_.expression)
+
+  }
 
   /** Comma separated tail expressions of a [[Group]] */
   case class GroupTail(
@@ -334,6 +359,7 @@ object SoftAST {
       documentation: Option[Comments],
       code: CodeString)
     extends IdentifierAST
+       with ExpressionAST
        with CodeDocumentedAST
 
   case class IdentifierExpected(
@@ -364,7 +390,7 @@ object SoftAST {
        with CodeDocumentedAST
        with BodyPartAST
 
-  sealed trait ReferenceCallOrIdentifier extends ExpressionAST {
+  sealed trait ReferenceCallOrIdentifier extends BodyPartAST {
 
     def identifier: IdentifierAST =
       this match {
@@ -383,6 +409,7 @@ object SoftAST {
       preArgumentsSpace: Option[Space],
       arguments: Group[Token.OpenParen.type, Token.CloseParen.type])
     extends ReferenceCallOrIdentifier
+       with ExpressionAST
 
   case class InfixExpression(
       index: SourceIndex,
@@ -407,14 +434,14 @@ object SoftAST {
       rightExpression: ReferenceCallOrIdentifier)
     extends SoftAST
 
-  case class ReturnStatement(
+  case class Return(
       index: SourceIndex,
       returnToken: TokenDocumented[Token.Return.type],
       preExpressionSpace: Option[Space],
       rightExpression: ExpressionAST)
     extends ExpressionAST
 
-  case class ForStatement(
+  case class For(
       index: SourceIndex,
       forToken: TokenDocumented[Token.For.type],
       postForSpace: Option[Space],
@@ -431,11 +458,11 @@ object SoftAST {
       expression3: ExpressionAST,
       postExpression3Space: Option[Space],
       closeParen: TokenDocExpectedAST[Token.CloseParen.type],
-      postCloseParenSpace: Option[SoftAST.Space],
-      block: SoftAST.BlockClause)
+      postCloseParenSpace: Option[Space],
+      block: Option[Block])
     extends ExpressionAST
 
-  case class WhileStatement(
+  case class While(
       index: SourceIndex,
       whileToken: TokenDocumented[Token.While.type],
       postWhileSpace: Option[Space],
@@ -444,8 +471,8 @@ object SoftAST {
       expression: ExpressionAST,
       postExpressionSpace: Option[Space],
       closeParen: TokenDocExpectedAST[Token.CloseParen.type],
-      postCloseParenSpace: Option[SoftAST.Space],
-      block: SoftAST.BlockClause)
+      postCloseParenSpace: Option[Space],
+      block: Option[Block])
     extends ExpressionAST
 
   case class Assignment(
@@ -459,11 +486,11 @@ object SoftAST {
 
   case class TypeAssignment(
       index: SourceIndex,
-      name: ExpressionAST,
+      expressionLeft: ExpressionAST,
       preColonSpace: Option[Space],
       colon: TokenDocumented[Token.Colon.type],
       postColonSpace: Option[Space],
-      tpe: ExpressionAST)
+      expressionRight: ExpressionAST)
     extends ExpressionAST
 
   case class AssignmentAccessModifier(

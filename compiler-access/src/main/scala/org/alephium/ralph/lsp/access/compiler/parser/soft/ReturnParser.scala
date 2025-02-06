@@ -5,9 +5,9 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object ReturnStatementParser {
+private object ReturnParser {
 
-  def parseOrFail[Unknown: P]: P[SoftAST.ReturnStatement] =
+  def parseOrFail[Unknown: P]: P[SoftAST.Return] =
     P {
       Index ~
         TokenParser.parseOrFail(Token.Return) ~
@@ -17,7 +17,7 @@ private object ReturnStatementParser {
         Index
     } map {
       case (from, returnStatement, space, expression, to) =>
-        SoftAST.ReturnStatement(
+        SoftAST.Return(
           index = range(from, to),
           returnToken = returnStatement,
           preExpressionSpace = space,

@@ -18,7 +18,7 @@ private object TemplateParser {
         ParameterParser.parseOrFail.? ~
         SpaceParser.parseOrFail.? ~
         InheritanceParser.parseOrFail.rep ~
-        BlockParser.parse ~
+        BlockParser.parseOrFail.? ~
         Index
     } map {
       case (from, abstractToken, templateType, preIdentifierSpace, identifier, preParamSpace, params, postParamSpace, inheritance, block, to) =>

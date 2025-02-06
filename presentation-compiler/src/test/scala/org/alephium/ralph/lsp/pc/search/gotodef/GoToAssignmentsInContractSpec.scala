@@ -24,7 +24,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "assigned variable does not exist" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract GoToAssignment() {
           |
@@ -40,7 +40,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
   "return non-empty" when {
     "assigned variables exist" when {
       "locally in the function" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract GoToAssignment() {
             |
@@ -54,7 +54,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
       }
 
       "as function argument" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract GoToAssignment() {
             |
@@ -67,7 +67,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
       }
 
       "as template argument" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract GoToAssignment(mut >>counter<<: U256) {
             |

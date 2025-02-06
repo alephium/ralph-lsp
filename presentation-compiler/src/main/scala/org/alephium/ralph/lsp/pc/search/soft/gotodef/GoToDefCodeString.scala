@@ -18,7 +18,11 @@ private object GoToDefCodeString {
       node: Node[SoftAST.CodeString, SoftAST],
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.GoToDefSoft] =
     node.parent match {
-      case Some(node @ Node(id @ SoftAST.Identifier(_, _, _), _)) =>
+      case Some(Node(_: SoftAST.Space, _)) =>
+        // Spaces do not require go-to-definition
+        Iterator.empty
+
+      case Some(node @ Node(id: SoftAST.Identifier, _)) =>
         GoToDefIdentifier(
           identNode = node.upcast(id),
           sourceCode = sourceCode
