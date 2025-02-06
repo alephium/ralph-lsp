@@ -23,6 +23,6 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 object SoftParser {
 
   def parse[Unknown: P]: P[SoftAST.BlockBody] =
-    P(Start ~ BlockParser.body ~ End)
+    P(Start ~ BlockBodyParser.parseOrFail() ~ End)
 
 }

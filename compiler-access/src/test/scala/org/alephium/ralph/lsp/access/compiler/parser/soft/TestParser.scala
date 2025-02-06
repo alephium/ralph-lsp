@@ -49,7 +49,7 @@ object TestParser {
     runSoftParser(ParameterParser.parse(_))(code)
 
   def parseBlockBody(code: String): SoftAST.BlockBody =
-    runSoftParser(BlockParser.body(_))(code)
+    runSoftParser(BlockBodyParser.parseOrFail()(_))(code)
 
   def parseComment(code: String): SoftAST.Comments =
     runSoftParser(CommentParser.parseOrFail(_))(code)

@@ -21,27 +21,49 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object BlockParser {
+private object BlockBodyParser {
 
-  def parseOrFail[Unknown: P]: P[SoftAST.Block] =
+  def parseOrFail[Unknown: P](stop: Token*): P[SoftAST.BlockBody] =
     P {
       Index ~
-        TokenParser.parseOrFail(Token.OpenCurly) ~
         SpaceParser.parseOrFail.? ~
-        BlockBodyParser.parseOrFail(Token.CloseCurly) ~
-        SpaceParser.parseOrFail.? ~
-        TokenParser.parse(Token.CloseCurly) ~
+        bodyPart(stop).rep ~
         Index
     } map {
-      case (from, openCurly, preBodySpace, body, postBodySpace, closeCurly, to) =>
-        SoftAST.Block(
+      case (from, headSpace, parts, to) =>
+        SoftAST.BlockBody(
           index = range(from, to),
-          openCurly = openCurly,
-          preBodySpace = preBodySpace,
-          body = body,
-          postBodySpace = postBodySpace,
-          closeCurly = closeCurly
+          prePartsSpace = headSpace,
+          parts = parts
         )
+    }
+
+  private def bodyPart[Unknown: P](stop: Seq[Token]): P[SoftAST.BlockBodyPart] =
+    P {
+      Index ~
+        part(stop) ~
+        SpaceParser.parseOrFail.? ~
+        Index
+    } map {
+      case (from, ast, space, to) =>
+        SoftAST.BlockBodyPart(
+          index = range(from, to),
+          part = ast,
+          postPartSpace = space
+        )
+    }
+
+  private def part[Unknown: P](stop: Seq[Token]): P[SoftAST.BodyPartAST] =
+    P {
+      TemplateParser.parseOrFail |
+        EventParser.parseOrFail |
+        StructParser.parseOrFail |
+        FunctionParser.parseOrFail |
+        ImportParser.parseOrFail |
+        InheritanceParser.parseOrFail |
+        ExpressionParser.parseOrFail |
+        CommentParser.parseOrFail |
+        UnresolvedParser.parseOrFail(stop: _*)
     }
 
 }
