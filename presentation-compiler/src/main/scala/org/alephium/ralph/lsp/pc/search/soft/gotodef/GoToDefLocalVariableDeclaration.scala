@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.pc.search.soft.gotodef
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.pc.search.gotodef.ScopeWalker
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.utils.Node
 
@@ -56,21 +57,20 @@ object GoToDefLocalVariableDeclaration {
   private def searchScope(
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    sourceCode // search within scope
-      .body
-      .toNode
-      .walkDown
-      .flatMap {
+    ScopeWalker
+      .walk(
+        from = sourceCode.body.toNode,
+        anchor = identNode.data
+      ) {
         case Node(variable: SoftAST.VariableDeclaration, _) =>
           checkVariableDeclaration(
             variableDec = variable,
             identNode = identNode,
             sourceCode = sourceCode
           )
-
-        case _ =>
-          Iterator.empty
       }
+      .iterator
+      .flatten
 
   /**
    * Checks if the given identifier is defined by the specified variable declaration.
