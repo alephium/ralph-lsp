@@ -58,15 +58,26 @@ case object GoToDefinitionProviderSoft extends CodeProvider[SourceCodeState.IsPa
   private def searchBodyPart(
       cursorIndex: Int,
       bodyPart: SoftAST.BlockBodyPart,
-      sourceCode: SourceCodeState.IsParsed): Iterator[SourceLocation.GoToDefSoft] =
+      sourceCode: SourceCodeState.IsParsed
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
     bodyPart.toNode.findLast(_.index contains cursorIndex) match {
-      case Some(node @ Node(codeString @ SoftAST.CodeString(_, _), _)) =>
+      case Some(Node(_: SoftAST.CodeToken[_], _)) =>
+        // Tokens (fn, Contract etc.) do not require go-to-definitions
+        Iterator.empty
+
+      case Some(node @ Node(codeString: SoftAST.CodeString, _)) =>
         GoToDefCodeString(
           node = node.upcast(codeString),
           sourceCode = SourceLocation.CodeSoft(bodyPart, sourceCode)
         )
 
-      case _ =>
+      case Some(node) =>
+        logger.trace(s"Go-to-definition not implemented for AST '${node.data.getClass.getSimpleName}' at source index '${node.data.index}'. File: ${sourceCode.fileURI}")
+        Iterator.empty
+
+      case None =>
+        // If this occurs, the client must be sending requests with incorrect 'cursorIndex'.
+        logger.error(s"AST Node not found for index $cursorIndex. File: ${sourceCode.fileURI}")
         Iterator.empty
     }
 
