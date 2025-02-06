@@ -168,7 +168,7 @@ object SoftAST {
       params: Option[Group[Token.OpenParen.type, Token.CloseParen.type]],
       postParamSpace: Option[Space],
       inheritance: Seq[Inheritance],
-      block: BlockClause)
+      block: Block)
     extends BodyPartAST
 
   case class Abstract(
@@ -230,7 +230,7 @@ object SoftAST {
       postReferenceSpace: Option[Space])
     extends SoftAST
 
-  case class BlockClause(
+  case class Block(
       index: SourceIndex,
       openCurly: TokenDocExpectedAST[Token.OpenCurly.type],
       preBodySpace: Option[Space],
@@ -260,7 +260,7 @@ object SoftAST {
       preSignatureSpace: Option[Space],
       signature: FunctionSignature,
       postSignatureSpace: Option[Space],
-      block: Option[BlockClause])
+      block: Option[Block])
     extends BodyPartAST
 
   case class FunctionSignature(
@@ -432,7 +432,7 @@ object SoftAST {
       postExpression3Space: Option[Space],
       closeParen: TokenDocExpectedAST[Token.CloseParen.type],
       postCloseParenSpace: Option[SoftAST.Space],
-      block: SoftAST.BlockClause)
+      block: SoftAST.Block)
     extends ExpressionAST
 
   case class WhileStatement(
@@ -445,7 +445,7 @@ object SoftAST {
       postExpressionSpace: Option[Space],
       closeParen: TokenDocExpectedAST[Token.CloseParen.type],
       postCloseParenSpace: Option[SoftAST.Space],
-      block: SoftAST.BlockClause)
+      block: SoftAST.Block)
     extends ExpressionAST
 
   case class Assignment(

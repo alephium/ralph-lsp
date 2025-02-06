@@ -23,16 +23,16 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object BlockParser {
 
-  def parse[Unknown: P]: P[SoftAST.BlockClause] =
+  def parse[Unknown: P]: P[SoftAST.Block] =
     parse(required = true)
 
-  def parseOrFail[Unknown: P]: P[SoftAST.BlockClause] =
+  def parseOrFail[Unknown: P]: P[SoftAST.Block] =
     parse(required = false)
 
   def body[Unknown: P]: P[SoftAST.BlockBody] =
     body()
 
-  private def parse[Unknown: P](required: Boolean): P[SoftAST.BlockClause] =
+  private def parse[Unknown: P](required: Boolean): P[SoftAST.Block] =
     P {
       Index ~
         TokenParser.parse(required, Token.OpenCurly) ~
@@ -43,7 +43,7 @@ private object BlockParser {
         Index
     } map {
       case (from, openCurly, preBodySpace, body, postBodySpace, closeCurly, to) =>
-        SoftAST.BlockClause(
+        SoftAST.Block(
           index = range(from, to),
           openCurly = openCurly,
           preBodySpace = preBodySpace,
