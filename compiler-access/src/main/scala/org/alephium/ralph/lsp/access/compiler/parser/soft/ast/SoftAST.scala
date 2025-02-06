@@ -309,7 +309,13 @@ object SoftAST {
       postHeadExpressionSpace: Option[Space],
       tailExpressions: Seq[GroupTail],
       closeToken: TokenDocExpectedAST[C])
-    extends ExpressionAST
+    extends ExpressionAST {
+
+    /** Collects all expressions defined in this group */
+    def expressions: Iterable[ExpressionAST] =
+      headExpression ++ tailExpressions.map(_.expression)
+
+  }
 
   /** Comma separated tail expressions of a [[Group]] */
   case class GroupTail(

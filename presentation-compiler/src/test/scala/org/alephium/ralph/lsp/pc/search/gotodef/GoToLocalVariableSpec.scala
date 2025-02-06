@@ -58,13 +58,41 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         )
       }
 
-      "let is spelt incorrectly" in {
+      "let is misspelled" in {
         goToDefinitionSoft()(
           """
             |le varA = v@@arB
             |""".stripMargin
         )
       }
+    }
+  }
+
+  "not return self" when {
+    // When `let` is misspelled, this statement is an assignment, not a variable declaration.
+    // So it should not jump to self.
+    "let is misspelled" in {
+      goToDefinitionSoft()(
+        """
+          |le var@@A = 123
+          |""".stripMargin
+      )
+    }
+
+    "let is misspelled & assignment is empty" in {
+      goToDefinitionSoft()(
+        """
+          |le var@@A =
+          |""".stripMargin
+      )
+    }
+
+    "let is not defined" in {
+      goToDefinitionSoft()(
+        """
+          |var@@A =
+          |""".stripMargin
+      )
     }
   }
 
@@ -84,49 +112,23 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         )
       }
 
-      "syntax has errors" when {
-        "Contract is not defined" in {
-          goToDefinitionSoft()(
-            """
-              |pub fn function() -> () {
-              |  let >>var@@A<< = 123
-              |}
-              |
-              |""".stripMargin
-          )
-        }
+      "Contract is not defined" in {
+        goToDefinitionSoft()(
+          """
+            |pub fn function() -> () {
+            |  let >>var@@A<< = 123
+            |}
+            |
+            |""".stripMargin
+        )
+      }
 
-        "function is not defined" in {
-          goToDefinitionSoft()(
-            """
-              |let >>var@@A<< = 123
-              |""".stripMargin
-          )
-        }
-
-        "let is misspelled" in {
-          goToDefinitionSoft()(
-            """
-              |le >>var@@A<< = 123
-              |""".stripMargin
-          )
-        }
-
-        "assignment does not exist & let is misspelled" in {
-          goToDefinitionSoft()(
-            """
-              |le >>var@@A<< =
-              |""".stripMargin
-          )
-        }
-
-        "let is not defined" in {
-          goToDefinitionSoft()(
-            """
-              |>>var@@A<< =
-              |""".stripMargin
-          )
-        }
+      "function is not defined" in {
+        goToDefinitionSoft()(
+          """
+            |let >>var@@A<< = 123
+            |""".stripMargin
+        )
       }
     }
 
@@ -148,10 +150,10 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         }
 
         "source is not well defined" when {
-          "Contract is not defined" in {
+          "outer Contract is not defined" in {
             goToDefinitionSoft()(
               """
-                |pub fn function() -> () {
+                |fn function( -> () {
                 |  let >>var@@A<< = 123
                 |  let varA = 123
                 |}
@@ -159,30 +161,25 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             )
           }
 
-          "function is not defined" in {
+          "outer function is not defined" in {
             goToDefinitionSoft()(
               """
-                |let >>var@@A<< = 123
-                |let varA = 123
+                |{
+                |  let >>var@@A<< = 123
+                |  let varA = 123
+                |}
                 |""".stripMargin
             )
           }
 
           "let is not defined" when {
-            "for first varA" in {
-              goToDefinitionSoft()(
-                """
-                  |>>var@@A<< = 123
-                  |let varA = 123
-                  |""".stripMargin
-              )
-            }
-
             "for second varA" in {
               goToDefinitionSoft()(
                 """
-                  |let >>var@@A<< = 123
-                  |varA = 123
+                  |{
+                  |  let >>var@@A<< = 123
+                  |  varA = 123
+                  |}
                   |""".stripMargin
               )
             }
@@ -190,17 +187,21 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             "both varAs" in {
               goToDefinitionSoft()(
                 """
-                  |>>var@@A<< = 123
-                  |varA = 123
+                  |{
+                  |  var@@A = 123
+                  |  varA = 123
+                  |}
                   |""".stripMargin
               )
             }
 
-            "assignment value is not defined" in {
+            "assignment value is not defined for the first var" in {
               goToDefinitionSoft()(
                 """
-                  |>>var@@A<< =
-                  |varA = 123
+                  |{
+                  |  var@@A = 123
+                  |  varA = 123
+                  |}
                   |""".stripMargin
               )
             }
@@ -218,7 +219,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "second var is selected" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |
@@ -232,11 +233,29 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         )
       }
     }
+
+    "a group defined" when {
+      "first item is selected" in {
+        goToDefinitionSoft() {
+          """
+            |let (>>fir@@st<<, second) = function()
+            |""".stripMargin
+        }
+      }
+
+      "second item is selected" in {
+        goToDefinitionSoft() {
+          """
+            |let (first, >>secon@@d<<) =
+            |""".stripMargin
+        }
+      }
+    }
   }
 
   "return non-empty" when {
     "single local variable exists" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract GoToTest() {
           |
@@ -250,24 +269,42 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       )
     }
 
-    "multiple local variables exists" in {
-      goToDefinitionStrict()(
-        """
-          |Contract GoToTest() {
-          |
-          |  pub fn function() -> () {
-          |    let >>varA<< = 123
-          |    let varB = var@@A
-          |    let varA = ABC
-          |  }
-          |
-          |}
-          |""".stripMargin
-      )
+    "multiple local variables exists" when {
+      "defined as independent variables" in {
+        goToDefinition()(
+          """
+            |Contract GoToTest() {
+            |
+            |  pub fn function() -> () {
+            |    let >>varA<< = 123
+            |    let varB = var@@A
+            |    let varA = ABC
+            |  }
+            |
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "defined as a group" in {
+        goToDefinitionSoft()(
+          """
+            |Contract GoToTest() {
+            |
+            |  pub fn function(varC) -> () {
+            |    let (varA, varB, >>varC<<) = 123
+            |    let >>varC<< = var@@C
+            |    let varA = ABC
+            |  }
+            |
+            |}
+            |""".stripMargin
+        )
+      }
     }
 
     "local variable and arguments have the same name" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract GoToTest(>>varA<<: Bool) {
           |
@@ -300,7 +337,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
     "variable is a tuple" when {
       "first tuple is queried" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |  fn test() -> () {
@@ -317,7 +354,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "second tuple is queried" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |  fn test() -> () {
@@ -334,7 +371,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "there are duplicate tuples" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |  fn test() -> () {

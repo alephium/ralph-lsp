@@ -160,7 +160,7 @@ object SourceIndexExtra {
       }
 
     def containsSoft(child: SourceIndex): Boolean =
-      sourceIndex contains child.from
+      sourceIndex.from >= child.from && child.to <= sourceIndex.to
 
     def isBehind(that: SourceIndex): Boolean =
       isBehind(that.from)

@@ -77,6 +77,9 @@ private[search] object ScopeWalker {
    *
    * Navigates the nodes within the scope of the `anchor` node, starting from the `from` node.
    *
+   * TODO: Improve performance: `dropWhile` drops elements linearly which can be slow.
+   *       Removing child nodes directly from the Node’s `children` field will be faster.
+   *
    * @param from   The node where the search starts.
    * @param anchor The node which is being scoped and where the search ends.
    *               If the collected result is empty, nodes after the `anchor`'s position
@@ -104,6 +107,8 @@ private[search] object ScopeWalker {
         // - If it's defined after the anchor node (node in scope), then only add it if currently collected items are empty.
         case node @ Node(ast, _) if pf.isDefinedAt(node) && (ast.isBehind(anchor) || found.isEmpty) =>
           found addOne pf(node)
+          // This node is processed, drop all its children.
+          walker = walker dropWhile node.contains
 
         case _ =>
         // ignore the rest
