@@ -461,11 +461,11 @@ object SoftAST {
 
   case class TypeAssignment(
       index: SourceIndex,
-      name: ExpressionAST,
+      expressionLeft: ExpressionAST,
       preColonSpace: Option[Space],
       colon: TokenDocumented[Token.Colon.type],
       postColonSpace: Option[Space],
-      tpe: ExpressionAST)
+      expressionRight: ExpressionAST)
     extends ExpressionAST
 
   case class AssignmentAccessModifier(

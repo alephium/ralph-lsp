@@ -20,11 +20,11 @@ private object TypeAssignmentParser {
       case (from, left, postIdentifierSpace, equalToken, postEqualSpace, right, to) =>
         SoftAST.TypeAssignment(
           index = range(from, to),
-          name = left,
+          expressionLeft = left,
           preColonSpace = postIdentifierSpace,
           colon = equalToken,
           postColonSpace = postEqualSpace,
-          tpe = right
+          expressionRight = right
         )
     }
 
