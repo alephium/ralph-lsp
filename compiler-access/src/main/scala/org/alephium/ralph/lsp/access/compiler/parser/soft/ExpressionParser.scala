@@ -43,9 +43,9 @@ private object ExpressionParser {
         InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |
         BlockParser.parseOrFail |
-        ReturnStatementParser.parseOrFail |
-        ForLoopParser.parseOrFail |
-        WhileLoopParser.parseOrFail |
+        ReturnParser.parseOrFail |
+        ForParser.parseOrFail |
+        WhileParser.parseOrFail |
         VariableDeclarationParser.parseOrFail |
         MutableBindingParser.parseOrFail |
         ReferenceCallParser.parseOrFail |

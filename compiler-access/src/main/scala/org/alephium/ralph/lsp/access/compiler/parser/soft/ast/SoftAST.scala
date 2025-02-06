@@ -407,14 +407,14 @@ object SoftAST {
       rightExpression: ReferenceCallOrIdentifier)
     extends SoftAST
 
-  case class ReturnStatement(
+  case class Return(
       index: SourceIndex,
       returnToken: TokenDocumented[Token.Return.type],
       preExpressionSpace: Option[Space],
       rightExpression: ExpressionAST)
     extends ExpressionAST
 
-  case class ForStatement(
+  case class For(
       index: SourceIndex,
       forToken: TokenDocumented[Token.For.type],
       postForSpace: Option[Space],
@@ -435,7 +435,7 @@ object SoftAST {
       block: SoftAST.Block)
     extends ExpressionAST
 
-  case class WhileStatement(
+  case class While(
       index: SourceIndex,
       whileToken: TokenDocumented[Token.While.type],
       postWhileSpace: Option[Space],
