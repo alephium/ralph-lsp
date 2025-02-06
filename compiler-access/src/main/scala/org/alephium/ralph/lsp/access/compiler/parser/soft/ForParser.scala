@@ -26,7 +26,7 @@ private object ForParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseParen) ~
         SpaceParser.parseOrFail.? ~
-        BlockParser.parse ~
+        BlockParser.parseOrFail.? ~
         Index
     } map {
       case (from,

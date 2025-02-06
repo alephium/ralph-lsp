@@ -64,8 +64,7 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
         template.preParamSpace shouldBe None
         template.params shouldBe empty
         template.postParamSpace shouldBe None
-        template.block.openCurly shouldBe SoftAST.TokenExpected(indexOf(s"$templateToken>><<"), Token.OpenCurly)
-        template.block.closeCurly shouldBe SoftAST.TokenExpected(indexOf(s"$templateToken>><<"), Token.CloseCurly)
+        template.block shouldBe None
       }
 
       "lowercase" in {
@@ -88,8 +87,7 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
         template.preParamSpace shouldBe empty
         template.params shouldBe empty
         template.postParamSpace shouldBe empty
-        template.block.openCurly shouldBe SoftAST.TokenExpected(indexOf(s"$templateToken>><<"), Token.OpenCurly)
-        template.block.closeCurly shouldBe SoftAST.TokenExpected(indexOf(s"$templateToken>><<"), Token.CloseCurly)
+        template.block shouldBe None
       }
 
       "lowercase" in {
@@ -239,11 +237,20 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
 
   "parse block" when {
     "open brace is missing" in {
-      val template =
-        parseTemplate("Contract mycontract }")
+      val body =
+        parseSoft("Contract mycontract }")
 
-      template.block.closeCurly shouldBe CloseCurly(indexOf("Contract mycontract >>}<<"))
-      template.block.openCurly shouldBe SoftAST.TokenExpected(indexOf("Contract mycontract >><<}"), Token.OpenCurly)
+      body.parts should have size 2
+
+      val template = body.parts.head.part.asInstanceOf[SoftAST.Template]
+      template.block shouldBe None
+
+      val unresolved = body.parts.last.part.asInstanceOf[SoftAST.Unresolved]
+      unresolved shouldBe
+        Unresolved(
+          index = indexOf("Contract mycontract >>}<<"),
+          text = "}"
+        )
     }
 
     "close brace and identifier are missing" in {
@@ -254,8 +261,8 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
 
       template.preIdentifierSpace shouldBe Some(SpaceOne(indexOf("Contract>> <<{")))
 
-      template.block.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
-      template.block.closeCurly shouldBe SoftAST.TokenExpected(indexOf("Contract {>><<"), Token.CloseCurly)
+      template.block.value.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
+      template.block.value.closeCurly shouldBe SoftAST.TokenExpected(indexOf("Contract {>><<"), Token.CloseCurly)
     }
 
     "a function is defined" in {
@@ -270,9 +277,9 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
       template.identifier shouldBe SoftAST.IdentifierExpected(indexOf("Contract >><<{"))
       template.preIdentifierSpace shouldBe Some(SpaceOne(indexOf("Contract>> <<{")))
       // block
-      template.block.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
+      template.block.value.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
 
-      template.block.closeCurly shouldBe
+      template.block.value.closeCurly shouldBe
         SoftAST.TokenExpected(
           index = indexOf {
             """Contract {
@@ -286,8 +293,8 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
       /**
        * Body part: Function
        */
-      template.block.body.parts should have size 1
-      val function = template.block.body.parts.head.part.asInstanceOf[SoftAST.Function]
+      template.block.value.body.parts should have size 1
+      val function = template.block.value.body.parts.head.part.asInstanceOf[SoftAST.Function]
 
       function.fn shouldBe
         Fn(
@@ -323,9 +330,9 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
       template.identifier shouldBe SoftAST.IdentifierExpected(indexOf("Contract >><<{"))
       template.preIdentifierSpace shouldBe Some(SpaceOne(indexOf("Contract>> <<{")))
       // block
-      template.block.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
+      template.block.value.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
 
-      template.block.closeCurly shouldBe
+      template.block.value.closeCurly shouldBe
         SoftAST.TokenExpected(
           index = indexOf {
             """Contract {
@@ -339,8 +346,8 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
       /**
        * Body part: TxScript
        */
-      template.block.body.parts should have size 1
-      val txScriptTemplate = template.block.body.parts.head.part.asInstanceOf[SoftAST.Template]
+      template.block.value.body.parts should have size 1
+      val txScriptTemplate = template.block.value.body.parts.head.part.asInstanceOf[SoftAST.Template]
 
       txScriptTemplate.templateType shouldBe
         TxScript(
@@ -376,8 +383,8 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
       /**
        * Body part: TxScript
        */
-      template.block.body.parts should have size 1
-      val part = template.block.body.parts.head.part
+      template.block.value.body.parts should have size 1
+      val part = template.block.value.body.parts.head.part
 
       part shouldBe
         Identifier(
