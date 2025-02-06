@@ -431,8 +431,8 @@ object SoftAST {
       expression3: ExpressionAST,
       postExpression3Space: Option[Space],
       closeParen: TokenDocExpectedAST[Token.CloseParen.type],
-      postCloseParenSpace: Option[SoftAST.Space],
-      block: SoftAST.Block)
+      postCloseParenSpace: Option[Space],
+      block: Block)
     extends ExpressionAST
 
   case class While(
@@ -444,8 +444,8 @@ object SoftAST {
       expression: ExpressionAST,
       postExpressionSpace: Option[Space],
       closeParen: TokenDocExpectedAST[Token.CloseParen.type],
-      postCloseParenSpace: Option[SoftAST.Space],
-      block: SoftAST.Block)
+      postCloseParenSpace: Option[Space],
+      block: Block)
     extends ExpressionAST
 
   case class Assignment(
