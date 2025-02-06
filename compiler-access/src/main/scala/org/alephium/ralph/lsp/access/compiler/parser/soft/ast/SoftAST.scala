@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft.ast
 
 import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST.collectASTs
 import org.alephium.ralph.lsp.utils.Node
 
@@ -48,6 +49,21 @@ sealed trait SoftAST extends Product { self =>
   def toStringPretty(): String =
     s"${self.getClass.getSimpleName}: ${self.index}"
 
+  /**
+   * Checks if `this` AST's position is before the `anchor` AST's position.
+   *
+   * @param anchor The AST with which the position of `current` is compared.
+   * @return `true` if `current`'s position is before `anchor`'s position, `false` otherwise.
+   */
+  def isBehind(anchor: SoftAST): Boolean =
+    this.index isBehind anchor.index
+
+  def contains(anchor: SoftAST): Boolean =
+    contains(anchor.index)
+
+  def contains(anchor: SourceIndex): Boolean =
+    this.index containsSoft anchor
+
 }
 
 object SoftAST {
@@ -65,6 +81,9 @@ object SoftAST {
 
     def toStringTree(): String =
       node.toStringTree(_.toStringPretty())
+
+    def contains(anchor: Node[SoftAST, SoftAST]): Boolean =
+      node.data contains anchor.data
 
   }
 

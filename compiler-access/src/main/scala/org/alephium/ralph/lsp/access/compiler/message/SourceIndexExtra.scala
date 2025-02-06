@@ -159,6 +159,9 @@ object SourceIndexExtra {
           false
       }
 
+    def containsSoft(child: SourceIndex): Boolean =
+      sourceIndex contains child.from
+
     def isBehind(that: SourceIndex): Boolean =
       isBehind(that.from)
 
