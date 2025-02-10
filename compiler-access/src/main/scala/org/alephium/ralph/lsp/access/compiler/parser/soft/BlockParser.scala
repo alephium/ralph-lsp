@@ -28,7 +28,7 @@ private object BlockParser {
       Index ~
         TokenParser.parseOrFail(Token.OpenCurly) ~
         SpaceParser.parseOrFail.? ~
-        BlockBodyParser.parseOrFail(Token.CloseCurly) ~
+        BlockBodyParser.parseOrFailChild(Token.CloseCurly) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseCurly) ~
         Index

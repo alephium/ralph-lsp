@@ -202,8 +202,15 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
           "invalid unit - 'alp' is typo" in {
             val body = parseSoft("1e-18 alp")
 
-            val number = body.parts.head.part
-            val alp    = body.parts.last.part
+            // since "1e-18" and "alp" individual expressions, they are parsed as an expression-block
+            // Since both expressions are contains within a single block, the body should have size 1
+            body.parts should have size 1
+
+            val expressionBlock = body.parts.head.part.asInstanceOf[SoftAST.ExpressionBlock]
+            val number          = expressionBlock.headExpression
+            val alp             = expressionBlock.tailExpressions.head.expression
+            // tail expression contains only the `alph` identifier
+            expressionBlock.tailExpressions should have size 1
 
             // Note: alp is not a unit. So it's not parsed as part of the number.
             //       Since alp is not part of the number, the number should
