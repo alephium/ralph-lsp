@@ -78,8 +78,13 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
                 index = indexOf(s">>$numberOnly<<alph"),
                 text = numberOnly
               ),
-              space = None,
-              unit = Some(AlphLowercase(indexOf(s"$numberOnly>>alph<<")))
+              unit = Some(
+                SoftAST.UnitAlph(
+                  index = indexOf(s"$numberOnly>>alph<<"),
+                  space = None,
+                  unit = AlphLowercase(indexOf(s"$numberOnly>>alph<<"))
+                )
+              )
             )
 
         "no sign" in {
@@ -111,8 +116,13 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
                 index = indexOf(s">>$numberOnly<< alph"),
                 text = numberOnly
               ),
-              space = Some(SpaceOne(indexOf(s"$numberOnly>> <<alph"))),
-              unit = Some(AlphLowercase(indexOf(s"$numberOnly >>alph<<")))
+              unit = Some(
+                SoftAST.UnitAlph(
+                  index = indexOf(s"$numberOnly>> alph<<"),
+                  space = Some(SpaceOne(indexOf(s"$numberOnly>> <<alph"))),
+                  unit = AlphLowercase(indexOf(s"$numberOnly >>alph<<"))
+                )
+              )
             )
 
         "no sign" in {
@@ -145,8 +155,13 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
                   index = indexOf(s">>1e-18<<alph"),
                   text = "1e-18"
                 ),
-                space = None,
-                unit = Some(AlphLowercase(indexOf("1e-18>>alph<<")))
+                unit = Some(
+                  SoftAST.UnitAlph(
+                    index = indexOf("1e-18>>alph<<"),
+                    space = None,
+                    unit = AlphLowercase(indexOf("1e-18>>alph<<"))
+                  )
+                )
               )
           }
 
@@ -159,7 +174,6 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
                   index = indexOf(s">>1e-18alp<<"),
                   text = "1e-18alp"
                 ),
-                space = None,
                 unit = None
               )
           }
@@ -175,28 +189,33 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
                   index = indexOf(s">>1e-18<< alph"),
                   text = "1e-18"
                 ),
-                space = Some(SpaceOne(indexOf("1e-18>> <<alph"))),
-                unit = Some(AlphLowercase(indexOf("1e-18 >>alph<<")))
+                unit = Some(
+                  SoftAST.UnitAlph(
+                    index = indexOf("1e-18>> alph<<"),
+                    space = Some(SpaceOne(indexOf("1e-18>> <<alph"))),
+                    unit = AlphLowercase(indexOf("1e-18 >>alph<<"))
+                  )
+                )
               )
           }
 
           "invalid unit - 'alp' is typo" in {
             val body = parseSoft("1e-18 alp")
-            body.parts should have size 2
 
             val number = body.parts.head.part
             val alp    = body.parts.last.part
 
             // Note: alp is not a unit. So it's not parsed as part of the number.
+            //       Since alp is not part of the number, the number should
+            //       not parse the space after 1e-18.
             number shouldBe
               SoftAST.Number(
-                index = indexOf(s">>1e-18 << alp"),
+                index = indexOf(s">>1e-18<< alp"),
                 documentation = None,
                 number = SoftAST.CodeString(
                   index = indexOf(s">>1e-18<< alp"),
                   text = "1e-18"
                 ),
-                space = Some(SpaceOne(indexOf("1e-18>> <<alp"))),
                 unit = None
               )
 

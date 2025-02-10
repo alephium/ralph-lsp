@@ -12,16 +12,14 @@ private object NumberParser {
       Index ~
         CommentParser.parseOrFail.? ~
         number ~
-        SpaceParser.parseOrFail.? ~
-        TokenParser.parseOrFail(Token.AlphLowercase).? ~
+        unitAlph.? ~
         Index
     } map {
-      case (from, documentation, digits, postDigitSpace, unit, to) =>
+      case (from, documentation, digits, unit, to) =>
         SoftAST.Number(
           index = range(from, to),
           documentation = documentation,
           number = digits,
-          space = postDigitSpace,
           unit = unit
         )
     }
@@ -67,6 +65,29 @@ private object NumberParser {
         CharsWhileIn("0-9_") ~
         ("." ~ CharsWhileIn("0-9_")).? ~
         (!Token.AlphLowercase.lexeme ~ (StringIn("e-", "E-") | CharIn("0-9a-zA-Z_"))).rep
+    }
+
+  /**
+   * Parses the space and the unit `alph`.
+   *
+   * {{{
+   *   1234.0 alph
+   *         ↑___↑
+   * }}}
+   */
+  private def unitAlph[Unknown: P]: P[SoftAST.UnitAlph] =
+    P {
+      Index ~
+        SpaceParser.parseOrFail.? ~
+        TokenParser.parseOrFail(Token.AlphLowercase) ~
+        Index
+    } map {
+      case (from, space, unit, to) =>
+        SoftAST.UnitAlph(
+          index = range(from, to),
+          space = space,
+          unit = unit
+        )
     }
 
 }

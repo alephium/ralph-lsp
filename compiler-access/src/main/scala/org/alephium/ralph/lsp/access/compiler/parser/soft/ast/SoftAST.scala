@@ -533,9 +533,14 @@ object SoftAST {
       index: SourceIndex,
       documentation: Option[Comments],
       number: CodeString,
-      space: Option[Space],
-      unit: Option[TokenDocumented[Token.AlphLowercase.type]])
+      unit: Option[UnitAlph])
     extends ExpressionAST
+
+  case class UnitAlph(
+      index: SourceIndex,
+      space: Option[Space],
+      unit: TokenDocumented[Token.AlphLowercase.type])
+    extends SoftAST
 
   case class BString(
       index: SourceIndex,
