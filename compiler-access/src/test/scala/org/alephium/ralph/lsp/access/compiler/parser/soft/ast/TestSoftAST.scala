@@ -202,7 +202,6 @@ object TestSoftAST {
         index = index,
         text = text
       ),
-      space = None,
       unit = None
     )
 
