@@ -402,7 +402,7 @@ object SoftAST {
        with CodeDocumentedAST
        with BodyPartAST
 
-  sealed trait ReferenceCallOrIdentifier extends BodyPartAST {
+  sealed trait ReferenceCallOrIdentifier extends SoftAST {
 
     def identifier: IdentifierAST =
       this match {
