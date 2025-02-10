@@ -312,6 +312,41 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
                 |""".stripMargin
             }
           }
+
+          "accessed after other body-parts" when {
+            "physical block is not defined" ignore {
+              // FIXME: Because `Contract Test` sits between two groups of expressions,
+              //        both groups of expressions do not recognise each other.
+              //        This is fixed if a physical block `{}` is provided, for example in the test below.
+              goToDefinitionSoft() {
+                """
+                  |let >>varA<< = 123
+                  |let varB = varA
+                  |
+                  |Contract Test() { }
+                  |
+                  |let >>varA<< = 123
+                  |let varB = va@@rA
+                  |""".stripMargin
+              }
+            }
+
+            "physical block is defined" in {
+              goToDefinitionSoft() {
+                """
+                  |{
+                  |  let >>varA<< = 123
+                  |  let varB = varA
+                  |
+                  |  Contract Test() { }
+                  |
+                  |  let >>varA<< = 123
+                  |  let varB = va@@rA
+                  |}
+                  |""".stripMargin
+              }
+            }
+          }
         }
       }
     }
