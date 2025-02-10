@@ -23,11 +23,41 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object BlockBodyParser {
 
-  def parseOrFail[Unknown: P](stop: Token*): P[SoftAST.BlockBody] =
+  /**
+   * Parses a block's body such that a virtual block (curly braces), i.e. `{}` is defined.
+   *
+   * This function is invoked only for the root parser call.
+   *
+   * To parse a block's body when a parent block is already defined, for example,
+   * within a contract or a function, use [[parseOrFailChild]].
+   *
+   * @return Parsed content of a block.
+   */
+  def parseOrFailRoot[Unknown: P]: P[SoftAST.BlockBody] =
+    parseOrFail(
+      isRootBlock = true,
+      stop = Seq.empty
+    )
+
+  /**
+   * Parses a block's body such a parent block is already defined.
+   * For example, within a parent contract or a function.
+   *
+   * @return Parsed content of a block.
+   */
+  def parseOrFailChild[Unknown: P](stop: Token*): P[SoftAST.BlockBody] =
+    parseOrFail(
+      isRootBlock = false,
+      stop = stop
+    )
+
+  private def parseOrFail[Unknown: P](
+      isRootBlock: Boolean,
+      stop: Seq[Token]): P[SoftAST.BlockBody] =
     P {
       Index ~
         SpaceParser.parseOrFail.? ~
-        bodyPart(stop).rep ~
+        bodyPart(isRootBlock, stop).rep ~
         Index
     } map {
       case (from, headSpace, parts, to) =>
@@ -38,10 +68,12 @@ private object BlockBodyParser {
         )
     }
 
-  private def bodyPart[Unknown: P](stop: Seq[Token]): P[SoftAST.BlockBodyPart] =
+  private def bodyPart[Unknown: P](
+      isRootBlock: Boolean,
+      stop: Seq[Token]): P[SoftAST.BlockBodyPart] =
     P {
       Index ~
-        part(stop) ~
+        part(isRootBlock, stop) ~
         SpaceParser.parseOrFail.? ~
         Index
     } map {
@@ -53,7 +85,9 @@ private object BlockBodyParser {
         )
     }
 
-  private def part[Unknown: P](stop: Seq[Token]): P[SoftAST.BodyPartAST] =
+  private def part[Unknown: P](
+      isRootBlock: Boolean,
+      stop: Seq[Token]): P[SoftAST.BodyPartAST] =
     P {
       TemplateParser.parseOrFail |
         EventParser.parseOrFail |
@@ -61,9 +95,15 @@ private object BlockBodyParser {
         FunctionParser.parseOrFail |
         ImportParser.parseOrFail |
         InheritanceParser.parseOrFail |
-        ExpressionParser.parseOrFail |
+        expression(isRootBlock) |
         CommentParser.parseOrFail |
         UnresolvedParser.parseOrFail(stop: _*)
     }
+
+  private def expression[Unknown: P](isRootBlock: Boolean): P[SoftAST.BodyPartAST] =
+    if (isRootBlock)
+      ExpressionBlockParser.parseOrFail
+    else
+      ExpressionParser.parseOrFail
 
 }

@@ -264,6 +264,18 @@ object SoftAST {
       parts: Seq[BlockBodyPart])
     extends SoftAST
 
+  case class ExpressionBlock(
+      index: SourceIndex,
+      headExpression: ExpressionAST,
+      tailExpressions: Seq[TailExpressionBlock])
+    extends BodyPartAST
+
+  case class TailExpressionBlock(
+      index: SourceIndex,
+      preExpressionSpace: Space,
+      expression: ExpressionAST)
+    extends SoftAST
+
   case class BlockBodyPart(
       index: SourceIndex,
       part: BodyPartAST,
