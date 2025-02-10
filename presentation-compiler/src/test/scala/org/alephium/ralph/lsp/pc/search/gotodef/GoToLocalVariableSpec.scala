@@ -254,23 +254,8 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
   }
 
   "return non-empty" when {
-    "single local variable exists" in {
-      goToDefinition()(
-        """
-          |Contract GoToTest() {
-          |
-          |  pub fn function() -> () {
-          |    let >>varA<< = 123
-          |    let varB = var@@A
-          |  }
-          |
-          |}
-          |""".stripMargin
-      )
-    }
-
-    "multiple local variables exists" when {
-      "defined as independent variables" in {
+    "single local variable exists" when {
+      "syntax is well defined" in {
         goToDefinition()(
           """
             |Contract GoToTest() {
@@ -278,12 +263,127 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             |  pub fn function() -> () {
             |    let >>varA<< = 123
             |    let varB = var@@A
-            |    let varA = ABC
             |  }
             |
             |}
             |""".stripMargin
         )
+      }
+
+      "syntax is not well defined" when {
+        "variables are defined in root scope" when {
+          "accessed in root scope" in {
+            goToDefinitionSoft() {
+              """
+                |let >>varA<< = 123
+                |let varB = var@@A
+                |
+                |while(true) {
+                |  // this is not accessed
+                |  let varA = 123
+                |  let varB = varA
+                |}
+                |
+                |Contract Test() {
+                |  // Some block with a copy of `varA`.
+                |  // This `varA` should not get accessed.
+                |  let varA = 123
+                |}
+                |""".stripMargin
+            }
+          }
+
+          "accessed in child scopes" in {
+            goToDefinitionSoft() {
+              """
+                |let >>varA<< = 123
+                |let varB = varA
+                |
+                |while(true) {
+                |  let >>varA<< = 123
+                |  let varB = var@@A
+                |}
+                |
+                |Contract Test() {
+                |  // Some block with a copy of `varA`.
+                |  // This `varA` should not get accessed.
+                |  let varA = 123
+                |}
+                |""".stripMargin
+            }
+          }
+        }
+      }
+    }
+
+    "multiple local variables exists" when {
+      "defined as independent variables" when {
+        "syntax is well defined" in {
+          goToDefinition() {
+            """
+              |Contract GoToTest() {
+              |
+              |  pub fn function() -> () {
+              |    let >>varA<< = 123
+              |    let varB = var@@A
+              |    let varA = ABC
+              |  }
+              |
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "syntax is not well defined" when {
+          "variables are defined in root scope" when {
+            "accessed in root scope" in {
+              goToDefinitionSoft() {
+                """
+                  |let >>varA<< = 123
+                  |let varB = var@@A
+                  |let varA = ABC
+                  |
+                  |while(true) {
+                  |  // this is not accessed
+                  |  let varA = 123
+                  |  let varB = varA
+                  |  let varA = ABC
+                  |}
+                  |
+                  |Contract Test() {
+                  |  // Some block with a copy of `varA`.
+                  |  // This `varA` should not get accessed.
+                  |  let varA = 123
+                  |  let varA = ABC
+                  |}
+                  |""".stripMargin
+              }
+            }
+
+            "accessed in child scopes" in {
+              goToDefinitionSoft() {
+                """
+                  |let >>varA<< = 123
+                  |let varB = varA
+                  |let >>varA<< = ABC
+                  |
+                  |while(true) {
+                  |  let >>varA<< = 123
+                  |  let varB = var@@A
+                  |  let varA = ABC
+                  |}
+                  |
+                  |Contract Test() {
+                  |  // Some block with a copy of `varA`.
+                  |  // This `varA` should not get accessed.
+                  |  let varA = 123
+                  |  let varA = ABC
+                  |}
+                  |""".stripMargin
+              }
+            }
+          }
+        }
       }
 
       "defined as a group" in {
