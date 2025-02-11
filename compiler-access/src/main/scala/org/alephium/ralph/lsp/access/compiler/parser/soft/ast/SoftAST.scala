@@ -491,7 +491,7 @@ object SoftAST {
       index: SourceIndex,
       expressionLeft: ExpressionAST,
       postIdentifierSpace: Option[Space],
-      equalToken: TokenDocumented[Token.Equal.type],
+      equalToken: TokenDocExpectedAST[Token.Equal.type],
       postEqualSpace: Option[Space],
       expressionRight: ExpressionAST)
     extends ExpressionAST
