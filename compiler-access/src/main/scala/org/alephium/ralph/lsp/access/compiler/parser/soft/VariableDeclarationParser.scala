@@ -3,7 +3,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object VariableDeclarationParser {
 
@@ -11,14 +11,17 @@ private object VariableDeclarationParser {
   def parseOrFail[Unknown: P]: P[SoftAST.VariableDeclaration] =
     P {
       Index ~
-        AssignmentAccessModifierParser.parseOrFail.rep(1) ~
+        TokenParser.parseOrFail(Token.Let) ~
+        TokenParser.isBoundary() ~
+        SpaceParser.parseOrFail.? ~
         AssignmentParser.parseOrFail ~
         Index
     } map {
-      case (from, modifier, assignment, to) =>
+      case (from, let, space, assignment, to) =>
         SoftAST.VariableDeclaration(
           index = range(from, to),
-          modifiers = modifier,
+          let = let,
+          postLetSpace = space,
           assignment = assignment
         )
     }

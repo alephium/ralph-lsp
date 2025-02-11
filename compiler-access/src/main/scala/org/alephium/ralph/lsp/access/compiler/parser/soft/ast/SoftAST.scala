@@ -402,7 +402,7 @@ object SoftAST {
        with CodeDocumentedAST
        with BodyPartAST
 
-  sealed trait ReferenceCallOrIdentifier extends BodyPartAST {
+  sealed trait ReferenceCallOrIdentifier extends SoftAST {
 
     def identifier: IdentifierAST =
       this match {
@@ -505,12 +505,6 @@ object SoftAST {
       expressionRight: ExpressionAST)
     extends ExpressionAST
 
-  case class AssignmentAccessModifier(
-      index: SourceIndex,
-      token: TokenDocumented[Token.DataDefinition],
-      postTokenSpace: Space)
-    extends ExpressionAST
-
   case class AccessModifier(
       index: SourceIndex,
       pub: TokenDocumented[Token.Pub.type],
@@ -519,7 +513,8 @@ object SoftAST {
 
   case class VariableDeclaration(
       index: SourceIndex,
-      modifiers: Seq[AssignmentAccessModifier],
+      let: TokenDocumented[Token.Let.type],
+      postLetSpace: Option[Space],
       assignment: Assignment)
     extends ExpressionAST
 
