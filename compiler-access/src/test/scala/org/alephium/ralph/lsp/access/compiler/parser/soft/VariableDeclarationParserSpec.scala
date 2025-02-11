@@ -16,16 +16,12 @@
 
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
-import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.TryValues.convertTryToSuccessOrFailure
-
-import scala.util.Try
 
 class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
 
@@ -56,39 +52,136 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
     }
   }
 
-  "error" when {
-    "expression is missing" in {
+  "let" should {
+    "always result in variable-declaration" when {
+      "right expression is missing" in {
+        val assigment =
+          parseVariableDeclaration("let mut variable = ")
+
+        assigment shouldBe
+          SoftAST.VariableDeclaration(
+            index = indexOf(">>let mut variable = <<"),
+            let = Let(indexOf(">>let<< mut variable = ")),
+            postLetSpace = Some(SpaceOne(indexOf("let>> <<mut variable = "))),
+            assignment = SoftAST.Assignment(
+              index = indexOf("let >>mut variable = <<"),
+              expressionLeft = SoftAST.MutableBinding(
+                index = indexOf("let >>mut variable<< = "),
+                mut = Mut(indexOf("let >>mut<< variable = ")),
+                space = SpaceOne(indexOf("let mut>> <<variable = ")),
+                identifier = Identifier(indexOf("let mut >>variable<< = "), "variable")
+              ),
+              postIdentifierSpace = Some(SpaceOne(indexOf("let mut variable>> <<= "))),
+              equalToken = Equal(indexOf("let mut variable >>=<< ")),
+              postEqualSpace = Some(SpaceOne(indexOf("let mut variable =>> <<"))),
+              expressionRight = SoftAST.ExpressionExpected(indexOf("let mut variable = >><<"))
+            )
+          )
+      }
+    }
+
+    "equal is missing" in {
       val assigment =
-        parseVariableDeclaration("let mut variable = ")
+        parseVariableDeclaration("let mut variable")
 
       assigment shouldBe
         SoftAST.VariableDeclaration(
-          index = indexOf(">>let mut variable = <<"),
-          let = Let(indexOf(">>let<< mut variable = ")),
-          postLetSpace = Some(SpaceOne(indexOf("let>> <<mut variable = "))),
+          index = indexOf(">>let mut variable<<"),
+          let = Let(indexOf(">>let<< mut variable")),
+          postLetSpace = Some(SpaceOne(indexOf("let>> <<mut variable"))),
           assignment = SoftAST.Assignment(
-            index = indexOf("let >>mut variable = <<"),
+            index = indexOf("let >>mut variable<<"),
             expressionLeft = SoftAST.MutableBinding(
-              index = indexOf("let >>mut variable<< = "),
-              mut = Mut(indexOf("let >>mut<< variable = ")),
-              space = SpaceOne(indexOf("let mut>> <<variable = ")),
-              identifier = Identifier(indexOf("let mut >>variable<< = "), "variable")
+              index = indexOf("let >>mut variable<<"),
+              mut = Mut(indexOf("let >>mut<< variable")),
+              space = SpaceOne(indexOf("let mut>> <<variable")),
+              identifier = Identifier(indexOf("let mut >>variable<<"), "variable")
             ),
-            postIdentifierSpace = Some(SpaceOne(indexOf("let mut variable>> <<= "))),
-            equalToken = Equal(indexOf("let mut variable >>=<< ")),
-            postEqualSpace = Some(SpaceOne(indexOf("let mut variable =>> <<"))),
-            expressionRight = SoftAST.ExpressionExpected(indexOf("let mut variable = >><<"))
+            postIdentifierSpace = None,
+            equalToken = SoftAST.TokenExpected(indexOf("let mut variable>><<"), Token.Equal),
+            postEqualSpace = None,
+            expressionRight = SoftAST.ExpressionExpected(indexOf("let mut variable>><<"))
+          )
+        )
+    }
+
+    "variable name is missing" in {
+      val soft =
+        parseSoft("let mut")
+
+      soft.parts should have size 2
+
+      val assignment = soft.parts.head.part.asInstanceOf[SoftAST.VariableDeclaration]
+      val unresolved = soft.parts.last.part.asInstanceOf[SoftAST.Unresolved]
+
+      assignment shouldBe
+        SoftAST.VariableDeclaration(
+          index = indexOf(">>let <<mut"),
+          let = Let(indexOf(">>let<< mut")),
+          postLetSpace = Some(SpaceOne(indexOf("let>> <<mut"))),
+          assignment = SoftAST.Assignment(
+            index = indexOf("let >><<mut"),
+            expressionLeft = SoftAST.ExpressionExpected(indexOf("let >><<mut")),
+            postIdentifierSpace = None,
+            equalToken = SoftAST.TokenExpected(indexOf("let >><<mut"), Token.Equal),
+            postEqualSpace = None,
+            expressionRight = SoftAST.ExpressionExpected(indexOf("let >><<mut"))
+          )
+        )
+
+      // FIXME: "mut" could still be recognised as part of the `let` variable declaration statement
+      //        instead of reporting it as unresolved.
+      unresolved shouldBe
+        SoftAST.Unresolved(
+          index = indexOf("let >>mut<<"),
+          documentation = None,
+          code = SoftAST.CodeString(indexOf("let >>mut<<"), "mut")
+        )
+    }
+
+    "only let is defined" in {
+      val assignment =
+        parseVariableDeclaration("let")
+
+      assignment shouldBe
+        SoftAST.VariableDeclaration(
+          index = indexOf(">>let<<"),
+          let = Let(indexOf(">>let<<")),
+          postLetSpace = None,
+          assignment = SoftAST.Assignment(
+            index = indexOf("let>><<"),
+            expressionLeft = SoftAST.ExpressionExpected(indexOf("let>><<")),
+            postIdentifierSpace = None,
+            equalToken = SoftAST.TokenExpected(indexOf("let>><<"), Token.Equal),
+            postEqualSpace = None,
+            expressionRight = SoftAST.ExpressionExpected(indexOf("let>><<"))
           )
         )
     }
   }
 
-  "let" should {
+  "`let` or any other reserved keyword" should {
     "not be allowed as variable name" in {
-      Try(parseVariableDeclaration("let let = 1"))
-        .failure
-        .exception
-        .getCause shouldBe a[CompilerError.FastParseError]
+      Token.reserved foreach {
+        reserved =>
+          val variable =
+            parseSoft(s"let ${reserved.lexeme} = 1")
+
+          // Variable declaration should be defined because `let` is defined.
+          // But none of the left expressions should be an identifier
+          variable.toNode.walkDown.map(_.data).collect {
+            case variableDeclaration: SoftAST.VariableDeclaration =>
+              variableDeclaration.assignment.expressionLeft should not be a[SoftAST.Identifier]
+              variableDeclaration
+          } should not be empty
+
+          // the tree should not contain any identifiers.
+          variable.toNode.walkDown.map(_.data).collect {
+            case ident: SoftAST.Identifier =>
+              ident
+          } shouldBe empty
+
+      }
     }
 
     "allow letter as variable name" in {

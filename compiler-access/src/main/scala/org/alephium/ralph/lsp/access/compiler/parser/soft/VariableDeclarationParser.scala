@@ -14,7 +14,7 @@ private object VariableDeclarationParser {
         TokenParser.parseOrFail(Token.Let) ~
         TokenParser.isBoundary() ~
         SpaceParser.parseOrFail.? ~
-        AssignmentParser.parseOrFail ~
+        AssignmentParser.parse ~
         Index
     } map {
       case (from, let, space, assignment, to) =>
