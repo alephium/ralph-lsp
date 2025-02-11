@@ -346,6 +346,15 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
                   |""".stripMargin
               }
             }
+
+            "let is not assigned" in {
+              goToDefinitionSoft()(
+                """
+                  |let >>varA<<
+                  |copy = var@@A
+                  |""".stripMargin
+              )
+            }
           }
         }
       }
