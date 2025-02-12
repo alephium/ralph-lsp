@@ -233,6 +233,35 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
                 text = "alp"
               )
           }
+
+          "invalid unit - 'alphs' is typo" in {
+            val body = parseSoft("1e-18 alphs")
+
+            // since alphs is a typo at the tail end of the "alph" token, it should get recognised as an identifier.
+            // Since both expressions are contains within a single block, the body should have size 1
+            body.parts should have size 1
+            val block = body.parts.head.part.asInstanceOf[SoftAST.ExpressionBlock]
+            block.tailExpressions should have size 1
+            val number = block.headExpression.asInstanceOf[SoftAST.Number]
+            val alphs  = block.tailExpressions.head.expression.asInstanceOf[SoftAST.Identifier]
+
+            number shouldBe
+              SoftAST.Number(
+                index = indexOf(s">>1e-18<< alphs"),
+                documentation = None,
+                number = SoftAST.CodeString(
+                  index = indexOf(s">>1e-18<< alphs"),
+                  text = "1e-18"
+                ),
+                unit = None
+              )
+
+            alphs shouldBe
+              Identifier(
+                index = indexOf(s"1e-18 >>alphs<<"),
+                text = "alphs"
+              )
+          }
         }
       }
     }

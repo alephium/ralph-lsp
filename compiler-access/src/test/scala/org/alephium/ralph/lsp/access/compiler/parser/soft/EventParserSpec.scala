@@ -9,6 +9,22 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class EventParserSpec extends AnyWordSpec {
 
+  "fail" when {
+    "event is not followed by a boundary" in {
+      val body =
+        parseSoft("eventMyEvent")
+
+      body.parts should have size 1
+      val identifier = body.parts.head.part
+
+      identifier shouldBe
+        Identifier(
+          index = indexOf(">>eventMyEvent<<"),
+          text = "eventMyEvent"
+        )
+    }
+  }
+
   "successfully parse an event" in {
     val event = parseEvent("event MyEvent(varName: TypeName")
 

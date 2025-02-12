@@ -195,11 +195,18 @@ object GoToDefLocalVariableDeclaration {
 
       case binding: SoftAST.MutableBinding =>
         // Search the identifier
-        expandAndSearchExpression(
-          expression = binding.identifier,
-          identNode = identNode,
-          sourceCode = sourceCode
-        )
+        binding.identifier match {
+          case identifier: SoftAST.Identifier =>
+            expandAndSearchExpression(
+              expression = identifier,
+              identNode = identNode,
+              sourceCode = sourceCode
+            )
+
+          case _: SoftAST.IdentifierExpected =>
+            // identifier not provided
+            Iterator.empty
+        }
 
       case SoftAST.Identifier(_, _, code) if code.text == identNode.data.code.text =>
         // Check if the identifier matches the text in the selected `identNode`.

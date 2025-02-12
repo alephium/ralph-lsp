@@ -12,8 +12,9 @@ private object MutableBindingParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.Mut) ~
-        SpaceParser.parseOrFail ~
-        IdentifierParser.parseOrFail ~
+        TokenParser.isBoundary() ~
+        SpaceParser.parseOrFail.? ~
+        IdentifierParser.parse ~
         Index
     } map {
       case (from, mut, space, identifier, to) =>

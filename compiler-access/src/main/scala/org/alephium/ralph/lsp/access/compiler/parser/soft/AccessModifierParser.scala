@@ -27,6 +27,7 @@ private object AccessModifierParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.Pub) ~
+        TokenParser.isBoundary() ~
         SpaceParser.parseOrFail.? ~
         Index
     } map {

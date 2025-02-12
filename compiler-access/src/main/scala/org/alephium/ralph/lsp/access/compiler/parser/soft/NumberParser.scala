@@ -80,6 +80,7 @@ private object NumberParser {
       Index ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.AlphLowercase) ~
+        TokenParser.isBoundary() ~
         Index
     } map {
       case (from, space, unit, to) =>

@@ -26,16 +26,44 @@ import org.scalatest.OptionValues._
 
 class MutableBindingParserSpec extends AnyWordSpec with Matchers {
 
+  "fail" when {
+    "mut is not followed by a space boundary" in {
+      val mut =
+        parseSoft("mutvariable")
+
+      // it gets parsed as an identifier and not a mutable-binding
+      mut.parts should have size 1
+      mut.parts.head.part shouldBe
+        Identifier(
+          index = indexOf(">>mutvariable<<"),
+          text = "mutvariable"
+        )
+    }
+  }
+
   "succeed" when {
+    "only mut is defined" in {
+      val mut =
+        parseMutableBinding("mut")
+
+      mut shouldBe
+        SoftAST.MutableBinding(
+          index = indexOf(">>mut<<"),
+          mut = Mut(indexOf(">>mut<<")),
+          space = None,
+          identifier = SoftAST.IdentifierExpected(indexOf("mut>><<"))
+        )
+    }
+
     "an identifier is set a mut" in {
-      val annotation =
+      val mut =
         parseMutableBinding("mut variable")
 
-      annotation shouldBe
+      mut shouldBe
         SoftAST.MutableBinding(
           index = indexOf(">>mut variable<<"),
           mut = Mut(indexOf(">>mut<< variable")),
-          space = SpaceOne(indexOf("mut>> <<variable")),
+          space = Some(SpaceOne(indexOf("mut>> <<variable"))),
           identifier = Identifier(indexOf("mut >>variable<<"), "variable")
         )
     }
@@ -55,7 +83,7 @@ class MutableBindingParserSpec extends AnyWordSpec with Matchers {
         SoftAST.MutableBinding(
           index = indexOf("(a, b, >>mut variable<<)"),
           mut = Mut(indexOf("(a, b, >>mut<< variable)")),
-          space = SpaceOne(indexOf("(a, b, mut>> <<variable)")),
+          space = Some(SpaceOne(indexOf("(a, b, mut>> <<variable)"))),
           identifier = Identifier(indexOf("(a, b, mut >>variable<<)"), "variable")
         )
     }

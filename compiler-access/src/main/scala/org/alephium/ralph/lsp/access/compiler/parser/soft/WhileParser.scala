@@ -11,6 +11,7 @@ private object WhileParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.While) ~
+        TokenParser.isBoundary(Token.OpenParen) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.OpenParen) ~
         SpaceParser.parseOrFail.? ~

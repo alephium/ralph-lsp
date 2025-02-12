@@ -180,6 +180,24 @@ object TestSoftAST {
       token = Token.Extends
     )
 
+  def Pub(index: SourceIndex): SoftAST.TokenDocumented[Token.Pub.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Pub
+    )
+
+  def For(index: SourceIndex): SoftAST.TokenDocumented[Token.For.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.For
+    )
+
+  def While(index: SourceIndex): SoftAST.TokenDocumented[Token.While.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.While
+    )
+
   def Identifier(
       index: SourceIndex,
       text: String): SoftAST.Identifier =
