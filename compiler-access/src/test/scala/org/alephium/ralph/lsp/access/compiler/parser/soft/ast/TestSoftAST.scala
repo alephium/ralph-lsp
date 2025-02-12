@@ -186,6 +186,12 @@ object TestSoftAST {
       token = Token.Pub
     )
 
+  def For(index: SourceIndex): SoftAST.TokenDocumented[Token.For.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.For
+    )
+
   def Identifier(
       index: SourceIndex,
       text: String): SoftAST.Identifier =

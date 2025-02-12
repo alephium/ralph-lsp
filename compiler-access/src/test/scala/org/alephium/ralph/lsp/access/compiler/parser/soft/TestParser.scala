@@ -103,6 +103,9 @@ object TestParser {
   def parseAccessModifier(code: String): SoftAST.AccessModifier =
     runSoftParser(AccessModifierParser.parseOrFail(_))(code)
 
+  def parseFor(code: String): SoftAST.For =
+    runSoftParser(ForParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,
