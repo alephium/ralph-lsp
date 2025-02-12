@@ -23,6 +23,23 @@ sealed trait Token extends Ordered[Token] { self =>
   def lexeme: String
 
   /**
+   * Fetches all other reserved token that may have this token's lexeme its prefix.
+   *
+   * For example, if this token is `-`, fetch `->` and `-=`.
+   */
+  lazy val otherReservedTokensWithThisPrefix: List[Token.Reserved] =
+    // FIXME: All tokens should be searched instead of reserved.
+    //        `sealedInstancesOf` does not work on `Token` yet.
+    Token
+      .reserved
+      .filter {
+        token =>
+          token != self &&
+          token.lexeme.startsWith(lexeme)
+      }
+      .toList
+
+  /**
    * Order such that tokens such as:
    *  - `||` comes before `|`
    *  - `+=` comes before `+` and `=`
@@ -51,7 +68,7 @@ object Token {
   sealed trait Expression    extends Token // A token that is also an expression.
 
   sealed abstract class Operator(override val lexeme: String) extends Token
-  case object Equality                                        extends Operator("==") with Reserved with InfixOperator
+  case object EqualEqual                                      extends Operator("==") with Reserved with InfixOperator
   case object GreaterThanOrEqual                              extends Operator(">=") with Reserved with InfixOperator
   case object PlusPlus                                        extends Operator("++") with Reserved with InfixOperator
   case object PlusEquals                                      extends Operator("+=") with Reserved with InfixOperator

@@ -35,4 +35,20 @@ class TokenParserSpec extends AnyWordSpec {
     }
   }
 
+  "otherReservedTokenWithThisPrefix" should {
+    "fetch other reserved tokens with same prefixes" when {
+      "-" in {
+        Token.Minus.otherReservedTokensWithThisPrefix should contain only (Token.MinusEquals, Token.ForwardArrow)
+      }
+
+      "+" in {
+        Token.Plus.otherReservedTokensWithThisPrefix should contain only (Token.PlusPlus, Token.PlusEquals)
+      }
+
+      "++" in {
+        Token.PlusEquals.otherReservedTokensWithThisPrefix shouldBe empty
+      }
+    }
+  }
+
 }
