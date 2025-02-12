@@ -106,6 +106,9 @@ object TestParser {
   def parseFor(code: String): SoftAST.For =
     runSoftParser(ForParser.parseOrFail(_))(code)
 
+  def parseWhile(code: String): SoftAST.While =
+    runSoftParser(WhileParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,
