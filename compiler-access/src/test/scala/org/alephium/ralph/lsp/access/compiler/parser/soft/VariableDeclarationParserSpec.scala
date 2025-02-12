@@ -27,10 +27,10 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
 
   "succeed" when {
     "full valid variable declaration is defined" in {
-      val assigment =
+      val varDec =
         parseVariableDeclaration("let mut variable = 1")
 
-      assigment shouldBe
+      varDec shouldBe
         SoftAST.VariableDeclaration(
           index = indexOf(">>let mut variable = 1<<"),
           let = Let(indexOf(">>let<< mut variable = 1")),
@@ -55,10 +55,10 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
   "let" should {
     "always result in variable-declaration" when {
       "right expression is missing" in {
-        val assigment =
+        val varDec =
           parseVariableDeclaration("let mut variable = ")
 
-        assigment shouldBe
+        varDec shouldBe
           SoftAST.VariableDeclaration(
             index = indexOf(">>let mut variable = <<"),
             let = Let(indexOf(">>let<< mut variable = ")),
@@ -81,10 +81,10 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
     }
 
     "equal is missing" in {
-      val assigment =
+      val varDec =
         parseVariableDeclaration("let mut variable")
 
-      assigment shouldBe
+      varDec shouldBe
         SoftAST.VariableDeclaration(
           index = indexOf(">>let mut variable<<"),
           let = Let(indexOf(">>let<< mut variable")),
@@ -131,10 +131,10 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
     }
 
     "only let is defined" in {
-      val assignment =
+      val varDec =
         parseVariableDeclaration("let")
 
-      assignment shouldBe
+      varDec shouldBe
         SoftAST.VariableDeclaration(
           index = indexOf(">>let<<"),
           let = Let(indexOf(">>let<<")),
@@ -185,19 +185,19 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
 
   "allow expressions as assignment identifiers" when {
     "the identifier is a tuple" in {
-      val tupleDecl =
+      val tupleVarDec =
         parseVariableDeclaration("let (a, b, c) = blah")
 
-      tupleDecl.let shouldBe Let(indexOf(">>let<< (a, b, c) = blah"))
-      tupleDecl.postLetSpace shouldBe Some(SpaceOne(indexOf("let>> <<(a, b, c) = blah")))
+      tupleVarDec.let shouldBe Let(indexOf(">>let<< (a, b, c) = blah"))
+      tupleVarDec.postLetSpace shouldBe Some(SpaceOne(indexOf("let>> <<(a, b, c) = blah")))
 
       // left is a tuple
-      val left = tupleDecl.assignment.expressionLeft.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
+      val left = tupleVarDec.assignment.expressionLeft.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
       left.index shouldBe indexOf("let >>(a, b, c)<< = blah")
       left.toCode() shouldBe "(a, b, c)"
 
       // right is an assignment
-      tupleDecl.assignment.expressionRight shouldBe
+      tupleVarDec.assignment.expressionRight shouldBe
         Identifier(
           index = indexOf("let (a, b, c) = >>blah<<"),
           text = "blah"

@@ -43,10 +43,10 @@ class MutableBindingParserSpec extends AnyWordSpec with Matchers {
 
   "succeed" when {
     "only mut is defined" in {
-      val annotation =
+      val mut =
         parseMutableBinding("mut")
 
-      annotation shouldBe
+      mut shouldBe
         SoftAST.MutableBinding(
           index = indexOf(">>mut<<"),
           mut = Mut(indexOf(">>mut<<")),
@@ -56,10 +56,10 @@ class MutableBindingParserSpec extends AnyWordSpec with Matchers {
     }
 
     "an identifier is set a mut" in {
-      val annotation =
+      val mut =
         parseMutableBinding("mut variable")
 
-      annotation shouldBe
+      mut shouldBe
         SoftAST.MutableBinding(
           index = indexOf(">>mut variable<<"),
           mut = Mut(indexOf(">>mut<< variable")),
