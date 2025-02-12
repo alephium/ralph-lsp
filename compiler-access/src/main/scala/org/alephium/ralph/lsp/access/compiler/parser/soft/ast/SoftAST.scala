@@ -522,8 +522,8 @@ object SoftAST {
   case class MutableBinding(
       index: SourceIndex,
       mut: TokenDocumented[Token.Mut.type],
-      space: Space,
-      identifier: Identifier)
+      space: Option[Space],
+      identifier: IdentifierAST)
     extends ExpressionAST
 
   case class Annotation(

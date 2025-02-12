@@ -40,7 +40,7 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
             expressionLeft = SoftAST.MutableBinding(
               index = indexOf("let >>mut variable<< = 1"),
               mut = Mut(indexOf("let >>mut<< variable = 1")),
-              space = SpaceOne(indexOf("let mut>> <<variable = 1")),
+              space = Some(SpaceOne(indexOf("let mut>> <<variable = 1"))),
               identifier = Identifier(indexOf("let mut >>variable<< = 1"), "variable")
             ),
             postIdentifierSpace = Some(SpaceOne(indexOf("let mut variable>> <<= 1"))),
@@ -68,7 +68,7 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
               expressionLeft = SoftAST.MutableBinding(
                 index = indexOf("let >>mut variable<< = "),
                 mut = Mut(indexOf("let >>mut<< variable = ")),
-                space = SpaceOne(indexOf("let mut>> <<variable = ")),
+                space = Some(SpaceOne(indexOf("let mut>> <<variable = "))),
                 identifier = Identifier(indexOf("let mut >>variable<< = "), "variable")
               ),
               postIdentifierSpace = Some(SpaceOne(indexOf("let mut variable>> <<= "))),
@@ -94,7 +94,7 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
             expressionLeft = SoftAST.MutableBinding(
               index = indexOf("let >>mut variable<<"),
               mut = Mut(indexOf("let >>mut<< variable")),
-              space = SpaceOne(indexOf("let mut>> <<variable")),
+              space = Some(SpaceOne(indexOf("let mut>> <<variable"))),
               identifier = Identifier(indexOf("let mut >>variable<<"), "variable")
             ),
             postIdentifierSpace = None,
@@ -106,36 +106,27 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
     }
 
     "variable name is missing" in {
-      val soft =
-        parseSoft("let mut")
+      val varDec =
+        parseVariableDeclaration("let mut")
 
-      soft.parts should have size 2
-
-      val assignment = soft.parts.head.part.asInstanceOf[SoftAST.VariableDeclaration]
-      val unresolved = soft.parts.last.part.asInstanceOf[SoftAST.Unresolved]
-
-      assignment shouldBe
+      varDec shouldBe
         SoftAST.VariableDeclaration(
-          index = indexOf(">>let <<mut"),
+          index = indexOf(">>let mut<<"),
           let = Let(indexOf(">>let<< mut")),
           postLetSpace = Some(SpaceOne(indexOf("let>> <<mut"))),
           assignment = SoftAST.Assignment(
-            index = indexOf("let >><<mut"),
-            expressionLeft = SoftAST.ExpressionExpected(indexOf("let >><<mut")),
+            index = indexOf("let >>mut<<"),
+            expressionLeft = SoftAST.MutableBinding(
+              index = indexOf("let >>mut<<"),
+              mut = Mut(indexOf("let >>mut<<")),
+              space = None,
+              identifier = SoftAST.IdentifierExpected(indexOf("let mut>><<"))
+            ),
             postIdentifierSpace = None,
-            equalToken = SoftAST.TokenExpected(indexOf("let >><<mut"), Token.Equal),
+            equalToken = SoftAST.TokenExpected(indexOf("let mut>><<"), Token.Equal),
             postEqualSpace = None,
-            expressionRight = SoftAST.ExpressionExpected(indexOf("let >><<mut"))
+            expressionRight = SoftAST.ExpressionExpected(indexOf("let mut>><<"))
           )
-        )
-
-      // FIXME: "mut" could still be recognised as part of the `let` variable declaration statement
-      //        instead of reporting it as unresolved.
-      unresolved shouldBe
-        SoftAST.Unresolved(
-          index = indexOf("let >>mut<<"),
-          documentation = None,
-          code = SoftAST.CodeString(indexOf("let >>mut<<"), "mut")
         )
     }
 
