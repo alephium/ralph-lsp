@@ -120,6 +120,12 @@ object TestSoftAST {
       token = Token.Equal
     )
 
+  def EqualEqual(index: SourceIndex): SoftAST.TokenDocumented[Token.EqualEqual.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.EqualEqual
+    )
+
   def Plus(index: SourceIndex): SoftAST.TokenDocumented[Token.Plus.type] =
     TokenDocumented(
       index = index,

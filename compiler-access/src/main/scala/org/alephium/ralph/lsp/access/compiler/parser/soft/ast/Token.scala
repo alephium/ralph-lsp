@@ -23,6 +23,23 @@ sealed trait Token extends Ordered[Token] { self =>
   def lexeme: String
 
   /**
+   * Fetches all other reserved token that may have this token's lexeme its prefix.
+   *
+   * For example, if this token is `-`, fetch `->` and `-=`.
+   */
+  lazy val otherReservedTokensWithThisPrefix: List[Token.Reserved] =
+    // FIXME: All tokens should be searched instead of reserved.
+    //        `sealedInstancesOf` does not work on `Token` yet.
+    Token
+      .reserved
+      .filter {
+        token =>
+          token != self &&
+          token.lexeme.startsWith(lexeme)
+      }
+      .toList
+
+  /**
    * Order such that tokens such as:
    *  - `||` comes before `|`
    *  - `+=` comes before `+` and `=`

@@ -8,7 +8,14 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 private object CodeParser {
 
   def parseOrFail[Unknown: P, T <: Token](token: T): P[SoftAST.CodeToken[T]] =
-    P(Index ~ token.lexeme ~ Index) map {
+    P {
+      Index ~
+        // Ensure that the input token is not a prefix of another token.
+        // For example, if the input token is `+` ensure that the next token is not `+=` or `++`.
+        !TokenParser.WhileInOrFail(token.otherReservedTokensWithThisPrefix: _*) ~
+        token.lexeme ~
+        Index
+    } map {
       case (from, to) =>
         SoftAST.CodeToken(
           index = range(from, to),

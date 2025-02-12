@@ -20,10 +20,41 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
+import org.alephium.ralph.lsp.access.util.TestFastParse.assertIsFastParseError
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class AssignmentParserSpec extends AnyWordSpec with Matchers {
+
+  "fail" when {
+    "equality token `==` is used instead of `=`" when {
+      "parsed from root" in {
+        val body =
+          parseSoft("variable ==")
+
+        body.parts should have size 1
+        val infix = body.parts.head.part
+
+        // `==` is not an assignment so it should get parsed as an infix expression
+        infix shouldBe
+          SoftAST.InfixExpression(
+            index = indexOf(">>variable ==<<"),
+            leftExpression = Identifier(indexOf(">>variable<< =="), "variable"),
+            preOperatorSpace = Some(SpaceOne(indexOf("variable>> <<=="))),
+            operator = EqualEqual(indexOf("variable >>==<<")),
+            postOperatorSpace = None,
+            rightExpression = SoftAST.ExpressionExpected(indexOf("variable ==>><<"))
+          )
+      }
+
+      "parsed by AssignmentParser" in {
+        // executing it directly on `AssignmentParser` should result in failed parser
+        assertIsFastParseError {
+          parseAssignment("variable ==")
+        }
+      }
+    }
+  }
 
   "assignments to an identifier" should {
     "report ExpressionExpected" when {
