@@ -43,12 +43,12 @@ private object FunctionParser {
         BlockParser.parseOrFail.? ~
         Index
     } map {
-      case (from, annotation, postAnnotationSpace, pub, fnDeceleration, headSpace, signature, tailSpace, block, to) =>
+      case (from, annotation, postAnnotationSpace, accessModifier, fnDeceleration, headSpace, signature, tailSpace, block, to) =>
         SoftAST.Function(
           index = range(from, to),
           annotations = annotation,
           postAnnotationSpace = postAnnotationSpace,
-          pub = pub,
+          accessModifier = accessModifier,
           fn = fnDeceleration,
           preSignatureSpace = headSpace,
           signature = signature,

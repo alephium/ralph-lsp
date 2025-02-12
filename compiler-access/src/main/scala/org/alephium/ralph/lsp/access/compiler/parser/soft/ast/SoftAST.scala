@@ -286,7 +286,7 @@ object SoftAST {
       index: SourceIndex,
       annotations: Seq[Annotation],
       postAnnotationSpace: Option[Space],
-      pub: Option[AccessModifier],
+      accessModifier: Option[AccessModifier],
       fn: TokenDocumented[Token.Fn.type],
       preSignatureSpace: Option[Space],
       signature: FunctionSignature,

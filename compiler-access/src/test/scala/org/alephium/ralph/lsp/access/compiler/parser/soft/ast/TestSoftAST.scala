@@ -180,6 +180,12 @@ object TestSoftAST {
       token = Token.Extends
     )
 
+  def Pub(index: SourceIndex): SoftAST.TokenDocumented[Token.Pub.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Pub
+    )
+
   def Identifier(
       index: SourceIndex,
       text: String): SoftAST.Identifier =

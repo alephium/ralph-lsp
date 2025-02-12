@@ -100,6 +100,9 @@ object TestParser {
   def parseInheritance(code: String): SoftAST.Inheritance =
     runSoftParser(InheritanceParser.parseOrFail(_))(code)
 
+  def parseAccessModifier(code: String): SoftAST.AccessModifier =
+    runSoftParser(AccessModifierParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,
