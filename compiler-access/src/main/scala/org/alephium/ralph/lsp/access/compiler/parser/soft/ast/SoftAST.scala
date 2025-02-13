@@ -443,7 +443,7 @@ object SoftAST {
       index: SourceIndex,
       dot: TokenDocumented[Token.Dot.type],
       postDotSpace: Option[Space],
-      rightExpression: ReferenceCallOrIdentifier)
+      rightExpression: ExpressionAST)
     extends SoftAST
 
   case class Return(

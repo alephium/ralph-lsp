@@ -10,7 +10,7 @@ private case object MethodCallParser {
   def parseOrFail[Unknown: P]: P[SoftAST.MethodCall] =
     P {
       Index ~
-        leftExpression ~
+        ExpressionParser.parseExpectedInput(leftExpression) ~
         SpaceParser.parseOrFail.? ~
         dotCall.rep(1) ~
         Index
@@ -29,7 +29,7 @@ private case object MethodCallParser {
       Index ~
         TokenParser.parseOrFail(Token.Dot) ~
         SpaceParser.parseOrFail.? ~
-        (ReferenceCallParser.parseOrFail | IdentifierParser.parse) ~
+        ExpressionParser.parseExpectedInput(rightExpression) ~
         Index
     } map {
       case (from, dot, postDotSpace, rightExpression, to) =>
@@ -43,13 +43,17 @@ private case object MethodCallParser {
 
   private def leftExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
-      VariableDeclarationParser.parseOrFail |
-        MutableBindingParser.parseOrFail |
-        ReferenceCallParser.parseOrFail |
+      ReferenceCallParser.parseOrFail |
         ParameterParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
+        IdentifierParser.parseOrFail
+    }
+
+  private def rightExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
+    P {
+      ReferenceCallParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 
