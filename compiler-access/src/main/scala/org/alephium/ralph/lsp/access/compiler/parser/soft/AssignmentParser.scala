@@ -67,11 +67,7 @@ private case object AssignmentParser {
   private def leftExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
       MethodCallParser.parseOrFail |
-        BlockParser.parseOrFail |
-        VariableDeclarationParser.parseOrFail |
         MutableBindingParser.parseOrFail |
-        ReferenceCallParser.parseOrFail |
-        AnnotationParser.parseOrFail |
         ParameterParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
