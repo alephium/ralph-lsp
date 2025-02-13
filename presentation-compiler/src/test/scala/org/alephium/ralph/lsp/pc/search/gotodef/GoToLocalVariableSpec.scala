@@ -355,6 +355,20 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
                   |""".stripMargin
               )
             }
+
+            "duplicate function names & parameters" in {
+              goToDefinitionSoft() {
+                """
+                  |{
+                  |  fn function(param: Type) -> () { }
+                  |
+                  |  fn function(>>param<<: Type) -> () {
+                  |    let copy = para@@m
+                  |  }
+                  |}
+                  |""".stripMargin
+              }
+            }
           }
         }
       }
