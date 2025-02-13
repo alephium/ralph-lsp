@@ -192,38 +192,91 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
     bbb.expressionRight.toCode() shouldBe "(tuple1, tuple2)"
   }
 
-  "nested tuples" in {
-    val tuple = parseTuple("(a, (b, c))")
+  "nested tuples" when {
+    "all tuple elements are defined" in {
+      val tuple = parseTuple("(a, (b, c))")
 
-    tuple.headExpression.value shouldBe a[SoftAST.Identifier]
+      tuple.headExpression.value shouldBe a[SoftAST.Identifier]
 
-    tuple.tailExpressions should have size 1
-    val lastTuple = tuple.tailExpressions.head
+      tuple.tailExpressions should have size 1
+      val lastTuple = tuple.tailExpressions.head
 
-    lastTuple shouldBe
-      SoftAST.GroupTail(
-        index = indexOf("(a>>, (b, c)<<)"),
-        comma = Comma(indexOf("(a>>,<< (b, c))")),
-        preExpressionSpace = Some(SpaceOne(indexOf("(a,>> <<(b, c))"))),
-        expression = SoftAST.Group(
-          index = indexOf("(a, >>(b, c)<<)"),
-          openToken = OpenParen(indexOf("(a, >>(<<b, c))")),
+      lastTuple shouldBe
+        SoftAST.GroupTail(
+          index = indexOf("(a>>, (b, c)<<)"),
+          comma = Comma(indexOf("(a>>,<< (b, c))")),
+          preExpressionSpace = Some(SpaceOne(indexOf("(a,>> <<(b, c))"))),
+          expression = SoftAST.Group(
+            index = indexOf("(a, >>(b, c)<<)"),
+            openToken = OpenParen(indexOf("(a, >>(<<b, c))")),
+            preHeadExpressionSpace = None,
+            headExpression = Some(Identifier(indexOf("(a, (>>b<<, c))"), "b")),
+            postHeadExpressionSpace = None,
+            tailExpressions = Seq(
+              SoftAST.GroupTail(
+                index = indexOf("(a, (b>>, c<<))"),
+                comma = Comma(indexOf("(a, (b>>,<< c))")),
+                preExpressionSpace = Some(SpaceOne(indexOf("(a, (b,>> <<c))"))),
+                expression = Identifier(indexOf("(a, (b, >>c<<))"), "c"),
+                postExpressionSpace = None
+              )
+            ),
+            closeToken = CloseParen(indexOf("(a, (b, c>>)<<)"))
+          ),
+          postExpressionSpace = None
+        )
+    }
+
+    "has missing tuple elements" in {
+      val tuple = parseTuple("(a, , ( , z)")
+
+      tuple shouldBe
+        SoftAST.Group(
+          index = indexOf(">>(a, , ( , z)<<"),
+          openToken = OpenParen(indexOf(">>(<<a, , ( , z)")),
           preHeadExpressionSpace = None,
-          headExpression = Some(Identifier(indexOf("(a, (>>b<<, c))"), "b")),
+          headExpression = Some(
+            Identifier(
+              index = indexOf("(>>a<<, , ( , z)"),
+              text = "a"
+            )
+          ),
           postHeadExpressionSpace = None,
           tailExpressions = Seq(
             SoftAST.GroupTail(
-              index = indexOf("(a, (b>>, c<<))"),
-              comma = Comma(indexOf("(a, (b>>,<< c))")),
-              preExpressionSpace = Some(SpaceOne(indexOf("(a, (b,>> <<c))"))),
-              expression = Identifier(indexOf("(a, (b, >>c<<))"), "c"),
+              index = indexOf("(a>>, <<, ( , z)"),
+              comma = Comma(indexOf("(a>>,<< , ( , z)")),
+              preExpressionSpace = Some(SpaceOne(indexOf("(a,>> <<, ( , z)"))),
+              expression = SoftAST.ExpressionExpected(indexOf("(a, >><<, ( , z)")),
+              postExpressionSpace = None
+            ),
+            SoftAST.GroupTail(
+              index = indexOf("(a, >>, ( , z)<<"),
+              comma = Comma(indexOf("(a, >>,<< ( , z)")),
+              preExpressionSpace = Some(SpaceOne(indexOf("(a, ,>> <<( , z)"))),
+              expression = SoftAST.Group(
+                index = indexOf("(a, , >>( , z)<<"),
+                openToken = OpenParen(indexOf("(a, , >>(<< , z)")),
+                preHeadExpressionSpace = Some(SpaceOne(indexOf("(a, , (>> <<, z)"))),
+                headExpression = Some(SoftAST.ExpressionExpected(indexOf("(a, , ( >><<, z)"))),
+                postHeadExpressionSpace = None,
+                tailExpressions = Seq(
+                  SoftAST.GroupTail(
+                    index = indexOf("(a, , ( >>, z<<)"),
+                    comma = Comma(indexOf("(a, , ( >>,<< z)")),
+                    preExpressionSpace = Some(SpaceOne(indexOf("(a, , ( ,>> <<z)"))),
+                    expression = Identifier(indexOf("(a, , ( , >>z<<)"), "z"),
+                    postExpressionSpace = None
+                  )
+                ),
+                closeToken = CloseParen(indexOf("(a, , ( , z>>)<<"))
+              ),
               postExpressionSpace = None
             )
           ),
-          closeToken = CloseParen(indexOf("(a, (b, c>>)<<)"))
-        ),
-        postExpressionSpace = None
-      )
+          closeToken = SoftAST.TokenExpected(indexOf("(a, , ( , z)>><<"), Token.CloseParen)
+        )
+    }
 
   }
 
