@@ -24,6 +24,9 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 private object ExpressionParser {
 
   def parse[Unknown: P]: P[SoftAST.ExpressionAST] =
+    parseExpectedInput(parseOrFail)
+
+  def parseExpectedInput[Unknown: P](parseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.ExpressionAST] =
     P {
       Index ~
         parseOrFail.? ~

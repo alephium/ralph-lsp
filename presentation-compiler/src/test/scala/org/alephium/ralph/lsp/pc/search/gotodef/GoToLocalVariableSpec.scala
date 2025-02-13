@@ -350,8 +350,10 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             "let is not assigned" in {
               goToDefinitionSoft()(
                 """
-                  |let >>varA<<
-                  |copy = var@@A
+                  |{
+                  |  let >>varA<<
+                  |  copy = var@@A
+                  |}
                   |""".stripMargin
               )
             }
