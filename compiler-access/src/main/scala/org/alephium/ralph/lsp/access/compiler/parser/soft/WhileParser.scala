@@ -15,7 +15,7 @@ private object WhileParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.OpenParen) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parseExpectedInput(expression) ~
+        ExpressionParser.parseSubset(expression) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseParen) ~
         SpaceParser.parseOrFail.? ~

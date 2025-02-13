@@ -199,10 +199,8 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
 
       "right expression is a ByteVec" in {
         // ByteVec is valid syntax, but has no parser implemented.
-        // The parse should still syntax that is valid
-
+        // Until then, ByteVec is reported as Unresolved.
         val body = parseSoft("mut number = #00112233")
-        println(body.toStringTree())
 
         body.parts should have size 2
         val assignment = body.parts.head.part.asInstanceOf[SoftAST.Assignment]

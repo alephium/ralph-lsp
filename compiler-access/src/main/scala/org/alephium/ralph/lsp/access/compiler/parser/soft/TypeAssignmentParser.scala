@@ -10,11 +10,11 @@ private object TypeAssignmentParser {
   def parseOrFail[Unknown: P]: P[SoftAST.TypeAssignment] =
     P {
       Index ~
-        ExpressionParser.parseExpectedInput(leftExpression) ~
+        ExpressionParser.parseSubset(leftExpression) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Colon) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parseExpectedInput(rightExpression) ~
+        ExpressionParser.parseSubset(rightExpression) ~
         Index
     } map {
       case (from, left, postIdentifierSpace, equalToken, postEqualSpace, right, to) =>

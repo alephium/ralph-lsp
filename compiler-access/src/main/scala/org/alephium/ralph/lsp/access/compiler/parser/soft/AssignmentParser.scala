@@ -26,7 +26,7 @@ private case object AssignmentParser {
         Index ~
         TokenParser.parseOrFail(Token.Equal).? ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parseExpectedInput(rightExpression) ~
+        ExpressionParser.parseSubset(rightExpression) ~
         Index
     } map {
       case (from, left, postIdentifierSpace, equalIndex, equalToken, postEqualSpace, right, to) =>
@@ -50,7 +50,7 @@ private case object AssignmentParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Equal) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parseExpectedInput(rightExpression) ~
+        ExpressionParser.parseSubset(rightExpression) ~
         Index
     } map {
       case (from, identifier, postIdentifierSpace, equalToken, postEqualSpace, expression, to) =>

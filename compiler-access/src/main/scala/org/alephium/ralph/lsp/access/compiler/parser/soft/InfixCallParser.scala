@@ -14,7 +14,7 @@ private case object InfixCallParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.InfixOperatorOrFail ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parseExpectedInput(rightExpression) ~
+        ExpressionParser.parseSubset(rightExpression) ~
         Index
     } map {
       case (from, leftExpression, preOperatorSpace, operator, postOperatorSpace, rightExpression, to) =>

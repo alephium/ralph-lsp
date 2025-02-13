@@ -13,7 +13,7 @@ private object ReturnParser {
         TokenParser.parseOrFail(Token.Return) ~
         TokenParser.isBoundary() ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parseExpectedInput(expression) ~
+        ExpressionParser.parseSubset(expression) ~
         Index
     } map {
       case (from, returnStatement, space, expression, to) =>

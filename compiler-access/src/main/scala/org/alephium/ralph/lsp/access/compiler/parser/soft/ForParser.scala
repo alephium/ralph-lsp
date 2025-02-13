@@ -15,15 +15,15 @@ private object ForParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.OpenParen) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parseExpectedInput(expression) ~
+        ExpressionParser.parseSubset(expression) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.Semicolon) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parseExpectedInput(expression) ~
+        ExpressionParser.parseSubset(expression) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.Semicolon) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parseExpectedInput(expression) ~
+        ExpressionParser.parseSubset(expression) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseParen) ~
         SpaceParser.parseOrFail.? ~
