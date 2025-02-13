@@ -41,10 +41,19 @@ object ExpressionBlockParser {
         headExpression
     }
 
+  /**
+   * Optional space because the previous expression could've parsed the space due to missing expected expressions.
+   *
+   * For example:
+   * {{{
+   *   let >>varA<< // missing `=` and `rightExpression` but the space is parsed looking for these missing expressions.
+   *   let copy = var@@A
+   * }}}
+   */
   private def tail[Unknown: P]: P[SoftAST.TailExpressionBlock] =
     P {
       Index ~
-        SpaceParser.parseOrFail ~
+        SpaceParser.parseOrFail.? ~
         ExpressionParser.parseOrFail ~
         Index
     } map {

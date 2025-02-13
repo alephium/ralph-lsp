@@ -82,13 +82,14 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
 
   "error tuple item exist" in {
     val body = parseSoft("(aaa typename")
-    body.parts should have size 2
+    body.parts should have size 1
+    val block = body.parts.head.part.asInstanceOf[SoftAST.ExpressionBlock]
 
     /**
-     * First body part is Tuple
+     * First body part is a Tuple
      */
     val tuple =
-      body.parts.head.part.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
+      block.headExpression.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
 
     tuple.openToken shouldBe OpenParen(indexOf(">>(<<aaa typename"))
 
@@ -103,8 +104,10 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
     /**
      * Second body part is an Identifier
      */
+    block.tailExpressions should have size 1
+
     val identifier =
-      body.parts.last.part.asInstanceOf[SoftAST.Identifier]
+      block.tailExpressions.head.expression.asInstanceOf[SoftAST.Identifier]
 
     identifier shouldBe
       Identifier(
