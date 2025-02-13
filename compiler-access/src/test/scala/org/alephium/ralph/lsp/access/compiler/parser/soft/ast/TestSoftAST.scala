@@ -210,6 +210,12 @@ object TestSoftAST {
       token = Token.Dot
     )
 
+  def Return(index: SourceIndex): SoftAST.TokenDocumented[Token.Return.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Return
+    )
+
   def Identifier(
       index: SourceIndex,
       text: String): SoftAST.Identifier =

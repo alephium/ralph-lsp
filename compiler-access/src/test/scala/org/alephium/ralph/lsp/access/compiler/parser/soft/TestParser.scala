@@ -112,6 +112,9 @@ object TestParser {
   def parseMethodCall(code: String): SoftAST.MethodCall =
     runSoftParser(MethodCallParser.parseOrFail(_))(code)
 
+  def parseReturn(code: String): SoftAST.Return =
+    runSoftParser(ReturnParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,

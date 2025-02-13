@@ -13,7 +13,7 @@ private object ReturnParser {
         TokenParser.parseOrFail(Token.Return) ~
         TokenParser.isBoundary() ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parse ~
+        ExpressionParser.parseExpectedInput(expression) ~
         Index
     } map {
       case (from, returnStatement, space, expression, to) =>
@@ -23,6 +23,21 @@ private object ReturnParser {
           preExpressionSpace = space,
           rightExpression = expression
         )
+    }
+
+  private def expression[Unknown: P]: P[SoftAST.ExpressionAST] =
+    P {
+      // TODO: Handle comma separated tuples but without enclosing parentheses
+      //       For example: return 1, 2, 3
+      InfixCallParser.parseOrFail |
+        MethodCallParser.parseOrFail |
+        AnnotationParser.parseOrFail |
+        ParameterParser.parseOrFail |
+        NumberParser.parseOrFail |
+        BooleanParser.parseOrFail |
+        BStringParser.parseOrFail |
+        StringLiteralParser.parseOrFail |
+        IdentifierParser.parseOrFail
     }
 
 }
