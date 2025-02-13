@@ -15,15 +15,15 @@ private object ForParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.OpenParen) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parse ~
+        ExpressionParser.parseExpectedInput(expression) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.Semicolon) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parse ~
+        ExpressionParser.parseExpectedInput(expression) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.Semicolon) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parse ~
+        ExpressionParser.parseExpectedInput(expression) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseParen) ~
         SpaceParser.parseOrFail.? ~
@@ -70,6 +70,23 @@ private object ForParser {
           postCloseParenSpace = postCloseParenSpace,
           block = block
         )
+    }
+
+  private def expression[Unknown: P]: P[SoftAST.ExpressionAST] =
+    P {
+      AssignmentParser.parseOrFail |
+        InfixCallParser.parseOrFail |
+        MethodCallParser.parseOrFail |
+        VariableDeclarationParser.parseOrFail |
+        MutableBindingParser.parseOrFail |
+        ReferenceCallParser.parseOrFail |
+        AnnotationParser.parseOrFail |
+        ParameterParser.parseOrFail |
+        NumberParser.parseOrFail |
+        BooleanParser.parseOrFail |
+        BStringParser.parseOrFail |
+        StringLiteralParser.parseOrFail |
+        IdentifierParser.parseOrFail
     }
 
 }
