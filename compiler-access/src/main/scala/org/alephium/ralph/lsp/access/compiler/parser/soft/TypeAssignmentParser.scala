@@ -2,7 +2,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object TypeAssignmentParser {
@@ -10,11 +10,11 @@ private object TypeAssignmentParser {
   def parseOrFail[Unknown: P]: P[SoftAST.TypeAssignment] =
     P {
       Index ~
-        leftExpression ~
+        ExpressionParser.parseExpectedInput(leftExpression) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Colon) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parse ~
+        ExpressionParser.parseExpectedInput(rightExpression) ~
         Index
     } map {
       case (from, left, postIdentifierSpace, equalToken, postEqualSpace, right, to) =>
@@ -28,18 +28,15 @@ private object TypeAssignmentParser {
         )
     }
 
-  private def leftExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
-    P(Index ~ leftExpressionOrFail.?) map {
-      case (_, Some(expression)) =>
-        expression
-
-      case (from, None) =>
-        SoftAST.ExpressionExpected(point(from))
-    }
-
-  private def leftExpressionOrFail[Unknown: P] =
+  private def leftExpression[Unknown: P] =
     P {
       MutableBindingParser.parseOrFail |
+        IdentifierParser.parseOrFail
+    }
+
+  private def rightExpression[Unknown: P] =
+    P {
+      ParameterParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 
