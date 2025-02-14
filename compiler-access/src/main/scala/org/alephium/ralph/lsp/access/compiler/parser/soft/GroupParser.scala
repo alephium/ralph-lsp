@@ -115,7 +115,7 @@ private object GroupParser {
       Index ~
         TokenParser.parseOrFail(Token.Comma) ~
         SpaceParser.parseOrFail.? ~
-        expression(open, close) ~
+        ExpressionParser.parseSubset(expression(open, close)) ~
         SpaceParser.parseOrFail.? ~
         Index
     } map {

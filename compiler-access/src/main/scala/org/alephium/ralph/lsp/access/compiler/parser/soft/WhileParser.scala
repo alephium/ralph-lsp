@@ -15,7 +15,7 @@ private object WhileParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.OpenParen) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parse ~
+        ExpressionParser.parseSubset(expression) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseParen) ~
         SpaceParser.parseOrFail.? ~
@@ -35,6 +35,19 @@ private object WhileParser {
           postCloseParenSpace = postCloseParenSpace,
           block = block
         )
+    }
+
+  private def expression[Unknown: P]: P[SoftAST.ExpressionAST] =
+    P {
+      InfixCallParser.parseOrFail |
+        MethodCallParser.parseOrFail |
+        ReferenceCallParser.parseOrFail |
+        AnnotationParser.parseOrFail |
+        NumberParser.parseOrFail |
+        BooleanParser.parseOrFail |
+        BStringParser.parseOrFail |
+        StringLiteralParser.parseOrFail |
+        IdentifierParser.parseOrFail
     }
 
 }

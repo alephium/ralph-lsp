@@ -171,4 +171,53 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "assignments to a tuple" should {
+    "succeed" when {
+      "right expression is a method call" in {
+        val assignment = parseAssignment("(a, mut b, c) = cache.get(id).toTuple")
+
+        val left = assignment.expressionLeft.asInstanceOf[SoftAST.Group[_, _]]
+        left.toCode() shouldBe "(a, mut b, c)"
+
+        val right = assignment.expressionRight.asInstanceOf[SoftAST.MethodCall]
+        right.toCode() shouldBe "cache.get(id).toTuple"
+      }
+    }
+  }
+
+  "assignments to a mutable binding" should {
+    "succeed" when {
+      "right expression is a variable" in {
+        val assignment = parseAssignment("mut number = -1e18")
+
+        val left = assignment.expressionLeft.asInstanceOf[SoftAST.MutableBinding]
+        left.toCode() shouldBe "mut number"
+
+        val right = assignment.expressionRight.asInstanceOf[SoftAST.Number]
+        right.toCode() shouldBe "-1e18"
+      }
+
+      "right expression is a ByteVec" in {
+        // ByteVec is valid syntax, but has no parser implemented.
+        // Until then, ByteVec is reported as Unresolved.
+        val body = parseSoft("mut number = #00112233")
+
+        body.parts should have size 2
+        val assignment = body.parts.head.part.asInstanceOf[SoftAST.Assignment]
+        val unresolved = body.parts.last.part.asInstanceOf[SoftAST.Unresolved]
+
+        val left = assignment.expressionLeft.asInstanceOf[SoftAST.MutableBinding]
+        left.toCode() shouldBe "mut number"
+
+        assignment.expressionRight shouldBe SoftAST.ExpressionExpected(indexOf("mut number = >><<#00112233"))
+
+        unresolved shouldBe
+          Unresolved(
+            index = indexOf("mut number = >>#00112233<<"),
+            text = "#00112233"
+          )
+      }
+    }
+  }
+
 }

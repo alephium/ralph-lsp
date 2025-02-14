@@ -351,7 +351,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
               goToDefinitionSoft()(
                 """
                   |let >>varA<<
-                  |copy = var@@A
+                  |let copy = var@@A
                   |""".stripMargin
               )
             }

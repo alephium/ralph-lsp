@@ -26,7 +26,7 @@ private case object AssignmentParser {
         Index ~
         TokenParser.parseOrFail(Token.Equal).? ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parse ~
+        ExpressionParser.parseSubset(rightExpression) ~
         Index
     } map {
       case (from, left, postIdentifierSpace, equalIndex, equalToken, postEqualSpace, right, to) =>
@@ -50,7 +50,7 @@ private case object AssignmentParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Equal) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parse ~
+        ExpressionParser.parseSubset(rightExpression) ~
         Index
     } map {
       case (from, identifier, postIdentifierSpace, equalToken, postEqualSpace, expression, to) =>
@@ -67,8 +67,20 @@ private case object AssignmentParser {
   private def leftExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
       MethodCallParser.parseOrFail |
+        MutableBindingParser.parseOrFail |
+        ParameterParser.parseOrFail |
+        NumberParser.parseOrFail |
+        BooleanParser.parseOrFail |
+        BStringParser.parseOrFail |
+        StringLiteralParser.parseOrFail |
+        IdentifierParser.parseOrFail
+    }
+
+  private def rightExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
+    P {
+      InfixCallParser.parseOrFail |
+        MethodCallParser.parseOrFail |
         BlockParser.parseOrFail |
-        VariableDeclarationParser.parseOrFail |
         MutableBindingParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
@@ -76,6 +88,7 @@ private case object AssignmentParser {
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
+        StringLiteralParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 

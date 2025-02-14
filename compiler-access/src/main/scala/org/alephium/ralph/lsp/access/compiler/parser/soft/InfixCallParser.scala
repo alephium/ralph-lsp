@@ -14,7 +14,7 @@ private case object InfixCallParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.InfixOperatorOrFail ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parse ~
+        ExpressionParser.parseSubset(rightExpression) ~
         Index
     } map {
       case (from, leftExpression, preOperatorSpace, operator, postOperatorSpace, rightExpression, to) =>
@@ -31,14 +31,25 @@ private case object InfixCallParser {
   private def leftExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
       MethodCallParser.parseOrFail |
-        BlockParser.parseOrFail |
-        VariableDeclarationParser.parseOrFail |
-        MutableBindingParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
-        ParameterParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
+        StringLiteralParser.parseOrFail |
+        IdentifierParser.parseOrFail
+    }
+
+  private def rightExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
+    P {
+      InfixCallParser.parseOrFail |
+        MethodCallParser.parseOrFail |
+        BlockParser.parseOrFail |
+        ReferenceCallParser.parseOrFail |
+        AnnotationParser.parseOrFail |
+        NumberParser.parseOrFail |
+        BooleanParser.parseOrFail |
+        BStringParser.parseOrFail |
+        StringLiteralParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 

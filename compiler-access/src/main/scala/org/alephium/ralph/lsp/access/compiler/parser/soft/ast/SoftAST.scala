@@ -272,7 +272,7 @@ object SoftAST {
 
   case class TailExpressionBlock(
       index: SourceIndex,
-      preExpressionSpace: Space,
+      preExpressionSpace: Option[Space],
       expression: ExpressionAST)
     extends SoftAST
 
@@ -443,7 +443,7 @@ object SoftAST {
       index: SourceIndex,
       dot: TokenDocumented[Token.Dot.type],
       postDotSpace: Option[Space],
-      rightExpression: ReferenceCallOrIdentifier)
+      rightExpression: ExpressionAST)
     extends SoftAST
 
   case class Return(
