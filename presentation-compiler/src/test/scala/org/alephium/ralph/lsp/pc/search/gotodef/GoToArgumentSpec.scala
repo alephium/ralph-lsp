@@ -258,7 +258,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "initial character is selected" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -271,7 +271,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "mid character is selected" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -284,12 +284,12 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "last character is selected" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
           |    // last character
-          |    let result = interface@@.function()
+          |    let result = interfac@@e.function()
           |  }
           |}
           |""".stripMargin
@@ -297,7 +297,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "function and the argument have the same name" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract MyContract(interface: MyInterface) {
           |
@@ -316,14 +316,14 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "there are multiple arguments with the same name" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |// the furthest argument
           |Contract GoToField(>>interface<<: MyInterface) {
           |
           |  // the nearest argument
           |  pub fn local_function(>>interface<<: MyInterface) -> () {
-          |    let result = interface@@.function()
+          |    let result = interfac@@e.function()
           |  }
           |}
           |""".stripMargin
@@ -349,7 +349,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
           |Contract GoToField(>>param<<: MyParam) extends Parent1() {
           |
           |  pub fn local_function(>>param<<: MyParam) -> () {
-          |    let result = param@@.function()
+          |    let result = para@@m.function()
           |  }
           |}
           |""".stripMargin
@@ -358,7 +358,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
     "template arguments are passed as inheritance parameter" when {
       "there are no duplicates" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Abstract Contract SomeType() { }
             |
@@ -371,27 +371,27 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
       "duplicates exist" when {
         "template parameter is duplicated" in {
-          goToDefinitionStrict()(
+          goToDefinition()(
             """
               |Abstract Contract SomeType() { }
               |
               |Abstract Contract Parent(param: SomeType) { }
               |
               |Abstract Contract Child(>>param<<: SomeType,
-              |                        >>param<<: SomeType) extends Parent(@@param) { }
+              |                        >>param<<: SomeType) extends Parent(p@@aram) { }
               |""".stripMargin
           )
         }
 
         "function parameter is duplicated" should {
           "not be included in search result" in {
-            goToDefinitionStrict()(
+            goToDefinition()(
               """
                 |Abstract Contract SomeType() { }
                 |
                 |Abstract Contract Parent(param: SomeType) { }
                 |
-                |Abstract Contract Child(>>param<<: SomeType) extends Parent(@@param) {
+                |Abstract Contract Child(>>param<<: SomeType) extends Parent(p@@aram) {
                 |
                 |  // the parameter `param` is not in the scope of template `param`, it's a function level scope,
                 |  // so it should not be included in the search result.

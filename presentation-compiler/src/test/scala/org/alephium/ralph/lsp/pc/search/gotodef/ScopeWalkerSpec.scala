@@ -26,7 +26,7 @@ class ScopeWalkerSpec extends AnyWordSpec with Matchers {
   "allow variable access" when {
     "defined outside the scope of a block" when {
       "defined before usage" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
               |Contract Test() {
               |
@@ -63,7 +63,7 @@ class ScopeWalkerSpec extends AnyWordSpec with Matchers {
         }
 
         "prioritise local definition over outside definition" in {
-          goToDefinitionStrict()(
+          goToDefinition()(
             """
               |Contract Test() {
               |
@@ -83,7 +83,7 @@ class ScopeWalkerSpec extends AnyWordSpec with Matchers {
       }
 
       "defined in a for loop" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |
@@ -103,7 +103,7 @@ class ScopeWalkerSpec extends AnyWordSpec with Matchers {
 
     "defined within one of the nested blocks and accessed in another" when {
       "define before usage" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
               |Contract Test() {
               |
@@ -185,7 +185,7 @@ class ScopeWalkerSpec extends AnyWordSpec with Matchers {
   "disallow variable access" when {
     "definition is in a different scope" when {
       "defined before usage" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |
@@ -204,7 +204,7 @@ class ScopeWalkerSpec extends AnyWordSpec with Matchers {
       }
 
       "defined after usage" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |
@@ -223,7 +223,7 @@ class ScopeWalkerSpec extends AnyWordSpec with Matchers {
       }
 
       "defined after usage but in an inner scope" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |
@@ -242,7 +242,7 @@ class ScopeWalkerSpec extends AnyWordSpec with Matchers {
       }
 
       "defined in a for loop" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |

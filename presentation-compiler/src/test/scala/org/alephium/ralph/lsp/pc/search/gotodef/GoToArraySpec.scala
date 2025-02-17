@@ -24,7 +24,7 @@ class GoToArraySpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "there is no array definition" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract Test()  {
           |  fn main() -> () {
