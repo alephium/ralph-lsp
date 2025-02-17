@@ -20,8 +20,14 @@ jobs:
         id: get_version
         run: |
           version=$(echo ${GITHUB_REF/refs\/tags\//} | cut -c 2-)
-          echo "VERSION=$version" >> $GITHUB_OUTPUT
+          echo "VERSION=$version" >> $GITHUB_ENV
+          if [[ "$version" == *"-rc"* ]]; then
+            echo "IS_RC=true" >> $GITHUB_ENV
+          else
+            echo "IS_RC=false" >> $GITHUB_ENV
+          fi
         shell: bash
+
       - run: sbt "compile; lsp-server/assembly; universal:packageBin"
 
       - name: Install jq
@@ -30,7 +36,7 @@ jobs:
       - name: Update version in package.json
         run: |
           cd plugin-vscode
-          jq --arg version "${{ steps.get_version.outputs.VERSION }}" '.version = $version' package.json > tmp_package.json && mv tmp_package.json package.json
+          jq --arg version "${{ env.VERSION }}" '.version = $version' package.json > tmp_package.json && mv tmp_package.json package.json
 
       - name: Package VSCode Extension
         run: |
@@ -38,7 +44,12 @@ jobs:
           cd plugin-vscode
           npm install -g vsce
           npm install
-          vsce package
+          if [[ "${{ env.IS_RC }}" == "true" ]]; then
+            vsce package --pre-release
+          else
+            vsce package
+          fi
+        shell: bash
 
       - name: Create Release
         id: create_release
@@ -46,11 +57,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.get_version.outputs.VERSION }}
-          release_name: v${{ steps.get_version.outputs.VERSION }}
+          tag_name: v${{ env.VERSION }}
+          release_name: v${{ env.VERSION }}
           body: Some solid code
           draft: false
-          prerelease: false
+          prerelease: ${{ env.IS_RC }}
 
       - name: Upload Release Asset (Jar)
         uses: actions/upload-release-asset@v1
@@ -59,7 +70,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: lsp-server/target/scala-2.13/ralph-lsp.jar
-          asset_name: ralph-lsp-${{ steps.get_version.outputs.VERSION }}.jar
+          asset_name: ralph-lsp-${{ env.VERSION }}.jar
           asset_content_type: application/java-archive
 
       - name: Upload Release Asset (Universal zip)
@@ -69,7 +80,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: target/universal/ralph-lsp-0.1.0-SNAPSHOT.zip
-          asset_name: ralph-lsp-${{ steps.get_version.outputs.VERSION }}.zip
+          asset_name: ralph-lsp-${{ env.VERSION }}.zip
           asset_content_type: application/zip
 
       - name: Upload Release Asset (VSCode Extension)
@@ -78,8 +89,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: plugin-vscode/ralph-lsp-${{ steps.get_version.outputs.VERSION }}.vsix
-          asset_name: ralph-lsp-${{ steps.get_version.outputs.VERSION }}.vsix
+          asset_path: plugin-vscode/ralph-lsp-${{ env.VERSION }}.vsix
+          asset_name: ralph-lsp-${{ env.VERSION }}.vsix
           asset_content_type: application/octet-stream
 
       - name: Publish VSCode Extension
@@ -87,4 +98,9 @@ jobs:
           VSCE_PAT: ${{ secrets.VSCODE_PUBLISH_TOKEN }}
         run: |
           cd plugin-vscode
-          vsce publish ${{ steps.get_version.outputs.VERSION }}
+          if [[ "${{ env.IS_RC }}" == "true" ]]; then
+            vsce publish --pre-release
+          else
+            vsce publish
+          fi
+        shell: bash
