@@ -69,8 +69,8 @@ class CommentsSpec extends AnyWordSpec with Matchers {
       SoftAST.Comment(
         index = indexOf {
           """// one
-            |>>// two
-            |<<""".stripMargin
+            |>>// two<<
+            |""".stripMargin
         },
         doubleForwardSlash = DoubleForwardSlash(
           index = indexOf {
@@ -98,15 +98,7 @@ class CommentsSpec extends AnyWordSpec with Matchers {
             text = "two"
           )
         ),
-        postTextSpace = Some(
-          SpaceNewline(
-            index = indexOf {
-              """// one
-                |// two>>
-                |<<""".stripMargin
-            }
-          )
-        )
+        postTextSpace = None
       )
 
     // assert the second comment so failures are easier to debug
@@ -120,7 +112,15 @@ class CommentsSpec extends AnyWordSpec with Matchers {
           expectedFirstComment,
           expectedSecondComment
         ),
-        postCommentSpace = None
+        postCommentSpace = Some(
+          SpaceNewline(
+            index = indexOf {
+              """// one
+                |// two>>
+                |<<""".stripMargin
+            }
+          )
+        )
       )
 
     comment shouldBe expected
@@ -159,43 +159,55 @@ class CommentsSpec extends AnyWordSpec with Matchers {
       }
 
       "// is on a new line" in {
-        val code =
-          """//
-            |//""".stripMargin
-
         val comment =
-          parseComment(code)
+          parseComment {
+            """//
+              |//""".stripMargin
+          }
 
         val expected =
           SoftAST.Comments(
-            index = indexOf(s">>$code<<"),
+            index = indexOf {
+              """>>//
+                |//<<""".stripMargin
+            },
             preCommentSpace = None,
             comments = Seq(
               SoftAST.Comment(
-                index = indexOf(s">>$code<<"),
+                index = indexOf {
+                  """>>//
+                    |<<//""".stripMargin
+                },
                 doubleForwardSlash = DoubleForwardSlash(
                   indexOf {
                     """>>//<<
                       |//""".stripMargin
                   }
                 ),
-                preTextSpace = Some(
+                preTextSpace = None,
+                text = None,
+                postTextSpace = Some(
                   SpaceNewline(
                     indexOf {
                       """//>>
                         |<<//""".stripMargin
                     }
                   )
+                )
+              ),
+              SoftAST.Comment(
+                index = indexOf {
+                  """//
+                    |>>//<<""".stripMargin
+                },
+                doubleForwardSlash = DoubleForwardSlash(
+                  indexOf {
+                    """//
+                      |>>//<<""".stripMargin
+                  }
                 ),
-                text = Some(
-                  SoftAST.CodeString(
-                    index = indexOf {
-                      """//
-                        |>>//<<""".stripMargin
-                    },
-                    text = "//"
-                  )
-                ),
+                preTextSpace = None,
+                text = None,
                 postTextSpace = None
               )
             ),
