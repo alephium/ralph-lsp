@@ -27,4 +27,10 @@ private object SpaceParser {
         SoftAST.Space(text)
     }
 
+  def parseOrFailSingleLine[Unknown: P]: P[SoftAST.Space] =
+    P(CodeParser.parseOrFail(TokenParser.WhileInOrFail(Token.Space, Token.Tab).!)) map {
+      text =>
+        SoftAST.Space(text)
+    }
+
 }

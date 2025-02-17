@@ -194,6 +194,7 @@ object SoftAST {
       index: SourceIndex,
       abstractToken: TokenDocumented[Token.Abstract.type],
       postAbstractSpace: Option[Space])
+    extends SoftAST
 
   case class Event(
       index: SourceIndex,

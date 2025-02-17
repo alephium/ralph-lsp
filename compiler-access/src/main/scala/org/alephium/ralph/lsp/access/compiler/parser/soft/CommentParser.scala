@@ -40,6 +40,7 @@ private object CommentParser {
       Index ~
         SpaceParser.parseOrFail.? ~
         one.rep(1) ~
+        // read the tail space so that the next token/expression is parsable
         SpaceParser.parseOrFail.? ~
         Index
     } map {
@@ -63,9 +64,10 @@ private object CommentParser {
     P {
       Index ~
         TokenParser.parseOrFailUndocumented(Token.DoubleForwardSlash) ~
-        SpaceParser.parseOrFail.? ~
+        SpaceParser.parseOrFailSingleLine.? ~
         TextParser.parseOrFail(Token.Newline).? ~
-        SpaceParser.parseOrFail.? ~
+        // read the tail space only if the next line is also a comment
+        (SpaceParser.parseOrFail ~ &(TokenParser.parseOrFailUndocumented(Token.DoubleForwardSlash))).? ~
         Index
     } map {
       case (from, doubleForwardSlash, preTextSpace, text, postTextSpace, to) =>
