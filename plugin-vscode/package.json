@@ -1,25 +1,37 @@
 {
   "name": "ralph-lsp",
-  "displayName": "Ralph LSP (Alephium)",
-  "description": "Language server for Ralph - The smart contract programming language for the Alephium blockchain",
+  "displayName": "Ralph - Official",
+  "description": "The official LSP for Ralph, the smart contract language of Alephium. Features syntax highlighting, autocompletion, linting, and more.",
   "author": "Alephium",
   "license": "LGPL-3.0",
   "version": "0.0.1",
   "publisher": "Alephium",
   "keywords": [
     "ralph",
-    "RALPH",
-    "Ralph",
+    "smart contracts",
+    "alephium",
+    "blockchain",
+    "language server",
     "lsp",
-    "LSP",
-    "ralph-lsp",
-    "RALPH-LSP",
-    "alephium"
+    "developer tools",
+    "syntax highlighting",
+    "autocompletion",
+    "ralph-lsp"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/alephium/ralph-lsp"
   },
+  "bugs": {
+    "url": "https://github.com/alephium/ralph-lsp/issues"
+  },
+  "categories": [
+    "Programming Languages",
+    "Blockchain",
+    "Smart Contracts",
+    "Linters"
+  ],
+  "icon": "alephium-logo.png",
   "engines": {
     "vscode": "^1.75.0"
   },
