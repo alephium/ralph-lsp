@@ -78,6 +78,13 @@ object Token {
   case object ForwardArrow                                    extends Operator("->") with Reserved
   case object Or                                              extends Operator("||") with Reserved with InfixOperator
   case object And                                             extends Operator("&&") with Reserved with InfixOperator
+  case object ShiftLeft                                       extends Operator("<<") with Reserved with InfixOperator
+  case object ShiftRight                                      extends Operator(">>") with Reserved with InfixOperator
+  case object ModuloAddition                                  extends Operator("|+|") with Reserved with InfixOperator
+  case object ModuloSubtraction                               extends Operator("|-|") with Reserved with InfixOperator
+  case object ModuloExponentiation                            extends Operator("|**|") with Reserved with InfixOperator
+  case object ModuloMultiplication                            extends Operator("|*|") with Reserved with InfixOperator
+  case object Exponentiation                                  extends Operator("**") with Reserved with InfixOperator
   case object Minus                                           extends Operator("-") with Reserved with InfixOperator
   case object Plus                                            extends Operator("+") with Reserved with InfixOperator
   case object Asterisk                                        extends Operator("*") with Reserved with InfixOperator
