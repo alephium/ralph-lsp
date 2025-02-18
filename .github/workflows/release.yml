@@ -23,8 +23,13 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
           if [[ "$version" == *"-rc"* ]]; then
             echo "IS_RC=true" >> $GITHUB_ENV
+            # Adjust the version for pre-release
+            release_version=$(echo $version | sed -E 's/-rc[0-9]+$//')
+            pre_release_version=$(echo $release_version | awk -F. '{OFS="."; $2+=1; print $0}')
+            echo "PRE_RELEASE_VERSION=$pre_release_version" >> $GITHUB_ENV
           else
             echo "IS_RC=false" >> $GITHUB_ENV
+            echo "PRE_RELEASE_VERSION=$version" >> $GITHUB_ENV
           fi
         shell: bash
 
@@ -36,7 +41,11 @@ jobs:
       - name: Update version in package.json
         run: |
           cd plugin-vscode
-          jq --arg version "${{ env.VERSION }}" '.version = $version' package.json > tmp_package.json && mv tmp_package.json package.json
+          if [[ "${{ env.IS_RC }}" == "true" ]]; then
+            jq --arg version "${{ env.PRE_RELEASE_VERSION }}" '.version = $version' package.json > tmp_package.json && mv tmp_package.json package.json
+          else
+            jq --arg version "${{ env.VERSION }}" '.version = $version' package.json > tmp_package.json && mv tmp_package.json package.json
+          fi
 
       - name: Package VSCode Extension
         run: |
@@ -89,8 +98,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: plugin-vscode/ralph-lsp-${{ env.VERSION }}.vsix
-          asset_name: ralph-lsp-${{ env.VERSION }}.vsix
+          asset_path: plugin-vscode/ralph-lsp-${{ env.PRE_RELEASE_VERSION }}.vsix
+          asset_name: ralph-lsp-${{ env.PRE_RELEASE_VERSION }}.vsix
           asset_content_type: application/octet-stream
 
       - name: Publish VSCode Extension
