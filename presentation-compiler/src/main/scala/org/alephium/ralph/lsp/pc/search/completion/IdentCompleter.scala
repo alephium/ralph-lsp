@@ -48,7 +48,7 @@ object IdentCompleter {
           workspace = workspace
         )
 
-      case Some(parent @ Node(_: Ast.IdentSelector, _)) =>
+      case Some(parent @ Node(_: Ast.IdentSelector[_], _)) =>
         parent.parent match {
           case Some(Node(selector: Ast.LoadDataBySelectors[_], _)) =>
             ExprCompleter.suggest(
