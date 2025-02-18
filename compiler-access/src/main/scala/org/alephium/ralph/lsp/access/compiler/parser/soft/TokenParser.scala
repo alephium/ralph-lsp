@@ -63,20 +63,11 @@ private object TokenParser {
   /**
    * Parses all tokens of type [[Token.InfixOperator]] and also their comments.
    */
-  def InfixOperatorOrFail[Unknown: P]: P[SoftAST.TokenDocumented[Token.InfixOperator]] = {
-    val infixOps =
-      ParserUtil.orCombinator(
-        items = Token.infix.diff(Seq(Token.ForwardSlash)).iterator, // remove forward-slash
-        parser = TokenParser.parseOrFail(_: Token.InfixOperator)
-      )
-
-    // Forward-slash followed by another forward-slash is not an Operator.
-    // `//` is reserved as a comment prefix.
-    def forwardSlashOperator =
-      P(TokenParser.parseOrFail(Token.ForwardSlash) ~ !Token.ForwardSlash.lexeme)
-
-    infixOps | forwardSlashOperator
-  }
+  def InfixOperatorOrFail[Unknown: P]: P[SoftAST.TokenDocumented[Token.InfixOperator]] =
+    ParserUtil.orCombinator(
+      items = Token.infix.iterator,
+      parser = TokenParser.parseOrFail(_: Token.InfixOperator)
+    )
 
   /**
    * Reads characters until at least one of the input tokens is matched.

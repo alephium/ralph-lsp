@@ -48,6 +48,14 @@ class TokenParserSpec extends AnyWordSpec {
       "++" in {
         Token.PlusEquals.otherReservedTokensWithThisPrefix shouldBe empty
       }
+
+      "/" in {
+        Token.ForwardSlash.otherReservedTokensWithThisPrefix should contain only Token.DoubleForwardSlash
+      }
+
+      "//" in {
+        Token.DoubleForwardSlash.otherReservedTokensWithThisPrefix shouldBe empty
+      }
     }
   }
 
