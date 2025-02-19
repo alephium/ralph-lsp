@@ -26,14 +26,14 @@ private object UnresolvedParser {
   def parseOrFail[Unknown: P](stop: Token*): P[SoftAST.Unresolved] =
     P {
       Index ~
-        CodeParser.parseOrFail(TokenParser.WhileNotOrFail(stop :+ Token.Space :+ Token.Newline: _*).!) ~
         CommentParser.parseOrFail.? ~
+        CodeParser.parseOrFail(TokenParser.WhileNotOrFail(stop :+ Token.Space :+ Token.Newline: _*).!) ~
         Index
     } map {
-      case (from, text, tailComment, to) =>
+      case (from, comment, text, to) =>
         SoftAST.Unresolved(
           index = range(from, to),
-          documentation = tailComment,
+          documentation = comment,
           code = text
         )
     }
