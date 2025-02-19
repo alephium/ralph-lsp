@@ -22,13 +22,13 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 private object SpaceParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.Space] =
-    P(CodeParser.parseOrFail(TokenParser.WhileInOrFail(Token.Space, Token.Tab, Token.Newline).!)) map {
+    P(CodeParser.parseOrFail(TokenParser.WhileInOrFail(Token.spaces).!)) map {
       text =>
         SoftAST.Space(text)
     }
 
   def parseOrFailSingleLine[Unknown: P]: P[SoftAST.Space] =
-    P(CodeParser.parseOrFail(TokenParser.WhileInOrFail(Token.Space, Token.Tab).!)) map {
+    P(CodeParser.parseOrFail(TokenParser.WhileInOrFail(Token.inlineSpaces).!)) map {
       text =>
         SoftAST.Space(text)
     }

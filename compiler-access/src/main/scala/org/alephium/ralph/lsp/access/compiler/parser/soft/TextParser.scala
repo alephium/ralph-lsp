@@ -31,7 +31,7 @@ private object TextParser {
    * @return Non-empty text string.
    */
   def parseOrFail[Unknown: P](stop: Token*): P[SoftAST.CodeString] =
-    P(Index ~ TokenParser.WhileNotOrFail(stop: _*).! ~ Index) map {
+    P(Index ~ TokenParser.WhileNotOrFail(stop).! ~ Index) map {
       case (from, text, to) =>
         SoftAST.CodeString(
           text = text,

@@ -97,7 +97,7 @@ private object BlockBodyParser {
         InheritanceParser.parseOrFail |
         expression(isRootBlock) |
         CommentParser.parseOrFail |
-        UnresolvedParser.parseOrFail(stop: _*)
+        UnresolvedParser.parseOrFail(stop)
     }
 
   private def expression[Unknown: P](isRootBlock: Boolean): P[SoftAST.BodyPartAST] =
