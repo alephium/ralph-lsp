@@ -23,9 +23,10 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
           if [[ "$version" == *"-rc"* ]]; then
             echo "IS_RC=true" >> $GITHUB_ENV
-            # Adjust the version for pre-release
-            release_version=$(echo $version | sed -E 's/-rc[0-9]+$//')
-            pre_release_version=$(echo $release_version | awk -F. '{OFS="."; $2+=1; print $0}')
+            # Remove the patch version and `-rc` suffix
+            base_version=$(echo $version | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+-rc[0-9]+/\1./')
+            current_date=$(date +"%Y%m%d%H")
+            pre_release_version="${base_version}$current_date"
             echo "PRE_RELEASE_VERSION=$pre_release_version" >> $GITHUB_ENV
           else
             echo "IS_RC=false" >> $GITHUB_ENV
