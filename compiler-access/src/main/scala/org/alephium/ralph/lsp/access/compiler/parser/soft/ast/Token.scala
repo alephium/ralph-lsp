@@ -64,6 +64,7 @@ object Token {
    * These tokens cannot be used as identifier [[SoftAST.Identifier]].
    */
   sealed trait Reserved      extends Token
+  sealed trait Space         extends Token
   sealed trait InfixOperator extends Token
   sealed trait Expression    extends Token // A token that is also an expression.
 
@@ -109,10 +110,10 @@ object Token {
   case object Dot                                              extends Delimiter(".") with Reserved
   case object Colon                                            extends Delimiter(":") with Reserved
   case object Semicolon                                        extends Delimiter(";") with Reserved
-  case object Newline                                          extends Delimiter(System.lineSeparator())
-  case object Space                                            extends Delimiter(" ")
-  case object Tab                                              extends Delimiter("\t")
   case object DoubleForwardSlash                               extends Delimiter("//") with Reserved
+  case object Newline                                          extends Delimiter(System.lineSeparator()) with Space
+  case object Space                                            extends Delimiter(" ") with Space
+  case object Tab                                              extends Delimiter("\t") with Space
 
   sealed abstract class Punctuator(override val lexeme: String) extends Token
   case object Hash                                              extends Punctuator("#") with Reserved
@@ -185,5 +186,14 @@ object Token {
       .sealedInstancesOf[InfixOperator]
       .toArray
       .sorted
+
+  val spaces: List[Space] =
+    EnumerationMacros
+      .sealedInstancesOf[Space]
+      .toList
+      .sorted
+
+  val inlineSpaces: List[Space] =
+    spaces.filter(_ != Token.Newline)
 
 }

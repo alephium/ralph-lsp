@@ -12,7 +12,7 @@ private object CodeParser {
       Index ~
         // Ensure that the input token is not a prefix of another token.
         // For example, if the input token is `+` ensure that the next token is not `+=` or `++`.
-        !TokenParser.WhileInOrFail(token.otherReservedTokensWithThisPrefix: _*) ~
+        !TokenParser.WhileInOrFail(token.otherReservedTokensWithThisPrefix) ~
         token.lexeme ~
         Index
     } map {
