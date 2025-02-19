@@ -13,7 +13,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
  *        ↑______________↑
  * }}}
  */
-private case object AssignmentParser {
+private object AssignmentParser {
 
   /**
    * Parses a required assignment and reports errors if it is missing.

@@ -19,7 +19,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private case object ParameterParser {
+private object ParameterParser {
 
   def parse[Unknown: P]: P[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]] =
     GroupParser.parse(

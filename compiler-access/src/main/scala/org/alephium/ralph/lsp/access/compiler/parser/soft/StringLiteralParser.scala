@@ -5,7 +5,7 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-object StringLiteralParser {
+private object StringLiteralParser {
 
   /**
    * Parses text enclosed in quotes, e.g. `"some text"`.
