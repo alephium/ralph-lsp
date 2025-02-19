@@ -34,7 +34,7 @@ object Demo extends App {
         |     for(a; b; c) {
         |     }
         |     // while loop
-        |     while(a = b) {
+        |     while (true) {
         |       // infix assignment
         |       let sum = 1 + 2
         |     }
