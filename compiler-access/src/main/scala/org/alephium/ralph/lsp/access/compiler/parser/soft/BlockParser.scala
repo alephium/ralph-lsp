@@ -27,19 +27,15 @@ private object BlockParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.OpenCurly) ~
-        SpaceParser.parseOrFail.? ~
         BlockBodyParser.parseOrFailChild(Token.CloseCurly) ~
-        SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.CloseCurly) ~
         Index
     } map {
-      case (from, openCurly, preBodySpace, body, postBodySpace, closeCurly, to) =>
+      case (from, openCurly, body, closeCurly, to) =>
         SoftAST.Block(
           index = range(from, to),
           openCurly = openCurly,
-          preBodySpace = preBodySpace,
           body = body,
-          postBodySpace = postBodySpace,
           closeCurly = closeCurly
         )
     }

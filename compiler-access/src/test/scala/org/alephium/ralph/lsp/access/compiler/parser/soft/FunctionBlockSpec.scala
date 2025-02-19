@@ -18,6 +18,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST.SpaceOne
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -51,8 +52,8 @@ class FunctionBlockSpec extends AnyWordSpec with Matchers {
 
         block.body shouldBe
           SoftAST.BlockBody(
-            index = indexOf("fn -> { >><<}"),
-            prePartsSpace = None,
+            index = indexOf("fn -> {>> <<}"),
+            prePartsSpace = Some(SpaceOne(indexOf("fn -> {>> <<}"))),
             parts = Seq.empty
           )
       }
