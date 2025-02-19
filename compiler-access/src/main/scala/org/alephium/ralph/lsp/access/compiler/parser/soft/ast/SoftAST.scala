@@ -253,9 +253,7 @@ object SoftAST {
   case class Block(
       index: SourceIndex,
       openCurly: TokenDocExpectedAST[Token.OpenCurly.type],
-      preBodySpace: Option[Space],
       body: BlockBody,
-      postBodySpace: Option[Space],
       closeCurly: TokenDocExpectedAST[Token.CloseCurly.type])
     extends ExpressionAST
 

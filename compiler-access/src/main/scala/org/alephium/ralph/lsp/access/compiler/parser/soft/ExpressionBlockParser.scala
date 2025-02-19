@@ -5,7 +5,7 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
-object ExpressionBlockParser {
+private object ExpressionBlockParser {
 
   /**
    * Parses two or more expressions as a block.
