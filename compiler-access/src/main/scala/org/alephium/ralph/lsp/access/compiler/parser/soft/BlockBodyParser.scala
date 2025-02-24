@@ -87,7 +87,7 @@ private object BlockBodyParser {
 
   private def part[Unknown: P](
       isRootBlock: Boolean,
-      stop: Seq[Token]): P[SoftAST.BodyPartAST] =
+      stop: Seq[Token]): P[SoftAST.BlockPartAST] =
     P {
       TemplateParser.parseOrFail |
         EventParser.parseOrFail |
@@ -100,7 +100,7 @@ private object BlockBodyParser {
         UnresolvedParser.parseOrFail(stop)
     }
 
-  private def expression[Unknown: P](isRootBlock: Boolean): P[SoftAST.BodyPartAST] =
+  private def expression[Unknown: P](isRootBlock: Boolean): P[SoftAST.BlockPartAST] =
     if (isRootBlock)
       ExpressionBlockParser.parseOrFail
     else

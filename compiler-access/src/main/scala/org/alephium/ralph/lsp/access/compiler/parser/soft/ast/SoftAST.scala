@@ -87,9 +87,9 @@ object SoftAST {
 
   }
 
-  sealed trait BodyPartAST extends SoftAST
+  sealed trait BlockPartAST extends SoftAST
 
-  sealed trait ExpressionAST extends BodyPartAST
+  sealed trait ExpressionAST extends BlockPartAST
 
   case class ExpressionExpected(
       index: SourceIndex)
@@ -188,7 +188,7 @@ object SoftAST {
       postParamSpace: Option[Space],
       inheritance: Seq[Inheritance],
       block: Option[Block])
-    extends BodyPartAST
+    extends BlockPartAST
 
   case class Abstract(
       index: SourceIndex,
@@ -203,7 +203,7 @@ object SoftAST {
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
       params: Group[Token.OpenParen.type, Token.CloseParen.type])
-    extends BodyPartAST
+    extends BlockPartAST
 
   case class Struct(
       index: SourceIndex,
@@ -212,14 +212,14 @@ object SoftAST {
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
       params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
-    extends BodyPartAST
+    extends BlockPartAST
 
   case class Import(
       index: SourceIndex,
       importToken: TokenDocumented[Token.Import.type],
       postImportSpace: Option[Space],
       string: Option[StringLiteral])
-    extends BodyPartAST
+    extends BlockPartAST
 
   /** Syntax: `implements or extends contract(arg1, arg2 ...)` */
   case class Inheritance(
@@ -228,7 +228,7 @@ object SoftAST {
       postInheritanceTypeSpace: Option[Space],
       headReference: ReferenceCallOrIdentifier,
       tailReferencesOrSpace: Option[Either[Space, Seq[TailReferences]]])
-    extends BodyPartAST {
+    extends BlockPartAST {
 
     /** Collects all inheritance references defined. */
     def references: Seq[ReferenceCallOrIdentifier] =
@@ -267,7 +267,7 @@ object SoftAST {
       index: SourceIndex,
       headExpression: ExpressionAST,
       tailExpressions: Seq[TailExpressionBlock])
-    extends BodyPartAST
+    extends BlockPartAST
 
   case class TailExpressionBlock(
       index: SourceIndex,
@@ -277,7 +277,7 @@ object SoftAST {
 
   case class BlockBodyPart(
       index: SourceIndex,
-      part: BodyPartAST,
+      part: BlockPartAST,
       postPartSpace: Option[Space])
     extends SoftAST
 
@@ -291,7 +291,7 @@ object SoftAST {
       signature: FunctionSignature,
       postSignatureSpace: Option[Space],
       block: Option[Block])
-    extends BodyPartAST
+    extends BlockPartAST
 
   case class FunctionSignature(
       index: SourceIndex,
@@ -383,7 +383,7 @@ object SoftAST {
       preCommentSpace: Option[Space],
       comments: Seq[Comment],
       postCommentSpace: Option[Space])
-    extends BodyPartAST
+    extends BlockPartAST
 
   case class Comment(
       index: SourceIndex,
@@ -391,7 +391,7 @@ object SoftAST {
       preTextSpace: Option[Space],
       text: Option[CodeString],
       postTextSpace: Option[Space])
-    extends BodyPartAST
+    extends BlockPartAST
 
   case class Unresolved(
       index: SourceIndex,
@@ -399,7 +399,7 @@ object SoftAST {
       code: CodeString)
     extends ErrorAST(s"Cannot resolve '${code.text}'")
        with CodeDocumentedAST
-       with BodyPartAST
+       with BlockPartAST
 
   sealed trait ReferenceCallOrIdentifier extends SoftAST {
 

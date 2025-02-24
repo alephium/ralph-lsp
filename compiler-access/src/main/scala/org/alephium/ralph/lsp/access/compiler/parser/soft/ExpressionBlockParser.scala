@@ -23,7 +23,7 @@ private object ExpressionBlockParser {
    *
    * @return An expression-block when multiple expressions are defined, otherwise a single expression-ast.
    */
-  def parseOrFail[Unknown: P]: P[SoftAST.BodyPartAST] =
+  def parseOrFail[Unknown: P]: P[SoftAST.BlockPartAST] =
     P {
       Index ~
         ExpressionParser.parseOrFail ~

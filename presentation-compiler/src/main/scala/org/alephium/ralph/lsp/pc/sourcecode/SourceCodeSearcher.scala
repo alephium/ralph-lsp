@@ -829,7 +829,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    */
   private def collectInheritanceDeclaration(
       inheritanceId: SoftAST.IdentifierAST,
-      target: SoftAST.BodyPartAST): Iterator[SoftAST.ReferenceCallOrIdentifier] =
+      target: SoftAST.BlockPartAST): Iterator[SoftAST.ReferenceCallOrIdentifier] =
     inheritanceId match {
       case inheritanceId: SoftAST.Identifier =>
         collectInheritanceDeclaration(
@@ -851,7 +851,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    */
   private def collectInheritanceDeclaration(
       inheritanceId: SoftAST.Identifier,
-      target: SoftAST.BodyPartAST): Iterator[SoftAST.ReferenceCallOrIdentifier] =
+      target: SoftAST.BlockPartAST): Iterator[SoftAST.ReferenceCallOrIdentifier] =
     target match {
       case template: SoftAST.Template =>
         collectInheritanceDeclaration(
