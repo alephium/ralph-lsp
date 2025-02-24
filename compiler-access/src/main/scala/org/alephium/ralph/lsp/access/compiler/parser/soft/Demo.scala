@@ -20,7 +20,7 @@ object Demo extends App {
         |  // This multiline comment
         |  // documents this function
         |  @using(left = right)
-        |  fn function(nested_tuple: (A, (B, C))) -> ABC {
+        |  fn function(@using nested_tuple: (A, (B, C))) -> ABC {
         |
         |     // document this
         |     let int = 1
