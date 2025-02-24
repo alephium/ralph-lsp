@@ -48,13 +48,14 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
           .sample
           .get
 
-      val tree = parsed.astSoft.fetch().value
-      tree.parts should have size 1
-      val bodyPart = tree.parts.head
-      bodyPart.part shouldBe a[SoftAST.Template]
+      val tree  = parsed.astSoft.fetch().value
+      val parts = tree.partsNonEmpty
+      parts should have size 1
+      val part = parts.head
+      part shouldBe a[SoftAST.Template]
 
       SourceCodeSearcher.collectImplementingChildren(
-        source = SourceLocation.CodeSoft(bodyPart, parsed),
+        source = SourceLocation.CodeSoft(part, parsed),
         allSource = ArraySeq.empty
       ) shouldBe empty
 
@@ -78,24 +79,26 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
       val softAST =
         parsed.astSoft.fetch().value
 
+      val parts = softAST.partsNonEmpty
+
       // first statement is Parent()
-      val parent = softAST.parts.head.part.asInstanceOf[SoftAST.Template]
+      val parent = parts.head.asInstanceOf[SoftAST.Template]
       parent.identifier.toOption.value.code.text shouldBe "Parent"
 
       // second statement is Child()
-      val child = softAST.parts(1).part.asInstanceOf[SoftAST.Template]
+      val child = parts(1).asInstanceOf[SoftAST.Template]
       child.identifier.toOption.value.code.text shouldBe "Child"
 
       // expect parent to be returned
       val expected =
         SourceLocation.CodeSoft(
-          body = softAST.parts(1),
+          part = parts(1),
           parsed = parsed
         )
 
       val actual =
         SourceCodeSearcher.collectImplementingChildren(
-          source = SourceLocation.CodeSoft(softAST.parts.head, parsed),
+          source = SourceLocation.CodeSoft(parts.head, parsed),
           allSource = parsedTrees
         )
 
@@ -177,28 +180,28 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
 
       // collect all trees from file1
       val treesFromFile1 =
-        file1.astSoft.fetch().value.parts
+        file1.astSoft.fetch().value.partsNonEmpty
 
       // collect all trees from file2
       val treesFromFile2 =
-        file2.astSoft.fetch().value.parts
+        file2.astSoft.fetch().value.partsNonEmpty
 
       // the first statement in file2 is Parent6()
       val parent = treesFromFile2.head
-      parent.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text shouldBe "Parent6"
+      parent.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text shouldBe "Parent6"
 
       // expect children to be returned excluding Parent1() and Parent3()
       val expectedTreesFromFile1 =
         treesFromFile1
           .filterNot {
             tree =>
-              val name = tree.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text
+              val name = tree.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text
               name == "Parent1" || name == "Parent3"
           }
           .map {
             child =>
               SourceLocation.CodeSoft(
-                body = child,
+                part = child,
                 parsed = file1 // file1 is in scope
               )
           }
@@ -207,13 +210,13 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
         treesFromFile2
           .filterNot {
             tree =>
-              val name = tree.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text
+              val name = tree.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text
               name == "Parent6"
           }
           .map {
             child =>
               SourceLocation.CodeSoft(
-                body = child,
+                part = child,
                 parsed = file2 // file2 is in scope
               )
           }
@@ -235,7 +238,7 @@ class SourceCodeSearcherCollectImplementingChildrenSoftSpec extends AnyWordSpec 
       actual should contain theSameElementsAs expectedTrees
 
       // Double check: Also assert the names of the parents.
-      val parentNames = actual.map(_.body.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text)
+      val parentNames = actual.map(_.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text)
       // Note: Parent3 and Child are not included.
       parentNames should contain only ("Parent4", "Parent2", "Parent5", "Child")
 

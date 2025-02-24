@@ -15,7 +15,7 @@ private object GoToDefIdentifier {
    *  - Second, executes search for all nodes within the scope of the current block of code.
    *
    * @param identNode  The node representing the identifier being searched.
-   * @param sourceCode The body-part and its source code state where this search is executed.
+   * @param sourceCode The block-part and its source code state where this search is executed.
    * @return An iterator over definition search results.
    */
   def apply(

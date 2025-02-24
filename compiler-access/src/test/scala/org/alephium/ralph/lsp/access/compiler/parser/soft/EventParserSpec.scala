@@ -11,11 +11,11 @@ class EventParserSpec extends AnyWordSpec {
 
   "fail" when {
     "event is not followed by a boundary" in {
-      val body =
+      val root =
         parseSoft("eventMyEvent")
 
-      body.parts should have size 1
-      val identifier = body.parts.head.part
+      root.parts should have size 1
+      val identifier = root.parts.head
 
       identifier shouldBe
         Identifier(

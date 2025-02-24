@@ -17,12 +17,30 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
-import fastparse.NoWhitespace.noWhitespaceImplicit
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-object SoftParser {
+private object BlockPartParser {
 
-  def parse[Unknown: P]: P[SoftAST.RootBlock] =
-    P(Start ~ RootBlockParser.parseOrFail ~ End)
+  def parseOrFail[Unknown: P](
+      blockExpressions: Boolean,
+      stop: Token*): P[SoftAST.BlockPartAST] =
+    P {
+      SpaceParser.parseOrFail |
+        TemplateParser.parseOrFail |
+        EventParser.parseOrFail |
+        StructParser.parseOrFail |
+        FunctionParser.parseOrFail |
+        ImportParser.parseOrFail |
+        InheritanceParser.parseOrFail |
+        expression(blockExpressions) |
+        CommentParser.parseOrFail |
+        UnresolvedParser.parseOrFail(stop)
+    }
+
+  private def expression[Unknown: P](blockExpressions: Boolean): P[SoftAST.BlockPartAST] =
+    if (blockExpressions)
+      ExpressionBlockParser.parseOrFail
+    else
+      ExpressionParser.parseOrFail
 
 }

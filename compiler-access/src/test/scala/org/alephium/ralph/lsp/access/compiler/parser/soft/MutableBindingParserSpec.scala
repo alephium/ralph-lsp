@@ -33,7 +33,7 @@ class MutableBindingParserSpec extends AnyWordSpec with Matchers {
 
       // it gets parsed as an identifier and not a mutable-binding
       mut.parts should have size 1
-      mut.parts.head.part shouldBe
+      mut.parts.head shouldBe
         Identifier(
           index = indexOf(">>mutvariable<<"),
           text = "mutvariable"
@@ -69,11 +69,11 @@ class MutableBindingParserSpec extends AnyWordSpec with Matchers {
     }
 
     "an identifier in a tuple is set a mut" in {
-      val body =
+      val root =
         parseSoft("(a, b, mut variable)")
 
-      body.parts should have size 1
-      val tuple = body.parts.head.part.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
+      root.parts should have size 1
+      val tuple = root.parts.head.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
 
       tuple.headExpression shouldBe defined
       tuple.tailExpressions should have size 2 // there are two tail expressions
@@ -90,7 +90,7 @@ class MutableBindingParserSpec extends AnyWordSpec with Matchers {
 
     "the binding is documented" when {
       "tuple" in {
-        val body =
+        val root =
           parseSoft {
             """(  
               |a,
@@ -102,8 +102,8 @@ class MutableBindingParserSpec extends AnyWordSpec with Matchers {
               |""".stripMargin
           }
 
-        body.parts should have size 1
-        val tuple = body.parts.head.part.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
+        root.parts should have size 2
+        val tuple = root.parts.head.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
 
         tuple.headExpression shouldBe defined
         tuple.tailExpressions should have size 2 // there are two tail expressions

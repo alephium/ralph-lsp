@@ -11,11 +11,11 @@ class WhileParserSpec extends AnyWordSpec with Matchers {
 
   "fail" when {
     "`while` is not followed by a boundary" in {
-      val body =
+      val root =
         parseSoft("whilel")
 
-      body.parts should have size 1
-      body.parts.head.part shouldBe
+      root.parts should have size 1
+      root.parts.head shouldBe
         Identifier(
           index = indexOf(">>whilel<<"),
           text = "whilel"

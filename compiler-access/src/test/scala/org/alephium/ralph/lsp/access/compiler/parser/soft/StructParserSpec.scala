@@ -14,7 +14,7 @@ class StructParserSpec extends AnyWordSpec {
       val struct = parseSoft("structMyStruct")
 
       struct.parts should have size 1
-      struct.parts.head.part shouldBe
+      struct.parts.head shouldBe
         Identifier(
           index = indexOf(">>structMyStruct<<"),
           text = "structMyStruct"

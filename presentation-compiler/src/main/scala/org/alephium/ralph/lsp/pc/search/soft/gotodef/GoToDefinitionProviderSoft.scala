@@ -36,10 +36,10 @@ case object GoToDefinitionProviderSoft extends CodeProvider[SourceCodeState.IsPa
         // First, find the first code block where the cursorIndex belongs, i.e. [[SoftAST.BodyPartAST]].
         // In a well-defined code, this is expected to be a top level Contract [[SoftAST.Template]].
         softAST.toNode.data.parts.find(_.index contains cursorIndex) match {
-          case Some(bodyPart) =>
-            searchBodyPart(
+          case Some(blockPart) =>
+            searchBlockPart(
               cursorIndex = cursorIndex,
-              bodyPart = bodyPart,
+              blockPart = blockPart,
               sourceCode = sourceCode
             )
 
@@ -52,15 +52,15 @@ case object GoToDefinitionProviderSoft extends CodeProvider[SourceCodeState.IsPa
    * Searches the given bodyPart.
    *
    * @param cursorIndex The index location where the search operation is performed.
-   * @param bodyPart    The first code block where the search is executed.
+   * @param blockPart    The first code block where the search is executed.
    * @param sourceCode  The parsed state of the source-code where the search is executed.
    */
-  private def searchBodyPart(
+  private def searchBlockPart(
       cursorIndex: Int,
-      bodyPart: SoftAST.BlockBodyPart,
+      blockPart: SoftAST.BlockPartAST,
       sourceCode: SourceCodeState.IsParsed
     )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
-    bodyPart.toNode.findLast(_.index contains cursorIndex) match {
+    blockPart.toNode.findLast(_.index contains cursorIndex) match {
       case Some(Node(_: SoftAST.CodeToken[_], _)) =>
         // Tokens (fn, Contract etc.) do not require go-to-definitions
         Iterator.empty
@@ -68,7 +68,7 @@ case object GoToDefinitionProviderSoft extends CodeProvider[SourceCodeState.IsPa
       case Some(node @ Node(codeString: SoftAST.CodeString, _)) =>
         GoToDefCodeString(
           node = node.upcast(codeString),
-          sourceCode = SourceLocation.CodeSoft(bodyPart, sourceCode)
+          sourceCode = SourceLocation.CodeSoft(blockPart, sourceCode)
         )
 
       case Some(node) =>

@@ -24,7 +24,7 @@ import org.scalatest.matchers.should.Matchers._
 
 object TestParser {
 
-  def parseSoft(code: String): SoftAST.BlockBody =
+  def parseSoft(code: String): SoftAST.RootBlock =
     runSoftParser(SoftParser.parse(_))(code)
 
   def parseAnnotation(code: String): SoftAST.Annotation =
@@ -48,11 +48,11 @@ object TestParser {
   def parseTuple(code: String): SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type] =
     runSoftParser(ParameterParser.parse(_))(code)
 
-  def parseBlockBodyChild(code: String): SoftAST.BlockBody =
-    runSoftParser(BlockBodyParser.parseOrFailChild()(_))(code)
+  def parseBlock(code: String): SoftAST.Block =
+    runSoftParser(BlockParser.parseOrFail(_))(code)
 
-  def parseBlockBodyRoot(code: String): SoftAST.BlockBody =
-    runSoftParser(BlockBodyParser.parseOrFailRoot(_))(code)
+  def parseRootBlock(code: String): SoftAST.RootBlock =
+    runSoftParser(RootBlockParser.parseOrFail(_))(code)
 
   def parseComment(code: String): SoftAST.Comments =
     runSoftParser(CommentParser.parseOrFail(_))(code)
@@ -132,8 +132,8 @@ object TestParser {
           annotation
       }
 
-  def findFirstComment(body: SoftAST): Option[SoftAST.Comments] =
-    body
+  def findFirstComment(ast: SoftAST): Option[SoftAST.Comments] =
+    ast
       .toNode
       .walkDown
       .collectFirst {

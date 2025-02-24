@@ -12,12 +12,12 @@ class AccessModifierParserSpec extends AnyWordSpec with Matchers {
 
   "fail" when {
     "pub is not an independent token" in {
-      val body =
+      val root =
         parseSoft("pubfn")
 
       // Code "pubfn" should be recognised as a function. It is an identifier.
-      body.parts should have size 1
-      body.parts.head.part shouldBe
+      root.parts should have size 1
+      root.parts.head shouldBe
         Identifier(
           index = indexOf(">>pubfn<<"),
           text = "pubfn"
@@ -27,11 +27,11 @@ class AccessModifierParserSpec extends AnyWordSpec with Matchers {
 
   "succeed" when {
     "pub an independent token" in {
-      val body =
+      val root =
         parseSoft("pub fn")
 
-      body.parts should have size 1
-      val function = body.parts.head.part.asInstanceOf[SoftAST.Function]
+      root.parts should have size 1
+      val function = root.parts.head.asInstanceOf[SoftAST.Function]
 
       function.accessModifier.value shouldBe
         SoftAST.AccessModifier(

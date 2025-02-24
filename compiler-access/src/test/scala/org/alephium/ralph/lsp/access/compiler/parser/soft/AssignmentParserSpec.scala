@@ -29,11 +29,11 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
   "fail" when {
     "equality token `==` is used instead of `=`" when {
       "parsed from root" in {
-        val body =
+        val root =
           parseSoft("variable ==")
 
-        body.parts should have size 1
-        val infix = body.parts.head.part
+        root.parts should have size 1
+        val infix = root.parts.head
 
         // `==` is not an assignment so it should get parsed as an infix expression
         infix shouldBe
@@ -200,11 +200,11 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
       "right expression is a ByteVec" in {
         // ByteVec is valid syntax, but has no parser implemented.
         // Until then, ByteVec is reported as Unresolved.
-        val body = parseSoft("mut number = #00112233")
+        val root = parseSoft("mut number = #00112233")
 
-        body.parts should have size 2
-        val assignment = body.parts.head.part.asInstanceOf[SoftAST.Assignment]
-        val unresolved = body.parts.last.part.asInstanceOf[SoftAST.Unresolved]
+        root.parts should have size 2
+        val assignment = root.parts.head.asInstanceOf[SoftAST.Assignment]
+        val unresolved = root.parts.last.asInstanceOf[SoftAST.Unresolved]
 
         val left = assignment.expressionLeft.asInstanceOf[SoftAST.MutableBinding]
         left.toCode() shouldBe "mut number"

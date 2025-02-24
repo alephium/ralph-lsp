@@ -39,9 +39,9 @@ import java.net.URI
 private object RalphCompilerAccess extends CompilerAccess with StrictImplicitLogging {
 
   /** @inheritdoc */
-  override def parseSoft(code: String): Either[FastParseError, SoftAST.BlockBody] =
+  override def parseSoft(code: String): Either[FastParseError, SoftAST.RootBlock] =
     fastparse.parse(code, SoftParser.parse(_)) match {
-      case Parsed.Success(ast: SoftAST.BlockBody, _) =>
+      case Parsed.Success(ast: SoftAST.RootBlock, _) =>
         Right(ast)
 
       case failure: Parsed.Failure =>

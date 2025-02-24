@@ -159,8 +159,9 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
                 |""".stripMargin
           }
 
-        comment.parts should have size 1
-        val varDec = comment.parts.head.part.asInstanceOf[SoftAST.VariableDeclaration]
+        val parts = comment.partsNonEmpty
+        parts should have size 1
+        val varDec = parts.head.asInstanceOf[SoftAST.VariableDeclaration]
 
         /**
          * Assert Errors: There should be no errors because the expression `let counter = 0` is valid.
@@ -205,8 +206,9 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
                 |""".stripMargin
           }
 
-        comment.parts should have size 1
-        val varDec = comment.parts.head.part.asInstanceOf[SoftAST.VariableDeclaration]
+        val parts = comment.partsNonEmpty
+        parts should have size 1
+        val varDec = parts.head.asInstanceOf[SoftAST.VariableDeclaration]
 
         varDec.let.documentation.value shouldBe
           SoftAST.Comments(
@@ -261,8 +263,9 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
                 |""".stripMargin
           }
 
-        comment.parts should have size 1
-        val varDec = comment.parts.head.part.asInstanceOf[SoftAST.VariableDeclaration]
+        val parts = comment.partsNonEmpty
+        parts should have size 1
+        val varDec = parts.head.asInstanceOf[SoftAST.VariableDeclaration]
 
         varDec.let.documentation.value shouldBe
           SoftAST.Comments(

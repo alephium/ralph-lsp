@@ -55,13 +55,13 @@ class AnnotationParserSpec extends AnyWordSpec with Matchers {
     }
 
     "reject reserved keyword as annotation identifier" in {
-      val body =
+      val root =
         // `fn` is a reserved keyword and cannot be used as an annotation identifier.
         // Similarly, `Contract TxScript etc` also cannot be used as an identifier
         parseSoft("@fn function()")
 
       val annotation =
-        body
+        root
           .toNode
           .walkDown
           .collectFirst {

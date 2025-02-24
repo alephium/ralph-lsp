@@ -34,13 +34,7 @@ class FunctionBlockSpec extends AnyWordSpec with Matchers {
         val block = function.block.value
 
         block.index shouldBe indexOf("fn -> >>{}<<")
-
-        block.body shouldBe
-          SoftAST.BlockBody(
-            index = indexOf("fn -> {>><<}"),
-            prePartsSpace = None,
-            parts = Seq.empty
-          )
+        block.parts shouldBe empty
       }
 
       "block contains a space" in {
@@ -50,34 +44,23 @@ class FunctionBlockSpec extends AnyWordSpec with Matchers {
 
         block.index shouldBe indexOf("fn -> >>{ }<<")
 
-        block.body shouldBe
-          SoftAST.BlockBody(
-            index = indexOf("fn -> {>> <<}"),
-            prePartsSpace = Some(SpaceOne(indexOf("fn -> {>> <<}"))),
-            parts = Seq.empty
-          )
+        block.parts should contain only SpaceOne(indexOf("fn -> {>> <<}"))
+      }
+
+      "closing curly is missing" in {
+        val function =
+          parseFunction("fn -> {")
+
+        // even with error syntax, the block still gets parsed, reporting the missing closing curly brace
+        val block = function.block.value
+        block.index shouldBe indexOf("fn -> >>{<<")
+
+        block.parts shouldBe empty
+
+        block.closeCurly shouldBe
+          SoftAST.TokenExpected(indexOf("fn -> {>><<"), Token.CloseCurly)
       }
     }
-
-    "closing curly is missing" in {
-      val function =
-        parseFunction("fn -> {")
-
-      // even with error syntax, the block still gets parsed, reporting the missing closing curly brace
-      val block = function.block.value
-      block.index shouldBe indexOf("fn -> >>{<<")
-
-      block.body shouldBe
-        SoftAST.BlockBody(
-          index = indexOf("fn -> {>><<"),
-          prePartsSpace = None,
-          parts = Seq.empty
-        )
-
-      block.closeCurly shouldBe
-        SoftAST.TokenExpected(indexOf("fn -> {>><<"), Token.CloseCurly)
-    }
-
   }
 
 }

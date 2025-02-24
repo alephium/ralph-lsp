@@ -200,13 +200,13 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
           }
 
           "invalid unit - 'alp' is typo" in {
-            val body = parseSoft("1e-18 alp")
+            val root = parseSoft("1e-18 alp")
 
             // since "1e-18" and "alp" individual expressions, they are parsed as an expression-block
-            // Since both expressions are contains within a single block, the body should have size 1
-            body.parts should have size 1
+            // Since both expressions are contains within a single block, the root should have size 1
+            root.parts should have size 1
 
-            val expressionBlock = body.parts.head.part.asInstanceOf[SoftAST.ExpressionBlock]
+            val expressionBlock = root.parts.head.asInstanceOf[SoftAST.ExpressionBlock]
             val number          = expressionBlock.headExpression
             val alp             = expressionBlock.tailExpressions.head.expression
             // tail expression contains only the `alph` identifier
@@ -235,12 +235,12 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
           }
 
           "invalid unit - 'alphs' is typo" in {
-            val body = parseSoft("1e-18 alphs")
+            val root = parseSoft("1e-18 alphs")
 
             // since alphs is a typo at the tail end of the "alph" token, it should get recognised as an identifier.
-            // Since both expressions are contains within a single block, the body should have size 1
-            body.parts should have size 1
-            val block = body.parts.head.part.asInstanceOf[SoftAST.ExpressionBlock]
+            // Since both expressions are contained within a single block, the parts should have size 1
+            root.parts should have size 1
+            val block = root.parts.head.asInstanceOf[SoftAST.ExpressionBlock]
             block.tailExpressions should have size 1
             val number = block.headExpression.asInstanceOf[SoftAST.Number]
             val alphs  = block.tailExpressions.head.expression.asInstanceOf[SoftAST.Identifier]
@@ -286,7 +286,7 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
           // parser it from the root SoftParser parses it as an infix operation and not a number.
           val infix = parseSoft(infixOperation)
           infix.parts should have size 1
-          infix.parts.head.part shouldBe a[SoftAST.InfixExpression]
+          infix.parts.head shouldBe a[SoftAST.InfixExpression]
       }
     }
   }

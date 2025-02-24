@@ -19,7 +19,7 @@ object GoToDefLocalVariableDeclaration {
    *  - Second, executes search for all nodes within the scope, local to the current block of code.
    *
    * @param identNode  The node representing the identifier being searched.
-   * @param sourceCode The body-part and its source code state where this search is executed.
+   * @param sourceCode The block-part and its source code state where this search is executed.
    * @return An iterator over definition search results.
    */
   def apply(
@@ -89,7 +89,7 @@ object GoToDefLocalVariableDeclaration {
    * The goal here is to search within the above ASTs.
    *
    * @param identNode  The node representing the identifier being searched.
-   * @param sourceCode The body-part and its source code state where this search is executed.
+   * @param sourceCode The block-part and its source code state where this search is executed.
    * @return An iterator over definition search results.
    */
   private def search(
@@ -97,7 +97,7 @@ object GoToDefLocalVariableDeclaration {
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     ScopeWalker
       .walk(
-        from = sourceCode.body.toNode,
+        from = sourceCode.part.toNode,
         anchor = identNode.data
       ) {
         case Node(variable: SoftAST.VariableDeclaration, _) =>

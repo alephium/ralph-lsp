@@ -49,13 +49,14 @@ class SourceCodeSearcherCollectInheritedParentsSoftSpec extends AnyWordSpec with
           .sample
           .get
 
-      val tree = parsed.astSoft.fetch().value
-      tree.parts should have size 1
-      val bodyPart = tree.parts.head
-      bodyPart.part shouldBe a[SoftAST.Template]
+      val tree  = parsed.astSoft.fetch().value
+      val parts = tree.partsNonEmpty
+      parts should have size 1
+      val part = parts.head
+      part shouldBe a[SoftAST.Template]
 
       SourceCodeSearcher.collectInheritedParents(
-        source = SourceLocation.CodeSoft(bodyPart, parsed),
+        source = SourceLocation.CodeSoft(part, parsed),
         allSource = ArraySeq.empty
       ) shouldBe empty
 
@@ -71,23 +72,23 @@ class SourceCodeSearcherCollectInheritedParentsSoftSpec extends AnyWordSpec with
           .sample
           .get
 
-      val softAST =
-        parsed.astSoft.fetch().value
+      val softAST = parsed.astSoft.fetch().value
+      val parts   = softAST.partsNonEmpty
 
       // first statement is Parent()
-      val parentPart = softAST.parts.head
-      val parent     = parentPart.part.asInstanceOf[SoftAST.Template]
+      val parentPart = parts.head
+      val parent     = parentPart.asInstanceOf[SoftAST.Template]
       parent.identifier.toOption.value.code.text shouldBe "Parent"
 
       // second statement is Child()
-      val childPart = softAST.parts(1)
-      val child     = childPart.part.asInstanceOf[SoftAST.Template]
+      val childPart = parts(1)
+      val child     = childPart.asInstanceOf[SoftAST.Template]
       child.identifier.toOption.value.code.text shouldBe "Child"
 
       // expect parent to be returned
       val expected =
         SourceLocation.CodeSoft(
-          body = parentPart,
+          part = parentPart,
           parsed = parsed
         )
 
@@ -182,28 +183,28 @@ class SourceCodeSearcherCollectInheritedParentsSoftSpec extends AnyWordSpec with
 
       // collect all tree from file1
       val treesFromFile1 =
-        file1.astSoft.fetch().value.parts
+        file1.astSoft.fetch().value.partsNonEmpty
 
       // collect all tree from file2
       val treesFromFile2 =
-        file2.astSoft.fetch().value.parts
+        file2.astSoft.fetch().value.partsNonEmpty
 
       // the last statement in file1 is Child()
       val child = treesFromFile1.last
-      child.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text shouldBe "Child"
+      child.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text shouldBe "Child"
 
       // expect parents to be returned excluding Parent3() and Child()
       val expectedTreesFromFile1 =
         treesFromFile1
           .filterNot {
             tree =>
-              val name = tree.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text
+              val name = tree.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text
               name == "Parent3" || name == "Child"
           }
           .map {
             parent =>
               SourceLocation.CodeSoft(
-                body = parent,
+                part = parent,
                 parsed = file1 // file1 is in scope
               )
           }
@@ -213,7 +214,7 @@ class SourceCodeSearcherCollectInheritedParentsSoftSpec extends AnyWordSpec with
           .map {
             parent =>
               SourceLocation.CodeSoft(
-                body = parent,
+                part = parent,
                 parsed = file2 // file2 is in scope
               )
           }
@@ -236,7 +237,7 @@ class SourceCodeSearcherCollectInheritedParentsSoftSpec extends AnyWordSpec with
       actual should contain theSameElementsAs expectedTrees
 
       // Double check: Also assert the names of the parents.
-      val parentNames = actual.map(_.body.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text)
+      val parentNames = actual.map(_.part.asInstanceOf[SoftAST.Template].identifier.toOption.value.code.text)
       // Note: Parent3 and Child are not included.
       parentNames should contain only ("Parent1", "Parent2", "Parent4", "Parent5", "Parent6")
 
