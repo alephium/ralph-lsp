@@ -10,6 +10,7 @@ private object TypeAssignmentParser {
   def parseOrFail[Unknown: P]: P[SoftAST.TypeAssignment] =
     P {
       Index ~
+        AnnotationParser.parseOrFail.rep ~
         ExpressionParser.parseSubset(leftExpression) ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Colon) ~
@@ -17,9 +18,10 @@ private object TypeAssignmentParser {
         ExpressionParser.parseSubset(rightExpression) ~
         Index
     } map {
-      case (from, left, postIdentifierSpace, equalToken, postEqualSpace, right, to) =>
+      case (from, annotations, left, postIdentifierSpace, equalToken, postEqualSpace, right, to) =>
         SoftAST.TypeAssignment(
           index = range(from, to),
+          annotations = annotations,
           expressionLeft = left,
           preColonSpace = postIdentifierSpace,
           colon = equalToken,
