@@ -1,6 +1,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft.ast
 
 import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.access.util.TestCodeUtil.{indexChunkOf, indexOf}
 
 object TestSoftAST {
 
@@ -66,10 +67,22 @@ object TestSoftAST {
       token = Token.CloseParen
     )
 
+  def OpenCurly(code: String): SoftAST.TokenDocumented[Token.OpenCurly.type] =
+    TokenDocumented(
+      index = indexOf(code),
+      token = Token.OpenCurly
+    )
+
   def OpenCurly(index: SourceIndex): SoftAST.TokenDocumented[Token.OpenCurly.type] =
     TokenDocumented(
       index = index,
       token = Token.OpenCurly
+    )
+
+  def CloseCurly(code: String): SoftAST.TokenDocumented[Token.CloseCurly.type] =
+    TokenDocumented(
+      index = indexOf(code),
+      token = Token.CloseCurly
     )
 
   def CloseCurly(index: SourceIndex): SoftAST.TokenDocumented[Token.CloseCurly.type] =
@@ -112,6 +125,12 @@ object TestSoftAST {
     TokenDocumented(
       index = index,
       token = Token.Mut
+    )
+
+  def Equal(code: String): SoftAST.TokenDocumented[Token.Equal.type] =
+    TokenDocumented(
+      index = indexOf(code),
+      token = Token.Equal
     )
 
   def Equal(index: SourceIndex): SoftAST.TokenDocumented[Token.Equal.type] =
@@ -174,6 +193,18 @@ object TestSoftAST {
       token = Token.Struct
     )
 
+  def Enum(code: String): SoftAST.TokenDocumented[Token.Enum.type] =
+    TokenDocumented(
+      index = indexOf(code),
+      token = Token.Enum
+    )
+
+  def Enum(index: SourceIndex): SoftAST.TokenDocumented[Token.Enum.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Enum
+    )
+
   def Implements(index: SourceIndex): SoftAST.TokenDocumented[Token.Implements.type] =
     TokenDocumented(
       index = index,
@@ -216,6 +247,15 @@ object TestSoftAST {
       token = Token.Return
     )
 
+  def Identifier(code: String): SoftAST.Identifier =
+    Identifier(indexChunkOf(code))
+
+  def Identifier(indexCode: (SourceIndex, String)): SoftAST.Identifier =
+    Identifier(
+      index = indexCode._1,
+      text = indexCode._2
+    )
+
   def Identifier(
       index: SourceIndex,
       text: String): SoftAST.Identifier =
@@ -226,6 +266,15 @@ object TestSoftAST {
         index = index,
         text = text
       )
+    )
+
+  def Number(code: String): SoftAST.Number =
+    Number(indexChunkOf(code))
+
+  def Number(indexCode: (SourceIndex, String)): SoftAST.Number =
+    Number(
+      index = indexCode._1,
+      text = indexCode._2
     )
 
   def Number(
@@ -241,6 +290,15 @@ object TestSoftAST {
       unit = None
     )
 
+  def Unresolved(code: String): SoftAST.Unresolved =
+    Unresolved(indexChunkOf(code))
+
+  def Unresolved(indexCode: (SourceIndex, String)): SoftAST.Unresolved =
+    Unresolved(
+      index = indexCode._1,
+      text = indexCode._2
+    )
+
   def Unresolved(
       index: SourceIndex,
       text: String): SoftAST.Unresolved =
@@ -251,6 +309,15 @@ object TestSoftAST {
         index = index,
         text = text
       )
+    )
+
+  def Space(text: String): SoftAST.Space =
+    Space(indexChunkOf(text))
+
+  def Space(indexText: (SourceIndex, String)): SoftAST.Space =
+    Space(
+      index = indexText._1,
+      text = indexText._2
     )
 
   def Space(

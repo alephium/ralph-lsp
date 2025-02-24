@@ -14,6 +14,7 @@ object Demo extends App {
         |
         |event Event(a: Type)
         |struct Struct { a: Type }
+        |enum Enum { one = 1 }
         |
         |Contract HelloWorld(type: SomeType, tuple: (A, B)) extends Class implements Trait {
         |

@@ -214,6 +214,15 @@ object SoftAST {
       params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
     extends BlockPartAST
 
+  case class Enum(
+      index: SourceIndex,
+      enumToken: TokenDocumented[Token.Enum.type],
+      preIdentifierSpace: Option[Space],
+      identifier: IdentifierAST,
+      preBlockSpace: Option[Space],
+      block: Option[Block])
+    extends BlockPartAST
+
   case class Import(
       index: SourceIndex,
       importToken: TokenDocumented[Token.Import.type],
