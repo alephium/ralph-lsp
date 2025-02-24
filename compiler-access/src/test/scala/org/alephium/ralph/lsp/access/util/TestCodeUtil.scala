@@ -18,6 +18,7 @@ package org.alephium.ralph.lsp.access.util
 
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange, SourceIndexExtra}
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.scalatest.Assertions.fail
 
 object TestCodeUtil {
@@ -94,13 +95,25 @@ object TestCodeUtil {
   }
 
   /**
-   * Extracts the [[SourceIndex]] of the substring the extracted [[SourceIndex]].
+   * Extracts the [[SourceIndex]] from the given input.
    *
    * @param code the input string containing the tokens `>>` and `<<`
    * @return [[SourceIndex]] of the substring between the tokens `>>` and `<<`
    */
   def indexOf(code: String): SourceIndex =
     indexCodeOf(code)._1
+
+  /**
+   * Extracts the [[SourceIndex]] and the string chunk enclosing the tokens `>>` and `<<`.
+   *
+   * @param code the input string containing the tokens `>>` and `<<`
+   * @return [[SourceIndex]] and the substring of the string between the tokens `>>` and `<<`.
+   */
+  def indexChunkOf(code: String): (SourceIndex, String) = {
+    val (index, unmarkedCode) = indexCodeOf(code)
+    val chunk                 = unmarkedCode.substring(index.from, index.to)
+    (index, chunk)
+  }
 
   /**
    * Extracts the [[SourceIndex]] for the substring between the tokens `>>` and `<<`

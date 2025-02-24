@@ -30,6 +30,7 @@ private object BlockPartParser {
         EventParser.parseOrFail |
         StructParser.parseOrFail |
         FunctionParser.parseOrFail |
+        EnumParser.parseOrFail |
         ImportParser.parseOrFail |
         InheritanceParser.parseOrFail |
         expression(blockExpressions) |
