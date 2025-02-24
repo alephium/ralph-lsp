@@ -33,7 +33,6 @@ private object FunctionParser {
     P {
       Index ~
         AnnotationParser.parseOrFail.rep ~
-        SpaceParser.parseOrFail.? ~
         AccessModifierParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Fn) ~
         TokenParser.isBoundary() ~
@@ -43,11 +42,10 @@ private object FunctionParser {
         BlockParser.parseOrFail.? ~
         Index
     } map {
-      case (from, annotation, postAnnotationSpace, accessModifier, fnDeceleration, headSpace, signature, tailSpace, block, to) =>
+      case (from, annotation, accessModifier, fnDeceleration, headSpace, signature, tailSpace, block, to) =>
         SoftAST.Function(
           index = range(from, to),
           annotations = annotation,
-          postAnnotationSpace = postAnnotationSpace,
           accessModifier = accessModifier,
           fn = fnDeceleration,
           preSignatureSpace = headSpace,

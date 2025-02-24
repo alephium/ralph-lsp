@@ -287,7 +287,12 @@ object SoftAST {
       index: SourceIndex,
       headExpression: ExpressionAST,
       tailExpressions: Seq[TailExpressionBlock])
-    extends BlockPartAST
+    extends BlockPartAST {
+
+    def expressions: Seq[ExpressionAST] =
+      headExpression +: tailExpressions.map(_.expression)
+
+  }
 
   case class TailExpressionBlock(
       index: SourceIndex,
@@ -298,7 +303,6 @@ object SoftAST {
   case class Function(
       index: SourceIndex,
       annotations: Seq[Annotation],
-      postAnnotationSpace: Option[Space],
       accessModifier: Option[AccessModifier],
       fn: TokenDocumented[Token.Fn.type],
       preSignatureSpace: Option[Space],
@@ -511,6 +515,7 @@ object SoftAST {
 
   case class TypeAssignment(
       index: SourceIndex,
+      annotations: Seq[Annotation],
       expressionLeft: ExpressionAST,
       preColonSpace: Option[Space],
       colon: TokenDocumented[Token.Colon.type],

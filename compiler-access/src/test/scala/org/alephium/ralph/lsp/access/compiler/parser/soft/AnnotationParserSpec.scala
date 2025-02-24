@@ -194,4 +194,37 @@ class AnnotationParserSpec extends AnyWordSpec with Matchers {
       )
   }
 
+  "annotations without spaces" in {
+    val root = parseSoft("@using@using")
+
+    val parts = root.partsNonEmpty
+    parts should have size 1
+
+    val expressions = parts.head.asInstanceOf[SoftAST.ExpressionBlock].expressions
+    expressions should have size 2
+
+    expressions shouldBe
+      Seq(
+        SoftAST.Annotation(
+          index = indexOf(">>@using<<@using"),
+          at = At(indexOf(">>@<<using@using")),
+          preIdentifierSpace = None,
+          identifier = Identifier(indexOf("@>>using<<@using"), "using"),
+          postIdentifierSpace = None,
+          tuple = None,
+          postTupleSpace = None
+        ),
+        SoftAST.Annotation(
+          index = indexOf("@using>>@using<<"),
+          at = At(indexOf("@using>>@<<using")),
+          preIdentifierSpace = None,
+          identifier = Identifier(indexOf("@using@>>using<<"), "using"),
+          postIdentifierSpace = None,
+          tuple = None,
+          postTupleSpace = None
+        )
+      )
+
+  }
+
 }
