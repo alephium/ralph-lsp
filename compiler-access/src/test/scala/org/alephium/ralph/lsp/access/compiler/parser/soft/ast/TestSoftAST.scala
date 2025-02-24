@@ -247,6 +247,12 @@ object TestSoftAST {
       token = Token.Return
     )
 
+  def LessThanOrEqual(index: SourceIndex): SoftAST.TokenDocumented[Token.LessThanOrEqual.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.LessThanOrEqual
+    )
+
   def Identifier(code: String): SoftAST.Identifier =
     Identifier(indexChunkOf(code))
 

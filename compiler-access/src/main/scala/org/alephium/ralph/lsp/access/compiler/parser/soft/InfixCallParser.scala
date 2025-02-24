@@ -32,6 +32,7 @@ private object InfixCallParser {
     P {
       MethodCallParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
+        ParameterParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
@@ -46,6 +47,7 @@ private object InfixCallParser {
         BlockParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
+        ParameterParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
