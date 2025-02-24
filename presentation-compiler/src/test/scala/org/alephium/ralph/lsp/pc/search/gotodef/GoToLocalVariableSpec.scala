@@ -313,7 +313,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             }
           }
 
-          "accessed after other body-parts" when {
+          "accessed after other block-parts" when {
             "physical block is not defined" ignore {
               // FIXME: Because `Contract Test` sits between two groups of expressions,
               //        both groups of expressions do not recognise each other.

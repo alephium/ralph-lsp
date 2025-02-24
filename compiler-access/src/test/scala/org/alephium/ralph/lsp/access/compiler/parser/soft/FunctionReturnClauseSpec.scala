@@ -212,12 +212,12 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
     val block =
       parseSoft("fn function() => ABC")
 
-    block.parts should have size 3
+    block.parts should have size 4
 
     /**
      * First part is [[SoftAST.Function]]
      */
-    val function = block.parts.head.part.asInstanceOf[SoftAST.Function]
+    val function = block.parts.head.asInstanceOf[SoftAST.Function]
 
     function.signature.fnName shouldBe
       Identifier(
@@ -231,7 +231,7 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
     /**
      * Second part is [[SoftAST.Unresolved]] arrow `=>`
      */
-    val unresolvedArrow = block.parts(1).part.asInstanceOf[SoftAST.Unresolved]
+    val unresolvedArrow = block.parts(1).asInstanceOf[SoftAST.Unresolved]
     unresolvedArrow shouldBe
       Unresolved(
         index = indexOf("fn function() >>=><< ABC"),
@@ -241,7 +241,7 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
     /**
      * Third part is [[Identifier]] token `ABC`
      */
-    val identifier = block.parts(2).part.asInstanceOf[SoftAST.Identifier]
+    val identifier = block.parts(3).asInstanceOf[SoftAST.Identifier]
     identifier shouldBe
       Identifier(
         index = indexOf("fn function() => >>ABC<<"),

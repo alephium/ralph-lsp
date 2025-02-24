@@ -11,11 +11,11 @@ class ForParserSpec extends AnyWordSpec with Matchers {
 
   "fail" when {
     "for is not followed a boundary" in {
-      val body =
+      val root =
         parseSoft("forloop")
 
-      body.parts should have size 1
-      body.parts.head.part shouldBe
+      root.parts should have size 1
+      root.parts.head shouldBe
         Identifier(
           index = indexOf(">>forloop<<"),
           text = "forloop"

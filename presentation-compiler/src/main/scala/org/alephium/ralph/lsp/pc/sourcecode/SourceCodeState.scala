@@ -75,7 +75,7 @@ object SourceCodeState {
    */
   sealed trait IsParsedAndCompiled extends IsCodeAware {
 
-    def astSoft: LazyVal[Either[FastParseError, SoftAST.BlockBody]]
+    def astSoft: LazyVal[Either[FastParseError, SoftAST.RootBlock]]
 
   }
 
@@ -94,7 +94,7 @@ object SourceCodeState {
     override def code: String =
       parsed.code
 
-    override def astSoft: LazyVal[Either[FastParseError, SoftAST.BlockBody]] =
+    override def astSoft: LazyVal[Either[FastParseError, SoftAST.RootBlock]] =
       parsed.astSoft
 
   }
@@ -132,7 +132,7 @@ object SourceCodeState {
       fileURI: URI,
       code: String,
       astStrict: Tree.Root,
-      astSoft: LazyVal[Either[FastParseError, SoftAST.BlockBody]])
+      astSoft: LazyVal[Either[FastParseError, SoftAST.RootBlock]])
     extends IsParsed
 
   /** Represents: Error during the parser phase. */
@@ -140,7 +140,7 @@ object SourceCodeState {
       fileURI: URI,
       code: String,
       errors: Seq[CompilerMessage.AnyError],
-      astSoft: LazyVal[Either[FastParseError, SoftAST.BlockBody]])
+      astSoft: LazyVal[Either[FastParseError, SoftAST.RootBlock]])
     extends IsParserOrCompilationError
        with IsParsed
 

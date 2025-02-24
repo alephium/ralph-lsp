@@ -250,18 +250,38 @@ object SoftAST {
       postReferenceSpace: Option[Space])
     extends SoftAST
 
+  /**
+   * Represents an AST that contains a sequence of [[BlockPartAST]].
+   */
+  sealed trait BlockAST extends ExpressionAST {
+
+    def parts: Seq[BlockPartAST]
+
+    /**
+     * Filters out empty or whitespace block-parts, i.e. block-parts of type [[Space]].
+     */
+    def partsNonEmpty: Seq[BlockPartAST] =
+      parts.filterNot(_.isInstanceOf[SoftAST.Space])
+
+  }
+
+  /**
+   * A [[RootBlock]] is similar to [[Block]] without the enclosing curly-braces.
+   */
+  case class RootBlock(
+      index: SourceIndex,
+      parts: Seq[BlockPartAST])
+    extends BlockAST
+
+  /**
+   * Represents a code block enclosed within curly braces `{}`.
+   */
   case class Block(
       index: SourceIndex,
       openCurly: TokenDocExpectedAST[Token.OpenCurly.type],
-      body: BlockBody,
+      parts: Seq[BlockPartAST],
       closeCurly: TokenDocExpectedAST[Token.CloseCurly.type])
-    extends ExpressionAST
-
-  case class BlockBody(
-      index: SourceIndex,
-      prePartsSpace: Option[Space],
-      parts: Seq[BlockBodyPart])
-    extends SoftAST
+    extends BlockAST
 
   case class ExpressionBlock(
       index: SourceIndex,
@@ -273,12 +293,6 @@ object SoftAST {
       index: SourceIndex,
       preExpressionSpace: Option[Space],
       expression: ExpressionAST)
-    extends SoftAST
-
-  case class BlockBodyPart(
-      index: SourceIndex,
-      part: BlockPartAST,
-      postPartSpace: Option[Space])
     extends SoftAST
 
   case class Function(
@@ -573,7 +587,8 @@ object SoftAST {
 
   case class Space(
       code: CodeString)
-    extends CodeAST {
+    extends CodeAST
+       with BlockPartAST {
 
     override def index: SourceIndex =
       code.index

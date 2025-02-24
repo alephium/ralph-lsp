@@ -20,11 +20,11 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
 
       "parsing via SoftParser" in {
         // It's not a method call, it's an identifier.
-        val body =
+        val root =
           parseSoft("abc")
 
-        body.parts should have size 1
-        body.parts.head.part shouldBe
+        root.parts should have size 1
+        root.parts.head shouldBe
           Identifier(
             index = indexOf(">>abc<<"),
             text = "abc"
@@ -124,7 +124,7 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
       "called via soft-parser" in {
         val number = parseSoft("1.1")
         number.parts should have size 1
-        val head = number.parts.head.part
+        val head = number.parts.head
 
         head shouldBe
           SoftAST.Number(

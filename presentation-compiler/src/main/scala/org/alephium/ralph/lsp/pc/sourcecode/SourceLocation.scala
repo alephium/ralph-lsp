@@ -158,7 +158,7 @@ object SourceLocation {
     extends Code
 
   case class CodeSoft(
-      body: SoftAST.BlockBodyPart,
+      part: SoftAST.BlockPartAST,
       parsed: SourceCodeState.IsParsedAndCompiled)
     extends Code
 

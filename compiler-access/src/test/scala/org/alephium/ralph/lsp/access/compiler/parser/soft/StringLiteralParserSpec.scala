@@ -231,11 +231,14 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
         }
 
-      string.parts should have size 2
-      // first one is a function
-      string.parts.head.part shouldBe a[SoftAST.Function]
-      // second one is a string-literal
-      val stringLit = string.parts.last.part.asInstanceOf[SoftAST.StringLiteral]
+      val parts = string.partsNonEmpty
+      parts should have size 2
+
+      // first is a function
+      parts.head shouldBe a[SoftAST.Function]
+
+      // second is a string-literal
+      val stringLit = parts.last.asInstanceOf[SoftAST.StringLiteral]
       stringLit.startQuote.documentation.value.toCode() shouldBe s"// Some comment$newline"
       stringLit.head.value.asInstanceOf[SoftAST.CodeString].text shouldBe "some string"
     }

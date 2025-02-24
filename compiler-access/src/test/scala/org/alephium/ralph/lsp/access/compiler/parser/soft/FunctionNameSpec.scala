@@ -94,7 +94,6 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
     val (functions, unresolved) =
       root
         .parts
-        .map(_.part)
         .collect {
           case function: SoftAST.Function =>
             Left(function)

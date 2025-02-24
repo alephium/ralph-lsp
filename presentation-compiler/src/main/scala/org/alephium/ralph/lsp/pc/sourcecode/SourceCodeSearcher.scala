@@ -247,7 +247,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
         block.parts map {
           part =>
             SourceLocation.CodeSoft(
-              body = part,
+              part = part,
               parsed = sourceCode
             )
         }
@@ -545,7 +545,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
   def collectInheritedParents(
       source: SourceLocation.CodeSoft,
       allSource: ArraySeq[SourceLocation.CodeSoft]): ArraySeq[SourceLocation.CodeSoft] =
-    source.body.part match {
+    source.part match {
       case contract: SoftAST.Template =>
         collectInheritedParentsSoft(
           inheritances = contract.inheritance,
@@ -591,7 +591,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
   def collectImplementingChildren(
       source: SourceLocation.CodeSoft,
       allSource: ArraySeq[SourceLocation.CodeSoft]): ArraySeq[SourceLocation.CodeSoft] =
-    source.body.part match {
+    source.part match {
       case contract: SoftAST.Template =>
         collectImplementingChildren(
           template = contract,
@@ -681,7 +681,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
       source =>
         // collect the trees if their name that belong to at least one of the inheritances
         val belongsToParent =
-          source.body.part match {
+          source.part match {
             case template: SoftAST.Template =>
               // check if the template's name is contained in the inheritance list.
               template
@@ -697,7 +697,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
         if (belongsToParent && !processedTrees.contains(source)) {
           processedTrees addOne source
 
-          source.body.part match {
+          source.part match {
             case contract: SoftAST.Template =>
               // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
               val parents =
@@ -792,14 +792,14 @@ object SourceCodeSearcher extends StrictImplicitLogging {
         val belongs =
           collectInheritanceDeclaration(
             inheritanceId = template.identifier,
-            target = source.body.part
+            target = source.part
           ).nonEmpty
 
         // collect the trees that belong to one of the inheritances and the ones that are not already processed
         if (belongs && !processedTrees.contains(source)) {
           processedTrees addOne source
 
-          source.body.part match {
+          source.part match {
             case contract: SoftAST.Template =>
               // TODO: There might a need for this to be tail-recursive to avoid stackoverflow on very large codebases.
               val children =

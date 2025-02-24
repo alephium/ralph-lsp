@@ -54,7 +54,7 @@ trait CompilerAccess {
    * @param code Code to parse.
    * @return Parsing error or successfully parsed [[SoftAST]].
    */
-  def parseSoft(code: String): Either[FastParseError, SoftAST.BlockBody]
+  def parseSoft(code: String): Either[FastParseError, SoftAST.RootBlock]
 
   /**
    * Runs the parser phase.

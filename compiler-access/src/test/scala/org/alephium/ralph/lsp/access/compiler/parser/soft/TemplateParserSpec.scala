@@ -30,23 +30,13 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
     def testTokenIsReportedAsIdentifier(templateToken: String) = {
       val block = parseSoft(templateToken)
 
-      val expected =
-        SoftAST.BlockBody(
-          index = indexOf(s">>$templateToken<<"),
-          prePartsSpace = None,
-          parts = Seq(
-            SoftAST.BlockBodyPart(
-              index = indexOf(s">>$templateToken<<"),
-              part = Identifier(
-                index = indexOf(s">>$templateToken<<"),
-                text = templateToken
-              ),
-              postPartSpace = None
-            )
-          )
-        )
+      block.parts should have size 1
 
-      block shouldBe expected
+      block.parts.head shouldBe
+        Identifier(
+          index = indexOf(s">>$templateToken<<"),
+          text = templateToken
+        )
     }
 
     "Contract" when {
@@ -237,15 +227,15 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
 
   "parse block" when {
     "open brace is missing" in {
-      val body =
+      val root =
         parseSoft("Contract mycontract }")
 
-      body.parts should have size 2
+      root.parts should have size 2
 
-      val template = body.parts.head.part.asInstanceOf[SoftAST.Template]
+      val template = root.parts.head.asInstanceOf[SoftAST.Template]
       template.block shouldBe None
 
-      val unresolved = body.parts.last.part.asInstanceOf[SoftAST.Unresolved]
+      val unresolved = root.parts.last.asInstanceOf[SoftAST.Unresolved]
       unresolved shouldBe
         Unresolved(
           index = indexOf("Contract mycontract >>}<<"),
@@ -291,10 +281,12 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
         )
 
       /**
-       * Body part: Function
+       * Block part: Function
        */
-      template.block.value.body.parts should have size 1
-      val function = template.block.value.body.parts.head.part.asInstanceOf[SoftAST.Function]
+      val parts = template.block.value.partsNonEmpty
+      parts should have size 1
+
+      val function = parts.head.asInstanceOf[SoftAST.Function]
 
       function.fn shouldBe
         Fn(
@@ -344,10 +336,12 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
         )
 
       /**
-       * Body part: TxScript
+       * Block part: TxScript
        */
-      template.block.value.body.parts should have size 1
-      val txScriptTemplate = template.block.value.body.parts.head.part.asInstanceOf[SoftAST.Template]
+      val parts = template.block.value.partsNonEmpty
+      parts should have size 1
+
+      val txScriptTemplate = parts.head.asInstanceOf[SoftAST.Template]
 
       txScriptTemplate.templateType shouldBe
         TxScript(
@@ -381,10 +375,12 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
         }
 
       /**
-       * Body part: TxScript
+       * Block part: TxScript
        */
-      template.block.value.body.parts should have size 1
-      val part = template.block.value.body.parts.head.part
+      val parts = template.block.value.partsNonEmpty
+      parts should have size 1
+
+      val part = parts.head
 
       part shouldBe
         Identifier(

@@ -40,7 +40,6 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
       val functions =
         parseSoft(" fn")
           .parts
-          .map(_.part)
           .collect {
             case function: SoftAST.Function =>
               function
@@ -81,13 +80,12 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
         }
 
-      val body =
+      val root =
         parseSoft(code)
 
       val blahIdentifiers =
-        body
+        root
           .parts
-          .map(_.part)
           .collect {
             case blahIdentifier: SoftAST.Identifier if blahIdentifier.code.text == "blah" =>
               blahIdentifier
