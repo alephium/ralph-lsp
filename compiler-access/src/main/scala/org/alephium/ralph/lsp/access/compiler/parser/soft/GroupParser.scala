@@ -58,6 +58,41 @@ private object GroupParser {
     }
 
   /**
+   * Parses a sequence of comma separated expressions.
+   *
+   * Syntax: expr1, expr2, (expr3, expr4), ...
+   *
+   * @return An instance of [[SoftAST.Group]] without enclosing tokens.
+   */
+  def parseOrFail[Unknown: P]: P[SoftAST.Group[Nothing, Nothing]] =
+    P {
+      Index ~
+        expression(Token.OpenParen, Token.CloseParen).? ~
+        SpaceParser.parseOrFail.? ~
+        tail(Token.OpenParen, Token.CloseParen).rep(1) ~
+        Index
+    } map {
+      case (from, headExpression, postHeadSpace, tailParams, to) =>
+        val headExpressionAdjusted =
+          adjustHeadExpression(
+            headParamIndex = from,
+            headExpression = headExpression,
+            tailParams = tailParams
+          )
+
+        SoftAST.Group(
+          index = range(from, to),
+          openToken = None,
+          preHeadExpressionSpace = None,
+          headExpression = headExpressionAdjusted,
+          postHeadExpressionSpace = postHeadSpace,
+          tailExpressions = tailParams,
+          closeToken = None
+        )
+
+    }
+
+  /**
    * Parses a sequence of expressions enclosed within the given open and close tokens.
    *
    * Syntax: (expr1, expr2, (expr3, expr4), ...)

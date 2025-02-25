@@ -27,9 +27,8 @@ private object ReturnParser {
 
   private def expression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
-      // TODO: Handle comma separated tuples but without enclosing parentheses
-      //       For example: return 1, 2, 3
-      InfixCallParser.parseOrFail |
+      GroupParser.parseOrFail |
+        InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
         ParameterParser.parseOrFail |
