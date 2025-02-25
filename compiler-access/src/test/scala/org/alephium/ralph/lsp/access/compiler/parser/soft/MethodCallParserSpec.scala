@@ -41,14 +41,14 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
         dot shouldBe
           SoftAST.MethodCall(
             index = indexOf(">>.<<"),
-            leftExpression = SoftAST.ExpressionExpected(indexOf(">><<.")),
+            leftExpression = ExpressionExpected(">><<."),
             preDotSpace = None,
             dotCalls = Seq(
               SoftAST.DotCall(
                 index = indexOf(">>.<<"),
-                dot = Dot(indexOf(">>.<<")),
+                dot = Dot(">>.<<"),
                 postDotSpace = None,
-                rightExpression = SoftAST.ExpressionExpected(indexOf(".>><<"))
+                rightExpression = ExpressionExpected(".>><<")
               )
             )
           )
@@ -60,14 +60,14 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
         dot shouldBe
           SoftAST.MethodCall(
             index = indexOf(">>.right<<"),
-            leftExpression = SoftAST.ExpressionExpected(indexOf(">><<.right")),
+            leftExpression = ExpressionExpected(">><<.right"),
             preDotSpace = None,
             dotCalls = Seq(
               SoftAST.DotCall(
                 index = indexOf(">>.right<<"),
-                dot = Dot(indexOf(">>.<<right")),
+                dot = Dot(">>.<<right"),
                 postDotSpace = None,
-                rightExpression = Identifier(indexOf(".>>right<<"), "right")
+                rightExpression = Identifier(".>>right<<")
               )
             )
           )
@@ -79,14 +79,14 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
         dot shouldBe
           SoftAST.MethodCall(
             index = indexOf(">>left.<<"),
-            leftExpression = Identifier(indexOf(">>left<<."), "left"),
+            leftExpression = Identifier(">>left<<."),
             preDotSpace = None,
             dotCalls = Seq(
               SoftAST.DotCall(
                 index = indexOf("left>>.<<"),
-                dot = Dot(indexOf("left>>.<<")),
+                dot = Dot("left>>.<<"),
                 postDotSpace = None,
-                rightExpression = SoftAST.ExpressionExpected(indexOf("left.>><<"))
+                rightExpression = ExpressionExpected("left.>><<")
               )
             )
           )
@@ -98,14 +98,14 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
         dot shouldBe
           SoftAST.MethodCall(
             index = indexOf(">>left.right<<"),
-            leftExpression = Identifier(indexOf(">>left<<.right"), "left"),
+            leftExpression = Identifier(">>left<<.right"),
             preDotSpace = None,
             dotCalls = Seq(
               SoftAST.DotCall(
                 index = indexOf("left>>.right<<"),
-                dot = Dot(indexOf("left>>.<<right")),
+                dot = Dot("left>>.<<right"),
                 postDotSpace = None,
-                rightExpression = Identifier(indexOf("left.>>right<<"), "right")
+                rightExpression = Identifier("left.>>right<<")
               )
             )
           )
@@ -130,10 +130,7 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
           SoftAST.Number(
             index = indexOf(">>1.1<<"),
             documentation = None,
-            number = SoftAST.CodeString(
-              index = indexOf(">>1.1<<"),
-              text = "1.1"
-            ),
+            number = CodeString(">>1.1<<"),
             unit = None
           )
       }

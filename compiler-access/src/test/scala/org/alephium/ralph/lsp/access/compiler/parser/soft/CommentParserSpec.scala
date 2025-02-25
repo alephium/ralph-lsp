@@ -38,7 +38,7 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
           comments = Seq(
             SoftAST.Comment(
               index = indexOf(">>//<<"),
-              doubleForwardSlash = DoubleForwardSlash(indexOf(">>//<<")),
+              doubleForwardSlash = DoubleForwardSlash(">>//<<"),
               preTextSpace = None,
               text = None,
               postTextSpace = None
@@ -63,8 +63,8 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
           comments = Seq(
             SoftAST.Comment(
               index = indexOf(">>// <<"),
-              doubleForwardSlash = DoubleForwardSlash(indexOf(">>//<< ")),
-              preTextSpace = Some(SpaceOne(indexOf("//>> <<"))),
+              doubleForwardSlash = DoubleForwardSlash(">>//<< "),
+              preTextSpace = Some(Space("//>> <<")),
               text = None,
               postTextSpace = None
             )
@@ -91,8 +91,8 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
           comments = Seq(
             SoftAST.Comment(
               index = indexOf(s">>// my comment <<$newLine"),
-              doubleForwardSlash = DoubleForwardSlash(indexOf(s">>//<< my comment $newLine")),
-              preTextSpace = Some(SpaceOne(indexOf(s"//>> <<my comment $newLine"))),
+              doubleForwardSlash = DoubleForwardSlash(s">>//<< my comment $newLine"),
+              preTextSpace = Some(Space(s"//>> <<my comment $newLine")),
               text = Some(
                 SoftAST.CodeString(
                   index = indexOf(s"// >>my comment <<$newLine"),
@@ -102,7 +102,7 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
               postTextSpace = None
             )
           ),
-          postCommentSpace = Some(SpaceNewline(indexOf(s"// my comment >>$newLine<<")))
+          postCommentSpace = Some(Space(s"// my comment >>$newLine<<"))
         )
 
       comment shouldBe expected
@@ -124,8 +124,8 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
           comments = Seq(
             SoftAST.Comment(
               index = indexOf(s">>$code<<"),
-              doubleForwardSlash = DoubleForwardSlash(indexOf(">>//<< fn function()")),
-              preTextSpace = Some(SpaceOne(indexOf("//>> <<fn function()"))),
+              doubleForwardSlash = DoubleForwardSlash(">>//<< fn function()"),
+              preTextSpace = Some(Space("//>> <<fn function()")),
               text = Some(
                 SoftAST.CodeString(
                   index = indexOf("// >>fn function()<<"),
@@ -148,15 +148,15 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
         val comment =
           parseSoft {
             """
-                |//
-                |let
-                |//
-                |counter
-                |//
-                |=
-                |//
-                |0
-                |""".stripMargin
+              |//
+              |let
+              |//
+              |counter
+              |//
+              |=
+              |//
+              |0
+              |""".stripMargin
           }
 
         val parts = comment.partsNonEmpty
@@ -201,9 +201,9 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
         val comment =
           parseSoft {
             """
-                |//
-                |let counter = 0
-                |""".stripMargin
+              |//
+              |let counter = 0
+              |""".stripMargin
           }
 
         val parts = comment.partsNonEmpty
@@ -214,25 +214,25 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
           SoftAST.Comments(
             index = indexOf {
               """
-                  |>>//
-                  |<<let counter = 0
-                  |""".stripMargin
+                |>>//
+                |<<let counter = 0
+                |""".stripMargin
             },
             preCommentSpace = None,
             comments = Seq(
               SoftAST.Comment(
                 index = indexOf {
                   """
-                      |>>//<<
-                      |let counter = 0
-                      |""".stripMargin
+                    |>>//<<
+                    |let counter = 0
+                    |""".stripMargin
                 },
                 doubleForwardSlash = DoubleForwardSlash {
                   indexOf {
                     """
-                        |>>//<<
-                        |let counter = 0
-                        |""".stripMargin
+                      |>>//<<
+                      |let counter = 0
+                      |""".stripMargin
                   }
                 },
                 preTextSpace = None,
@@ -241,14 +241,12 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
               )
             ),
             postCommentSpace = Some(
-              SpaceNewline(
-                indexOf {
-                  """
-                      |//>>
-                      |<<let counter = 0
-                      |""".stripMargin
-                }
-              )
+              Space {
+                """
+                  |//>>
+                  |<<let counter = 0
+                  |""".stripMargin
+              }
             )
           )
       }
@@ -257,10 +255,10 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
         val comment =
           parseSoft {
             """
-                |//
-                |//
-                |let counter = 0
-                |""".stripMargin
+              |//
+              |//
+              |let counter = 0
+              |""".stripMargin
           }
 
         val parts = comment.partsNonEmpty
@@ -271,59 +269,57 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
           SoftAST.Comments(
             index = indexOf {
               """
-                  |>>//
-                  |//
-                  |<<let counter = 0
-                  |""".stripMargin
+                |>>//
+                |//
+                |<<let counter = 0
+                |""".stripMargin
             },
             preCommentSpace = None,
             comments = Seq(
               SoftAST.Comment(
                 index = indexOf {
                   """
-                      |>>//
-                      |<<//
-                      |let counter = 0
-                      |""".stripMargin
+                    |>>//
+                    |<<//
+                    |let counter = 0
+                    |""".stripMargin
                 },
                 doubleForwardSlash = DoubleForwardSlash {
                   indexOf {
                     """
-                        |>>//<<
-                        |//
-                        |let counter = 0
-                        |""".stripMargin
+                      |>>//<<
+                      |//
+                      |let counter = 0
+                      |""".stripMargin
                   }
                 },
                 preTextSpace = None,
                 text = None,
                 postTextSpace = Some(
-                  SpaceNewline(
-                    indexOf {
-                      """
-                            |//>>
-                            |<<//
-                            |let counter = 0
-                            |""".stripMargin
-                    }
-                  )
+                  Space {
+                    """
+                      |//>>
+                      |<<//
+                      |let counter = 0
+                      |""".stripMargin
+                  }
                 )
               ),
               SoftAST.Comment(
                 index = indexOf {
                   """
-                      |//
-                      |>>//<<
-                      |let counter = 0
-                      |""".stripMargin
+                    |//
+                    |>>//<<
+                    |let counter = 0
+                    |""".stripMargin
                 },
                 doubleForwardSlash = DoubleForwardSlash {
                   indexOf {
                     """
-                        |//
-                        |>>//<<
-                        |let counter = 0
-                        |""".stripMargin
+                      |//
+                      |>>//<<
+                      |let counter = 0
+                      |""".stripMargin
                   }
                 },
                 preTextSpace = None,
@@ -332,15 +328,13 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
               )
             ),
             postCommentSpace = Some(
-              SpaceNewline(
-                indexOf {
-                  """
-                      |//
-                      |//>>
-                      |<<let counter = 0
-                      |""".stripMargin
-                }
-              )
+              Space {
+                """
+                  |//
+                  |//>>
+                  |<<let counter = 0
+                  |""".stripMargin
+              }
             )
           )
       }

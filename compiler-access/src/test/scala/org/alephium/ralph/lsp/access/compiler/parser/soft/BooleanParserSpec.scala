@@ -2,7 +2,6 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
-import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
@@ -10,11 +9,11 @@ import org.scalatest.OptionValues._
 class BooleanParserSpec extends AnyWordSpec with Matchers {
 
   "true" in {
-    parseBoolean("true").token shouldBe True(indexOf(">>true<<"))
+    parseBoolean("true").token shouldBe True(">>true<<")
   }
 
   "false" in {
-    parseBoolean("false").token shouldBe False(indexOf(">>false<<"))
+    parseBoolean("false").token shouldBe False(">>false<<")
   }
 
   "boolean with comments" in {

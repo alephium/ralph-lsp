@@ -82,7 +82,7 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
                 SoftAST.UnitAlph(
                   index = indexOf(s"$numberOnly>>alph<<"),
                   space = None,
-                  unit = AlphLowercase(indexOf(s"$numberOnly>>alph<<"))
+                  unit = AlphLowercase(s"$numberOnly>>alph<<")
                 )
               )
             )
@@ -119,8 +119,8 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
               unit = Some(
                 SoftAST.UnitAlph(
                   index = indexOf(s"$numberOnly>> alph<<"),
-                  space = Some(SpaceOne(indexOf(s"$numberOnly>> <<alph"))),
-                  unit = AlphLowercase(indexOf(s"$numberOnly >>alph<<"))
+                  space = Some(Space(s"$numberOnly>> <<alph")),
+                  unit = AlphLowercase(s"$numberOnly >>alph<<")
                 )
               )
             )
@@ -159,7 +159,7 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
                   SoftAST.UnitAlph(
                     index = indexOf("1e-18>>alph<<"),
                     space = None,
-                    unit = AlphLowercase(indexOf("1e-18>>alph<<"))
+                    unit = AlphLowercase("1e-18>>alph<<")
                   )
                 )
               )
@@ -192,8 +192,8 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
                 unit = Some(
                   SoftAST.UnitAlph(
                     index = indexOf("1e-18>> alph<<"),
-                    space = Some(SpaceOne(indexOf("1e-18>> <<alph"))),
-                    unit = AlphLowercase(indexOf("1e-18 >>alph<<"))
+                    space = Some(Space("1e-18>> <<alph")),
+                    unit = AlphLowercase("1e-18 >>alph<<")
                   )
                 )
               )

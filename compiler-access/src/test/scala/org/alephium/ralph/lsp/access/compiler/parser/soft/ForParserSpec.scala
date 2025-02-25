@@ -15,11 +15,7 @@ class ForParserSpec extends AnyWordSpec with Matchers {
         parseSoft("forloop")
 
       root.parts should have size 1
-      root.parts.head shouldBe
-        Identifier(
-          index = indexOf(">>forloop<<"),
-          text = "forloop"
-        )
+      root.parts.head shouldBe Identifier(">>forloop<<")
     }
   }
 
@@ -31,19 +27,19 @@ class ForParserSpec extends AnyWordSpec with Matchers {
       forExpression shouldBe
         SoftAST.For(
           index = indexOf(">>for <<"),
-          forToken = For(indexOf(">>for<< ")),
-          postForSpace = Some(SpaceOne(indexOf("for>> <<"))),
+          forToken = For(">>for<< "),
+          postForSpace = Some(Space("for>> <<")),
           openParen = SoftAST.TokenExpected(indexOf("for >><<"), Token.OpenParen),
           postOpenParenSpace = None,
-          expression1 = SoftAST.ExpressionExpected(indexOf("for >><<")),
+          expression1 = ExpressionExpected("for >><<"),
           postExpression1Space = None,
           postExpression1Semicolon = SoftAST.TokenExpected(indexOf("for >><<"), Token.Semicolon),
           postExpression1SemicolonSpace = None,
-          expression2 = SoftAST.ExpressionExpected(indexOf("for >><<")),
+          expression2 = ExpressionExpected("for >><<"),
           postExpression2Space = None,
           postExpression2Semicolon = SoftAST.TokenExpected(indexOf("for >><<"), Token.Semicolon),
           postExpression2SemicolonSpace = None,
-          expression3 = SoftAST.ExpressionExpected(indexOf("for >><<")),
+          expression3 = ExpressionExpected("for >><<"),
           postExpression3Space = None,
           closeParen = SoftAST.TokenExpected(indexOf("for >><<"), Token.CloseParen),
           postCloseParenSpace = None,
@@ -58,19 +54,19 @@ class ForParserSpec extends AnyWordSpec with Matchers {
       forExpression shouldBe
         SoftAST.For(
           index = indexOf(">>for(<<"),
-          forToken = For(indexOf(">>for<<(")),
+          forToken = For(">>for<<("),
           postForSpace = None,
-          openParen = OpenParen(indexOf("for>>(<<")),
+          openParen = OpenParen("for>>(<<"),
           postOpenParenSpace = None,
-          expression1 = SoftAST.ExpressionExpected(indexOf("for(>><<")),
+          expression1 = ExpressionExpected("for(>><<"),
           postExpression1Space = None,
           postExpression1Semicolon = SoftAST.TokenExpected(indexOf("for(>><<"), Token.Semicolon),
           postExpression1SemicolonSpace = None,
-          expression2 = SoftAST.ExpressionExpected(indexOf("for(>><<")),
+          expression2 = ExpressionExpected("for(>><<"),
           postExpression2Space = None,
           postExpression2Semicolon = SoftAST.TokenExpected(indexOf("for(>><<"), Token.Semicolon),
           postExpression2SemicolonSpace = None,
-          expression3 = SoftAST.ExpressionExpected(indexOf("for(>><<")),
+          expression3 = ExpressionExpected("for(>><<"),
           postExpression3Space = None,
           closeParen = SoftAST.TokenExpected(indexOf("for(>><<"), Token.CloseParen),
           postCloseParenSpace = None,

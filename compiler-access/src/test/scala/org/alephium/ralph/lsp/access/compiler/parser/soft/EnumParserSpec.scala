@@ -42,7 +42,7 @@ class EnumParserSpec extends AnyWordSpec {
           index = indexOf(">>enum<<"),
           enumToken = Enum(">>enum<<"),
           preIdentifierSpace = None,
-          identifier = SoftAST.IdentifierExpected(indexOf("enum>><<")),
+          identifier = IdentifierExpected("enum>><<"),
           preBlockSpace = None,
           block = None
         )
@@ -56,7 +56,7 @@ class EnumParserSpec extends AnyWordSpec {
           index = indexOf(">>enum {}<<"),
           enumToken = Enum(">>enum<<"),
           preIdentifierSpace = Some(Space("enum>> <<{}")),
-          identifier = SoftAST.IdentifierExpected(indexOf("enum >><<{}")),
+          identifier = IdentifierExpected("enum >><<{}"),
           preBlockSpace = None,
           block = Some(
             SoftAST.Block(
@@ -77,7 +77,7 @@ class EnumParserSpec extends AnyWordSpec {
           index = indexOf(">>enum { }<<"),
           enumToken = Enum(">>enum<< { }"),
           preIdentifierSpace = Some(Space("enum>> <<{ }")),
-          identifier = SoftAST.IdentifierExpected(indexOf("enum >><<{ }")),
+          identifier = IdentifierExpected("enum >><<{ }"),
           preBlockSpace = None,
           block = Some(
             SoftAST.Block(
@@ -100,7 +100,7 @@ class EnumParserSpec extends AnyWordSpec {
           index = indexOf(">>enum { blah }<<"),
           enumToken = Enum(">>enum<< { blah }"),
           preIdentifierSpace = Some(Space("enum>> <<{ blah }")),
-          identifier = SoftAST.IdentifierExpected(indexOf("enum >><<{ blah }")),
+          identifier = IdentifierExpected("enum >><<{ blah }"),
           preBlockSpace = None,
           block = Some(
             SoftAST.Block(
@@ -125,7 +125,7 @@ class EnumParserSpec extends AnyWordSpec {
           index = indexOf(">>enum { value = 1 }<<"),
           enumToken = Enum(">>enum<< { value = 1 }"),
           preIdentifierSpace = Some(Space("enum>> <<{ value = 1 }")),
-          identifier = SoftAST.IdentifierExpected(indexOf("enum >><<{ value = 1 }")),
+          identifier = IdentifierExpected("enum >><<{ value = 1 }"),
           preBlockSpace = None,
           block = Some(
             SoftAST.Block(
@@ -157,7 +157,7 @@ class EnumParserSpec extends AnyWordSpec {
           index = indexOf(">>enum { one = 1 two = 2 }<<"),
           enumToken = Enum(">>enum<< { one = 1 two = 2 }"),
           preIdentifierSpace = Some(Space("enum>> <<{ one = 1 two = 2 }")),
-          identifier = SoftAST.IdentifierExpected(indexOf("enum >><<{ one = 1 two = 2 }")),
+          identifier = IdentifierExpected("enum >><<{ one = 1 two = 2 }"),
           preBlockSpace = None,
           block = Some(
             SoftAST.Block(
@@ -200,7 +200,7 @@ class EnumParserSpec extends AnyWordSpec {
           index = indexOf(">>enum { blah two = 2 }<<"),
           enumToken = Enum(">>enum<< { blah two = 2 }"),
           preIdentifierSpace = Some(Space("enum>> <<{ blah two = 2 }")),
-          identifier = SoftAST.IdentifierExpected(indexOf("enum >><<{ blah two = 2 }")),
+          identifier = IdentifierExpected("enum >><<{ blah two = 2 }"),
           preBlockSpace = None,
           block = Some(
             SoftAST.Block(

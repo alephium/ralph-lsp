@@ -19,11 +19,11 @@ class TypeAssignmentParserSpec extends AnyWordSpec {
           SoftAST.TypeAssignment(
             index = indexOf(">>: Type<<"),
             annotations = Seq.empty,
-            expressionLeft = SoftAST.ExpressionExpected(indexOf(">><<: Type")),
+            expressionLeft = ExpressionExpected(">><<: Type"),
             preColonSpace = None,
-            colon = Colon(indexOf(">>:<< Type")),
-            postColonSpace = Some(SpaceOne(indexOf(":>> <<Type"))),
-            expressionRight = Identifier(indexOf(": >>Type<<"), "Type")
+            colon = Colon(">>:<< Type"),
+            postColonSpace = Some(Space(":>> <<Type")),
+            expressionRight = Identifier(": >>Type<<")
           )
       }
 
@@ -37,19 +37,19 @@ class TypeAssignmentParserSpec extends AnyWordSpec {
             annotations = Seq(
               SoftAST.Annotation(
                 index = indexOf(">>@using <<: Type"),
-                at = At(indexOf(">>@<<using : Type")),
+                at = At(">>@<<using : Type"),
                 preIdentifierSpace = None,
-                identifier = Identifier(indexOf("@>>using<< : Type"), "using"),
-                postIdentifierSpace = Some(SpaceOne(indexOf("@using>> <<: Type"))),
+                identifier = Identifier("@>>using<< : Type"),
+                postIdentifierSpace = Some(Space("@using>> <<: Type")),
                 tuple = None,
                 postTupleSpace = None
               )
             ),
-            expressionLeft = SoftAST.ExpressionExpected(indexOf("@using >><<: Type")),
+            expressionLeft = ExpressionExpected("@using >><<: Type"),
             preColonSpace = None,
-            colon = Colon(indexOf("@using >>:<< Type")),
-            postColonSpace = Some(SpaceOne(indexOf("@using :>> <<Type"))),
-            expressionRight = Identifier(indexOf("@using : >>Type<<"), "Type")
+            colon = Colon("@using >>:<< Type"),
+            postColonSpace = Some(Space("@using :>> <<Type")),
+            expressionRight = Identifier("@using : >>Type<<")
           )
       }
     }
@@ -65,11 +65,11 @@ class TypeAssignmentParserSpec extends AnyWordSpec {
           SoftAST.TypeAssignment(
             index = indexOf(">>name : Type<<"),
             annotations = Seq.empty,
-            expressionLeft = Identifier(indexOf(">>name<< : Type"), "name"),
-            preColonSpace = Some(SpaceOne(indexOf("name>> <<: Type"))),
-            colon = Colon(indexOf("name >>:<< Type")),
-            postColonSpace = Some(SpaceOne(indexOf("name :>> <<Type"))),
-            expressionRight = Identifier(indexOf("name : >>Type<<"), "Type")
+            expressionLeft = Identifier(">>name<< : Type"),
+            preColonSpace = Some(Space("name>> <<: Type")),
+            colon = Colon("name >>:<< Type"),
+            postColonSpace = Some(Space("name :>> <<Type")),
+            expressionRight = Identifier("name : >>Type<<")
           )
       }
 
@@ -83,19 +83,19 @@ class TypeAssignmentParserSpec extends AnyWordSpec {
             annotations = Seq(
               SoftAST.Annotation(
                 index = indexOf(">>@using <<name : Type"),
-                at = At(indexOf(">>@<<using name : Type")),
+                at = At(">>@<<using name : Type"),
                 preIdentifierSpace = None,
-                identifier = Identifier(indexOf("@>>using<< name : Type"), "using"),
-                postIdentifierSpace = Some(SpaceOne(indexOf("@using>> <<name : Type"))),
+                identifier = Identifier("@>>using<< name : Type"),
+                postIdentifierSpace = Some(Space("@using>> <<name : Type")),
                 tuple = None,
                 postTupleSpace = None
               )
             ),
-            expressionLeft = Identifier(indexOf("@using >>name<< : Type"), "name"),
-            preColonSpace = Some(SpaceOne(indexOf("@using name>> <<: Type"))),
-            colon = Colon(indexOf("@using name >>:<< Type")),
-            postColonSpace = Some(SpaceOne(indexOf("@using name :>> <<Type"))),
-            expressionRight = Identifier(indexOf("@using name : >>Type<<"), "Type")
+            expressionLeft = Identifier("@using >>name<< : Type"),
+            preColonSpace = Some(Space("@using name>> <<: Type")),
+            colon = Colon("@using name >>:<< Type"),
+            postColonSpace = Some(Space("@using name :>> <<Type")),
+            expressionRight = Identifier("@using name : >>Type<<")
           )
       }
 
@@ -109,28 +109,28 @@ class TypeAssignmentParserSpec extends AnyWordSpec {
             annotations = Seq(
               SoftAST.Annotation(
                 index = indexOf(">>@using <<@another name : Type"),
-                at = At(indexOf(">>@<<using @another name : Type")),
+                at = At(">>@<<using @another name : Type"),
                 preIdentifierSpace = None,
-                identifier = Identifier(indexOf("@>>using<< @another name : Type"), "using"),
-                postIdentifierSpace = Some(SpaceOne(indexOf("@using>> <<@another name : Type"))),
+                identifier = Identifier("@>>using<< @another name : Type"),
+                postIdentifierSpace = Some(Space("@using>> <<@another name : Type")),
                 tuple = None,
                 postTupleSpace = None
               ),
               SoftAST.Annotation(
                 index = indexOf("@using >>@another <<name : Type"),
-                at = At(indexOf("@using >>@<<another name : Type")),
+                at = At("@using >>@<<another name : Type"),
                 preIdentifierSpace = None,
-                identifier = Identifier(indexOf("@using @>>another<< name : Type"), "another"),
-                postIdentifierSpace = Some(SpaceOne(indexOf("@using @another>> <<name : Type"))),
+                identifier = Identifier("@using @>>another<< name : Type"),
+                postIdentifierSpace = Some(Space("@using @another>> <<name : Type")),
                 tuple = None,
                 postTupleSpace = None
               )
             ),
-            expressionLeft = Identifier(indexOf("@using @another >>name<< : Type"), "name"),
-            preColonSpace = Some(SpaceOne(indexOf("@using @another name>> <<: Type"))),
-            colon = Colon(indexOf("@using @another name >>:<< Type")),
-            postColonSpace = Some(SpaceOne(indexOf("@using @another name :>> <<Type"))),
-            expressionRight = Identifier(indexOf("@using @another name : >>Type<<"), "Type")
+            expressionLeft = Identifier("@using @another >>name<< : Type"),
+            preColonSpace = Some(Space("@using @another name>> <<: Type")),
+            colon = Colon("@using @another name >>:<< Type"),
+            postColonSpace = Some(Space("@using @another name :>> <<Type")),
+            expressionRight = Identifier("@using @another name : >>Type<<")
           )
       }
     }

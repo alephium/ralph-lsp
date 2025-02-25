@@ -33,13 +33,11 @@ class CommentsSpec extends AnyWordSpec with Matchers {
           }
         ),
         preTextSpace = Some(
-          SpaceOne(
-            indexOf {
-              """//>> <<one
-                |// two
-                |""".stripMargin
-            }
-          )
+          Space {
+            """//>> <<one
+              |// two
+              |""".stripMargin
+          }
         ),
         text = Some(
           SoftAST.CodeString(
@@ -52,13 +50,11 @@ class CommentsSpec extends AnyWordSpec with Matchers {
           )
         ),
         postTextSpace = Some(
-          SpaceNewline(
-            indexOf {
-              """// one>>
-                |<<// two
-                |""".stripMargin
-            }
-          )
+          Space {
+            """// one>>
+              |<<// two
+              |""".stripMargin
+          }
         )
       )
 
@@ -80,13 +76,11 @@ class CommentsSpec extends AnyWordSpec with Matchers {
           }
         ),
         preTextSpace = Some(
-          SpaceOne(
-            indexOf {
-              """// one
-                |//>> <<two
-                |""".stripMargin
-            }
-          )
+          Space {
+            """// one
+              |//>> <<two
+              |""".stripMargin
+          }
         ),
         text = Some(
           SoftAST.CodeString(
@@ -113,13 +107,11 @@ class CommentsSpec extends AnyWordSpec with Matchers {
           expectedSecondComment
         ),
         postCommentSpace = Some(
-          SpaceNewline(
-            index = indexOf {
-              """// one
-                |// two>>
-                |<<""".stripMargin
-            }
-          )
+          Space {
+            """// one
+              |// two>>
+              |<<""".stripMargin
+          }
         )
       )
 
@@ -141,8 +133,8 @@ class CommentsSpec extends AnyWordSpec with Matchers {
             comments = Seq(
               SoftAST.Comment(
                 index = indexOf(s">>$code<<"),
-                doubleForwardSlash = DoubleForwardSlash(indexOf(s">>//<< //")),
-                preTextSpace = Some(SpaceOne(indexOf(s"//>> <<//"))),
+                doubleForwardSlash = DoubleForwardSlash(s">>//<< //"),
+                preTextSpace = Some(Space(s"//>> <<//")),
                 text = Some(
                   SoftAST.CodeString(
                     index = indexOf(s"// >>//<<"),
@@ -187,12 +179,10 @@ class CommentsSpec extends AnyWordSpec with Matchers {
                 preTextSpace = None,
                 text = None,
                 postTextSpace = Some(
-                  SpaceNewline(
-                    indexOf {
-                      """//>>
-                        |<<//""".stripMargin
-                    }
-                  )
+                  Space {
+                    """//>>
+                      |<<//""".stripMargin
+                  }
                 )
               ),
               SoftAST.Comment(

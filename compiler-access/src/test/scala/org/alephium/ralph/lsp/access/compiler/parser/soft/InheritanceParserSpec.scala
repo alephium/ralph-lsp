@@ -35,7 +35,7 @@ class InheritanceParserSpec extends AnyWordSpec with Matchers {
             index = indexOf(s">>${token.lexeme}<<"),
             inheritanceType = TokenDocumented(indexOf(s">>${token.lexeme}<<"), token),
             postInheritanceTypeSpace = None,
-            headReference = SoftAST.IdentifierExpected(indexOf(s"${token.lexeme}>><<")),
+            headReference = IdentifierExpected(s"${token.lexeme}>><<"),
             tailReferencesOrSpace = None
           )
       }
@@ -58,19 +58,19 @@ class InheritanceParserSpec extends AnyWordSpec with Matchers {
           SoftAST.Inheritance(
             index = indexOf(s">>${token.lexeme} A(), B<<"),
             inheritanceType = TokenDocumented(indexOf(s">>${token.lexeme}<< A(), B"), token),
-            postInheritanceTypeSpace = Some(SpaceOne(indexOf(s"${token.lexeme}>> <<A(), B"))),
+            postInheritanceTypeSpace = Some(Space(s"${token.lexeme}>> <<A(), B")),
             headReference = SoftAST.ReferenceCall(
               index = indexOf(s"${token.lexeme} >>A()<<, B"),
-              reference = Identifier(indexOf(s"${token.lexeme} >>A<<(), B"), "A"),
+              reference = Identifier(s"${token.lexeme} >>A<<(), B"),
               preArgumentsSpace = None,
               arguments = SoftAST.Group(
                 index = indexOf(s"${token.lexeme} A>>()<<, B"),
-                openToken = OpenParen(indexOf(s"${token.lexeme} A>>(<<), B")),
+                openToken = OpenParen(s"${token.lexeme} A>>(<<), B"),
                 preHeadExpressionSpace = None,
                 headExpression = None,
                 postHeadExpressionSpace = None,
                 tailExpressions = Seq.empty,
-                closeToken = CloseParen(indexOf(s"${token.lexeme} A(>>)<<, B"))
+                closeToken = CloseParen(s"${token.lexeme} A(>>)<<, B")
               )
             ),
             tailReferencesOrSpace = Some(
@@ -78,9 +78,9 @@ class InheritanceParserSpec extends AnyWordSpec with Matchers {
                 Seq(
                   SoftAST.TailReferences(
                     index = indexOf(s"${token.lexeme} A()>>, B<<"),
-                    comma = Comma(indexOf(s"${token.lexeme} A()>>,<< B")),
-                    postCommaSpace = Some(SpaceOne(indexOf(s"${token.lexeme} A(),>> <<B"))),
-                    reference = Identifier(indexOf(s"${token.lexeme} A(), >>B<<"), "B"),
+                    comma = Comma(s"${token.lexeme} A()>>,<< B"),
+                    postCommaSpace = Some(Space(s"${token.lexeme} A(),>> <<B")),
+                    reference = Identifier(s"${token.lexeme} A(), >>B<<"),
                     postReferenceSpace = None
                   )
                 )

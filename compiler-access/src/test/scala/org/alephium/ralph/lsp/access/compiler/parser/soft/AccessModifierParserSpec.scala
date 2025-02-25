@@ -17,11 +17,7 @@ class AccessModifierParserSpec extends AnyWordSpec with Matchers {
 
       // Code "pubfn" should be recognised as a function. It is an identifier.
       root.parts should have size 1
-      root.parts.head shouldBe
-        Identifier(
-          index = indexOf(">>pubfn<<"),
-          text = "pubfn"
-        )
+      root.parts.head shouldBe Identifier(">>pubfn<<")
     }
   }
 
@@ -36,8 +32,8 @@ class AccessModifierParserSpec extends AnyWordSpec with Matchers {
       function.accessModifier.value shouldBe
         SoftAST.AccessModifier(
           index = indexOf(">>pub <<fn"),
-          pub = Pub(indexOf(">>pub<< fn")),
-          postTokenSpace = Some(SpaceOne(indexOf("pub>> <<fn")))
+          pub = Pub(">>pub<< fn"),
+          postTokenSpace = Some(Space("pub>> <<fn"))
         )
     }
 
@@ -48,7 +44,7 @@ class AccessModifierParserSpec extends AnyWordSpec with Matchers {
       accessModifier shouldBe
         SoftAST.AccessModifier(
           index = indexOf(">>pub<<"),
-          pub = Pub(indexOf(">>pub<<")),
+          pub = Pub(">>pub<<"),
           postTokenSpace = None
         )
     }
