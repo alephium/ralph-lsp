@@ -103,8 +103,8 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
         parseTemplate("Contract mycontract(")
 
       val params = template.params.value
-      params.openToken shouldBe OpenParen("Contract mycontract>>(<<")
-      params.closeToken shouldBe SoftAST.TokenExpected(indexOf("Contract mycontract(>><<"), Token.CloseParen)
+      params.openToken.value shouldBe OpenParen("Contract mycontract>>(<<")
+      params.closeToken.value shouldBe SoftAST.TokenExpected(indexOf("Contract mycontract(>><<"), Token.CloseParen)
     }
 
     "params are empty" in {

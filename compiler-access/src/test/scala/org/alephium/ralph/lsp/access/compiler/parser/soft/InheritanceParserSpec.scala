@@ -65,12 +65,12 @@ class InheritanceParserSpec extends AnyWordSpec with Matchers {
               preArgumentsSpace = None,
               arguments = SoftAST.Group(
                 index = indexOf(s"${token.lexeme} A>>()<<, B"),
-                openToken = OpenParen(s"${token.lexeme} A>>(<<), B"),
+                openToken = Some(OpenParen(s"${token.lexeme} A>>(<<), B")),
                 preHeadExpressionSpace = None,
                 headExpression = None,
                 postHeadExpressionSpace = None,
                 tailExpressions = Seq.empty,
-                closeToken = CloseParen(s"${token.lexeme} A(>>)<<, B")
+                closeToken = Some(CloseParen(s"${token.lexeme} A(>>)<<, B"))
               )
             ),
             tailReferencesOrSpace = Some(

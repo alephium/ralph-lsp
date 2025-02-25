@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.OptionValues._
 
 class EventParserSpec extends AnyWordSpec {
 
@@ -30,7 +31,7 @@ class EventParserSpec extends AnyWordSpec {
     // Tuples are tested in TupleSpec, test for the index and string code here.
     event.params.index shouldBe indexOf("event MyEvent>>(varName: TypeName<<")
     event.params.toCode() shouldBe "(varName: TypeName"
-    event.params.closeToken shouldBe SoftAST.TokenExpected(indexOf("event MyEvent(varName: TypeName>><<"), Token.CloseParen)
+    event.params.closeToken.value shouldBe SoftAST.TokenExpected(indexOf("event MyEvent(varName: TypeName>><<"), Token.CloseParen)
   }
 
 }

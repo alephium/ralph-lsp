@@ -22,6 +22,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.OptionValues._
 
 class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
 
@@ -117,9 +118,9 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
           text = "function"
         )
 
-      function.signature.params.openToken shouldBe OpenParen("fn function>>(<<-> ")
+      function.signature.params.openToken.value shouldBe OpenParen("fn function>>(<<-> ")
 
-      function.signature.params.closeToken shouldBe
+      function.signature.params.closeToken.value shouldBe
         SoftAST.TokenExpected(indexOf("fn function(>><<-> "), Token.CloseParen)
 
       function.signature.returned shouldBe
@@ -141,8 +142,8 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
           text = "function"
         )
 
-      function.signature.params.openToken shouldBe OpenParen("fn function>>(<<-> Type")
-      function.signature.params.closeToken shouldBe SoftAST.TokenExpected(indexOf("fn function(>><<-> Type"), Token.CloseParen)
+      function.signature.params.openToken.value shouldBe OpenParen("fn function>>(<<-> Type")
+      function.signature.params.closeToken.value shouldBe SoftAST.TokenExpected(indexOf("fn function(>><<-> Type"), Token.CloseParen)
 
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(
@@ -169,8 +170,8 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
           text = "function"
         )
 
-      function.signature.params.openToken shouldBe OpenParen("fn function>>(<<) -> ")
-      function.signature.params.closeToken shouldBe CloseParen("fn function(>>)<< -> ")
+      function.signature.params.openToken.value shouldBe OpenParen("fn function>>(<<) -> ")
+      function.signature.params.closeToken.value shouldBe CloseParen("fn function(>>)<< -> ")
 
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(
@@ -191,8 +192,8 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
           text = "function"
         )
 
-      function.signature.params.openToken shouldBe OpenParen("fn function>>(<<) -> type")
-      function.signature.params.closeToken shouldBe CloseParen("fn function(>>)<< -> type")
+      function.signature.params.openToken.value shouldBe OpenParen("fn function>>(<<) -> type")
+      function.signature.params.closeToken.value shouldBe CloseParen("fn function(>>)<< -> type")
 
       function.signature.returned shouldBe
         SoftAST.FunctionReturn(
@@ -225,8 +226,8 @@ class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
         text = "function"
       )
 
-    function.signature.params.openToken shouldBe OpenParen("fn function>>(<<) => ABC")
-    function.signature.params.closeToken shouldBe CloseParen("fn function(>>)<< => ABC")
+    function.signature.params.openToken.value shouldBe OpenParen("fn function>>(<<) => ABC")
+    function.signature.params.closeToken.value shouldBe CloseParen("fn function(>>)<< => ABC")
 
     /**
      * Second part is [[SoftAST.Unresolved]] arrow `=>`

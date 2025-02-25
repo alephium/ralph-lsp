@@ -22,6 +22,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.OptionValues._
 
 class FunctionNameSpec extends AnyWordSpec with Matchers {
 
@@ -168,7 +169,8 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
     function
       .signature
       .params
-      .closeToken shouldBe SoftAST.TokenExpected(indexOf("fn abcd(>><<"), Token.CloseParen)
+      .closeToken
+      .value shouldBe SoftAST.TokenExpected(indexOf("fn abcd(>><<"), Token.CloseParen)
   }
 
   "missing opening parentheses" in {
@@ -184,7 +186,8 @@ class FunctionNameSpec extends AnyWordSpec with Matchers {
     function
       .signature
       .params
-      .openToken shouldBe SoftAST.TokenExpected(indexOf("fn abcd>><<)"), Token.OpenParen)
+      .openToken
+      .value shouldBe SoftAST.TokenExpected(indexOf("fn abcd>><<)"), Token.OpenParen)
   }
 
 }
