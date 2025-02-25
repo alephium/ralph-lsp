@@ -24,7 +24,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
-class FunctionReturnClauseSpec extends AnyWordSpec with Matchers {
+class FunctionReturnSpec extends AnyWordSpec with Matchers {
 
   "function name is not defined" when {
     "arrow is defined" in {
