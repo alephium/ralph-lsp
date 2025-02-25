@@ -138,8 +138,7 @@ class BStringParserSpec extends AnyWordSpec with Matchers {
                 |a string value
                 |<<""".stripMargin
             },
-            text =
-              """ this is
+            text = """ this is
                 |
                 |a string value
                 |""".stripMargin
