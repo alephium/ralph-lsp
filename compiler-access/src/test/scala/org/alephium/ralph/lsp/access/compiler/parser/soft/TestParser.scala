@@ -121,6 +121,9 @@ object TestParser {
   def parseInfixCall(code: String): SoftAST.InfixExpression =
     runSoftParser(InfixCallParser.parseOrFail(_))(code)
 
+  def parseConst(code: String): SoftAST.Const =
+    runSoftParser(ConstParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,

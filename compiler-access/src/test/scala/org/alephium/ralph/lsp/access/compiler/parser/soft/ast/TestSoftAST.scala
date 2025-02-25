@@ -755,11 +755,19 @@ object TestSoftAST {
       )
     )
 
-  def IdentifierExpected(text: String): SoftAST.IdentifierExpected =
-    SoftAST.IdentifierExpected(indexOf(text))
+  def IdentifierExpected(code: String): SoftAST.IdentifierExpected =
+    SoftAST.IdentifierExpected(indexOf(code))
 
-  def ExpressionExpected(text: String): SoftAST.ExpressionExpected =
-    SoftAST.ExpressionExpected(indexOf(text))
+  def ExpressionExpected(code: String): SoftAST.ExpressionExpected =
+    SoftAST.ExpressionExpected(indexOf(code))
+
+  def TokenExpected[T <: Token](
+      code: String,
+      token: T): SoftAST.TokenExpected[T] =
+    SoftAST.TokenExpected(
+      index = indexOf(code),
+      token = token
+    )
 
   def Space(text: String): SoftAST.Space =
     Space(indexChunkOf(text))
