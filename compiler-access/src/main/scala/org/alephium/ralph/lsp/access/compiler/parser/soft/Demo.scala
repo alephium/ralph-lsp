@@ -55,6 +55,8 @@ object Demo extends App {
         |       b`some text 🎸
         |         some text in the middle
         |         some more text 🤙`
+        |
+        |    return a + b, method.call(), (1, 2)
         |  }
         |
         |  🚀

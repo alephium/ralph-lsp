@@ -341,12 +341,12 @@ object SoftAST {
    */
   case class Group[O <: Token, C <: Token](
       index: SourceIndex,
-      openToken: TokenDocExpectedAST[O],
+      openToken: Option[TokenDocExpectedAST[O]],
       preHeadExpressionSpace: Option[Space],
       headExpression: Option[ExpressionAST],
       postHeadExpressionSpace: Option[Space],
       tailExpressions: Seq[GroupTail],
-      closeToken: TokenDocExpectedAST[C])
+      closeToken: Option[TokenDocExpectedAST[C]])
     extends ExpressionAST {
 
     /** Collects all expressions defined in this group */

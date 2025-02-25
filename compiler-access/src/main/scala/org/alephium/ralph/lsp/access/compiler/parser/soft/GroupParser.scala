@@ -58,9 +58,44 @@ private object GroupParser {
     }
 
   /**
-   * Parses a sequence of arguments enclosed within parentheses.
+   * Parses a sequence of comma separated expressions.
    *
-   * Syntax: (arg1, arg2, (arg3, arg4), arg5)
+   * Syntax: expr1, expr2, (expr3, expr4), ...
+   *
+   * @return An instance of [[SoftAST.Group]] without enclosing tokens.
+   */
+  def parseOrFail[Unknown: P]: P[SoftAST.Group[Nothing, Nothing]] =
+    P {
+      Index ~
+        expression(Token.OpenParen, Token.CloseParen).? ~
+        SpaceParser.parseOrFail.? ~
+        tail(Token.OpenParen, Token.CloseParen).rep(1) ~
+        Index
+    } map {
+      case (from, headExpression, postHeadSpace, tailParams, to) =>
+        val headExpressionAdjusted =
+          adjustHeadExpression(
+            headParamIndex = from,
+            headExpression = headExpression,
+            tailParams = tailParams
+          )
+
+        SoftAST.Group(
+          index = range(from, to),
+          openToken = None,
+          preHeadExpressionSpace = None,
+          headExpression = headExpressionAdjusted,
+          postHeadExpressionSpace = postHeadSpace,
+          tailExpressions = tailParams,
+          closeToken = None
+        )
+
+    }
+
+  /**
+   * Parses a sequence of expressions enclosed within the given open and close tokens.
+   *
+   * Syntax: (expr1, expr2, (expr3, expr4), ...)
    *
    * @param required Determines if the parser should fail when the opening parenthesis is missing.
    * @return An instance of [[SoftAST.Group]].
@@ -81,25 +116,38 @@ private object GroupParser {
         Index
     } map {
       case (from, openParen, preHeadSpace, headParamIndex, headExpression, postHeadSpace, tailParams, closeParen, to) =>
-        // Look ahead check: If tail param is provided, but head param is missing, report the head param as required.
-        // For example, in the case of `(, tailArgs)`, head param is missing which is required.
         val headExpressionAdjusted =
-          if (tailParams.nonEmpty && headExpression.isEmpty)
-            Some(SoftAST.ExpressionExpected(point(headParamIndex)))
-          else
-            headExpression
+          adjustHeadExpression(
+            headParamIndex = headParamIndex,
+            headExpression = headExpression,
+            tailParams = tailParams
+          )
 
         SoftAST.Group(
           index = range(from, to),
-          openToken = openParen,
+          openToken = Some(openParen),
           preHeadExpressionSpace = preHeadSpace,
           headExpression = headExpressionAdjusted,
           postHeadExpressionSpace = postHeadSpace,
           tailExpressions = tailParams,
-          closeToken = closeParen
+          closeToken = Some(closeParen)
         )
 
     }
+
+  /**
+   * Look ahead check: If tail param is provided, but head param is missing, report the head param as required.
+   *
+   * For example, in the case of `(, tailArgs)`, head param is missing which is required.
+   */
+  private def adjustHeadExpression(
+      headParamIndex: Int,
+      headExpression: Option[SoftAST.ExpressionAST],
+      tailParams: Seq[SoftAST.GroupTail]): Option[SoftAST.ExpressionAST] =
+    if (tailParams.nonEmpty && headExpression.isEmpty)
+      Some(SoftAST.ExpressionExpected(point(headParamIndex)))
+    else
+      headExpression
 
   /**
    * Parses a "tail param" which may contain nested arguments.

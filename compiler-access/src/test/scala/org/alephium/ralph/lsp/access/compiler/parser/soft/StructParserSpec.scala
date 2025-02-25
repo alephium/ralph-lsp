@@ -6,6 +6,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.OptionValues._
 
 class StructParserSpec extends AnyWordSpec {
 
@@ -35,12 +36,12 @@ class StructParserSpec extends AnyWordSpec {
           preParamSpace = None,
           params = SoftAST.Group(
             index = indexOf("struct>><<"),
-            openToken = SoftAST.TokenExpected(indexOf("struct>><<"), Token.OpenCurly),
+            openToken = Some(SoftAST.TokenExpected(indexOf("struct>><<"), Token.OpenCurly)),
             preHeadExpressionSpace = None,
             headExpression = None,
             postHeadExpressionSpace = None,
             tailExpressions = Seq.empty,
-            closeToken = SoftAST.TokenExpected(indexOf("struct>><<"), Token.CloseCurly)
+            closeToken = Some(SoftAST.TokenExpected(indexOf("struct>><<"), Token.CloseCurly))
           )
         )
     }
@@ -54,7 +55,7 @@ class StructParserSpec extends AnyWordSpec {
       // Tuples are tested in TupleSpec, test for the index and string code here.
       struct.params.index shouldBe indexOf("struct MyStruct>>{varName: TypeName<<")
       struct.params.toCode() shouldBe "{varName: TypeName"
-      struct.params.closeToken shouldBe SoftAST.TokenExpected(indexOf("struct MyStruct{varName: TypeName>><<"), Token.CloseCurly)
+      struct.params.closeToken.value shouldBe SoftAST.TokenExpected(indexOf("struct MyStruct{varName: TypeName>><<"), Token.CloseCurly)
     }
 
     "well defined struct" in {
@@ -66,8 +67,8 @@ class StructParserSpec extends AnyWordSpec {
       // Tuples are tested in TupleSpec, test for the index and string code here.
       struct.params.index shouldBe indexOf("struct Bar >>{ z: U256, mut foo: Foo }<<")
       struct.params.toCode() shouldBe "{ z: U256, mut foo: Foo }"
-      struct.params.openToken shouldBe OpenCurly("struct Bar >>{<< z: U256, mut foo: Foo }")
-      struct.params.closeToken shouldBe CloseCurly("struct Bar { z: U256, mut foo: Foo >>}<<")
+      struct.params.openToken.value shouldBe OpenCurly("struct Bar >>{<< z: U256, mut foo: Foo }")
+      struct.params.closeToken.value shouldBe CloseCurly("struct Bar { z: U256, mut foo: Foo >>}<<")
 
     }
   }
