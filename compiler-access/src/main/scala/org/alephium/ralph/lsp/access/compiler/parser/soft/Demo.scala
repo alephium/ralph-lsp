@@ -15,8 +15,11 @@ object Demo extends App {
         |event Event(a: Type)
         |struct Struct { a: Type }
         |enum Enum { one = 1 }
+        |const Const = (1 + 1) * 2
         |
         |Contract HelloWorld(type: SomeType, tuple: (A, B)) extends Class implements Trait {
+        |
+        |  const CacheValue = type.getCache().value + 0
         |
         |  // This multiline comment
         |  // documents this function
