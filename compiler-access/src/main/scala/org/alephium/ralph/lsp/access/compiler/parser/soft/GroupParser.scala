@@ -181,13 +181,13 @@ private object GroupParser {
       open: O,
       close: C): P[SoftAST.ExpressionAST] =
     P {
-      GroupParser.parseOrFail(open, close) |
-        TypeAssignmentParser.parseOrFail |
+      TypeAssignmentParser.parseOrFail |
         AssignmentParser.parseOrFail |
         InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |
         MutableBindingParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
+        GroupParser.parseOrFail(open, close) |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |

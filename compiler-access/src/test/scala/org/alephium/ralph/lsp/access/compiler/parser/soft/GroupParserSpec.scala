@@ -281,6 +281,48 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
         )
     }
 
+    "the element is an infix expression" in {
+      val tuple = parseTuple("((1 + 2) * 3)")
+
+      tuple shouldBe
+        SoftAST.Group(
+          index = indexOf(">>((1 + 2) * 3)<<"),
+          openToken = Some(OpenParen(">>(<<(1 + 2) * 3)")),
+          preHeadExpressionSpace = None,
+          headExpression = Some(
+            SoftAST.InfixExpression(
+              index = indexOf("(>>(1 + 2) * 3<<)"),
+              leftExpression = SoftAST.Group(
+                index = indexOf("(>>(1 + 2)<< * 3)"),
+                openToken = Some(OpenParen("(>>(<<1 + 2) * 3)")),
+                preHeadExpressionSpace = None,
+                headExpression = Some(
+                  SoftAST.InfixExpression(
+                    index = indexOf("((>>1 + 2<<) * 3)"),
+                    leftExpression = Number("((>>1<< + 2) * 3)"),
+                    preOperatorSpace = Some(Space("((1>> <<+ 2) * 3)")),
+                    operator = Plus("((1 >>+<< 2) * 3)"),
+                    postOperatorSpace = Some(Space("((1 +>> <<2) * 3)")),
+                    rightExpression = Number("((1 + >>2<<) * 3)")
+                  )
+                ),
+                postHeadExpressionSpace = None,
+                tailExpressions = Seq.empty,
+                closeToken = Some(CloseParen("((1 + 2>>)<< * 3)"))
+              ),
+              preOperatorSpace = Some(Space("((1 + 2)>> <<* 3)")),
+              operator = Asterisk("((1 + 2) >>*<< 3)"),
+              postOperatorSpace = Some(Space("((1 + 2) *>> <<3)")),
+              rightExpression = Number("((1 + 2) * >>3<<)")
+            )
+          ),
+          postHeadExpressionSpace = None,
+          tailExpressions = Seq.empty,
+          closeToken = Some(CloseParen("((1 + 2) * 3>>)<<"))
+        )
+
+    }
+
   }
 
 }
