@@ -26,7 +26,7 @@ class ImportParserSpec extends AnyWordSpec with Matchers {
       importAST shouldBe
         SoftAST.Import(
           index = indexOf(">>import<<"),
-          importToken = Import(indexOf(">>import<<")),
+          importToken = Import(">>import<<"),
           postImportSpace = None,
           string = None
         )
@@ -39,8 +39,8 @@ class ImportParserSpec extends AnyWordSpec with Matchers {
       importAST shouldBe
         SoftAST.Import(
           index = indexOf(">>import <<"),
-          importToken = Import(indexOf(">>import<< ")),
-          postImportSpace = Some(SpaceOne(indexOf("import>> <<"))),
+          importToken = Import(">>import<< "),
+          postImportSpace = Some(Space("import>> <<")),
           string = None
         )
     }
@@ -52,12 +52,12 @@ class ImportParserSpec extends AnyWordSpec with Matchers {
       importAST shouldBe
         SoftAST.Import(
           index = indexOf(">>import\"<<"),
-          importToken = Import(indexOf(">>import<<")),
+          importToken = Import(">>import<<"),
           postImportSpace = None,
           string = Some(
             SoftAST.StringLiteral(
               index = indexOf("import>>\"<<"),
-              startQuote = Quote(indexOf("import>>\"<<")),
+              startQuote = Quote("import>>\"<<"),
               head = None,
               tail = Seq.empty,
               endQuote = SoftAST.TokenExpected(indexOf("import\">><<"), Token.Quote)
@@ -73,21 +73,21 @@ class ImportParserSpec extends AnyWordSpec with Matchers {
       importAST shouldBe
         SoftAST.Import(
           index = indexOf(""">>import "folder/file.ral"<<"""),
-          importToken = Import(indexOf(""">>import<< "folder/file.ral"""")),
-          postImportSpace = Some(SpaceOne(indexOf("""import>> <<"folder/file.ral""""))),
+          importToken = Import(""">>import<< "folder/file.ral""""),
+          postImportSpace = Some(Space("""import>> <<"folder/file.ral"""")),
           string = Some(
             SoftAST.StringLiteral(
               index = indexOf("""import >>"folder/file.ral"<<"""),
-              startQuote = Quote(indexOf("""import >>"<<folder/file.ral"""")),
+              startQuote = Quote("""import >>"<<folder/file.ral""""),
               head = Some(SoftAST.CodeString(indexOf("""import ">>folder<</file.ral""""), "folder")),
               tail = Seq(
                 SoftAST.Path(
                   index = indexOf("""import "folder>>/file.ral<<""""),
-                  slash = ForwardSlash(indexOf("""import "folder>>/<<file.ral"""")),
+                  slash = ForwardSlash("""import "folder>>/<<file.ral""""),
                   text = SoftAST.CodeString(indexOf("""import "folder/>>file.ral<<""""), "file.ral")
                 )
               ),
-              endQuote = Quote(indexOf("""import "folder/file.ral>>"<<"""))
+              endQuote = Quote("""import "folder/file.ral>>"<<""")
             )
           )
         )

@@ -49,21 +49,17 @@ class FnAnnotationSpec extends AnyWordSpec with Matchers {
             |<<fn function() -> ()
             |""".stripMargin
         },
-        at = At(
-          indexOf {
-            """>>@<<
-              |fn function() -> ()
+        at = At {
+          """>>@<<
+            |fn function() -> ()
+            |""".stripMargin
+        },
+        preIdentifierSpace = Some(
+          Space {
+            """@>>
+              |<<fn function() -> ()
               |""".stripMargin
           }
-        ),
-        preIdentifierSpace = Some(
-          SpaceNewline(
-            indexOf {
-              """@>>
-                |<<fn function() -> ()
-                |""".stripMargin
-            }
-          )
         ),
         identifier = SoftAST.IdentifierExpected(
           indexOf {
@@ -94,30 +90,23 @@ class FnAnnotationSpec extends AnyWordSpec with Matchers {
               |<<fn function() -> ()
               |""".stripMargin
           },
-          at = At(
-            indexOf {
-              """>>@<<annotation
-                |fn function() -> ()
+          At {
+            """>>@<<annotation
+              |fn function() -> ()
+              |""".stripMargin
+          },
+          preIdentifierSpace = None,
+          identifier = Identifier {
+            """@>>annotation<<
+              |fn function() -> ()
+              |""".stripMargin
+          },
+          postIdentifierSpace = Some(
+            Space {
+              """@annotation>>
+                |<<fn function() -> ()
                 |""".stripMargin
             }
-          ),
-          preIdentifierSpace = None,
-          identifier = Identifier(
-            index = indexOf {
-              """@>>annotation<<
-                |fn function() -> ()
-                |""".stripMargin
-            },
-            text = "annotation"
-          ),
-          postIdentifierSpace = Some(
-            SpaceNewline(
-              indexOf {
-                """@annotation>>
-                  |<<fn function() -> ()
-                  |""".stripMargin
-              }
-            )
           ),
           tuple = None,
           postTupleSpace = None
@@ -147,55 +136,44 @@ class FnAnnotationSpec extends AnyWordSpec with Matchers {
               |fn function() -> ()
               |""".stripMargin
           },
-          at = At(
-            indexOf {
-              """>>@<< annotation (a, b + c, c = 4)
+          at = At {
+            """>>@<< annotation (a, b + c, c = 4)
+              |@ last ()
+              |fn function() -> ()
+              |""".stripMargin
+          },
+          preIdentifierSpace = Some(
+            Space {
+              """@>> <<annotation (a, b + c, c = 4)
                 |@ last ()
                 |fn function() -> ()
                 |""".stripMargin
             }
           ),
-          preIdentifierSpace = Some(
-            SpaceOne(
-              indexOf {
-                """@>> <<annotation (a, b + c, c = 4)
-                  |@ last ()
-                  |fn function() -> ()
-                  |""".stripMargin
-              }
-            )
-          ),
-          identifier = Identifier(
-            index = indexOf {
-              """@ >>annotation<< (a, b + c, c = 4)
+          identifier = Identifier {
+            """@ >>annotation<< (a, b + c, c = 4)
+              |@ last ()
+              |fn function() -> ()
+              |""".stripMargin
+          },
+          postIdentifierSpace = Some(
+            Space {
+              """@ annotation>> <<(a, b + c, c = 4)
                 |@ last ()
                 |fn function() -> ()
                 |""".stripMargin
-            },
-            text = "annotation"
-          ),
-          postIdentifierSpace = Some(
-            SpaceOne(
-              index = indexOf {
-                """@ annotation>> <<(a, b + c, c = 4)
-                  |@ last ()
-                  |fn function() -> ()
-                  |""".stripMargin
-              }
-            )
+            }
           ),
           tuple =
             // This test case is not targeting Tuples AST, simply parse it.
             Some(findAnnotation("annotation")(code).flatMap(_.tuple).value),
           postTupleSpace = Some(
-            SpaceNewline(
-              index = indexOf {
-                """@ annotation (a, b + c, c = 4)>>
-                  |<<@ last ()
-                  |fn function() -> ()
-                  |""".stripMargin
-              }
-            )
+            Space {
+              """@ annotation (a, b + c, c = 4)>>
+                |<<@ last ()
+                |fn function() -> ()
+                |""".stripMargin
+            }
           )
         )
 
@@ -207,55 +185,44 @@ class FnAnnotationSpec extends AnyWordSpec with Matchers {
               |<<fn function() -> ()
               |""".stripMargin
           },
-          at = At(
-            indexOf {
+          at = At {
+            """@ annotation (a, b + c, c = 4)
+              |>>@<< last ()
+              |fn function() -> ()
+              |""".stripMargin
+          },
+          preIdentifierSpace = Some(
+            Space {
               """@ annotation (a, b + c, c = 4)
-                |>>@<< last ()
+                |@>> <<last ()
                 |fn function() -> ()
                 |""".stripMargin
             }
           ),
-          preIdentifierSpace = Some(
-            SpaceOne(
-              index = indexOf {
-                """@ annotation (a, b + c, c = 4)
-                  |@>> <<last ()
-                  |fn function() -> ()
-                  |""".stripMargin
-              }
-            )
-          ),
-          identifier = Identifier(
-            index = indexOf {
+          identifier = Identifier {
+            """@ annotation (a, b + c, c = 4)
+              |@ >>last<< ()
+              |fn function() -> ()
+              |""".stripMargin
+          },
+          postIdentifierSpace = Some(
+            Space {
               """@ annotation (a, b + c, c = 4)
-                |@ >>last<< ()
+                |@ last>> <<()
                 |fn function() -> ()
                 |""".stripMargin
-            },
-            text = "last"
-          ),
-          postIdentifierSpace = Some(
-            SpaceOne(
-              index = indexOf {
-                """@ annotation (a, b + c, c = 4)
-                  |@ last>> <<()
-                  |fn function() -> ()
-                  |""".stripMargin
-              }
-            )
+            }
           ),
           tuple =
             // This test case is not targeting Tuples AST, simply parse it.
             Some(findAnnotation("last")(code).flatMap(_.tuple).value),
           postTupleSpace = Some(
-            SpaceNewline(
-              indexOf {
-                """@ annotation (a, b + c, c = 4)
-                  |@ last ()>>
-                  |<<fn function() -> ()
-                  |""".stripMargin
-              }
-            )
+            Space {
+              """@ annotation (a, b + c, c = 4)
+                |@ last ()>>
+                |<<fn function() -> ()
+                |""".stripMargin
+            }
           )
         )
 

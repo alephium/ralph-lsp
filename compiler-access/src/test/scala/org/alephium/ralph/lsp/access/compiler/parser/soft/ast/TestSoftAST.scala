@@ -755,6 +755,12 @@ object TestSoftAST {
       )
     )
 
+  def IdentifierExpected(text: String): SoftAST.IdentifierExpected =
+    SoftAST.IdentifierExpected(indexOf(text))
+
+  def ExpressionExpected(text: String): SoftAST.ExpressionExpected =
+    SoftAST.ExpressionExpected(indexOf(text))
+
   def Space(text: String): SoftAST.Space =
     Space(indexChunkOf(text))
 
@@ -774,28 +780,29 @@ object TestSoftAST {
       )
     )
 
-  def SpaceOne(index: SourceIndex): SoftAST.Space =
-    SoftAST.Space(
-      code = SoftAST.CodeString(
-        index = index,
-        text = " "
-      )
-    )
-
-  def SpaceNewline(index: SourceIndex): SoftAST.Space =
-    SoftAST.Space(
-      code = Code(
-        index = index,
-        token = Token.Newline
-      )
-    )
-
   def Code(
       index: SourceIndex,
       token: Token): SoftAST.CodeString =
     SoftAST.CodeString(
       index = index,
       text = token.lexeme
+    )
+
+  def CodeString(text: String): SoftAST.CodeString =
+    CodeString(indexChunkOf(text))
+
+  def CodeString(indexText: (SourceIndex, String)): SoftAST.CodeString =
+    CodeString(
+      index = indexText._1,
+      text = indexText._2
+    )
+
+  def CodeString(
+      index: SourceIndex,
+      text: String): SoftAST.CodeString =
+    SoftAST.CodeString(
+      index = index,
+      text = text
     )
 
   def TokenDocumented[T <: Token](

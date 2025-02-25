@@ -33,19 +33,19 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
       varDec shouldBe
         SoftAST.VariableDeclaration(
           index = indexOf(">>let mut variable = 1<<"),
-          let = Let(indexOf(">>let<< mut variable = 1")),
-          postLetSpace = Some(SpaceOne(indexOf("let>> <<mut variable = 1"))),
+          let = Let(">>let<< mut variable = 1"),
+          postLetSpace = Some(Space("let>> <<mut variable = 1")),
           assignment = SoftAST.Assignment(
             index = indexOf("let >>mut variable = 1<<"),
             expressionLeft = SoftAST.MutableBinding(
               index = indexOf("let >>mut variable<< = 1"),
-              mut = Mut(indexOf("let >>mut<< variable = 1")),
-              space = Some(SpaceOne(indexOf("let mut>> <<variable = 1"))),
-              identifier = Identifier(indexOf("let mut >>variable<< = 1"), "variable")
+              mut = Mut("let >>mut<< variable = 1"),
+              space = Some(Space("let mut>> <<variable = 1")),
+              identifier = Identifier("let mut >>variable<< = 1")
             ),
-            postIdentifierSpace = Some(SpaceOne(indexOf("let mut variable>> <<= 1"))),
-            equalToken = Equal(indexOf("let mut variable >>=<< 1")),
-            postEqualSpace = Some(SpaceOne(indexOf("let mut variable =>> <<1"))),
+            postIdentifierSpace = Some(Space("let mut variable>> <<= 1")),
+            equalToken = Equal("let mut variable >>=<< 1"),
+            postEqualSpace = Some(Space("let mut variable =>> <<1")),
             expressionRight = Number(indexOf("let mut variable = >>1<<"), "1")
           )
         )
@@ -61,20 +61,20 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
         varDec shouldBe
           SoftAST.VariableDeclaration(
             index = indexOf(">>let mut variable = <<"),
-            let = Let(indexOf(">>let<< mut variable = ")),
-            postLetSpace = Some(SpaceOne(indexOf("let>> <<mut variable = "))),
+            let = Let(">>let<< mut variable = "),
+            postLetSpace = Some(Space("let>> <<mut variable = ")),
             assignment = SoftAST.Assignment(
               index = indexOf("let >>mut variable = <<"),
               expressionLeft = SoftAST.MutableBinding(
                 index = indexOf("let >>mut variable<< = "),
-                mut = Mut(indexOf("let >>mut<< variable = ")),
-                space = Some(SpaceOne(indexOf("let mut>> <<variable = "))),
-                identifier = Identifier(indexOf("let mut >>variable<< = "), "variable")
+                mut = Mut("let >>mut<< variable = "),
+                space = Some(Space("let mut>> <<variable = ")),
+                identifier = Identifier("let mut >>variable<< = ")
               ),
-              postIdentifierSpace = Some(SpaceOne(indexOf("let mut variable>> <<= "))),
-              equalToken = Equal(indexOf("let mut variable >>=<< ")),
-              postEqualSpace = Some(SpaceOne(indexOf("let mut variable =>> <<"))),
-              expressionRight = SoftAST.ExpressionExpected(indexOf("let mut variable = >><<"))
+              postIdentifierSpace = Some(Space("let mut variable>> <<= ")),
+              equalToken = Equal("let mut variable >>=<< "),
+              postEqualSpace = Some(Space("let mut variable =>> <<")),
+              expressionRight = ExpressionExpected("let mut variable = >><<")
             )
           )
       }
@@ -87,20 +87,20 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
       varDec shouldBe
         SoftAST.VariableDeclaration(
           index = indexOf(">>let mut variable<<"),
-          let = Let(indexOf(">>let<< mut variable")),
-          postLetSpace = Some(SpaceOne(indexOf("let>> <<mut variable"))),
+          let = Let(">>let<< mut variable"),
+          postLetSpace = Some(Space("let>> <<mut variable")),
           assignment = SoftAST.Assignment(
             index = indexOf("let >>mut variable<<"),
             expressionLeft = SoftAST.MutableBinding(
               index = indexOf("let >>mut variable<<"),
-              mut = Mut(indexOf("let >>mut<< variable")),
-              space = Some(SpaceOne(indexOf("let mut>> <<variable"))),
-              identifier = Identifier(indexOf("let mut >>variable<<"), "variable")
+              mut = Mut("let >>mut<< variable"),
+              space = Some(Space("let mut>> <<variable")),
+              identifier = Identifier("let mut >>variable<<")
             ),
             postIdentifierSpace = None,
             equalToken = SoftAST.TokenExpected(indexOf("let mut variable>><<"), Token.Equal),
             postEqualSpace = None,
-            expressionRight = SoftAST.ExpressionExpected(indexOf("let mut variable>><<"))
+            expressionRight = ExpressionExpected("let mut variable>><<")
           )
         )
     }
@@ -112,20 +112,20 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
       varDec shouldBe
         SoftAST.VariableDeclaration(
           index = indexOf(">>let mut<<"),
-          let = Let(indexOf(">>let<< mut")),
-          postLetSpace = Some(SpaceOne(indexOf("let>> <<mut"))),
+          let = Let(">>let<< mut"),
+          postLetSpace = Some(Space("let>> <<mut")),
           assignment = SoftAST.Assignment(
             index = indexOf("let >>mut<<"),
             expressionLeft = SoftAST.MutableBinding(
               index = indexOf("let >>mut<<"),
-              mut = Mut(indexOf("let >>mut<<")),
+              mut = Mut("let >>mut<<"),
               space = None,
-              identifier = SoftAST.IdentifierExpected(indexOf("let mut>><<"))
+              identifier = IdentifierExpected("let mut>><<")
             ),
             postIdentifierSpace = None,
             equalToken = SoftAST.TokenExpected(indexOf("let mut>><<"), Token.Equal),
             postEqualSpace = None,
-            expressionRight = SoftAST.ExpressionExpected(indexOf("let mut>><<"))
+            expressionRight = ExpressionExpected("let mut>><<")
           )
         )
     }
@@ -137,15 +137,15 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
       varDec shouldBe
         SoftAST.VariableDeclaration(
           index = indexOf(">>let<<"),
-          let = Let(indexOf(">>let<<")),
+          let = Let(">>let<<"),
           postLetSpace = None,
           assignment = SoftAST.Assignment(
             index = indexOf("let>><<"),
-            expressionLeft = SoftAST.ExpressionExpected(indexOf("let>><<")),
+            expressionLeft = ExpressionExpected("let>><<"),
             postIdentifierSpace = None,
             equalToken = SoftAST.TokenExpected(indexOf("let>><<"), Token.Equal),
             postEqualSpace = None,
-            expressionRight = SoftAST.ExpressionExpected(indexOf("let>><<"))
+            expressionRight = ExpressionExpected("let>><<")
           )
         )
     }
@@ -188,8 +188,8 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
       val tupleVarDec =
         parseVariableDeclaration("let (a, b, c) = blah")
 
-      tupleVarDec.let shouldBe Let(indexOf(">>let<< (a, b, c) = blah"))
-      tupleVarDec.postLetSpace shouldBe Some(SpaceOne(indexOf("let>> <<(a, b, c) = blah")))
+      tupleVarDec.let shouldBe Let(">>let<< (a, b, c) = blah")
+      tupleVarDec.postLetSpace shouldBe Some(Space("let>> <<(a, b, c) = blah"))
 
       // left is a tuple
       val left = tupleVarDec.assignment.expressionLeft.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]

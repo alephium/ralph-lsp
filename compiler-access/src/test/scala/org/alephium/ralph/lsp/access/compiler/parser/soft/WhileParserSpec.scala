@@ -31,11 +31,11 @@ class WhileParserSpec extends AnyWordSpec with Matchers {
       actual shouldBe
         SoftAST.While(
           index = indexOf(">>while<<"),
-          whileToken = While(indexOf(">>while<<")),
+          whileToken = While(">>while<<"),
           postWhileSpace = None,
           openParen = SoftAST.TokenExpected(indexOf("while>><<"), Token.OpenParen),
           postOpenParenSpace = None,
-          expression = SoftAST.ExpressionExpected(indexOf("while>><<")),
+          expression = ExpressionExpected("while>><<"),
           postExpressionSpace = None,
           closeParen = SoftAST.TokenExpected(indexOf("while>><<"), Token.CloseParen),
           postCloseParenSpace = None,
@@ -50,11 +50,11 @@ class WhileParserSpec extends AnyWordSpec with Matchers {
       actual shouldBe
         SoftAST.While(
           index = indexOf(">>while <<"),
-          whileToken = While(indexOf(">>while<< ")),
-          postWhileSpace = Some(SpaceOne(indexOf("while>> <<"))),
+          whileToken = While(">>while<< "),
+          postWhileSpace = Some(Space("while>> <<")),
           openParen = SoftAST.TokenExpected(indexOf("while >><<"), Token.OpenParen),
           postOpenParenSpace = None,
-          expression = SoftAST.ExpressionExpected(indexOf("while >><<")),
+          expression = ExpressionExpected("while >><<"),
           postExpressionSpace = None,
           closeParen = SoftAST.TokenExpected(indexOf("while >><<"), Token.CloseParen),
           postCloseParenSpace = None,
@@ -69,11 +69,11 @@ class WhileParserSpec extends AnyWordSpec with Matchers {
       actual shouldBe
         SoftAST.While(
           index = indexOf(">>while(<<"),
-          whileToken = While(indexOf(">>while<<")),
+          whileToken = While(">>while<<"),
           postWhileSpace = None,
-          openParen = OpenParen(indexOf("while>>(<<")),
+          openParen = OpenParen("while>>(<<"),
           postOpenParenSpace = None,
-          expression = SoftAST.ExpressionExpected(indexOf("while(>><<")),
+          expression = ExpressionExpected("while(>><<"),
           postExpressionSpace = None,
           closeParen = SoftAST.TokenExpected(indexOf("while(>><<"), Token.CloseParen),
           postCloseParenSpace = None,

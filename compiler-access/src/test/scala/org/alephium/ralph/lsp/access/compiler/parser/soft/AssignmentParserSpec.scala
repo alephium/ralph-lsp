@@ -39,11 +39,11 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
         infix shouldBe
           SoftAST.InfixExpression(
             index = indexOf(">>variable ==<<"),
-            leftExpression = Identifier(indexOf(">>variable<< =="), "variable"),
-            preOperatorSpace = Some(SpaceOne(indexOf("variable>> <<=="))),
-            operator = EqualEqual(indexOf("variable >>==<<")),
+            leftExpression = Identifier(">>variable<< =="),
+            preOperatorSpace = Some(Space("variable>> <<==")),
+            operator = EqualEqual("variable >>==<<"),
             postOperatorSpace = None,
-            rightExpression = SoftAST.ExpressionExpected(indexOf("variable ==>><<"))
+            rightExpression = ExpressionExpected("variable ==>><<")
           )
       }
 
@@ -65,11 +65,11 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
         assignment shouldBe
           SoftAST.Assignment(
             index = indexOf(">>variable =<<"),
-            expressionLeft = Identifier(indexOf(">>variable<<="), "variable"),
-            postIdentifierSpace = Some(SpaceOne(indexOf("variable>> <<="))),
-            equalToken = Equal(indexOf("variable >>=<<")),
+            expressionLeft = Identifier(">>variable<<="),
+            postIdentifierSpace = Some(Space("variable>> <<=")),
+            equalToken = Equal("variable >>=<<"),
             postEqualSpace = None,
-            expressionRight = SoftAST.ExpressionExpected(indexOf("variable =>><<"))
+            expressionRight = ExpressionExpected("variable =>><<")
           )
       }
     }
@@ -82,10 +82,10 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
         assigment shouldBe
           SoftAST.Assignment(
             index = indexOf(">>variable = 1<<"),
-            expressionLeft = Identifier(indexOf(">>variable<< = 1"), "variable"),
-            postIdentifierSpace = Some(SpaceOne(indexOf("variable>> <<= 1"))),
-            equalToken = Equal(indexOf("variable >>=<< 1")),
-            postEqualSpace = Some(SpaceOne(indexOf("variable =>> <<1"))),
+            expressionLeft = Identifier(">>variable<< = 1"),
+            postIdentifierSpace = Some(Space("variable>> <<= 1")),
+            equalToken = Equal("variable >>=<< 1"),
+            postEqualSpace = Some(Space("variable =>> <<1")),
             expressionRight = Number(indexOf("variable = >>1<<"), "1")
           )
       }
@@ -97,16 +97,16 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
         assigment shouldBe
           SoftAST.Assignment(
             index = indexOf(">>variable = variable + 1<<"),
-            expressionLeft = Identifier(indexOf(">>variable<< = variable + 1"), "variable"),
-            postIdentifierSpace = Some(SpaceOne(indexOf("variable>> <<= variable + 1"))),
-            equalToken = Equal(indexOf("variable >>=<< variable + 1")),
-            postEqualSpace = Some(SpaceOne(indexOf("variable =>> << variable + 1"))),
+            expressionLeft = Identifier(">>variable<< = variable + 1"),
+            postIdentifierSpace = Some(Space("variable>> <<= variable + 1")),
+            equalToken = Equal("variable >>=<< variable + 1"),
+            postEqualSpace = Some(Space("variable =>> << variable + 1")),
             expressionRight = SoftAST.InfixExpression(
               index = indexOf("variable = >>variable + 1<<"),
-              leftExpression = Identifier(indexOf("variable = >>variable<< + 1"), "variable"),
-              preOperatorSpace = Some(SpaceOne(indexOf("variable = variable>> <<+ 1"))),
-              operator = Plus(indexOf("variable = variable >>+<< 1")),
-              postOperatorSpace = Some(SpaceOne(indexOf("variable = variable +>> <<1"))),
+              leftExpression = Identifier("variable = >>variable<< + 1"),
+              preOperatorSpace = Some(Space("variable = variable>> <<+ 1")),
+              operator = Plus("variable = variable >>+<< 1"),
+              postOperatorSpace = Some(Space("variable = variable +>> <<1")),
               rightExpression = Number(indexOf("variable = variable + >>1<<"), "1")
             )
           )
@@ -166,7 +166,7 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
 
         // right expression is a number
         assignment.expressionRight shouldBe
-          SoftAST.ExpressionExpected(indexOf("obj.func(param).counter =>><<"))
+          ExpressionExpected("obj.func(param).counter =>><<")
       }
     }
   }
@@ -209,7 +209,7 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
         val left = assignment.expressionLeft.asInstanceOf[SoftAST.MutableBinding]
         left.toCode() shouldBe "mut number"
 
-        assignment.expressionRight shouldBe SoftAST.ExpressionExpected(indexOf("mut number = >><<#00112233"))
+        assignment.expressionRight shouldBe ExpressionExpected("mut number = >><<#00112233")
 
         unresolved shouldBe
           Unresolved(

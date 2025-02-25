@@ -16,12 +16,11 @@
 
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
-import TestParser._
+import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
-import org.alephium.ralph.lsp.access.util.TestCodeUtil._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 class InfixCallParserSpec extends AnyWordSpec with Matchers {
 
@@ -36,7 +35,7 @@ class InfixCallParserSpec extends AnyWordSpec with Matchers {
       val right = infix.rightExpression.asInstanceOf[SoftAST.Group[_, _]]
       right.toCode() shouldBe "(this - that)"
 
-      infix.operator shouldBe LessThanOrEqual(indexOf("(one + one) >><=<< (this - that)"))
+      infix.operator shouldBe LessThanOrEqual("(one + one) >><=<< (this - that)")
     }
   }
 

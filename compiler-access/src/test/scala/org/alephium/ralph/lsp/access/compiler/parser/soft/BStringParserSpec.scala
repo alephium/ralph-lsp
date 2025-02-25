@@ -30,9 +30,9 @@ class BStringParserSpec extends AnyWordSpec with Matchers {
       string shouldBe
         SoftAST.BString(
           index = indexOf(">>b`<<"),
-          b = B(indexOf(">>b<<`")),
+          b = B(">>b<<`"),
           postBSpace = None,
-          startTick = Tick(indexOf("b>>`<<")),
+          startTick = Tick("b>>`<<"),
           text = None,
           endTick = SoftAST.TokenExpected(indexOf("b`>><<"), Token.Tick)
         )
@@ -46,11 +46,11 @@ class BStringParserSpec extends AnyWordSpec with Matchers {
     string shouldBe
       SoftAST.BString(
         index = indexOf(">>b``<<"),
-        b = B(indexOf(">>b<<``")),
+        b = B(">>b<<``"),
         postBSpace = None,
-        startTick = Tick(indexOf("b>>`<<`")),
+        startTick = Tick("b>>`<<`"),
         text = None,
-        endTick = Tick(indexOf("b`>>`<<"))
+        endTick = Tick("b`>>`<<")
       )
   }
 
@@ -61,11 +61,11 @@ class BStringParserSpec extends AnyWordSpec with Matchers {
     string shouldBe
       SoftAST.BString(
         index = indexOf(">>b ` `<<"),
-        b = B(indexOf(">>b<< ` `")),
-        postBSpace = Some(SpaceOne(indexOf("b>> <<` `"))),
-        startTick = Tick(indexOf("b >>`<< `")),
+        b = B(">>b<< ` `"),
+        postBSpace = Some(Space("b>> <<` `")),
+        startTick = Tick("b >>`<< `"),
         text = Some(SoftAST.CodeString(indexOf("b `>> <<`"), " ")),
-        endTick = Tick(indexOf("b ` >>`<<"))
+        endTick = Tick("b ` >>`<<")
       )
   }
 
@@ -138,7 +138,8 @@ class BStringParserSpec extends AnyWordSpec with Matchers {
                 |a string value
                 |<<""".stripMargin
             },
-            text = """ this is
+            text =
+              """ this is
                 |
                 |a string value
                 |""".stripMargin

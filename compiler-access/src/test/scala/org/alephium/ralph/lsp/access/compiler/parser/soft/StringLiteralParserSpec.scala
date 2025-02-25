@@ -43,7 +43,7 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
         string shouldBe
           SoftAST.StringLiteral(
             index = indexOf(">>\"<<"),
-            startQuote = Quote(indexOf(">>\"<<")),
+            startQuote = Quote(">>\"<<"),
             head = None,
             tail = Seq.empty,
             endQuote = SoftAST.TokenExpected(indexOf("\">><<"), Token.Quote)
@@ -57,7 +57,7 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
         string shouldBe
           SoftAST.StringLiteral(
             index = indexOf(">>\" a b c <<"),
-            startQuote = Quote(indexOf(">>\"<< a b c ")),
+            startQuote = Quote(">>\"<< a b c "),
             head = Some(SoftAST.CodeString(indexOf("\">> a b c <<"), " a b c ")),
             tail = Seq.empty,
             endQuote = SoftAST.TokenExpected(indexOf("\" a b c >><<"), Token.Quote)
@@ -71,7 +71,7 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
         string shouldBe
           SoftAST.StringLiteral(
             index = indexOf(s">>\" $newline a b c $newline <<"),
-            startQuote = Quote(indexOf(s">>\"<< $newline a b c $newline ")),
+            startQuote = Quote(s">>\"<< $newline a b c $newline "),
             head = Some(SoftAST.CodeString(indexOf(s"\">> $newline a b c $newline <<"), s" $newline a b c $newline ")),
             tail = Seq.empty,
             endQuote = SoftAST.TokenExpected(indexOf(s"\" $newline a b c $newline >><<"), Token.Quote)
@@ -87,7 +87,7 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
         string shouldBe
           SoftAST.StringLiteral(
             index = indexOf(s">>\" $newline a b c $newline \"<<"),
-            startQuote = Quote(indexOf(s">>\"<< $newline a b c $newline \"")),
+            startQuote = Quote(s">>\"<< $newline a b c $newline \""),
             head = Some(
               SoftAST.CodeString(
                 index = indexOf(s"\">> $newline a b c $newline <<\""),
@@ -95,7 +95,7 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
               )
             ),
             tail = Seq.empty,
-            endQuote = Quote(indexOf(s"\" $newline a b c $newline >>\"<<"))
+            endQuote = Quote(s"\" $newline a b c $newline >>\"<<")
           )
       }
     }
@@ -110,12 +110,12 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
         string shouldBe
           SoftAST.StringLiteral(
             index = indexOf(">>\"/b<<"),
-            startQuote = Quote(indexOf(">>\"<</b")),
+            startQuote = Quote(">>\"<</b"),
             head = Some(SoftAST.CodeStringExpected(indexOf("\">><</b"))),
             tail = Seq(
               SoftAST.Path(
                 index = indexOf("\">>/b<<"),
-                slash = ForwardSlash(indexOf("\">>/<<b")),
+                slash = ForwardSlash("\">>/<<b"),
                 text = SoftAST.CodeString(indexOf("\"/>>b<<"), "b")
               )
             ),
@@ -130,12 +130,12 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
         string shouldBe
           SoftAST.StringLiteral(
             index = indexOf(">>\"a/<<"),
-            startQuote = Quote(indexOf(">>\"<<a/")),
+            startQuote = Quote(">>\"<<a/"),
             head = Some(SoftAST.CodeString(indexOf("\">>a<</"), "a")),
             tail = Seq(
               SoftAST.Path(
                 index = indexOf("\"a>>/<<"),
-                slash = ForwardSlash(indexOf("\"a>>/<<")),
+                slash = ForwardSlash("\"a>>/<<"),
                 text = SoftAST.CodeStringExpected(indexOf("\"a/>><<"))
               )
             ),
@@ -150,17 +150,17 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
         string shouldBe
           SoftAST.StringLiteral(
             index = indexOf(">>\" a / b / c <<"),
-            startQuote = Quote(indexOf(">>\"<< a / b / c ")),
+            startQuote = Quote(">>\"<< a / b / c "),
             head = Some(SoftAST.CodeString(indexOf("\">> a <</ b / c "), " a ")),
             tail = Seq(
               SoftAST.Path(
                 index = indexOf("\" a >>/ b <</ c "),
-                slash = ForwardSlash(indexOf("\" a >>/<< b / c ")),
+                slash = ForwardSlash("\" a >>/<< b / c "),
                 text = SoftAST.CodeString(indexOf("\" a />> b <</ c "), " b ")
               ),
               SoftAST.Path(
                 index = indexOf("\" a / b >>/ c <<"),
-                slash = ForwardSlash(indexOf("\" a / b >>/<< c ")),
+                slash = ForwardSlash("\" a / b >>/<< c "),
                 text = SoftAST.CodeString(indexOf("\" a / b />> c <<"), " c ")
               )
             ),
@@ -178,7 +178,7 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
           string shouldBe
             SoftAST.StringLiteral(
               index = indexOf(s">>\" $newline a b c $newline \"<<"),
-              startQuote = Quote(indexOf(s">>\"<< $newline a b c $newline \"")),
+              startQuote = Quote(s">>\"<< $newline a b c $newline \""),
               head = Some(
                 SoftAST.CodeString(
                   index = indexOf(s"\">> $newline a b c $newline <<\""),
@@ -186,7 +186,7 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
                 )
               ),
               tail = Seq.empty,
-              endQuote = Quote(indexOf(s"\" $newline a b c $newline >>\"<<"))
+              endQuote = Quote(s"\" $newline a b c $newline >>\"<<")
             )
         }
 
@@ -197,21 +197,21 @@ class StringLiteralParserSpec extends AnyWordSpec with Matchers {
           string shouldBe
             SoftAST.StringLiteral(
               index = indexOf(">>\" a / b / c \"<<"),
-              startQuote = Quote(indexOf(">>\"<< a / b / c \"")),
+              startQuote = Quote(">>\"<< a / b / c \""),
               head = Some(SoftAST.CodeString(indexOf("\">> a <</ b / c \""), " a ")),
               tail = Seq(
                 SoftAST.Path(
                   index = indexOf("\" a >>/ b <</ c \""),
-                  slash = ForwardSlash(indexOf("\" a >>/<< b / c \"")),
+                  slash = ForwardSlash("\" a >>/<< b / c \""),
                   text = SoftAST.CodeString(indexOf("\" a />> b <</ c \""), " b ")
                 ),
                 SoftAST.Path(
                   index = indexOf("\" a / b >>/ c <<\""),
-                  slash = ForwardSlash(indexOf("\" a / b >>/<< c \"")),
+                  slash = ForwardSlash("\" a / b >>/<< c \""),
                   text = SoftAST.CodeString(indexOf("\" a / b />> c <<\""), " c ")
                 )
               ),
-              endQuote = Quote(indexOf("\" a / b / c >>\"<<"))
+              endQuote = Quote("\" a / b / c >>\"<<")
             )
         }
       }

@@ -49,9 +49,9 @@ class MutableBindingParserSpec extends AnyWordSpec with Matchers {
       mut shouldBe
         SoftAST.MutableBinding(
           index = indexOf(">>mut<<"),
-          mut = Mut(indexOf(">>mut<<")),
+          mut = Mut(">>mut<<"),
           space = None,
-          identifier = SoftAST.IdentifierExpected(indexOf("mut>><<"))
+          identifier = IdentifierExpected("mut>><<")
         )
     }
 
@@ -62,9 +62,9 @@ class MutableBindingParserSpec extends AnyWordSpec with Matchers {
       mut shouldBe
         SoftAST.MutableBinding(
           index = indexOf(">>mut variable<<"),
-          mut = Mut(indexOf(">>mut<< variable")),
-          space = Some(SpaceOne(indexOf("mut>> <<variable"))),
-          identifier = Identifier(indexOf("mut >>variable<<"), "variable")
+          mut = Mut(">>mut<< variable"),
+          space = Some(Space("mut>> <<variable")),
+          identifier = Identifier("mut >>variable<<")
         )
     }
 
@@ -82,9 +82,9 @@ class MutableBindingParserSpec extends AnyWordSpec with Matchers {
       lastExpression shouldBe
         SoftAST.MutableBinding(
           index = indexOf("(a, b, >>mut variable<<)"),
-          mut = Mut(indexOf("(a, b, >>mut<< variable)")),
-          space = Some(SpaceOne(indexOf("(a, b, mut>> <<variable)"))),
-          identifier = Identifier(indexOf("(a, b, mut >>variable<<)"), "variable")
+          mut = Mut("(a, b, >>mut<< variable)"),
+          space = Some(Space("(a, b, mut>> <<variable)")),
+          identifier = Identifier("(a, b, mut >>variable<<)")
         )
     }
 

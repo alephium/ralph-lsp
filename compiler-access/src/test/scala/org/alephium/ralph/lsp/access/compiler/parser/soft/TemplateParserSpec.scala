@@ -48,9 +48,9 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
           parseTemplate(templateToken)
 
         template.index shouldBe indexOf(s">>$templateToken<<")
-        template.templateType shouldBe Contract(indexOf(s">>$templateToken<<"))
+        template.templateType shouldBe Contract(s">>$templateToken<<")
         template.preIdentifierSpace shouldBe None
-        template.identifier shouldBe SoftAST.IdentifierExpected(indexOf(s"$templateToken>><<"))
+        template.identifier shouldBe IdentifierExpected(s"$templateToken>><<")
         template.preParamSpace shouldBe None
         template.params shouldBe empty
         template.postParamSpace shouldBe None
@@ -71,9 +71,9 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
           parseTemplate(templateToken)
 
         template.index shouldBe indexOf(s">>$templateToken<<")
-        template.templateType shouldBe TxScript(indexOf(s">>$templateToken<<"))
+        template.templateType shouldBe TxScript(s">>$templateToken<<")
         template.preIdentifierSpace shouldBe None
-        template.identifier shouldBe SoftAST.IdentifierExpected(indexOf(s"$templateToken>><<"))
+        template.identifier shouldBe IdentifierExpected(s"$templateToken>><<")
         template.preParamSpace shouldBe empty
         template.params shouldBe empty
         template.postParamSpace shouldBe empty
@@ -103,7 +103,7 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
         parseTemplate("Contract mycontract(")
 
       val params = template.params.value
-      params.openToken shouldBe OpenParen(indexOf("Contract mycontract>>(<<"))
+      params.openToken shouldBe OpenParen("Contract mycontract>>(<<")
       params.closeToken shouldBe SoftAST.TokenExpected(indexOf("Contract mycontract(>><<"), Token.CloseParen)
     }
 
@@ -113,7 +113,7 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
 
       val params = template.params.value
 
-      params.preHeadExpressionSpace.value shouldBe SpaceOne(indexOf("Contract mycontract(>> <<)"))
+      params.preHeadExpressionSpace.value shouldBe Space("Contract mycontract(>> <<)")
     }
   }
 
@@ -125,9 +125,9 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
       template.inheritance should contain only
         SoftAST.Inheritance(
           index = indexOf("Contract MyContract >>implements<<"),
-          inheritanceType = Implements(indexOf("Contract MyContract >>implements<<")),
+          inheritanceType = Implements("Contract MyContract >>implements<<"),
           postInheritanceTypeSpace = None,
-          headReference = SoftAST.IdentifierExpected(indexOf("Contract MyContract implements>><<")),
+          headReference = IdentifierExpected("Contract MyContract implements>><<"),
           tailReferencesOrSpace = None
         )
     }
@@ -145,19 +145,19 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
       extended shouldBe
         SoftAST.Inheritance(
           index = indexOf("Contract HelloWorld >>extends Class <<implements Trait"),
-          inheritanceType = Extends(indexOf("Contract HelloWorld >>extends<< Class implements Trait")),
-          postInheritanceTypeSpace = Some(SpaceOne(indexOf("Contract HelloWorld extends>> <<Class implements Trait"))),
-          headReference = Identifier(indexOf("Contract HelloWorld extends >>Class<< implements Trait"), "Class"),
-          tailReferencesOrSpace = Some(Left(SpaceOne(indexOf("Contract HelloWorld extends Class>> <<implements Trait"))))
+          inheritanceType = Extends("Contract HelloWorld >>extends<< Class implements Trait"),
+          postInheritanceTypeSpace = Some(Space("Contract HelloWorld extends>> <<Class implements Trait")),
+          headReference = Identifier("Contract HelloWorld extends >>Class<< implements Trait"),
+          tailReferencesOrSpace = Some(Left(Space("Contract HelloWorld extends Class>> <<implements Trait")))
         )
 
       /** Assert implements */
       implements shouldBe
         SoftAST.Inheritance(
           index = indexOf("Contract HelloWorld extends Class >>implements Trait<<"),
-          inheritanceType = Implements(indexOf("Contract HelloWorld extends Class >>implements<< Trait")),
-          postInheritanceTypeSpace = Some(SpaceOne(indexOf("Contract HelloWorld extends Class implements>> <<Trait"))),
-          headReference = Identifier(indexOf("Contract HelloWorld extends Class implements >>Trait<<"), "Trait"),
+          inheritanceType = Implements("Contract HelloWorld extends Class >>implements<< Trait"),
+          postInheritanceTypeSpace = Some(Space("Contract HelloWorld extends Class implements>> <<Trait")),
+          headReference = Identifier("Contract HelloWorld extends Class implements >>Trait<<"),
           tailReferencesOrSpace = None
         )
     }
@@ -176,25 +176,25 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
       implements shouldBe
         SoftAST.Inheritance(
           index = indexOf("Contract MyContract >>implements A, B, C <<extends D, E"),
-          inheritanceType = Implements(indexOf("Contract MyContract >>implements<< A, B, C extends D, E")),
-          postInheritanceTypeSpace = Some(SpaceOne(indexOf("Contract MyContract implements>> <<A, B, C extends D, E"))),
-          headReference = Identifier(indexOf("Contract MyContract implements >>A<<, B, C extends D, E"), "A"),
+          inheritanceType = Implements("Contract MyContract >>implements<< A, B, C extends D, E"),
+          postInheritanceTypeSpace = Some(Space("Contract MyContract implements>> <<A, B, C extends D, E")),
+          headReference = Identifier("Contract MyContract implements >>A<<, B, C extends D, E"),
           tailReferencesOrSpace = Some(
             Right(
               Seq(
                 SoftAST.TailReferences(
                   index = indexOf("Contract MyContract implements A>>, B<<, C extends D, E"),
-                  comma = Comma(indexOf("Contract MyContract implements A>>,<< B, C extends D, E")),
-                  postCommaSpace = Some(SpaceOne(indexOf("Contract MyContract implements A,>> <<B, C extends D, E"))),
-                  reference = Identifier(indexOf("Contract MyContract implements A, >>B<<, C extends D, E"), "B"),
+                  comma = Comma("Contract MyContract implements A>>,<< B, C extends D, E"),
+                  postCommaSpace = Some(Space("Contract MyContract implements A,>> <<B, C extends D, E")),
+                  reference = Identifier("Contract MyContract implements A, >>B<<, C extends D, E"),
                   postReferenceSpace = None
                 ),
                 SoftAST.TailReferences(
                   index = indexOf("Contract MyContract implements A, B>>, C <<extends D, E"),
-                  comma = Comma(indexOf("Contract MyContract implements A, B>>,<< C extends D, E")),
-                  postCommaSpace = Some(SpaceOne(indexOf("Contract MyContract implements A, B,>> <<C extends D, E"))),
-                  reference = Identifier(indexOf("Contract MyContract implements A, B, >>C<< extends D, E"), "C"),
-                  postReferenceSpace = Some(SpaceOne(indexOf("Contract MyContract implements A, B, C>> <<extends D, E")))
+                  comma = Comma("Contract MyContract implements A, B>>,<< C extends D, E"),
+                  postCommaSpace = Some(Space("Contract MyContract implements A, B,>> <<C extends D, E")),
+                  reference = Identifier("Contract MyContract implements A, B, >>C<< extends D, E"),
+                  postReferenceSpace = Some(Space("Contract MyContract implements A, B, C>> <<extends D, E"))
                 )
               )
             )
@@ -205,17 +205,17 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
       `extends` shouldBe
         SoftAST.Inheritance(
           index = indexOf("Contract MyContract implements A, B, C >>extends D, E<<"),
-          inheritanceType = Extends(indexOf("Contract MyContract implements A, B, C >>extends<< D, E")),
-          postInheritanceTypeSpace = Some(SpaceOne(indexOf("Contract MyContract implements A, B, C extends>> <<D, E"))),
-          headReference = Identifier(indexOf("Contract MyContract implements A, B, C extends >>D<<, E"), "D"),
+          inheritanceType = Extends("Contract MyContract implements A, B, C >>extends<< D, E"),
+          postInheritanceTypeSpace = Some(Space("Contract MyContract implements A, B, C extends>> <<D, E")),
+          headReference = Identifier("Contract MyContract implements A, B, C extends >>D<<, E"),
           tailReferencesOrSpace = Some(
             Right(
               Seq(
                 SoftAST.TailReferences(
                   index = indexOf("Contract MyContract implements A, B, C extends D>>, E<<"),
-                  comma = Comma(indexOf("Contract MyContract implements A, B, C extends D>>,<< E")),
-                  postCommaSpace = Some(SpaceOne(indexOf("Contract MyContract implements A, B, C extends D,>> <<E"))),
-                  reference = Identifier(indexOf("Contract MyContract implements A, B, C extends D, >>E<<"), "E"),
+                  comma = Comma("Contract MyContract implements A, B, C extends D>>,<< E"),
+                  postCommaSpace = Some(Space("Contract MyContract implements A, B, C extends D,>> <<E")),
+                  reference = Identifier("Contract MyContract implements A, B, C extends D, >>E<<"),
                   postReferenceSpace = None
                 )
               )
@@ -247,11 +247,11 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
       val template =
         parseTemplate("Contract {")
 
-      template.identifier shouldBe SoftAST.IdentifierExpected(indexOf("Contract >><<{"))
+      template.identifier shouldBe IdentifierExpected("Contract >><<{")
 
-      template.preIdentifierSpace shouldBe Some(SpaceOne(indexOf("Contract>> <<{")))
+      template.preIdentifierSpace shouldBe Some(Space("Contract>> <<{"))
 
-      template.block.value.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
+      template.block.value.openCurly shouldBe OpenCurly("Contract >>{<<")
       template.block.value.closeCurly shouldBe SoftAST.TokenExpected(indexOf("Contract {>><<"), Token.CloseCurly)
     }
 
@@ -264,10 +264,10 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
         }
 
-      template.identifier shouldBe SoftAST.IdentifierExpected(indexOf("Contract >><<{"))
-      template.preIdentifierSpace shouldBe Some(SpaceOne(indexOf("Contract>> <<{")))
+      template.identifier shouldBe IdentifierExpected("Contract >><<{")
+      template.preIdentifierSpace shouldBe Some(Space("Contract>> <<{"))
       // block
-      template.block.value.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
+      template.block.value.openCurly shouldBe OpenCurly("Contract >>{<<")
 
       template.block.value.closeCurly shouldBe
         SoftAST.TokenExpected(
@@ -319,10 +319,10 @@ class TemplateParserSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
         }
 
-      template.identifier shouldBe SoftAST.IdentifierExpected(indexOf("Contract >><<{"))
-      template.preIdentifierSpace shouldBe Some(SpaceOne(indexOf("Contract>> <<{")))
+      template.identifier shouldBe IdentifierExpected("Contract >><<{")
+      template.preIdentifierSpace shouldBe Some(Space("Contract>> <<{"))
       // block
-      template.block.value.openCurly shouldBe OpenCurly(indexOf("Contract >>{<<"))
+      template.block.value.openCurly shouldBe OpenCurly("Contract >>{<<")
 
       template.block.value.closeCurly shouldBe
         SoftAST.TokenExpected(

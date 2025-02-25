@@ -32,9 +32,9 @@ class ReturnParserSpec extends AnyWordSpec with Matchers {
     returned shouldBe
       SoftAST.Return(
         index = indexOf(">>return<<"),
-        returnToken = Return(indexOf(">>return<<")),
+        returnToken = Return(">>return<<"),
         preExpressionSpace = None,
-        rightExpression = SoftAST.ExpressionExpected(indexOf("return>><<"))
+        rightExpression = ExpressionExpected("return>><<")
       )
   }
 
@@ -45,9 +45,9 @@ class ReturnParserSpec extends AnyWordSpec with Matchers {
     returned shouldBe
       SoftAST.Return(
         index = indexOf(">>return value<<"),
-        returnToken = Return(indexOf(">>return<< value")),
-        preExpressionSpace = Some(SpaceOne(indexOf("return>> <<value"))),
-        rightExpression = Identifier(indexOf("return >>value<<"), "value")
+        returnToken = Return(">>return<< value"),
+        preExpressionSpace = Some(Space("return>> <<value")),
+        rightExpression = Identifier("return >>value<<")
       )
 
   }

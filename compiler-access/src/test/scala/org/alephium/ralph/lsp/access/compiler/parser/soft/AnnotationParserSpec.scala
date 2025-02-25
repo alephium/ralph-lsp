@@ -35,9 +35,9 @@ class AnnotationParserSpec extends AnyWordSpec with Matchers {
       annotation shouldBe
         SoftAST.Annotation(
           index = indexOf(">>@<<"),
-          at = At(indexOf(">>@<<")),
+          at = At(">>@<<"),
           preIdentifierSpace = None,
-          identifier = SoftAST.IdentifierExpected(indexOf("@>><<")),
+          identifier = IdentifierExpected("@>><<"),
           postIdentifierSpace = None,
           tuple = None,
           postTupleSpace = None
@@ -49,7 +49,7 @@ class AnnotationParserSpec extends AnyWordSpec with Matchers {
         parseAnnotation("@anno(")
 
       // opening paren is parsed
-      annotation.tuple.value.openToken shouldBe OpenParen(indexOf("@anno>>(<<"))
+      annotation.tuple.value.openToken shouldBe OpenParen("@anno>>(<<")
       // closing paren is reported as expected
       annotation.tuple.value.closeToken shouldBe SoftAST.TokenExpected(indexOf("@anno(>><<"), Token.CloseParen)
     }
@@ -73,9 +73,9 @@ class AnnotationParserSpec extends AnyWordSpec with Matchers {
       annotation shouldBe
         SoftAST.Annotation(
           index = indexOf(">>@<<fn function()"),
-          at = At(indexOf(">>@<<fn function()")),
+          at = At(">>@<<fn function()"),
           preIdentifierSpace = None,
-          identifier = SoftAST.IdentifierExpected(indexOf("@>><<fn function()")),
+          identifier = IdentifierExpected("@>><<fn function()"),
           postIdentifierSpace = None,
           tuple = None,
           postTupleSpace = None
@@ -90,12 +90,9 @@ class AnnotationParserSpec extends AnyWordSpec with Matchers {
     annotation shouldBe
       SoftAST.Annotation(
         index = indexOf(">>@anno<<"),
-        at = At(indexOf(">>@<<anno")),
+        at = At(">>@<<anno"),
         preIdentifierSpace = None,
-        identifier = Identifier(
-          index = indexOf("@>>anno<<"),
-          text = "anno"
-        ),
+        identifier = Identifier("@>>anno<<"),
         postIdentifierSpace = None,
         tuple = None,
         postTupleSpace = None
@@ -109,12 +106,9 @@ class AnnotationParserSpec extends AnyWordSpec with Matchers {
     annotation shouldBe
       SoftAST.Annotation(
         index = indexOf(">>@anno(a, b, c + d)<<"),
-        at = At(indexOf(">>@<<anno(a, b, c + d)")),
+        at = At(">>@<<anno(a, b, c + d)"),
         preIdentifierSpace = None,
-        identifier = Identifier(
-          index = indexOf("@>>anno<<(a, b, c + d)"),
-          text = "anno"
-        ),
+        identifier = Identifier("@>>anno<<(a, b, c + d)"),
         postIdentifierSpace = None,
         // No need to test the AST for the Tuple. Simply test that a tuple is defined
         tuple = Some(annotation.tuple.value),
@@ -169,14 +163,11 @@ class AnnotationParserSpec extends AnyWordSpec with Matchers {
           )
         ),
         preIdentifierSpace = None,
-        identifier = Identifier(
-          index = indexOf {
-            """// documentation
-              |@>>anno<<
-              |""".stripMargin
-          },
-          text = "anno"
-        ),
+        identifier = Identifier {
+          """// documentation
+            |@>>anno<<
+            |""".stripMargin
+        },
         postIdentifierSpace = Some(
           SoftAST.Space(
             Code(
@@ -207,18 +198,18 @@ class AnnotationParserSpec extends AnyWordSpec with Matchers {
       Seq(
         SoftAST.Annotation(
           index = indexOf(">>@using<<@using"),
-          at = At(indexOf(">>@<<using@using")),
+          at = At(">>@<<using@using"),
           preIdentifierSpace = None,
-          identifier = Identifier(indexOf("@>>using<<@using"), "using"),
+          identifier = Identifier("@>>using<<@using"),
           postIdentifierSpace = None,
           tuple = None,
           postTupleSpace = None
         ),
         SoftAST.Annotation(
           index = indexOf("@using>>@using<<"),
-          at = At(indexOf("@using>>@<<using")),
+          at = At("@using>>@<<using"),
           preIdentifierSpace = None,
-          identifier = Identifier(indexOf("@using@>>using<<"), "using"),
+          identifier = Identifier("@using@>>using<<"),
           postIdentifierSpace = None,
           tuple = None,
           postTupleSpace = None

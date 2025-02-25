@@ -17,19 +17,15 @@ class EventParserSpec extends AnyWordSpec {
       root.parts should have size 1
       val identifier = root.parts.head
 
-      identifier shouldBe
-        Identifier(
-          index = indexOf(">>eventMyEvent<<"),
-          text = "eventMyEvent"
-        )
+      identifier shouldBe Identifier(">>eventMyEvent<<")
     }
   }
 
   "successfully parse an event" in {
     val event = parseEvent("event MyEvent(varName: TypeName")
 
-    event.eventToken shouldBe Event(indexOf(">>event<< MyEvent(varName: TypeName"))
-    event.identifier shouldBe Identifier(indexOf("event >>MyEvent<<(varName: TypeName"), "MyEvent")
+    event.eventToken shouldBe Event(">>event<< MyEvent(varName: TypeName")
+    event.identifier shouldBe Identifier("event >>MyEvent<<(varName: TypeName")
 
     // Tuples are tested in TupleSpec, test for the index and string code here.
     event.params.index shouldBe indexOf("event MyEvent>>(varName: TypeName<<")
