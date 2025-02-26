@@ -96,7 +96,7 @@ class ConstParserSpec extends AnyWordSpec with Matchers {
       "another expression is a number" in {
         val const = parseConst("const value = (1 + 2) * contract.call().value")
 
-        // This test is for `const` only, so asserting the AST of the right-hand expression is not necessary.
+        // This test is for `const` only, so asserting the assignment AST is not necessary.
         const.copy(assignment = null) shouldBe
           SoftAST.Const(
             index = indexOf(">>const value = (1 + 2) * contract.call().value<<"),
@@ -105,7 +105,7 @@ class ConstParserSpec extends AnyWordSpec with Matchers {
             assignment = null
           )
 
-        // Assert that the right-hand expression produces the expected code.
+        // Assert that the assignment AST produces the expected code.
         const.assignment.toCode() shouldBe "value = (1 + 2) * contract.call().value"
       }
     }
