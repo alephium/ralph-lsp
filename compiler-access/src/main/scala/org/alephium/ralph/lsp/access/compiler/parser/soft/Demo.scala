@@ -28,15 +28,20 @@ object Demo extends App {
         |
         |     // document this
         |     let int = 1
+        |
         |     // assignment
         |     int = 2
+        |
         |     // infix operation
         |     1 + 1
+        |
         |     // method call
         |     function(a, b)
+        |
         |     // for loop
         |     for(a; b; c) {
         |     }
+        |
         |     // while loop
         |     while (true) {
         |       // infix assignment
@@ -59,7 +64,12 @@ object Demo extends App {
         |         some text in the middle
         |         some more text 🤙`
         |
-        |    return a + b, method.call(), (1, 2)
+        |     // if-else
+        |     if (a) { 
+        |       something
+        |     } else { 
+        |       return a + b, method.call(), (1, 2) 
+        |     }
         |  }
         |
         |  🚀
