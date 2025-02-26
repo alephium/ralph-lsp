@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the library. If not, see http:www.gnu.org/licenses/.
+// along with the library. If not, see http://www.gnu.org/licenses/.
 
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
@@ -115,6 +115,58 @@ class IfElseParserSpec extends AnyWordSpec with Matchers {
       ifElse.group.toCode() shouldBe "(a + b == 1)"
       ifElse.block.value.toCode() shouldBe "{ }"
       ifElse.elseStatement.value.toCode() shouldBe "else { }"
+    }
+
+    "not read the tail `if` space if `else` is not defined" in {
+      val root = parseSoft("if (a + b == 1) { } ")
+
+      // Head part is the `if` statement.
+      // Last part is the space, not read as part of the `if` statement.
+      root.parts should have size 2
+
+      // Expect that the tail space is not read by the `if` parser.
+      val iff = root.parts.head.asInstanceOf[SoftAST.IfElse]
+      iff.toCode() shouldBe "if (a + b == 1) { }"
+      iff.index shouldBe indexOf(">>if (a + b == 1) { }<< ")
+
+      // Last part is the space
+      root.parts.last shouldBe Space("if (a + b == 1) { }>> <<")
+    }
+
+    "parse `if` else `else` within other expressions" when {
+      "the other expression is" when {
+        "`while` statement" in {
+          val root =
+            parseSoft {
+              """
+                |while (if (a + b == 1) {true} else {false}) {
+                |   if (true) {
+                |     return break
+                |   }
+                |}
+                |""".stripMargin
+            }
+
+          // the only non-space part is the `while` statement
+          val parts = root.partsNonEmpty
+          parts should have size 1
+          val whileAST = parts.head.asInstanceOf[SoftAST.While]
+
+          // check the `if-else` within the parentheses
+          val ifElse = whileAST.expression.asInstanceOf[SoftAST.IfElse]
+          ifElse.toCode() shouldBe "if (a + b == 1) {true} else {false}"
+
+          // check the `if` within the block
+          val blockParts = whileAST.block.value.partsNonEmpty
+          blockParts should have size 1
+          val blockIfAST = blockParts.head.asInstanceOf[SoftAST.IfElse]
+          blockIfAST.toCode() shouldBe
+            """if (true) {
+              |     return break
+              |   }""".stripMargin
+
+        }
+      }
     }
   }
 

@@ -30,6 +30,8 @@ private object ReturnParser {
       GroupParser.parseOrFail |
         InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |
+        IfElseParser.parseOrFail |
+        ElseParser.parseOrFail |
         AnnotationParser.parseOrFail |
         ParameterParser.parseOrFail |
         NumberParser.parseOrFail |

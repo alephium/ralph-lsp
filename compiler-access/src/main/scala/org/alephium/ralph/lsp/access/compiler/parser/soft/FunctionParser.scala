@@ -119,7 +119,9 @@ private object FunctionParser {
 
   private def returnExpressionParserOrFail[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
-      ParameterParser.parseOrFail |
+      IfElseParser.parseOrFail |
+        ElseParser.parseOrFail |
+        ParameterParser.parseOrFail |
         NumberParser.parseOrFail |
         IdentifierParser.parseOrFail
     }

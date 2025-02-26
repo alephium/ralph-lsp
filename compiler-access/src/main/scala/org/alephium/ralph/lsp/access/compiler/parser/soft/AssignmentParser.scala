@@ -81,6 +81,8 @@ private object AssignmentParser {
         MethodCallParser.parseOrFail |
         BlockParser.parseOrFail |
         MutableBindingParser.parseOrFail |
+        IfElseParser.parseOrFail |
+        ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
         ParameterParser.parseOrFail |
