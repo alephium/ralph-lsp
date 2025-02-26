@@ -606,6 +606,17 @@ object SoftAST {
       text: CodeStringAST)
     extends SoftAST
 
+  case class IfElse(
+      index: SourceIndex,
+      ifToken: TokenDocumented[Token.If.type],
+      preGroupSpace: Option[Space],
+      group: Group[Token.OpenParen.type, Token.CloseParen.type],
+      preBlockSpace: Option[Space],
+      block: Option[Block],
+      preElseSpace: Option[Space],
+      elseStatement: Option[Else])
+    extends ExpressionAST
+
   case class Else(
       index: SourceIndex,
       elseToken: TokenDocumented[Token.Else.type],
