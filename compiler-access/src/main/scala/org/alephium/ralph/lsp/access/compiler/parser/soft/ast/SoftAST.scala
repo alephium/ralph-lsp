@@ -606,6 +606,13 @@ object SoftAST {
       text: CodeStringAST)
     extends SoftAST
 
+  case class Else(
+      index: SourceIndex,
+      elseToken: TokenDocumented[Token.Else.type],
+      preBlockSpace: Option[Space],
+      block: Option[Block])
+    extends ExpressionAST
+
   case class Space(
       code: CodeString)
     extends CodeAST
