@@ -223,6 +223,13 @@ object SoftAST {
       block: Option[Block])
     extends BlockPartAST
 
+  case class Const(
+      index: SourceIndex,
+      constToken: TokenDocumented[Token.Const.type],
+      preAssignmentSpace: Option[Space],
+      assignment: Assignment)
+    extends BlockPartAST
+
   case class Import(
       index: SourceIndex,
       importToken: TokenDocumented[Token.Import.type],
