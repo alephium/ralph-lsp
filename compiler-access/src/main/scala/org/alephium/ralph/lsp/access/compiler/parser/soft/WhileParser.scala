@@ -41,6 +41,8 @@ private object WhileParser {
     P {
       InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |
+        IfElseParser.parseOrFail |
+        ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
         NumberParser.parseOrFail |

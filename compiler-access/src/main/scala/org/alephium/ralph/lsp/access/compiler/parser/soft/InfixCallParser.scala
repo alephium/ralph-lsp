@@ -31,6 +31,8 @@ private object InfixCallParser {
   private def leftExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
       MethodCallParser.parseOrFail |
+        IfElseParser.parseOrFail |
+        ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         ParameterParser.parseOrFail |
         NumberParser.parseOrFail |
@@ -45,6 +47,8 @@ private object InfixCallParser {
       InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |
         BlockParser.parseOrFail |
+        IfElseParser.parseOrFail |
+        ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
         ParameterParser.parseOrFail |

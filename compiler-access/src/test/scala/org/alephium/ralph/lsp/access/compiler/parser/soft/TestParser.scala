@@ -124,6 +124,12 @@ object TestParser {
   def parseConst(code: String): SoftAST.Const =
     runSoftParser(ConstParser.parseOrFail(_))(code)
 
+  def parseIfElse(code: String): SoftAST.IfElse =
+    runSoftParser(IfElseParser.parseOrFail(_))(code)
+
+  def parseElse(code: String): SoftAST.Else =
+    runSoftParser(ElseParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,

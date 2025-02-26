@@ -186,6 +186,8 @@ private object GroupParser {
         InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |
         MutableBindingParser.parseOrFail |
+        IfElseParser.parseOrFail |
+        ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         GroupParser.parseOrFail(open, close) |
         NumberParser.parseOrFail |
