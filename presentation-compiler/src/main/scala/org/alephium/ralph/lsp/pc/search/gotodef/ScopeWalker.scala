@@ -97,9 +97,7 @@ private[search] object ScopeWalker {
     while (walker.hasNext)
       walker.next() match {
         // Check: Is this a scoped node that does not contain the anchor node within its scope? If yes, drop all its child nodes.
-        // format: off
-        case block @ Node(_: SoftAST.While | _: SoftAST.For | _: SoftAST.Template | _: SoftAST.Function | _: SoftAST.Block | _: SoftAST.Event | _: SoftAST.Struct, _) if !block.data.contains(anchor) => 
-          // format: on
+        case block @ Node(_: SoftAST.IsLocallyScoped, _) if !block.data.contains(anchor) =>
           // drop all child nodes
           walker = walker dropWhile block.contains
 

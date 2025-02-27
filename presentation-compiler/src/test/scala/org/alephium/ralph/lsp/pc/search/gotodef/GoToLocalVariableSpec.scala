@@ -66,6 +66,28 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         )
       }
     }
+
+    "variable exist within external scope" when {
+      "for loop" in {
+        goToDefinition() {
+          """
+            |Contract Test() {
+            |
+            |  fn function() -> () {
+            |
+            |    // index is local to the for loop
+            |    for (let mut index = 0; index <= 4; index = index + 1) { bar(index) }
+            |
+            |    // index is not accessible from outside
+            |    let copy = ind@@ex
+            |
+            |  }
+            |
+            |}
+            |""".stripMargin
+        }
+      }
+    }
   }
 
   "not return self" when {

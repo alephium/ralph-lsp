@@ -91,6 +91,25 @@ object SoftAST {
 
   sealed trait ExpressionAST extends BlockPartAST
 
+  /**
+   * Represents an AST that contains a block of code ([[Block]])
+   * or a group of type definitions ([[Group]]) local to the AST identifier.
+   *
+   * For example:
+   *
+   * {{{
+   *   struct MyStruct {
+   *     type: Name // local to the identifier `MyStruct`
+   *   }
+   *
+   *   // Parameter `param` is local to the identifier `function`
+   *   fn function(param: Type) -> () {
+   *     let variable = 1 // local to the identifier `function`
+   *   }
+   * }}}
+   */
+  sealed trait IsLocallyScoped extends SoftAST
+
   case class ExpressionExpected(
       index: SourceIndex)
     extends ExpectedErrorAST("Symbol")
@@ -189,6 +208,7 @@ object SoftAST {
       inheritance: Seq[Inheritance],
       block: Option[Block])
     extends BlockPartAST
+       with IsLocallyScoped
 
   case class Abstract(
       index: SourceIndex,
@@ -204,6 +224,7 @@ object SoftAST {
       preParamSpace: Option[Space],
       params: Group[Token.OpenParen.type, Token.CloseParen.type])
     extends BlockPartAST
+       with IsLocallyScoped
 
   case class Struct(
       index: SourceIndex,
@@ -213,6 +234,7 @@ object SoftAST {
       preParamSpace: Option[Space],
       params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
     extends BlockPartAST
+       with IsLocallyScoped
 
   case class Enum(
       index: SourceIndex,
@@ -222,6 +244,7 @@ object SoftAST {
       preBlockSpace: Option[Space],
       block: Option[Block])
     extends BlockPartAST
+       with IsLocallyScoped
 
   case class Const(
       index: SourceIndex,
@@ -298,6 +321,7 @@ object SoftAST {
       parts: Seq[BlockPartAST],
       closeCurly: TokenDocExpectedAST[Token.CloseCurly.type])
     extends BlockAST
+       with IsLocallyScoped
 
   case class ExpressionBlock(
       index: SourceIndex,
@@ -326,6 +350,7 @@ object SoftAST {
       postSignatureSpace: Option[Space],
       block: Option[Block])
     extends BlockPartAST
+       with IsLocallyScoped
 
   case class FunctionSignature(
       index: SourceIndex,
@@ -506,6 +531,7 @@ object SoftAST {
       postCloseParenSpace: Option[Space],
       block: Option[Block])
     extends ExpressionAST
+       with IsLocallyScoped
 
   case class While(
       index: SourceIndex,
@@ -519,6 +545,7 @@ object SoftAST {
       postCloseParenSpace: Option[Space],
       block: Option[Block])
     extends ExpressionAST
+       with IsLocallyScoped
 
   case class Assignment(
       index: SourceIndex,
@@ -616,6 +643,7 @@ object SoftAST {
       preElseSpace: Option[Space],
       elseStatement: Option[Else])
     extends ExpressionAST
+       with IsLocallyScoped
 
   case class Else(
       index: SourceIndex,
@@ -623,6 +651,7 @@ object SoftAST {
       preBlockSpace: Option[Space],
       block: Option[Block])
     extends ExpressionAST
+       with IsLocallyScoped
 
   case class Space(
       code: CodeString)
