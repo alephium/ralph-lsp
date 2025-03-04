@@ -103,12 +103,30 @@ object SourceCodeSearcher extends StrictImplicitLogging {
   /**
    * Collects all source files with valid parsed syntax.
    *
-   * @param sourceCode The source files to filter.
-   * @return An array sequence containing parsed source code files.
+   * @param sourceCode The source files to be filtered
+   * @return Source files that are successfully parsed.
    */
   def collectParsed(sourceCode: ArraySeq[SourceCodeState]): ArraySeq[SourceCodeState.Parsed] =
     sourceCode collect {
       case parsed: SourceCodeState.Parsed =>
+        parsed
+
+      case compiled: SourceCodeState.Compiled =>
+        compiled.parsed
+
+      case errored: SourceCodeState.ErrorCompilation =>
+        errored.parsed
+    }
+
+  /**
+   * Collects all source files that were parsed and may contain syntax errors.
+   *
+   * @param sourceCode The source files to be filtered.
+   * @return Source files that were parsed at least once.
+   */
+  def collectIsParsed(sourceCode: ArraySeq[SourceCodeState]): ArraySeq[SourceCodeState.IsParsed] =
+    sourceCode collect {
+      case parsed: SourceCodeState.IsParsed =>
         parsed
 
       case compiled: SourceCodeState.Compiled =>
