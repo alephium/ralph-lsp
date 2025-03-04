@@ -136,6 +136,32 @@ object SourceCodeSearcher extends StrictImplicitLogging {
       .distinctBy(_.string.value)
 
   /**
+   * Collect all unique import statements from source code.
+   *
+   * @param sourceCode Source code to search import statements within.
+   * @return A sequence of tuples, where each tuple contains:
+   *          - An import statement AST (`SoftAST.Import`).
+   *          - The corresponding import path as a string.
+   */
+  def collectImportStatementsSoft(sourceCode: ArraySeq[SourceCodeState.IsParsed])(implicit logger: ClientLogger): ArraySeq[(SoftAST.Import, String)] =
+    sourceCode
+      .flatMap {
+        parsed =>
+          parsed.astSoft.fetch() match {
+            case Left(error) =>
+              logger.error(s"SoftParser Error: '${parsed.fileURI}'", error.error)
+              Seq.empty
+
+            case Right(root) =>
+              root.parts.collect {
+                case imported @ SoftAST.Import(_, _, _, Some(path: SoftAST.StringLiteral)) =>
+                  (imported, path.text)
+              }
+          }
+      }
+      .distinctBy(_._2)
+
+  /**
    * Collects unique inherited parents for all input parsed files and for each tree within a file.
    *
    * @param sourceCode The source code to find inherited parents for.

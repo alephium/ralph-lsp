@@ -625,7 +625,12 @@ object SoftAST {
       head: Option[CodeStringAST],
       tail: Seq[Path],
       endQuote: TokenDocExpectedAST[Token.Quote.type])
-    extends ExpressionAST
+    extends ExpressionAST {
+
+    def text: String =
+      (head ++ tail).foldLeft("")(_ + _.toCode())
+
+  }
 
   case class Path(
       index: SourceIndex,
