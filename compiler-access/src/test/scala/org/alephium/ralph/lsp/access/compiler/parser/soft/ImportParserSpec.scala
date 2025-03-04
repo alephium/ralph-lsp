@@ -130,45 +130,96 @@ class ImportParserSpec extends AnyWordSpec with Matchers {
         )
     }
 
-    "the second path is the `import` keyword" in {
-      val root =
-        parseSoft("import \"nft/import")
+    "the second path is the `import` keyword" when {
+      "without closing quote" in {
+        val root =
+          parseSoft("import \"nft/import")
 
-      // both `import` statements are parsed as individual `import` ASTs
-      root.parts should have size 2
+        // both `import` statements are parsed as individual `import` ASTs
+        root.parts should have size 2
 
-      root shouldBe
-        SoftAST.RootBlock(
-          index = indexOf(">>import \"nft/import<<"),
-          parts = Seq(
-            SoftAST.Import(
-              index = indexOf(">>import \"nft/<<import"),
-              importToken = Import(">>import<< \"nft/import"),
-              postImportSpace = Some(Space("import>> <<\"nft/import")),
-              string = Some(
-                SoftAST.StringLiteral(
-                  index = indexOf("import >>\"nft/<<import"),
-                  startQuote = Quote("import >>\"<<nft/import"),
-                  head = Some(CodeString("import \">>nft<</import")),
-                  tail = Seq(
-                    SoftAST.Path(
-                      index = indexOf("import \"nft>>/<<import"),
-                      slash = ForwardSlash("import \"nft>>/<<import"),
-                      text = CodeStringExpected("import \"nft/>><<import")
-                    )
-                  ),
-                  endQuote = TokenExpected("import \"nft/>><<import", Token.Quote)
+        root shouldBe
+          SoftAST.RootBlock(
+            index = indexOf(">>import \"nft/import<<"),
+            parts = Seq(
+              SoftAST.Import(
+                index = indexOf(">>import \"nft/<<import"),
+                importToken = Import(">>import<< \"nft/import"),
+                postImportSpace = Some(Space("import>> <<\"nft/import")),
+                string = Some(
+                  SoftAST.StringLiteral(
+                    index = indexOf("import >>\"nft/<<import"),
+                    startQuote = Quote("import >>\"<<nft/import"),
+                    head = Some(CodeString("import \">>nft<</import")),
+                    tail = Seq(
+                      SoftAST.Path(
+                        index = indexOf("import \"nft>>/<<import"),
+                        slash = ForwardSlash("import \"nft>>/<<import"),
+                        text = CodeStringExpected("import \"nft/>><<import")
+                      )
+                    ),
+                    endQuote = TokenExpected("import \"nft/>><<import", Token.Quote)
+                  )
                 )
+              ),
+              SoftAST.Import(
+                index = indexOf("import \"nft/>>import<<"),
+                importToken = Import("import \"nft/>>import<<"),
+                postImportSpace = None,
+                string = None
               )
-            ),
-            SoftAST.Import(
-              index = indexOf("import \"nft/>>import<<"),
-              importToken = Import("import \"nft/>>import<<"),
-              postImportSpace = None,
-              string = None
             )
           )
-        )
+      }
+
+      "with closing quote" in {
+        val root =
+          parseSoft("import \"nft/import\"")
+
+        // both `import` statements are parsed as individual `import` ASTs
+        root.parts should have size 2
+
+        root shouldBe
+          SoftAST.RootBlock(
+            index = indexOf(">>import \"nft/import\"<<"),
+            parts = Seq(
+              SoftAST.Import(
+                index = indexOf(">>import \"nft/<<import\""),
+                importToken = Import(">>import<< \"nft/import\""),
+                postImportSpace = Some(Space("import>> <<\"nft/import\"")),
+                string = Some(
+                  SoftAST.StringLiteral(
+                    index = indexOf("import >>\"nft/<<import\""),
+                    startQuote = Quote("import >>\"<<nft/import\""),
+                    head = Some(CodeString("import \">>nft<</import\"")),
+                    tail = Seq(
+                      SoftAST.Path(
+                        index = indexOf("import \"nft>>/<<import\""),
+                        slash = ForwardSlash("import \"nft>>/<<import\""),
+                        text = CodeStringExpected("import \"nft/>><<import\"")
+                      )
+                    ),
+                    endQuote = TokenExpected("import \"nft/>><<import\"", Token.Quote)
+                  )
+                )
+              ),
+              SoftAST.Import(
+                index = indexOf("import \"nft/>>import\"<<"),
+                importToken = Import("import \"nft/>>import<<\""),
+                postImportSpace = None,
+                string = Some(
+                  SoftAST.StringLiteral(
+                    index = indexOf("import \"nft/import>>\"<<"),
+                    startQuote = Quote("import \"nft/import>>\"<<"),
+                    head = None,
+                    tail = Seq.empty,
+                    endQuote = TokenExpected("import \"nft/import\">><<", Token.Quote)
+                  )
+                )
+              )
+            )
+          )
+      }
     }
   }
 
