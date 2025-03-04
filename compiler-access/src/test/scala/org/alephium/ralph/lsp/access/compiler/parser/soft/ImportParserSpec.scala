@@ -94,4 +94,41 @@ class ImportParserSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "stop" when {
+    "the head path is the `import` keyword" in {
+      val root =
+        parseSoft("import \"import")
+
+      // both `import` statements are parsed as individual `import` ASTs
+      root.parts should have size 2
+
+      root shouldBe
+        SoftAST.RootBlock(
+          index = indexOf(">>import \"import<<"),
+          parts = Seq(
+            SoftAST.Import(
+              index = indexOf(">>import \"<<import"),
+              importToken = Import(">>import<< \"import"),
+              postImportSpace = Some(Space("import>> <<\"import")),
+              string = Some(
+                SoftAST.StringLiteral(
+                  index = indexOf("import >>\"<<import"),
+                  startQuote = Quote("import >>\"<<import"),
+                  head = None,
+                  tail = Seq.empty,
+                  endQuote = TokenExpected("import \">><<import", Token.Quote)
+                )
+              )
+            ),
+            SoftAST.Import(
+              index = indexOf("import \">>import<<"),
+              importToken = Import("import \">>import<<"),
+              postImportSpace = None,
+              string = None
+            )
+          )
+        )
+    }
+  }
+
 }
