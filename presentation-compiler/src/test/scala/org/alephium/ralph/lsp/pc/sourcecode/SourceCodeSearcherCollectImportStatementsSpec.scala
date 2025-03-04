@@ -17,6 +17,7 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.Token
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.utils.log.ClientLogger
@@ -186,15 +187,17 @@ class SourceCodeSearcherCollectImportStatementsSpec extends AnyWordSpec with Mat
           .collectImportStatementsSoft(allCode)
           .map(_._1.string.value.toCode())
 
+      val newline = Token.Newline.lexeme
+
       val expected =
         Array(
-          "\"blah/blah\n",
-          "\"std/fungible_token_interface\n",
+          s"\"blah/blah$newline",
+          s"\"std/fungible_token_interface$newline",
           "\"\"",
           "\" \"",
-          "\"std/fungible_token_unimplemented\n",
-          "\"std/nft_collection_interface\n",
-          "\"std/nft_collection_with_royalty_interface\n"
+          s"\"std/fungible_token_unimplemented$newline",
+          s"\"std/nft_collection_interface$newline",
+          s"\"std/nft_collection_with_royalty_interface$newline"
         )
 
       actual should contain theSameElementsAs expected
