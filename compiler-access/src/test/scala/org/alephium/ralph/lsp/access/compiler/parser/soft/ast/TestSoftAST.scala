@@ -813,6 +813,9 @@ object TestSoftAST {
       text = text
     )
 
+  def CodeStringExpected(text: String): SoftAST.CodeStringExpected =
+    SoftAST.CodeStringExpected(indexOf(text))
+
   def TokenDocumented[T <: Token](
       index: SourceIndex,
       token: T): SoftAST.TokenDocumented[T] =

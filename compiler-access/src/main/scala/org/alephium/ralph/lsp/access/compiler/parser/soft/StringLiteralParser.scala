@@ -48,7 +48,7 @@ private object StringLiteralParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.ForwardSlash) ~
-        TextParser.parse(Token.ForwardSlash, Token.Quote) ~
+        TextParser.parse(Token.ForwardSlash, Token.Quote, Token.Import) ~
         Index
     } map {
       case (from, slash, text, to) =>
