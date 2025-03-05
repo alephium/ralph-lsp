@@ -134,6 +134,32 @@ object WorkspaceSearcher {
   }
 
   /**
+   * Collects all parent source implementations inherited by the given source tree, excluding itself.
+   *
+   * @param sourceCode The source code for which in-scope files are being searched.
+   * @param workspace  The workspace that may contain files within the scope.
+   * @return The source trees within the scope.
+   */
+  def collectInheritedParentsSoft(
+      sourceCode: SourceLocation.CodeSoft,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): InheritedParentsResultSoft = {
+    val allInScopeCode =
+      collectTreesSoft(workspace = workspace, includeNonImportedCode = false)
+
+    val parents =
+      SourceCodeSearcher.collectInheritedParents(
+        source = sourceCode,
+        allSource = allInScopeCode
+      )
+
+    InheritedParentsResultSoft(
+      parentTrees = parents,
+      allTrees = allInScopeCode
+    )
+  }
+
+  /**
    * Collects all children implementing or extending the given
    * source tree and public contracts/structs.
    *
