@@ -205,6 +205,32 @@ object SourceCodeSearcher extends StrictImplicitLogging {
   }
 
   /**
+   * Collects unique inherited parents for all input parsed files and for each tree within each file.
+   *
+   * @param sourceCode The source code to find inherited parents for.
+   * @param workspace  The source code containing the parents.
+   * @return All inherited parent implementations and their source files.
+   */
+  def collectInheritedParentsForAllSoft(
+      sourceCode: ArraySeq[SourceCodeState.IsParsed],
+      workspace: ArraySeq[SourceCodeState.IsParsed]
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.CodeSoft] = {
+    val workspaceTrees = collectSourceTreesSoft(workspace)
+
+    val parents =
+      sourceCode flatMap {
+        parsed =>
+          collectInheritedParentsForAllSoft(
+            sourceCode = parsed,
+            workspace = workspaceTrees
+          )
+      }
+
+    // unique parents
+    parents.distinct
+  }
+
+  /**
    * Collects unique inherited parents of each tree within a parsed file.
    *
    * @param sourceCode The source code to find inherited parents for.
@@ -223,6 +249,22 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    * Collects unique inherited parents of each tree within a parsed file.
    *
    * @param sourceCode The source code to find inherited parents for.
+   * @param workspace  The source code containing the parents.
+   * @return All inherited parent implementations and their source files.
+   */
+  def collectInheritedParentsForAllTreesSoft(
+      sourceCode: SourceCodeState.IsParsed,
+      workspace: ArraySeq[SourceCodeState.IsParsed]
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.CodeSoft] =
+    collectInheritedParentsForAllSoft(
+      sourceCode = sourceCode,
+      workspace = collectSourceTreesSoft(workspace)
+    ).distinct
+
+  /**
+   * Collects unique inherited parents of each tree within a parsed file.
+   *
+   * @param sourceCode The source code to find inherited parents for.
    * @param workspace  The source trees containing the parents.
    * @return All inherited parent implementations and their source files.
    */
@@ -231,6 +273,22 @@ object SourceCodeSearcher extends StrictImplicitLogging {
       workspace: ArraySeq[SourceLocation.CodeStrict]): ArraySeq[SourceLocation.CodeStrict] =
     collectInheritedParents(
       source = collectSourceTrees(sourceCode).to(ArraySeq),
+      allSource = workspace
+    ).distinct
+
+  /**
+   * Collects unique inherited parents of each tree within a parsed file.
+   *
+   * @param sourceCode The source code to find inherited parents for.
+   * @param workspace  The source trees containing the parents.
+   * @return All inherited parent implementations and their source files.
+   */
+  def collectInheritedParentsForAllSoft(
+      sourceCode: SourceCodeState.IsParsed,
+      workspace: ArraySeq[SourceLocation.CodeSoft]
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.CodeSoft] =
+    collectInheritedParentsSoft(
+      source = collectSourceTreesSoft(sourceCode).to(ArraySeq),
       allSource = workspace
     ).distinct
 
@@ -540,8 +598,8 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    * Collects all parent source implementations inherited by the given
    * source tree within the provided source code files.
    *
-   * @param source    The source tree to search for parent implementations.
-   * @param allSource The source code files containing the parent implementations.
+   * @param source    The source trees to search for parent implementations.
+   * @param allSource The source trees containing the parent implementations.
    * @return All parent source implementations found.
    */
   def collectInheritedParents(
@@ -559,8 +617,27 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    * Collects all parent source implementations inherited by the given
    * source tree within the provided source code files.
    *
+   * @param source    The source trees to search for parent implementations.
+   * @param allSource The source trees containing the parent implementations.
+   * @return All parent source implementations found.
+   */
+  def collectInheritedParentsSoft(
+      source: ArraySeq[SourceLocation.CodeSoft],
+      allSource: ArraySeq[SourceLocation.CodeSoft]): ArraySeq[SourceLocation.CodeSoft] =
+    source.flatMap {
+      source =>
+        collectInheritedParents(
+          source = source,
+          allSource = allSource
+        )
+    }.distinct
+
+  /**
+   * Collects all parent source implementations inherited by the given
+   * source tree within the provided source code files.
+   *
    * @param source    The source tree to search for parent implementations.
-   * @param allSource The source code files containing the parent implementations.
+   * @param allSource The source trees containing the parent implementations.
    * @return All parent source implementations found.
    */
   def collectInheritedParents(
@@ -583,7 +660,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    * source tree within the provided source code files.
    *
    * @param source    The source tree to search for parent implementations.
-   * @param allSource The source code files containing the parent implementations.
+   * @param allSource The source trees containing the parent implementations.
    * @return All parent source implementations found.
    */
   def collectInheritedParents(
