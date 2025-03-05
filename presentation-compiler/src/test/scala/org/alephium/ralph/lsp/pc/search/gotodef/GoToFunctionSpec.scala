@@ -24,7 +24,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
   "return in empty" when {
     "function does not exist" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean: Bool) -> () {
@@ -69,7 +69,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
   "go to the function" when {
     "function exists" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean: Bool) -> () {

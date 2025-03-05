@@ -281,60 +281,18 @@ object TestCodeProvider {
       }
 
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-    try
+    // The error output of the above test is difficult to debug because `SourceIndex` only emits numbers.
+    // For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
+    // This print statement outputs a formatted compiler error message for better readability.
+    tryOrPrintIndexer(
+      code = code,
+      indexes = searchResultList.flatMap(_.index)
+    ) {
       actual should contain theSameElementsAs expectedGoToLocations
-    catch {
-      case throwable: Throwable =>
-        // The error output of the above test is difficult to debug because `SourceIndex` only emits numbers.
-        // For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
-        // This print statement outputs a formatted compiler error message for better readability.
-        printAsError(
-          message = "Unexpected search result",
-          code = code,
-          indexes = searchResultList.flatMap(_.index)
-        )
-
-        throw throwable
     }
 
     actual
   }
-
-  /**
-   * Prints the given [[SourceIndex]]s as an error messages.
-   *
-   * @param message The pointer error message.
-   * @param code    The code executed.
-   * @param indexes Indexes to report as error message.
-   * @return String formatted error messages.
-   */
-  def printAsError(
-      message: String,
-      code: String,
-      indexes: Iterable[SourceIndex]): Unit =
-    toErrorMessage(
-      message = message,
-      code = code,
-      indexes = indexes
-    ).foreach(println)
-
-  /**
-   * Transforms the given [[SourceIndex]]s as an error messages.
-   *
-   * @param message The pointer error message.
-   * @param code    The code executed.
-   * @param indexes Indexes to report as error message.
-   * @return String formatted error messages.
-   */
-  def toErrorMessage(
-      message: String,
-      code: String,
-      indexes: Iterable[SourceIndex]): Iterable[String] =
-    indexes map {
-      index =>
-        val error = CompilerError(message, Some(index))
-        error.toFormatter(code).format(Some(Console.RED))
-    }
 
   /**
    * Tests directly on the `builtin` native library.
@@ -708,5 +666,65 @@ object TestCodeProvider {
 
     (completionResult.value, compiledWorkspace)
   }
+
+  /**
+   * Some test error outputs are difficult to debug because `SourceIndex` only emits numbers.
+   * For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
+   *
+   * This prints a formatted compiler error message for better readability.
+   */
+  private def tryOrPrintIndexer[T](
+      code: String,
+      indexes: Iterable[SourceIndex],
+      message: String = "Unexpected search result"
+    )(f: => T): T =
+    try
+      f
+    catch {
+      case throwable: Throwable =>
+        printAsError(
+          message = message,
+          code = code,
+          indexes = indexes
+        )
+
+        throw throwable
+    }
+
+  /**
+   * Prints the given [[SourceIndex]]s as an error messages.
+   *
+   * @param message The pointer error message.
+   * @param code    The code executed.
+   * @param indexes Indexes to report as error message.
+   * @return String formatted error messages.
+   */
+  private def printAsError(
+      message: String,
+      code: String,
+      indexes: Iterable[SourceIndex]): Unit =
+    toErrorMessage(
+      message = message,
+      code = code,
+      indexes = indexes
+    ).foreach(println)
+
+  /**
+   * Transforms the given [[SourceIndex]]s as an error messages.
+   *
+   * @param message The pointer error message.
+   * @param code    The code executed.
+   * @param indexes Indexes to report as error message.
+   * @return String formatted error messages.
+   */
+  private def toErrorMessage(
+      message: String,
+      code: String,
+      indexes: Iterable[SourceIndex]): Iterable[String] =
+    indexes map {
+      index =>
+        val error = CompilerError(message, Some(index))
+        error.toFormatter(code).format(Some(Console.RED))
+    }
 
 }
