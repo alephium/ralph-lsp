@@ -8,7 +8,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "typeId does not exist" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract GoToConstant() {
           |
@@ -23,7 +23,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
 
   "return self" when {
     "type definition is selected" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract >>Te@@st<<() {
           |
@@ -36,7 +36,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
 
     "duplicate type definition exists" when {
       "second duplicate is selected" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |  pub fn function() -> () { }

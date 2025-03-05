@@ -69,6 +69,14 @@ private object GoToDefIdentifier {
           )
         )
 
+      case Some(Node(template: SoftAST.Template, _)) if template.identifier == identNode.data =>
+        Iterator.single(
+          SourceLocation.NodeSoft(
+            ast = identNode.data.code,
+            source = sourceCode
+          )
+        )
+
       case _ =>
         search(
           identNode = identNode,
@@ -132,9 +140,16 @@ private object GoToDefIdentifier {
 
         case Node(function: SoftAST.Function, _) =>
           searchFunction(
+            function = function,
             target = target,
-            sourceCode = sourceCode,
-            function = function
+            sourceCode = sourceCode
+          )
+
+        case Node(template: SoftAST.Template, _) =>
+          searchTemplate(
+            template = template,
+            target = target,
+            sourceCode = sourceCode
           )
       }
 
@@ -192,6 +207,60 @@ private object GoToDefIdentifier {
         )
       else
         Iterator.empty
+
+    nameMatches ++ blockMatches
+  }
+
+  /**
+   * Given a template, expands and searches within it for all possible definitions.
+   *
+   * @param template   The template to expand and search.
+   * @param target     The identifier being searched.
+   * @param sourceCode The source code state where the function belongs.
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchTemplate(
+      template: SoftAST.Template,
+      target: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft) = {
+    val blockMatches =
+      template.block match {
+        case Some(block) if block.contains(target) || template.inheritance.exists(_.contains(target)) =>
+          // Search the parameters
+          val paramMatches =
+            template.params match {
+              case Some(params) =>
+                searchExpression(
+                  expression = params,
+                  target = target,
+                  sourceCode = sourceCode
+                )
+
+              case None =>
+                Iterator.empty
+            }
+
+          // search the block
+          val blockMatches =
+            searchBlock(
+              block = block,
+              target = target,
+              sourceCode = sourceCode
+            )
+
+          paramMatches ++ blockMatches
+
+        case _ =>
+          Iterator.empty
+      }
+
+    // Check if the name matches the identifier.
+    val nameMatches =
+      searchIdentifier(
+        identifier = template.identifier,
+        target = target,
+        sourceCode = sourceCode
+      )
 
     nameMatches ++ blockMatches
   }
