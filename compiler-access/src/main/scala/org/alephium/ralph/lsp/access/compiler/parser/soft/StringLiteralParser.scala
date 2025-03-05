@@ -18,7 +18,9 @@ private object StringLiteralParser {
       Index ~
         TokenParser.parseOrFail(Token.Quote) ~
         Index ~
-        TextParser.parseOrFail(Token.ForwardSlash, Token.Quote).? ~
+        // TODO: Other keywords such as `Contract`, `Abstract` etc might also need stopping here.
+        //       Add them only if LSP features require them.
+        TextParser.parseOrFail(Token.ForwardSlash, Token.Quote, Token.Import).? ~
         path.rep ~
         TokenParser.parse(Token.Quote) ~
         Index
@@ -46,7 +48,7 @@ private object StringLiteralParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.ForwardSlash) ~
-        TextParser.parse(Token.ForwardSlash, Token.Quote) ~
+        TextParser.parse(Token.ForwardSlash, Token.Quote, Token.Import) ~
         Index
     } map {
       case (from, slash, text, to) =>
