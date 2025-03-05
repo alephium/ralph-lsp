@@ -93,6 +93,16 @@ object SoftAST {
 
   }
 
+  implicit class NodeIdentifierExtensions(val node: Node[SoftAST.Identifier, SoftAST]) extends AnyVal {
+
+    def isReferenceCall(): Boolean =
+      node.parent match {
+        case Some(Node(_: SoftAST.ReferenceCall, _)) => true
+        case _                                       => false
+      }
+
+  }
+
   /**
    * Represents types that can be implemented within a [[Block]].
    */

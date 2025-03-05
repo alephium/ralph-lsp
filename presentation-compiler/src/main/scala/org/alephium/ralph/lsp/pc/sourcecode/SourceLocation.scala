@@ -16,7 +16,7 @@
 
 package org.alephium.ralph.lsp.pc.sourcecode
 
-import org.alephium.ralph.Ast
+import org.alephium.ralph.{Ast, SourceIndex}
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.LineRange
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
@@ -35,6 +35,8 @@ object SourceLocation {
    * Result types for GoTo location search results.
    */
   sealed trait GoTo extends SourceLocation {
+
+    def index: Option[SourceIndex]
 
     def toLineRange(): Option[LineRange]
 
@@ -78,6 +80,9 @@ object SourceLocation {
     override def toLineRange(): Option[LineRange] =
       Some(lineRange())
 
+    override def index: Option[SourceIndex] =
+      Some(SourceIndex.empty)
+
   }
 
   /**
@@ -91,6 +96,9 @@ object SourceLocation {
       parsed: SourceCodeState.Parsed)
     extends GoToRefStrict
        with GoToRenameStrict {
+
+    override def index: Option[SourceIndex] =
+      Some(name.index)
 
     def lineRange(): LineRange =
       name.index.toLineRange(parsed.code)
@@ -114,10 +122,11 @@ object SourceLocation {
        with GoToRefStrict
        with GoToRenameStrict {
 
+    override def index: Option[SourceIndex] =
+      ast.sourceIndex
+
     def toLineRange(): Option[LineRange] =
-      ast
-        .sourceIndex
-        .map(_.toLineRange(source.parsed.code))
+      index.map(_.toLineRange(source.parsed.code))
 
     override def parsed: SourceCodeState.Parsed =
       source.parsed
@@ -130,6 +139,9 @@ object SourceLocation {
     extends GoToDefSoft
        with GoToRefSoft
        with GoToRenameSoft {
+
+    override def index: Option[SourceIndex] =
+      Some(ast.index)
 
     def toLineRange(): Option[LineRange] =
       Some(ast.index.toLineRange(source.parsed.code))

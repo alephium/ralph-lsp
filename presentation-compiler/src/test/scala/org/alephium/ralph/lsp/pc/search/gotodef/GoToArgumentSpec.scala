@@ -297,22 +297,27 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "function and the argument have the same name" in {
-      goToDefinition()(
+      goToDefinition() {
         """
-          |Contract MyContract(interface: MyInterface) {
+          |Abstract Contract Parent() {
           |
-          |  // argument_b is also a function, but it should still go to the argument.
-          |  pub fn function_a(>>argument_b<<: Bool) -> () {
-          |    let go_to_function = @@argument_b
+          |  pub fn argument_b(boolean: Bool) -> () { }
+          |}
+          |
+          |Contract MyContract(interface: MyInterface) extends Parent() {
+          |
+          |  pub fn argument_b(boolean: Bool) -> () { }
+          |
+          |  // `argument_b` is also a function, but it should still go to the argument.
+          |  pub fn argument_b(>>argument_b<<: Bool) -> () {
+          |    let go_to_function = a@@rgument_b
           |    let result = blah.function()
           |  }
           |
-          |  pub fn argument_b(boolean: Bool) -> () {
-          |
-          |  }
+          |  pub fn argument_b(boolean: Bool) -> () { }
           |}
           |""".stripMargin
-      )
+      }
     }
 
     "there are multiple arguments with the same name" in {

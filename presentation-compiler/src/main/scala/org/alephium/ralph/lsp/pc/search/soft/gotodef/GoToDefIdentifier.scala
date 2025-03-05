@@ -26,10 +26,6 @@ private object GoToDefIdentifier {
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.GoToDefSoft] =
     identNode.parent match {
-      case Some(Node(_: SoftAST.ReferenceCall | _: SoftAST.DotCall, _)) =>
-        // TODO: Handle function and dot calls
-        Iterator.empty
-
       case Some(Node(assignment: SoftAST.VariableDeclaration, _)) if assignment.assignment.expressionLeft == identNode.data =>
         Iterator.single(
           SourceLocation.NodeSoft(
@@ -80,21 +76,38 @@ private object GoToDefIdentifier {
         )
     }
 
+  /**
+   * Searches for occurrences of the given identifier node within the source code.
+   *
+   * @param identNode  The identifier node to search for.
+   * @param sourceCode The source code state where the search is performed.
+   * @return return An iterator over the locations of the definitions.
+   */
   private def search(
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     searchLocal(
-      target = identNode.data,
+      from = sourceCode.part.toNode,
+      target = identNode,
       sourceCode = sourceCode
-    )
+    ).iterator
 
+  /**
+   * Expands and searches for all possible local definitions starting from the given position.
+   *
+   * @param from       The position from where the search should begin.
+   * @param target     The identifier being searched.
+   * @param sourceCode The source code state where the `from` node is located.
+   * @return An iterator over the locations of the definitions.
+   */
   private def searchLocal(
-      target: SoftAST.Identifier,
-      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+      from: Node[SoftAST, SoftAST],
+      target: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     ScopeWalker
       .walk(
-        from = sourceCode.part.toNode,
-        anchor = target.index
+        from = from,
+        anchor = target.data.index
       ) {
         case Node(variable: SoftAST.VariableDeclaration, _) =>
           searchExpression(
@@ -116,8 +129,93 @@ private object GoToDefIdentifier {
             target = target,
             sourceCode = sourceCode
           )
+
+        case Node(function: SoftAST.Function, _) =>
+          searchFunction(
+            target = target,
+            sourceCode = sourceCode,
+            function = function
+          )
       }
-      .iterator
+
+  /**
+   * Given a function, expands and searches within it for all possible definitions.
+   *
+   * @param function   The function to expand and search.
+   * @param target     The identifier being searched.
+   * @param sourceCode The source code state where the function belongs.
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchFunction(
+      function: SoftAST.Function,
+      target: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft) = {
+    // Check if searched identifier is a reference call
+    val isReferenceCall = target.isReferenceCall()
+
+    // If the identifier belongs the function's block, search the parameters and the block.
+    val blockMatches =
+      function.block match {
+        case Some(block) if block.contains(target) =>
+          // Search the parameters
+          val paramMatches =
+            if (isReferenceCall)
+              Iterator.empty
+            else
+              searchExpression(
+                expression = function.signature.params,
+                target = target,
+                sourceCode = sourceCode
+              )
+
+          // search the block
+          val blockMatches =
+            searchBlock(
+              block = block,
+              target = target,
+              sourceCode = sourceCode
+            )
+
+          paramMatches ++ blockMatches
+
+        case _ =>
+          Iterator.empty
+      }
+
+    // Check if the name matches the identifier.
+    val nameMatches =
+      if (isReferenceCall)
+        searchIdentifier(
+          identifier = function.signature.fnName,
+          target = target,
+          sourceCode = sourceCode
+        )
+      else
+        Iterator.empty
+
+    nameMatches ++ blockMatches
+  }
+
+  /**
+   * Given a block, expands and searches within it for all possible definitions.
+   *
+   * @param block      The block to expand and search.
+   * @param target     The identifier being searched.
+   * @param sourceCode The source code state where the function belongs.
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchBlock(
+      block: SoftAST.Block,
+      target: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    if (block contains target)
+      searchLocal(
+        from = block.toNode,
+        target = target,
+        sourceCode = sourceCode
+      )
+    else
+      Iterable.empty
 
   /**
    * Given a collection of expressions, expands each expression and searches within it for all possible definitions.
@@ -129,7 +227,7 @@ private object GoToDefIdentifier {
    */
   private def searchExpressions(
       expressions: Iterable[SoftAST.ExpressionAST],
-      target: SoftAST.Identifier,
+      target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     expressions
       .iterator
@@ -152,7 +250,7 @@ private object GoToDefIdentifier {
    */
   private def searchIdentifier(
       identifier: SoftAST.IdentifierAST,
-      target: SoftAST.Identifier,
+      target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     identifier match {
       case identifier: SoftAST.Identifier =>
@@ -177,7 +275,7 @@ private object GoToDefIdentifier {
   @tailrec
   private def searchExpression(
       expression: SoftAST.ExpressionAST,
-      target: SoftAST.Identifier,
+      target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     expression match {
       case ast: SoftAST.VariableDeclaration =>
@@ -220,7 +318,7 @@ private object GoToDefIdentifier {
           sourceCode = sourceCode
         )
 
-      case identifier: SoftAST.Identifier if identifier.code.text == target.code.text =>
+      case identifier: SoftAST.Identifier if identifier.code.text == target.data.code.text =>
         // Check if the identifier matches the text in the selected `identNode`.
         Iterator.single(
           SourceLocation.NodeSoft(

@@ -471,7 +471,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
           """
             |Contract GoToTest() {
             |
-            |  pub fn function(varC) -> () {
+            |  pub fn function(>>varC<<) -> () {
             |    let (varA, varB, >>varC<<) = 123
             |    let >>varC<< = var@@C
             |    let varA = ABC

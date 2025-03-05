@@ -89,12 +89,10 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
       goToDefinitionStrict()(
         """
           |Abstract Contract Parent2() {
-          |
           |  pub fn >>function_b<<(boolean: Bool) -> () { }
           |}
           |
           |Abstract Contract Parent1() {
-          |
           |  pub fn >>function_b<<(boolean: Bool) -> () { }
           |}
           |
