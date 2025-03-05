@@ -80,48 +80,40 @@ private object GoToDefIdentifier {
         )
     }
 
-  /**
-   * Searches for definitions with the local scope of the current block.
-   *
-   * Within the [[ScopeWalker]] block, define all expressions where the local variables and arguments could be present:
-   *
-   * A local variable can only be defined as a:
-   *  - Variable-declaration `let variable = 1` ([[SoftAST.VariableDeclaration]]).
-   *  - Type-assignment `variable: U256` ([[SoftAST.TypeAssignment]]).
-   *  - Mutable-binding `mut variable` ([[SoftAST.MutableBinding]]).
-   *
-   * The goal here is to search within the above ASTs.
-   *
-   * @param identNode  The node representing the identifier being searched.
-   * @param sourceCode The block-part and its source code state where this search is executed.
-   * @return An iterator over definition search results.
-   */
   private def search(
       identNode: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    searchLocal(
+      target = identNode.data,
+      sourceCode = sourceCode
+    )
+
+  private def searchLocal(
+      target: SoftAST.Identifier,
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     ScopeWalker
       .walk(
         from = sourceCode.part.toNode,
-        anchor = identNode.data.index
+        anchor = target.index
       ) {
         case Node(variable: SoftAST.VariableDeclaration, _) =>
           searchExpression(
             expression = variable,
-            target = identNode.data,
+            target = target,
             sourceCode = sourceCode
           )
 
         case Node(assignment: SoftAST.TypeAssignment, _) =>
           searchExpression(
             expression = assignment,
-            target = identNode.data,
+            target = target,
             sourceCode = sourceCode
           )
 
         case Node(binding: SoftAST.MutableBinding, _) =>
           searchExpression(
             expression = binding,
-            target = identNode.data,
+            target = target,
             sourceCode = sourceCode
           )
       }
