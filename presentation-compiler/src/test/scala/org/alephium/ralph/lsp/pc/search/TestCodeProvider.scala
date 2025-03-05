@@ -46,7 +46,10 @@ import scala.util.matching.Regex
 object TestCodeProvider {
 
   val testGoToDefSetting: GoToDefSetting =
-    GoToDefSetting(includeAbstractFuncDef = false)
+    GoToDefSetting(
+      includeAbstractFuncDef = false,
+      includeInheritance = true
+    )
 
   val testGoToRefSetting: GoToRefSetting =
     GoToRefSetting(

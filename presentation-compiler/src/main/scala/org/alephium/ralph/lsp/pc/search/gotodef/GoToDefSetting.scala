@@ -32,5 +32,17 @@ package org.alephium.ralph.lsp.pc.search.gotodef
  *                                     fn >>function()<< -> () { }
  *                                   }
  *                               }}}
+ * @param includeInheritance     If `true`, inherited parameters are included in the search results.
+ *                               If `false`, inherited parameters are excluded.
+ *                               For example, in the following case, the `param` in the `Parent` contract
+ *                               should be excluded from the search. To achieve this,
+ *                               `enableInheritanceSearch` must be set to `false`.
+ *                               {{{
+ *                                  Abstract Contract Parent(param: Type)
+ *
+ *                                  Contract MyContract(>>param<<: Type) extends Parent(para@@m)
+ *                               }}}
  */
-case class GoToDefSetting(includeAbstractFuncDef: Boolean)
+case class GoToDefSetting(
+    includeAbstractFuncDef: Boolean,
+    includeInheritance: Boolean)
