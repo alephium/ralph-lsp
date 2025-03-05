@@ -4,7 +4,7 @@ import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class GoToCodeSpec extends AnyWordSpec with Matchers {
+class GoToTemplateSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "typeId does not exist" in {
