@@ -105,21 +105,21 @@ private object GoToDefIdentifier {
         anchor = identNode.data.index
       ) {
         case Node(variable: SoftAST.VariableDeclaration, _) =>
-          expandAndSearchExpression(
+          searchExpression(
             expression = variable,
             identNode = identNode,
             sourceCode = sourceCode
           )
 
         case Node(assignment: SoftAST.TypeAssignment, _) =>
-          expandAndSearchExpression(
+          searchExpression(
             expression = assignment,
             identNode = identNode,
             sourceCode = sourceCode
           )
 
         case Node(binding: SoftAST.MutableBinding, _) =>
-          expandAndSearchExpression(
+          searchExpression(
             expression = binding,
             identNode = identNode,
             sourceCode = sourceCode
@@ -135,7 +135,7 @@ private object GoToDefIdentifier {
    * @param sourceCode  The source code state where this search is executed.
    * @return An iterator over the locations of the definitions.
    */
-  private def expandAndSearchExpressions(
+  private def searchExpressions(
       expressions: Iterable[SoftAST.ExpressionAST],
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
@@ -143,7 +143,7 @@ private object GoToDefIdentifier {
       .iterator
       .flatMap {
         expression =>
-          expandAndSearchExpression(
+          searchExpression(
             expression = expression,
             identNode = identNode,
             sourceCode = sourceCode
@@ -159,14 +159,14 @@ private object GoToDefIdentifier {
    * @return An iterator over the locations of the definitions.
    */
   @tailrec
-  private def expandAndSearchExpression(
+  private def searchExpression(
       expression: SoftAST.ExpressionAST,
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     expression match {
       case ast: SoftAST.VariableDeclaration =>
         // expand variable declaration and search within the assignment
-        expandAndSearchExpression(
+        searchExpression(
           expression = ast.assignment,
           identNode = identNode,
           sourceCode = sourceCode
@@ -174,7 +174,7 @@ private object GoToDefIdentifier {
 
       case ast: SoftAST.TypeAssignment =>
         // expand type assigment and search within the left expression
-        expandAndSearchExpression(
+        searchExpression(
           expression = ast.expressionLeft,
           identNode = identNode,
           sourceCode = sourceCode
@@ -182,7 +182,7 @@ private object GoToDefIdentifier {
 
       case group: SoftAST.Group[_, _] =>
         // Expand the group and search the expressions within
-        expandAndSearchExpressions(
+        searchExpressions(
           expressions = group.expressions,
           identNode = identNode,
           sourceCode = sourceCode
@@ -190,7 +190,7 @@ private object GoToDefIdentifier {
 
       case SoftAST.Assignment(_, left, _, _, _, _) =>
         // Expand the expression within this assignment and search within
-        expandAndSearchExpression(
+        searchExpression(
           expression = left,
           identNode = identNode,
           sourceCode = sourceCode
@@ -200,7 +200,7 @@ private object GoToDefIdentifier {
         // Search the identifier
         binding.identifier match {
           case identifier: SoftAST.Identifier =>
-            expandAndSearchExpression(
+            searchExpression(
               expression = identifier,
               identNode = identNode,
               sourceCode = sourceCode
