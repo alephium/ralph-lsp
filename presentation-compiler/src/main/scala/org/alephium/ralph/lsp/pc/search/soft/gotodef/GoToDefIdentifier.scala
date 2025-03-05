@@ -107,21 +107,21 @@ private object GoToDefIdentifier {
         case Node(variable: SoftAST.VariableDeclaration, _) =>
           searchExpression(
             expression = variable,
-            identNode = identNode,
+            target = identNode.data,
             sourceCode = sourceCode
           )
 
         case Node(assignment: SoftAST.TypeAssignment, _) =>
           searchExpression(
             expression = assignment,
-            identNode = identNode,
+            target = identNode.data,
             sourceCode = sourceCode
           )
 
         case Node(binding: SoftAST.MutableBinding, _) =>
           searchExpression(
             expression = binding,
-            identNode = identNode,
+            target = identNode.data,
             sourceCode = sourceCode
           )
       }
@@ -131,13 +131,13 @@ private object GoToDefIdentifier {
    * Given a collection of expressions, expands each expression and searches within it for all possible definitions.
    *
    * @param expressions The expressions to expand and search.
-   * @param identNode   The node representing the identifier being searched.
+   * @param target      The identifier being searched.
    * @param sourceCode  The source code state where this search is executed.
    * @return An iterator over the locations of the definitions.
    */
   private def searchExpressions(
       expressions: Iterable[SoftAST.ExpressionAST],
-      identNode: Node[SoftAST.Identifier, SoftAST],
+      target: SoftAST.Identifier,
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     expressions
       .iterator
@@ -145,30 +145,54 @@ private object GoToDefIdentifier {
         expression =>
           searchExpression(
             expression = expression,
-            identNode = identNode,
+            target = target,
             sourceCode = sourceCode
           )
       }
 
   /**
+   * Expands the given identifier and matches its name against a target.
+   *
+   * @param identifier The identifier to expand and match.
+   * @param target     The identifier being searched.
+   * @param sourceCode The source code state where this search is executed.
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchIdentifier(
+      identifier: SoftAST.IdentifierAST,
+      target: SoftAST.Identifier,
+      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    identifier match {
+      case identifier: SoftAST.Identifier =>
+        searchExpression(
+          expression = identifier,
+          target = target,
+          sourceCode = sourceCode
+        )
+
+      case _: SoftAST.IdentifierExpected =>
+        Iterator.empty
+    }
+
+  /**
    * Given an expression, expands the expression and searches within it for all possible definitions.
    *
    * @param expression The expression to expand and search.
-   * @param identNode  The node representing the identifier being searched.
+   * @param target     The identifier being searched.
    * @param sourceCode The source code state where this search is executed.
    * @return An iterator over the locations of the definitions.
    */
   @tailrec
   private def searchExpression(
       expression: SoftAST.ExpressionAST,
-      identNode: Node[SoftAST.Identifier, SoftAST],
+      target: SoftAST.Identifier,
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     expression match {
       case ast: SoftAST.VariableDeclaration =>
         // expand variable declaration and search within the assignment
         searchExpression(
           expression = ast.assignment,
-          identNode = identNode,
+          target = target,
           sourceCode = sourceCode
         )
 
@@ -176,7 +200,7 @@ private object GoToDefIdentifier {
         // expand type assigment and search within the left expression
         searchExpression(
           expression = ast.expressionLeft,
-          identNode = identNode,
+          target = target,
           sourceCode = sourceCode
         )
 
@@ -184,38 +208,31 @@ private object GoToDefIdentifier {
         // Expand the group and search the expressions within
         searchExpressions(
           expressions = group.expressions,
-          identNode = identNode,
+          target = target,
           sourceCode = sourceCode
         )
 
-      case SoftAST.Assignment(_, left, _, _, _, _) =>
+      case assignment: SoftAST.Assignment =>
         // Expand the expression within this assignment and search within
         searchExpression(
-          expression = left,
-          identNode = identNode,
+          expression = assignment.expressionLeft,
+          target = target,
           sourceCode = sourceCode
         )
 
       case binding: SoftAST.MutableBinding =>
         // Search the identifier
-        binding.identifier match {
-          case identifier: SoftAST.Identifier =>
-            searchExpression(
-              expression = identifier,
-              identNode = identNode,
-              sourceCode = sourceCode
-            )
+        searchIdentifier(
+          identifier = binding.identifier,
+          target = target,
+          sourceCode = sourceCode
+        )
 
-          case _: SoftAST.IdentifierExpected =>
-            // identifier not provided
-            Iterator.empty
-        }
-
-      case SoftAST.Identifier(_, _, code) if code.text == identNode.data.code.text =>
+      case identifier: SoftAST.Identifier if identifier.code.text == target.code.text =>
         // Check if the identifier matches the text in the selected `identNode`.
         Iterator.single(
           SourceLocation.NodeSoft(
-            ast = code,
+            ast = identifier.code,
             source = sourceCode
           )
         )
