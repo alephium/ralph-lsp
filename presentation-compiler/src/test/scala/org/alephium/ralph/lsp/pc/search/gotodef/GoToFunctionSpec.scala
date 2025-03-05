@@ -39,7 +39,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
   "return self" when {
     "the function itself is selected" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Abstract Contract Action() {
           |  fn >>funct@@ion<<() -> Bool
@@ -52,7 +52,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
     "duplicate functions exist" when {
       "second duplicate is selected" should {
         "still select only itself" in {
-          goToDefinitionStrict()(
+          goToDefinition()(
             """
               |Abstract Contract Action() {
               |  fn function() -> Bool

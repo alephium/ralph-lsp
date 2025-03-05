@@ -26,14 +26,6 @@ private object GoToDefIdentifier {
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.GoToDefSoft] =
     identNode.parent match {
-      case Some(Node(assignment: SoftAST.VariableDeclaration, _)) if assignment.assignment.expressionLeft == identNode.data =>
-        Iterator.single(
-          SourceLocation.NodeSoft(
-            ast = identNode.data.code,
-            source = sourceCode
-          )
-        )
-
       case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
         node.parent match {
           // If it's an assignment, it must also be a variable declaration for the current node to be a self.
@@ -62,6 +54,14 @@ private object GoToDefIdentifier {
         )
 
       case Some(Node(assignment: SoftAST.MutableBinding, _)) if assignment.identifier == identNode.data =>
+        Iterator.single(
+          SourceLocation.NodeSoft(
+            ast = identNode.data.code,
+            source = sourceCode
+          )
+        )
+
+      case Some(Node(function: SoftAST.FunctionSignature, _)) if function.fnName == identNode.data =>
         Iterator.single(
           SourceLocation.NodeSoft(
             ast = identNode.data.code,
