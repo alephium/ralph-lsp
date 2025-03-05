@@ -102,7 +102,7 @@ private object GoToDefIdentifier {
     ScopeWalker
       .walk(
         from = sourceCode.part.toNode,
-        anchor = identNode.data
+        anchor = identNode.data.index
       ) {
         case Node(variable: SoftAST.VariableDeclaration, _) =>
           expandAndSearchExpression(
@@ -126,7 +126,6 @@ private object GoToDefIdentifier {
           )
       }
       .iterator
-      .flatten
 
   /**
    * Given a collection of expressions, expands each expression and searches within it for all possible definitions.
