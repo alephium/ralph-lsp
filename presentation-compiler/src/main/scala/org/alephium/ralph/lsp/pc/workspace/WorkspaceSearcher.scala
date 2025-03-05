@@ -23,6 +23,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.utils.URIUtil
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -256,6 +257,12 @@ object WorkspaceSearcher {
       includeNonImportedCode = false
     )
 
+  def collectAllTreesSoft(workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): ArraySeq[SourceLocation.CodeSoft] =
+    collectTreesSoft(
+      workspace = workspace,
+      includeNonImportedCode = false
+    )
+
   /**
    * Collects ALL parsed source code from the workspace and dependencies.
    *
@@ -329,6 +336,71 @@ object WorkspaceSearcher {
     // The entire local dev workspace source-code is available.
     val workspaceTrees =
       SourceCodeSearcher.collectSourceTrees(workspaceCode)
+
+    workspaceTrees ++ allImportedCode
+  }
+
+  /**
+   * Collects all parsed source files, excluding `std` dependency source files
+   * that are not imported.
+   *
+   * @param workspace              The workspace with dependencies.
+   * @param includeNonImportedCode If true, includes dependency code that is not imported,
+   *                               otherwise, excludes non-imported dependency code.
+   * @return Parsed source files in scope.
+   */
+  private def collectTreesSoft(
+      workspace: WorkspaceState.IsSourceAware,
+      includeNonImportedCode: Boolean
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.CodeSoft] = {
+    // fetch the `std` dependency
+    val stdSourceParsedCode =
+      workspace
+        .build
+        .findDependency(DependencyID.Std)
+        .to(ArraySeq)
+        .flatMap(_.sourceCode.map(_.parsed))
+
+    // collect all parsed source-files
+    val workspaceCode =
+      SourceCodeSearcher.collectIsParsed(workspace.sourceCode)
+
+    val importedCode =
+      if (includeNonImportedCode) {
+        stdSourceParsedCode
+      } else {
+        // collect all import statements
+        val importStatements =
+          SourceCodeSearcher
+            .collectImportStatementsSoft(workspaceCode)
+            .map(_._2)
+
+        // filter out std files that are not imported
+        stdSourceParsedCode filter {
+          stdCode =>
+            stdCode
+              .importIdentifier
+              .exists {
+                stdImportIdentifier =>
+                  importStatements contains stdImportIdentifier.string.value
+              }
+        }
+      }
+
+    // Pull in all inherited source-files for the used import statements.
+    val importedInheritedParentTrees =
+      SourceCodeSearcher.collectInheritedParentsForAllSoft(
+        sourceCode = importedCode,
+        workspace = stdSourceParsedCode
+      )
+
+    // collect all imported code including the inherited code.
+    val allImportedCode =
+      (SourceCodeSearcher.collectSourceTreesSoft(importedCode) ++ importedInheritedParentTrees).distinct
+
+    // The entire local dev workspace source-code is available.
+    val workspaceTrees =
+      SourceCodeSearcher.collectSourceTreesSoft(workspaceCode)
 
     workspaceTrees ++ allImportedCode
   }
