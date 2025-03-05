@@ -16,6 +16,7 @@
 
 package org.alephium.ralph.lsp.pc.search
 
+import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.TestCommon
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
@@ -32,6 +33,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild, TestRal
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.{BuiltInFunctionDownloader, DependencyDownloader, StdInterfaceDownloader}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.SourceIndex
 import org.scalatest.Assertion
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
@@ -279,9 +281,60 @@ object TestCodeProvider {
       }
 
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-    actual should contain theSameElementsAs expectedGoToLocations
+    try
+      actual should contain theSameElementsAs expectedGoToLocations
+    catch {
+      case throwable: Throwable =>
+        // The error output of the above test is difficult to debug because `SourceIndex` only emits numbers.
+        // For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
+        // This print statement outputs a formatted compiler error message for better readability.
+        printAsError(
+          message = "Unexpected search result",
+          code = code,
+          indexes = searchResultList.flatMap(_.index)
+        )
+
+        throw throwable
+    }
+
     actual
   }
+
+  /**
+   * Prints the given [[SourceIndex]]s as an error messages.
+   *
+   * @param message The pointer error message.
+   * @param code    The code executed.
+   * @param indexes Indexes to report as error message.
+   * @return String formatted error messages.
+   */
+  def printAsError(
+      message: String,
+      code: String,
+      indexes: Iterable[SourceIndex]): Unit =
+    toErrorMessage(
+      message = message,
+      code = code,
+      indexes = indexes
+    ).foreach(println)
+
+  /**
+   * Transforms the given [[SourceIndex]]s as an error messages.
+   *
+   * @param message The pointer error message.
+   * @param code    The code executed.
+   * @param indexes Indexes to report as error message.
+   * @return String formatted error messages.
+   */
+  def toErrorMessage(
+      message: String,
+      code: String,
+      indexes: Iterable[SourceIndex]): Iterable[String] =
+    indexes map {
+      index =>
+        val error = CompilerError(message, Some(index))
+        error.toFormatter(code).format(Some(Console.RED))
+    }
 
   /**
    * Tests directly on the `builtin` native library.
