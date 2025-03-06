@@ -40,7 +40,9 @@ case object GoToDefinitionProviderSoft extends CodeProvider[SourceCodeState.IsPa
             searchBlockPart(
               cursorIndex = cursorIndex,
               blockPart = blockPart,
-              sourceCode = sourceCode
+              sourceCode = sourceCode,
+              workspace = workspace,
+              settings = searchSettings._2
             )
 
           case None =>
@@ -52,13 +54,16 @@ case object GoToDefinitionProviderSoft extends CodeProvider[SourceCodeState.IsPa
    * Searches the given bodyPart.
    *
    * @param cursorIndex The index location where the search operation is performed.
-   * @param blockPart    The first code block where the search is executed.
+   * @param blockPart   The first code block where the search is executed.
    * @param sourceCode  The parsed state of the source-code where the search is executed.
+   * @param workspace   The workspace state where the source-code is located.
    */
   private def searchBlockPart(
       cursorIndex: Int,
       blockPart: SoftAST.BlockPartAST,
-      sourceCode: SourceCodeState.IsParsed
+      sourceCode: SourceCodeState.IsParsed,
+      workspace: WorkspaceState.IsSourceAware,
+      settings: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
     blockPart.toNode.findLast(_.index contains cursorIndex) match {
       case Some(Node(_: SoftAST.CodeToken[_], _)) =>
@@ -68,7 +73,9 @@ case object GoToDefinitionProviderSoft extends CodeProvider[SourceCodeState.IsPa
       case Some(node @ Node(codeString: SoftAST.CodeString, _)) =>
         GoToDefCodeString(
           node = node.upcast(codeString),
-          sourceCode = SourceLocation.CodeSoft(blockPart, sourceCode)
+          sourceCode = SourceLocation.CodeSoft(blockPart, sourceCode),
+          workspace = workspace,
+          settings = settings
         )
 
       case Some(node) =>

@@ -283,12 +283,16 @@ object TestCodeProvider {
           (result.parsed.fileURI, result.toLineRange().value)
       }
 
+    val codeWithNoSymbols =
+      codeWithoutLineRangeSymbols.replace(TestCodeUtil.SEARCH_INDICATOR, "")
+
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
     // The error output of the above test is difficult to debug because `SourceIndex` only emits numbers.
     // For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
     // This print statement outputs a formatted compiler error message for better readability.
     tryOrPrintIndexer(
-      code = code,
+      codeBeingTested = code,
+      codeWithoutSymbols = codeWithNoSymbols,
       indexes = searchResultList.flatMap(_.index)
     ) {
       actual should contain theSameElementsAs expectedGoToLocations
@@ -675,19 +679,27 @@ object TestCodeProvider {
    * For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
    *
    * This prints a formatted compiler error message for better readability.
+   *
+   * @param codeBeingTested    The actual code being tested
+   * @param codeWithoutSymbols Test code without the test markers `>><<` and `@@`.
    */
   private def tryOrPrintIndexer[T](
-      code: String,
+      codeBeingTested: String,
+      codeWithoutSymbols: String,
       indexes: Iterable[SourceIndex],
-      message: String = "Unexpected search result"
+      message: String = "Actual"
     )(f: => T): T =
     try
       f
     catch {
       case throwable: Throwable =>
+        // print the code was tested
+        println(codeBeingTested)
+
+        // print the actual result
         printAsError(
           message = message,
-          code = code,
+          code = codeWithoutSymbols,
           indexes = indexes
         )
 

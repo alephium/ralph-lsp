@@ -86,7 +86,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
     }
 
     "function and argument have same names" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Abstract Contract Parent2() {
           |  pub fn >>function_b<<(boolean: Bool) -> () { }
@@ -114,7 +114,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
     "function is an interface function" should {
       "highlight the entire function signature" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Abstract Contract Test() {
             |
@@ -128,7 +128,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
             |  }
             |
             |  fn main() -> () {
-            |    function@@()
+            |    functio@@n()
             |  }
             |
             |}

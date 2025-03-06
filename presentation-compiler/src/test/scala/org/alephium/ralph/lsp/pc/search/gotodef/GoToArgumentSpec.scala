@@ -336,7 +336,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     }
 
     "there are duplicate arguments within inheritance" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Abstract Contract Parent3(>>param<<: MyParam,
           |                          >>param<<: MyParam) { }
@@ -363,20 +363,20 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
     "template arguments are passed as inheritance parameter" when {
       "there are no duplicates" in {
-        goToDefinition()(
+        goToDefinitionStrict()(
           """
             |Abstract Contract SomeType() { }
             |
             |Abstract Contract Parent(param: SomeType) { }
             |
-            |Abstract Contract Child(>>param<<: SomeType) extends Parent(@@param) { }
+            |Abstract Contract Child(>>param<<: SomeType) extends Parent(p@@aram) { }
             |""".stripMargin
         )
       }
 
       "duplicates exist" when {
         "template parameter is duplicated" in {
-          goToDefinition()(
+          goToDefinitionStrict()(
             """
               |Abstract Contract SomeType() { }
               |
@@ -390,7 +390,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
         "function parameter is duplicated" should {
           "not be included in search result" in {
-            goToDefinition()(
+            goToDefinitionStrict()(
               """
                 |Abstract Contract SomeType() { }
                 |

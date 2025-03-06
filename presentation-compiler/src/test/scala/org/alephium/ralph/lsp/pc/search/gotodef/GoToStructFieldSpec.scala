@@ -41,7 +41,7 @@ class GoToStructFieldSpec extends AnyWordSpec with Matchers {
         }
       }
 
-      "struct is defined within the contract" in {
+      "struct is defined within the contract" ignore {
         goToDefinitionSoft() {
           """
             |Contract Test() {

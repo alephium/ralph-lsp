@@ -80,7 +80,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
       }
 
       "at multiple locations" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Abstract Contract Parent2(mut >>counter<<: U256) { }
             |

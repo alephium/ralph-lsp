@@ -1,13 +1,16 @@
 package org.alephium.ralph.lsp.pc.search.soft.gotodef
 
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, SourceIndexExtension}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
-import org.alephium.ralph.lsp.pc.search.gotodef.ScopeWalker
+import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefSetting, ScopeWalker}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.Node
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
 import scala.annotation.tailrec
 
-private object GoToDefIdentifier {
+private object GoToDefIdentifier extends StrictImplicitLogging {
 
   /**
    * Searches definitions given the location of the identifier node [[SoftAST.Identifier]]
@@ -20,11 +23,15 @@ private object GoToDefIdentifier {
    *
    * @param identNode  The node representing the identifier being searched.
    * @param sourceCode The block-part and its source code state where this search is executed.
+   * @param workspace  The workspace state where the source-code is located.
    * @return An iterator over definition search results.
    */
   def apply(
       identNode: Node[SoftAST.Identifier, SoftAST],
-      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.GoToDefSoft] =
+      sourceCode: SourceLocation.CodeSoft,
+      workspace: WorkspaceState.IsSourceAware,
+      settings: GoToDefSetting
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
     identNode.parent match {
       case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
         node.parent match {
@@ -41,7 +48,9 @@ private object GoToDefIdentifier {
             // invoke full scope search.
             search(
               identNode = identNode,
-              sourceCode = sourceCode
+              sourceCode = sourceCode,
+              workspace = workspace,
+              settings = settings
             )
         }
 
@@ -80,7 +89,9 @@ private object GoToDefIdentifier {
       case _ =>
         search(
           identNode = identNode,
-          sourceCode = sourceCode
+          sourceCode = sourceCode,
+          workspace = workspace,
+          settings = settings
         )
     }
 
@@ -93,12 +104,34 @@ private object GoToDefIdentifier {
    */
   private def search(
       identNode: Node[SoftAST.Identifier, SoftAST],
-      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    searchLocal(
-      from = sourceCode.part.toNode,
-      target = identNode,
-      sourceCode = sourceCode
-    ).iterator
+      sourceCode: SourceLocation.CodeSoft,
+      workspace: WorkspaceState.IsSourceAware,
+      settings: GoToDefSetting
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    val inheritance =
+      WorkspaceSearcher.collectInheritedParentsSoft(
+        sourceCode = sourceCode,
+        workspace = workspace
+      )
+
+    val inherited =
+      if (settings.includeInheritance)
+        searchInheritance(
+          target = identNode,
+          inheritance = inheritance.parentTrees.iterator
+        )
+      else
+        Iterator.empty
+
+    val local =
+      searchLocal(
+        from = sourceCode.part.toNode,
+        target = identNode,
+        sourceCode = sourceCode
+      )
+
+    (local.iterator ++ inherited).distinct
+  }
 
   /**
    * Expands and searches for all possible local definitions starting from the given position.
@@ -152,6 +185,111 @@ private object GoToDefIdentifier {
             sourceCode = sourceCode
           )
       }
+
+  /**
+   * Given a target identifier, searches all inherited contracts for all possible definitions.
+   *
+   * @param target      The identifier being searched.
+   * @param inheritance The inherited source code to search within.
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchInheritance(
+      target: Node[SoftAST.Identifier, SoftAST],
+      inheritance: Iterator[SourceLocation.CodeSoft]
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    inheritance flatMap {
+      sourceCode =>
+        searchInheritance(
+          target = target,
+          inherited = sourceCode
+        )
+    }
+
+  /**
+   * Given a target identifier, searches an inherited contract for all possible definitions.
+   *
+   * Note that the `target` identifier belongs to the source code where this search is executed.
+   * Since the inherited source code does not recognise this target,
+   * this function creates a virtual identifier at the end of the inherited source code.
+   * This allows a local search that returns all public definitions.
+   *
+   * {{{
+   *   Contract Child() extends Parent() {
+   *      let copy = pa@@ram // `param` is not visible to `Parent`
+   *   }
+   *
+   *   Abstract Contract(>>param<<: Type) {
+   *     pa@@ram // A virtual identifier is used to locate it
+   *   }
+   * }}}
+   *
+   * @param target    The identifier being searched.
+   * @param inherited The inherited source code to search within.
+   * @return All found definitions.
+   */
+  private def searchInheritance(
+      target: Node[SoftAST.Identifier, SoftAST],
+      inherited: SourceLocation.CodeSoft
+    )(implicit logger: ClientLogger): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    // the end index of the inherited source code
+    val endIndex =
+      point(inherited.part.index.to)
+
+    // create a virtual identifier at the end index
+    val virtualIdentifier =
+      SoftAST.Identifier(
+        index = endIndex,
+        documentation = None,
+        code = SoftAST.CodeString(
+          index = endIndex,
+          text = target.data.code.text
+        )
+      )
+
+    val virtualTarget =
+      if (target.isReferenceCall()) // if it is a reference call, created a virtual reference call
+        SoftAST.ReferenceCall(
+          index = endIndex,
+          reference = virtualIdentifier,
+          preArgumentsSpace = None,
+          arguments = SoftAST.Group(
+            index = endIndex,
+            openToken = None,
+            preHeadExpressionSpace = None,
+            headExpression = None,
+            postHeadExpressionSpace = None,
+            tailExpressions = Seq.empty,
+            closeToken = None
+          )
+        )
+      else
+        virtualIdentifier // else use the identifier
+
+    // fetch the only identifier as a Node
+    val virtualNode =
+      virtualTarget
+        .toNode
+        .walkDown
+        .collectFirst {
+          case node @ Node(ident: SoftAST.Identifier, _) =>
+            node.upcast(ident)
+        }
+
+    virtualNode match {
+      case Some(virtualNode) =>
+        // execute a local search within the inherited source code
+        searchLocal(
+          from = inherited.part.toNode,
+          target = virtualNode,
+          sourceCode = inherited
+        )
+
+      case None =>
+        // This should not occur if the above AST has an identifier.
+        logger.error("Error: Virtual `Identifier` not found")
+        Iterable.empty
+    }
+  }
 
   /**
    * Given a function, expands and searches within it for all possible definitions.
