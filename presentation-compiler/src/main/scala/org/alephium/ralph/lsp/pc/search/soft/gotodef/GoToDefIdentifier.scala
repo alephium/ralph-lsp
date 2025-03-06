@@ -86,6 +86,22 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           )
         )
 
+      case Some(node @ Node(_: SoftAST.Group[_, _], _)) if node.parent.flatMap(_.parent).exists(_.data.isInstanceOf[SoftAST.Inheritance]) =>
+        /**
+         * If this is an inheritance group, then disable execute inheritance search.
+         * For example, in the following case, the `Parent`s `param` should not be returned.
+         * {{{
+         *   Contract Parent(param: Type)
+         *   Contract Child(>>param<<: Type) extends Parent(para@@m)
+         * }}}
+         */
+        search(
+          identNode = identNode,
+          sourceCode = sourceCode,
+          workspace = workspace,
+          settings = settings.copy(includeInheritance = false)
+        )
+
       case _ =>
         search(
           identNode = identNode,
