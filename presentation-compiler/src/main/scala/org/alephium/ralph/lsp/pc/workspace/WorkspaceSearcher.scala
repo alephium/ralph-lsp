@@ -145,7 +145,10 @@ object WorkspaceSearcher {
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): InheritedParentsResultSoft = {
     val allInScopeCode =
-      collectTreesSoft(workspace = workspace, includeNonImportedCode = false)
+      collectTreesSoft(
+        workspace = workspace,
+        includeNonImportedCode = false
+      )
 
     val parents =
       SourceCodeSearcher.collectInheritedParents(

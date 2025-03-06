@@ -103,9 +103,9 @@ private[search] object ScopeWalker {
 
         // Check:
         // - Is this node (i.e. within the scope) defined by the partial-function?
-        // - If it is a declaration, process the node because declarations can do not require ordering.
+        // - If it is a declaration, process the node because declarations do not require ordering and are available locally to all code.
         // - If it is not a declaration, is it before the anchor node?
-        // - If it's defined after the anchor node (node in scope), then only add it if currently collected items are empty.
+        // - If it is defined after the anchor node (node in scope), then only add it if currently collected items are empty.
         case node @ Node(ast, _) if pf.isDefinedAt(node) && (ast.isInstanceOf[SoftAST.DeclarationAST] || ast.isBehind(anchor) || found.isEmpty) =>
           found addAll pf(node)
           // This node is processed, drop all its children.

@@ -161,46 +161,45 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       from: Node[SoftAST, SoftAST],
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    ScopeWalker
-      .walk(
-        from = from,
-        anchor = target.data.index
-      ) {
-        case Node(variable: SoftAST.VariableDeclaration, _) =>
-          searchExpression(
-            expression = variable,
-            target = target,
-            sourceCode = sourceCode
-          )
+    ScopeWalker.walk(
+      from = from,
+      anchor = target.data.index
+    ) {
+      case Node(variable: SoftAST.VariableDeclaration, _) =>
+        searchExpression(
+          expression = variable,
+          target = target,
+          sourceCode = sourceCode
+        )
 
-        case Node(assignment: SoftAST.TypeAssignment, _) =>
-          searchExpression(
-            expression = assignment,
-            target = target,
-            sourceCode = sourceCode
-          )
+      case Node(assignment: SoftAST.TypeAssignment, _) =>
+        searchExpression(
+          expression = assignment,
+          target = target,
+          sourceCode = sourceCode
+        )
 
-        case Node(binding: SoftAST.MutableBinding, _) =>
-          searchExpression(
-            expression = binding,
-            target = target,
-            sourceCode = sourceCode
-          )
+      case Node(binding: SoftAST.MutableBinding, _) =>
+        searchExpression(
+          expression = binding,
+          target = target,
+          sourceCode = sourceCode
+        )
 
-        case Node(function: SoftAST.Function, _) =>
-          searchFunction(
-            function = function,
-            target = target,
-            sourceCode = sourceCode
-          )
+      case Node(function: SoftAST.Function, _) =>
+        searchFunction(
+          function = function,
+          target = target,
+          sourceCode = sourceCode
+        )
 
-        case Node(template: SoftAST.Template, _) =>
-          searchTemplate(
-            template = template,
-            target = target,
-            sourceCode = sourceCode
-          )
-      }
+      case Node(template: SoftAST.Template, _) =>
+        searchTemplate(
+          template = template,
+          target = target,
+          sourceCode = sourceCode
+        )
+    }
 
   /**
    * Given a target identifier, searches all inherited contracts for all possible definitions.
@@ -302,7 +301,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
       case None =>
         // This should not occur if the above AST has an identifier.
-        logger.error("Error: Virtual `Identifier` not found")
+        logger.error(s"Error: Virtual `Identifier` not found. File: ${inherited.parsed.fileURI}")
         Iterable.empty
     }
   }
