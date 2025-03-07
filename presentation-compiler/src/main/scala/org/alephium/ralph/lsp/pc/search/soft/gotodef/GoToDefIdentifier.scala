@@ -200,26 +200,31 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   private def searchLocal(
       from: Node[SoftAST, SoftAST],
       target: Node[SoftAST.Identifier, SoftAST],
-      sourceCode: SourceLocation.CodeSoft): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+      sourceCode: SourceLocation.CodeSoft): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    // Reference calls are then ones ending with parentheses, for example `refCall()`.
+    // Reference calls should only search for function and contract calls, not variables.
+    val isReferenceCall =
+      target.isReferenceCall()
+
     ScopeWalker.walk(
       from = from,
       anchor = target.data.index
     ) {
-      case Node(variable: SoftAST.VariableDeclaration, _) =>
+      case Node(variable: SoftAST.VariableDeclaration, _) if !isReferenceCall =>
         searchExpression(
           expression = variable,
           target = target,
           sourceCode = sourceCode
         )
 
-      case Node(assignment: SoftAST.TypeAssignment, _) =>
+      case Node(assignment: SoftAST.TypeAssignment, _) if !isReferenceCall =>
         searchExpression(
           expression = assignment,
           target = target,
           sourceCode = sourceCode
         )
 
-      case Node(binding: SoftAST.MutableBinding, _) =>
+      case Node(binding: SoftAST.MutableBinding, _) if !isReferenceCall =>
         searchExpression(
           expression = binding,
           target = target,
@@ -240,6 +245,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           sourceCode = sourceCode
         )
     }
+  }
 
   /**
    * Given a target identifier, searches all inherited contracts for all possible definitions.
@@ -357,7 +363,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   private def searchFunction(
       function: SoftAST.Function,
       target: Node[SoftAST.Identifier, SoftAST],
-      sourceCode: SourceLocation.CodeSoft) = {
+      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     // Check if searched identifier is a reference call
     val isReferenceCall = target.isReferenceCall()
 
@@ -415,23 +421,26 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   private def searchTemplate(
       template: SoftAST.Template,
       target: Node[SoftAST.Identifier, SoftAST],
-      sourceCode: SourceLocation.CodeSoft) = {
+      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     val blockMatches =
       template.block match {
         case Some(block) if block.contains(target) || template.inheritance.exists(_.contains(target)) =>
           // Search the parameters
           val paramMatches =
-            template.params match {
-              case Some(params) =>
-                searchExpression(
-                  expression = params,
-                  target = target,
-                  sourceCode = sourceCode
-                )
+            if (target.isReferenceCall()) // reference calls end with `()`, these only need to search for
+              Iterator.empty
+            else
+              template.params match {
+                case Some(params) =>
+                  searchExpression(
+                    expression = params,
+                    target = target,
+                    sourceCode = sourceCode
+                  )
 
-              case None =>
-                Iterator.empty
-            }
+                case None =>
+                  Iterator.empty
+              }
 
           // search the block
           val blockMatches =
@@ -494,7 +503,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeSoft,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting
-    )(implicit logger: ClientLogger) =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     group.parent match {
       case Some(Node(_: SoftAST.DeclarationAST | _: SoftAST.FunctionSignature, _)) =>
         // The identifier is defined within the group.

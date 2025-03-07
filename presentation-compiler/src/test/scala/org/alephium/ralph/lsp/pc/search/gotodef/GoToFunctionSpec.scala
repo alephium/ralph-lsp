@@ -24,7 +24,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
   "return in empty" when {
     "function does not exist" in {
-      goToDefinition()(
+      goToDefinition() {
         """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean: Bool) -> () {
@@ -33,26 +33,26 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
   }
 
   "return self" when {
     "the function itself is selected" in {
-      goToDefinition()(
+      goToDefinition() {
         """
           |Abstract Contract Action() {
           |  fn >>funct@@ion<<() -> Bool
           |}
           |
           |""".stripMargin
-      )
+      }
     }
 
     "duplicate functions exist" when {
       "second duplicate is selected" should {
         "still select only itself" in {
-          goToDefinition()(
+          goToDefinition() {
             """
               |Abstract Contract Action() {
               |  fn function() -> Bool
@@ -61,7 +61,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
               |}
               |
               |""".stripMargin
-          )
+          }
         }
       }
     }
@@ -69,7 +69,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
   "go to the function" when {
     "function exists" in {
-      goToDefinition()(
+      goToDefinition() {
         """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean: Bool) -> () {
@@ -82,39 +82,80 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
 
-    "function and argument have same names" in {
-      goToDefinition()(
-        """
-          |Abstract Contract Parent2() {
-          |  pub fn >>function_b<<(boolean: Bool) -> () { }
-          |}
-          |
-          |Abstract Contract Parent1() {
-          |  pub fn >>function_b<<(boolean: Bool) -> () { }
-          |}
-          |
-          |Contract MyContract(interface: MyInterface) extends Parent1(), Parent2() {
-          |
-          |  // function_b is also an input parameter, but it should still go to the target function.
-          |  pub fn function_a(function_b: Bool) -> () {
-          |    let go_to_function = func@@tion_b()
-          |    let result = blah.function()
-          |  }
-          |
-          |  pub fn >>function_b<<(boolean: Bool) -> () {
-          |
-          |  }
-          |}
-          |""".stripMargin
-      )
+    "function and arguments have same names" when {
+      "strict-parseable" in {
+        goToDefinition() {
+          """
+            |Abstract Contract Parent2() {
+            |  pub fn >>function_b<<(boolean: Bool) -> () { }
+            |}
+            |
+            |Abstract Contract Parent1() {
+            |  pub fn >>function_b<<(boolean: Bool) -> () { }
+            |}
+            |
+            |Contract MyContract(function_b: Bool) extends Parent1(), Parent2() {
+            |
+            |  // function_b is also an input parameter, but it should still go to the target function.
+            |  pub fn function_a(function_b: Bool) -> () {
+            |    let go_to_function = func@@tion_b()
+            |    let result = blah.function()
+            |  }
+            |
+            |  pub fn >>function_b<<(boolean: Bool) -> () {
+            |
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "soft-parseable" in {
+        goToDefinitionSoft() {
+          """
+            |Abstract Contract Parent2() {
+            |  pub fn >>function_b<<(boolean: Bool) -> () { }
+            |}
+            |
+            |Abstract Contract Parent1() {
+            |  pub fn >>function_b<<(boolean: Bool) -> () { }
+            |}
+            |
+            |Contract MyContract(function_b: Bool) extends Parent1(), Parent2() {
+            |
+            |  // function_b is also an input parameter, but it should still go to the target function.
+            |  pub fn function_a(function_b: Bool) -> () {
+            |
+            |    // Before Usage: nested function, but it is still within scope
+            |    fn >>function_b<<(function_b: Bool) -> () {
+            |      // different scope
+            |      fn function_b(function_b: Bool) -> () { }
+            |    }
+            |
+            |    let go_to_function = func@@tion_b()
+            |
+            |    // After Usage: nested function, but it is still within scope
+            |    fn >>function_b<<(function_b: Bool) -> () {
+            |      // different scope
+            |      fn function_b(function_b: Bool) -> () { }
+            |    }
+            |  }
+            |
+            |  pub fn >>function_b<<(boolean: Bool) -> () {
+            |
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
     }
 
     "function is an interface function" should {
       "highlight the entire function signature" in {
-        goToDefinition()(
+        goToDefinition() {
           """
             |Abstract Contract Test() {
             |
@@ -133,8 +174,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-        )
-
+        }
       }
     }
   }
