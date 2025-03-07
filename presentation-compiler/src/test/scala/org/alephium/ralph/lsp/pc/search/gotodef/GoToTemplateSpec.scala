@@ -8,7 +8,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "typeId does not exist" in {
-      goToDefinition()(
+      goToDefinition() {
         """
           |Contract GoToConstant() {
           |
@@ -17,13 +17,13 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
   }
 
   "return self" when {
     "type definition is selected" in {
-      goToDefinition()(
+      goToDefinition() {
         """
           |Contract >>Te@@st<<() {
           |
@@ -31,12 +31,12 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
           |
           |}
           |""".stripMargin
-      )
+      }
     }
 
     "duplicate type definition exists" when {
       "second duplicate is selected" in {
-        goToDefinition()(
+        goToDefinition() {
           """
             |Contract Test() {
             |  pub fn function() -> () { }
@@ -48,7 +48,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-        )
+        }
       }
     }
   }
@@ -78,19 +78,19 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
         |""".stripMargin
 
     "type is an inheritance" in {
-      goToDefinitionStrict()(
+      goToDefinitionStrict() {
         s"""
-          |$types
-          |
-          |Contract Child() extends Paren@@t() {
-          |  pub fn function() -> () { }
-          |}
-          |""".stripMargin
-      )
+           |$types
+           |
+           |Contract Child() extends Paren@@t() {
+           |  pub fn function() -> () { }
+           |}
+           |""".stripMargin
+      }
     }
 
     "type is a function parameter" in {
-      goToDefinitionStrict()(
+      goToDefinitionStrict() {
         s"""
            |$types
            |
@@ -98,11 +98,11 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
            |  pub fn function(parent: Parent@@) -> () { }
            |}
            |""".stripMargin
-      )
+      }
     }
 
     "type is a template parameter" in {
-      goToDefinitionStrict()(
+      goToDefinitionStrict() {
         s"""
            |$types
            |
@@ -110,11 +110,11 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
            |  pub fn function() -> () { }
            |}
            |""".stripMargin
-      )
+      }
     }
 
     "type is a constructor" in {
-      goToDefinitionStrict()(
+      goToDefinitionStrict() {
         s"""
            |$types
            |
@@ -124,7 +124,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
            |  }
            |}
            |""".stripMargin
-      )
+      }
     }
 
     "implemented interfaces is indirectly imported" in {
