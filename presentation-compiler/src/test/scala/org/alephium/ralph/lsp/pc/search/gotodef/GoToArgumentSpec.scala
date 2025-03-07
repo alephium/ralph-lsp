@@ -24,7 +24,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "argument does not exists" in {
-      goToDefinition()(
+      goToDefinition() {
         """
           |Contract GoToField(interface: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -33,14 +33,66 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
+    }
+
+    "argument exists in another another" in {
+      goToDefinition() {
+        """
+          |Abstract Contract Test(blah: Type) { }
+          |
+          |Contract GoToField(interface: MyInterface) {
+          |  pub fn local_function(boolean: Bool) -> () {
+          |    let result = bl@@ah.function()
+          |  }
+          |}
+          |""".stripMargin
+      }
+    }
+
+    "argument exists in another block" when {
+      "the block is external to the function" in {
+        goToDefinitionSoft() {
+          """
+            |Contract Test(interface: MyInterface) {
+            |  
+            |  // it's in a different block
+            |  {
+            |    let blah = 1
+            |  }
+            |  
+            |  fn local_function(boolean: Bool) -> () {
+            |    let result = bl@@ah.function()
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "the block is within the function" in {
+        goToDefinitionSoft() {
+          """
+            |Contract Test(interface: MyInterface) {
+            |  
+            |  fn local_function(boolean: Bool) -> () {
+            |    // it's in a different block
+            |    {
+            |      let blah = 1
+            |    }
+            |  
+            |    let result = bl@@ah.function()
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
     }
   }
 
   "return self" when {
     "template argument is selected" when {
       "code is well defined" in {
-        goToDefinition()(
+        goToDefinition() {
           """
             |Contract Test(>>interfa@@ce<<: MyInterface,
             |              interface2: MyInterface) {
@@ -49,33 +101,33 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-        )
+        }
       }
 
       "Contract block does not exist" when {
         "first param is selected" in {
-          goToDefinitionSoft()(
+          goToDefinitionSoft() {
             """
               |Contract Test(>>interfa@@ce<<: MyInterface,
               |              interface2: MyInterface)
               |""".stripMargin
-          )
+          }
         }
 
         "second param is selected" in {
-          goToDefinitionSoft()(
+          goToDefinitionSoft() {
             """
               |Contract Test(interface: MyInterface,
               |              >>interfa@@ce2<<: MyInterface)
               |""".stripMargin
-          )
+          }
         }
       }
     }
 
     "function argument  is selected" when {
       "code is well defined" in {
-        goToDefinition()(
+        goToDefinition() {
           """
             |Contract Test(interface2: MyInterface) {
             |
@@ -83,91 +135,115 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-        )
+        }
       }
 
       "Contract block does not exist" in {
-        goToDefinitionSoft()(
+        goToDefinitionSoft() {
           """
             |fn test(>>interfa@@ce<<: MyInterface) -> () { }
             |""".stripMargin
-        )
+        }
       }
 
       "function has syntax errors" in {
-        goToDefinitionSoft()(
+        goToDefinitionSoft() {
           """
             |fn test(>>interfa@@ce<<: MyInterface -> ( {
             |""".stripMargin
-        )
+        }
       }
     }
 
     "function and template argument exist with duplicate names" should {
       "select only itself" when {
         "function argument is selected" in {
-          goToDefinition()(
+          goToDefinition() {
             """
-                |Contract Test(interface: MyInterface) {
-                |
-                |  fn test(>>interfa@@ce<<: MyInterface) -> () { }
-                |
-                |}
-                |""".stripMargin
-          )
+              |Contract Test(interface: MyInterface) {
+              |
+              |  fn test(>>interfa@@ce<<: MyInterface,
+              |            interface:     MyInterface) -> () { }
+              |
+              |}
+              |""".stripMargin
+          }
         }
 
         "template argument is selected" in {
-          goToDefinition()(
+          goToDefinition() {
             """
-                |Contract Test(>>interfa@@ce<<: MyInterface) {
-                |
-                |  fn test(interface: MyInterface) -> () { }
-                |
-                |}
-                |""".stripMargin
-          )
+              |Contract Test(>>interfa@@ce<<: MyInterface,
+              |                interface:     MyInterface) {
+              |
+              |  fn test(interface: MyInterface) -> () { }
+              |
+              |}
+              |""".stripMargin
+          }
         }
       }
     }
 
     "no enclosing blocks" when {
       "type name is defined" in {
-        goToDefinitionSoft()(
+        goToDefinitionSoft() {
           """
             |>>variab@@le<<: SomeType
             |""".stripMargin
-        )
+        }
+      }
+
+      "duplicate identifiers are defined" in {
+        goToDefinitionSoft() {
+          """
+            |{
+            |  >>variab@@le<<: SomeType
+            |    variable:     SomeType
+            |}
+            |""".stripMargin
+        }
       }
 
       "type name is not defined" in {
-        goToDefinitionSoft()(
+        goToDefinitionSoft() {
           """
             |>>variab@@le<<:
             |""".stripMargin
-        )
+        }
+      }
+
+      "type name is not defined with duplicate identifiers" in {
+        goToDefinitionSoft() {
+          """
+            |{
+            |  >>variab@@le<<:
+            |  variable:
+            |}
+            |""".stripMargin
+        }
       }
 
       "type name is defined for another variable" in {
-        goToDefinitionSoft()(
+        goToDefinitionSoft() {
           """
             |{
             |  >>variab@@le<<:
             |  anotherVariable: SomeType
             |}
             |""".stripMargin
-        )
+        }
       }
 
       "type name is defined for duplicate variable" in {
-        goToDefinitionSoft()(
+        goToDefinitionSoft() {
           """
             |{
             |  >>variab@@le<<:
             |  variable: SomeType
             |}
             |""".stripMargin
-        )
+        }
       }
     }
 
@@ -254,24 +330,121 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         }
       }
     }
+
+    "identifier only arguments" when {
+      "defined as a Contract parameter" when {
+        "single param exists" in {
+          goToDefinitionSoft() {
+            """
+              |Contract contract(>>para@@m<<)
+              |""".stripMargin
+          }
+        }
+
+        "duplicate params exist" when {
+          "first param is selected" in {
+            goToDefinitionSoft() {
+              """
+                |Contract contract(>>para@@m<<,
+                |                  param)
+                |""".stripMargin
+            }
+          }
+
+          "but types are not defined" when {
+            "first param is selected" in {
+              goToDefinitionSoft() {
+                """
+                  |Contract contract(>>para@@m<<,
+                  |                  param)
+                  |""".stripMargin
+              }
+            }
+
+            "second param is selected" in {
+              goToDefinitionSoft() {
+                """
+                  |Contract contract(param,
+                  |                  >>para@@m<<)
+                  |""".stripMargin
+              }
+            }
+          }
+        }
+      }
+
+      "defined as a function parameter" when {
+        "single param exists" in {
+          goToDefinitionSoft() {
+            """
+              |fn function(>>para@@m<<)
+              |""".stripMargin
+          }
+        }
+
+        "duplicate params exist" when {
+          "first param is selected" in {
+            goToDefinitionSoft() {
+              """
+                |fn function(>>para@@m<<,
+                |            param)
+                |""".stripMargin
+            }
+          }
+
+          "but types are not defined" when {
+            "first param is selected" in {
+              goToDefinitionSoft() {
+                """
+                  |fn function(>>para@@m<<,
+                  |            param)
+                  |""".stripMargin
+              }
+            }
+
+            "second param is selected" in {
+              goToDefinitionSoft() {
+                """
+                  |fn function(param,
+                  |            >>para@@m<<)
+                  |""".stripMargin
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   "return non-empty" when {
-    "initial character is selected" in {
-      goToDefinition()(
-        """
-          |Contract GoToField(>>interface<<: MyInterface) {
-          |  pub fn local_function(boolean: Bool) -> () {
-          |    // first character
-          |    let result = @@interface.function()
-          |  }
-          |}
-          |""".stripMargin
-      )
+    "initial character is selected" when {
+      "the code is strict parseable" in {
+        goToDefinition() {
+          """
+            |Contract GoToField(>>interface<<: MyInterface) {
+            |  pub fn local_function(boolean: Bool) -> () {
+            |    // first character
+            |    let result = @@interface.function()
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "the code is soft parseable" in {
+        goToDefinitionSoft() {
+          """
+            |Contract GoToField(>>interface<<: MyInterface) {
+            |  fn local_function(boolean: Bool -> {
+            |    // first character
+            |    let result = @@interface.function()
+            |""".stripMargin
+        }
+      }
     }
 
     "mid character is selected" in {
-      goToDefinition()(
+      goToDefinition() {
         """
           |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -280,11 +453,11 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
 
     "last character is selected" in {
-      goToDefinition()(
+      goToDefinition() {
         """
           |Contract GoToField(>>interface<<: MyInterface) {
           |  pub fn local_function(boolean: Bool) -> () {
@@ -293,35 +466,61 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
 
-    "function and the argument have the same name" in {
-      goToDefinition() {
-        """
-          |Abstract Contract Parent() {
-          |
-          |  pub fn argument_b(boolean: Bool) -> () { }
-          |}
-          |
-          |Contract MyContract(interface: MyInterface) extends Parent() {
-          |
-          |  pub fn argument_b(boolean: Bool) -> () { }
-          |
-          |  // `argument_b` is also a function, but it should still go to the argument.
-          |  pub fn argument_b(>>argument_b<<: Bool) -> () {
-          |    let go_to_function = a@@rgument_b
-          |    let result = blah.function()
-          |  }
-          |
-          |  pub fn argument_b(boolean: Bool) -> () { }
-          |}
-          |""".stripMargin
+    "function and the argument have the same name" when {
+      "strict parseable" in {
+        goToDefinition() {
+          """
+            |Abstract Contract Parent() {
+            |
+            |  pub fn argument_b(boolean: Bool) -> () { }
+            |}
+            |
+            |Contract MyContract(interface: MyInterface) extends Parent() {
+            |
+            |  pub fn argument_b(boolean: Bool) -> () { }
+            |
+            |  // `argument_b` is also a function, but it should still go to the argument.
+            |  pub fn argument_b(>>argument_b<<: Bool) -> () {
+            |    let go_to_function = a@@rgument_b
+            |    let result = blah.function()
+            |  }
+            |
+            |  pub fn argument_b(boolean: Bool) -> () { }
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "soft parseable" in {
+        goToDefinitionSoft() {
+          """
+            |Abstract Contract Parent() {
+            |
+            |  fn argument_b(boolean) -> () { }
+            |}
+            |
+            |Contract MyContract(interface: MyInterface) extends Parent() {
+            |
+            |  fn argument_b(boolean) -> () { }
+            |
+            |  // `argument_b` is also a function, but it should still go to the argument.
+            |  fn argument_b(>>argument_b<<) -> () {
+            |    let go_to_function = a@@rgument_b
+            |    let result = blah.function()
+            |  }
+            |
+            |  fn argument_b(boolean: Bool) -> () { }
+            |}
+            |""".stripMargin
+        }
       }
     }
 
     "there are multiple arguments with the same name" in {
-      goToDefinition()(
+      goToDefinition() {
         """
           |// the furthest argument
           |Contract GoToField(>>interface<<: MyInterface) {
@@ -332,11 +531,11 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
 
     "there are duplicate arguments within inheritance" in {
-      goToDefinition()(
+      goToDefinition() {
         """
           |Abstract Contract Parent3(>>param<<: MyParam,
           |                          >>param<<: MyParam) { }
@@ -358,12 +557,12 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
 
     "template arguments are passed as inheritance parameter" when {
       "there are no duplicates" in {
-        goToDefinition()(
+        goToDefinition() {
           """
             |Abstract Contract SomeType() { }
             |
@@ -371,12 +570,12 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
             |
             |Abstract Contract Child(>>param<<: SomeType) extends Parent(p@@aram) { }
             |""".stripMargin
-        )
+        }
       }
 
       "duplicates exist" when {
         "template parameter is duplicated" in {
-          goToDefinition()(
+          goToDefinition() {
             """
               |Abstract Contract SomeType() { }
               |
@@ -385,29 +584,55 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
               |Abstract Contract Child(>>param<<: SomeType,
               |                        >>param<<: SomeType) extends Parent(p@@aram) { }
               |""".stripMargin
-          )
+          }
         }
 
-        "function parameter is duplicated" should {
-          "not be included in search result" in {
-            goToDefinition()(
-              """
-                |Abstract Contract SomeType() { }
-                |
-                |Abstract Contract Parent(param: SomeType) { }
-                |
-                |Abstract Contract Child(>>param<<: SomeType) extends Parent(p@@aram) {
-                |
-                |  // the parameter `param` is not in the scope of template `param`, it's a function level scope,
-                |  // so it should not be included in the search result.
-                |  fn function(param: SomeType) -> () { }
-                |}
-                |""".stripMargin
-            )
+        "duplicated function parameters and variables" should {
+          "not be included in search result" when {
+            "strict parseable" in {
+              goToDefinition() {
+                """
+                  |Abstract Contract SomeType() { }
+                  |
+                  |Abstract Contract Parent(param: SomeType) { }
+                  |
+                  |Abstract Contract Child(>>param<<: SomeType) extends Parent(p@@aram) {
+                  |
+                  |  // the parameter `param` is not in the scope of template `param`, it's a function level scope,
+                  |  // so it should not be included in the search result.
+                  |  fn function(param: SomeType) -> () { }
+                  |}
+                  |""".stripMargin
+              }
+            }
+
+            "soft parseable" in {
+              goToDefinitionSoft() {
+                """
+                  |let param = 1
+                  |
+                  |Abstract Contract SomeType() { }
+                  |
+                  |Abstract Contract Parent(param: SomeType) {
+                  |  let param = 2
+                  |}
+                  |
+                  |Abstract Contract Child(>>param<<) extends Parent(p@@aram) {
+                  |
+                  |  let param = 3
+                  |
+                  |  // the parameter `param` is not in the scope of template `param`, it's a function level scope,
+                  |  // so it should not be included in the search result.
+                  |  fn function(param: SomeType) -> () { }
+                  |}
+                  |
+                  |let param = 4
+                  |""".stripMargin
+              }
+            }
           }
         }
       }
-
     }
   }
 

@@ -16,11 +16,6 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * Searches definitions given the location of the identifier node [[SoftAST.Identifier]]
    * and the [[SourceLocation]] of the identifier.
    *
-   * Steps:
-   *  - First, checks if the current [[SoftAST.Identifier]] itself belongs to a definition.
-   *    These are self-jump-definitions.
-   *  - Second, executes definition search within the workspace.
-   *
    * @param identNode  The node representing the identifier being searched.
    * @param sourceCode The block-part and its source code state where this search is executed.
    * @param workspace  The workspace state where the source-code is located.
@@ -32,7 +27,37 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
-    identNode.parent match {
+    searchParent(
+      identNode = identNode,
+      parent = identNode.parent,
+      sourceCode = sourceCode,
+      workspace = workspace,
+      settings = settings
+    )
+
+  /**
+   * Searches definitions given the location of the identifier node [[SoftAST.Identifier]]
+   * and any of its parent or grandparent nodes in the hierarchy.
+   *
+   * Steps:
+   *  - First, checks if the current [[SoftAST.Identifier]] itself belongs to a definition.
+   *    These are self-jump-definitions.
+   *  - If the above condition is not met, then it executes full search within the workspace.
+   *
+   * @param identNode  The node representing the identifier being searched.
+   * @param parent     One of the identifier node's parents.
+   * @param sourceCode The block-part and its source code state where this search is executed.
+   * @param workspace  The workspace state where the source-code is located.
+   * @return An iterator over definition search results.
+   */
+  private def searchParent(
+      identNode: Node[SoftAST.Identifier, SoftAST],
+      parent: Option[Node[SoftAST, SoftAST]],
+      sourceCode: SourceLocation.CodeSoft,
+      workspace: WorkspaceState.IsSourceAware,
+      settings: GoToDefSetting
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
+    parent match {
       case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
         node.parent match {
           // If it's an assignment, it must also be a variable declaration for the current node to be a self.
@@ -86,21 +111,36 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           )
         )
 
-      case Some(node @ Node(_: SoftAST.Group[_, _], _)) if node.parent.flatMap(_.parent).exists(_.data.isInstanceOf[SoftAST.Inheritance]) =>
-        /**
-         * If this is an inheritance group, then disable execute inheritance search.
-         * For example, in the following case, the `Parent`s `param` should not be returned.
-         * {{{
-         *   Contract Parent(param: Type)
-         *   Contract Child(>>param<<: Type) extends Parent(para@@m)
-         * }}}
-         */
-        search(
+      case Some(node @ Node(group: SoftAST.Group[_, _], _)) =>
+        searchGroup(
           identNode = identNode,
           sourceCode = sourceCode,
           workspace = workspace,
-          settings = settings.copy(includeInheritance = false)
+          settings = settings,
+          group = node.upcast(group)
         )
+
+      case Some(node @ Node(tail: SoftAST.GroupTail, _)) =>
+        node.parent match {
+          case Some(node @ Node(group: SoftAST.Group[_, _], _)) => // a `GroupTail` is always contained with a `Group`
+            searchGroup(
+              identNode = identNode,
+              sourceCode = sourceCode,
+              workspace = workspace,
+              settings = settings,
+              group = node.upcast(group)
+            )
+
+          case _ =>
+            logger.trace(s"GroupTail not contained with a group. Index: ${tail.index}. File: ${sourceCode.parsed.fileURI}")
+
+            search(
+              identNode = identNode,
+              sourceCode = sourceCode,
+              workspace = workspace,
+              settings = settings
+            )
+        }
 
       case _ =>
         search(
@@ -438,6 +478,69 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       )
     else
       Iterable.empty
+
+  /**
+   * Expands and searches the given group.
+   *
+   * @param group      The node representing the group being searched.
+   * @param identNode  The node representing the identifier being searched, which is also a child of the group.
+   * @param sourceCode The block-part and its source code state where this search is executed.
+   * @param workspace  The workspace state where the source-code is located.
+   * @return An iterator over definition search results.
+   */
+  private def searchGroup(
+      group: Node[SoftAST.Group[_, _], SoftAST],
+      identNode: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      workspace: WorkspaceState.IsSourceAware,
+      settings: GoToDefSetting
+    )(implicit logger: ClientLogger) =
+    group.parent match {
+      case Some(Node(_: SoftAST.DeclarationAST | _: SoftAST.FunctionSignature, _)) =>
+        // The identifier is defined within the group.
+        // For example, `Contract MyContract(ident)`
+        Iterator.single(
+          SourceLocation.NodeSoft(
+            ast = identNode.data.code,
+            source = sourceCode
+          )
+        )
+
+      case Some(node) =>
+        node.parent match {
+          case Some(Node(_: SoftAST.Inheritance, _)) =>
+            /**
+             * If this is an inheritance group, then disable execute inheritance search.
+             * For example, in the following case, the `Parent`s `param` should not be returned.
+             * {{{
+             *   Contract Parent(param: Type)
+             *   Contract Child(>>param<<: Type) extends Parent(para@@m)
+             * }}}
+             */
+            search(
+              identNode = identNode,
+              sourceCode = sourceCode,
+              workspace = workspace,
+              settings = settings.copy(includeInheritance = false)
+            )
+
+          case _ =>
+            search(
+              identNode = identNode,
+              sourceCode = sourceCode,
+              workspace = workspace,
+              settings = settings
+            )
+        }
+
+      case None =>
+        search(
+          identNode = identNode,
+          sourceCode = sourceCode,
+          workspace = workspace,
+          settings = settings
+        )
+    }
 
   /**
    * Given a collection of expressions, expands each expression and searches within it for all possible definitions.
