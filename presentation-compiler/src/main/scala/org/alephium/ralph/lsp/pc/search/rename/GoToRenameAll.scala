@@ -97,7 +97,10 @@ private object GoToRenameAll extends StrictImplicitLogging {
         includeDeclaration = true,
         includeTemplateArgumentOverrides = true,
         includeEventFieldReferences = false, // do not rename event field references
-        goToDefSetting = GoToDefSetting(includeAbstractFuncDef = true)
+        goToDefSetting = GoToDefSetting(
+          includeAbstractFuncDef = true,
+          includeInheritance = true
+        )
       )
 
     // Start collect the nodes to rename

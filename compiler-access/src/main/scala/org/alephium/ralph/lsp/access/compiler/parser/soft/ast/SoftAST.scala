@@ -56,7 +56,13 @@ sealed trait SoftAST extends Product { self =>
    * @return `true` if `current`'s position is before `anchor`'s position, `false` otherwise.
    */
   def isBehind(anchor: SoftAST): Boolean =
-    this.index isBehind anchor.index
+    isBehind(anchor.index)
+
+  def isBehind(anchor: SourceIndex): Boolean =
+    this.index isBehind anchor
+
+  def contains(anchor: Node[SoftAST, SoftAST]): Boolean =
+    contains(anchor.data)
 
   def contains(anchor: SoftAST): Boolean =
     contains(anchor.index)
@@ -87,28 +93,22 @@ object SoftAST {
 
   }
 
-  sealed trait BlockPartAST extends SoftAST
+  implicit class NodeIdentifierExtensions(val node: Node[SoftAST.Identifier, SoftAST]) extends AnyVal {
 
-  sealed trait ExpressionAST extends BlockPartAST
+    def isReferenceCall(): Boolean =
+      node.parent match {
+        case Some(Node(_: SoftAST.ReferenceCall, _)) => true
+        case _                                       => false
+      }
+
+  }
 
   /**
-   * Represents an AST that contains a block of code ([[Block]])
-   * or a group of type definitions ([[Group]]) local to the AST identifier.
-   *
-   * For example:
-   *
-   * {{{
-   *   struct MyStruct {
-   *     type: Name // local to the identifier `MyStruct`
-   *   }
-   *
-   *   // Parameter `param` is local to the identifier `function`
-   *   fn function(param: Type) -> () {
-   *     let variable = 1 // local to the identifier `function`
-   *   }
-   * }}}
+   * Represents types that can be implemented within a [[Block]].
    */
-  sealed trait IsLocallyScoped extends SoftAST
+  sealed trait BlockPartAST   extends SoftAST
+  sealed trait DeclarationAST extends BlockPartAST
+  sealed trait ExpressionAST  extends BlockPartAST
 
   case class ExpressionExpected(
       index: SourceIndex)
@@ -207,8 +207,7 @@ object SoftAST {
       postParamSpace: Option[Space],
       inheritance: Seq[Inheritance],
       block: Option[Block])
-    extends BlockPartAST
-       with IsLocallyScoped
+    extends DeclarationAST
 
   case class Abstract(
       index: SourceIndex,
@@ -223,8 +222,7 @@ object SoftAST {
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
       params: Group[Token.OpenParen.type, Token.CloseParen.type])
-    extends BlockPartAST
-       with IsLocallyScoped
+    extends DeclarationAST
 
   case class Struct(
       index: SourceIndex,
@@ -233,8 +231,7 @@ object SoftAST {
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
       params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
-    extends BlockPartAST
-       with IsLocallyScoped
+    extends DeclarationAST
 
   case class Enum(
       index: SourceIndex,
@@ -243,15 +240,14 @@ object SoftAST {
       identifier: IdentifierAST,
       preBlockSpace: Option[Space],
       block: Option[Block])
-    extends BlockPartAST
-       with IsLocallyScoped
+    extends DeclarationAST
 
   case class Const(
       index: SourceIndex,
       constToken: TokenDocumented[Token.Const.type],
       preAssignmentSpace: Option[Space],
       assignment: Assignment)
-    extends BlockPartAST
+    extends DeclarationAST
 
   case class Import(
       index: SourceIndex,
@@ -321,7 +317,6 @@ object SoftAST {
       parts: Seq[BlockPartAST],
       closeCurly: TokenDocExpectedAST[Token.CloseCurly.type])
     extends BlockAST
-       with IsLocallyScoped
 
   case class ExpressionBlock(
       index: SourceIndex,
@@ -349,8 +344,7 @@ object SoftAST {
       signature: FunctionSignature,
       postSignatureSpace: Option[Space],
       block: Option[Block])
-    extends BlockPartAST
-       with IsLocallyScoped
+    extends DeclarationAST
 
   case class FunctionSignature(
       index: SourceIndex,
@@ -531,7 +525,6 @@ object SoftAST {
       postCloseParenSpace: Option[Space],
       block: Option[Block])
     extends ExpressionAST
-       with IsLocallyScoped
 
   case class While(
       index: SourceIndex,
@@ -545,7 +538,6 @@ object SoftAST {
       postCloseParenSpace: Option[Space],
       block: Option[Block])
     extends ExpressionAST
-       with IsLocallyScoped
 
   case class Assignment(
       index: SourceIndex,
@@ -648,7 +640,6 @@ object SoftAST {
       preElseSpace: Option[Space],
       elseStatement: Option[Else])
     extends ExpressionAST
-       with IsLocallyScoped
 
   case class Else(
       index: SourceIndex,
@@ -656,7 +647,6 @@ object SoftAST {
       preBlockSpace: Option[Space],
       block: Option[Block])
     extends ExpressionAST
-       with IsLocallyScoped
 
   case class Space(
       code: CodeString)

@@ -4,11 +4,11 @@ import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class GoToCodeSpec extends AnyWordSpec with Matchers {
+class GoToTemplateSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "typeId does not exist" in {
-      goToDefinitionStrict()(
+      goToDefinition() {
         """
           |Contract GoToConstant() {
           |
@@ -17,13 +17,13 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
   }
 
   "return self" when {
     "type definition is selected" in {
-      goToDefinitionStrict()(
+      goToDefinition() {
         """
           |Contract >>Te@@st<<() {
           |
@@ -31,12 +31,12 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
           |
           |}
           |""".stripMargin
-      )
+      }
     }
 
     "duplicate type definition exists" when {
       "second duplicate is selected" in {
-        goToDefinitionStrict()(
+        goToDefinition() {
           """
             |Contract Test() {
             |  pub fn function() -> () { }
@@ -48,7 +48,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-        )
+        }
       }
     }
   }
@@ -78,19 +78,19 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
         |""".stripMargin
 
     "type is an inheritance" in {
-      goToDefinitionStrict()(
+      goToDefinitionStrict() {
         s"""
-          |$types
-          |
-          |Contract Child() extends Paren@@t() {
-          |  pub fn function() -> () { }
-          |}
-          |""".stripMargin
-      )
+           |$types
+           |
+           |Contract Child() extends Paren@@t() {
+           |  pub fn function() -> () { }
+           |}
+           |""".stripMargin
+      }
     }
 
     "type is a function parameter" in {
-      goToDefinitionStrict()(
+      goToDefinitionStrict() {
         s"""
            |$types
            |
@@ -98,11 +98,11 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
            |  pub fn function(parent: Parent@@) -> () { }
            |}
            |""".stripMargin
-      )
+      }
     }
 
     "type is a template parameter" in {
-      goToDefinitionStrict()(
+      goToDefinitionStrict() {
         s"""
            |$types
            |
@@ -110,11 +110,11 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
            |  pub fn function() -> () { }
            |}
            |""".stripMargin
-      )
+      }
     }
 
     "type is a constructor" in {
-      goToDefinitionStrict()(
+      goToDefinitionStrict() {
         s"""
            |$types
            |
@@ -124,7 +124,7 @@ class GoToCodeSpec extends AnyWordSpec with Matchers {
            |  }
            |}
            |""".stripMargin
-      )
+      }
     }
 
     "implemented interfaces is indirectly imported" in {

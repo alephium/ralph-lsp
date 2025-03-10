@@ -501,6 +501,12 @@ class RalphLangServer private (
         val line      = params.getPosition.getLine
         val character = params.getPosition.getCharacter
 
+        val settings =
+          GoToDefSetting(
+            includeAbstractFuncDef = false,
+            includeInheritance = true
+          )
+
         // Compute soft AST locations asynchronously
         val softASTLocationsFuture =
           if (enableSoftParser)
@@ -510,7 +516,7 @@ class RalphLangServer private (
                   fileURI = fileURI,
                   line = line,
                   character = character,
-                  searchSettings = (SoftAST, GoToDefSetting(includeAbstractFuncDef = false)),
+                  searchSettings = (SoftAST, settings),
                   cancelChecker = cancelChecker,
                   currentState = getPCState()
                 )
@@ -524,7 +530,7 @@ class RalphLangServer private (
             fileURI = fileURI,
             line = line,
             character = character,
-            searchSettings = GoToDefSetting(includeAbstractFuncDef = false),
+            searchSettings = settings,
             cancelChecker = cancelChecker,
             currentState = getPCState()
           )
@@ -558,7 +564,10 @@ class RalphLangServer private (
             includeDeclaration = isIncludeDeclaration,
             includeTemplateArgumentOverrides = false,
             includeEventFieldReferences = true,
-            goToDefSetting = GoToDefSetting(includeAbstractFuncDef = false)
+            goToDefSetting = GoToDefSetting(
+              includeAbstractFuncDef = false,
+              includeInheritance = true
+            )
           )
 
         val locations =

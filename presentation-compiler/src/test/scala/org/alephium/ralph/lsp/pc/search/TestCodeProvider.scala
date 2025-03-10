@@ -16,6 +16,7 @@
 
 package org.alephium.ralph.lsp.pc.search
 
+import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.TestCommon
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
@@ -32,6 +33,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild, TestRal
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.{BuiltInFunctionDownloader, DependencyDownloader, StdInterfaceDownloader}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.SourceIndex
 import org.scalatest.Assertion
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
@@ -44,7 +46,10 @@ import scala.util.matching.Regex
 object TestCodeProvider {
 
   val testGoToDefSetting: GoToDefSetting =
-    GoToDefSetting(includeAbstractFuncDef = false)
+    GoToDefSetting(
+      includeAbstractFuncDef = false,
+      includeInheritance = true
+    )
 
   val testGoToRefSetting: GoToRefSetting =
     GoToRefSetting(
@@ -278,8 +283,21 @@ object TestCodeProvider {
           (result.parsed.fileURI, result.toLineRange().value)
       }
 
+    val codeWithNoSymbols =
+      codeWithoutLineRangeSymbols.replace(TestCodeUtil.SEARCH_INDICATOR, "")
+
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-    actual should contain theSameElementsAs expectedGoToLocations
+    // The error output of the above test is difficult to debug because `SourceIndex` only emits numbers.
+    // For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
+    // This print statement outputs a formatted compiler error message for better readability.
+    tryOrPrintIndexer(
+      codeBeingTested = code,
+      codeWithoutSymbols = codeWithNoSymbols,
+      actualIndexes = searchResultList.flatMap(_.index)
+    ) {
+      actual should contain theSameElementsAs expectedGoToLocations
+    }
+
     actual
   }
 
@@ -655,5 +673,74 @@ object TestCodeProvider {
 
     (completionResult.value, compiledWorkspace)
   }
+
+  /**
+   * Some test error outputs are difficult to debug because `SourceIndex` only emits numbers.
+   * For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
+   *
+   * This prints a formatted compiler error message for better readability.
+   *
+   * @param codeBeingTested    The actual code being tested
+   * @param codeWithoutSymbols Test code without the test markers `>><<` and `@@`.
+   */
+  private def tryOrPrintIndexer[T](
+      codeBeingTested: String,
+      codeWithoutSymbols: String,
+      actualIndexes: Iterable[SourceIndex],
+      message: String = "Actual"
+    )(f: => T): T =
+    try
+      f
+    catch {
+      case throwable: Throwable =>
+        // print the code was tested
+        println(codeBeingTested)
+
+        // print the actual result
+        printAsError(
+          message = message,
+          code = codeWithoutSymbols,
+          actualIndexes = actualIndexes
+        )
+
+        throw throwable
+    }
+
+  /**
+   * Prints the given [[SourceIndex]]s as an error messages.
+   *
+   * @param message The pointer error message.
+   * @param code    The code executed.
+   * @param actualIndexes Indexes to report as error message.
+   * @return String formatted error messages.
+   */
+  private def printAsError(
+      message: String,
+      code: String,
+      actualIndexes: Iterable[SourceIndex]): Unit =
+    toErrorMessage(
+      message = message,
+      code = code,
+      actualIndexes = actualIndexes
+    ).foreach(println)
+
+  /**
+   * Transforms the given [[SourceIndex]]s as an error messages.
+   *
+   * @param message The pointer error message.
+   * @param code    The code executed.
+   * @param actualIndexes Indexes to report as error message.
+   * @return String formatted error messages.
+   */
+  private def toErrorMessage(
+      message: String,
+      code: String,
+      actualIndexes: Iterable[SourceIndex]): Iterable[String] =
+    actualIndexes map {
+      index =>
+        val error          = CompilerError(message, Some(index))
+        val formattedError = error.toFormatter(code).format(Some(Console.RED))
+        s"Index: $index\n$formattedError"
+    }
 
 }

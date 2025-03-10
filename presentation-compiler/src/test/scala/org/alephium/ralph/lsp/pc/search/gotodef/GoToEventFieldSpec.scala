@@ -40,7 +40,7 @@ class GoToEventFieldSpec extends AnyWordSpec with Matchers {
       }
 
       "event is defined within the contract" in {
-        goToDefinition() {
+        goToDefinitionStrict() {
           """
             |Contract Test() {
             |
