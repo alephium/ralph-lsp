@@ -562,7 +562,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case Some(node) =>
         node.parent match {
           case Some(Node(_: SoftAST.Inheritance, _)) =>
-            /**
+            /*
              * If this is an inheritance group, then disable execute inheritance search.
              * For example, in the following case, the `Parent`s `param` should not be returned.
              * {{{
