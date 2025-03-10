@@ -471,7 +471,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
           """
             |Contract GoToTest() {
             |
-            |  pub fn function(varC) -> () {
+            |  pub fn function(>>varC<<) -> () {
             |    let (varA, varB, >>varC<<) = 123
             |    let >>varC<< = var@@C
             |    let varA = ABC
@@ -567,6 +567,174 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             |}
             |""".stripMargin
         )
+      }
+    }
+  }
+
+  "detect call syntax" should {
+    "return variable definition" when {
+      "function-call is selected" when {
+        "the function does not exist" in {
+          goToDefinitionSoft() {
+            """
+              |let >>function<< = 1
+              |// no function named `function` exists, but a variable named `function` exists
+              |let call = functio@@n()
+              |""".stripMargin
+          }
+        }
+
+        "a function with a different name exists" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  let >>function<< = 1
+              |
+              |  fn test() -> () {
+              |    let call = functio@@n()
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "multiple variables exist" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  let >>function<< =
+              |
+              |  fn test() -> ( {
+              |    let >>function<<
+              |    let call = functio@@n()
+              |    let function = 3
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "variable named `function` is declared after its usage" in {
+          goToDefinitionSoft() {
+            """
+              |fn test() -> () {
+              |  let call = functio@@n()
+              |  let >>function<< = 1
+              |""".stripMargin
+          }
+        }
+
+        "variable named `function` is declared within inheritance" in {
+          goToDefinitionSoft() {
+            """
+              |Abstract Contract GrandParent(>>function<<) {
+              |  let >>function<< = 1
+              |
+              |  fn inner() -> () {
+              |    // out of scope
+              |    let function = 1
+              |  }
+              |
+              |  let >>function<<
+              |}
+              |
+              |Contract Parent() extends GrandParent() {
+              |
+              |  fn test() -> () {
+              |    let call = functio@@n()
+              |  }
+              |}
+              |
+              |Contract Child() extends Parent() {
+              |  // This is available to the `Parent`
+              |  let function = 3
+              |}
+              |""".stripMargin
+          }
+        }
+      }
+
+      "variable-reference is selected" when {
+        "the variable exist" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  let >>variable<< = 1
+              |  fn variable() -> {}
+              |  let copy = variab@@le
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "a variable is accessed within a function" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  let >>variable<< = 1
+              |
+              |  fn variable() -> () {
+              |    let copy = variab@@le
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "multiple variables exist" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  let >>variable<< =
+              |
+              |  fn variable() -> ( {
+              |    let >>variable<<
+              |    let copy = variab@@le
+              |    let function = 3
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "variable is declared after its usage" in {
+          goToDefinitionSoft() {
+            """
+              |fn test() -> () {
+              |  let copy = variab@@le
+              |  let >>variable<< = 1
+              |""".stripMargin
+          }
+        }
+
+        "variable is declared within inheritance" in {
+          goToDefinitionSoft() {
+            """
+              |Abstract Contract GrandParent(>>variable<<) {
+              |  let >>variable<< = 1
+              |
+              |  fn variable() -> () {
+              |    // out of scope
+              |    let variable = 1
+              |  }
+              |
+              |  let >>variable<<
+              |}
+              |
+              |Contract Parent() extends GrandParent() {
+              |
+              |  fn variable() -> () {
+              |    let >>variable<< = variab@@le
+              |  }
+              |}
+              |
+              |Contract Child() extends Parent() {
+              |  // This is available to the `Parent`
+              |  let variable = 3
+              |}
+              |""".stripMargin
+          }
+        }
       }
     }
   }

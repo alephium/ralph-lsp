@@ -45,7 +45,7 @@ class ScopeWalkerSpec extends AnyWordSpec with Matchers {
 
       "defined after usage" should {
         "go-to the first definition" in {
-          goToDefinitionStrict()(
+          goToDefinition()(
             """
                 |Contract Test() {
                 |
@@ -130,7 +130,7 @@ class ScopeWalkerSpec extends AnyWordSpec with Matchers {
       }
 
       "define after usage" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
               |Contract Test() {
               |
@@ -155,7 +155,7 @@ class ScopeWalkerSpec extends AnyWordSpec with Matchers {
       }
 
       "define in while loop and accessed in for loop" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Test() {
             |

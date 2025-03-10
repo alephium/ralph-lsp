@@ -16,7 +16,7 @@
 
 package org.alephium.ralph.lsp.pc.search.gotodef
 
-import org.alephium.ralph.Ast
+import org.alephium.ralph.{Ast, SourceIndex}
 import org.alephium.ralph.lsp.access.compiler.ast.AstExtra
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
@@ -89,24 +89,25 @@ private[search] object ScopeWalker {
    */
   def walk[T](
       from: Node[SoftAST, SoftAST],
-      anchor: SoftAST
-    )(pf: PartialFunction[Node[SoftAST, SoftAST], T]): Iterable[T] = {
+      anchor: SourceIndex
+    )(pf: PartialFunction[Node[SoftAST, SoftAST], Iterator[T]]): Iterable[T] = {
     val found  = ListBuffer.empty[T]
     var walker = from.walkDown
 
     while (walker.hasNext)
       walker.next() match {
         // Check: Is this a scoped node that does not contain the anchor node within its scope? If yes, drop all its child nodes.
-        case block @ Node(_: SoftAST.IsLocallyScoped, _) if !block.data.contains(anchor) =>
+        case block @ Node(_: SoftAST.While | _: SoftAST.For | _: SoftAST.IfElse | _: SoftAST.Else | _: SoftAST.Block, _) if !block.data.contains(anchor) =>
           // drop all child nodes
           walker = walker dropWhile block.contains
 
         // Check:
         // - Is this node (i.e. within the scope) defined by the partial-function?
-        // - And is it before the anchor node?
-        // - If it's defined after the anchor node (node in scope), then only add it if currently collected items are empty.
-        case node @ Node(ast, _) if pf.isDefinedAt(node) && (ast.isBehind(anchor) || found.isEmpty) =>
-          found addOne pf(node)
+        // - If it is a declaration, process the node because declarations do not require ordering and are available locally to all code.
+        // - If it is not a declaration, is it before the anchor node?
+        // - If it is defined after the anchor node (node in scope), then only add it if currently collected items are empty.
+        case node @ Node(ast, _) if pf.isDefinedAt(node) && (ast.isInstanceOf[SoftAST.DeclarationAST] || ast.isBehind(anchor) || found.isEmpty) =>
+          found addAll pf(node)
           // This node is processed, drop all its children.
           walker = walker dropWhile node.contains
 
