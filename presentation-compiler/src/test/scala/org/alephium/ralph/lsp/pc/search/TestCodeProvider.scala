@@ -293,7 +293,7 @@ object TestCodeProvider {
     tryOrPrintIndexer(
       codeBeingTested = code,
       codeWithoutSymbols = codeWithNoSymbols,
-      indexes = searchResultList.flatMap(_.index)
+      actualIndexes = searchResultList.flatMap(_.index)
     ) {
       actual should contain theSameElementsAs expectedGoToLocations
     }
@@ -686,7 +686,7 @@ object TestCodeProvider {
   private def tryOrPrintIndexer[T](
       codeBeingTested: String,
       codeWithoutSymbols: String,
-      indexes: Iterable[SourceIndex],
+      actualIndexes: Iterable[SourceIndex],
       message: String = "Actual"
     )(f: => T): T =
     try
@@ -700,7 +700,7 @@ object TestCodeProvider {
         printAsError(
           message = message,
           code = codeWithoutSymbols,
-          indexes = indexes
+          actualIndexes = actualIndexes
         )
 
         throw throwable
@@ -711,17 +711,17 @@ object TestCodeProvider {
    *
    * @param message The pointer error message.
    * @param code    The code executed.
-   * @param indexes Indexes to report as error message.
+   * @param actualIndexes Indexes to report as error message.
    * @return String formatted error messages.
    */
   private def printAsError(
       message: String,
       code: String,
-      indexes: Iterable[SourceIndex]): Unit =
+      actualIndexes: Iterable[SourceIndex]): Unit =
     toErrorMessage(
       message = message,
       code = code,
-      indexes = indexes
+      actualIndexes = actualIndexes
     ).foreach(println)
 
   /**
@@ -729,17 +729,18 @@ object TestCodeProvider {
    *
    * @param message The pointer error message.
    * @param code    The code executed.
-   * @param indexes Indexes to report as error message.
+   * @param actualIndexes Indexes to report as error message.
    * @return String formatted error messages.
    */
   private def toErrorMessage(
       message: String,
       code: String,
-      indexes: Iterable[SourceIndex]): Iterable[String] =
-    indexes map {
+      actualIndexes: Iterable[SourceIndex]): Iterable[String] =
+    actualIndexes map {
       index =>
-        val error = CompilerError(message, Some(index))
-        error.toFormatter(code).format(Some(Console.RED))
+        val error          = CompilerError(message, Some(index))
+        val formattedError = error.toFormatter(code).format(Some(Console.RED))
+        s"Index: $index\n$formattedError"
     }
 
 }

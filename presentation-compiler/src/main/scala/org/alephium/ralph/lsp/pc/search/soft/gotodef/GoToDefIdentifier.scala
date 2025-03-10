@@ -1,6 +1,6 @@
 package org.alephium.ralph.lsp.pc.search.soft.gotodef
 
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, SourceIndexExtension}
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefSetting, ScopeWalker}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
@@ -56,7 +56,16 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeSoft,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] = {
+    @inline def runFullSearch() =
+      search(
+        identNode = identNode,
+        sourceCode = sourceCode,
+        workspace = workspace,
+        settings = settings,
+        detectCallSyntax = true
+      )
+
     parent match {
       case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
         node.parent match {
@@ -71,12 +80,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
           case _ =>
             // invoke full scope search.
-            search(
-              identNode = identNode,
-              sourceCode = sourceCode,
-              workspace = workspace,
-              settings = settings
-            )
+            runFullSearch()
         }
 
       case Some(Node(assignment: SoftAST.TypeAssignment, _)) if assignment.expressionLeft == identNode.data =>
@@ -113,56 +117,54 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
       case Some(node @ Node(group: SoftAST.Group[_, _], _)) =>
         searchGroup(
+          group = node.upcast(group),
           identNode = identNode,
           sourceCode = sourceCode,
           workspace = workspace,
           settings = settings,
-          group = node.upcast(group)
+          detectCallSyntax = true
         )
 
       case Some(node @ Node(tail: SoftAST.GroupTail, _)) =>
         node.parent match {
           case Some(node @ Node(group: SoftAST.Group[_, _], _)) => // a `GroupTail` is always contained with a `Group`
             searchGroup(
+              group = node.upcast(group),
               identNode = identNode,
               sourceCode = sourceCode,
               workspace = workspace,
               settings = settings,
-              group = node.upcast(group)
+              detectCallSyntax = true
             )
 
           case _ =>
             logger.trace(s"GroupTail not contained with a group. Index: ${tail.index}. File: ${sourceCode.parsed.fileURI}")
 
-            search(
-              identNode = identNode,
-              sourceCode = sourceCode,
-              workspace = workspace,
-              settings = settings
-            )
+            runFullSearch()
         }
 
       case _ =>
-        search(
-          identNode = identNode,
-          sourceCode = sourceCode,
-          workspace = workspace,
-          settings = settings
-        )
+        runFullSearch()
     }
+  }
 
   /**
    * Searches for occurrences of the given identifier node within the source code.
    *
-   * @param identNode  The identifier node to search for.
-   * @param sourceCode The source code state where the search is performed.
+   * @param identNode        The identifier node to search for.
+   * @param sourceCode       The source code state where the search is performed.
+   * @param detectCallSyntax If `true`, ensures that when a function is called,
+   *                         the search is restricted to reference calls only and does not
+   *                         return variables with the same name.
    * @return return An iterator over the locations of the definitions.
    */
+  @tailrec
   private def search(
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       workspace: WorkspaceState.IsSourceAware,
-      settings: GoToDefSetting
+      settings: GoToDefSetting,
+      detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     val inheritance =
       WorkspaceSearcher.collectInheritedParentsSoft(
@@ -174,7 +176,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       if (settings.includeInheritance)
         searchInheritance(
           target = identNode,
-          inheritance = inheritance.parentTrees.iterator
+          inheritance = inheritance.parentTrees.iterator,
+          detectCallSyntax = detectCallSyntax
         )
       else
         Iterator.empty
@@ -183,48 +186,62 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       searchLocal(
         from = sourceCode.part.toNode,
         target = identNode,
-        sourceCode = sourceCode
+        sourceCode = sourceCode,
+        detectCallSyntax = detectCallSyntax
       )
 
-    (local.iterator ++ inherited).distinct
+    val result =
+      (local.iterator ++ inherited).distinct
+
+    if (detectCallSyntax && result.isEmpty)
+      search( // The restricted exact call syntax search returned no results. Executing a relaxed search.
+        identNode = identNode,
+        sourceCode = sourceCode,
+        workspace = workspace,
+        settings = settings,
+        detectCallSyntax = false
+      )
+    else
+      result
   }
 
   /**
    * Expands and searches for all possible local definitions starting from the given position.
    *
-   * @param from       The position from where the search should begin.
-   * @param target     The identifier being searched.
-   * @param sourceCode The source code state where the `from` node is located.
+   * @param from             The position from where the search should begin.
+   * @param target           The identifier being searched.
+   * @param sourceCode       The source code state where the `from` node is located.
+   * @param detectCallSyntax If `true`, ensures that when a function is called,
+   *                         the search is restricted to reference calls only and does not
+   *                         return variables with the same name.
    * @return An iterator over the locations of the definitions.
    */
   private def searchLocal(
       from: Node[SoftAST, SoftAST],
       target: Node[SoftAST.Identifier, SoftAST],
-      sourceCode: SourceLocation.CodeSoft): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+      sourceCode: SourceLocation.CodeSoft,
+      detectCallSyntax: Boolean): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     // Reference calls are then ones ending with parentheses, for example `refCall()`.
     // Reference calls should only search for function and contract calls, not variables.
-    val isReferenceCall =
-      target.isReferenceCall()
-
     ScopeWalker.walk(
       from = from,
       anchor = target.data.index
     ) {
-      case Node(variable: SoftAST.VariableDeclaration, _) if !isReferenceCall =>
+      case Node(variable: SoftAST.VariableDeclaration, _) if !detectCallSyntax || !target.isReferenceCall() =>
         searchExpression(
           expression = variable,
           target = target,
           sourceCode = sourceCode
         )
 
-      case Node(assignment: SoftAST.TypeAssignment, _) if !isReferenceCall =>
+      case Node(assignment: SoftAST.TypeAssignment, _) if !detectCallSyntax || !target.isReferenceCall() =>
         searchExpression(
           expression = assignment,
           target = target,
           sourceCode = sourceCode
         )
 
-      case Node(binding: SoftAST.MutableBinding, _) if !isReferenceCall =>
+      case Node(binding: SoftAST.MutableBinding, _) if !detectCallSyntax || !target.isReferenceCall() =>
         searchExpression(
           expression = binding,
           target = target,
@@ -235,34 +252,40 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         searchFunction(
           function = function,
           target = target,
-          sourceCode = sourceCode
+          sourceCode = sourceCode,
+          detectCallSyntax = detectCallSyntax
         )
 
       case Node(template: SoftAST.Template, _) =>
         searchTemplate(
           template = template,
           target = target,
-          sourceCode = sourceCode
+          sourceCode = sourceCode,
+          detectCallSyntax = detectCallSyntax
         )
     }
-  }
 
   /**
    * Given a target identifier, searches all inherited contracts for all possible definitions.
    *
-   * @param target      The identifier being searched.
-   * @param inheritance The inherited source code to search within.
+   * @param target           The identifier being searched.
+   * @param inheritance      The inherited source code to search within.
+   * @param detectCallSyntax If `true`, ensures that when a function is called,
+   *                         the search is restricted to reference calls only and does not
+   *                         return variables with the same name.
    * @return An iterator over the locations of the definitions.
    */
   private def searchInheritance(
       target: Node[SoftAST.Identifier, SoftAST],
-      inheritance: Iterator[SourceLocation.CodeSoft]
+      inheritance: Iterator[SourceLocation.CodeSoft],
+      detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     inheritance flatMap {
       sourceCode =>
         searchInheritance(
           target = target,
-          inherited = sourceCode
+          inherited = sourceCode,
+          detectCallSyntax = detectCallSyntax
         )
     }
 
@@ -284,13 +307,17 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    *   }
    * }}}
    *
-   * @param target    The identifier being searched.
-   * @param inherited The inherited source code to search within.
+   * @param target           The identifier being searched.
+   * @param inherited        The inherited source code to search within.
+   * @param detectCallSyntax If `true`, ensures that when a function is called,
+   *                         the search is restricted to reference calls only and does not
+   *                         return variables with the same name.
    * @return All found definitions.
    */
   private def searchInheritance(
       target: Node[SoftAST.Identifier, SoftAST],
-      inherited: SourceLocation.CodeSoft
+      inherited: SourceLocation.CodeSoft,
+      detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     // the end index of the inherited source code
     val endIndex =
@@ -342,7 +369,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         searchLocal(
           from = inherited.part.toNode,
           target = virtualNode,
-          sourceCode = inherited
+          sourceCode = inherited,
+          detectCallSyntax = detectCallSyntax
         )
 
       case None =>
@@ -355,25 +383,26 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   /**
    * Given a function, expands and searches within it for all possible definitions.
    *
-   * @param function   The function to expand and search.
-   * @param target     The identifier being searched.
-   * @param sourceCode The source code state where the function belongs.
+   * @param function         The function to expand and search.
+   * @param target           The identifier being searched.
+   * @param sourceCode       The source code state where the function belongs.
+   * @param detectCallSyntax If `true`, ensures that when a function is called,
+   *                         the search is restricted to reference calls only and does not
+   *                         return variables with the same name.
    * @return An iterator over the locations of the definitions.
    */
   private def searchFunction(
       function: SoftAST.Function,
       target: Node[SoftAST.Identifier, SoftAST],
-      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
-    // Check if searched identifier is a reference call
-    val isReferenceCall = target.isReferenceCall()
-
+      sourceCode: SourceLocation.CodeSoft,
+      detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     // If the identifier belongs the function's block, search the parameters and the block.
     val blockMatches =
       function.block match {
         case Some(block) if block.contains(target) =>
           // Search the parameters
           val paramMatches =
-            if (isReferenceCall)
+            if (detectCallSyntax && target.isReferenceCall())
               Iterator.empty
             else
               searchExpression(
@@ -387,7 +416,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             searchBlock(
               block = block,
               target = target,
-              sourceCode = sourceCode
+              sourceCode = sourceCode,
+              detectCallSyntax = detectCallSyntax
             )
 
           paramMatches ++ blockMatches
@@ -398,7 +428,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
     // Check if the name matches the identifier.
     val nameMatches =
-      if (isReferenceCall)
+      if (!detectCallSyntax || target.isReferenceCall())
         searchIdentifier(
           identifier = function.signature.fnName,
           target = target,
@@ -413,21 +443,25 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   /**
    * Given a template, expands and searches within it for all possible definitions.
    *
-   * @param template   The template to expand and search.
-   * @param target     The identifier being searched.
-   * @param sourceCode The source code state where the function belongs.
+   * @param template         The template to expand and search.
+   * @param target           The identifier being searched.
+   * @param sourceCode       The source code state where the function belongs.
+   * @param detectCallSyntax If `true`, ensures that when a function is called,
+   *                         the search is restricted to reference calls only and does not
+   *                         return variables with the same name.
    * @return An iterator over the locations of the definitions.
    */
   private def searchTemplate(
       template: SoftAST.Template,
       target: Node[SoftAST.Identifier, SoftAST],
-      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+      sourceCode: SourceLocation.CodeSoft,
+      detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     val blockMatches =
       template.block match {
         case Some(block) if block.contains(target) || template.inheritance.exists(_.contains(target)) =>
           // Search the parameters
           val paramMatches =
-            if (target.isReferenceCall()) // reference calls end with `()`, these only need to search for
+            if (detectCallSyntax && target.isReferenceCall())
               Iterator.empty
             else
               template.params match {
@@ -447,7 +481,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             searchBlock(
               block = block,
               target = target,
-              sourceCode = sourceCode
+              sourceCode = sourceCode,
+              detectCallSyntax = detectCallSyntax
             )
 
           paramMatches ++ blockMatches
@@ -470,20 +505,25 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   /**
    * Given a block, expands and searches within it for all possible definitions.
    *
-   * @param block      The block to expand and search.
-   * @param target     The identifier being searched.
-   * @param sourceCode The source code state where the function belongs.
+   * @param block            The block to expand and search.
+   * @param target           The identifier being searched.
+   * @param sourceCode       The source code state where the function belongs.
+   * @param detectCallSyntax If `true`, ensures that when a function is called,
+   *                         the search is restricted to reference calls only and does not
+   *                         return variables with the same name.
    * @return An iterator over the locations of the definitions.
    */
   private def searchBlock(
       block: SoftAST.Block,
       target: Node[SoftAST.Identifier, SoftAST],
-      sourceCode: SourceLocation.CodeSoft): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+      sourceCode: SourceLocation.CodeSoft,
+      detectCallSyntax: Boolean): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     if (block contains target)
       searchLocal(
         from = block.toNode,
         target = target,
-        sourceCode = sourceCode
+        sourceCode = sourceCode,
+        detectCallSyntax = detectCallSyntax
       )
     else
       Iterable.empty
@@ -491,10 +531,13 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   /**
    * Expands and searches the given group.
    *
-   * @param group      The node representing the group being searched.
-   * @param identNode  The node representing the identifier being searched, which is also a child of the group.
-   * @param sourceCode The block-part and its source code state where this search is executed.
-   * @param workspace  The workspace state where the source-code is located.
+   * @param group            The node representing the group being searched.
+   * @param identNode        The node representing the identifier being searched, which is also a child of the group.
+   * @param sourceCode       The block-part and its source code state where this search is executed.
+   * @param workspace        The workspace state where the source-code is located.
+   * @param detectCallSyntax If `true`, ensures that when a function is called,
+   *                         the search is restricted to reference calls only and does not
+   *                         return variables with the same name.
    * @return An iterator over definition search results.
    */
   private def searchGroup(
@@ -502,7 +545,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       workspace: WorkspaceState.IsSourceAware,
-      settings: GoToDefSetting
+      settings: GoToDefSetting,
+      detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     group.parent match {
       case Some(Node(_: SoftAST.DeclarationAST | _: SoftAST.FunctionSignature, _)) =>
@@ -530,7 +574,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
               identNode = identNode,
               sourceCode = sourceCode,
               workspace = workspace,
-              settings = settings.copy(includeInheritance = false)
+              settings = settings.copy(includeInheritance = false),
+              detectCallSyntax = detectCallSyntax
             )
 
           case _ =>
@@ -538,7 +583,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
               identNode = identNode,
               sourceCode = sourceCode,
               workspace = workspace,
-              settings = settings
+              settings = settings,
+              detectCallSyntax = detectCallSyntax
             )
         }
 
@@ -547,7 +593,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           identNode = identNode,
           sourceCode = sourceCode,
           workspace = workspace,
-          settings = settings
+          settings = settings,
+          detectCallSyntax = detectCallSyntax
         )
     }
 

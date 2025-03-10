@@ -199,4 +199,203 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "detect call syntax" should {
+    "return the function definition" when {
+      "function-call is selected" when {
+        "the function exists" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  let function = 1
+              |  fn >>function<<() -> () {}
+              |  let call = functio@@n()
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "the function is called within another function" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  let function = 1
+              |
+              |  fn >>function<<() {}
+              |
+              |  fn test() -> () {
+              |    let call = functio@@n()
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "multiple functions and variables exist" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  let function =
+              |
+              |  fn >>function<<() -> () {}
+              |
+              |  fn test() -> ( {
+              |    let function
+              |    let call = functio@@n()
+              |    let function = 3
+              |  }
+              |
+              |  fn >>function<<() -> () {}
+              |
+              |  fn >>function<<() -> ()
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "recursive function call" in {
+          goToDefinitionSoft() {
+            """
+              |fn >>function<<() -> () {
+              |  let call = functio@@n()
+              |  let function = 1
+              |""".stripMargin
+          }
+        }
+
+        "function is declared within inheritance" in {
+          goToDefinitionSoft() {
+            """
+              |Abstract Contract GrandParent(function) {
+              |  let function = 1
+              |
+              |  fn >>function<<() -> A {
+              |    let function = 1
+              |  }
+              |
+              |  let function
+              |
+              |  fn >>function<<() -> E
+              |}
+              |
+              |Contract Parent(function) extends GrandParent() {
+              |
+              |  fn >>function<<() -> B {
+              |    let call = functio@@n()
+              |  }
+              |
+              |  fn >>function<<() -> C {}
+              |
+              |  fn >>function<<() ->
+              |}
+              |
+              |Contract Child(function) extends Parent(function) {
+              |  // This is available to the `Parent`
+              |  let function = 3
+              |
+              |  fn function() -> D { }
+              |}
+              |""".stripMargin
+          }
+        }
+      }
+    }
+
+    "variable-reference is selected" when {
+      "the variable does not exist" in {
+        goToDefinitionSoft() {
+          """
+            |{
+            |  let var = 1
+            |  fn >>variable<<() -> () {}
+            |  let copy = variab@@le
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "the variable is accessed within a function" in {
+        goToDefinitionSoft() {
+          """
+            |{
+            |  let var = 1
+            |
+            |  fn >>variable<<() {}
+            |
+            |  fn test() -> () {
+            |    let copy = variab@@le
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "multiple functions named `variable` and variables exist" in {
+        goToDefinitionSoft() {
+          """
+            |{
+            |  let var =
+            |
+            |  fn >>variable<<() -> () {}
+            |
+            |  fn test() -> ( {
+            |    let var
+            |    let copy = variab@@le
+            |    let var = 3
+            |  }
+            |
+            |  fn >>variable<<() -> () {}
+            |
+            |  fn >>variable<<() -> ()
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "recursive function named `variable`" in {
+        goToDefinitionSoft() {
+          """
+            |fn >>variable<<() -> () {
+            |  let copy = variab@@le
+            |  let var = 1
+            |""".stripMargin
+        }
+      }
+
+      "function named `variable` is declared within inheritance" in {
+        goToDefinitionSoft() {
+          """
+            |Abstract Contract GrandParent() {
+            |  let var = 1
+            |
+            |  fn >>variable<<() -> A {
+            |    let var = 1
+            |  }
+            |
+            |  let var
+            |
+            |  fn >>variable<<() -> E
+            |}
+            |
+            |Contract Parent() extends GrandParent() {
+            |
+            |  fn >>variable<<() -> B {
+            |    let copy = variab@@le
+            |  }
+            |
+            |  fn >>variable<<() -> C {}
+            |
+            |  fn >>variable<<() ->
+            |}
+            |
+            |Contract Child(variable) extends Parent(variable) {
+            |  let variable = 3
+            |
+            |  fn variable() -> D { }
+            |}
+            |""".stripMargin
+        }
+      }
+    }
+  }
+
 }
