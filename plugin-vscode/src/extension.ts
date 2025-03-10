@@ -1,3 +1,6 @@
+// Copyright (c) Alephium
+// SPDX-License-Identifier: LGPL-3.0-only
+
 import {ExtensionContext} from 'vscode';
 
 import {LanguageClient, LanguageClientOptions, ServerOptions} from 'vscode-languageclient/node';
