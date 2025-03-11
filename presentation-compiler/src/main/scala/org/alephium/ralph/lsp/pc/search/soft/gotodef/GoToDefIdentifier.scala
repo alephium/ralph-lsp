@@ -73,7 +73,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
         node.parent match {
           // If it's an assignment, it must also be a variable declaration for the current node to be a self.
-          case Some(Node(_: SoftAST.VariableDeclaration, _)) =>
+          case Some(Node(_: SoftAST.VariableDeclaration | _: SoftAST.Const, _)) =>
             Iterator.single(
               SourceLocation.NodeSoft(
                 ast = identNode.data.code,

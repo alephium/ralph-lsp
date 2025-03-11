@@ -11,7 +11,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "constant does not exist" in {
-      goToDefinitionStrict()(
+      goToDefinition() {
         """
           |Contract GoToConstant() {
           |
@@ -20,13 +20,13 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
   }
 
   "return self" when {
     "constant definition is selected" in {
-      goToDefinitionStrict()(
+      goToDefinition() {
         """
           |Contract Test() {
           |
@@ -35,11 +35,11 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
           |  pub fn function() -> () { }
           |}
           |""".stripMargin
-      )
+      }
     }
 
     "duplicate constant definitions exist" in {
-      goToDefinitionStrict()(
+      goToDefinition() {
         """
           |Contract Test() {
           |
@@ -49,7 +49,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
           |  pub fn function() -> () { }
           |}
           |""".stripMargin
-      )
+      }
     }
   }
 
