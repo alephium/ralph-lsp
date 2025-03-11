@@ -115,7 +115,7 @@ class SourceCodeSearcherCollectImportStatementsSpec extends AnyWordSpec with Mat
         val actual =
           SourceCodeSearcher
             .collectImportStatementsSoft(allCode)
-            .map(_._1.string.value.toCode())
+            .map(_.string.value.toCode())
 
         doAssert(actual)
       }
@@ -172,7 +172,7 @@ class SourceCodeSearcherCollectImportStatementsSpec extends AnyWordSpec with Mat
       val actual =
         SourceCodeSearcher
           .collectImportStatementsSoft(allCode)
-          .map(_._1.string.value.toCode())
+          .map(_.string.value.toCode())
 
       val newline = Token.Newline.lexeme
 

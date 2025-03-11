@@ -389,7 +389,8 @@ object WorkspaceSearcher {
         val importStatements =
           SourceCodeSearcher
             .collectImportStatementsSoft(workspaceCode)
-            .map(_._2)
+            .flatMap(_.string)
+            .map(_.toCode())
 
         // filter out std files that are not imported
         stdSourceParsedCode filter {

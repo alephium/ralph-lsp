@@ -148,7 +148,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    *          - An import statement AST (`SoftAST.Import`).
    *          - The corresponding import path as a string.
    */
-  def collectImportStatementsSoft(sourceCode: ArraySeq[SourceCodeState.IsParsed])(implicit logger: ClientLogger): ArraySeq[(SoftAST.Import, String)] =
+  def collectImportStatementsSoft(sourceCode: ArraySeq[SourceCodeState.IsParsed])(implicit logger: ClientLogger): ArraySeq[SoftAST.Import] =
     sourceCode
       .flatMap {
         parsed =>
@@ -165,6 +165,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
           }
       }
       .distinctBy(_._2)
+      .map(_._1)
 
   /**
    * Collects unique inherited parents for all input parsed files and for each tree within a file.

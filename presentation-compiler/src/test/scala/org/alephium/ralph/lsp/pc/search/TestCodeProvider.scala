@@ -21,10 +21,10 @@ import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestD
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.{BuiltInFunctionDownloader, DependencyDownloader, StdInterfaceDownloader}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.SourceIndex
-import org.scalatest.Assertion
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers._
+import org.scalatest.Assertion
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -302,7 +302,7 @@ object TestCodeProvider {
   def goToBuiltIn(
       code: String,
       expected: Option[String]): Assertion =
-    goToDependency(
+    goToDependencyStrict(
       code = code,
       expected = expected.map {
         string =>
@@ -319,13 +319,11 @@ object TestCodeProvider {
    * contained in the `std` library downloaded by native dependency
    * downloader [[StdInterfaceDownloader]].
    *
-   * @param code     The code with the search indicator '@@'.
    * @param expected An optional tuple where the first element is the expected line,
    *                 and the second is the highlighted token in that line.
+   * @param code     The code with the search indicator '@@'.
    */
-  def goToStd(
-      code: String,
-      expected: Option[(String, String)]): Assertion =
+  def goToStd(expected: Option[(String, String)])(code: String): Assertion =
     goToDependency(
       code = code,
       expected = expected,
@@ -497,10 +495,39 @@ object TestCodeProvider {
       code: String,
       expected: Option[(String, String)],
       downloader: DependencyDownloader.Native): Assertion = {
+    goToDependencyStrict(
+      code = code,
+      expected = expected,
+      downloader = downloader
+    )
+
+    goToDependencySoft(
+      code = code,
+      expected = expected,
+      downloader = downloader
+    )
+  }
+
+  /**
+   * Runs go-to definition where @@ is positioned, expecting
+   * the resulting go-to definition to be within a dependency workspace.
+   *
+   * @param code       The code with the search indicator '@@'.
+   * @param expected   An optional tuple where the first element is the expected line,
+   *                   and the second is the highlighted token in that line.
+   * @param downloader The native dependency to download, and to test on.
+   *                   These must be of type [[DependencyDownloader.Native]]
+   *                   as they can be written to `~/ralph-lsp`.
+   *                   We don't want generated libraries being written to `~/ralph-lsp`.
+   */
+  private def goToDependencyStrict(
+      code: String,
+      expected: Option[(String, String)],
+      downloader: DependencyDownloader.Native): Assertion = {
     val (_, codeWithoutGoToSymbols, _, _) =
       TestCodeUtil.lineRanges(code)
 
-    // Execute go-to definition.
+    // Execute go-to definition on strict-AST.
     val (searchResult, _, workspace) =
       TestCodeProvider[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
         code = codeWithoutGoToSymbols,
@@ -508,6 +535,67 @@ object TestCodeProvider {
         dependencyDownloaders = ArraySeq(downloader)
       )
 
+    assertGoToDependency(
+      expected = expected,
+      actual = searchResult,
+      workspace = workspace,
+      downloader = downloader
+    )
+  }
+
+  /**
+   * Runs go-to definition where @@ is positioned, expecting
+   * the resulting go-to definition to be within a dependency workspace.
+   *
+   * @param code       The code with the search indicator '@@'.
+   * @param expected   An optional tuple where the first element is the expected line,
+   *                   and the second is the highlighted token in that line.
+   * @param downloader The native dependency to download, and to test on.
+   *                   These must be of type [[DependencyDownloader.Native]]
+   *                   as they can be written to `~/ralph-lsp`.
+   *                   We don't want generated libraries being written to `~/ralph-lsp`.
+   */
+  private def goToDependencySoft(
+      code: String,
+      expected: Option[(String, String)],
+      downloader: DependencyDownloader.Native): Assertion = {
+    val (_, codeWithoutGoToSymbols, _, _) =
+      TestCodeUtil.lineRanges(code)
+
+    // Execute go-to definition on SoftAST.
+    val (searchResult, _, workspace) =
+      TestCodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
+        code = codeWithoutGoToSymbols,
+        searchSettings = (SoftAST, testGoToDefSetting),
+        dependencyDownloaders = ArraySeq(downloader)
+      )
+
+    assertGoToDependency(
+      expected = expected,
+      actual = searchResult,
+      workspace = workspace,
+      downloader = downloader
+    )
+  }
+
+  /**
+   * Asserts the go-to definition search result, expecting
+   * the resulting go-to definition to be within a dependency workspace.
+   *
+   * @param expected   An optional tuple where the first element is the expected line,
+   *                   and the second is the highlighted token in that line.
+   * @param actual     The actual search result.
+   * @param workspace  The workspace where the search was executed.
+   * @param downloader The native dependency to download, and to test on.
+   *                   These must be of type [[DependencyDownloader.Native]]
+   *                   as they can be written to `~/ralph-lsp`.
+   *                   We don't want generated libraries being written to `~/ralph-lsp`.
+   */
+  private def assertGoToDependency(
+      expected: Option[(String, String)],
+      actual: Iterator[SourceLocation.GoToDef],
+      workspace: WorkspaceState.IsParsedAndCompiled,
+      downloader: DependencyDownloader.Native): Assertion =
     expected match {
       case Some((expectedLine, expectedHighlightedToken)) =>
         val expectedResults =
@@ -543,7 +631,7 @@ object TestCodeProvider {
 
         // For actual search result assert only the fileURI and line-ranges
         val actualResults =
-          searchResult
+          actual
             .toList
             .map {
               result =>
@@ -554,9 +642,8 @@ object TestCodeProvider {
         actualResults should contain theSameElementsAs expectedResults
 
       case None =>
-        searchResult shouldBe empty
+        actual shouldBe empty
     }
-  }
 
   /**
    * Runs code-provider on the given code that contains the selection indicator '@@'.
