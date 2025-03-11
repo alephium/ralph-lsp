@@ -485,6 +485,13 @@ object SoftAST {
       rightExpression: ExpressionAST)
     extends SoftAST
 
+  case class Emit(
+      index: SourceIndex,
+      emit: TokenDocumented[Token.Emit.type],
+      preExpressionSpace: Option[Space],
+      expression: ExpressionAST)
+    extends ExpressionAST
+
   case class Return(
       index: SourceIndex,
       returnToken: TokenDocumented[Token.Return.type],
