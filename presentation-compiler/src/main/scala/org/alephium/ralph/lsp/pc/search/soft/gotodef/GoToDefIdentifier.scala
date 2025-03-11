@@ -118,6 +118,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           )
         )
 
+      case Some(Node(event: SoftAST.Event, _)) if event.identifier == identNode.data =>
+        Iterator.single(
+          SourceLocation.NodeSoft(
+            ast = identNode.data.code,
+            source = sourceCode
+          )
+        )
+
       case Some(node @ Node(group: SoftAST.Group[_, _], _)) =>
         searchGroup(
           group = node.upcast(group),
