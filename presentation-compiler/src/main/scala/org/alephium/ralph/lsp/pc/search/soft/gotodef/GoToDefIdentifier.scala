@@ -150,7 +150,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param detectCallSyntax If `true`, ensures that when a function is called,
    *                         the search is restricted to reference calls only and does not
    *                         return variables with the same name.
-   * @return return An iterator over the locations of the definitions.
+   * @return An iterator over the locations of the definitions.
    */
   @tailrec
   private def search(
@@ -184,8 +184,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         detectCallSyntax = detectCallSyntax
       )
 
+    val globals =
+      searchGlobal(
+        target = identNode,
+        trees = inheritance.allTrees.iterator
+      )
+
     val result =
-      (local.iterator ++ inherited).distinct
+      (local.iterator ++ inherited ++ globals).distinct
 
     if (detectCallSyntax && result.isEmpty)
       search( // The restricted exact call syntax search returned no results. Executing a relaxed search.
@@ -198,6 +204,48 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     else
       result
   }
+
+  /**
+   * Searches for occurrences of the given identifier node within global scope.
+   *
+   * @param target The identifier node to search for.
+   * @param trees  All workspace code within scope.
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchGlobal(
+      target: Node[SoftAST.Identifier, SoftAST],
+      trees: Iterator[SourceLocation.CodeSoft]): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    trees flatMap {
+      sourceCode =>
+        searchGlobal(
+          target = target,
+          tree = sourceCode.part,
+          sourceCode = sourceCode
+        )
+    }
+
+  /**
+   * Searches for occurrences of the given identifier node within global scope.
+   *
+   * @param target The identifier node to search for.
+   * @param tree   A tree within the global scope.
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchGlobal(
+      target: Node[SoftAST.Identifier, SoftAST],
+      tree: SoftAST.BlockPartAST,
+      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    tree match {
+      case template: SoftAST.Template =>
+        searchIdentifier(
+          identifier = template.identifier,
+          target = target,
+          sourceCode = sourceCode
+        )
+
+      case _ =>
+        Iterator.empty
+    }
 
   /**
    * Expands and searches for all possible local definitions starting from the given position.
