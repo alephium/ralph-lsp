@@ -3,13 +3,14 @@
 
 package org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader
 
+import org.alephium.ralph.{BuiltIn, SourceIndex}
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.Token
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
-import org.alephium.ralph.{SourceIndex, BuiltIn}
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 
 import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
@@ -103,7 +104,7 @@ object BuiltInFunctionDownloader extends DependencyDownloader.Native {
                     param =>
                       s"  // $param"
                   }
-                  .mkString("\n", "\n", "")
+                  .mkString(Token.Newline.lexeme, Token.Newline.lexeme, "")
               else
                 ""
 
@@ -112,7 +113,7 @@ object BuiltInFunctionDownloader extends DependencyDownloader.Native {
                |  ${function.signature}
                |""".stripMargin
         }
-        .mkString("\n")
+        .mkString(Token.Newline.lexeme)
 
     val interface =
       s"""Interface ${category}Functions {
