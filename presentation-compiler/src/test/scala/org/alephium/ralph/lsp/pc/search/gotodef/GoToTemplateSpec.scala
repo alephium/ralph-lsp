@@ -57,76 +57,102 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
   }
 
   "return non-empty" when {
-    val types =
-      """
-        |TxScript >>Parent<<() {
-        |  assert!()
-        |}
-        |
-        |Abstract Contract >>Parent<<() { }
-        |
-        |Abstract Contract NotThis() { }
-        |
-        |Interface >>Parent<< {
-        |  fn function() -> ()
-        |}
-        |
-        |Interface NotThisEither {
-        |  fn function() -> ()
-        |}
-        |
-        |Contract >>Parent<<() {
-        |  fn function() -> () { }
-        |}
-        |""".stripMargin
+    "strict-parseable" when {
+      val types =
+        """
+          |TxScript >>Parent<<() {
+          |  assert!()
+          |}
+          |
+          |Abstract Contract >>Parent<<() { }
+          |
+          |Abstract Contract NotThis() { }
+          |
+          |Interface >>Parent<< {
+          |  fn function() -> ()
+          |}
+          |
+          |Interface NotThisEither {
+          |  fn function() -> ()
+          |}
+          |
+          |Contract >>Parent<<() {
+          |  fn function() -> () { }
+          |}
+          |""".stripMargin
 
-    "type is an inheritance" in {
-      goToDefinitionStrict() {
-        s"""
-           |$types
-           |
-           |Contract Child() extends Paren@@t() {
-           |  pub fn function() -> () { }
-           |}
-           |""".stripMargin
+      "type is an inheritance" in {
+        goToDefinition() {
+          s"""
+             |$types
+             |
+             |Contract Child() extends Paren@@t() {
+             |  pub fn function() -> () { }
+             |}
+             |""".stripMargin
+        }
+      }
+
+      "type is a function parameter" in {
+        goToDefinition() {
+          s"""
+             |$types
+             |
+             |Contract Child() {
+             |  pub fn function(parent: Paren@@t) -> () { }
+             |}
+             |""".stripMargin
+        }
+      }
+
+      "type is a template parameter" in {
+        goToDefinition() {
+          s"""
+             |$types
+             |
+             |Contract Child(parent: Paren@@t) {
+             |  pub fn function() -> () { }
+             |}
+             |""".stripMargin
+        }
+      }
+
+      "type is a constructor" in {
+        goToDefinition() {
+          s"""
+             |$types
+             |
+             |Contract Child() {
+             |  pub fn function() -> () {
+             |    let parent = Paren@@t(blah)
+             |  }
+             |}
+             |""".stripMargin
+        }
       }
     }
 
-    "type is a function parameter" in {
-      goToDefinitionStrict() {
-        s"""
-           |$types
-           |
-           |Contract Child() {
-           |  pub fn function(parent: Parent@@) -> () { }
-           |}
-           |""".stripMargin
+    "soft-parseable" when {
+      "type identifier is selected" in {
+        goToDefinitionSoft() {
+          """
+            |Contract >>MyCode<<
+            |TxScript >>MyCode<<
+            |
+            |MyCo@@de
+            |""".stripMargin
+        }
       }
-    }
 
-    "type is a template parameter" in {
-      goToDefinitionStrict() {
-        s"""
-           |$types
-           |
-           |Contract Child(parent: Parent@@) {
-           |  pub fn function() -> () { }
-           |}
-           |""".stripMargin
-      }
-    }
-
-    "type is a constructor" in {
-      goToDefinitionStrict() {
-        s"""
-           |$types
-           |
-           |Contract Child() {
-           |  pub fn function() -> () {
-           |    let parent = Parent@@(blah)
-           |  }
-           |}
-           |""".stripMargin
+      "reference call is selected" in {
+        goToDefinitionSoft() {
+          """
+            |Contract >>MyCode<<
+            |TxScript >>MyCode<<
+            |
+            |MyCo@@de()
+            |""".stripMargin
+        }
       }
     }
 
@@ -155,6 +181,38 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
           |""".stripMargin,
         Some(("Interface INFTCollectionWithRoyalty extends INFTCollection {", "INFTCollectionWithRoyalty"))
       )
+    }
+  }
+
+  "detect call syntax" should {
+    "jump to contract" when {
+      "variable does not exist" in {
+        goToDefinitionSoft() {
+          """
+            |Contract >>variable<<() { }
+            |
+            |Contract Test() {
+            |  let vari_able = 1
+            |  variab@@le
+            |}
+            |""".stripMargin
+        }
+      }
+    }
+
+    "jump to both (variable & contract)" when {
+      "variable exists" in {
+        goToDefinitionSoft() {
+          """
+            |Contract >>variable<<() { }
+            |
+            |Contract Test() {
+            |  let >>variable<< = 1
+            |  variab@@le
+            |}
+            |""".stripMargin
+        }
+      }
     }
   }
 
