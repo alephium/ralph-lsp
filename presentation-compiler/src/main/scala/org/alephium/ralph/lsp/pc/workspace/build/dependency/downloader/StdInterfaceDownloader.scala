@@ -5,18 +5,19 @@ package org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader
 
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.Token
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDownloadingDependency
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
 import java.net.URI
-import java.nio.file.{Path, FileSystems, Paths, Files}
+import java.nio.file.{Files, FileSystems, Path, Paths}
 import scala.collection.immutable.ArraySeq
 import scala.io.Source
 import scala.jdk.CollectionConverters.{IteratorHasAsScala, MapHasAsJava}
-import scala.util.{Using, Success, Failure}
+import scala.util.{Failure, Success, Using}
 
 object StdInterfaceDownloader extends DependencyDownloader.Native with StrictImplicitLogging {
 
@@ -90,7 +91,7 @@ object StdInterfaceDownloader extends DependencyDownloader.Native with StrictImp
 
         interfaceFiles.map {
           file =>
-            val code     = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines().mkString("\n")
+            val code     = use(Source.fromInputStream(Files.newInputStream(file), "UTF-8")).getLines().mkString(Token.Newline.lexeme)
             val filePath = dependencyPath.resolve(Paths.get(dependencyID.dirName).resolve(file.getFileName.toString))
             SourceCodeState.UnCompiled(
               fileURI = filePath.toUri,
