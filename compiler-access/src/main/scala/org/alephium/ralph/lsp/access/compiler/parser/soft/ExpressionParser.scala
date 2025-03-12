@@ -43,6 +43,7 @@ private object ExpressionParser {
         MutableBindingParser.parseOrFail |
         IfElseParser.parseOrFail |
         ElseParser.parseOrFail |
+        EmitParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
         ParameterParser.parseOrFail |

@@ -117,6 +117,9 @@ object TestParser {
   def parseElse(code: String): SoftAST.Else =
     runSoftParser(ElseParser.parseOrFail(_))(code)
 
+  def parseEmit(code: String): SoftAST.Emit =
+    runSoftParser(EmitParser.parseOrFail(_))(code)
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,
