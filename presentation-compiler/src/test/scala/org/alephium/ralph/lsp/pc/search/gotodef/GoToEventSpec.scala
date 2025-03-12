@@ -11,7 +11,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "event does not exists" in {
-      goToDefinitionStrict()(
+      goToDefinition() {
         """
           |Contract Test() {
           |
@@ -21,36 +21,64 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
           |}
           |
           |""".stripMargin
-      )
+      }
     }
   }
 
   "return self" when {
-    "an event definition is selected" in {
-      goToDefinitionStrict()(
-        """
-          |Contract Test() extends Parent() {
-          |
-          |  event >>Transf@@er<<(to: Address, amount: U256)
-          |
-          |  pub fn function() -> () { }
-          |}
-          |""".stripMargin
-      )
+    "strict-parseable" when {
+      "an event definition is selected" in {
+        goToDefinition() {
+          """
+            |Contract Test() extends Parent() {
+            |
+            |  event >>Transf@@er<<(to: Address, amount: U256)
+            |
+            |  pub fn function() -> () { }
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "duplicate event definitions exist" in {
+        goToDefinition() {
+          """
+            |Contract Test() extends Parent() {
+            |
+            |  event Transfer(to: Address, amount: U256)
+            |  event >>Transf@@er<<(to: Address, amount: U256)
+            |
+            |  pub fn function() -> () { }
+            |}
+            |""".stripMargin
+        }
+      }
     }
 
-    "duplicate event definitions exist" in {
-      goToDefinitionStrict()(
-        """
-          |Contract Test() extends Parent() {
-          |
-          |  event Transfer(to: Address, amount: U256)
-          |  event >>Transf@@er<<(to: Address, amount: U256)
-          |
-          |  pub fn function() -> () { }
-          |}
-          |""".stripMargin
-      )
+    "soft-parseable" when {
+      "an event definition is selected" in {
+        goToDefinitionSoft() {
+          """
+            |{
+            |  event >>Transf@@er<<(to: Address, amount: U256
+            |  pub fn function( -> () {
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "duplicate event definitions exist" in {
+        goToDefinitionSoft() {
+          """
+            |{
+            |  event Transfer(to, amount)
+            |  event >>Transf@@er<<(to, amount
+            |
+            |  pub fn function() -> () { }
+            |}
+            |""".stripMargin
+        }
+      }
     }
   }
 

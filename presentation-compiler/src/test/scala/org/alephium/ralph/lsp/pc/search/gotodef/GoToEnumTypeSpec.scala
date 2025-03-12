@@ -11,7 +11,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "enum type does not exist" in {
-      goToDefinitionStrict()(
+      goToDefinition() {
         """
           |Contract MyContract() {
           |  pub fn function() -> () {
@@ -19,20 +19,56 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      )
+      }
     }
   }
 
   "return self" when {
-    "EnumType definition is selected" in {
-      goToDefinitionStrict()(
-        """
-          |enum >>En@@umType<< {
-          |  Field0 = 0
-          |  Field1 = 1
-          |}
-          |""".stripMargin
-      )
+    "EnumType definition is selected" when {
+      "strict-parseable" in {
+        goToDefinition() {
+          """
+            |enum >>En@@umType<< {
+            |  Field0 = 0
+            |  Field1 = 1
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "soft-parseable" when {
+        "invalid enum values exist" in {
+          goToDefinitionSoft() {
+            """
+              |enum >>En@@umType<< {
+              |  Field0 = 0
+              |  let a = 1
+              |  Another = true
+              |  blah = contract.function()
+              |  Field1 = 1
+              |""".stripMargin
+          }
+        }
+
+        "enum exists without a body" in {
+          goToDefinitionSoft() {
+            """
+              |enum >>En@@umType<<
+              |""".stripMargin
+          }
+        }
+
+        "duplicate enums exist" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  enum EnumType
+              |  enum >>En@@umType<<
+              |}
+              |""".stripMargin
+          }
+        }
+      }
     }
   }
 

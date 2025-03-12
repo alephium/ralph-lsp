@@ -109,6 +109,26 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
               |""".stripMargin
           }
         }
+
+        "param is mutable" when {
+          "first param is selected" in {
+            goToDefinitionSoft() {
+              """
+                |Contract Test(mut >>interfa@@ce<<: MyInterface,
+                |                    interface2: MyInterface)
+                |""".stripMargin
+            }
+          }
+
+          "second param is selected" in {
+            goToDefinitionSoft() {
+              """
+                |Contract Test(      interface: MyInterface,
+                |              mut >>interfa@@ce2<<: MyInterface)
+                |""".stripMargin
+            }
+          }
+        }
       }
     }
 
