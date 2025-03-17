@@ -47,7 +47,7 @@ class ServerStateSpec extends AnyWordSpec with Matchers {
             fileURI = "/parent/child"
           ).value
 
-        pcState.workspace.workspaceURI.getPath shouldBe "/parent/child"
+        pcState.workspace.workspaceURI shouldBe Paths.get("/parent/child").toUri
       }
 
       "fileURI is contained within the parentURI" in {
@@ -57,7 +57,7 @@ class ServerStateSpec extends AnyWordSpec with Matchers {
             fileURI = "/parent/child/code.ral"
           ).value
 
-        pcState.workspace.workspaceURI.getPath shouldBe "/parent/child"
+        pcState.workspace.workspaceURI shouldBe Paths.get("/parent/child").toUri
       }
     }
   }
@@ -111,7 +111,7 @@ class ServerStateSpec extends AnyWordSpec with Matchers {
 
           // assert removes
           removedStated should have size 1
-          removedStated.head.workspace.workspaceURI.getPath shouldBe "/parent/child"
+          removedStated.head.workspace.workspaceURI shouldBe Paths.get("/parent/child").toUri
         }
 
         "multiple workspaces exist" in {
@@ -128,12 +128,19 @@ class ServerStateSpec extends AnyWordSpec with Matchers {
               fileURI = "/parent/child"
             ).value
 
+          val expected =
+            Seq("/parent", "/up/down", "/this/that") map {
+              path =>
+                Paths.get(path).toUri
+            }
+
           // other PCStates left
-          serverState.pcState.map(_.workspace.workspaceURI.getPath) should contain only ("/parent", "/up/down", "/this/that")
+          val actual = serverState.pcState.map(_.workspace.workspaceURI)
+          actual should contain theSameElementsAs expected
 
           // assert removes
           removedStated should have size 1
-          removedStated.head.workspace.workspaceURI.getPath shouldBe "/parent/child"
+          removedStated.head.workspace.workspaceURI shouldBe Paths.get("/parent/child").toUri
 
         }
       }
