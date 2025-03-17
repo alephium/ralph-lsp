@@ -68,6 +68,8 @@ lazy_plugin_config = {
 
 The plugin adds file type detection, syntax highlighting and start the LSP server, make sure you have `ralph-lsp` available in your `PATH`
 
+For more info check the [plugin-nvim](plugin-nvim) directory.
+
 # Build the JAR
 
 ```shell
@@ -121,7 +123,7 @@ Refer to the [documentation](https://docs.alephium.org/sdk/cli/#configuration) f
 ## `ralph.json`
 
 Once your IDE has booted up, a config file named `ralph.json` will be generated in your project's root
-directory under the folder `.ralph-lsp/ralph.json`. 
+directory under the folder `.ralph-lsp/ralph.json`.
 This file reflects the `sourceDir` and `compilerOptions` settings defined in `alephium.config.ts`.
 If `alephium.config.ts` is not present or if the settings are missing, default settings will be used.
 
