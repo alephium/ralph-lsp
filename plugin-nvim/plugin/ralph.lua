@@ -4,17 +4,20 @@ local function ralph_init()
 
   capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = true
 
-  local root_dir = vim.fs.dirname(vim.fs.find({'build.ralph', 'contracts', 'artifacts'}, { upward = true })[1])
+  local function find_project_root(fname)
+    return vim.fs.dirname(vim.fs.find({'alephium.config.ts', '.ralph-lsp', 'contracts', 'artifacts', '.git'}, { upward = true, path = fname })[1])
+      or vim.fn.getcwd()
+  end
 
-  if root_dir == nil then root_dir = vim.fn.getcwd() end
+  local buf = vim.api.nvim_get_current_buf()
+  local root_dir = find_project_root(vim.api.nvim_buf_get_name(buf))
 
-   vim.lsp.start({
-     name = 'ralph-lsp',
-     cmd = {'ralph-lsp'},
-     root_dir = root_dir,
-     capabilities = capabilities
-   })
-
+  vim.lsp.start({
+    name = 'ralph-lsp',
+    cmd = {'ralph-lsp'},
+    root_dir = root_dir,
+    capabilities = capabilities
+  })
 end
 
 vim.api.nvim_create_autocmd('FileType', {
