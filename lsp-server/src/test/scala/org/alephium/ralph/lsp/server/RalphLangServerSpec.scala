@@ -13,14 +13,15 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.OptionValues._
 
 import java.nio.file.Paths
+import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
-import scala.annotation.nowarn
+import scala.collection.immutable.ArraySeq
 import scala.concurrent.Promise
 import scala.jdk.FutureConverters._
 
-@nowarn("cat=deprecation")
 class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory with ScalaFutures {
 
   "initialize" should {
@@ -37,9 +38,20 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
       val server   = RalphLangServer(client, listener)
 
       // this is the initial message received from the LSP client.
-      val initialise   = new InitializeParams()
-      val workspaceURI = Paths.get("test").toUri
-      initialise.setRootUri(workspaceURI.toString)
+      val initialise    = new InitializeParams()
+      val workspaceURI1 = Paths.get("workspace1").toUri
+      val workspaceURI2 = Paths.get("workspace2").toUri
+      val workspaceURI3 = Paths.get("workspace1").toUri // This has the same directory as workspace1 and should be ignored
+      val workspaceFolders =
+        util
+          .Arrays
+          .asList(
+            new WorkspaceFolder(workspaceURI1.toString, ""),
+            new WorkspaceFolder(workspaceURI2.toString, ""),
+            new WorkspaceFolder(workspaceURI3.toString, "")
+          )
+
+      initialise.setWorkspaceFolders(workspaceFolders)
       initialise.setProcessId(ProcessHandle.current().pid().toInt)
 
       // invoke server with the 'initialise' message
@@ -53,13 +65,20 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
         ServerState(
           client = Some(client),
           listener = Some(listener),
-          pcState = Some(
-            PCState(
-              workspace = WorkspaceState.Created(workspaceURI),
-              buildErrors = None,
-              tsErrors = None
-            )
-          ),
+          pcState =
+            // Note the duplicate workspaceURI3 is not created
+            ArraySeq(
+              PCState(
+                workspace = WorkspaceState.Created(workspaceURI1),
+                buildErrors = None,
+                tsErrors = None
+              ),
+              PCState(
+                workspace = WorkspaceState.Created(workspaceURI2),
+                buildErrors = None,
+                tsErrors = None
+              )
+            ),
           clientAllowsWatchedFilesDynamicRegistration = false,
           trace = Trace.Off,
           shutdownReceived = false
@@ -67,12 +86,13 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
     }
   }
 
-  "getRootUri" should {
-    "Create valide URI with scheme when no RootUri or RootPath exists" in {
+  "getWorkspaceFolders" should {
+    "Create valid URI with scheme when no RootUri or RootPath exists" in {
       val initialise = new InitializeParams()
-      val uri        = RalphLangServer.getRootUri(initialise)
+      val uri        = RalphLangServer.getWorkspaceFolders(initialise).value
 
-      uri.get.getScheme() shouldBe "file"
+      uri should have size 1
+      uri.head.getScheme() shouldBe "file"
     }
   }
 
