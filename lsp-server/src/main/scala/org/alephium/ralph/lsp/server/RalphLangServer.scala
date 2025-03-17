@@ -615,31 +615,6 @@ class RalphLangServer private (
     this
 
   /**
-   * Re-builds a fresh workspace from disk.
-   */
-  def reboot(): Unit =
-    runSync {
-      // initialise a new workspace
-      val currentPCState =
-        getPCState()
-
-      val newPCState =
-        PC.initialise(currentPCState.workspace.workspaceURI)
-
-      // clear all existing diagnostics
-      val diagnostics =
-        setPCStateAndBuildDiagnostics(
-          currentPCState = currentPCState,
-          newPCState = newPCState
-        )
-
-      getClient() publish diagnostics
-
-      // invoke initial build on new PCState
-      triggerInitialBuild()
-    }
-
-  /**
    * Apply code change and publish diagnostics.
    *
    * @param fileURI File that changed
