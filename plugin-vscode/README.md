@@ -16,6 +16,11 @@ The Ralph LSP is an implementation of the [language server protocol](https://mic
 
 Java 11 or higher.
 
+## Workspace folders
+
+To learn how to work with multiple project folders in VSCode, see the official documentation 
+on [Multi-Root Workspaces](https://code.visualstudio.com/docs/editor/workspaces/multi-root-workspaces).
+
 ## FAQ
 
 <https://github.com/alephium/ralph-lsp/issues>
