@@ -3,12 +3,18 @@
 
 package org.alephium.ralph.lsp.server.state
 
+import org.alephium.macros.EnumerationMacros
 import org.alephium.ralph.lsp.server.ResponseError.InvalidTraceSetting
 
 /**
  * @see [[org.eclipse.lsp4j.TraceValue]].
  */
-sealed trait Trace
+sealed trait Trace extends Ordered[Trace] with Product {
+
+  override def compare(that: Trace): Int =
+    this.productPrefix compare that.productPrefix
+
+}
 
 object Trace {
 
@@ -27,5 +33,10 @@ object Trace {
       Right(Trace.Verbose)
     else
       Left(InvalidTraceSetting(string))
+
+  def all: Array[Trace] =
+    EnumerationMacros
+      .sealedInstancesOf[Trace]
+      .toArray
 
 }

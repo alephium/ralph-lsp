@@ -30,7 +30,6 @@ import java.net.URI
 import java.nio.file.Paths
 import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
-import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.{IterableHasAsScala, MapHasAsJava, SeqHasAsJava}
 import scala.jdk.OptionConverters.RichOptional
@@ -48,7 +47,7 @@ object RalphLangServer extends StrictImplicitLogging {
       ServerState(
         client = Some(client),
         listener = Some(listener),
-        pcState = None,
+        pcState = ArraySeq.empty,
         clientAllowsWatchedFilesDynamicRegistration = clientAllowsWatchedFilesDynamicRegistration,
         trace = Trace.Off,
         shutdownReceived = false
@@ -64,24 +63,36 @@ object RalphLangServer extends StrictImplicitLogging {
       ServerState(
         client = None,
         listener = None,
-        pcState = None,
+        pcState = ArraySeq.empty,
         clientAllowsWatchedFilesDynamicRegistration = false,
         trace = Trace.Off,
         shutdownReceived = false
       )
     )
 
-  @nowarn("cat=deprecation")
-  def getRootUri(params: InitializeParams): Option[URI] =
-    Option(params.getRootUri)
-      .orElse(Option(params.getRootPath))
-      .map(URI.create)
-      // Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
-      .orElse {
-        Option(System.getProperty("user.dir"))
-          .map(Paths.get(_))
-          .map(_.toUri)
+  def getWorkspaceFolders(params: InitializeParams): Option[Iterable[URI]] = {
+    // fetch workspaces folders
+    val folders =
+      Option(params.getWorkspaceFolders) match {
+        case Some(workspaceFolders) =>
+          workspaceFolders.asScala map {
+            folder =>
+              URI.create(folder.getUri)
+          }
+
+        case None =>
+          Iterable.empty
       }
+
+    if (folders.isEmpty)
+      // Some LSP clients aren't providing `rootUri` or `rootPath`, like in nvim, so we fall back on `user.dir`
+      Option(System.getProperty("user.dir"))
+        .map(Paths.get(_))
+        .map(_.toUri)
+        .map(Iterable(_))
+    else
+      Some(folders)
+  }
 
   /** Build capabilities supported by the LSP server */
   def serverCapabilities(): ServerCapabilities = {
@@ -92,6 +103,13 @@ object RalphLangServer extends StrictImplicitLogging {
     capabilities.setDefinitionProvider(true)
     capabilities.setReferencesProvider(true)
     capabilities.setRenameProvider(true)
+
+    // Workspace Capabilities
+    val workspaceCapabilities  = new WorkspaceServerCapabilities()
+    val workspaceFolderOptions = new WorkspaceFoldersOptions()
+    workspaceFolderOptions.setChangeNotifications(true)
+    workspaceCapabilities.setWorkspaceFolders(workspaceFolderOptions)
+    capabilities.setWorkspace(workspaceCapabilities)
 
     capabilities
   }
@@ -253,16 +271,16 @@ class RalphLangServer private (
         shutdownOnProcessExit(params.getProcessId)
 
         // Previous commit uses the non-deprecated API but that does not work in vim.
-        val rootURI =
-          RalphLangServer.getRootUri(params)
+        val workspaceFolderURIs =
+          RalphLangServer.getWorkspaceFolders(params)
 
-        val workspaceURI =
-          rootURI getOrElse notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
+        val workspaceURIs =
+          workspaceFolderURIs getOrElse notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
 
-        val pcState =
-          PC.initialise(workspaceURI)
-
-        setPCState(pcState)
+        workspaceURIs foreach {
+          workspaceURI =>
+            putPCState(PC.initialise(workspaceURI))
+        }
 
         val maybeDynamicRegistration =
           getAllowsWatchedFilesDynamicRegistration(params)
@@ -280,7 +298,7 @@ class RalphLangServer private (
       logger.debug("Client initialized")
       registerClientCapabilities()
       // Invoke initial compilation. Trigger it as a build file changed.
-      triggerInitialBuild()
+      getAllPCStates() foreach triggerInitialBuild
     }
 
   /**
@@ -288,10 +306,10 @@ class RalphLangServer private (
    *
    * Both build files get processed from disk.
    */
-  def triggerInitialBuild(): Unit = {
+  def triggerInitialBuild(pcState: PCState): Unit = {
     // Trigger the build of `alephium.config.ts` first, which, if it exists, will generate `ralph.json`.
     didChangeAndPublish(
-      fileURI = getPCState().workspace.tsBuildURI,
+      fileURI = pcState.workspace.tsBuildURI,
       code = None
     )
 
@@ -299,7 +317,7 @@ class RalphLangServer private (
     // The cost here is relatively low because rebuilding `ralph.json` will be
     // cancelled immediately if it's already built by the above call.
     didChangeAndPublish(
-      fileURI = getPCState().workspace.buildURI,
+      fileURI = getPCStateOrFail(pcState.workspace.workspaceURI).workspace.buildURI,
       code = None
     )
   }
@@ -387,43 +405,52 @@ class RalphLangServer private (
       logger.debug(s"didChangeWatchedFiles: ${changes.mkString("\n", "\n", "")}")
 
       val events =
-        changes collect {
-          case fileEvent if isFileScheme(uri(fileEvent.getUri)) =>
-            val fileURI = uri(fileEvent.getUri)
+        changes
+          .collect {
+            case fileEvent if isFileScheme(uri(fileEvent.getUri)) =>
+              val fileURI = uri(fileEvent.getUri)
 
-            fileEvent.getType match {
-              case FileChangeType.Created =>
-                WorkspaceFileEvent.Created(fileURI)
+              fileEvent.getType match {
+                case FileChangeType.Created =>
+                  WorkspaceFileEvent.Created(fileURI)
 
-              case FileChangeType.Changed =>
-                WorkspaceFileEvent.Changed(fileURI)
+                case FileChangeType.Changed =>
+                  WorkspaceFileEvent.Changed(fileURI)
 
-              case FileChangeType.Deleted =>
-                WorkspaceFileEvent.Deleted(fileURI)
-            }
-        }
+                case FileChangeType.Deleted =>
+                  WorkspaceFileEvent.Deleted(fileURI)
+              }
+          }
+          .groupBy {
+            event =>
+              getPCStateOrNone(event.uri)
+          }
 
-      if (events.nonEmpty) {
-        val currentPCState =
-          getPCState()
+      events foreach {
+        case (Some(currentPCState), events) =>
+          if (events.nonEmpty) {
+            // Build OK! process delete or create
+            val newPCState =
+              PC.events(
+                events = events,
+                pcState = currentPCState
+              )
 
-        // Build OK! process delete or create
-        val newPCState =
-          PC.events(
-            events = events,
-            pcState = currentPCState
-          )
+            // Set the updated workspace
+            val diagnostics =
+              putPCStateAndBuildDiagnostics(
+                currentPCState = currentPCState,
+                newPCState = newPCState
+              )
 
-        // Set the updated workspace
-        val diagnostics =
-          setPCStateAndBuildDiagnostics(
-            currentPCState = currentPCState,
-            newPCState = newPCState
-          )
+            getClient() publish diagnostics
+          }
 
-        getClient() publish diagnostics
+        case (None, events) =>
+          // Occurs when no workspace is found for an event's `fileURI`.
+          // This can happen when modifying dependency files located under the home directory at `.ralph-lsp/dependencies/code.ral`.
+          logger.trace(s"Cannot execute events (count = ${events.size}) because source file is not within an active workspace: '${events.map(_.uri).distinct.mkString(", ")}'")
       }
-
     }
 
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
@@ -438,44 +465,54 @@ class RalphLangServer private (
 
           cancelChecker.checkCanceled()
 
-          getPCState().workspace match {
-            case sourceAware: WorkspaceState.IsSourceAware =>
-              val completionResult =
-                CodeProvider.search[SourceCodeState.Parsed, Unit, Suggestion](
-                  line = line,
-                  character = character,
-                  fileURI = fileURI,
-                  workspace = sourceAware,
-                  searchSettings = ()
-                )
+          // Completion should always be executed within the scope of a valid workspace.
+          // Run only if a workspace is found, otherwise, ignore the request (e.g. for an external dependency).
+          // No need to report errors for code completion.
+          getPCStateOrNone(fileURI) match {
+            case Some(currentPCState) =>
+              currentPCState.workspace match {
+                case sourceAware: WorkspaceState.IsSourceAware =>
+                  val completionResult =
+                    CodeProvider.search[SourceCodeState.Parsed, Unit, Suggestion](
+                      line = line,
+                      character = character,
+                      fileURI = fileURI,
+                      workspace = sourceAware,
+                      searchSettings = ()
+                    )
 
-              val suggestions =
-                completionResult match {
-                  case Some(Right(suggestions)) =>
-                    // completion successful
-                    suggestions
+                  val suggestions =
+                    completionResult match {
+                      case Some(Right(suggestions)) =>
+                        // completion successful
+                        suggestions
 
-                  case Some(Left(error)) =>
-                    // Completion failed: Log the error message
-                    logger.info("Code completion unsuccessful: " + error.message)
-                    Iterator.empty[Suggestion]
+                      case Some(Left(error)) =>
+                        // Completion failed: Log the error message
+                        logger.info("Code completion unsuccessful: " + error.message)
+                        Iterator.empty[Suggestion]
 
-                  case None =>
-                    // Not a ralph file or it does not belong to the workspace's contract-uri directory.
-                    Iterator.empty[Suggestion]
-                }
+                      case None =>
+                        // Not a ralph file or it does not belong to the workspace's contract-uri directory.
+                        Iterator.empty[Suggestion]
+                    }
 
-              val completionList =
-                CompletionConverter.toCompletionList(suggestions)
+                  val completionList =
+                    CompletionConverter.toCompletionList(suggestions)
 
-              cancelChecker.checkCanceled()
+                  cancelChecker.checkCanceled()
 
-              messages.Either.forRight(completionList)
+                  messages.Either.forRight(completionList)
 
-            case _: WorkspaceState.Created =>
-              // Workspace must be compiled at least once to enable code completion.
-              // The server must've invoked the initial compilation in the boot-up initialize function.
-              logger.info("Code completion unsuccessful: Workspace is not compiled")
+                case _: WorkspaceState.Created =>
+                  // Workspace must be compiled at least once to enable code completion.
+                  // The server must've invoked the initial compilation in the boot-up initialize function.
+                  logger.info("Code completion unsuccessful: Workspace is not compiled")
+                  messages.Either.forLeft(util.Arrays.asList())
+              }
+
+            case None =>
+              logger.trace(s"Code completion unsuccessful: Source not within an active workspace. fileURI: $fileURI")
               messages.Either.forLeft(util.Arrays.asList())
           }
         }
@@ -499,28 +536,34 @@ class RalphLangServer private (
           if (enableSoftParser)
             CompletableFuture.supplyAsync {
               () =>
-                goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
-                  fileURI = fileURI,
-                  line = line,
-                  character = character,
-                  searchSettings = (SoftAST, settings),
-                  cancelChecker = cancelChecker,
-                  currentState = getPCState()
-                )
+                getOneOrAllPCStates(fileURI) flatMap {
+                  currentState =>
+                    goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
+                      fileURI = fileURI,
+                      line = line,
+                      character = character,
+                      searchSettings = (SoftAST, settings),
+                      cancelChecker = cancelChecker,
+                      currentState = currentState
+                    )
+                }
             }
           else
             CompletableFuture.completedFuture(Iterator.empty)
 
         // Compute strict AST locations within the current thread
         val strictASTLocations =
-          goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
-            fileURI = fileURI,
-            line = line,
-            character = character,
-            searchSettings = settings,
-            cancelChecker = cancelChecker,
-            currentState = getPCState()
-          )
+          getOneOrAllPCStates(fileURI) flatMap {
+            currentState =>
+              goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
+                fileURI = fileURI,
+                line = line,
+                character = character,
+                searchSettings = settings,
+                cancelChecker = cancelChecker,
+                currentState = currentState
+              )
+          }
 
         // Combine the results asynchronously
         softASTLocationsFuture.thenApply {
@@ -558,17 +601,20 @@ class RalphLangServer private (
           )
 
         val locations =
-          goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
-            fileURI = fileURI,
-            line = line,
-            character = character,
-            searchSettings = settings,
-            cancelChecker = cancelChecker,
-            currentState = getPCState()
-          )
+          getOneOrAllPCStates(fileURI) flatMap {
+            currentState =>
+              goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
+                fileURI = fileURI,
+                line = line,
+                character = character,
+                searchSettings = settings,
+                cancelChecker = cancelChecker,
+                currentState = currentState
+              )
+          }
 
         val javaLocations =
-          GoToConverter.toLocations(locations)
+          GoToConverter.toLocations(locations.iterator)
 
         CollectionUtil.toJavaList(javaLocations)
     }
@@ -587,7 +633,8 @@ class RalphLangServer private (
             character = character,
             searchSettings = (),
             cancelChecker = cancelChecker,
-            currentState = getPCState()
+            // Uses `OrFail` to ensure a notification is displayed when renaming a file not within an active workspace.
+            currentState = getPCStateOrFail(fileURI)
           )
 
         val javaLocations =
@@ -605,6 +652,14 @@ class RalphLangServer private (
         new WorkspaceEdit(javaLocations)
     }
 
+  override def didChangeWorkspaceFolders(params: DidChangeWorkspaceFoldersParams): Unit = {
+    val added   = params.getEvent.getAdded.asScala.map(_.getUri).map(URI.create)
+    val removed = params.getEvent.getRemoved.asScala.map(_.getUri).map(URI.create)
+
+    addWorkspaceFolders(added)
+    removeWorkspaceFolders(removed)
+  }
+
   override def didChangeConfiguration(params: DidChangeConfigurationParams): Unit =
     ()
 
@@ -615,28 +670,48 @@ class RalphLangServer private (
     this
 
   /**
-   * Re-builds a fresh workspace from disk.
+   * Inserts and builds the new workspace folders.
+   *
+   * @param uris Root workspace directory URIs to be added.
    */
-  def reboot(): Unit =
-    runSync {
-      // initialise a new workspace
-      val currentPCState =
-        getPCState()
+  private def addWorkspaceFolders(uris: Iterable[URI]): Unit =
+    uris foreach {
+      newURI =>
+        // Initialise a new PCState
+        val pcState = PC.initialise(newURI)
+        // Insert the new initialised PCState
+        putPCState(pcState)
+        // Trigger initial build
+        triggerInitialBuild(pcState)
+    }
 
-      val newPCState =
-        PC.initialise(currentPCState.workspace.workspaceURI)
+  /**
+   * Removes the given workspace folder.
+   *
+   * @param uris Root workspace directory URIs to be removed.
+   */
+  private def removeWorkspaceFolders(uris: Iterable[URI]): Unit =
+    uris foreach {
+      removedURI =>
+        // remove workspace from state
+        removePCState(removedURI) match {
+          case Some(removedPCStates) =>
+            // publish an empty state to clear all existing diagnostics for the removed workspace.
+            removedPCStates foreach {
+              removed =>
+                val diagnostics =
+                  buildDiagnostics(
+                    currentPCState = removed,
+                    newPCState = PC.initialise(removedURI)
+                  )
 
-      // clear all existing diagnostics
-      val diagnostics =
-        setPCStateAndBuildDiagnostics(
-          currentPCState = currentPCState,
-          newPCState = newPCState
-        )
+                // For quicker client updates, execute `publish` after each `build` instead of together.
+                getClient() publish diagnostics
+            }
 
-      getClient() publish diagnostics
-
-      // invoke initial build on new PCState
-      triggerInitialBuild()
+          case None =>
+            logger.error(s"Workspace-folder not found for URI $removedURI")
+        }
     }
 
   /**
@@ -669,41 +744,84 @@ class RalphLangServer private (
       fileURI: URI,
       code: Option[String]): Iterable[PublishDiagnosticsParams] =
     runSync {
-      val currentPCState =
-        getPCState()
+      getPCStateOrNone(fileURI) match {
+        case Some(currentPCState) =>
+          val newPCState =
+            PC.changed(
+              fileURI = fileURI,
+              code = code,
+              pcState = currentPCState
+            )
 
-      val newPCState =
-        PC.changed(
-          fileURI = fileURI,
-          code = code,
-          pcState = currentPCState
-        )
+          putPCStateAndBuildDiagnostics(
+            currentPCState = currentPCState,
+            newPCState = newPCState
+          )
 
-      setPCStateAndBuildDiagnostics(
-        currentPCState = currentPCState,
-        newPCState = newPCState
-      )
+        case None =>
+          logger.trace(s"Cannot execute change because the source file is not within an active workspace: '$fileURI'")
+          Iterable.empty
+      }
     }
 
-  private def getPCState(): PCState =
-    state.pcState getOrElse {
+  /**
+   * Get the [[PCState]] containing the given `fileURI`.
+   * If no matching [[PCState]] is found, returns all available [[PCState]]s.
+   *
+   * The purpose for retuning all [[PCState]]s is to handle cases
+   * the requested is executed outside the workspace directory,
+   * for example, within dependencies, then APIs like
+   * [[definition]] and [[references]] must be executed on all root-workspaces
+   * where the dependency code is used.
+   *
+   * @param fileURI The `fileURI` to search for in [[PCState]].
+   * @return The matching [[PCState]], or all [[PCState]]s if none is found.
+   */
+  private def getOneOrAllPCStates(fileURI: URI): ArraySeq[PCState] =
+    thisServer.state.findContains(fileURI) match {
+      case Some(pcState) =>
+        ArraySeq(pcState)
+
+      case None =>
+        getAllPCStates()
+    }
+
+  private def getPCStateOrFail(fileURI: URI): PCState =
+    getPCStateOrNone(fileURI) getOrElse {
+      // Workspace folder is not defined.
+      // This is not expected to occur since `initialized` is always invoked first.
+      notifyAndThrow(ResponseError.SourceNotInWorkspace(fileURI))
+    }
+
+  private def getPCStateOrNone(fileURI: URI): Option[PCState] =
+    thisServer.state.findContains(fileURI)
+
+  private def getAllPCStates(): ArraySeq[PCState] =
+    if (thisServer.state.pcState.isEmpty)
       // Workspace folder is not defined.
       // This is not expected to occur since `initialized` is always invoked first.
       notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
+    else
+      state.pcState
+
+  private def removePCState(fileURI: URI): Option[ArraySeq[PCState]] =
+    thisServer.state.remove(fileURI) map {
+      case (newState, removedPCStates) =>
+        thisServer.state = newState
+        removedPCStates
     }
 
   private def getClient(): RalphLangClient =
-    state.client getOrElse {
+    thisServer.state.client getOrElse {
       val error     = ResponseError.ClientNotConfigured
       val exception = error.toResponseErrorException
       logger.error(error.getMessage, exception)
       throw exception
     }
 
-  private def setPCState(pcState: PCState): Unit =
+  private def putPCState(pcState: PCState): Unit =
     runSync {
-      thisServer.state = thisServer.state.copy(pcState = Some(pcState))
-      ()
+      thisServer.state = thisServer.state.put(pcState)
     }
 
   private def setClientAllowsWatchedFilesDynamicRegistration(allows: Boolean): Unit =
@@ -730,13 +848,13 @@ class RalphLangServer private (
    * @param newPCState Compilation result returned by presentation-compiler.
    * @return Diagnostics for current workspace.
    */
-  private def setPCStateAndBuildDiagnostics(
+  private def putPCStateAndBuildDiagnostics(
       currentPCState: PCState,
       newPCState: Either[ErrorUnknownFileType, Option[PCState]]): Iterable[PublishDiagnosticsParams] =
     runSync {
       newPCState match {
         case Right(Some(newPCState)) =>
-          setPCStateAndBuildDiagnostics(
+          putPCStateAndBuildDiagnostics(
             currentPCState = currentPCState,
             newPCState = newPCState
           )
@@ -758,15 +876,31 @@ class RalphLangServer private (
    *
    * @param currentPCState The [[PCState]] that got used to run this compilation.
    * @param newPCState     Compilation result returned by presentation-compiler.
-   *                       [[None]] indicates that the file-type does not belong to us.
    * @return Diagnostics for current workspace.
    */
-  private def setPCStateAndBuildDiagnostics(
+  private def putPCStateAndBuildDiagnostics(
       currentPCState: PCState,
       newPCState: PCState): Iterable[PublishDiagnosticsParams] =
     runSync {
-      setPCState(newPCState)
+      putPCState(newPCState)
 
+      buildDiagnostics(
+        currentPCState = currentPCState,
+        newPCState = newPCState
+      )
+    }
+
+  /**
+   * Returns diagnostics to publish for the current state.
+   *
+   * @param currentPCState The [[PCState]] that got used to run this compilation.
+   * @param newPCState     Compilation result returned by presentation-compiler.
+   * @return Diagnostics for current workspace.
+   */
+  private def buildDiagnostics(
+      currentPCState: PCState,
+      newPCState: PCState): Iterable[PublishDiagnosticsParams] =
+    runSync {
       // build diagnostics for this PCState change
       val pcDiagnostics =
         Diagnostics.toFileDiagnostics(

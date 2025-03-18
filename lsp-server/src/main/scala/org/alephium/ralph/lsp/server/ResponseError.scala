@@ -32,10 +32,10 @@ object ResponseError {
       message = "Root workspace folder not supplied"
     )
 
-  case object MultiRootWorkspaceFoldersNotSupported
+  case class SourceNotInWorkspace(fileURI: URI)
     extends ResponseError(
-      errorCode = ResponseErrorCode.InvalidParams,
-      message = "Multiple root workspace folders are not supported"
+      errorCode = ResponseErrorCode.InvalidRequest,
+      message = s"Source file not within an active workspace: '$fileURI'"
     )
 
   case class UnknownFileType(fileURI: URI)

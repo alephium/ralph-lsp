@@ -9,6 +9,16 @@ import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 object URIUtil {
 
+  implicit class URIUtilImplicits(val uri: URI) extends AnyVal {
+
+    def contains(child: URI): Boolean =
+      URIUtil.contains(
+        parent = uri,
+        child = child
+      )
+
+  }
+
   /**
    * Build URI and clean it from escaped characters. Happen on Windows
    */
