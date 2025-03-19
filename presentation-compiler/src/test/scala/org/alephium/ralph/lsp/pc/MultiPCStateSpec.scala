@@ -1,10 +1,8 @@
 // Copyright (c) Alephium
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package org.alephium.ralph.lsp.server
+package org.alephium.ralph.lsp.pc
 
-import org.alephium.ralph.lsp.pc.PCState
-import org.alephium.ralph.lsp.server.state.ServerState
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
@@ -13,14 +11,14 @@ import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 import scala.util.Random
 
-class ServerStateSpec extends AnyWordSpec with Matchers {
+class MultiPCStateSpec extends AnyWordSpec with Matchers {
 
   "findContains" should {
     def testFind(
         fileURI: String,
         foldURI: String): Option[PCState] =
-      TestServerState
-        .genServerState(Iterable(Paths.get(foldURI).toUri))
+      TestMultiPCState
+        .genMultiPCState(Iterable(Paths.get(foldURI).toUri))
         .findContains(Paths.get(fileURI).toUri)
 
     "return None" when {
@@ -65,12 +63,12 @@ class ServerStateSpec extends AnyWordSpec with Matchers {
   "removeContains" should {
     def testRemove(
         foldURI: Iterable[String],
-        fileURI: String): Option[(ServerState, ArraySeq[PCState])] = {
+        fileURI: String): Option[(MultiPCState, ArraySeq[PCState])] = {
       val parent =
         foldURI.map(Paths.get(_).toUri)
 
-      TestServerState
-        .genServerState(parent)
+      TestMultiPCState
+        .genMultiPCState(parent)
         .remove(Paths.get(fileURI).toUri)
     }
 
@@ -100,14 +98,14 @@ class ServerStateSpec extends AnyWordSpec with Matchers {
     "return Some" when {
       "fileURI matches exactly to the parentURI" when {
         "only on workspace exists" in {
-          val (serverState, removedStated) =
+          val (multiPCState, removedStated) =
             testRemove(
               foldURI = Array("/parent/child"),
               fileURI = "/parent/child"
             ).value
 
           // no PCStates left
-          serverState.pcState shouldBe empty
+          multiPCState.states shouldBe empty
 
           // assert removes
           removedStated should have size 1
@@ -115,7 +113,7 @@ class ServerStateSpec extends AnyWordSpec with Matchers {
         }
 
         "multiple workspaces exist" in {
-          val (serverState, removedStated) =
+          val (multiPCState, removedStated) =
             testRemove(
               foldURI = Random.shuffle(
                 List(
@@ -135,7 +133,7 @@ class ServerStateSpec extends AnyWordSpec with Matchers {
             }
 
           // other PCStates left
-          val actual = serverState.pcState.map(_.workspace.workspaceURI)
+          val actual = multiPCState.states.map(_.workspace.workspaceURI)
           actual should contain theSameElementsAs expected
 
           // assert removes

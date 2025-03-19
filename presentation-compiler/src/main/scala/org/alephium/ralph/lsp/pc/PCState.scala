@@ -7,6 +7,13 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuildState
 
+object PCState {
+
+  val orderByWorkspaceId: Ordering[PCState] =
+    Ordering.by(_.workspace.workspaceURI)
+
+}
+
 /**
  * Presentation-compiler state.
  *

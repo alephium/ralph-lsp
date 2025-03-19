@@ -5,7 +5,7 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.PCState
+import org.alephium.ralph.lsp.pc.{MultiPCState, PCState}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 import org.eclipse.lsp4j._
@@ -65,18 +65,20 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
         ServerState(
           client = Some(client),
           listener = Some(listener),
-          pcState =
+          multiPCState =
             // Note the duplicate workspaceURI3 is not created
-            ArraySeq(
-              PCState(
-                workspace = WorkspaceState.Created(workspaceURI1),
-                buildErrors = None,
-                tsErrors = None
-              ),
-              PCState(
-                workspace = WorkspaceState.Created(workspaceURI2),
-                buildErrors = None,
-                tsErrors = None
+            MultiPCState(
+              ArraySeq(
+                PCState(
+                  workspace = WorkspaceState.Created(workspaceURI1),
+                  buildErrors = None,
+                  tsErrors = None
+                ),
+                PCState(
+                  workspace = WorkspaceState.Created(workspaceURI2),
+                  buildErrors = None,
+                  tsErrors = None
+                )
               )
             ),
           clientAllowsWatchedFilesDynamicRegistration = false,

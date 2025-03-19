@@ -6,7 +6,7 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.{PC, PCState}
+import org.alephium.ralph.lsp.pc.{MultiPCState, PC, PCState}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
@@ -47,7 +47,7 @@ object RalphLangServer extends StrictImplicitLogging {
       ServerState(
         client = Some(client),
         listener = Some(listener),
-        pcState = ArraySeq.empty,
+        multiPCState = MultiPCState.empty,
         clientAllowsWatchedFilesDynamicRegistration = clientAllowsWatchedFilesDynamicRegistration,
         trace = Trace.Off,
         shutdownReceived = false
@@ -63,7 +63,7 @@ object RalphLangServer extends StrictImplicitLogging {
       ServerState(
         client = None,
         listener = None,
-        pcState = ArraySeq.empty,
+        multiPCState = MultiPCState.empty,
         clientAllowsWatchedFilesDynamicRegistration = false,
         trace = Trace.Off,
         shutdownReceived = false
@@ -778,7 +778,7 @@ class RalphLangServer private (
    * @return The matching [[PCState]], or all [[PCState]]s if none is found.
    */
   private def getOneOrAllPCStates(fileURI: URI): ArraySeq[PCState] =
-    thisServer.state.findContains(fileURI) match {
+    thisServer.state.multiPCState.findContains(fileURI) match {
       case Some(pcState) =>
         ArraySeq(pcState)
 
@@ -794,15 +794,15 @@ class RalphLangServer private (
     }
 
   private def getPCStateOrNone(fileURI: URI): Option[PCState] =
-    thisServer.state.findContains(fileURI)
+    thisServer.state.multiPCState.findContains(fileURI)
 
   private def getAllPCStates(): ArraySeq[PCState] =
-    if (thisServer.state.pcState.isEmpty)
+    if (thisServer.state.multiPCState.isEmpty)
       // Workspace folder is not defined.
       // This is not expected to occur since `initialized` is always invoked first.
       notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
     else
-      state.pcState
+      state.multiPCState.states
 
   private def removePCState(fileURI: URI): Option[ArraySeq[PCState]] =
     thisServer.state.remove(fileURI) map {
