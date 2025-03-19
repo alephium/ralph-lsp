@@ -19,7 +19,7 @@ import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter, GoToConverter, RenameConverter}
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
-import org.alephium.ralph.lsp.utils.{CollectionUtil, IsCancelled}
+import org.alephium.ralph.lsp.utils.{CollectionUtil, IsCancelled, ProcessUtil}
 import org.alephium.ralph.lsp.utils.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.utils.URIUtil.{isFileScheme, uri}
 import org.eclipse.lsp4j._
@@ -206,7 +206,10 @@ class RalphLangServer private (
       cancelChecker =>
         logger.debug("Initialize request")
 
-        shutdownOnProcessExit(params.getProcessId)
+        ProcessUtil.closeOnExit(
+          processId = params.getProcessId,
+          closeable = () => thisServer.exit()
+        )
 
         // Previous commit uses the non-deprecated API but that does not work in vim.
         val workspaceFolderURIs =
@@ -901,46 +904,6 @@ class RalphLangServer private (
 
   override def setTrace(params: SetTraceParams): Unit =
     setTraceSetting(params.getValue)
-
-  /**
-   * Shuts down the server if the process either exits or cannot be found.
-   *
-   * @param processId The ID of the process to monitor. If null, the server will
-   *                  immediately initiate a shutdown.
-   */
-  private def shutdownOnProcessExit(processId: Integer): Unit =
-    Option(processId) match {
-      case Some(pid) =>
-        logger.trace(s"Monitoring exit of process with ID $pid.")
-        if (pid == ProcessHandle.current().pid().toInt)
-          logger.debug(s"Monitoring exit of current process $pid is not allowed.")
-        else
-          ProcessHandle.of(pid.toLong).toScala match {
-            case Some(processHandle) =>
-              val _ =
-                processHandle
-                  .onExit()
-                  .thenRun {
-                    () =>
-                      logger.trace(s"Parent process with ID $pid has terminated. Initiating server shutdown.")
-                      thisServer.exit()
-                  }
-                  .exceptionally {
-                    throwable =>
-                      logger.error(s"Error during ProcessHandle exit for PID $pid. Initiating forced server shutdown.", throwable)
-                      thisServer.exit()
-                      null
-                  }
-
-            case None =>
-              logger.error(s"Process with ID $pid not found. Initiating server shutdown.")
-              thisServer.exit()
-          }
-
-      case None =>
-        logger.error("Provided process ID is null. Initiating server shutdown.")
-        thisServer.exit()
-    }
 
   override def shutdown(): CompletableFuture[AnyRef] =
     runSync {

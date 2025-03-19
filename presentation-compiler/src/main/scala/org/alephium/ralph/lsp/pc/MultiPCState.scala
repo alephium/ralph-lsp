@@ -4,8 +4,8 @@
 package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.pc.notification.{ErrorSourceNotInWorkspace, ErrorWorkspaceFolderNotSupplied}
 import org.alephium.ralph.lsp.pc.MultiPCState._
+import org.alephium.ralph.lsp.pc.error.{ErrorSourceNotInWorkspace, ErrorWorkspaceFolderNotSupplied}
 import org.alephium.ralph.lsp.utils.CollectionUtil.CollectionUtilImplicits
 import org.alephium.ralph.lsp.utils.URIUtil.URIUtilImplicits
 
