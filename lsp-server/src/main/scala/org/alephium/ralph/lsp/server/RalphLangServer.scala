@@ -6,7 +6,7 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.{MultiPCState, PC, PCState}
+import org.alephium.ralph.lsp.pc.{MultiPCState, PC, PCSearcher, PCState}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
@@ -19,8 +19,8 @@ import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter, GoToConverter, RenameConverter}
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
-import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
-import org.alephium.ralph.lsp.utils.CollectionUtil
+import org.alephium.ralph.lsp.utils.{CollectionUtil, IsCancelled}
+import org.alephium.ralph.lsp.utils.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.utils.URIUtil.{isFileScheme, uri}
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CancelChecker, CompletableFutures}
@@ -134,70 +134,8 @@ object RalphLangServer extends StrictImplicitLogging {
     allows contains true
   }
 
-  /**
-   * Executes Go-to services.
-   *
-   * @param fileURI        URI of the file where this request was executed.
-   * @param line           Line number within the file where this request was executed.
-   * @param character      Character number within the Line where this request was executed.
-   * @param searchSettings Settings defined for the input [[CodeProvider]].
-   * @param cancelChecker  Cancellation support instance.
-   * @param currentState   Current presentation-compiler state.
-   * @param codeProvider   Target [[CodeProvider]] to use for responding to this request.
-   * @param logger         Remote client and local logger.
-   * @tparam I The type of input [[CodeProvider]] settings.
-   * @tparam O The type of [[CodeProvider]] function output.
-   * @return Go-to search results.
-   */
-  def goTo[S, I, O <: SourceLocation.GoTo](
-      fileURI: URI,
-      line: Int,
-      character: Int,
-      searchSettings: I,
-      cancelChecker: CancelChecker,
-      currentState: PCState
-    )(implicit codeProvider: CodeProvider[S, I, O],
-      logger: ClientLogger): Iterator[O] =
-    if (!isFileScheme(fileURI)) {
-      Iterator.empty
-    } else {
-      cancelChecker.checkCanceled()
-
-      currentState.workspace match {
-        case sourceAware: WorkspaceState.IsSourceAware =>
-          val goToResult =
-            CodeProvider.search[S, I, O](
-              line = line,
-              character = character,
-              fileURI = fileURI,
-              workspace = sourceAware,
-              searchSettings = searchSettings
-            )
-
-          cancelChecker.checkCanceled()
-
-          goToResult match {
-            case Some(Right(goToLocations)) =>
-              // successful
-              goToLocations
-
-            case Some(Left(error)) =>
-              // Go-to definition failed: Log the error message
-              logger.info(s"${codeProvider.productPrefix} unsuccessful: " + error.message)
-              Iterator.empty
-
-            case None =>
-              // Not a ralph file, or it does not belong to the workspace's contract-uri directory.
-              Iterator.empty
-          }
-
-        case _: WorkspaceState.Created =>
-          // Workspace must be compiled at least once to enable GoTo definition.
-          // The server must've invoked the initial compilation in the boot-up initialize function.
-          logger.info(s"${codeProvider.productPrefix} unsuccessful: Workspace is not compiled")
-          Iterator.empty
-      }
-    }
+  @inline private def toIsCancelled(cancelChecker: CancelChecker): IsCancelled =
+    IsCancelled(cancelChecker.isCanceled)
 
 }
 
@@ -538,12 +476,12 @@ class RalphLangServer private (
               () =>
                 getOneOrAllPCStates(fileURI) flatMap {
                   currentState =>
-                    goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
+                    PCSearcher.goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
                       fileURI = fileURI,
                       line = line,
                       character = character,
                       searchSettings = (SoftAST, settings),
-                      cancelChecker = cancelChecker,
+                      isCancelled = toIsCancelled(cancelChecker),
                       currentState = currentState
                     )
                 }
@@ -555,12 +493,12 @@ class RalphLangServer private (
         val strictASTLocations =
           getOneOrAllPCStates(fileURI) flatMap {
             currentState =>
-              goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
+              PCSearcher.goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
                 fileURI = fileURI,
                 line = line,
                 character = character,
                 searchSettings = settings,
-                cancelChecker = cancelChecker,
+                toIsCancelled(cancelChecker),
                 currentState = currentState
               )
           }
@@ -603,12 +541,12 @@ class RalphLangServer private (
         val locations =
           getOneOrAllPCStates(fileURI) flatMap {
             currentState =>
-              goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
+              PCSearcher.goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
                 fileURI = fileURI,
                 line = line,
                 character = character,
                 searchSettings = settings,
-                cancelChecker = cancelChecker,
+                isCancelled = toIsCancelled(cancelChecker),
                 currentState = currentState
               )
           }
@@ -627,12 +565,12 @@ class RalphLangServer private (
         val character = params.getPosition.getCharacter
 
         val locations =
-          goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
+          PCSearcher.goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
             fileURI = fileURI,
             line = line,
             character = character,
             searchSettings = (),
-            cancelChecker = cancelChecker,
+            isCancelled = toIsCancelled(cancelChecker),
             // Uses `OrFail` to ensure a notification is displayed when renaming a file not within an active workspace.
             currentState = getPCStateOrFail(fileURI)
           )
