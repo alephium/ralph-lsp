@@ -19,6 +19,8 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.EitherValues._
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
+import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 
 import scala.collection.immutable.ArraySeq
 import scala.concurrent.ExecutionContext
@@ -89,7 +91,7 @@ class PCSearcherDefinitionSpec extends AnyWordSpec with Matchers with ScalaFutur
             isCancelled = IsCancelled(() => false), // format: on
             pcStates = pcStates
           )
-          .futureValue
+          .futureValue(Timeout(5.seconds))
 
       TestWorkspace delete workspace
 
