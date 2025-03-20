@@ -11,6 +11,8 @@ import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.eclipse.lsp4j.services.LanguageClient
 
 import java.io.{InputStream, OutputStream}
+import java.util.concurrent.Executors
+import scala.concurrent.ExecutionContext
 
 object Main extends StrictLogging {
 
@@ -29,6 +31,12 @@ object Main extends StrictLogging {
     implicit val file: FileAccess =
       FileAccess.disk
 
+    val executor =
+      Executors.newCachedThreadPool()
+
+    implicit val ec: ExecutionContext =
+      ExecutionContext.fromExecutor(executor)
+
     val server = RalphLangServer()
 
     // configure LSP server
@@ -38,6 +46,7 @@ object Main extends StrictLogging {
         .setOutput(out)
         .setRemoteInterface(classOf[LanguageClient])
         .setLocalService(server)
+        .setExecutorService(executor)
         .create()
 
     server.setInitialState(

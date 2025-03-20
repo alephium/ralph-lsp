@@ -5,7 +5,7 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.{MultiPCState, PCState}
+import org.alephium.ralph.lsp.pc.{PCStates, PCState}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 import org.eclipse.lsp4j._
@@ -19,6 +19,7 @@ import java.nio.file.Paths
 import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.collection.immutable.ArraySeq
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Promise
 import scala.jdk.FutureConverters._
 
@@ -65,9 +66,9 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
         ServerState(
           client = Some(client),
           listener = Some(listener),
-          multiPCState =
+          pcStates =
             // Note the duplicate workspaceURI3 is not created
-            MultiPCState(
+            PCStates(
               ArraySeq(
                 PCState(
                   workspace = WorkspaceState.Created(workspaceURI1),

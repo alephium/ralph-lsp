@@ -4,9 +4,9 @@
 package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.{MultiPCState, PC, PCSearcher, PCState}
+import org.alephium.ralph.lsp.pc.{PCStates, PC, PCSearcher, PCState}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
@@ -31,8 +31,9 @@ import java.nio.file.Paths
 import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.collection.immutable.ArraySeq
+import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.{IterableHasAsScala, MapHasAsJava, SeqHasAsJava}
-import scala.jdk.OptionConverters.RichOptional
+import scala.jdk.FutureConverters.FutureOps
 
 object RalphLangServer extends StrictImplicitLogging {
 
@@ -42,12 +43,13 @@ object RalphLangServer extends StrictImplicitLogging {
       listener: JFuture[Void],
       clientAllowsWatchedFilesDynamicRegistration: Boolean = false
     )(implicit compiler: CompilerAccess,
-      file: FileAccess): RalphLangServer = {
+      file: FileAccess,
+      ec: ExecutionContext): RalphLangServer = {
     val initialState =
       ServerState(
         client = Some(client),
         listener = Some(listener),
-        multiPCState = MultiPCState.empty,
+        pcStates = PCStates.empty,
         clientAllowsWatchedFilesDynamicRegistration = clientAllowsWatchedFilesDynamicRegistration,
         trace = Trace.Off,
         shutdownReceived = false
@@ -58,12 +60,13 @@ object RalphLangServer extends StrictImplicitLogging {
 
   // format: off
   def apply()(implicit compiler: CompilerAccess,
-              file: FileAccess): RalphLangServer = // format: on
+              file: FileAccess,
+              ec: ExecutionContext): RalphLangServer = // format: on
     new RalphLangServer(
       ServerState(
         client = None,
         listener = None,
-        multiPCState = MultiPCState.empty,
+        pcStates = PCStates.empty,
         clientAllowsWatchedFilesDynamicRegistration = false,
         trace = Trace.Off,
         shutdownReceived = false
@@ -148,7 +151,8 @@ object RalphLangServer extends StrictImplicitLogging {
 class RalphLangServer private (
     @volatile private var state: ServerState
   )(implicit compiler: CompilerAccess,
-    file: FileAccess)
+    file: FileAccess,
+    ec: ExecutionContext)
   extends LanguageServer
      with TextDocumentService
      with WorkspaceService
@@ -239,7 +243,7 @@ class RalphLangServer private (
       logger.debug("Client initialized")
       registerClientCapabilities()
       // Invoke initial compilation. Trigger it as a build file changed.
-      getAllPCStates() foreach triggerInitialBuild
+      getPCStatesOrFail() foreach triggerInitialBuild
     }
 
   /**
@@ -460,67 +464,19 @@ class RalphLangServer private (
     }
 
   override def definition(params: DefinitionParams): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =
-    runAsync {
-      cancelChecker =>
-        val fileURI   = uri(params.getTextDocument.getUri)
-        val line      = params.getPosition.getLine
-        val character = params.getPosition.getCharacter
-
-        val settings =
-          GoToDefSetting(
-            includeAbstractFuncDef = false,
-            includeInheritance = true
+    runFuture {
+      isCancelled =>
+        PCSearcher
+          .definition(
+            fileURI = uri(params.getTextDocument.getUri),
+            line = params.getPosition.getLine,
+            character = params.getPosition.getCharacter,
+            enableSoftParser = enableSoftParser,
+            isCancelled = isCancelled,
+            pcStates = getPCStates()
           )
-
-        // Compute soft AST locations asynchronously
-        val softASTLocationsFuture =
-          if (enableSoftParser)
-            CompletableFuture.supplyAsync {
-              () =>
-                getOneOrAllPCStates(fileURI) flatMap {
-                  currentState =>
-                    PCSearcher.goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
-                      fileURI = fileURI,
-                      line = line,
-                      character = character,
-                      searchSettings = (SoftAST, settings),
-                      isCancelled = toIsCancelled(cancelChecker),
-                      currentState = currentState
-                    )
-                }
-            }
-          else
-            CompletableFuture.completedFuture(Iterator.empty)
-
-        // Compute strict AST locations within the current thread
-        val strictASTLocations =
-          getOneOrAllPCStates(fileURI) flatMap {
-            currentState =>
-              PCSearcher.goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
-                fileURI = fileURI,
-                line = line,
-                character = character,
-                searchSettings = settings,
-                toIsCancelled(cancelChecker),
-                currentState = currentState
-              )
-          }
-
-        // Combine the results asynchronously
-        softASTLocationsFuture.thenApply {
-          softASTLocations =>
-            val allLocations =
-              strictASTLocations ++ softASTLocations
-
-            val uniqueLocations =
-              GoToConverter.toLocations(allLocations.iterator).distinct
-
-            val javaLocations =
-              CollectionUtil.toJavaList(uniqueLocations)
-
-            messages.Either.forLeft[util.List[_ <: Location], util.List[_ <: LocationLink]](javaLocations)
-        }
-    }.thenCompose(java.util.function.Function.identity())
+          .map(_.map(GoToConverter.toLocationEither))
+    }
 
   override def references(params: ReferenceParams): CompletableFuture[util.List[_ <: Location]] =
     runAsync {
@@ -550,7 +506,7 @@ class RalphLangServer private (
                 character = character,
                 searchSettings = settings,
                 isCancelled = toIsCancelled(cancelChecker),
-                currentState = currentState
+                state = currentState
               )
           }
 
@@ -575,7 +531,7 @@ class RalphLangServer private (
             searchSettings = (),
             isCancelled = toIsCancelled(cancelChecker),
             // Uses `OrFail` to ensure a notification is displayed when renaming a file not within an active workspace.
-            currentState = getPCStateOrFail(fileURI)
+            state = getPCStateOrFail(fileURI)
           )
 
         val javaLocations =
@@ -719,12 +675,12 @@ class RalphLangServer private (
    * @return The matching [[PCState]], or all [[PCState]]s if none is found.
    */
   private def getOneOrAllPCStates(fileURI: URI): ArraySeq[PCState] =
-    thisServer.state.multiPCState.findContains(fileURI) match {
+    getPCStates().findContains(fileURI) match {
       case Some(pcState) =>
         ArraySeq(pcState)
 
       case None =>
-        getAllPCStates()
+        getPCStatesOrFail()
     }
 
   private def getPCStateOrFail(fileURI: URI): PCState =
@@ -735,15 +691,20 @@ class RalphLangServer private (
     }
 
   private def getPCStateOrNone(fileURI: URI): Option[PCState] =
-    thisServer.state.multiPCState.findContains(fileURI)
+    getPCStates().findContains(fileURI)
 
-  private def getAllPCStates(): ArraySeq[PCState] =
-    if (thisServer.state.multiPCState.isEmpty)
+  private def getPCStatesOrFail(): ArraySeq[PCState] = {
+    val pcStates = getPCStates()
+    if (pcStates.states.isEmpty)
       // Workspace folder is not defined.
       // This is not expected to occur since `initialized` is always invoked first.
       notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
     else
-      state.multiPCState.states
+      pcStates.states
+  }
+
+  private def getPCStates(): PCStates =
+    thisServer.state.pcStates
 
   private def removePCState(fileURI: URI): Option[ArraySeq[PCState]] =
     thisServer.state.remove(fileURI) map {
@@ -861,6 +822,14 @@ class RalphLangServer private (
     throw exception
   }
 
+  /** Notify the client and log */
+  private def notify(error: server.ResponseError): ResponseError = {
+    val client    = getClient()
+    val exception = client.show(error).toResponseErrorException
+    logger.error(error.getMessage, exception)
+    error
+  }
+
   /** Write to log file and send the error to the client */
   private def logAndSend[A](error: server.ResponseError): CompletableFuture[A] = {
     logger.error(error.getMessage, error.toResponseErrorException)
@@ -896,6 +865,39 @@ class RalphLangServer private (
   private def runAsync[A](f: CancelChecker => A): CompletableFuture[A] =
     CompletableFutures
       .computeAsync(f(_))
+      .whenComplete {
+        case (_, error) =>
+          if (error != null)
+            logger.error("Async request failed", error)
+      }
+
+  /**
+   * Runs a Scala [[Future]] within Java's [[CompletableFuture]].
+   * If an error occurs, the client is notified.
+   *
+   * @param f The function to execute.
+   */
+  private def runFuture[A](f: IsCancelled => Future[Either[CompilerMessage.Error, A]]): CompletableFuture[A] =
+    CompletableFutures
+      .computeAsync {
+        cancelChecker =>
+          // Expect a scala future.
+          // Scala `Future`s are used internally within `presentation-compiler`.
+          val scalaFuture =
+            f(toIsCancelled(cancelChecker)).flatMap {
+              case Left(error) =>
+                val responseError = ResponseError.InvalidRequest(error)
+                notify(responseError)
+                Future.failed(responseError.toResponseErrorException)
+
+              case Right(result) =>
+                Future.successful(result)
+            }
+
+          // convert back to Java
+          scalaFuture.asJava
+      }
+      .thenCompose(java.util.function.Function.identity())
       .whenComplete {
         case (_, error) =>
           if (error != null)

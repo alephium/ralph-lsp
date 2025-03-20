@@ -11,14 +11,14 @@ import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 import scala.util.Random
 
-class MultiPCStateSpec extends AnyWordSpec with Matchers {
+class PCStatesSpec extends AnyWordSpec with Matchers {
 
   "findContains" should {
     def testFind(
         fileURI: String,
         foldURI: String): Option[PCState] =
-      TestMultiPCState
-        .genMultiPCState(Iterable(Paths.get(foldURI).toUri))
+      TestPCStates
+        .genPCStates(Iterable(Paths.get(foldURI).toUri))
         .findContains(Paths.get(fileURI).toUri)
 
     "return None" when {
@@ -63,12 +63,12 @@ class MultiPCStateSpec extends AnyWordSpec with Matchers {
   "removeContains" should {
     def testRemove(
         foldURI: Iterable[String],
-        fileURI: String): Option[(MultiPCState, ArraySeq[PCState])] = {
+        fileURI: String): Option[(PCStates, ArraySeq[PCState])] = {
       val parent =
         foldURI.map(Paths.get(_).toUri)
 
-      TestMultiPCState
-        .genMultiPCState(parent)
+      TestPCStates
+        .genPCStates(parent)
         .remove(Paths.get(fileURI).toUri)
     }
 
@@ -98,14 +98,14 @@ class MultiPCStateSpec extends AnyWordSpec with Matchers {
     "return Some" when {
       "fileURI matches exactly to the parentURI" when {
         "only on workspace exists" in {
-          val (multiPCState, removedStated) =
+          val (pcStates, removedStated) =
             testRemove(
               foldURI = Array("/parent/child"),
               fileURI = "/parent/child"
             ).value
 
           // no PCStates left
-          multiPCState.states shouldBe empty
+          pcStates.states shouldBe empty
 
           // assert removes
           removedStated should have size 1
@@ -113,7 +113,7 @@ class MultiPCStateSpec extends AnyWordSpec with Matchers {
         }
 
         "multiple workspaces exist" in {
-          val (multiPCState, removedStated) =
+          val (pcStates, removedStated) =
             testRemove(
               foldURI = Random.shuffle(
                 List(
@@ -133,7 +133,7 @@ class MultiPCStateSpec extends AnyWordSpec with Matchers {
             }
 
           // other PCStates left
-          val actual = multiPCState.states.map(_.workspace.workspaceURI)
+          val actual = pcStates.states.map(_.workspace.workspaceURI)
           actual should contain theSameElementsAs expected
 
           // assert removes

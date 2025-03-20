@@ -3,7 +3,7 @@
 
 package org.alephium.ralph.lsp.server
 
-import org.alephium.ralph.lsp.pc.{MultiPCState, PCState}
+import org.alephium.ralph.lsp.pc.{PCStates, PCState}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 
@@ -27,7 +27,7 @@ object TestServerState {
     ServerState(
       client = None,
       listener = None,
-      multiPCState = MultiPCState(pcStates.to(ArraySeq)),
+      pcStates = PCStates(pcStates.to(ArraySeq)),
       clientAllowsWatchedFilesDynamicRegistration = Random.nextBoolean(),
       trace = Random.shuffle(Trace.all.toList).head,
       shutdownReceived = Random.nextBoolean()

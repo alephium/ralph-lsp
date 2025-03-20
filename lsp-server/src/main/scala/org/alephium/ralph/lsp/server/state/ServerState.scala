@@ -3,7 +3,7 @@
 
 package org.alephium.ralph.lsp.server.state
 
-import org.alephium.ralph.lsp.pc.{MultiPCState, PCState}
+import org.alephium.ralph.lsp.pc.{PCState, PCStates}
 import org.alephium.ralph.lsp.server.RalphLangClient
 
 import java.net.URI
@@ -13,16 +13,16 @@ import scala.collection.immutable.ArraySeq
 /**
  * Stores Ralph's LSP server state.
  *
- * @param client       Client proxy.
- * @param listener     Request listener which is canceled on server termination.
- * @param multiPCState A collection of all [[PCState]].
- *                     Multiple states are created when more than one root-workspace is available.
- * @param trace        Client configured setting. See also [[org.eclipse.lsp4j.TraceValue]].
+ * @param client   Client proxy.
+ * @param listener Request listener which is canceled on server termination.
+ * @param pcStates A collection of all [[PCState]].
+ *                 Multiple states are created when more than one root-workspace is available.
+ * @param trace    Client configured setting. See also [[org.eclipse.lsp4j.TraceValue]].
  */
 case class ServerState(
     client: Option[RalphLangClient],
     listener: Option[JFuture[Void]],
-    multiPCState: MultiPCState,
+    pcStates: PCStates,
     clientAllowsWatchedFilesDynamicRegistration: Boolean,
     trace: Trace,
     shutdownReceived: Boolean) {
@@ -32,7 +32,7 @@ case class ServerState(
    * otherwise, inserts the new [[PCState]].
    */
   def put(newState: PCState): ServerState =
-    this.copy(multiPCState = multiPCState put newState)
+    this.copy(pcStates = pcStates put newState)
 
   /**
    * Removes all existing [[PCState]]s that matches the given `workspaceURI`.
@@ -43,9 +43,9 @@ case class ServerState(
    *         - The second element is the sequence of removed [[PCState]]s.
    */
   def remove(workspaceURI: URI): Option[(ServerState, ArraySeq[PCState])] =
-    multiPCState.remove(workspaceURI) map {
+    pcStates.remove(workspaceURI) map {
       case (server, states) =>
-        (this.copy(multiPCState = server), states)
+        (this.copy(pcStates = server), states)
     }
 
 }

@@ -8,20 +8,27 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import java.net.URI
 import scala.collection.immutable.ArraySeq
 
-object TestMultiPCState {
+object TestPCStates {
 
-  def genMultiPCState(uris: Iterable[URI]): MultiPCState = {
+  def genPCStates(uris: Iterable[URI]): PCStates = {
+    val workspaces =
+      uris map WorkspaceState.Created
+
+    genPCStates(workspaces.toSeq: _*)
+  }
+
+  def genPCStates(workspaces: WorkspaceState*): PCStates = {
     val pcStates =
-      uris map {
-        fileURI =>
+      workspaces map {
+        workspace =>
           PCState(
-            workspace = WorkspaceState.Created(fileURI),
+            workspace = workspace,
             buildErrors = None,
             tsErrors = None
           )
       }
 
-    MultiPCState(pcStates.to(ArraySeq))
+    PCStates(pcStates.to(ArraySeq))
   }
 
 }

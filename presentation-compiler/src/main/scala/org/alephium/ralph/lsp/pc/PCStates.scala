@@ -4,7 +4,7 @@
 package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.pc.MultiPCState._
+import org.alephium.ralph.lsp.pc.PCStates._
 import org.alephium.ralph.lsp.pc.error.{ErrorSourceNotInWorkspace, ErrorWorkspaceFolderNotSupplied}
 import org.alephium.ralph.lsp.utils.CollectionUtil.CollectionUtilImplicits
 import org.alephium.ralph.lsp.utils.URIUtil.URIUtilImplicits
@@ -12,13 +12,13 @@ import org.alephium.ralph.lsp.utils.URIUtil.URIUtilImplicits
 import java.net.URI
 import scala.collection.immutable.ArraySeq
 
-object MultiPCState {
+object PCStates {
 
   implicit val pcStateOrder: Ordering[PCState] =
     PCState.orderByWorkspaceId
 
-  def empty: MultiPCState =
-    MultiPCState(ArraySeq.empty)
+  def empty: PCStates =
+    PCStates(ArraySeq.empty)
 
 }
 
@@ -29,27 +29,24 @@ object MultiPCState {
  *
  * @param states The state of each root directory.
  */
-case class MultiPCState(states: ArraySeq[PCState]) extends AnyVal {
-
-  def isEmpty: Boolean =
-    states.isEmpty
+case class PCStates(states: ArraySeq[PCState]) extends AnyVal {
 
   /**
    * Replaces an existing [[PCState]] with a matching workspace URI if it exists,
    * otherwise, inserts the new [[PCState]].
    */
-  def put(newState: PCState): MultiPCState =
-    MultiPCState(states = states put newState)
+  def put(newState: PCState): PCStates =
+    PCStates(states = states put newState)
 
   /**
    * Removes all existing [[PCState]]s that matches the given `workspaceURI`.
    *
    * @return [[None]] if no [[PCState]]s are removed.
    *         Otherwise, returns a tuple where:
-   *         - The first element is the updated [[MultiPCState]] after removal.
+   *         - The first element is the updated [[PCStates]] after removal.
    *         - The second element is the sequence of removed [[PCState]]s.
    */
-  def remove(workspaceURI: URI): Option[(MultiPCState, ArraySeq[PCState])] = {
+  def remove(workspaceURI: URI): Option[(PCStates, ArraySeq[PCState])] = {
     val removedStates =
       states.filter(_.workspace.workspaceURI == workspaceURI)
 
@@ -57,7 +54,7 @@ case class MultiPCState(states: ArraySeq[PCState]) extends AnyVal {
       None
     } else {
       val newStates      = states.diff(removedStates)
-      val newServerState = MultiPCState(states = newStates)
+      val newServerState = PCStates(states = newStates)
       Some((newServerState, removedStates))
     }
   }
