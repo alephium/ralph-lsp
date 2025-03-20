@@ -3,6 +3,7 @@
 
 package org.alephium.ralph.lsp.server
 
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.eclipse.lsp4j.jsonrpc.messages.{ResponseErrorCode, ResponseError => LSP4JResponseError}
 
@@ -54,6 +55,12 @@ object ResponseError {
     extends ResponseError(
       errorCode = ResponseErrorCode.InvalidRequest,
       message = "Request Ignored: A server shutdown request is in progress"
+    )
+
+  case class InvalidRequest(error: CompilerMessage.Error)
+    extends ResponseError(
+      errorCode = ResponseErrorCode.InvalidRequest,
+      message = error.message
     )
 
   /** An unexpected internal error */

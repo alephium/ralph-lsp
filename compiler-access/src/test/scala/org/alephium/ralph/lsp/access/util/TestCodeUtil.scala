@@ -7,6 +7,7 @@ import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange, SourceIndexExtra}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.scalatest.Assertions.fail
+import org.scalatest.matchers.should.Matchers._
 
 object TestCodeUtil {
 
@@ -16,6 +17,12 @@ object TestCodeUtil {
 
   def codeLines(code: String): Array[String] =
     code.split("\r\n|\r|\n")
+
+  def lineRange(code: String): LineRange = {
+    val (range, _, _, _) = lineRanges(code)
+    range should have size 1
+    range.head
+  }
 
   /**
    * Extracts line ranges from the code provided between the symbols `>>...<<`.

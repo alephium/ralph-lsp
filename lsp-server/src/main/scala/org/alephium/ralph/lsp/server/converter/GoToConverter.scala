@@ -4,10 +4,26 @@
 package org.alephium.ralph.lsp.server.converter
 
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.utils.CollectionUtil
 import org.eclipse.lsp4j
+import org.eclipse.lsp4j.{Location, LocationLink}
+import org.eclipse.lsp4j.jsonrpc.messages
+
+import java.util
 
 /** Converts Go-to definition types to LSP4J types */
 object GoToConverter {
+
+  /** Convert [[SourceLocation.GoTo]]s to LSP4J's either type [[lsp4j.Location]] */
+  def toLocationEither(locations: Iterable[SourceLocation.GoTo]): messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]] = {
+    val javaLocations =
+      GoToConverter.toLocations(locations.iterator)
+
+    val javaList =
+      CollectionUtil.toJavaList(javaLocations)
+
+    messages.Either.forLeft[util.List[_ <: Location], util.List[_ <: LocationLink]](javaList)
+  }
 
   /** Convert [[SourceLocation.GoTo]]s to LSP4J types [[lsp4j.Location]] */
   def toLocations(goTos: Iterator[SourceLocation.GoTo]): Iterator[lsp4j.Location] =

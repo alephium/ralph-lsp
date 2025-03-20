@@ -4,9 +4,9 @@
 package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.{PC, PCState}
+import org.alephium.ralph.lsp.pc.{PCStates, PC, PCSearcher, PCState}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
@@ -19,8 +19,8 @@ import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter, GoToConverter, RenameConverter}
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
-import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
-import org.alephium.ralph.lsp.utils.CollectionUtil
+import org.alephium.ralph.lsp.utils.{CollectionUtil, IsCancelled, ProcessUtil}
+import org.alephium.ralph.lsp.utils.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.utils.URIUtil.{isFileScheme, uri}
 import org.eclipse.lsp4j._
 import org.eclipse.lsp4j.jsonrpc.{messages, CancelChecker, CompletableFutures}
@@ -31,8 +31,9 @@ import java.nio.file.Paths
 import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.collection.immutable.ArraySeq
+import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.{IterableHasAsScala, MapHasAsJava, SeqHasAsJava}
-import scala.jdk.OptionConverters.RichOptional
+import scala.jdk.FutureConverters.FutureOps
 
 object RalphLangServer extends StrictImplicitLogging {
 
@@ -42,12 +43,13 @@ object RalphLangServer extends StrictImplicitLogging {
       listener: JFuture[Void],
       clientAllowsWatchedFilesDynamicRegistration: Boolean = false
     )(implicit compiler: CompilerAccess,
-      file: FileAccess): RalphLangServer = {
+      file: FileAccess,
+      ec: ExecutionContext): RalphLangServer = {
     val initialState =
       ServerState(
         client = Some(client),
         listener = Some(listener),
-        pcState = ArraySeq.empty,
+        pcStates = PCStates.empty,
         clientAllowsWatchedFilesDynamicRegistration = clientAllowsWatchedFilesDynamicRegistration,
         trace = Trace.Off,
         shutdownReceived = false
@@ -58,12 +60,13 @@ object RalphLangServer extends StrictImplicitLogging {
 
   // format: off
   def apply()(implicit compiler: CompilerAccess,
-              file: FileAccess): RalphLangServer = // format: on
+              file: FileAccess,
+              ec: ExecutionContext): RalphLangServer = // format: on
     new RalphLangServer(
       ServerState(
         client = None,
         listener = None,
-        pcState = ArraySeq.empty,
+        pcStates = PCStates.empty,
         clientAllowsWatchedFilesDynamicRegistration = false,
         trace = Trace.Off,
         shutdownReceived = false
@@ -134,70 +137,8 @@ object RalphLangServer extends StrictImplicitLogging {
     allows contains true
   }
 
-  /**
-   * Executes Go-to services.
-   *
-   * @param fileURI        URI of the file where this request was executed.
-   * @param line           Line number within the file where this request was executed.
-   * @param character      Character number within the Line where this request was executed.
-   * @param searchSettings Settings defined for the input [[CodeProvider]].
-   * @param cancelChecker  Cancellation support instance.
-   * @param currentState   Current presentation-compiler state.
-   * @param codeProvider   Target [[CodeProvider]] to use for responding to this request.
-   * @param logger         Remote client and local logger.
-   * @tparam I The type of input [[CodeProvider]] settings.
-   * @tparam O The type of [[CodeProvider]] function output.
-   * @return Go-to search results.
-   */
-  def goTo[S, I, O <: SourceLocation.GoTo](
-      fileURI: URI,
-      line: Int,
-      character: Int,
-      searchSettings: I,
-      cancelChecker: CancelChecker,
-      currentState: PCState
-    )(implicit codeProvider: CodeProvider[S, I, O],
-      logger: ClientLogger): Iterator[O] =
-    if (!isFileScheme(fileURI)) {
-      Iterator.empty
-    } else {
-      cancelChecker.checkCanceled()
-
-      currentState.workspace match {
-        case sourceAware: WorkspaceState.IsSourceAware =>
-          val goToResult =
-            CodeProvider.search[S, I, O](
-              line = line,
-              character = character,
-              fileURI = fileURI,
-              workspace = sourceAware,
-              searchSettings = searchSettings
-            )
-
-          cancelChecker.checkCanceled()
-
-          goToResult match {
-            case Some(Right(goToLocations)) =>
-              // successful
-              goToLocations
-
-            case Some(Left(error)) =>
-              // Go-to definition failed: Log the error message
-              logger.info(s"${codeProvider.productPrefix} unsuccessful: " + error.message)
-              Iterator.empty
-
-            case None =>
-              // Not a ralph file, or it does not belong to the workspace's contract-uri directory.
-              Iterator.empty
-          }
-
-        case _: WorkspaceState.Created =>
-          // Workspace must be compiled at least once to enable GoTo definition.
-          // The server must've invoked the initial compilation in the boot-up initialize function.
-          logger.info(s"${codeProvider.productPrefix} unsuccessful: Workspace is not compiled")
-          Iterator.empty
-      }
-    }
+  @inline private def toIsCancelled(cancelChecker: CancelChecker): IsCancelled =
+    IsCancelled(cancelChecker.isCanceled)
 
 }
 
@@ -210,7 +151,8 @@ object RalphLangServer extends StrictImplicitLogging {
 class RalphLangServer private (
     @volatile private var state: ServerState
   )(implicit compiler: CompilerAccess,
-    file: FileAccess)
+    file: FileAccess,
+    ec: ExecutionContext)
   extends LanguageServer
      with TextDocumentService
      with WorkspaceService
@@ -268,7 +210,10 @@ class RalphLangServer private (
       cancelChecker =>
         logger.debug("Initialize request")
 
-        shutdownOnProcessExit(params.getProcessId)
+        ProcessUtil.closeOnExit(
+          processId = params.getProcessId,
+          closeable = () => thisServer.exit()
+        )
 
         // Previous commit uses the non-deprecated API but that does not work in vim.
         val workspaceFolderURIs =
@@ -298,7 +243,7 @@ class RalphLangServer private (
       logger.debug("Client initialized")
       registerClientCapabilities()
       // Invoke initial compilation. Trigger it as a build file changed.
-      getAllPCStates() foreach triggerInitialBuild
+      getPCStatesOrFail() foreach triggerInitialBuild
     }
 
   /**
@@ -519,67 +464,19 @@ class RalphLangServer private (
     }
 
   override def definition(params: DefinitionParams): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =
-    runAsync {
-      cancelChecker =>
-        val fileURI   = uri(params.getTextDocument.getUri)
-        val line      = params.getPosition.getLine
-        val character = params.getPosition.getCharacter
-
-        val settings =
-          GoToDefSetting(
-            includeAbstractFuncDef = false,
-            includeInheritance = true
+    runFuture {
+      isCancelled =>
+        PCSearcher
+          .definition(
+            fileURI = uri(params.getTextDocument.getUri),
+            line = params.getPosition.getLine,
+            character = params.getPosition.getCharacter,
+            enableSoftParser = enableSoftParser,
+            isCancelled = isCancelled,
+            pcStates = getPCStates()
           )
-
-        // Compute soft AST locations asynchronously
-        val softASTLocationsFuture =
-          if (enableSoftParser)
-            CompletableFuture.supplyAsync {
-              () =>
-                getOneOrAllPCStates(fileURI) flatMap {
-                  currentState =>
-                    goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
-                      fileURI = fileURI,
-                      line = line,
-                      character = character,
-                      searchSettings = (SoftAST, settings),
-                      cancelChecker = cancelChecker,
-                      currentState = currentState
-                    )
-                }
-            }
-          else
-            CompletableFuture.completedFuture(Iterator.empty)
-
-        // Compute strict AST locations within the current thread
-        val strictASTLocations =
-          getOneOrAllPCStates(fileURI) flatMap {
-            currentState =>
-              goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
-                fileURI = fileURI,
-                line = line,
-                character = character,
-                searchSettings = settings,
-                cancelChecker = cancelChecker,
-                currentState = currentState
-              )
-          }
-
-        // Combine the results asynchronously
-        softASTLocationsFuture.thenApply {
-          softASTLocations =>
-            val allLocations =
-              strictASTLocations ++ softASTLocations
-
-            val uniqueLocations =
-              GoToConverter.toLocations(allLocations.iterator).distinct
-
-            val javaLocations =
-              CollectionUtil.toJavaList(uniqueLocations)
-
-            messages.Either.forLeft[util.List[_ <: Location], util.List[_ <: LocationLink]](javaLocations)
-        }
-    }.thenCompose(java.util.function.Function.identity())
+          .map(_.map(GoToConverter.toLocationEither))
+    }
 
   override def references(params: ReferenceParams): CompletableFuture[util.List[_ <: Location]] =
     runAsync {
@@ -603,13 +500,13 @@ class RalphLangServer private (
         val locations =
           getOneOrAllPCStates(fileURI) flatMap {
             currentState =>
-              goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
+              PCSearcher.goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
                 fileURI = fileURI,
                 line = line,
                 character = character,
                 searchSettings = settings,
-                cancelChecker = cancelChecker,
-                currentState = currentState
+                isCancelled = toIsCancelled(cancelChecker),
+                state = currentState
               )
           }
 
@@ -627,14 +524,14 @@ class RalphLangServer private (
         val character = params.getPosition.getCharacter
 
         val locations =
-          goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
+          PCSearcher.goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
             fileURI = fileURI,
             line = line,
             character = character,
             searchSettings = (),
-            cancelChecker = cancelChecker,
+            isCancelled = toIsCancelled(cancelChecker),
             // Uses `OrFail` to ensure a notification is displayed when renaming a file not within an active workspace.
-            currentState = getPCStateOrFail(fileURI)
+            state = getPCStateOrFail(fileURI)
           )
 
         val javaLocations =
@@ -778,12 +675,12 @@ class RalphLangServer private (
    * @return The matching [[PCState]], or all [[PCState]]s if none is found.
    */
   private def getOneOrAllPCStates(fileURI: URI): ArraySeq[PCState] =
-    thisServer.state.findContains(fileURI) match {
+    getPCStates().findContains(fileURI) match {
       case Some(pcState) =>
         ArraySeq(pcState)
 
       case None =>
-        getAllPCStates()
+        getPCStatesOrFail()
     }
 
   private def getPCStateOrFail(fileURI: URI): PCState =
@@ -794,15 +691,20 @@ class RalphLangServer private (
     }
 
   private def getPCStateOrNone(fileURI: URI): Option[PCState] =
-    thisServer.state.findContains(fileURI)
+    getPCStates().findContains(fileURI)
 
-  private def getAllPCStates(): ArraySeq[PCState] =
-    if (thisServer.state.pcState.isEmpty)
+  private def getPCStatesOrFail(): ArraySeq[PCState] = {
+    val pcStates = getPCStates()
+    if (pcStates.states.isEmpty)
       // Workspace folder is not defined.
       // This is not expected to occur since `initialized` is always invoked first.
       notifyAndThrow(ResponseError.WorkspaceFolderNotSupplied)
     else
-      state.pcState
+      pcStates.states
+  }
+
+  private def getPCStates(): PCStates =
+    thisServer.state.pcStates
 
   private def removePCState(fileURI: URI): Option[ArraySeq[PCState]] =
     thisServer.state.remove(fileURI) map {
@@ -920,6 +822,14 @@ class RalphLangServer private (
     throw exception
   }
 
+  /** Notify the client and log */
+  private def notify(error: server.ResponseError): ResponseError = {
+    val client    = getClient()
+    val exception = client.show(error).toResponseErrorException
+    logger.error(error.getMessage, exception)
+    error
+  }
+
   /** Write to log file and send the error to the client */
   private def logAndSend[A](error: server.ResponseError): CompletableFuture[A] = {
     logger.error(error.getMessage, error.toResponseErrorException)
@@ -961,48 +871,41 @@ class RalphLangServer private (
             logger.error("Async request failed", error)
       }
 
+  /**
+   * Runs a Scala [[Future]] within Java's [[CompletableFuture]].
+   * If an error occurs, the client is notified.
+   *
+   * @param f The function to execute.
+   */
+  private def runFuture[A](f: IsCancelled => Future[Either[CompilerMessage.Error, A]]): CompletableFuture[A] =
+    CompletableFutures
+      .computeAsync {
+        cancelChecker =>
+          // Expect a scala future.
+          // Scala `Future`s are used internally within `presentation-compiler`.
+          val scalaFuture =
+            f(toIsCancelled(cancelChecker)).flatMap {
+              case Left(error) =>
+                val responseError = ResponseError.InvalidRequest(error)
+                notify(responseError)
+                Future.failed(responseError.toResponseErrorException)
+
+              case Right(result) =>
+                Future.successful(result)
+            }
+
+          // convert back to Java
+          scalaFuture.asJava
+      }
+      .thenCompose(java.util.function.Function.identity())
+      .whenComplete {
+        case (_, error) =>
+          if (error != null)
+            logger.error("Async request failed", error)
+      }
+
   override def setTrace(params: SetTraceParams): Unit =
     setTraceSetting(params.getValue)
-
-  /**
-   * Shuts down the server if the process either exits or cannot be found.
-   *
-   * @param processId The ID of the process to monitor. If null, the server will
-   *                  immediately initiate a shutdown.
-   */
-  private def shutdownOnProcessExit(processId: Integer): Unit =
-    Option(processId) match {
-      case Some(pid) =>
-        logger.trace(s"Monitoring exit of process with ID $pid.")
-        if (pid == ProcessHandle.current().pid().toInt)
-          logger.debug(s"Monitoring exit of current process $pid is not allowed.")
-        else
-          ProcessHandle.of(pid.toLong).toScala match {
-            case Some(processHandle) =>
-              val _ =
-                processHandle
-                  .onExit()
-                  .thenRun {
-                    () =>
-                      logger.trace(s"Parent process with ID $pid has terminated. Initiating server shutdown.")
-                      thisServer.exit()
-                  }
-                  .exceptionally {
-                    throwable =>
-                      logger.error(s"Error during ProcessHandle exit for PID $pid. Initiating forced server shutdown.", throwable)
-                      thisServer.exit()
-                      null
-                  }
-
-            case None =>
-              logger.error(s"Process with ID $pid not found. Initiating server shutdown.")
-              thisServer.exit()
-          }
-
-      case None =>
-        logger.error("Provided process ID is null. Initiating server shutdown.")
-        thisServer.exit()
-    }
 
   override def shutdown(): CompletableFuture[AnyRef] =
     runSync {

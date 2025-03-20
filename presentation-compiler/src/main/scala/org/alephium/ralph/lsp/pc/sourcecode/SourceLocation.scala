@@ -8,6 +8,9 @@ import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.LineRange
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
+
+import scala.collection.immutable.ArraySeq
 
 /** Represents a position within a source-file in parsed state. */
 sealed trait SourceLocation {
@@ -16,7 +19,32 @@ sealed trait SourceLocation {
 
 }
 
-object SourceLocation {
+object SourceLocation extends StrictImplicitLogging {
+
+  /**
+   * Ensures that only unique definitions for a file and range are kept.
+   *
+   * @note [[GoTo.index]] must be defined.
+   *       The [[GoTo.index]] is optional because [[Ast.Positioned.sourceIndex]] is optional.
+   *       However, [[SoftAST.index]] is always defined.
+   *       Ensure that [[SourceIndex]] from [[Ast.Positioned]] is defined in the input.
+   * @return Unique results based on file URI and range.
+   */
+  def distinctByLocation[A <: GoTo](goTo: ArraySeq[A])(implicit logger: ClientLogger): ArraySeq[A] =
+    goTo.distinctBy {
+      goToDef =>
+        val index =
+          goToDef.index.map {
+            sourceIndex =>
+              (sourceIndex.from, sourceIndex.to)
+          }
+
+        // Report to debug cases where index is `None`
+        if (index.isEmpty)
+          logger.error(s"`${goToDef.getClass.getName}` contains `None` source-index. FileURI: `${goToDef.parsed.fileURI}`")
+
+        (index, goToDef.parsed.fileURI)
+    }
 
   /**
    * Result types for GoTo location search results.
