@@ -20,7 +20,6 @@ import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild, TestRal
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.{BuiltInFunctionDownloader, DependencyDownloader, StdInterfaceDownloader}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
-import org.alephium.ralph.SourceIndex
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers._
@@ -270,17 +269,13 @@ object TestCodeProvider {
           (result.parsed.fileURI, result.toLineRange().value)
       }
 
-    val codeWithNoSymbols =
-      codeWithoutLineRangeSymbols.replace(TestCodeUtil.SEARCH_INDICATOR, "")
-
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
     // The error output of the above test is difficult to debug because `SourceIndex` only emits numbers.
     // For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
     // This print statement outputs a formatted compiler error message for better readability.
     tryOrPrintIndexer(
       codeBeingTested = code,
-      codeWithoutSymbols = codeWithNoSymbols,
-      actualIndexes = searchResultList.flatMap(_.index)
+      code = searchResultList
     ) {
       actual should contain theSameElementsAs expectedGoToLocations
     }
@@ -755,12 +750,12 @@ object TestCodeProvider {
    * This prints a formatted compiler error message for better readability.
    *
    * @param codeBeingTested    The actual code being tested
-   * @param codeWithoutSymbols Test code without the test markers `>><<` and `@@`.
+   * @param code This is the executed code and the actual search result indexes,
+   *             without the test markers `>><<` and `@@`.
    */
   private def tryOrPrintIndexer[T](
       codeBeingTested: String,
-      codeWithoutSymbols: String,
-      actualIndexes: Iterable[SourceIndex],
+      code: List[SourceLocation.GoTo],
       message: String = "Actual"
     )(f: => T): T =
     try
@@ -773,47 +768,42 @@ object TestCodeProvider {
         // print the actual result
         printAsError(
           message = message,
-          code = codeWithoutSymbols,
-          actualIndexes = actualIndexes
+          code = code
         )
 
         throw throwable
     }
 
   /**
-   * Prints the given [[SourceIndex]]s as an error messages.
+   * Prints the given [[org.alephium.ralph.SourceIndex]]s as an error messages.
    *
    * @param message The pointer error message.
-   * @param code    The code executed.
-   * @param actualIndexes Indexes to report as error message.
+   * @param code    The executed code and the actual search result indexes.
    * @return String formatted error messages.
    */
   private def printAsError(
       message: String,
-      code: String,
-      actualIndexes: Iterable[SourceIndex]): Unit =
+      code: List[SourceLocation.GoTo]): Unit =
     toErrorMessage(
       message = message,
-      code = code,
-      actualIndexes = actualIndexes
+      code = code
     ).foreach(println)
 
   /**
-   * Transforms the given [[SourceIndex]]s as an error messages.
+   * Transforms the given [[org.alephium.ralph.SourceIndex]]s as an error messages.
    *
    * @param message The pointer error message.
-   * @param code    The code executed.
-   * @param actualIndexes Indexes to report as error message.
+   * @param code    The executed code and the actual search result indexes.
    * @return String formatted error messages.
    */
   private def toErrorMessage(
       message: String,
-      code: String,
-      actualIndexes: Iterable[SourceIndex]): Iterable[String] =
-    actualIndexes map {
-      index =>
+      code: List[SourceLocation.GoTo]): Iterable[String] =
+    code map {
+      result =>
+        val index          = result.index.value
         val error          = CompilerError(message, Some(index))
-        val formattedError = error.toFormatter(code).format(Some(Console.RED))
+        val formattedError = error.toFormatter(result.parsed.code).format(Some(Console.RED))
         s"Index: $index\n$formattedError"
     }
 
