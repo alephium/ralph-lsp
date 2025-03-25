@@ -24,6 +24,12 @@ object TestCodeUtil {
     range.head
   }
 
+  def lineRangesOnly(code: String): Array[LineRange] =
+    lineRanges(code)._1
+
+  def removeRangeSymbols(code: String): String =
+    lineRanges(code)._2
+
   /**
    * Extracts line ranges from the code provided between the symbols `>>...<<`.
    *
@@ -64,29 +70,30 @@ object TestCodeUtil {
   /**
    *  Extracts the 'LinePosition', as well as the index from the code provided where `@@` is located.
    */
-  def indicatorPosition(code: String): (LinePosition, Int, String) = {
-    val lines = codeLines(code)
-
+  def indicatorPositionOrFail(code: String): (LinePosition, Int, String) =
     // find the line where @@ is located
-    lines.zipWithIndex.find(_._1.contains(SEARCH_INDICATOR)) match {
-      case Some((line, lineIndex)) =>
-        val index = code.indexOf(SEARCH_INDICATOR)
-        // find the character where @@ is located
-        val character =
-          line.indexOf(SEARCH_INDICATOR)
+    indicatorPosition(code) getOrElse fail(s"Location indicator '$SEARCH_INDICATOR' not provided")
 
-        // remove @@
-        val codeWithoutAtSymbol =
-          code.replaceFirst(SEARCH_INDICATOR, "")
+  // find the line where @@ is located
+  def indicatorPosition(code: String): Option[(LinePosition, Int, String)] =
+    codeLines(code)
+      .zipWithIndex
+      .find(_._1.contains(SEARCH_INDICATOR))
+      .map {
+        case (line, lineIndex) =>
+          val index = code.indexOf(SEARCH_INDICATOR)
+          // find the character where @@ is located
+          val character =
+            line.indexOf(SEARCH_INDICATOR)
 
-        val linePosition = LinePosition(lineIndex, character)
+          // remove @@
+          val codeWithoutAtSymbol =
+            code.replaceFirst(SEARCH_INDICATOR, "")
 
-        (linePosition, index, codeWithoutAtSymbol)
+          val linePosition = LinePosition(lineIndex, character)
 
-      case None =>
-        fail(s"Location indicator '$SEARCH_INDICATOR' not provided")
-    }
-  }
+          (linePosition, index, codeWithoutAtSymbol)
+      }
 
   /**
    * Extracts the [[SourceIndex]] from the given input.

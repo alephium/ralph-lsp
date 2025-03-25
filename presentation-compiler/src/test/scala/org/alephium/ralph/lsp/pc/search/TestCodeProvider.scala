@@ -20,7 +20,6 @@ import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild, TestRal
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.{BuiltInFunctionDownloader, DependencyDownloader, StdInterfaceDownloader}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
-import org.alephium.ralph.SourceIndex
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers._
@@ -52,9 +51,9 @@ object TestCodeProvider {
    * @param code The code to run code completion on.
    * @return A list of code completion suggestions.
    */
-  def suggest(code: String): List[Suggestion] =
+  def suggest(code: String*): List[Suggestion] =
     TestCodeProvider[SourceCodeState.Parsed, Unit, Suggestion](
-      code = code,
+      code = code.to(ArraySeq),
       searchSettings = (),
       dependencyDownloaders = DependencyDownloader.natives()
     )._1.toList
@@ -68,24 +67,24 @@ object TestCodeProvider {
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
-  def goToDefinitionStrict(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] =
+  def goToDefinitionStrict(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[(URI, LineRange)] =
     goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
-      code = code,
+      code = code.to(ArraySeq),
       searchSettings = settings
     )
 
-  def goToDefinitionSoft(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] =
+  def goToDefinitionSoft(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[(URI, LineRange)] =
     goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
-      code = code,
+      code = code.to(ArraySeq),
       searchSettings = (SoftAST, settings)
     )
 
   /** Executes go-to-definition providers for both StrictAST and [[SoftAST]] */
-  def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String): List[(URI, LineRange)] = {
-    val resultStrict       = goToDefinitionStrict(settings)(code)
+  def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[(URI, LineRange)] = {
+    val resultStrict       = goToDefinitionStrict(settings)(code: _*)
     val resultStrictRanges = resultStrict.map(_._2)
 
-    val resultSoft       = goToDefinitionSoft(settings)(code)
+    val resultSoft       = goToDefinitionSoft(settings)(code: _*)
     val resultSoftRanges = resultSoft.map(_._2)
 
     // Assert that both go-to-def services (Strict & Soft) return the same result.
@@ -106,15 +105,15 @@ object TestCodeProvider {
       code = code
     )
 
-  def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String): List[(URI, LineRange)] =
+  def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String*): List[(URI, LineRange)] =
     goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
-      code = code,
+      code = code.to(ArraySeq),
       searchSettings = settings
     )
 
-  def goToRename(code: String): List[(URI, LineRange)] =
+  def goToRename(code: String*): List[(URI, LineRange)] =
     goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
-      code = code,
+      code = code.to(ArraySeq),
       searchSettings = ()
     )
 
@@ -163,7 +162,7 @@ object TestCodeProvider {
     // This should be most expressed on the declaration.
     val firstResult =
       goTo(
-        code = code,
+        code = ArraySeq(code),
         searchSettings = settings
       ).map(_._2)
 
@@ -208,7 +207,7 @@ object TestCodeProvider {
         val newRanges =
           reportCodeOnFailure {
             goTo(
-              code = newCode,
+              code = ArraySeq(newCode),
               searchSettings = settings
             ).map(_._2)
           }
@@ -229,20 +228,23 @@ object TestCodeProvider {
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
-  def goTo[S, I, O <: SourceLocation.GoTo](
-      code: String,
+  private def goTo[S, I, O <: SourceLocation.GoTo](
+      code: ArraySeq[String],
       searchSettings: I
     )(implicit codeProvider: CodeProvider[S, I, O]): List[(URI, LineRange)] = {
     // To find line ranges remove the select indicator @@
     val codeWithoutSelectSymbol =
-      code.replace(TestCodeUtil.SEARCH_INDICATOR, "")
+      code.map(_.replace(TestCodeUtil.SEARCH_INDICATOR, ""))
 
-    val (expectedLineRanges, _, _, _) =
-      TestCodeUtil.lineRanges(codeWithoutSelectSymbol)
+    val expectedLineRanges =
+      (codeWithoutSelectSymbol map TestCodeUtil.lineRanges).map {
+        case (ranges, code, _, _) =>
+          (ranges, code)
+      }
 
     // Remove all line-range indicators and keep the select indicator @@
     val codeWithoutLineRangeSymbols =
-      code.replaceAll(">>|<<", "")
+      code.map(_.replaceAll(">>|<<", ""))
 
     // Execute go-to definition.
     val (searchResultIterator, sourceCode, _) =
@@ -254,9 +256,15 @@ object TestCodeProvider {
 
     // Expect GoToLocations to also contain the fileURI
     val expectedGoToLocations =
-      expectedLineRanges map {
-        lineRange =>
-          (sourceCode.fileURI, lineRange)
+      expectedLineRanges flatMap {
+        case (ranges, code) =>
+          val targetCode =
+            sourceCode.find(_.code == code).value
+
+          ranges map {
+            range =>
+              (targetCode.fileURI, range)
+          }
       }
 
     // Convert to List for debugging
@@ -270,17 +278,13 @@ object TestCodeProvider {
           (result.parsed.fileURI, result.toLineRange().value)
       }
 
-    val codeWithNoSymbols =
-      codeWithoutLineRangeSymbols.replace(TestCodeUtil.SEARCH_INDICATOR, "")
-
     // assert that the go-to definition jumps to all text between the go-to symbols << and >>
     // The error output of the above test is difficult to debug because `SourceIndex` only emits numbers.
     // For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
     // This print statement outputs a formatted compiler error message for better readability.
     tryOrPrintIndexer(
       codeBeingTested = code,
-      codeWithoutSymbols = codeWithNoSymbols,
-      actualIndexes = searchResultList.flatMap(_.index)
+      code = searchResultList
     ) {
       actual should contain theSameElementsAs expectedGoToLocations
     }
@@ -303,7 +307,7 @@ object TestCodeProvider {
       code: String,
       expected: Option[String]): Assertion =
     goToDependencyStrict(
-      code = code,
+      code = ArraySeq(code),
       expected = expected.map {
         string =>
           (string, string)
@@ -323,9 +327,9 @@ object TestCodeProvider {
    *                 and the second is the highlighted token in that line.
    * @param code     The code with the search indicator '@@'.
    */
-  def goToStd(expected: Option[(String, String)])(code: String): Assertion =
+  def goToStd(expected: Option[(String, String)])(code: String*): Assertion =
     goToDependency(
-      code = code,
+      code = code.to(ArraySeq),
       expected = expected,
       downloader = StdInterfaceDownloader
     )
@@ -390,9 +394,9 @@ object TestCodeProvider {
 
     val (indicatorPosition, _, codeWithoutIndicatorMarker) =
       if (isIndicatorInDependency)
-        TestCodeUtil.indicatorPosition(dependency) // maybe the indicator in dependency code
+        TestCodeUtil.indicatorPositionOrFail(dependency) // maybe the indicator in dependency code
       else
-        TestCodeUtil.indicatorPosition(workspace) // otherwise, the indicator must be in dependency code
+        TestCodeUtil.indicatorPositionOrFail(workspace) // otherwise, the indicator must be in dependency code
 
     val (dependencyLineRange, dependencyCodeWithoutRangeMarkers, _, _) =
       if (isIndicatorInDependency)
@@ -433,7 +437,7 @@ object TestCodeProvider {
               )
         }
         .sample
-        .get
+        .value
 
     // the one dependency is written with custom code.
     build.dependencies should have size 1
@@ -449,7 +453,7 @@ object TestCodeProvider {
           code = workspaceCodeWithoutRangeMarkers
         )
         .sample
-        .get
+        .value
 
     // use the selected fileURI to be the one with @@ indicator.
     val selectedFileURI =
@@ -466,7 +470,7 @@ object TestCodeProvider {
         selectedFileURI = selectedFileURI,
         searchSettings = searchSettings,
         build = build,
-        workspaceSourceCode = sourceCode
+        workspaceSourceCode = ArraySeq(sourceCode)
       )
 
     testWorkspace.sourceCode should have size 1
@@ -492,7 +496,7 @@ object TestCodeProvider {
    *                   We don't want generated libraries being written to `~/ralph-lsp`.
    */
   private def goToDependency(
-      code: String,
+      code: ArraySeq[String],
       expected: Option[(String, String)],
       downloader: DependencyDownloader.Native): Assertion = {
     goToDependencyStrict(
@@ -521,11 +525,11 @@ object TestCodeProvider {
    *                   We don't want generated libraries being written to `~/ralph-lsp`.
    */
   private def goToDependencyStrict(
-      code: String,
+      code: ArraySeq[String],
       expected: Option[(String, String)],
       downloader: DependencyDownloader.Native): Assertion = {
-    val (_, codeWithoutGoToSymbols, _, _) =
-      TestCodeUtil.lineRanges(code)
+    val codeWithoutGoToSymbols =
+      code map TestCodeUtil.removeRangeSymbols
 
     // Execute go-to definition on strict-AST.
     val (searchResult, _, workspace) =
@@ -556,11 +560,11 @@ object TestCodeProvider {
    *                   We don't want generated libraries being written to `~/ralph-lsp`.
    */
   private def goToDependencySoft(
-      code: String,
+      code: ArraySeq[String],
       expected: Option[(String, String)],
       downloader: DependencyDownloader.Native): Assertion = {
-    val (_, codeWithoutGoToSymbols, _, _) =
-      TestCodeUtil.lineRanges(code)
+    val codeWithoutGoToSymbols =
+      code map TestCodeUtil.removeRangeSymbols
 
     // Execute go-to definition on SoftAST.
     val (searchResult, _, workspace) =
@@ -618,8 +622,7 @@ object TestCodeProvider {
 
                 // compute the line range
                 TestCodeUtil
-                  .lineRanges(codeWithRangeSymbols)
-                  ._1
+                  .lineRangesOnly(codeWithRangeSymbols)
                   .map {
                     lineRange =>
                       (builtInFile.fileURI, lineRange)
@@ -655,52 +658,84 @@ object TestCodeProvider {
    *                              We don't want generated libraries being written to `~/ralph-lsp`.
    */
   private def apply[S, I, O](
-      code: String,
       searchSettings: I,
-      dependencyDownloaders: ArraySeq[DependencyDownloader.Native]
-    )(implicit provider: CodeProvider[S, I, O]): (Iterator[O], SourceCodeState.IsCodeAware, WorkspaceState.IsParsedAndCompiled) = {
+      dependencyDownloaders: ArraySeq[DependencyDownloader.Native],
+      code: ArraySeq[String]
+    )(implicit provider: CodeProvider[S, I, O]): (Iterator[O], ArraySeq[SourceCodeState.IsCodeAware], WorkspaceState.IsParsedAndCompiled) = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess           = FileAccess.disk
     implicit val compiler: CompilerAccess   = CompilerAccess.ralphc
 
-    val (linePosition, _, codeWithoutAtSymbol) =
-      TestCodeUtil.indicatorPosition(code)
+    val (withoutAt, withAt) =
+      code partitionMap {
+        code =>
+          // - Right = Code with the `@` symbol (expected only 1)
+          // - Left  = Code without the `@` symbol
+          TestCodeUtil.indicatorPosition(code) match {
+            case Some((location, _, code)) =>
+              Right((location, code))
+
+            case None =>
+              Left(code)
+          }
+      }
+
+    // there should only be 1 source-code with the `@` symbol
+    withAt should have size 1
+    val (atPosition, codeWithAt) = withAt.head
 
     // create a build file
     val build =
       TestBuild
         .genCompiledOK(dependencyDownloaders = dependencyDownloaders)
         .sample
-        .get
+        .value
 
-    // generate source-code for the code
-    val sourceCode =
+    val sourceCodeWithAt =
       TestSourceCode
         .genOnDiskAndPersist(
           build = build,
-          code = codeWithoutAtSymbol
+          code = codeWithAt
         )
         .sample
-        .get
+        .value
+
+    val sourceCodeWithoutAt =
+      withoutAt map {
+        code =>
+          TestSourceCode
+            .genOnDiskAndPersist(
+              build = build,
+              code = code
+            )
+            .sample
+            .value
+      }
+
+    val workspaceSourceCode =
+      sourceCodeWithoutAt :+ sourceCodeWithAt
 
     // run completion at that line and character
     val (searchResult, workspace) =
       TestCodeProvider(
-        line = linePosition.line,
-        character = linePosition.character,
-        selectedFileURI = sourceCode.fileURI,
+        line = atPosition.line,
+        character = atPosition.character,
+        selectedFileURI = sourceCodeWithAt.fileURI,
         searchSettings = searchSettings,
         build = build,
-        workspaceSourceCode = sourceCode
+        workspaceSourceCode = workspaceSourceCode
       )
 
-    workspace.sourceCode should have size 1
+    workspace.sourceCode should have size code.size.toLong
 
     // delete the workspace
     TestWorkspace delete workspace
 
-    (searchResult.value, workspace.sourceCode.head.asInstanceOf[SourceCodeState.IsCodeAware], workspace)
+    // The workspace must contain `CodeAware` source files, meaning - it is read from disk.
+    val codeAwareSource =
+      workspace.sourceCode.asInstanceOf[ArraySeq[SourceCodeState.IsCodeAware]]
 
+    (searchResult.value, codeAwareSource, workspace)
   }
 
   /**
@@ -718,7 +753,7 @@ object TestCodeProvider {
       selectedFileURI: URI,
       searchSettings: I,
       build: BuildState.Compiled,
-      workspaceSourceCode: SourceCodeState.OnDisk
+      workspaceSourceCode: ArraySeq[SourceCodeState.OnDisk]
     )(implicit provider: CodeProvider[S, I, O],
       client: ClientLogger,
       file: FileAccess,
@@ -728,7 +763,7 @@ object TestCodeProvider {
     val workspace =
       WorkspaceState.UnCompiled(
         build = build,
-        sourceCode = ArraySeq(workspaceSourceCode)
+        sourceCode = workspaceSourceCode
       )
 
     // parse and compile workspace
@@ -755,12 +790,12 @@ object TestCodeProvider {
    * This prints a formatted compiler error message for better readability.
    *
    * @param codeBeingTested    The actual code being tested
-   * @param codeWithoutSymbols Test code without the test markers `>><<` and `@@`.
+   * @param code This is the executed code and the actual search result indexes,
+   *             without the test markers `>><<` and `@@`.
    */
   private def tryOrPrintIndexer[T](
-      codeBeingTested: String,
-      codeWithoutSymbols: String,
-      actualIndexes: Iterable[SourceIndex],
+      codeBeingTested: Iterable[String],
+      code: Iterable[SourceLocation.GoTo],
       message: String = "Actual"
     )(f: => T): T =
     try
@@ -768,52 +803,47 @@ object TestCodeProvider {
     catch {
       case throwable: Throwable =>
         // print the code was tested
-        println(codeBeingTested)
+        codeBeingTested foreach println
 
         // print the actual result
         printAsError(
           message = message,
-          code = codeWithoutSymbols,
-          actualIndexes = actualIndexes
+          code = code
         )
 
         throw throwable
     }
 
   /**
-   * Prints the given [[SourceIndex]]s as an error messages.
+   * Prints the given [[org.alephium.ralph.SourceIndex]]s as an error messages.
    *
    * @param message The pointer error message.
-   * @param code    The code executed.
-   * @param actualIndexes Indexes to report as error message.
+   * @param code    The executed code and the actual search result indexes.
    * @return String formatted error messages.
    */
   private def printAsError(
       message: String,
-      code: String,
-      actualIndexes: Iterable[SourceIndex]): Unit =
+      code: Iterable[SourceLocation.GoTo]): Unit =
     toErrorMessage(
       message = message,
-      code = code,
-      actualIndexes = actualIndexes
+      code = code
     ).foreach(println)
 
   /**
-   * Transforms the given [[SourceIndex]]s as an error messages.
+   * Transforms the given [[org.alephium.ralph.SourceIndex]]s as an error messages.
    *
    * @param message The pointer error message.
-   * @param code    The code executed.
-   * @param actualIndexes Indexes to report as error message.
+   * @param code    The executed code and the actual search result indexes.
    * @return String formatted error messages.
    */
   private def toErrorMessage(
       message: String,
-      code: String,
-      actualIndexes: Iterable[SourceIndex]): Iterable[String] =
-    actualIndexes map {
-      index =>
+      code: Iterable[SourceLocation.GoTo]): Iterable[String] =
+    code map {
+      result =>
+        val index          = result.index.value
         val error          = CompilerError(message, Some(index))
-        val formattedError = error.toFormatter(code).format(Some(Console.RED))
+        val formattedError = error.toFormatter(result.parsed.code).format(Some(Console.RED))
         s"Index: $index\n$formattedError"
     }
 
