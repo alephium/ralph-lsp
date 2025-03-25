@@ -384,43 +384,87 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
           }
         }
 
-        "soft-parseable" in {
-          goToDefinitionSoft() {
-            """
-              |Contract Parent2(>>counter<< { }
-              |
-              |// This is not an Abstract, but Go-To definition should still work as expected.
-              |Contract Parent1(mut >>counter<<: U256,
-              |                     >>counter<<) extends Parent2(counter) {
-              |
-              |  // the counter parameter here is not in scope, so it should get added to search result.
-              |  fn function(mut counter: U256) -> () {}
-              |
-              |}
-              |
-              |Contract GoToAssignment(mut >>counter<<) extends Parent1(counter, counter) {
-              |
-              |  let >>counter<<
-              |  let anotherCounter = 1
-              |
-              |  {
-              |    // within a block, so it is out of scope.
-              |    let mut counter = 0
-              |  }
-              |
-              |  fn function(mut >>counter<<: U256) -> {
-              |    let mut >>counter<<
-              |    counter = count@@er
-              |    for (let mut counter = 0; counter <= 4; counter = counter + 1) {
-              |      counter = counter + 1
-              |    }
-              |
-              |    let counter = 0
-              |  }
-              |
-              |  let counter = 0
-              |}
-              |""".stripMargin
+        "soft-parseable" when {
+          "single source-file" in {
+            goToDefinitionSoft() {
+              """
+                |Contract Parent2(>>counter<< { }
+                |
+                |// This is not an Abstract, but Go-To definition should still work as expected.
+                |Contract Parent1(mut >>counter<<: U256,
+                |                     >>counter<<) extends Parent2(counter) {
+                |
+                |  // the counter parameter here is not in scope, so it should get added to search result.
+                |  fn function(mut counter: U256) -> () {}
+                |
+                |}
+                |
+                |Contract GoToAssignment(mut >>counter<<) extends Parent1(counter, counter) {
+                |
+                |  let >>counter<<
+                |  let anotherCounter = 1
+                |
+                |  {
+                |    // within a block, so it is out of scope.
+                |    let mut counter = 0
+                |  }
+                |
+                |  fn function(mut >>counter<<: U256) -> {
+                |    let mut >>counter<<
+                |    counter = count@@er
+                |    for (let mut counter = 0; counter <= 4; counter = counter + 1) {
+                |      counter = counter + 1
+                |    }
+                |
+                |    let counter = 0
+                |  }
+                |
+                |  let counter = 0
+                |}
+                |""".stripMargin
+            }
+          }
+
+          "multiple source-files" in {
+            goToDefinitionSoft()(
+              """
+                |Contract Parent2(>>counter<< { }
+                |""".stripMargin,
+              """
+                |// This is not an Abstract, but Go-To definition should still work as expected.
+                |Contract Parent1(mut >>counter<<: U256,
+                |                     >>counter<<) extends Parent2(counter) {
+                |
+                |  // the counter parameter here is not in scope, so it should get added to search result.
+                |  fn function(mut counter: U256) -> () {}
+                |
+                |}
+                |""".stripMargin,
+              """
+                |Contract GoToAssignment(mut >>counter<<) extends Parent1(counter, counter) {
+                |
+                |  let >>counter<<
+                |  let anotherCounter = 1
+                |
+                |  {
+                |    // within a block, so it is out of scope.
+                |    let mut counter = 0
+                |  }
+                |
+                |  fn function(mut >>counter<<: U256) -> {
+                |    let mut >>counter<<
+                |    counter = count@@er
+                |    for (let mut counter = 0; counter <= 4; counter = counter + 1) {
+                |      counter = counter + 1
+                |    }
+                |
+                |    let counter = 0
+                |  }
+                |
+                |  let counter = 0
+                |}
+                |""".stripMargin
+            )
           }
         }
       }

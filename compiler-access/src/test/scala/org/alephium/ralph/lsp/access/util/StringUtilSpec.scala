@@ -12,7 +12,7 @@ import org.alephium.ralph.lsp.access.util.StringUtil._
 class StringUtilSpec extends AnyWordSpec with Matchers {
 
   def computeIndex(code: String): Assertion = {
-    val (linePosition, index, codeWithoutSymbol) = TestCodeUtil.indicatorPosition(code)
+    val (linePosition, index, codeWithoutSymbol) = TestCodeUtil.indicatorPositionOrFail(code)
     StringUtil.computeIndex(codeWithoutSymbol, linePosition.line, linePosition.character) shouldBe index
   }
 

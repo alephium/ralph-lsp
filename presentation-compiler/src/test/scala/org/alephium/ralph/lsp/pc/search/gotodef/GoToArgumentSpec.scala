@@ -541,29 +541,59 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
     }
 
-    "there are duplicate arguments within inheritance" in {
-      goToDefinition() {
-        """
-          |Abstract Contract Parent3(>>param<<: MyParam,
-          |                          >>param<<: MyParam) { }
-          |
-          |
-          |Abstract Contract Parent2(>>param<<: MyParam,
-          |                          >>param<<: MyParam) extends Parent3() { }
-          |
-          |Abstract Contract Parent1(>>param<<: MyParam) extends Parent2() {
-          |
-          |  // this function also has `interface` as parameter, but it is not in scope.
-          |  pub fn local_function(param: MyParam) -> () { }
-          |}
-          |
-          |Contract GoToField(>>param<<: MyParam) extends Parent1() {
-          |
-          |  pub fn local_function(>>param<<: MyParam) -> () {
-          |    let result = para@@m.function()
-          |  }
-          |}
-          |""".stripMargin
+    "there are duplicate arguments within inheritance" when {
+      "single source-file" in {
+        goToDefinition() {
+          """
+            |Abstract Contract Parent3(>>param<<: MyParam,
+            |                          >>param<<: MyParam) { }
+            |
+            |
+            |Abstract Contract Parent2(>>param<<: MyParam,
+            |                          >>param<<: MyParam) extends Parent3() { }
+            |
+            |Abstract Contract Parent1(>>param<<: MyParam) extends Parent2() {
+            |
+            |  // this function also has `interface` as parameter, but it is not in scope.
+            |  pub fn local_function(param: MyParam) -> () { }
+            |}
+            |
+            |Contract GoToField(>>param<<: MyParam) extends Parent1() {
+            |
+            |  pub fn local_function(>>param<<: MyParam) -> () {
+            |    let result = para@@m.function()
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "multiple source-files" in {
+        goToDefinition()(
+          """
+            |Abstract Contract Parent3(>>param<<: MyParam,
+            |                          >>param<<: MyParam) { }
+            |""".stripMargin,
+          """
+            |Abstract Contract Parent2(>>param<<: MyParam,
+            |                          >>param<<: MyParam) extends Parent3() { }
+            |""".stripMargin,
+          """
+            |Abstract Contract Parent1(>>param<<: MyParam) extends Parent2() {
+            |
+            |  // this function also has `interface` as parameter, but it is not in scope.
+            |  pub fn local_function(param: MyParam) -> () { }
+            |}
+            |""".stripMargin,
+          """
+            |Contract GoToField(>>param<<: MyParam) extends Parent1() {
+            |
+            |  pub fn local_function(>>param<<: MyParam) -> () {
+            |    let result = para@@m.function()
+            |  }
+            |}
+            |""".stripMargin
+        )
       }
     }
 

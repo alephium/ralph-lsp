@@ -49,22 +49,43 @@ class GoToArraySpec extends AnyWordSpec with Matchers {
         )
       }
 
-      "within inheritance" in {
-        goToDefinitionStrict()(
-          """
-            |Contract Parent(>>array<<: [U256; 2])  {
-            |  fn main(array: [U256; 2]) -> () {
-            |    let head = array[0]
-            |  }
-            |}
-            |
-            |Contract Test(>>array<<: [U256; 2]) extends Parent(array) {
-            |  fn main(>>array<<: [U256; 2]) -> () {
-            |    let head = arra@@y[0]
-            |  }
-            |}
-            |""".stripMargin
-        )
+      "within inheritance" when {
+        "single source-file" in {
+          goToDefinitionStrict()(
+            """
+              |Contract Parent(>>array<<: [U256; 2])  {
+              |  fn main(array: [U256; 2]) -> () {
+              |    let head = array[0]
+              |  }
+              |}
+              |
+              |Contract Test(>>array<<: [U256; 2]) extends Parent(array) {
+              |  fn main(>>array<<: [U256; 2]) -> () {
+              |    let head = arra@@y[0]
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "multiple source-files" in {
+          goToDefinitionStrict()(
+            """
+              |Contract Parent(>>array<<: [U256; 2])  {
+              |  fn main(array: [U256; 2]) -> () {
+              |    let head = array[0]
+              |  }
+              |}
+              |""".stripMargin,
+            """
+              |Contract Test(>>array<<: [U256; 2]) extends Parent(array) {
+              |  fn main(>>array<<: [U256; 2]) -> () {
+              |    let head = arra@@y[0]
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
       }
     }
 
