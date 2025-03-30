@@ -417,7 +417,7 @@ object TestCodeProvider {
     val downloader =
       TestDependency.buildDependencyDownloader(
         depId = dependencyId,
-        depCode = dependencyCodeWithoutRangeMarkers
+        depCode = ArraySeq(dependencyCodeWithoutRangeMarkers)
       )
 
     // create a build file

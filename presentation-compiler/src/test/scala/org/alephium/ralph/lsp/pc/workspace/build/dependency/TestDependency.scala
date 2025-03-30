@@ -69,7 +69,7 @@ object TestDependency {
    */
   def buildDependencyDownloader(
       depId: DependencyID,
-      depCode: String
+      depCode: ArraySeq[String]
     )(implicit file: FileAccess,
       compiler: CompilerAccess): DependencyDownloader =
     new DependencyDownloader {
@@ -105,7 +105,7 @@ object TestDependency {
           TestWorkspace
             .genUnCompiled(
               build = build,
-              code = Seq(depCode)
+              code = depCode
             )
             .sample
             .value
