@@ -3,7 +3,6 @@
 
 package org.alephium.ralph.lsp.pc.search
 
-import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.TestCommon
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
@@ -282,7 +281,7 @@ object TestCodeProvider {
     // The error output of the above test is difficult to debug because `SourceIndex` only emits numbers.
     // For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
     // This print statement outputs a formatted compiler error message for better readability.
-    tryOrPrintIndexer(
+    TestCommon.tryOrPrintIndexer(
       codeBeingTested = code,
       code = searchResultList
     ) {
@@ -782,69 +781,5 @@ object TestCodeProvider {
 
     (completionResult.value, compiledWorkspace)
   }
-
-  /**
-   * Some test error outputs are difficult to debug because `SourceIndex` only emits numbers.
-   * For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
-   *
-   * This prints a formatted compiler error message for better readability.
-   *
-   * @param codeBeingTested    The actual code being tested
-   * @param code This is the executed code and the actual search result indexes,
-   *             without the test markers `>><<` and `@@`.
-   */
-  private def tryOrPrintIndexer[T](
-      codeBeingTested: Iterable[String],
-      code: Iterable[SourceLocation.GoTo],
-      message: String = "Actual"
-    )(f: => T): T =
-    try
-      f
-    catch {
-      case throwable: Throwable =>
-        // print the code was tested
-        codeBeingTested foreach println
-
-        // print the actual result
-        printAsError(
-          message = message,
-          code = code
-        )
-
-        throw throwable
-    }
-
-  /**
-   * Prints the given [[org.alephium.ralph.SourceIndex]]s as an error messages.
-   *
-   * @param message The pointer error message.
-   * @param code    The executed code and the actual search result indexes.
-   * @return String formatted error messages.
-   */
-  private def printAsError(
-      message: String,
-      code: Iterable[SourceLocation.GoTo]): Unit =
-    toErrorMessage(
-      message = message,
-      code = code
-    ).foreach(println)
-
-  /**
-   * Transforms the given [[org.alephium.ralph.SourceIndex]]s as an error messages.
-   *
-   * @param message The pointer error message.
-   * @param code    The executed code and the actual search result indexes.
-   * @return String formatted error messages.
-   */
-  private def toErrorMessage(
-      message: String,
-      code: Iterable[SourceLocation.GoTo]): Iterable[String] =
-    code map {
-      result =>
-        val index          = result.index.value
-        val error          = CompilerError(message, Some(index))
-        val formattedError = error.toFormatter(result.parsed.code).format(Some(Console.RED))
-        s"Index: $index\n$formattedError"
-    }
 
 }
