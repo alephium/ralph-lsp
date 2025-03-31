@@ -10,8 +10,7 @@ import org.alephium.ralph.lsp.pc.{PC, PCSearcher, PCState, PCStates}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
 import org.alephium.ralph.lsp.pc.search.{CodeProvider, MultiCodeProvider}
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
-import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
-import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
+import org.alephium.ralph.lsp.pc.search.gotoref.multi.GoToRefMultiSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
@@ -19,7 +18,7 @@ import org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.server.MessageMethods.{WORKSPACE_WATCHED_FILES, WORKSPACE_WATCHED_FILES_ID}
 import org.alephium.ralph.lsp.server.converter.{CompletionConverter, DiagnosticsConverter, GoToConverter, RenameConverter}
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
-import org.alephium.ralph.lsp.utils.{CollectionUtil, IsCancelled, ProcessUtil}
+import org.alephium.ralph.lsp.utils.{IsCancelled, ProcessUtil}
 import org.alephium.ralph.lsp.utils.log.StrictImplicitLogging
 import org.alephium.ralph.lsp.utils.URIUtil.{isFileScheme, uri}
 import org.eclipse.lsp4j._
@@ -480,41 +479,19 @@ class RalphLangServer private (
     }
 
   override def references(params: ReferenceParams): CompletableFuture[util.List[_ <: Location]] =
-    runAsync {
-      cancelChecker =>
-        val fileURI              = uri(params.getTextDocument.getUri)
-        val line                 = params.getPosition.getLine
-        val character            = params.getPosition.getCharacter
-        val isIncludeDeclaration = params.getContext.isIncludeDeclaration
-
-        val settings =
-          GoToRefSetting(
-            includeDeclaration = isIncludeDeclaration,
-            includeTemplateArgumentOverrides = false,
-            includeEventFieldReferences = true,
-            goToDefSetting = GoToDefSetting(
-              includeAbstractFuncDef = false,
-              includeInheritance = true
-            )
+    runFuture {
+      isCancelled =>
+        MultiCodeProvider
+          .search[GoToRefMultiSetting, SourceLocation.GoToRefStrict](
+            fileURI = uri(params.getTextDocument.getUri),
+            line = params.getPosition.getLine,
+            character = params.getPosition.getCharacter,
+            enableSoftParser = enableSoftParser,
+            isCancelled = isCancelled,
+            pcStates = getPCStates(),
+            settings = GoToRefMultiSetting(params.getContext.isIncludeDeclaration)
           )
-
-        val locations =
-          getOneOrAllPCStates(fileURI) flatMap {
-            currentState =>
-              PCSearcher.goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
-                fileURI = fileURI,
-                line = line,
-                character = character,
-                searchSettings = settings,
-                isCancelled = toIsCancelled(cancelChecker),
-                state = currentState
-              )
-          }
-
-        val javaLocations =
-          GoToConverter.toLocations(locations.iterator)
-
-        CollectionUtil.toJavaList(javaLocations)
+          .map(_.map(GoToConverter.toLocations))
     }
 
   override def rename(params: RenameParams): CompletableFuture[WorkspaceEdit] =
@@ -660,28 +637,6 @@ class RalphLangServer private (
           logger.trace(s"Cannot execute change because the source file is not within an active workspace: '$fileURI'")
           Iterable.empty
       }
-    }
-
-  /**
-   * Get the [[PCState]] containing the given `fileURI`.
-   * If no matching [[PCState]] is found, returns all available [[PCState]]s.
-   *
-   * The purpose for retuning all [[PCState]]s is to handle cases
-   * the requested is executed outside the workspace directory,
-   * for example, within dependencies, then APIs like
-   * [[definition]] and [[references]] must be executed on all root-workspaces
-   * where the dependency code is used.
-   *
-   * @param fileURI The `fileURI` to search for in [[PCState]].
-   * @return The matching [[PCState]], or all [[PCState]]s if none is found.
-   */
-  private def getOneOrAllPCStates(fileURI: URI): ArraySeq[PCState] =
-    getPCStates().findContains(fileURI) match {
-      case Some(pcState) =>
-        ArraySeq(pcState)
-
-      case None =>
-        getPCStatesOrFail()
     }
 
   private def getPCStateOrFail(fileURI: URI): PCState =

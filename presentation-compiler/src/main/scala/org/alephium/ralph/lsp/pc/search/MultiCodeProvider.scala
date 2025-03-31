@@ -6,6 +6,7 @@ package org.alephium.ralph.lsp.pc.search
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.PCStates
 import org.alephium.ralph.lsp.pc.search.gotodef.multi.GoToDefMultiCodeProvider
+import org.alephium.ralph.lsp.pc.search.gotoref.multi.{GoToRefMultiCodeProvider, GoToRefMultiSetting}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.utils.IsCancelled
 import org.alephium.ralph.lsp.utils.log.ClientLogger
@@ -53,6 +54,9 @@ object MultiCodeProvider {
 
   implicit val goToDef: MultiCodeProvider[Unit, SourceLocation.GoToDef] =
     GoToDefMultiCodeProvider
+
+  implicit val goToRef: MultiCodeProvider[GoToRefMultiSetting, SourceLocation.GoToRefStrict] =
+    GoToRefMultiCodeProvider
 
   /**
    * Executes the search.
