@@ -143,6 +143,21 @@ object TestSourceCode {
       genUnCompiled(code, fileURI)
     )
 
+  def genParsed(
+      build: BuildState.Compiled,
+      code: String*
+    )(implicit file: FileAccess,
+      compiler: CompilerAccess): Seq[SourceCodeState] =
+    code
+      .zipWithIndex
+      .map {
+        case (code, index) =>
+          genParsed(
+            code = code,
+            fileURI = build.contractURI.resolve(s"file$index.ral")
+          ).sample.value
+      }
+
   def genParsedOK(
       build: BuildState.Compiled,
       code: String*

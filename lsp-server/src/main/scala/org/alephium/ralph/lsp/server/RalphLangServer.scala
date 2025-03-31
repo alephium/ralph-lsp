@@ -6,9 +6,9 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.{PCStates, PC, PCSearcher, PCState}
+import org.alephium.ralph.lsp.pc.{PC, PCSearcher, PCState, PCStates}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
-import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.{CodeProvider, MultiCodeProvider}
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
@@ -466,14 +466,15 @@ class RalphLangServer private (
   override def definition(params: DefinitionParams): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =
     runFuture {
       isCancelled =>
-        PCSearcher
-          .definition(
+        MultiCodeProvider
+          .search[Unit, SourceLocation.GoToDef](
             fileURI = uri(params.getTextDocument.getUri),
             line = params.getPosition.getLine,
             character = params.getPosition.getCharacter,
             enableSoftParser = enableSoftParser,
             isCancelled = isCancelled,
-            pcStates = getPCStates()
+            pcStates = getPCStates(),
+            settings = ()
           )
           .map(_.map(GoToConverter.toLocationEither))
     }
