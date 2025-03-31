@@ -19,10 +19,11 @@ import org.alephium.ralph.lsp.utils.URIUtil
 import java.net.URI
 
 /**
- * A trait representing a code provider, which performs search operations
- * within the source code of a workspace.
+ * A trait representing a code provider that performs search operations
+ * within a single workspace.
  *
- * @tparam I The type of search settings.
+ * @tparam S The type of source code state.
+ * @tparam I The type of search settings or configuration.
  * @tparam O The type of search results.
  */
 trait CodeProvider[S, I, O] extends Product {
@@ -30,10 +31,11 @@ trait CodeProvider[S, I, O] extends Product {
   /**
    * Performs a search operation at the cursor index within the source-code of a workspace.
    *
-   * @param cursorIndex The index location where the search operation is performed.
-   * @param sourceCode  The parsed state of the source-code where the search is executed.
-   * @param workspace   The workspace state where the source-code is located.
-   * @return An iterator over search results of type [[O]].
+   * @param cursorIndex    The index (character offset) in the source code representing the cursor position.
+   * @param sourceCode     The source code state where the search is executed.
+   * @param workspace      The workspace state where the source-code is located.
+   * @param searchSettings Provider-specific settings.
+   * @return Search results.
    */
   def search(
       cursorIndex: Int,

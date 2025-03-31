@@ -3,19 +3,22 @@
 
 package org.alephium.ralph.lsp.pc.workspace
 
+import org.alephium.ralph.lsp.{TestCode, TestFile}
 import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange}
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.lsp.access.util.TestCodeUtil
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
 import org.alephium.ralph.lsp.pc.sourcecode.TestSourceCode._
-import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
-import org.alephium.ralph.lsp.{TestCode, TestFile}
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.scalacheck.Gen
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.OptionValues._
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
-import org.scalatest.matchers.should.Matchers._
 
 /** [[Workspace]] related test functions */
 object TestWorkspace {
@@ -193,6 +196,94 @@ object TestWorkspace {
 
         unCompiled
     }
+
+  /**
+   * Extracts the location of the `@@` marker from the given source code,
+   * and maps each source code snippet to its corresponding source code state within the workspace.
+   * Only one `@@` marker is expected in the input. Any `>><<` markers will be removed.
+   *
+   * @note All workspace code must be unique. To create duplicates, use comments.
+   * @param codeWithMarkers The source code lines containing at most one `@@` marker.
+   * @param workspaces      The workspaces to which the source code lines belong.
+   * @return A tuple consisting of:
+   *         - A pair of the `@@` marker's position and its associated source code state.
+   *         - Other source code states.
+   */
+  def extractAtInfo(
+      codeWithMarkers: ArraySeq[String],
+      workspaces: ArraySeq[WorkspaceState.IsParsedAndCompiled]): ((LinePosition, SourceCodeState.IsCodeAware), ArraySeq[SourceCodeState.IsCodeAware]) = {
+    val (withAt, withoutAt) =
+      TestCodeUtil.extractAtInfo(codeWithMarkers)
+
+    val workspaceSourceCode =
+      workspaces
+        .flatMap(_.sourceCode)
+        .asInstanceOf[ArraySeq[SourceCodeState.IsCodeAware]]
+
+    val dependencySourceCode =
+      workspaces
+        .flatMap(_.build.dependencies.flatMap(_.sourceCode))
+        .distinct
+        .asInstanceOf[ArraySeq[SourceCodeState.IsCodeAware]]
+
+    val allSource =
+      workspaceSourceCode ++ dependencySourceCode
+
+    val atInfo =
+      withAt map {
+        case (position, code) =>
+          val source = allSource.find(_.code == code)
+          (position, source.value)
+      }
+
+    val withoutAtInfo =
+      withoutAt map {
+        code =>
+          val found = allSource.find(_.code == code)
+          found.value
+      }
+
+    (atInfo.value, withoutAtInfo)
+  }
+
+  /**
+   * Extracts the line range `>><<` marker from information the given source code,
+   * and maps each source code snippet to its corresponding source code state within the workspace.
+   * Only the `>><<` markers are expected in the input. Any `@@` markers will be removed.
+   *
+   * @note All workspace code must be unique. To create duplicates, use comments.
+   * @param codeWithMarkers The source code lines containing the range `>><<` markers.
+   * @param workspaces      The workspaces to which the source code lines belong.
+   * @return A tuple consisting of:
+   *         - A pair of the range marker positions and its associated source code state.
+   *         - Other source code states.
+   */
+  def extractLineRange(
+      codeWithMarkers: ArraySeq[String],
+      workspaces: ArraySeq[WorkspaceState.IsParsedAndCompiled]): ArraySeq[(Array[LineRange], SourceCodeState.IsCodeAware)] = {
+    val rangeInfo =
+      TestCodeUtil.extractLineRangeInfo(codeWithMarkers)
+
+    val workspaceSourceCode =
+      workspaces
+        .flatMap(_.sourceCode)
+        .asInstanceOf[ArraySeq[SourceCodeState.IsCodeAware]]
+
+    val dependencySourceCode =
+      workspaces
+        .flatMap(_.build.dependencies.flatMap(_.sourceCode))
+        .distinct
+        .asInstanceOf[ArraySeq[SourceCodeState.IsCodeAware]]
+
+    val allSource =
+      workspaceSourceCode ++ dependencySourceCode
+
+    rangeInfo map {
+      case (position, code) =>
+        val source = allSource.find(_.code == code)
+        (position, source.value)
+    }
+  }
 
   def persist[W <: WorkspaceState.IsSourceAware](
       workspace: W,
