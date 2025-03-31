@@ -600,7 +600,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
     reference.ast.sourceIndex exists {
       referenceSourceIndex =>
         CodeProvider
-          .goToDefinition
+          .goToDef
           .search(
             cursorIndex = referenceSourceIndex.index,
             sourceCode = sourceCode.parsed,

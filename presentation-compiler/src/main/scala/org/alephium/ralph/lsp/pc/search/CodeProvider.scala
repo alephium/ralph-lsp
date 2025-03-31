@@ -7,10 +7,10 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.search.completion.{CodeCompletionProvider, Suggestion}
-import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefinitionProvider, GoToDefSetting}
-import org.alephium.ralph.lsp.pc.search.gotoref.{GoToReferenceProvider, GoToRefSetting}
-import org.alephium.ralph.lsp.pc.search.rename.GoToRenameProvider
-import org.alephium.ralph.lsp.pc.search.soft.gotodef.GoToDefinitionProviderSoft
+import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefCodeProvider, GoToDefSetting}
+import org.alephium.ralph.lsp.pc.search.gotoref.{GoToRefCodeProvider, GoToRefSetting}
+import org.alephium.ralph.lsp.pc.search.rename.GoToRenameCodeProvider
+import org.alephium.ralph.lsp.pc.search.soft.gotodef.GoToDefCodeProviderSoft
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
@@ -51,19 +51,19 @@ object CodeProvider {
     CodeCompletionProvider
 
   /** The go-to definition implementation of [[CodeProvider]]. */
-  implicit val goToDefinition: CodeProvider[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict] =
-    GoToDefinitionProvider
+  implicit val goToDef: CodeProvider[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict] =
+    GoToDefCodeProvider
 
-  implicit val softGoToDefinition: CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] =
-    GoToDefinitionProviderSoft
+  implicit val goToDefSoft: CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] =
+    GoToDefCodeProviderSoft
 
   /** The go-to references implementation of [[CodeProvider]]. */
-  implicit val goToReferences: CodeProvider[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict] =
-    GoToReferenceProvider
+  implicit val goToRef: CodeProvider[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict] =
+    GoToRefCodeProvider
 
   /** The rename request implementation of [[CodeProvider]]. */
   implicit val goToRename: CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict] =
-    GoToRenameProvider
+    GoToRenameCodeProvider
 
   /**
    * Execute search at cursor position within the current workspace state.
@@ -117,7 +117,7 @@ object CodeProvider {
     )(implicit provider: CodeProvider[S, I, O],
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     // Search on dependencies should only run for go-to definitions requests. Code-completion is ignored.
-    if (provider == CodeProvider.goToDefinition || provider == CodeProvider.goToReferences)
+    if (provider == CodeProvider.goToDef || provider == CodeProvider.goToRef)
       workspace
         .build
         .dependencies

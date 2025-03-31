@@ -3,4 +3,4 @@
 
 package org.alephium.ralph.lsp.utils
 
-case class IsCancelled(check: () => Boolean)
+case class IsCancelled(check: () => Boolean) extends AnyVal
