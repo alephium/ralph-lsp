@@ -15,7 +15,7 @@ import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation, TestSourceCode}
 import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, Workspace, WorkspaceState}
-import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild, TestRalphc}
+import org.alephium.ralph.lsp.pc.workspace.build.{TestBuild, TestRalphc}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.{BuiltInFunctionDownloader, DependencyDownloader, StdInterfaceDownloader}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
@@ -231,17 +231,10 @@ object TestCodeProvider {
       code: ArraySeq[String],
       searchSettings: I
     )(implicit codeProvider: CodeProvider[S, I, O]): List[(URI, LineRange)] = {
-    // To find line ranges remove the select indicator @@
-    val codeWithoutSelectSymbol =
-      code.map(_.replace(TestCodeUtil.SEARCH_INDICATOR, ""))
-
     val expectedLineRanges =
-      (codeWithoutSelectSymbol map TestCodeUtil.lineRanges).map {
-        case (ranges, code, _, _) =>
-          (ranges, code)
-      }
+      TestCodeUtil.extractLineRangeInfo(code)
 
-    // Remove all line-range indicators and keep the select indicator @@
+    // Remove all line-range indicators and keep the select indicator `@@`
     val codeWithoutLineRangeSymbols =
       code.map(_.replaceAll(">>|<<", ""))
 
@@ -461,24 +454,29 @@ object TestCodeProvider {
       else
         sourceCode.fileURI
 
+    val unCompiledWorkspace =
+      WorkspaceState.UnCompiled(
+        build = build,
+        sourceCode = ArraySeq(sourceCode)
+      )
+
     // run test
-    val (searchResult, testWorkspace) =
+    val (searchResult, compiledWorkspace) =
       TestCodeProvider[S, I, O](
         line = indicatorPosition.line,
         character = indicatorPosition.character,
         selectedFileURI = selectedFileURI,
         searchSettings = searchSettings,
-        build = build,
-        workspaceSourceCode = ArraySeq(sourceCode)
+        workspace = unCompiledWorkspace
       )
 
-    testWorkspace.sourceCode should have size 1
-    testWorkspace.build.dependencies should have size 1
+    compiledWorkspace.sourceCode should have size 1
+    compiledWorkspace.build.dependencies should have size 1
 
     val actualLineRanges = searchResult.value.flatMap(_.toLineRange()).toList
     actualLineRanges should contain theSameElementsAs expectedRanges
 
-    TestWorkspace delete testWorkspace
+    TestWorkspace delete compiledWorkspace
     ()
   }
 
@@ -665,23 +663,16 @@ object TestCodeProvider {
     implicit val file: FileAccess           = FileAccess.disk
     implicit val compiler: CompilerAccess   = CompilerAccess.ralphc
 
-    val (withoutAt, withAt) =
-      code partitionMap {
-        code =>
-          // - Right = Code with the `@` symbol (expected only 1)
-          // - Left  = Code without the `@` symbol
-          TestCodeUtil.indicatorPosition(code) match {
-            case Some((location, _, code)) =>
-              Right((location, code))
+    val (atPosition, atSource, withoutAtSource) = {
+      val (_withAt, withoutAt) =
+        TestCodeUtil.extractAtInfo(code)
 
-            case None =>
-              Left(code)
-          }
-      }
+      // there must be one `@@` marker
+      val (atPosition, atSource) =
+        _withAt.value
 
-    // there should only be 1 source-code with the `@` symbol
-    withAt should have size 1
-    val (atPosition, codeWithAt) = withAt.head
+      (atPosition, atSource, withoutAt)
+    }
 
     // create a build file
     val build =
@@ -690,17 +681,17 @@ object TestCodeProvider {
         .sample
         .value
 
-    val sourceCodeWithAt =
+    val withAtSourceCode =
       TestSourceCode
         .genOnDiskAndPersist(
           build = build,
-          code = codeWithAt
+          code = atSource
         )
         .sample
         .value
 
-    val sourceCodeWithoutAt =
-      withoutAt map {
+    val withoutAtSourceCode =
+      withoutAtSource map {
         code =>
           TestSourceCode
             .genOnDiskAndPersist(
@@ -711,39 +702,45 @@ object TestCodeProvider {
             .value
       }
 
-    val workspaceSourceCode =
-      sourceCodeWithoutAt :+ sourceCodeWithAt
+    val allSourceCode =
+      withoutAtSourceCode :+ withAtSourceCode
+
+    // create a workspace for all sources.
+    val unCompiledWorkspace =
+      WorkspaceState.UnCompiled(
+        build = build,
+        sourceCode = allSourceCode
+      )
 
     // run completion at that line and character
-    val (searchResult, workspace) =
+    val (searchResult, compiledWorkspace) =
       TestCodeProvider(
         line = atPosition.line,
         character = atPosition.character,
-        selectedFileURI = sourceCodeWithAt.fileURI,
+        selectedFileURI = withAtSourceCode.fileURI,
         searchSettings = searchSettings,
-        build = build,
-        workspaceSourceCode = workspaceSourceCode
+        workspace = unCompiledWorkspace
       )
 
-    workspace.sourceCode should have size code.size.toLong
+    compiledWorkspace.sourceCode should have size code.size.toLong
 
     // delete the workspace
-    TestWorkspace delete workspace
+    TestWorkspace delete compiledWorkspace
 
     // The workspace must contain `CodeAware` source files, meaning - it is read from disk.
     val codeAwareSource =
-      workspace.sourceCode.asInstanceOf[ArraySeq[SourceCodeState.IsCodeAware]]
+      compiledWorkspace.sourceCode.asInstanceOf[ArraySeq[SourceCodeState.IsCodeAware]]
 
-    (searchResult.value, codeAwareSource, workspace)
+    (searchResult.value, codeAwareSource, compiledWorkspace)
   }
 
   /**
    * Runs test on the given [[CodeProvider]], at the given line and character number.
    *
-   * @param line                The target line number
-   * @param character           The target character within the line
-   * @param selectedFileURI     The URI of the source-file where this search is to be executed.
-   * @param workspaceSourceCode The source to write to the test workspace.
+   * @param line            The target line number
+   * @param character       The target character within the line
+   * @param selectedFileURI The URI of the source-file where this search is to be executed.
+   * @param workspace       The workspace to compile.
    * @return Suggestions and the created workspace.
    */
   private def apply[S, I, O](
@@ -751,26 +748,17 @@ object TestCodeProvider {
       character: Int,
       selectedFileURI: URI,
       searchSettings: I,
-      build: BuildState.Compiled,
-      workspaceSourceCode: ArraySeq[SourceCodeState.OnDisk]
+      workspace: WorkspaceState.UnCompiled
     )(implicit provider: CodeProvider[S, I, O],
       client: ClientLogger,
       file: FileAccess,
       compiler: CompilerAccess): (Either[CompilerMessage.Error, Iterator[O]], WorkspaceState.IsParsedAndCompiled) = {
-
-    // create a workspace for the build file
-    val workspace =
-      WorkspaceState.UnCompiled(
-        build = build,
-        sourceCode = workspaceSourceCode
-      )
-
     // parse and compile workspace
     val compiledWorkspace =
       Workspace.parseAndCompile(workspace)
 
     // execute code-provider.
-    val completionResult =
+    val result =
       CodeProvider.search(
         line = line,
         character = character,
@@ -779,7 +767,7 @@ object TestCodeProvider {
         searchSettings = searchSettings
       )
 
-    (completionResult.value, compiledWorkspace)
+    (result.value, compiledWorkspace)
   }
 
 }
