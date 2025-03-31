@@ -15,18 +15,18 @@ import java.util
 object GoToConverter {
 
   /** Convert [[SourceLocation.GoTo]]s to LSP4J's either type [[lsp4j.Location]] */
-  def toLocationEither(locations: Iterable[SourceLocation.GoTo]): messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]] = {
+  def toLocationEither(locations: Iterable[SourceLocation.GoTo]): messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]] =
+    messages.Either.forLeft[util.List[_ <: Location], util.List[_ <: LocationLink]](toLocations(locations))
+
+  def toLocations(locations: Iterable[SourceLocation.GoTo]): util.ArrayList[Location] = {
     val javaLocations =
       GoToConverter.toLocations(locations.iterator)
 
-    val javaList =
-      CollectionUtil.toJavaList(javaLocations)
-
-    messages.Either.forLeft[util.List[_ <: Location], util.List[_ <: LocationLink]](javaList)
+    CollectionUtil.toJavaList(javaLocations)
   }
 
   /** Convert [[SourceLocation.GoTo]]s to LSP4J types [[lsp4j.Location]] */
-  def toLocations(goTos: Iterator[SourceLocation.GoTo]): Iterator[lsp4j.Location] =
+  private def toLocations(goTos: Iterator[SourceLocation.GoTo]): Iterator[lsp4j.Location] =
     goTos flatMap toLocation
 
   /** Convert [[SourceLocation.GoTo]] to LSP4J type [[lsp4j.Location]] */

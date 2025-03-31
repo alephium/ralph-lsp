@@ -9,6 +9,7 @@ import org.alephium.ralph.lsp.access.compiler.message.LineRange
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.access.util.TestCodeUtil
 import org.alephium.ralph.lsp.pc.{PCState, PCStates}
+import org.alephium.ralph.lsp.pc.search.gotoref.multi.GoToRefMultiSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, TestSourceCode}
 import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, Workspace, WorkspaceState}
 import org.alephium.ralph.lsp.pc.workspace.build.{TestBuild, TestRalphc}
@@ -72,6 +73,52 @@ object TestMultiCodeProvider extends ScalaFutures {
     goTo[Unit, SourceLocation.GoToDef](
       enableSoftParser = enableSoftParser,
       settings = (),
+      dependencyID = dependencyID,
+      dependency = dependency.to(ArraySeq),
+      workspaces = workspaces.to(ArraySeq)
+    )
+
+  /**
+   * Runs the [[org.alephium.ralph.lsp.pc.search.gotoref.multi.GoToRefMultiCodeProvider]] on the given workspaces,
+   * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
+   *
+   * @param workspaces The source code for the workspaces.
+   * @return The line range pairs pointing to the resolved locations.
+   */
+  def goToRefMulti(
+      settings: GoToRefMultiSetting = GoToRefMultiSetting(false)
+    )(workspaces: ArraySeq[String]*
+    )(implicit logger: ClientLogger,
+      file: FileAccess,
+      compiler: CompilerAccess,
+      ec: ExecutionContext): ArraySeq[(URI, LineRange)] =
+    goToRefMultiWithDependency(settings = settings)(
+      dependencyID = DependencyID.Std,
+      dependency = ArraySeq.empty,
+      workspaces = workspaces: _*
+    )
+
+  /**
+   * Runs the [[org.alephium.ralph.lsp.pc.search.gotodef.multi.GoToDefMultiCodeProvider]] on the given workspaces and dependency,
+   * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
+   *
+   * @param dependencyID     The ID to assign to the created dependency.
+   * @param dependency       The source code for the dependency.
+   * @param workspaces       The source code for the workspaces.
+   * @return The line range pairs pointing to the resolved locations.
+   */
+  def goToRefMultiWithDependency(
+      settings: GoToRefMultiSetting = GoToRefMultiSetting(false)
+    )(dependencyID: DependencyID,
+      dependency: ArraySeq[String],
+      workspaces: ArraySeq[String]*
+    )(implicit logger: ClientLogger,
+      file: FileAccess,
+      compiler: CompilerAccess,
+      ec: ExecutionContext): ArraySeq[(URI, LineRange)] =
+    goTo[GoToRefMultiSetting, SourceLocation.GoToRefStrict](
+      enableSoftParser = false,
+      settings = settings,
       dependencyID = dependencyID,
       dependency = dependency.to(ArraySeq),
       workspaces = workspaces.to(ArraySeq)
