@@ -31,7 +31,7 @@ class WorkspaceBuildCleanSpec extends AnyWordSpec with Matchers {
 
   "clean build on ralph.json" should {
     "not access disk" when {
-      "JSON code is provided" in {
+      "JSON code is provided" when {
         implicit val file: FileAccess =
           FileAccess.disk
 
@@ -65,26 +65,28 @@ class WorkspaceBuildCleanSpec extends AnyWordSpec with Matchers {
           actualWorkspace.value shouldBe expectedWorkspace
         }
 
-        // Test 1: Build code is not supplied
-        doTest(
-          WorkspaceFile(
-            fileURI = build.buildURI,
-            text = None // expect IO because build code is not provided.
-          )
-        )
-
-        // Test 2: Build code is supplied
-        doTest {
-          // Delete the build file to test that no IO occurs.
-          TestFile delete build.buildURI
-
-          WorkspaceFile(
-            fileURI = build.buildURI,
-            text = Some(build.code) // build's code is supplied, so no IO should occur.
+        "build code is not supplied" in {
+          doTest(
+            WorkspaceFile(
+              fileURI = build.buildURI,
+              text = None // expect IO because build code is not provided.
+            )
           )
         }
 
-        TestWorkspace delete workspace
+        "Build code is supplied" in {
+          // Delete the build file to test that no IO occurs, i.e. executing `doTest` should not throw `FileNotFoundException`.
+          TestFile delete build.buildURI
+
+          doTest(
+            WorkspaceFile(
+              fileURI = build.buildURI,
+              text = Some(build.code) // build's code is supplied, so no IO should occur.
+            )
+          )
+
+          TestWorkspace delete workspace
+        }
       }
     }
 

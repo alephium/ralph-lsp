@@ -28,7 +28,7 @@ private object GoToRefSource extends StrictImplicitLogging {
       settings: GoToRefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     CodeProvider
-      .goToDefinition
+      .goToDef
       .search( // find definitions for the token at the given cursorIndex.
         cursorIndex = cursorIndex,
         sourceCode = sourceCode,

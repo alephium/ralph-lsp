@@ -9,6 +9,8 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.scalatest.Assertions.fail
 import org.scalatest.matchers.should.Matchers._
 
+import scala.collection.immutable.ArraySeq
+
 object TestCodeUtil {
 
   /** Use this in your test-case for */
@@ -133,5 +135,56 @@ object TestCodeUtil {
     val codeWithoutSymbols = codeWithoutStart.replaceFirst("<<", "")
     (SourceIndexExtra.range(start, end), codeWithoutSymbols)
   }
+
+  /**
+   * Extracts the location of the `@@` marker from the given source code.
+   * Only one `@@` marker is expected in the input. Any `>><<` markers will be removed.
+   *
+   * @param code The source code lines containing at most on `@@` marker.
+   * @return A tuple of:
+   *         - An optional pair of the `@@` marker's position and the cleaned line (without the markers).
+   *         - Other source code with the search marker `>><<` removed.
+   */
+  def extractAtInfo(code: ArraySeq[String]): (Option[(LinePosition, String)], ArraySeq[String]) = {
+    val (withAt, withoutAt) =
+      code partitionMap {
+        code =>
+          val codeWithoutRangeMarkers = code.replaceAll(">>|<<", "")
+          // - Left = Code with the `@@` marker (only one expected)
+          // - Right = Code without the `@@` marker
+          TestCodeUtil.indicatorPosition(codeWithoutRangeMarkers) match {
+            case Some((location, _, code)) =>
+              // persist the source with the `@@` marker.
+              Left((location, code))
+
+            case None =>
+              Right(codeWithoutRangeMarkers)
+          }
+      }
+
+    // there should only be one source-code with the `@@` symbol
+    withAt.size should be <= 1
+    (withAt.headOption, withoutAt)
+  }
+
+  /**
+   * Extracts the line range `>><<` marker information from the given source code.
+   * Only the `>><<` markers are expected in the input. Any `@@` markers will be removed.
+   *
+   * @param code The source code lines containing the `>><<` marker.
+   * @return The `>><<` marker positions and the cleaned line (without the markers).
+   */
+  def extractLineRangeInfo(code: ArraySeq[String]): ArraySeq[(Array[LineRange], String)] = {
+    val codeWithoutAtMarker =
+      code.map(_.replace(TestCodeUtil.SEARCH_INDICATOR, ""))
+
+    (codeWithoutAtMarker map TestCodeUtil.lineRanges).map {
+      case (ranges, code, _, _) =>
+        (ranges, code)
+    }
+  }
+
+  def clearTestMarkers(code: String): String =
+    code.replaceAll(">>|<<|@@", "")
 
 }

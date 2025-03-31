@@ -16,7 +16,7 @@ import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
  *
  * To execution this function invoke [[CodeProvider.search]] with [[SourceLocation.GoToDefStrict]] as type parameter.
  */
-private[search] case object GoToDefinitionProvider extends CodeProvider[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict] with StrictImplicitLogging {
+private[search] case object GoToDefCodeProvider extends CodeProvider[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict] with StrictImplicitLogging {
 
   /** @inheritdoc */
   override def search(

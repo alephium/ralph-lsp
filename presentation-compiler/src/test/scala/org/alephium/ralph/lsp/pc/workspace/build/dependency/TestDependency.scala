@@ -9,7 +9,7 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, WorkspaceState}
-import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild}
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState, TestBuild, TestRalphc}
 import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfig, RalphcConfigState}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.{DependencyDownloader, StdInterfaceDownloader}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
@@ -69,7 +69,7 @@ object TestDependency {
    */
   def buildDependencyDownloader(
       depId: DependencyID,
-      depCode: String
+      depCode: ArraySeq[String]
     )(implicit file: FileAccess,
       compiler: CompilerAccess): DependencyDownloader =
     new DependencyDownloader {
@@ -87,6 +87,14 @@ object TestDependency {
               // the dependency's folder name should be the ID's name
               workspaceURI = dependencyPath.resolve(depId.dirName).toUri,
               // the dependency itself does not have other dependencies
+              config = TestRalphc.genRalphcParsedConfig(
+                // In dependencies there is no `contracts` folder, so write the test code to the root itself,
+                // i.e., if `std` is the dependency name, write within the `std` directory.
+                contractsFolderName = "",
+                // Dependencies for dependencies are not yet supported, so they do not need to be tested.
+                // Always set to `None` so they do not overlap with `contractsPath` directory.
+                dependenciesFolderName = None
+              ),
               dependencyDownloaders = ArraySeq.empty
             )
             .sample
@@ -97,7 +105,7 @@ object TestDependency {
           TestWorkspace
             .genUnCompiled(
               build = build,
-              code = Seq(depCode)
+              code = depCode
             )
             .sample
             .value
