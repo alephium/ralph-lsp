@@ -6,7 +6,7 @@ package org.alephium.ralph.lsp.server
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.{PC, PCSearcher, PCState, PCStates}
+import org.alephium.ralph.lsp.pc.{PC, PCState, PCStates}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
 import org.alephium.ralph.lsp.pc.search.{CodeProvider, MultiCodeProvider}
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
@@ -31,7 +31,7 @@ import java.util
 import java.util.concurrent.{CompletableFuture, Future => JFuture}
 import scala.collection.immutable.ArraySeq
 import scala.concurrent.{ExecutionContext, Future}
-import scala.jdk.CollectionConverters.{IterableHasAsScala, MapHasAsJava, SeqHasAsJava}
+import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.jdk.FutureConverters.FutureOps
 
 object RalphLangServer extends StrictImplicitLogging {
@@ -495,36 +495,19 @@ class RalphLangServer private (
     }
 
   override def rename(params: RenameParams): CompletableFuture[WorkspaceEdit] =
-    runAsync {
-      cancelChecker =>
-        val fileURI   = uri(params.getTextDocument.getUri)
-        val line      = params.getPosition.getLine
-        val character = params.getPosition.getCharacter
-
-        val locations =
-          PCSearcher.goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
-            fileURI = fileURI,
-            line = line,
-            character = character,
-            searchSettings = (),
-            isCancelled = toIsCancelled(cancelChecker),
-            // Uses `OrFail` to ensure a notification is displayed when renaming a file not within an active workspace.
-            state = getPCStateOrFail(fileURI)
+    runFuture {
+      isCancelled =>
+        MultiCodeProvider
+          .search[Unit, SourceLocation.GoToRenameStrict](
+            fileURI = uri(params.getTextDocument.getUri),
+            line = params.getPosition.getLine,
+            character = params.getPosition.getCharacter,
+            enableSoftParser = enableSoftParser,
+            isCancelled = isCancelled,
+            pcStates = getPCStates(),
+            settings = ()
           )
-
-        val javaLocations =
-          RenameConverter
-            .toTextEdits(
-              goTos = locations,
-              newText = params.getNewName
-            )
-            .map {
-              case (key, value) =>
-                (key.toString, value.asJava)
-            }
-            .asJava
-
-        new WorkspaceEdit(javaLocations)
+          .map(_.map(RenameConverter.toWorkspaceEdits(_, params.getNewName)))
     }
 
   override def didChangeWorkspaceFolders(params: DidChangeWorkspaceFoldersParams): Unit = {
