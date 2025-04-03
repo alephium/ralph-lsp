@@ -16,7 +16,7 @@ class ElseParserSpec extends AnyWordSpec with Matchers {
   "fail" when {
     "`else` is not a keyword" in {
       assertIsFastParseError {
-        parseConst("elsie")
+        parseElse("elsie")
       }
     }
   }
