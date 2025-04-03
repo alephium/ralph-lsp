@@ -8,10 +8,10 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.{PC, PCState, PCStates}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
-import org.alephium.ralph.lsp.pc.search.{CodeProvider, MultiCodeProvider}
+import org.alephium.ralph.lsp.pc.search.MultiCodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotoref.multi.GoToRefMultiSetting
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
@@ -398,68 +398,19 @@ class RalphLangServer private (
     }
 
   override def completion(params: CompletionParams): CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] =
-    runAsync {
-      cancelChecker =>
-        val fileURI = uri(params.getTextDocument.getUri)
-        if (!isFileScheme(fileURI)) {
-          messages.Either.forLeft(util.Arrays.asList())
-        } else {
-          val line      = params.getPosition.getLine
-          val character = params.getPosition.getCharacter
-
-          cancelChecker.checkCanceled()
-
-          // Completion should always be executed within the scope of a valid workspace.
-          // Run only if a workspace is found, otherwise, ignore the request (e.g. for an external dependency).
-          // No need to report errors for code completion.
-          getPCStateOrNone(fileURI) match {
-            case Some(currentPCState) =>
-              currentPCState.workspace match {
-                case sourceAware: WorkspaceState.IsSourceAware =>
-                  val completionResult =
-                    CodeProvider.search[SourceCodeState.Parsed, Unit, Suggestion](
-                      line = line,
-                      character = character,
-                      fileURI = fileURI,
-                      workspace = sourceAware,
-                      searchSettings = ()
-                    )
-
-                  val suggestions =
-                    completionResult match {
-                      case Some(Right(suggestions)) =>
-                        // completion successful
-                        suggestions
-
-                      case Some(Left(error)) =>
-                        // Completion failed: Log the error message
-                        logger.info("Code completion unsuccessful: " + error.message)
-                        Iterator.empty[Suggestion]
-
-                      case None =>
-                        // Not a ralph file or it does not belong to the workspace's contract-uri directory.
-                        Iterator.empty[Suggestion]
-                    }
-
-                  val completionList =
-                    CompletionConverter.toCompletionList(suggestions)
-
-                  cancelChecker.checkCanceled()
-
-                  messages.Either.forRight(completionList)
-
-                case _: WorkspaceState.Created =>
-                  // Workspace must be compiled at least once to enable code completion.
-                  // The server must've invoked the initial compilation in the boot-up initialize function.
-                  logger.info("Code completion unsuccessful: Workspace is not compiled")
-                  messages.Either.forLeft(util.Arrays.asList())
-              }
-
-            case None =>
-              logger.trace(s"Code completion unsuccessful: Source not within an active workspace. fileURI: $fileURI")
-              messages.Either.forLeft(util.Arrays.asList())
-          }
-        }
+    runFuture {
+      isCancelled =>
+        MultiCodeProvider
+          .search[Unit, Suggestion](
+            fileURI = uri(params.getTextDocument.getUri),
+            line = params.getPosition.getLine,
+            character = params.getPosition.getCharacter,
+            enableSoftParser = enableSoftParser,
+            isCancelled = isCancelled,
+            pcStates = getPCStates(),
+            settings = ()
+          )
+          .map(_.map(CompletionConverter.toCompletionItemsEither))
     }
 
   override def definition(params: DefinitionParams): CompletableFuture[messages.Either[util.List[_ <: Location], util.List[_ <: LocationLink]]] =

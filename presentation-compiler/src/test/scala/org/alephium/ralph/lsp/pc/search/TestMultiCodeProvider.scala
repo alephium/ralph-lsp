@@ -5,10 +5,11 @@ package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.{TestCommon, TestFile}
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.LineRange
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.access.util.TestCodeUtil
 import org.alephium.ralph.lsp.pc.{PCState, PCStates}
+import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotoref.multi.GoToRefMultiSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, TestSourceCode}
 import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, Workspace, WorkspaceState}
@@ -169,6 +170,50 @@ object TestMultiCodeProvider extends ScalaFutures {
     )
 
   /**
+   * Runs the [[org.alephium.ralph.lsp.pc.search.completion.multi.CompletionMultiCodeProvider]] on the given workspaces,
+   * which contains the selection indicator `@@`.
+   *
+   * @param workspaces The source code for the workspaces.
+   * @return The line range pairs pointing to the resolved locations.
+   */
+  def suggestMulti(
+      workspaces: ArraySeq[String]*
+    )(implicit logger: ClientLogger,
+      file: FileAccess,
+      compiler: CompilerAccess,
+      ec: ExecutionContext): ArraySeq[Suggestion] =
+    suggestMultiWithDependency(
+      dependencyID = DependencyID.Std,
+      dependency = ArraySeq.empty,
+      workspaces = workspaces: _*
+    )
+
+  /**
+   * Runs the [[org.alephium.ralph.lsp.pc.search.completion.multi.CompletionMultiCodeProvider]] on the given workspaces and dependency,
+   * which contains the selection indicator `@@`.
+   *
+   * @param dependencyID The ID to assign to the created dependency.
+   * @param dependency   The source code for the dependency.
+   * @param workspaces   The source code for the workspaces.
+   * @return The line range pairs pointing to the resolved locations.
+   */
+  def suggestMultiWithDependency(
+      dependencyID: DependencyID,
+      dependency: ArraySeq[String],
+      workspaces: ArraySeq[String]*
+    )(implicit logger: ClientLogger,
+      file: FileAccess,
+      compiler: CompilerAccess,
+      ec: ExecutionContext): ArraySeq[Suggestion] =
+    search[Unit, Suggestion](
+      enableSoftParser = false,
+      settings = (),
+      dependencyID = dependencyID,
+      dependency = dependency.to(ArraySeq),
+      workspaces = workspaces.to(ArraySeq)
+    )._1.value
+
+  /**
    * Runs the [[MultiCodeProvider]] on the given workspaces and dependency,
    * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
    *
@@ -192,6 +237,85 @@ object TestMultiCodeProvider extends ScalaFutures {
       file: FileAccess,
       compiler: CompilerAccess,
       ec: ExecutionContext): ArraySeq[(URI, LineRange)] = {
+    val (result, compiledWorkspace) =
+      search(
+        enableSoftParser = enableSoftParser,
+        settings = settings,
+        dependencyID = dependencyID,
+        dependency = dependency,
+        workspaces = workspaces
+      )
+
+    // Error is not expected
+    val searchResult = result.value
+
+    // all dependency and workspaces source code
+    val allCodeWithMarkers =
+      workspaces.flatten ++ dependency
+
+    // `>><<` marker information
+    val lineRangeInfo =
+      TestWorkspace.extractLineRange(
+        codeWithMarkers = allCodeWithMarkers,
+        workspaces = compiledWorkspace
+      )
+
+    // Expected search result.
+    // Assert only the fileURI and line-ranges.
+    val expected =
+      lineRangeInfo flatMap {
+        case (ranges, code) =>
+          ranges map {
+            range =>
+              (code.fileURI, range)
+          }
+      }
+
+    // Actual search result.
+    val actual =
+      searchResult map {
+        result =>
+          (result.parsed.fileURI, result.toLineRange().value)
+      }
+
+    // assert that the go-to definition jumps to all text between the go-to symbols << and >>
+    // The error output of the above test is difficult to debug because `SourceIndex` only emits numbers.
+    // For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
+    // This print statement outputs a formatted compiler error message for better readability.
+    TestCommon.tryOrPrintIndexer(
+      codeBeingTested = workspaces.flatten,
+      code = searchResult
+    ) {
+      actual should contain theSameElementsAs expected
+    }
+
+    actual
+  }
+
+  /**
+   * Runs the [[MultiCodeProvider]] on the given workspaces and dependency,
+   * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
+   *
+   * @param enableSoftParser Whether to use the soft parser.
+   * @param settings         Settings for the [[MultiCodeProvider]].
+   * @param dependencyID     The ID to assign to the created dependency.
+   * @param dependency       The source code for the dependency.
+   * @param workspaces       The source code for the workspaces.
+   * @tparam I [[MultiCodeProvider]]s settings type.
+   * @tparam O [[MultiCodeProvider]]s output type.
+   * @return A pair containing the search result and the test compiled workspaces created (deleted from disk).
+   */
+  private def search[I, O](
+      enableSoftParser: Boolean,
+      settings: I,
+      dependencyID: DependencyID,
+      dependency: ArraySeq[String],
+      workspaces: ArraySeq[ArraySeq[String]]
+    )(implicit provider: MultiCodeProvider[I, O],
+      logger: ClientLogger,
+      file: FileAccess,
+      compiler: CompilerAccess,
+      ec: ExecutionContext): (Either[CompilerMessage.Error, ArraySeq[O]], ArraySeq[WorkspaceState.IsParsedAndCompiled]) = {
     // For test-cases, set the dependency paths to be the same for all workspaces.
     // This is because a majority of test-cases will require this behaviour.
     val dependencyAbsolutePath =
@@ -252,13 +376,6 @@ object TestMultiCodeProvider extends ScalaFutures {
         workspaces = compiledWorkspace
       )
 
-    // `>><<` marker information
-    val lineRangeInfo =
-      TestWorkspace.extractLineRange(
-        codeWithMarkers = allCodeWithMarkers,
-        workspaces = compiledWorkspace
-      )
-
     // Create presentation-compiler states for each workspace
     val pcStates =
       compiledWorkspace map {
@@ -285,42 +402,10 @@ object TestMultiCodeProvider extends ScalaFutures {
         )
         .futureValue(Timeout(5.seconds))
 
-    // Delete the created workspaces
+    // Delete the created workspaces before returning the search result.
     compiledWorkspace foreach TestWorkspace.delete
 
-    // Error is not expected
-    val searchResult = result.value
-
-    // Expected search result.
-    // Assert only the fileURI and line-ranges.
-    val expected =
-      lineRangeInfo flatMap {
-        case (ranges, code) =>
-          ranges map {
-            range =>
-              (code.fileURI, range)
-          }
-      }
-
-    // Actual search result.
-    val actual =
-      searchResult map {
-        result =>
-          (result.parsed.fileURI, result.toLineRange().value)
-      }
-
-    // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-    // The error output of the above test is difficult to debug because `SourceIndex` only emits numbers.
-    // For example: "LineRange(LinePosition(3, 16), LinePosition(3, 26)))) did not contain the same elements as Array()"
-    // This print statement outputs a formatted compiler error message for better readability.
-    TestCommon.tryOrPrintIndexer(
-      codeBeingTested = workspaces.flatten,
-      code = searchResult
-    ) {
-      actual should contain theSameElementsAs expected
-    }
-
-    actual
+    (result, compiledWorkspace)
   }
 
 }

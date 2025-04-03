@@ -5,6 +5,8 @@ package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.PCStates
+import org.alephium.ralph.lsp.pc.search.completion.multi.CompletionMultiCodeProvider
+import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.multi.GoToDefMultiCodeProvider
 import org.alephium.ralph.lsp.pc.search.gotoref.multi.{GoToRefMultiCodeProvider, GoToRefMultiSetting}
 import org.alephium.ralph.lsp.pc.search.rename.multi.GoToRenameMultiCodeProvider
@@ -61,6 +63,9 @@ object MultiCodeProvider {
 
   implicit val rename: MultiCodeProvider[Unit, SourceLocation.GoToRenameStrict] =
     GoToRenameMultiCodeProvider
+
+  implicit val completion: MultiCodeProvider[Unit, Suggestion] =
+    CompletionMultiCodeProvider
 
   /**
    * Executes the search.
