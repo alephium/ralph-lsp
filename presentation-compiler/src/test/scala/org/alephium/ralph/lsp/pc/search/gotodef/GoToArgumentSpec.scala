@@ -611,16 +611,46 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
 
       "duplicates exist" when {
-        "template parameter is duplicated" in {
-          goToDefinition() {
-            """
-              |Abstract Contract SomeType() { }
-              |
-              |Abstract Contract Parent(param: SomeType) { }
-              |
-              |Abstract Contract Child(>>param<<: SomeType,
-              |                        >>param<<: SomeType) extends Parent(p@@aram) { }
-              |""".stripMargin
+        "template parameter is duplicated" when {
+          "first parameter is searched" in {
+            goToDefinition() {
+              """
+                |Abstract Contract SomeType() { }
+                |
+                |Abstract Contract Parent(param: SomeType) { }
+                |
+                |Abstract Contract Child(>>param<<: SomeType,
+                |                        >>param<<: SomeType) extends Parent(p@@aram, param2) { }
+                |""".stripMargin
+            }
+          }
+
+          "second parameter is searched" when {
+            "strict-parsable" in {
+              goToDefinition() {
+                """
+                  |Abstract Contract SomeType() { }
+                  |
+                  |Abstract Contract Parent(param2: SomeType) { }
+                  |
+                  |Abstract Contract Child(>>param2<<: SomeType,
+                  |                        >>param2<<: SomeType) extends Parent(param1, p@@aram2) { }
+                  |""".stripMargin
+              }
+            }
+
+            "soft-parsable" in {
+              goToDefinitionSoft() {
+                """
+                  |Abstract Contract SomeType() { }
+                  |
+                  |Abstract Contract Parent(param2: SomeType) { }
+                  |
+                  |Abstract Contract Child(>>param2<<:,
+                  |                        >>param2<< extends Parent(param1, p@@aram2
+                  |""".stripMargin
+              }
+            }
           }
         }
 

@@ -78,6 +78,26 @@ object SoftAST {
     def contains(anchor: Node[SoftAST, SoftAST]): Boolean =
       node.data contains anchor.data
 
+    /**
+     * Checks whether the [[node]] belongs to an inheritance definition.
+     *
+     * @return true if the node is part of an inheritance definition, false otherwise.
+     */
+    def isChildOfInheritance(): Boolean =
+      node.parent match {
+        case Some(Node(_: SoftAST.Inheritance, _)) =>
+          true
+
+        case Some(node @ Node(_: SoftAST.TailReferences, _)) =>
+          // Indicates that the inheritance definition sits within one of the tail-references.
+          // Note: The type `TailReferences` is always expected to be a child of `Inheritance`.
+          //       But this check is performed to handle any future changes.
+          node.isChildOfInheritance()
+
+        case _ =>
+          false
+      }
+
   }
 
   implicit class NodeIdentifierExtensions(val node: Node[SoftAST.Identifier, SoftAST]) extends AnyVal {

@@ -498,36 +498,39 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    // Search within the parameters if either of the following conditions is met:
+    //  - The target belongs to the template's block
+    //  - The target belongs to the template's inheritance group
+    val paramMatches =
+      if (template.block.exists(_.contains(target)) || template.inheritance.exists(_.contains(target)))
+        if (detectCallSyntax && target.isReferenceCall())
+          Iterator.empty
+        else
+          template.params match {
+            case Some(params) =>
+              searchExpression(
+                expression = params,
+                target = target,
+                sourceCode = sourceCode
+              )
+
+            case None =>
+              Iterator.empty
+          }
+      else
+        Iterator.empty
+
+    // Search within the block only if it contains the target.
     val blockMatches =
       template.block match {
-        case Some(block) if block.contains(target) || template.inheritance.exists(_.contains(target)) =>
-          // Search the parameters
-          val paramMatches =
-            if (detectCallSyntax && target.isReferenceCall())
-              Iterator.empty
-            else
-              template.params match {
-                case Some(params) =>
-                  searchExpression(
-                    expression = params,
-                    target = target,
-                    sourceCode = sourceCode
-                  )
-
-                case None =>
-                  Iterator.empty
-              }
-
+        case Some(block) if block.contains(target) =>
           // search the block
-          val blockMatches =
-            searchBlock(
-              block = block,
-              target = target,
-              sourceCode = sourceCode,
-              detectCallSyntax = detectCallSyntax
-            )
-
-          paramMatches ++ blockMatches
+          searchBlock(
+            block = block,
+            target = target,
+            sourceCode = sourceCode,
+            detectCallSyntax = detectCallSyntax
+          )
 
         case _ =>
           Iterator.empty
@@ -541,7 +544,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         sourceCode = sourceCode
       )
 
-    nameMatches ++ blockMatches
+    nameMatches ++ blockMatches ++ paramMatches
   }
 
   /**
@@ -602,33 +605,27 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         )
 
       case Some(node) =>
-        node.parent match {
-          case Some(Node(_: SoftAST.Inheritance, _)) =>
-            /*
-             * If this is an inheritance group, then disable execute inheritance search.
-             * For example, in the following case, the `Parent`s `param` should not be returned.
-             * {{{
-             *   Contract Parent(param: Type)
-             *   Contract Child(>>param<<: Type) extends Parent(para@@m)
-             * }}}
-             */
-            search(
-              identNode = identNode,
-              sourceCode = sourceCode,
-              workspace = workspace,
-              settings = settings.copy(includeInheritance = false),
-              detectCallSyntax = detectCallSyntax
-            )
+        /*
+         * If this is an inheritance group, then disable executing inheritance search.
+         * For example, in the following case, the `Parent`s `param` should not be returned.
+         * {{{
+         *   Contract Parent(param: Type)
+         *   Contract Child(>>param<<: Type) extends Parent(para@@m)
+         * }}}
+         */
+        val updatedSettings =
+          if (node.isChildOfInheritance())
+            settings.copy(includeInheritance = false)
+          else
+            settings
 
-          case _ =>
-            search(
-              identNode = identNode,
-              sourceCode = sourceCode,
-              workspace = workspace,
-              settings = settings,
-              detectCallSyntax = detectCallSyntax
-            )
-        }
+        search(
+          identNode = identNode,
+          sourceCode = sourceCode,
+          workspace = workspace,
+          settings = updatedSettings,
+          detectCallSyntax = detectCallSyntax
+        )
 
       case None =>
         search(
