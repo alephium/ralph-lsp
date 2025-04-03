@@ -125,6 +125,50 @@ object TestMultiCodeProvider extends ScalaFutures {
     )
 
   /**
+   * Runs the [[org.alephium.ralph.lsp.pc.search.rename.multi.GoToRenameMultiCodeProvider]] on the given workspaces,
+   * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
+   *
+   * @param workspaces The source code for the workspaces.
+   * @return The line range pairs pointing to the resolved locations.
+   */
+  def goToRenameMulti(
+      workspaces: ArraySeq[String]*
+    )(implicit logger: ClientLogger,
+      file: FileAccess,
+      compiler: CompilerAccess,
+      ec: ExecutionContext): ArraySeq[(URI, LineRange)] =
+    goToRenameMultiWithDependency(
+      dependencyID = DependencyID.Std,
+      dependency = ArraySeq.empty,
+      workspaces = workspaces: _*
+    )
+
+  /**
+   * Runs the [[org.alephium.ralph.lsp.pc.search.rename.multi.GoToRenameMultiCodeProvider]] on the given workspaces and dependency,
+   * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
+   *
+   * @param dependencyID The ID to assign to the created dependency.
+   * @param dependency   The source code for the dependency.
+   * @param workspaces   The source code for the workspaces.
+   * @return The line range pairs pointing to the resolved locations.
+   */
+  def goToRenameMultiWithDependency(
+      dependencyID: DependencyID,
+      dependency: ArraySeq[String],
+      workspaces: ArraySeq[String]*
+    )(implicit logger: ClientLogger,
+      file: FileAccess,
+      compiler: CompilerAccess,
+      ec: ExecutionContext): ArraySeq[(URI, LineRange)] =
+    goTo[Unit, SourceLocation.GoToRenameStrict](
+      enableSoftParser = false,
+      settings = (),
+      dependencyID = dependencyID,
+      dependency = dependency.to(ArraySeq),
+      workspaces = workspaces.to(ArraySeq)
+    )
+
+  /**
    * Runs the [[MultiCodeProvider]] on the given workspaces and dependency,
    * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
    *

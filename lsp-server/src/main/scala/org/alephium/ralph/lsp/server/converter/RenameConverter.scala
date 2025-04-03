@@ -6,12 +6,31 @@ package org.alephium.ralph.lsp.server.converter
 import java.net.URI
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.eclipse.lsp4j
-import org.eclipse.lsp4j.TextEdit
+import org.eclipse.lsp4j.{TextEdit, WorkspaceEdit}
+
+import scala.collection.immutable.ArraySeq
+import scala.jdk.CollectionConverters.{MapHasAsJava, SeqHasAsJava}
 
 object RenameConverter {
 
+  /** Converts rename results to LSP4J type [[WorkspaceEdit]] */
+  def toWorkspaceEdits(
+      goTos: ArraySeq[SourceLocation.GoToRename],
+      newText: String): WorkspaceEdit = {
+    val locations =
+      toTextEdits(
+        goTos = goTos.iterator,
+        newText = newText
+      ).map {
+        case (key, value) =>
+          (key.toString, value.asJava)
+      }
+
+    new WorkspaceEdit(locations.asJava)
+  }
+
   /** Converts rename results to LSP4J type [[lsp4j.TextEdit]] */
-  def toTextEdits(
+  private def toTextEdits(
       goTos: Iterator[SourceLocation.GoToRename],
       newText: String): Map[URI, List[lsp4j.TextEdit]] =
     goTos
