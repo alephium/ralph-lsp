@@ -11,6 +11,7 @@ import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
 import scala.annotation.tailrec
 
@@ -181,11 +182,21 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         workspace = workspace
       )
 
+    // Inheritance search must also include all built-in interfaces.
+    val builtInInterfaces =
+      WorkspaceSearcher.collectAllDependencyTreesSoft(
+        dependencyID = DependencyID.BuiltIn,
+        build = workspace.build
+      )
+
+    val parentTrees =
+      inheritance.parentTrees ++ builtInInterfaces
+
     val inherited =
       if (settings.includeInheritance)
         searchInheritance(
           target = identNode,
-          inheritance = inheritance.parentTrees.iterator,
+          inheritance = parentTrees.iterator,
           detectCallSyntax = detectCallSyntax
         )
       else
