@@ -4,12 +4,13 @@
 package org.alephium.ralph.lsp.pc.search.soft.gotodef
 
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefSetting, ScopeWalker}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
+import org.alephium.ralph.SourceIndex
 
 import scala.annotation.tailrec
 
@@ -78,6 +79,20 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       )
 
     parent match {
+      case Some(node @ Node(_: SoftAST.ReferenceCall, _)) =>
+        node.parent match {
+          case Some(Node(_: SoftAST.DotCall, _)) =>
+            // TODO - This needs type information from Strict-AST.
+            Iterator.empty
+
+          case _ =>
+            runFullSearch()
+        }
+
+      case Some(Node(_: SoftAST.DotCall, _)) =>
+        // TODO - This needs type information from Strict-AST.
+        Iterator.empty
+
       case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
         node.parent match {
           // If it's an assignment, it must also be a variable declaration for the current node to be a self.
@@ -187,7 +202,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     val globals =
       searchGlobal(
         target = identNode,
-        trees = inheritance.allTrees.iterator
+        trees = inheritance.allTrees.iterator,
+        detectCallSyntax = detectCallSyntax
       )
 
     val result =
@@ -214,13 +230,15 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    */
   private def searchGlobal(
       target: Node[SoftAST.Identifier, SoftAST],
-      trees: Iterator[SourceLocation.CodeSoft]): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+      trees: Iterator[SourceLocation.CodeSoft],
+      detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     trees flatMap {
       sourceCode =>
         searchGlobal(
           target = target,
           tree = sourceCode.part,
-          sourceCode = sourceCode
+          sourceCode = sourceCode,
+          detectCallSyntax = detectCallSyntax
         )
     }
 
@@ -234,13 +252,23 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   private def searchGlobal(
       target: Node[SoftAST.Identifier, SoftAST],
       tree: SoftAST.BlockPartAST,
-      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+      sourceCode: SourceLocation.CodeSoft,
+      detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     tree match {
       case template: SoftAST.Template =>
-        searchIdentifier(
-          identifier = template.identifier,
+        searchTemplateIdentifier(
+          templateIdentifier = template.identifier,
           target = target,
-          sourceCode = sourceCode
+          sourceCode = sourceCode,
+          detectCallSyntax = detectCallSyntax
+        )
+
+      case event: SoftAST.Event =>
+        searchEvent(
+          event = event,
+          target = target,
+          sourceCode = sourceCode,
+          detectCallSyntax = detectCallSyntax
         )
 
       case _ =>
@@ -305,6 +333,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           sourceCode = sourceCode,
           detectCallSyntax = detectCallSyntax
         )
+
+      case Node(event: SoftAST.Event, _) =>
+        searchEvent(
+          event = event,
+          target = target,
+          sourceCode = sourceCode,
+          detectCallSyntax = detectCallSyntax
+        )
     }
 
   /**
@@ -361,43 +397,15 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       inherited: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
-    // the end index of the inherited source code
-    val endIndex =
-      point(inherited.part.index.to)
-
-    // create a virtual identifier at the end index
-    val virtualIdentifier =
-      SoftAST.Identifier(
-        index = endIndex,
-        documentation = None,
-        code = SoftAST.CodeString(
-          index = endIndex,
-          text = target.data.code.text
-        )
+    val virtualExpression =
+      buildVirtualExpression(
+        target = target,
+        position = point(inherited.part.index.to)
       )
-
-    val virtualTarget =
-      if (target.isReferenceCall()) // if it is a reference call, created a virtual reference call
-        SoftAST.ReferenceCall(
-          index = endIndex,
-          reference = virtualIdentifier,
-          preArgumentsSpace = None,
-          arguments = SoftAST.Group(
-            index = endIndex,
-            openToken = None,
-            preHeadExpressionSpace = None,
-            headExpression = None,
-            postHeadExpressionSpace = None,
-            tailExpressions = Seq.empty,
-            closeToken = None
-          )
-        )
-      else
-        virtualIdentifier // else use the identifier
 
     // fetch the only identifier as a Node
     val virtualNode =
-      virtualTarget
+      virtualExpression
         .toNode
         .walkDown
         .collectFirst {
@@ -420,6 +428,93 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         logger.error(s"Error: Virtual `Identifier` not found. File: ${inherited.parsed.fileURI}")
         Iterable.empty
     }
+  }
+
+  /**
+   * Builds a virtual expression from the given [[SoftAST.Identifier]] tree,
+   * assigning the specified [[SourceIndex]] to all virtual expression nodes.
+   *
+   * A virtual node is created only for the following syntax:
+   * - [[SoftAST.Identifier]] — e.g. `Transfer`
+   * - [[SoftAST.ReferenceCall]] — e.g. `Transfer()`
+   * - [[SoftAST.MethodCall]] — e.g. `Transfer.function`
+   * - [[SoftAST.Emit]] — e.g. `emit <<any of the above three cases>>`
+   *
+   * FIXME: To simplify this logic, this function should be replaced with `updateSourceIndex` in [[SoftAST]]:
+   *        {{{
+   *          def updateSourceIndex(newIndex: SourceIndex): SoftAST = ???
+   *        }}}
+   *
+   * @param target   The identifier tree to create the virtual expression from.
+   * @param position The source position to assign to each node.
+   * @return The created virtual expression.
+   */
+  private def buildVirtualExpression(
+      target: Node[SoftAST.Identifier, SoftAST],
+      position: SourceIndex): SoftAST.ExpressionAST = {
+    // create a virtual identifier at the end index
+    val virtualIdentifier =
+      SoftAST.Identifier(
+        index = position,
+        documentation = None,
+        code = SoftAST.CodeString(
+          index = position,
+          text = target.data.code.text
+        )
+      )
+
+    val virtualExpression =
+      if (target.isReferenceCall()) // create a virtual reference call
+        SoftAST.ReferenceCall(
+          index = position,
+          reference = virtualIdentifier,
+          preArgumentsSpace = None,
+          arguments = SoftAST.Group(
+            index = position,
+            openToken = None,
+            preHeadExpressionSpace = None,
+            headExpression = None,
+            postHeadExpressionSpace = None,
+            tailExpressions = Seq.empty,
+            closeToken = None
+          )
+        )
+      else if (target.isMethodCall()) // create a virtual method call
+        SoftAST.MethodCall(
+          index = position,
+          leftExpression = virtualIdentifier,
+          preDotSpace = None,
+          dotCalls = Seq(
+            SoftAST.DotCall(
+              index = position,
+              dot = SoftAST.TokenDocumented(
+                index = position,
+                documentation = None,
+                code = SoftAST.CodeToken(position, Token.Dot)
+              ),
+              postDotSpace = None,
+              // This is temporary, because the right-expression is not used when searching inheritance.
+              // FIXME: See the function documentation. `updateSourceIndex` would remove the need for this assumption.
+              rightExpression = SoftAST.ExpressionExpected(position)
+            )
+          )
+        )
+      else
+        virtualIdentifier // else use the identifier
+
+    if (target.isWithinEmit()) // wrap the virtual expression
+      SoftAST.Emit(
+        index = position,
+        emit = SoftAST.TokenDocumented(
+          index = position,
+          documentation = None,
+          code = SoftAST.CodeToken(position, Token.Emit)
+        ),
+        preExpressionSpace = None,
+        expression = virtualExpression
+      )
+    else
+      virtualExpression // else no wrap needed, use the created virtual expression
   }
 
   /**
@@ -470,7 +565,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
     // Check if the name matches the identifier.
     val nameMatches =
-      if (!detectCallSyntax || target.isReferenceCall())
+      if (!detectCallSyntax || (target.isReferenceCall() && !target.isWithinEmit()))
         searchIdentifier(
           identifier = function.signature.fnName,
           target = target,
@@ -538,14 +633,61 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
     // Check if the name matches the identifier.
     val nameMatches =
-      searchIdentifier(
-        identifier = template.identifier,
+      searchTemplateIdentifier(
+        templateIdentifier = template.identifier,
         target = target,
-        sourceCode = sourceCode
+        sourceCode = sourceCode,
+        detectCallSyntax = detectCallSyntax
       )
 
     nameMatches ++ blockMatches ++ paramMatches
   }
+
+  /**
+   * Given a template identifier, expands and searches it for a possible target identifier definition.
+   *
+   * @param templateIdentifier The template identifier to search.
+   * @param target             The identifier being searched.
+   * @param sourceCode         The source code state where the template identifier belongs.
+   * @param detectCallSyntax   If `true`, restricts the search to `event` only when an `emit` is defined.
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchTemplateIdentifier(
+      templateIdentifier: SoftAST.IdentifierAST,
+      target: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    // Check if the name matches the identifier.
+    if (!detectCallSyntax || !target.isWithinEmit())
+      searchIdentifier(
+        identifier = templateIdentifier.identifier,
+        target = target,
+        sourceCode = sourceCode
+      )
+    else
+      Iterator.empty
+
+  /**
+   * Given an event, expands and searches within it for all possible definitions.
+   *
+   * @param event      The event to expand and search.
+   * @param target     The identifier being searched.
+   * @param sourceCode The source code state where the event belongs.
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchEvent(
+      event: SoftAST.Event,
+      target: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    if (!detectCallSyntax || target.isWithinEmit())
+      searchIdentifier(
+        identifier = event.identifier,
+        target = target,
+        sourceCode = sourceCode
+      )
+    else
+      Iterator.empty
 
   /**
    * Given a block, expands and searches within it for all possible definitions.
@@ -614,7 +756,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
          * }}}
          */
         val updatedSettings =
-          if (node.isChildOfInheritance())
+          if (node.isWithinInheritance())
             settings.copy(includeInheritance = false)
           else
             settings

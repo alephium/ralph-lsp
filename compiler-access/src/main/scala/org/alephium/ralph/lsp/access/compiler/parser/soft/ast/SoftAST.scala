@@ -8,6 +8,8 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceInd
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST.collectASTs
 import org.alephium.ralph.lsp.utils.Node
 
+import scala.annotation.tailrec
+
 sealed trait SoftAST extends Product { self =>
 
   def index: SourceIndex
@@ -83,7 +85,8 @@ object SoftAST {
      *
      * @return true if the node is part of an inheritance definition, false otherwise.
      */
-    def isChildOfInheritance(): Boolean =
+    @tailrec
+    final def isWithinInheritance(): Boolean =
       node.parent match {
         case Some(Node(_: SoftAST.Inheritance, _)) =>
           true
@@ -92,7 +95,7 @@ object SoftAST {
           // Indicates that the inheritance definition sits within one of the tail-references.
           // Note: The type `TailReferences` is always expected to be a child of `Inheritance`.
           //       But this check is performed to handle any future changes.
-          node.isChildOfInheritance()
+          node.isWithinInheritance()
 
         case _ =>
           false
@@ -107,6 +110,28 @@ object SoftAST {
         case Some(Node(_: SoftAST.ReferenceCall, _)) => true
         case _                                       => false
       }
+
+    def isMethodCall(): Boolean =
+      node.parent match {
+        case Some(Node(_: SoftAST.MethodCall, _)) => true
+        case _                                    => false
+      }
+
+    /**
+     * Checks whether the given [[SoftAST.Identifier]] is contained within an `emit` definition.
+     *
+     * Checking only two parents is required, because a valid `emit` can be followed by either one of the cases:
+     *  - A reference call [[SoftAST.ReferenceCall]], e.g. `emit Transfer(a, b)`
+     *  - A method call [[SoftAST.MethodCall]], e.g. `emit Transfer(a, b).blah`
+     *  - An identifier [[SoftAST.Identifier]], e.g. `emit Transfer`
+     *
+     * @return true if the node is part of an `emit` definition, false otherwise.
+     */
+    def isWithinEmit(): Boolean =
+      node
+        .walkParents
+        .take(2)
+        .exists(_.data.isInstanceOf[SoftAST.Emit])
 
   }
 
