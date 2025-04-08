@@ -6,13 +6,16 @@ package org.alephium.ralph.lsp.pc.search.soft.gotodef
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefSetting, ScopeWalker}
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 
 import scala.annotation.tailrec
+import scala.collection.immutable.ArraySeq
 
 private object GoToDefIdentifier extends StrictImplicitLogging {
 
@@ -175,17 +178,16 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
-    val inheritance =
-      WorkspaceSearcher.collectInheritedParentsSoft(
-        sourceCode = sourceCode,
-        workspace = workspace
-      )
+    val allTrees =
+      WorkspaceSearcher.collectAllTreesSoft(workspace)
 
     val inherited =
       if (settings.includeInheritance)
         searchInheritance(
           target = identNode,
-          inheritance = inheritance.parentTrees.iterator,
+          sourceCode = sourceCode,
+          build = workspace.build,
+          workspaceTrees = allTrees,
           detectCallSyntax = detectCallSyntax
         )
       else
@@ -202,7 +204,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     val globals =
       searchGlobal(
         target = identNode,
-        trees = inheritance.allTrees.iterator,
+        trees = allTrees.iterator,
         detectCallSyntax = detectCallSyntax
       )
 
@@ -342,6 +344,52 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           detectCallSyntax = detectCallSyntax
         )
     }
+
+  /**
+   * Given a target identifier, searches all inherited contracts for all possible definitions, including
+   * the built-in interfaces.
+   *
+   * @param target           The identifier being searched.
+   * @param sourceCode       The source code state where the `target` node is located.
+   * @param build            Current workspace build.
+   * @param workspaceTrees   All workspace trees in scope, including the imported code.
+   * @param detectCallSyntax If `true`, ensures that when a function is called,
+   *                         the search is restricted to reference calls only and does not
+   *                         return variables with the same name.
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchInheritance(
+      target: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      build: BuildState.Compiled,
+      workspaceTrees: ArraySeq[SourceLocation.CodeSoft],
+      detectCallSyntax: Boolean
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    // The actual inherited code as defined in the AST
+    val inheritedTrees =
+      SourceCodeSearcher.collectInheritedParents(
+        source = sourceCode,
+        allSource = workspaceTrees
+      )
+
+    // Inheritance search must include all built-in interfaces.
+    val builtInTrees =
+      WorkspaceSearcher.collectAllDependencyTreesSoft(
+        dependencyID = DependencyID.BuiltIn,
+        build = build
+      )
+
+    // Merge both the actual inherited trees and the built-in trees.
+    val allInheritedTrees =
+      inheritedTrees ++ builtInTrees
+
+    // Execute inheritance search.
+    searchInheritance(
+      target = target,
+      inheritance = allInheritedTrees.iterator,
+      detectCallSyntax = detectCallSyntax
+    )
+  }
 
   /**
    * Given a target identifier, searches all inherited contracts for all possible definitions.

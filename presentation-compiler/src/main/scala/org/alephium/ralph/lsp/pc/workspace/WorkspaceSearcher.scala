@@ -9,6 +9,7 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.alephium.ralph.lsp.utils.URIUtil
 import org.alephium.ralph.lsp.utils.log.ClientLogger
 
@@ -260,6 +261,24 @@ object WorkspaceSearcher {
     val trees = collectTrees(workspace, includeNonImportedCode = false)
     SourceCodeSearcher.collectGlobalConstants(trees.iterator)
   }
+
+  /**
+   * Collects ALL [[org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST]] sources from dependency with the given [[DependencyID]].
+   *
+   * @param build The build containing the dependency.
+   * @return All Parsed source files in all workspaces.
+   */
+  def collectAllDependencyTreesSoft(
+      dependencyID: DependencyID,
+      build: BuildState.Compiled
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.CodeSoft] =
+    build.findDependency(dependencyID) match {
+      case Some(dependency) =>
+        collectAllTreesSoft(dependency)
+
+      case None =>
+        ArraySeq.empty
+    }
 
   /**
    * Collects all in-scope workspace source trees.

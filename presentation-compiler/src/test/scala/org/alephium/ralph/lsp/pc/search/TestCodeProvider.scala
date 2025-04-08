@@ -297,7 +297,8 @@ object TestCodeProvider {
    */
   def goToBuiltIn(
       code: String,
-      expected: Option[String]): Assertion =
+      expected: Option[String]): Assertion = {
+    // Assert Node's AST
     goToDependencyStrict(
       code = ArraySeq(code),
       expected = expected.map {
@@ -306,6 +307,17 @@ object TestCodeProvider {
       },
       downloader = BuiltInFunctionDownloader
     )
+
+    // Assert `SoftAST`
+    goToDependencySoft(
+      code = ArraySeq(code),
+      expected = expected.map {
+        string =>
+          (string, string)
+      },
+      downloader = BuiltInFunctionDownloader
+    )
+  }
 
   /**
    * Tests directly on the `std` native library.
