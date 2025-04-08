@@ -8,9 +8,9 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.search.completion.{CodeCompletionProvider, Suggestion}
 import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefCodeProvider, GoToDefSetting}
+import org.alephium.ralph.lsp.pc.search.gotodef.soft.GoToDefCodeProviderSoft
 import org.alephium.ralph.lsp.pc.search.gotoref.{GoToRefCodeProvider, GoToRefSetting}
 import org.alephium.ralph.lsp.pc.search.rename.GoToRenameCodeProvider
-import org.alephium.ralph.lsp.pc.search.soft.gotodef.GoToDefCodeProviderSoft
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
