@@ -98,7 +98,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
 
   "constant exists locally" when {
     "strict-parseable" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract Child() {
           |
