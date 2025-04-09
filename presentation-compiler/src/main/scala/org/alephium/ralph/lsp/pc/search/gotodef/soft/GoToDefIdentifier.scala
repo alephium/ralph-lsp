@@ -273,6 +273,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           detectCallSyntax = detectCallSyntax
         )
 
+      case constant: SoftAST.Const =>
+        searchConstant(
+          constant = constant,
+          target = target,
+          sourceCode = sourceCode,
+          detectCallSyntax = detectCallSyntax
+        )
+
       case _ =>
         Iterator.empty
     }
@@ -339,6 +347,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case Node(event: SoftAST.Event, _) =>
         searchEvent(
           event = event,
+          target = target,
+          sourceCode = sourceCode,
+          detectCallSyntax = detectCallSyntax
+        )
+
+      case Node(constant: SoftAST.Const, _) =>
+        searchConstant(
+          constant = constant,
           target = target,
           sourceCode = sourceCode,
           detectCallSyntax = detectCallSyntax
@@ -706,7 +722,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     // Check if the name matches the identifier.
-    if (!detectCallSyntax || !target.isWithinEmit())
+    if (!detectCallSyntax || ((target.isReferenceCall() || target.isMethodCall()) && !target.isWithinEmit()))
       searchIdentifier(
         identifier = templateIdentifier.identifier,
         target = target,
@@ -731,6 +747,28 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     if (!detectCallSyntax || target.isWithinEmit())
       searchIdentifier(
         identifier = event.identifier,
+        target = target,
+        sourceCode = sourceCode
+      )
+    else
+      Iterator.empty
+
+  /**
+   * Given a constant, expands and searches within it for all possible definitions.
+   *
+   * @param constant   The constant to expand and search.
+   * @param target     The identifier being searched.
+   * @param sourceCode The source code state where the event belongs.
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchConstant(
+      constant: SoftAST.Const,
+      target: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    if (!detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()))
+      searchExpression(
+        expression = constant.assignment.expressionLeft,
         target = target,
         sourceCode = sourceCode
       )

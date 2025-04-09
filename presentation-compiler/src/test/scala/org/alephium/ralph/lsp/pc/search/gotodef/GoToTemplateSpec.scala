@@ -184,7 +184,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
 
   "detect call syntax" should {
     "jump to contract" when {
-      "variable does not exist" in {
+      "variable with the same name does not exist" in {
         goToDefinitionSoft() {
           """
             |Contract >>variable<<() { }
@@ -196,13 +196,42 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
         }
       }
-    }
 
-    "jump to both (variable & contract)" when {
-      "variable exists" in {
+      "variable exists, but the call is a reference call" in {
         goToDefinitionSoft() {
           """
             |Contract >>variable<<() { }
+            |
+            |Contract Test() {
+            |  event variable()
+            |  let variable = 1
+            |  variab@@le()
+            |}
+            |""".stripMargin
+        }
+      }
+    }
+
+    "jump to the contract and the variable" when {
+      "variable exists, but the call is a method call" in {
+        goToDefinitionSoft() {
+          """
+            |Contract >>variable<<() { }
+            |
+            |Contract Test(instance: variable) {
+            |  let >>variable<< = instance
+            |  variab@@le.function()
+            |}
+            |""".stripMargin
+        }
+      }
+    }
+
+    "jump to the variable" when {
+      "variable with the same name exists" in {
+        goToDefinitionSoft() {
+          """
+            |Contract variable() { }
             |
             |Contract Test() {
             |  let >>variable<< = 1

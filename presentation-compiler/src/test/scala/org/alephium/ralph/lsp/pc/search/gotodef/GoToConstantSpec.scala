@@ -25,37 +25,148 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
   }
 
   "return self" when {
-    "constant definition is selected" in {
-      goToDefinition() {
-        """
-          |Contract Test() {
-          |
-          |  const >>My@@Constant<< = 1
-          |
-          |  pub fn function() -> () { }
-          |}
-          |""".stripMargin
+    "constant definition is selected" when {
+      "strict-parseable" when {
+        "contract is defined" in {
+          goToDefinition() {
+            """
+              |Contract Test() {
+              |
+              |  const >>My@@Constant<< = 1
+              |
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "contract is not defined" in {
+          goToDefinition() {
+            """
+              |const >>My@@Constant<< = 1
+              |""".stripMargin
+          }
+        }
+      }
+
+      "soft-parseable" when {
+        "value is not defined" in {
+          goToDefinitionSoft() {
+            """
+              |const >>My@@Constant<< =
+              |""".stripMargin
+          }
+        }
+
+        "assignment is not defined" in {
+          goToDefinitionSoft() {
+            """
+              |const >>My@@Constant<<
+              |""".stripMargin
+          }
+        }
       }
     }
 
-    "duplicate constant definitions exist" in {
-      goToDefinition() {
-        """
-          |Contract Test() {
-          |
-          |  const MyConstant = 1
-          |  const >>My@@Constant<< = 1
-          |
-          |  pub fn function() -> () { }
-          |}
-          |""".stripMargin
+    "duplicate constant definitions exist" when {
+      "strict-parseable" in {
+        goToDefinition() {
+          """
+            |Contract Test() {
+            |
+            |  const MyConstant = 1
+            |  const >>My@@Constant<< = 1
+            |  
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "soft-parseable" in {
+        goToDefinitionSoft() {
+          """
+            |Contract Test() {
+            |
+            |  const MyConstant
+            |  const >>My@@Constant<<
+            |  
+            |}
+            |""".stripMargin
+        }
       }
     }
   }
 
-  "return non-empty" when {
-    "constant exists" in {
-      goToDefinitionStrict()(
+  "constant exists locally" when {
+    "strict-parseable" in {
+      goToDefinition()(
+        """
+          |Contract Child() {
+          |
+          |  const >>MyConstant<< = 0
+          |
+          |  pub fn function() -> () {
+          |    let my_constant = MyCo@@nstant
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "soft-parseable" when {
+      "function name is not defined" in {
+        goToDefinitionSoft()(
+          """
+            |Contract Child() {
+            |
+            |  const >>MyConstant<< = 0
+            |
+            |  fn () -> () {
+            |    let my_constant = MyCo@@nstant
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "constant is not assigned an identifier" in {
+        goToDefinitionSoft()(
+          """
+            |Contract Child() {
+            |
+            |  const >>MyConstant<< = 0
+            |
+            |  fn () -> () {
+            |    MyCo@@nstant
+            |""".stripMargin
+        )
+      }
+
+      "blocks are not defined" in {
+        goToDefinitionSoft()(
+          """
+            |const >>MyConstant<< = 0
+            |MyCo@@nstant
+            |""".stripMargin
+        )
+      }
+
+      "block is defined for reference" in {
+        goToDefinitionSoft()(
+          """
+            |const >>MyConstant<< = 0
+            |
+            |contract block {
+            |  MyCo@@nstant
+            |}
+            |""".stripMargin
+        )
+      }
+    }
+  }
+
+  "constant exists within inheritance" when {
+    "all constants have the same name" in {
+      goToDefinition()(
         """
           |const >>MyConstant<< = 1
           |
@@ -76,7 +187,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "duplicate constants exists" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |const >>MyConstant<< = 0
           |const >>MyConstant<< = 1
@@ -101,65 +212,92 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
       )
     }
 
-    "constant and the Contract have the same name" in {
-      goToDefinitionStrict()(
+    "soft-parseable (contains errors)" in {
+      goToDefinitionSoft()(
         """
-          |Abstract Contract MyConstant() {
+          |const >>MyConstant<<
+          |blah
+          |const >>MyConstant<< blah
+          |const >>MyConstant<<
+          |const >>MyConstant<< blah
           |
-          |  const >>MyConstant<< = 2
-          |  const >>MyConstant<< = 3
+          |Contract Parent {
+          |  const >>MyConstant<<
+          |  const >>MyConstant<<
           |}
           |
-          |Contract MyConstant() extends MyConstant() {
+          |Contract Child extends Parent {
           |
-          |  const >>MyConstant<< = 0
-          |  const >>MyConstant<< = 1
+          |  const >>MyConstant<<
+          |  const >>MyConstant<<
           |
-          |  pub fn function() -> () {
+          |  fn () -> {
           |    let my_constant = MyCo@@nstant
-          |  }
-          |}
           |""".stripMargin
       )
     }
+  }
 
-    "only a global constant exists" in {
-      goToDefinitionStrict()(
-        """
-          |const >>MyConstant<< = 0
-          |
-          |Contract Test() {
-          |
-          |  pub fn function() -> () {
-          |    let my_constant = MyCo@@nstant
-          |  }
-          |}
-          |""".stripMargin
-      )
+  "constant and the Contract have the same name" in {
+    goToDefinition()(
+      """
+        |Abstract Contract MyConstant() {
+        |
+        |  const >>MyConstant<< = 2
+        |  const >>MyConstant<< = 3
+        |}
+        |
+        |Contract MyConstant() extends MyConstant() {
+        |
+        |  const >>MyConstant<< = 0
+        |  const >>MyConstant<< = 1
+        |
+        |  pub fn function() -> () {
+        |    let my_constant = MyCo@@nstant
+        |  }
+        |}
+        |""".stripMargin
+    )
+  }
+
+  "only a global constant exists" in {
+    goToDefinition()(
+      """
+        |const >>MyConstant<< = 0
+        |
+        |Contract Test() {
+        |
+        |  pub fn function() -> () {
+        |    let my_constant = MyCo@@nstant
+        |  }
+        |}
+        |""".stripMargin
+    )
+  }
+
+  "constants with expression" in {
+    goToDefinition() {
+      """
+        |const ONE = 1
+        |const TWO = 2
+        |const >>THREE<< = ONE + TWO
+        |
+        |Contract Test() {
+        |  pub fn main() -> () {
+        |     let three = THRE@@E
+        |  }
+        |}
+        |""".stripMargin
     }
+  }
 
-    "constants with expression" in {
-      goToDefinitionStrict() {
+  "constants is defined after its usage" when {
+    "strict-parseable" in {
+      goToDefinition() {
         """
-          |const ONE = 1
-          |const TWO = 2
-          |const >>THREE<< = ONE + TWO
-          |
           |Contract Test() {
           |  pub fn main() -> () {
-          |     let three = THRE@@E
-          |  }
-          |}
-          |""".stripMargin
-      }
-    }
-
-    "constants is defined after its usage" in {
-      goToDefinitionStrict() {
-        """
-          |Contract Test() {
-          |  pub fn main() -> () {
-          |     let one = ONE@@
+          |     let one = ON@@E
           |  }
           |}
           |
@@ -167,19 +305,19 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       }
     }
+  }
 
-    "Issue #254: Global constant has no tail newline" in {
-      // https://github.com/alephium/ralph-lsp/issues/254
-      goToDefinitionStrict() {
-        """
-          |Contract Test() {
-          |  pub fn main() -> () {
-          |     let one = ONE@@
-          |  }
-          |}
-          |
-          |const >>ONE<< = 1""".stripMargin
-      }
+  "Issue #254: Global constant has no tail newline" in {
+    // https://github.com/alephium/ralph-lsp/issues/254
+    goToDefinition() {
+      """
+        |Contract Test() {
+        |  pub fn main() -> () {
+        |     let one = ON@@E
+        |  }
+        |}
+        |
+        |const >>ONE<< = 1""".stripMargin
     }
   }
 
