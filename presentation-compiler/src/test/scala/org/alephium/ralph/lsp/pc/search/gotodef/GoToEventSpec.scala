@@ -537,7 +537,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
         }
       }
 
-      "non-event definitions" when {
+      "not go to definitions" when {
         "call is a reference call" in {
           goToDefinitionSoft()(
             """
@@ -565,11 +565,11 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
         "call is a value call" in {
           goToDefinitionSoft()(
             """
-              |Contract >>Transfer<<() {
+              |Contract Transfer() {
               |  fn function() -> () {}
               |}
               |
-              |Contract >>Transfer<<() {
+              |Contract Transfer() {
               |
               |  event Transfer(to: Address)
               |
@@ -580,6 +580,30 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
               |  pub fn function() -> () {
               |    let >>Transfer<< = 1
               |    Transfe@@r
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "call is an assignment" in {
+          goToDefinitionSoft()(
+            """
+              |Contract Transfer() {
+              |  fn function() -> () {}
+              |}
+              |
+              |Contract Transfer() {
+              |
+              |  event Transfer(to: Address)
+              |
+              |  let >>Transfer<< = 1
+              |
+              |  fn Transfer() -> () { }
+              |
+              |  pub fn function() -> () {
+              |    let >>Transfer<< = 1
+              |    let value = Transfe@@r
               |  }
               |}
               |""".stripMargin
