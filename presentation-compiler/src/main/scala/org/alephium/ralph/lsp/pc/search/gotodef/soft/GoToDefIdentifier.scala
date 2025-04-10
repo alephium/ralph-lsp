@@ -307,21 +307,21 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       from = from,
       anchor = target.data.index
     ) {
-      case Node(variable: SoftAST.VariableDeclaration, _) if !detectCallSyntax || !target.isReferenceCall() =>
+      case Node(variable: SoftAST.VariableDeclaration, _) if !detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()) =>
         searchExpression(
           expression = variable,
           target = target,
           sourceCode = sourceCode
         )
 
-      case Node(assignment: SoftAST.TypeAssignment, _) if !detectCallSyntax || !target.isReferenceCall() =>
+      case Node(assignment: SoftAST.TypeAssignment, _) if !detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()) =>
         searchExpression(
           expression = assignment,
           target = target,
           sourceCode = sourceCode
         )
 
-      case Node(binding: SoftAST.MutableBinding, _) if !detectCallSyntax || !target.isReferenceCall() =>
+      case Node(binding: SoftAST.MutableBinding, _) if !detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()) =>
         searchExpression(
           expression = binding,
           target = target,
@@ -603,7 +603,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         case Some(block) if block.contains(target) =>
           // Search the parameters
           val paramMatches =
-            if (detectCallSyntax && target.isReferenceCall())
+            if (detectCallSyntax && (target.isReferenceCall() || target.isWithinEmit()))
               Iterator.empty
             else
               searchExpression(
@@ -662,7 +662,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     //  - The target belongs to the template's inheritance group
     val paramMatches =
       if (template.block.exists(_.contains(target)) || template.inheritance.exists(_.contains(target)))
-        if (detectCallSyntax && target.isReferenceCall())
+        if (detectCallSyntax && (target.isReferenceCall() || target.isWithinEmit()))
           Iterator.empty
         else
           template.params match {
