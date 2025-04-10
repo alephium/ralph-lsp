@@ -108,7 +108,18 @@ object BuiltInFunctionDownloader extends DependencyDownloader.Native {
               else
                 ""
 
-            s"""  // ${function.doc}$params
+            // process multiline documentation
+            val doc =
+              function
+                .doc
+                .split(Token.Newline.lexeme)
+                .map {
+                  docLine =>
+                    s"  // $docLine"
+                }
+                .mkString(Token.Newline.lexeme)
+
+            s"""$doc$params
                |  // ${function.returns}
                |  ${function.signature}
                |""".stripMargin
