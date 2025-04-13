@@ -4,15 +4,15 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.CompilerOptions
-import org.alephium.ralph.lsp.{TestCode, TestFile}
+import org.alephium.ralph.lsp.{TestCode, TestCommon, TestFile}
 import org.alephium.ralph.lsp.TestFile._
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.error.TestError
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.TestDependency
-import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.utils.{LazyVal, URIUtil}
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.scalacheck.Gen
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
@@ -192,7 +192,7 @@ object TestSourceCode {
     genParsed(
       code = code,
       fileURI = fileURI
-    ).map(_.asInstanceOf[SourceCodeState.Parsed])
+    ).map(TestCommon.castOrPrintErrors[SourceCodeState.Parsed])
 
   def genParsed(
       code: Gen[String] = TestCode.genGoodCode(),
@@ -223,7 +223,7 @@ object TestSourceCode {
     genCompiled(
       code = code,
       fileURI = fileURI
-    ).map(_.asInstanceOf[SourceCodeState.Compiled])
+    ).map(TestCommon.castOrPrintErrors[SourceCodeState.Compiled])
 
   def genCompiled(
       code: Gen[String] = TestCode.genGoodCode(),
