@@ -9,8 +9,9 @@ import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error.FastParseError
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.pc.sourcecode.imports.Importer
 import org.alephium.ralph.lsp.pc.sourcecode.warning.StringWarning
-import org.alephium.ralph.lsp.utils.{LazyVal, URIUtil}
+import org.alephium.ralph.lsp.utils.LazyVal
 
 import java.net.URI
 
@@ -24,10 +25,10 @@ sealed trait SourceCodeState {
    * Can be concurrently accessed or not accessed at all.
    *
    * @return An AST representing this source file's import string literal.
-   * @see [[URIUtil.importIdentifier]]
+   * @see [[Importer.importIdentifier]]
    */
   lazy val importIdentifier: Option[Tree.Import] =
-    URIUtil
+    Importer
       .importIdentifier(fileURI)
       .flatMap(RalphParserExtension.lazyParseImportIdentifier(_, fileURI))
 

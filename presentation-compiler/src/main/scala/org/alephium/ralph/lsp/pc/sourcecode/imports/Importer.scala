@@ -6,8 +6,11 @@ package org.alephium.ralph.lsp.pc.sourcecode.imports
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.error.ImportError
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.utils.URIUtil.takeRight
 
+import java.net.URI
 import scala.collection.immutable.ArraySeq
+import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 object Importer {
 
@@ -92,5 +95,26 @@ object Importer {
       Right(importedCode)
     }
   }
+
+  /**
+   * String literal that defines an import statement for a source file.
+   *
+   * @return If the file is named `std/my_code.ral`, the import statement returned
+   *         is `import "std/my_code"`.
+   */
+  def importIdentifier(uri: URI): Option[String] =
+    takeRight(
+      uri = uri,
+      count = 2
+    ) map {
+      identifier =>
+        val string =
+          identifier
+            .iterator()
+            .asScala
+            .mkString("/") // import statements use forward slash.
+
+        string.substring(0, string.lastIndexOf("."))
+    }
 
 }
