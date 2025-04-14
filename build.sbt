@@ -92,6 +92,7 @@ lazy val `compiler-access` =
 
 lazy val `presentation-compiler` =
   project
+    .enablePlugins(BuildInfoPlugin)
     .settings(
       commonSettings,
       libraryDependencies ++=
@@ -102,7 +103,12 @@ lazy val `presentation-compiler` =
           Dependencies.scalaMock,
           Dependencies.logback,
           Dependencies.scalaLogging
-        )
+        ),
+      buildInfoKeys ++= Seq[BuildInfoKey](
+        "web3Version"   -> Version.web3,
+        "ralphcVersion" -> Version.ralphc
+      ),
+      buildInfoPackage := "org.alephium.ralph.lsp"
     )
     .dependsOn(
       `compiler-access` % "test->test;compile->compile",
