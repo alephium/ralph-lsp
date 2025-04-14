@@ -90,6 +90,34 @@ case class Node[+A, B] private (
 
     }
 
+  /**
+   * Walks down from the current node, applying the given predicate to each node (including self) and its children.
+   *
+   * When a parent node does not satisfy the predicate, it is filtered-out along with all of its children.
+   */
+  def filterDown(f: Node[B, B] => Boolean): Iterator[Node[B, B]] =
+    new Iterator[Node[B, B]] {
+
+      @inline private def selfCasted =
+        self.asInstanceOf[Node[B, B]]
+
+      private val iter =
+        if (f(selfCasted))
+          Iterator.single(selfCasted) ++
+            children
+              .iterator
+              .flatMap(_.filterDown(f))
+        else
+          Iterator.empty
+
+      override def hasNext: Boolean =
+        iter.hasNext
+
+      override def next(): Node[B, B] =
+        iter.next()
+
+    }
+
   def walkParents: Iterator[Node[B, B]] =
     new Iterator[Node[B, B]] {
 
