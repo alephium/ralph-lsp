@@ -77,7 +77,7 @@ case class Node[+A, B] private (
     new Iterator[Node[B, B]] {
 
       private val iter =
-        Iterator(self.asInstanceOf[Node[B, B]]) ++
+        Iterator.single(self.asInstanceOf[Node[B, B]]) ++
           children
             .iterator
             .flatMap(_.walkDown)
@@ -128,7 +128,7 @@ case class Node[+A, B] private (
           .iterator
           .flatMap {
             parent =>
-              Iterator(parent) ++
+              Iterator.single(parent) ++
                 parent.walkParents
           }
 
