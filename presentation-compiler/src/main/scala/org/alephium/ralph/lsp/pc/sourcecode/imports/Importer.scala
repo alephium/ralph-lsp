@@ -6,7 +6,8 @@ package org.alephium.ralph.lsp.pc.sourcecode.imports
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.error.ImportError
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
-import org.alephium.ralph.lsp.utils.URIUtil.takeRight
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.utils.URIUtil
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -103,7 +104,7 @@ object Importer {
    *         is `import "std/my_code"`.
    */
   def importIdentifier(uri: URI): Option[String] =
-    takeRight(
+    URIUtil.takeRight(
       uri = uri,
       count = 2
     ) map {
@@ -114,7 +115,14 @@ object Importer {
             .asScala
             .mkString("/") // import statements use forward slash.
 
-        string.substring(0, string.lastIndexOf("."))
+        val identifierWithVersion =
+          string.substring(0, string.lastIndexOf("."))
+
+        // Import statements do not contain version numbers, remove them.
+        DependencyID.all().foldLeft(identifierWithVersion) {
+          case (ident, dependencyID) =>
+            ident.replace(dependencyID.dirName, dependencyID.importName)
+        }
     }
 
 }

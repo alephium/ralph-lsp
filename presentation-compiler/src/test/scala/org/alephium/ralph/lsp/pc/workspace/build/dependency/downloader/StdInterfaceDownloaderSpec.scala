@@ -7,6 +7,7 @@ import org.alephium.ralph.lsp.TestFile
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers
@@ -38,7 +39,7 @@ class StdInterfaceDownloaderSpec extends AnyWordSpec with Matchers {
     "respect `std/` structure" in {
       stdInterfaces foreach {
         source =>
-          source.fileURI.toString.contains("std/") shouldBe true
+          source.fileURI.toString.contains(s"${DependencyID.Std.dirName}/") shouldBe true
       }
     }
 
