@@ -98,10 +98,10 @@ case class Node[+A, B] private (
   def filterDown(f: Node[B, B] => Boolean): Iterator[Node[B, B]] =
     new Iterator[Node[B, B]] {
 
-      @inline private def selfCasted =
-        self.asInstanceOf[Node[B, B]]
+      private val iter = {
+        val selfCasted =
+          self.asInstanceOf[Node[B, B]]
 
-      private val iter =
         if (f(selfCasted))
           Iterator.single(selfCasted) ++
             children
@@ -109,6 +109,7 @@ case class Node[+A, B] private (
               .flatMap(_.filterDown(f))
         else
           Iterator.empty
+      }
 
       override def hasNext: Boolean =
         iter.hasNext
