@@ -64,9 +64,6 @@ private[search] object ScopeWalker {
    *
    * Navigates the nodes within the scope of the `anchor` node, starting from the `from` node.
    *
-   * TODO: Improve performance: `dropWhile` drops elements linearly which can be slow.
-   *       Removing child nodes directly from the Node’s `children` field will be faster.
-   *
    * @param from   The node where the search starts.
    * @param anchor The node which is being scoped and where the search ends.
    *               If the collected result is empty, nodes after the `anchor`'s position
@@ -78,15 +75,13 @@ private[search] object ScopeWalker {
       from: Node[SoftAST, SoftAST],
       anchor: SourceIndex
     )(pf: PartialFunction[Node[SoftAST, SoftAST], Iterator[T]]): Iterable[T] = {
-    val found  = ListBuffer.empty[T]
-    var walker = from.walkDown
+    val found = ListBuffer.empty[T]
 
-    while (walker.hasNext)
-      walker.next() match {
-        // Check: Is this a scoped node that does not contain the anchor node within its scope? If yes, drop all its child nodes.
+    val iterator =
+      from filterDown {
         case block @ Node(_: SoftAST.While | _: SoftAST.For | _: SoftAST.IfElse | _: SoftAST.Else | _: SoftAST.Block, _) if !block.data.contains(anchor) =>
           // drop all child nodes
-          walker = walker dropWhile block.contains
+          false
 
         // Check:
         // - Is this node (i.e. within the scope) defined by the partial-function?
@@ -96,11 +91,16 @@ private[search] object ScopeWalker {
         case node @ Node(ast, _) if pf.isDefinedAt(node) && (ast.isInstanceOf[SoftAST.DeclarationAST] || ast.isBehind(anchor) || found.isEmpty) =>
           found addAll pf(node)
           // This node is processed, drop all its children.
-          walker = walker dropWhile node.contains
+          false
 
         case _ =>
-        // ignore the rest
+          // Keep processing the rest
+          true
       }
+
+    // run the iterator
+    while (iterator.hasNext)
+      iterator.next()
 
     found
 
