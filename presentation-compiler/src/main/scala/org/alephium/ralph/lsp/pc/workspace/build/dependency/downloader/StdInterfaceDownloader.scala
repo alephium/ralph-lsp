@@ -77,7 +77,7 @@ object StdInterfaceDownloader extends DependencyDownloader.Native with StrictImp
     )(implicit logger: ClientLogger): Either[ErrorDownloadingDependency, List[SourceCodeState.UnCompiled]] =
     Using.Manager {
       use =>
-        val stdURL = getClass.getResource(s"/${dependencyID.dirName}")
+        val stdURL = getClass.getResource(s"/${dependencyID.importName}")
 
         val stdPath = if (stdURL.getProtocol == "file") {
           Paths.get(stdURL.toURI)
@@ -105,7 +105,7 @@ object StdInterfaceDownloader extends DependencyDownloader.Native with StrictImp
       case Failure(throwable) =>
         val error =
           ErrorDownloadingDependency(
-            dependencyID = dependencyID.dirName,
+            dependencyID = dependencyID.importName,
             throwable = throwable,
             index = errorIndex
           )

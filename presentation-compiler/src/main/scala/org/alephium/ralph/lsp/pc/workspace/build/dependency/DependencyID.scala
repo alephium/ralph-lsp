@@ -3,19 +3,24 @@
 
 package org.alephium.ralph.lsp.pc.workspace.build.dependency
 
+import org.alephium.ralph.lsp.BuildInfo
+
 import scala.collection.immutable.ArraySeq
 
-sealed trait DependencyID extends Product {
+sealed abstract class DependencyID(version: String) extends Product {
 
-  final def dirName: String =
+  final val importName: String =
     productPrefix.toLowerCase
+
+  final val dirName: String =
+    s"$importName-$version"
 
 }
 
 object DependencyID {
 
-  case object Std     extends DependencyID
-  case object BuiltIn extends DependencyID
+  case object Std     extends DependencyID(BuildInfo.web3Version)
+  case object BuiltIn extends DependencyID(BuildInfo.ralphcVersion)
 
   def all(): ArraySeq[DependencyID] =
     ArraySeq(

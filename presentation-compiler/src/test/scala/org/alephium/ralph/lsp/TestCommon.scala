@@ -4,9 +4,10 @@
 package org.alephium.ralph.lsp
 
 import org.alephium.ralph.error.CompilerError
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.scalacheck.Gen
 import org.scalatest.OptionValues._
+import org.scalatest.matchers.should.Matchers.fail
 
 /**
  * Common test data generator used by all other data types.
@@ -19,6 +20,37 @@ object TestCommon {
 
   val genCamelCase: Gen[String] =
     genName.map(_.capitalize)
+
+  /**
+   * Tries to cast the given [[SourceCodeState]] to the expected subtype [[T]].
+   * If the state is an error, all contained errors are printed in a readable format for debugging.
+   *
+   * @param state The source code state to cast or inspect for errors.
+   * @tparam T The type to cast to.
+   * @return The casted [[SourceCodeState]] if successful.
+   */
+  def castOrPrintErrors[T <: SourceCodeState](state: SourceCodeState): T =
+    state match {
+      case error: SourceCodeState.IsError =>
+        error match {
+          case parseError: SourceCodeState.IsParserOrCompilationError =>
+            parseError.errors foreach {
+              error =>
+                val compilerError = CompilerError.Default(error.message, Some(error.index))
+                val errorMessage  = compilerError.toFormatter(parseError.code).format(Some(Console.RED))
+                println(errorMessage)
+            }
+
+            fail(s"Actual: ${parseError.getClass}. Expected: SourceCodeState.Parsed")
+
+          case access: SourceCodeState.ErrorAccess =>
+            println(s"${Console.RED}${access.getClass.getSimpleName}${Console.RESET}: ${access.error.message}")
+            fail(s"Actual: ${access.getClass}. Expected: SourceCodeState.Parsed")
+        }
+
+      case result =>
+        result.asInstanceOf[T]
+    }
 
   /**
    * Some test error outputs are difficult to debug because [[org.alephium.ralph.SourceIndex]] only emits numbers.
