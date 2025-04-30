@@ -74,7 +74,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "user selects the enum type of the first field" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |enum >>EnumType<< {
           |  Field0 = 0
@@ -116,7 +116,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     }
 
     "user selects the enum type of the second field" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |enum >>EnumType<< {
           |  Field0 = 0
@@ -153,7 +153,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     }
 
     "there are multiple enum types with duplicate names" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |enum >>EnumType<< {
           |  Field0 = 0
@@ -219,6 +219,64 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
           |}
           |""".stripMargin
       )
+    }
+  }
+
+  "duplicates identifier" when {
+    "enum is called" in {
+      // FIXME: Currently the `Contract` and the `enum` both are returned.
+      //        Only the `Enum` should be returned.
+      //        This will be resolved by type-inference code-provider, which is not yet implemented.
+      goToDefinitionSoft()(
+        """
+          |Contract >>Enum<< {
+          |
+          |  enum >>Enum<< {}
+          |  const Enum = 1
+          |
+          |  fn main() -> () {
+          |     Enu@@m.One
+          |  }
+          |
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "identifier is called" when {
+      "cont and enum exists" in {
+        goToDefinitionSoft()(
+          """
+            |Contract Enum {
+            |
+            |  enum >>Enum<< {}
+            |  const >>Enum<< = 1
+            |
+            |  fn main() -> () {
+            |     Enu@@m
+            |  }
+            |
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "cont and enum do not exist" in {
+        goToDefinitionSoft()(
+          """
+            |Contract >>Enum<< {
+            |
+            |  // enum Enum {}
+            |  // const Enum = 1
+            |
+            |  fn main() -> () {
+            |     Enu@@m
+            |  }
+            |
+            |}
+            |""".stripMargin
+        )
+      }
     }
   }
 

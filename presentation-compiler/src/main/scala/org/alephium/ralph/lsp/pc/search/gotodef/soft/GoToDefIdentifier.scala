@@ -273,6 +273,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           detectCallSyntax = detectCallSyntax
         )
 
+      case enumAST: SoftAST.Enum =>
+        searchEnum(
+          enumAST = enumAST,
+          target = target,
+          sourceCode = sourceCode,
+          detectCallSyntax = detectCallSyntax
+        )
+
       case constant: SoftAST.Const =>
         searchConstant(
           constant = constant,
@@ -355,6 +363,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case Node(constant: SoftAST.Const, _) =>
         searchConstant(
           constant = constant,
+          target = target,
+          sourceCode = sourceCode,
+          detectCallSyntax = detectCallSyntax
+        )
+
+      case Node(enumAST: SoftAST.Enum, _) =>
+        searchEnum(
+          enumAST = enumAST,
           target = target,
           sourceCode = sourceCode,
           detectCallSyntax = detectCallSyntax
@@ -642,6 +658,50 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   }
 
   /**
+   * Given an enum, expands and searches within it for all possible definitions.
+   *
+   * @param enumAST          The enum to expand and search.
+   * @param target           The identifier being searched.
+   * @param sourceCode       The source code state where the enum belongs.
+   * @param detectCallSyntax If `true`, ensures that when an enum is called,
+   *                         the search is restricted to enum calls only.
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchEnum(
+      enumAST: SoftAST.Enum,
+      target: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    val blockMatches =
+      enumAST.block match {
+        case Some(block) if block.contains(target) =>
+          // search the block
+          searchBlock(
+            block = block,
+            target = target,
+            sourceCode = sourceCode,
+            detectCallSyntax = detectCallSyntax
+          )
+
+        case _ =>
+          Iterator.empty
+      }
+
+    // Check if the name matches the identifier.
+    val nameMatches =
+      if (!detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()))
+        searchIdentifier(
+          identifier = enumAST.identifier,
+          target = target,
+          sourceCode = sourceCode
+        )
+      else
+        Iterator.empty
+
+    nameMatches ++ blockMatches
+  }
+
+  /**
    * Given a template, expands and searches within it for all possible definitions.
    *
    * @param template         The template to expand and search.
@@ -766,7 +826,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    if (!detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()))
+    if (!detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit() && !target.isMethodCall()))
       searchExpression(
         expression = constant.assignment.expressionLeft,
         target = target,
