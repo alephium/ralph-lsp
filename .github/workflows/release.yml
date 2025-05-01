@@ -70,7 +70,7 @@ jobs:
           tag_name: v${{ env.VERSION }}
           release_name: v${{ env.VERSION }}
           body: Some solid code
-          draft: false
+          draft: true
           prerelease: ${{ env.IS_RC }}
 
       - name: Upload Release Asset (Jar)
