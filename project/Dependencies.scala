@@ -4,7 +4,7 @@ object Version {
 
   val scala213 = "2.13.15"
   val web3     = "0.38.0"
-  val ralphc   = "3.12.7"
+  val ralphc   = "3.13.0"
 
 }
 
@@ -13,7 +13,7 @@ object Dependencies {
   /** TEST */
   lazy val scalaTest  = "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test
   lazy val scalaCheck = "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test
-  lazy val scalaMock  = "org.scalamock"     %% "scalamock"       % "7.3.0"    % Test
+  lazy val scalaMock  = "org.scalamock"     %% "scalamock"       % "7.3.2"    % Test
 
   /** Core */
   lazy val ralphc = "org.alephium" %% "alephium-ralphc" % Version.ralphc excludeAll (
