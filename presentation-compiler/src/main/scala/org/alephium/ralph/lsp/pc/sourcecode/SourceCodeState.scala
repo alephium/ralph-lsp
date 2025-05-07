@@ -11,6 +11,8 @@ import org.alephium.ralph.lsp.access.compiler.message.error.FastParseError
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.sourcecode.imports.Importer
 import org.alephium.ralph.lsp.pc.sourcecode.warning.StringWarning
+import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralph.lsp.utils.LazyVal
 
 import java.net.URI
@@ -18,6 +20,10 @@ import java.net.URI
 sealed trait SourceCodeState {
 
   def fileURI: URI
+
+  /** Returns true if this file is a built-in primitive source file. */
+  def isPrimitive(builtInWorkspace: WorkspaceState.IsSourceAware): Boolean =
+    Dependency.isPrimitive(fileURI, builtInWorkspace)
 
   /**
    * Lazily initialise import statements for all files.

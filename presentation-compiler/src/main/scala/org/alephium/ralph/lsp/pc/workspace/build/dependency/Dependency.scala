@@ -7,23 +7,44 @@ import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.lsp.pc.workspace.{Workspace, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
 import org.alephium.ralph.lsp.pc.workspace.build.config.RalphcConfigState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorDefaultDependencyDirectoryDoesNotExists
-import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, Workspace}
+import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.lsp.utils.URIUtil
 import org.alephium.ralphc.Config
 
+import java.net.URI
 import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 
 object Dependency {
 
+  val PRIMITIVE_FILE_NAME =
+    s"primitives.${CompilerAccess.RALPH_FILE_EXTENSION}"
+
   def defaultPath(): Option[Path] =
     FileAccess
       .USER_HOME
       .map(_.resolve(FileAccess.RALPH_LSP_HOME).resolve("dependencies"))
+
+  /**
+   * Checks whether the given file URI refers to the built-in primitive source file.
+   *
+   * @param builtInFileURI   The URI of the file to check.
+   * @param builtInWorkspace The built-in workspace.
+   * @return `true` if the file matches the primitive file by name and URI, otherwise `false`.
+   */
+  def isPrimitive(
+      builtInFileURI: URI,
+      builtInWorkspace: WorkspaceState.IsSourceAware): Boolean =
+    builtInWorkspace.sourceCode.exists {
+      builtInWorkspace =>
+        builtInFileURI == builtInWorkspace.fileURI &&
+        URIUtil.getFileName(builtInFileURI) == PRIMITIVE_FILE_NAME
+    }
 
   /**
    * Compile this build's dependency.

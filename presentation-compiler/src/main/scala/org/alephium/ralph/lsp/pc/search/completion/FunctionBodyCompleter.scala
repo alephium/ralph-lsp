@@ -209,6 +209,7 @@ object FunctionBodyCompleter {
       case Some(builtIn) =>
         WorkspaceSearcher
           .collectFunctions(builtIn.parsed)
+          .filter(!_.parsed.isPrimitive(builtIn)) // drop functions on primitive types
           .map {
             node =>
               Suggestion.FuncDef(

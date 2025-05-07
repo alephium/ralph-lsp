@@ -115,7 +115,9 @@ private[search] object GoToDefFuncId extends StrictImplicitLogging {
       if (funcId.isBuiltIn)
         workspace.build.findDependency(DependencyID.BuiltIn) match {
           case Some(builtInWorkspace) =>
-            WorkspaceSearcher.collectFunctions(builtInWorkspace.parsed)
+            WorkspaceSearcher
+              .collectFunctions(builtInWorkspace.parsed)
+              .filter(!_.parsed.isPrimitive(builtInWorkspace)) // Ignore functions primitive types
 
           case None =>
             // there is no dependency on the built-in library with this workspace,

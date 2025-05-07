@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.{Dependency, DependencyID}
 import org.alephium.ralph.{BuiltIn, SourceIndex}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.Token
 
@@ -39,18 +39,61 @@ object BuiltInFunctionDownloader extends DependencyDownloader.Native {
         functions = BuiltInFunctionInfo.build()
       )
 
+    // build the `primitives.ral` file.
+    val primitiveSourceCode =
+      primitives(workspaceDir)
+
     // a default build file.
     val build =
       DependencyDownloader.defaultBuild(workspaceDir)
 
+    val allSourceCode =
+      sourceCode.to(ArraySeq) :+ primitiveSourceCode
+
     val workspace =
       WorkspaceState.UnCompiled(
         build = build,
-        sourceCode = sourceCode.to(ArraySeq)
+        sourceCode = allSourceCode
       )
 
     Right(workspace)
   }
+
+  /**
+   * Creates the built-in primitive source file.
+   *
+   * @param workspaceDir The directory where dependencies are located.
+   * @return An uncompiled `primitive.ral` source file located in the given workspace directory.
+   */
+  private def primitives(workspaceDir: Path): SourceCodeState.UnCompiled =
+    SourceCodeState.UnCompiled(
+      fileURI = workspaceDir.resolve(Dependency.PRIMITIVE_FILE_NAME).toUri,
+      code = """// ------------------------------------------------------------------------------
+          |// NOTE: These are **not** real contracts or actual core types in Alephium.
+          |//
+          |// They are abstract representations created to support code inspection,
+          |// such as go-to-definition, type inference, and reference resolution in tooling.
+          |//
+          |// Do not confuse these with real types or deployable contracts.
+          |// For official type definitions, refer to: https://ralph.alephium.org/
+          |// ------------------------------------------------------------------------------
+          |
+          |// https://ralph.alephium.org/#bool
+          |Abstract Contract Bool() {}
+          |
+          |// https://ralph.alephium.org/#i256-and-u256
+          |Abstract Contract U256() {}
+          |
+          |// https://ralph.alephium.org/#i256-and-u256
+          |Abstract Contract I256() {}
+          |
+          |// https://ralph.alephium.org/#bytevec
+          |Abstract Contract ByteVec() {}
+          |
+          |// https://ralph.alephium.org/#address
+          |Abstract Contract Address() {}
+          |""".stripMargin
+    )
 
   /**
    * Converts [[BuiltInFunctionInfo]] to [[SourceCodeState.UnCompiled]].

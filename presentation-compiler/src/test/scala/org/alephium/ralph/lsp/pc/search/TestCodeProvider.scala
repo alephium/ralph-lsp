@@ -299,25 +299,37 @@ object TestCodeProvider {
       code: String,
       expected: Option[String]): Assertion = {
     // Assert Node's AST
-    goToDependencyStrict(
-      code = ArraySeq(code),
-      expected = expected.map {
-        string =>
-          (string, string)
-      },
-      downloader = BuiltInFunctionDownloader
+    goToBuiltInStrict(
+      code = code,
+      expected = expected
     )
 
     // Assert `SoftAST`
-    goToDependencySoft(
-      code = ArraySeq(code),
-      expected = expected.map {
-        string =>
-          (string, string)
-      },
-      downloader = BuiltInFunctionDownloader
+    goToBuiltInSoft(
+      code = code,
+      expected = expected
     )
   }
+
+  def goToBuiltInStrict(
+      code: String,
+      expected: Option[String]): Assertion =
+    // Assert Node's AST
+    goToDependencyStrict(
+      code = ArraySeq(code),
+      expected = expected,
+      downloader = BuiltInFunctionDownloader
+    )
+
+  def goToBuiltInSoft(
+      code: String,
+      expected: Option[String]): Assertion =
+    // Assert `SoftAST`
+    goToDependencySoft(
+      code = ArraySeq(code),
+      expected = expected,
+      downloader = BuiltInFunctionDownloader
+    )
 
   /**
    * Tests directly on the `std` native library.
@@ -327,11 +339,10 @@ object TestCodeProvider {
    * contained in the `std` library downloaded by native dependency
    * downloader [[StdInterfaceDownloader]].
    *
-   * @param expected An optional tuple where the first element is the expected line,
-   *                 and the second is the highlighted token in that line.
+   * @param expected The expected dependency line, including the highlighted range `>>range to expect<<`.
    * @param code     The code with the search indicator '@@'.
    */
-  def goToStd(expected: Option[(String, String)])(code: String*): Assertion =
+  def goToStd(expected: Option[String])(code: String*): Assertion =
     goToDependency(
       code = code.to(ArraySeq),
       expected = expected,
@@ -497,8 +508,7 @@ object TestCodeProvider {
    * the resulting go-to definition to be within a dependency workspace.
    *
    * @param code       The code with the search indicator '@@'.
-   * @param expected   An optional tuple where the first element is the expected line,
-   *                   and the second is the highlighted token in that line.
+   * @param expected   The expected dependency line, including the highlighted range `>>range to expect<<`.
    * @param downloader The native dependency to download, and to test on.
    *                   These must be of type [[DependencyDownloader.Native]]
    *                   as they can be written to `~/ralph-lsp`.
@@ -506,7 +516,7 @@ object TestCodeProvider {
    */
   private def goToDependency(
       code: ArraySeq[String],
-      expected: Option[(String, String)],
+      expected: Option[String],
       downloader: DependencyDownloader.Native): Assertion = {
     goToDependencyStrict(
       code = code,
@@ -526,8 +536,7 @@ object TestCodeProvider {
    * the resulting go-to definition to be within a dependency workspace.
    *
    * @param code       The code with the search indicator '@@'.
-   * @param expected   An optional tuple where the first element is the expected line,
-   *                   and the second is the highlighted token in that line.
+   * @param expected   The expected dependency line, including the highlighted range `>>range to expect<<`.
    * @param downloader The native dependency to download, and to test on.
    *                   These must be of type [[DependencyDownloader.Native]]
    *                   as they can be written to `~/ralph-lsp`.
@@ -535,7 +544,7 @@ object TestCodeProvider {
    */
   private def goToDependencyStrict(
       code: ArraySeq[String],
-      expected: Option[(String, String)],
+      expected: Option[String],
       downloader: DependencyDownloader.Native): Assertion = {
     val codeWithoutGoToSymbols =
       code map TestCodeUtil.removeRangeSymbols
@@ -561,8 +570,7 @@ object TestCodeProvider {
    * the resulting go-to definition to be within a dependency workspace.
    *
    * @param code       The code with the search indicator '@@'.
-   * @param expected   An optional tuple where the first element is the expected line,
-   *                   and the second is the highlighted token in that line.
+   * @param expected   The expected dependency line, including the highlighted range `>>range to expect<<`.
    * @param downloader The native dependency to download, and to test on.
    *                   These must be of type [[DependencyDownloader.Native]]
    *                   as they can be written to `~/ralph-lsp`.
@@ -570,7 +578,7 @@ object TestCodeProvider {
    */
   private def goToDependencySoft(
       code: ArraySeq[String],
-      expected: Option[(String, String)],
+      expected: Option[String],
       downloader: DependencyDownloader.Native): Assertion = {
     val codeWithoutGoToSymbols =
       code map TestCodeUtil.removeRangeSymbols
@@ -595,8 +603,7 @@ object TestCodeProvider {
    * Asserts the go-to definition search result, expecting
    * the resulting go-to definition to be within a dependency workspace.
    *
-   * @param expected   An optional tuple where the first element is the expected line,
-   *                   and the second is the highlighted token in that line.
+   * @param expected   The expected dependency line, including the highlighted range `>>range to expect<<`.
    * @param actual     The actual search result.
    * @param workspace  The workspace where the search was executed.
    * @param downloader The native dependency to download, and to test on.
@@ -605,29 +612,32 @@ object TestCodeProvider {
    *                   We don't want generated libraries being written to `~/ralph-lsp`.
    */
   private def assertGoToDependency(
-      expected: Option[(String, String)],
+      expected: Option[String],
       actual: Iterator[SourceLocation.GoToDef],
       workspace: WorkspaceState.IsParsedAndCompiled,
       downloader: DependencyDownloader.Native): Assertion =
     expected match {
-      case Some((expectedLine, expectedHighlightedToken)) =>
+      case Some(expectedLineWithRange) =>
+        val expectedLineWithoutRange =
+          TestCodeUtil.removeRangeSymbols(expectedLineWithRange)
+
         val expectedResults =
           workspace
             .build
             .findDependency(downloader.dependencyID)
             .to(ArraySeq)
             .flatMap(_.sourceCode)
-            .filter(_.code.contains(expectedLine)) // filter source-files that contain this code function.
+            .filter(_.code.contains(expectedLineWithoutRange)) // filter source-files that contain this code function.
             .flatMap {
               builtInFile =>
                 // insert symbol >>..<<
                 val codeWithRangeSymbols =
                   builtInFile
                     .code
-                    .replace(expectedHighlightedToken, s">>$expectedHighlightedToken<<")
+                    .replace(expectedLineWithoutRange, expectedLineWithRange)
 
                 if (builtInFile.code == codeWithRangeSymbols)
-                  fail(s"Could not find the expected highlighted token '$expectedHighlightedToken' in line '$expectedLine'.")
+                  fail(s"Range symbols `>> <<` not provided in expected: \"$expectedLineWithRange\".")
 
                 // compute the line range
                 TestCodeUtil
@@ -639,7 +649,7 @@ object TestCodeProvider {
             }
 
         if (expectedResults.isEmpty)
-          fail(s"Could not find the expected line '$expectedLine'.")
+          fail(s"Could not find the expected line '$expectedLineWithRange'.")
 
         // For actual search result assert only the fileURI and line-ranges
         val actualResults =
