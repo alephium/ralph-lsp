@@ -13,16 +13,9 @@ object TypeCompleter {
    * @param workspace The workspace to search for types.
    * @return An iterator of all types in the workspace.
    */
-  def suggest(workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.Type] = {
-    val workspaceTypes =
-      WorkspaceSearcher
-        .collectTypes(workspace = workspace, includeNonImportedCode = true)
-        .map(Suggestion.CreatedType)
-
-    val primitiveTypes =
-      PrimitiveTypesCompleter.suggest()
-
-    workspaceTypes ++ primitiveTypes
-  }
+  def suggest(workspace: WorkspaceState.IsSourceAware): Iterator[Suggestion.Type] =
+    WorkspaceSearcher
+      .collectTypes(workspace = workspace, includeNonImportedCode = true)
+      .map(Suggestion.Type)
 
 }

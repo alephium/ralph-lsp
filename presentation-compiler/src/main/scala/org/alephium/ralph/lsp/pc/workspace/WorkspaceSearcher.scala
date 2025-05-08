@@ -271,13 +271,10 @@ object WorkspaceSearcher {
   def collectAllDependencyTreesSoft(
       dependencyID: DependencyID,
       build: BuildState.Compiled
-    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.CodeSoft] =
-    build.findDependency(dependencyID) match {
-      case Some(dependency) =>
-        collectAllTreesSoft(dependency)
-
-      case None =>
-        ArraySeq.empty
+    )(implicit logger: ClientLogger): Option[(WorkspaceState.Compiled, ArraySeq[SourceLocation.CodeSoft])] =
+    build.findDependency(dependencyID) map {
+      dependency =>
+        (dependency, collectAllTreesSoft(dependency))
     }
 
   /**
@@ -323,13 +320,8 @@ object WorkspaceSearcher {
   private def collectTrees(
       workspace: WorkspaceState.IsSourceAware,
       includeNonImportedCode: Boolean): ArraySeq[SourceLocation.CodeStrict] = {
-    // fetch the `std` dependency
-    val stdSourceParsedCode =
-      workspace
-        .build
-        .findDependency(DependencyID.Std)
-        .to(ArraySeq)
-        .flatMap(_.sourceCode.map(_.parsed))
+    val (stdSourceParsedCode, primitives) =
+      collectDependencySourceCode(workspace.build)
 
     // collect all parsed source-files
     val workspaceCode =
@@ -372,7 +364,10 @@ object WorkspaceSearcher {
     val workspaceTrees =
       SourceCodeSearcher.collectSourceTrees(workspaceCode)
 
-    workspaceTrees ++ allImportedCode
+    val primitiveTrees =
+      SourceCodeSearcher.collectSourceTrees(primitives)
+
+    workspaceTrees ++ allImportedCode ++ primitiveTrees
   }
 
   /**
@@ -388,13 +383,8 @@ object WorkspaceSearcher {
       workspace: WorkspaceState.IsSourceAware,
       includeNonImportedCode: Boolean
     )(implicit logger: ClientLogger): ArraySeq[SourceLocation.CodeSoft] = {
-    // fetch the `std` dependency
-    val stdSourceParsedCode =
-      workspace
-        .build
-        .findDependency(DependencyID.Std)
-        .to(ArraySeq)
-        .flatMap(_.sourceCode.map(_.parsed))
+    val (stdSourceParsedCode, primitives) =
+      collectDependencySourceCode(workspace.build)
 
     // collect all parsed source-files
     val workspaceCode =
@@ -438,7 +428,42 @@ object WorkspaceSearcher {
     val workspaceTrees =
       SourceCodeSearcher.collectSourceTreesSoft(workspaceCode)
 
-    workspaceTrees ++ allImportedCode
+    val primitiveTrees =
+      SourceCodeSearcher.collectSourceTreesSoft(primitives)
+
+    workspaceTrees ++ allImportedCode ++ primitiveTrees
+  }
+
+  /**
+   * Collects all parsed and searchable source files from the dependency workspace.
+   *
+   * @param build The build containing the dependencies.
+   * @return A tuple:
+   *          - All parsed source files from the standard `std` library.
+   *          - The parsed primitive source file contained in the `builtin` dependency.
+   */
+  private def collectDependencySourceCode(build: BuildState.Compiled): (ArraySeq[SourceCodeState.Parsed], ArraySeq[SourceCodeState.Parsed]) = {
+    // fetch the `std` dependency
+    val stdSourceParsedCode =
+      build
+        .findDependency(DependencyID.Std)
+        .to(ArraySeq)
+        .flatMap(_.sourceCode.map(_.parsed))
+
+    // fetch the `primitives.ral` file
+    val primitives =
+      build
+        .findDependency(DependencyID.BuiltIn)
+        .to(ArraySeq)
+        .flatMap {
+          builtIn =>
+            builtIn
+              .sourceCode
+              .map(_.parsed)
+              .filter(_.isPrimitive(builtIn))
+        }
+
+    (stdSourceParsedCode, primitives)
   }
 
   /**

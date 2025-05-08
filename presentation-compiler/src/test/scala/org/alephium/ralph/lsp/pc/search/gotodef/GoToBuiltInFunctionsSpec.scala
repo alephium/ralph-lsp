@@ -37,7 +37,7 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
               |  }
               |}
               |""".stripMargin,
-          expected = Some("""assert!""")
+          expected = Some(""">>assert!<<""")
         )
       }
 
@@ -79,7 +79,7 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
             |  }
             |}
             |""".stripMargin,
-        expected = Some("""verifyAbsoluteLocktime!""")
+        expected = Some(""">>verifyAbsoluteLocktime!<<""")
       )
     }
 
@@ -98,7 +98,7 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
             |  }
             |}
             |""".stripMargin,
-        expected = Some("""assert!""")
+        expected = Some(""">>assert!<<""")
       )
     }
   }

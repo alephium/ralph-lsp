@@ -157,7 +157,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
     }
 
     "implemented interfaces is indirectly imported" in {
-      goToStd(Some(("Interface INFTCollection {", "INFTCollection"))) {
+      goToStd(Some("Interface >>INFTCollection<< {")) {
         """
           |// This import does not contain the implemented INFTCollection interface,
           |// but it has INFTCollectionWithRoyalty that implements it.
@@ -170,7 +170,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
     }
 
     "implemented interfaces is directly imported" in {
-      goToStd(Some(("Interface INFTCollectionWithRoyalty extends INFTCollection {", "INFTCollectionWithRoyalty"))) {
+      goToStd(Some("Interface >>INFTCollectionWithRoyalty<< extends INFTCollection {")) {
         """
           |// An obvious import.
           |import "std/nft_collection_with_royalty_interface"

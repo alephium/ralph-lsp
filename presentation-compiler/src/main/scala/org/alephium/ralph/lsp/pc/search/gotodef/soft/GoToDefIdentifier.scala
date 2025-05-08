@@ -409,7 +409,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       WorkspaceSearcher.collectAllDependencyTreesSoft(
         dependencyID = DependencyID.BuiltIn,
         build = build
-      )
+      ) match {
+        case Some((builtIn, builtInTrees)) =>
+          // Primitives should not be included within inheritance search.
+          builtInTrees.filter(!_.parsed.isPrimitive(builtIn))
+
+        case None =>
+          Iterator.empty
+      }
 
     // Merge both the actual inherited trees and the built-in trees.
     val allInheritedTrees =

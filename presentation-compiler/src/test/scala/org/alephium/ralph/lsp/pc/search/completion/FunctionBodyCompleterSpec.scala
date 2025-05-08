@@ -470,7 +470,7 @@ class FunctionBodyCompleterSpec extends AnyWordSpec with Matchers {
             case enums: Suggestion.EnumDef =>
               enums
 
-            case enumCreatedTypes: Suggestion.CreatedType if enumCreatedTypes.node.source.tree.ast.isInstanceOf[Ast.EnumDef[_]] =>
+            case enumCreatedTypes: Suggestion.Type if enumCreatedTypes.node.source.tree.ast.isInstanceOf[Ast.EnumDef[_]] =>
               enumCreatedTypes
           }
           .flatMap(_.toCompletion())
