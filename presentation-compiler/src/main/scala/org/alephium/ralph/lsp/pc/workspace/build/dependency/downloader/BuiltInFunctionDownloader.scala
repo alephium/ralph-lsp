@@ -155,7 +155,7 @@ object BuiltInFunctionDownloader extends DependencyDownloader.Native {
             val doc =
               function
                 .doc
-                .split(Token.Newline.lexeme)
+                .split("\n") // Use `\n` for splitting because the `doc` string is coming from the JVM, i.e. it's not persisted.
                 .map {
                   docLine =>
                     s"  // $docLine"
