@@ -5,9 +5,12 @@ package org.alephium.ralph.lsp
 
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
+import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 import org.scalacheck.Gen
 import org.scalatest.OptionValues._
 import org.scalatest.matchers.should.Matchers.fail
+
+import scala.reflect.ClassTag
 
 /**
  * Common test data generator used by all other data types.
@@ -29,24 +32,66 @@ object TestCommon {
    * @tparam T The type to cast to.
    * @return The casted [[SourceCodeState]] if successful.
    */
-  def castOrPrintErrors[T <: SourceCodeState](state: SourceCodeState): T =
+  def castOrPrintErrors[T <: SourceCodeState](state: SourceCodeState)(implicit classTag: ClassTag[T]): T =
     state match {
       case error: SourceCodeState.IsError =>
         error match {
           case parseError: SourceCodeState.IsParserOrCompilationError =>
-            parseError.errors foreach {
-              error =>
-                val compilerError = CompilerError.Default(error.message, Some(error.index))
-                val errorMessage  = compilerError.toFormatter(parseError.code).format(Some(Console.RED))
-                println(errorMessage)
-            }
+            val error =
+              parseError
+                .errors
+                .map {
+                  error =>
+                    val compilerError = CompilerError.Default(error.message, Some(error.index))
+                    compilerError.toFormatter(parseError.code).format(Some(Console.RED))
+                }
+                .mkString("\n")
 
-            fail(s"Actual: ${parseError.getClass}. Expected: SourceCodeState.Parsed")
+            fail(s"""Actual: ${parseError.getClass}. Expected: ${classTag.runtimeClass}
+                 |$error""".stripMargin)
 
           case access: SourceCodeState.ErrorAccess =>
-            println(s"${Console.RED}${access.getClass.getSimpleName}${Console.RESET}: ${access.error.message}")
-            fail(s"Actual: ${access.getClass}. Expected: SourceCodeState.Parsed")
+            fail(s"""Actual: ${access.getClass}. Expected: ${classTag.runtimeClass}
+                 |${Console.RED}${access.getClass}${Console.RESET}: ${access.error.message}""".stripMargin)
         }
+
+      case result =>
+        result.asInstanceOf[T]
+    }
+
+  /**
+   * Tries to cast the given [[BuildState]] to the expected subtype [[T]].
+   * If the state is an error, all contained errors are printed in a readable format for debugging.
+   *
+   * @param state The source code state to cast or inspect for errors.
+   * @tparam T The type to cast to.
+   * @return The casted [[BuildState]] if successful.
+   */
+  def castOrPrintErrors[T <: BuildState](state: BuildState)(implicit classTag: ClassTag[T]): T =
+    state match {
+      case BuildState.Errored(_, codeOption, errors, dependencies, _) =>
+        // The build errored, print formatted errors for debugging.
+        errors foreach {
+          error =>
+            val compilerError = CompilerError.Default(error.message, Some(error.index))
+            codeOption match {
+              case Some(code) =>
+                val message = compilerError.toFormatter(code).format(Some(Console.RED))
+
+                fail(s"""Actual: ${state.getClass}. Expected: ${classTag.runtimeClass}
+                     |$message""".stripMargin)
+
+              case None =>
+                fail(s"Cannot print formatted error because `codeOption == None`. Error: $error")
+            }
+        }
+
+        dependencies foreach {
+          workspace =>
+            workspace.sourceCode foreach castOrPrintErrors[SourceCodeState]
+        }
+
+        state.asInstanceOf[T]
 
       case result =>
         result.asInstanceOf[T]

@@ -3,16 +3,16 @@
 
 package org.alephium.ralph.lsp.pc.workspace.build
 
+import org.alephium.ralph.lsp.{TestCode, TestCommon, TestFile}
 import org.alephium.ralph.lsp.GenExtension.GenExtensionsImplicits
 import org.alephium.ralph.lsp.TestFile.genFolderURI
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.utils.log.ClientLogger
-import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
 import org.alephium.ralph.lsp.pc.workspace.build.TestRalphc.genRalphcParsedConfig
-import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfig, RalphcConfigState}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
-import org.alephium.ralph.lsp.{TestCode, TestFile}
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers._
 
@@ -56,7 +56,7 @@ object TestBuild {
       workspaceURI = workspaceURI,
       config = config,
       dependencyDownloaders = dependencyDownloaders
-    ).map(_.asInstanceOf[BuildState.Compiled])
+    ).map(TestCommon.castOrPrintErrors[BuildState.Compiled])
 
   def genCompiled(
       workspaceURI: Gen[URI] = genFolderURI(),
