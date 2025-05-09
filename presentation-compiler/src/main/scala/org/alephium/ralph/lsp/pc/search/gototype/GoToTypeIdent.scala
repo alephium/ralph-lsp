@@ -11,8 +11,15 @@ import org.alephium.ralph.lsp.utils.Node
 
 import scala.collection.immutable.ArraySeq
 
-private object GoToTypeIdent extends StrictImplicitLogging {
+private case object GoToTypeIdent extends StrictImplicitLogging {
 
+  /**
+   * Searches type-definitions given the identifier node [[Ast.Ident]].
+   *
+   * @param node      The node representing the identifier being searched.
+   * @param workspace The workspace state where the source-code is located.
+   * @return An iterator over type-definition search results.
+   */
   def apply(
       node: Node[Ast.Ident, Ast.Positioned],
       workspace: WorkspaceState.IsSourceAware
@@ -37,11 +44,11 @@ private object GoToTypeIdent extends StrictImplicitLogging {
         }
 
       case Some(Node(data, _)) =>
-        logger.info(s"Type-inference not implemented for ${data.getClass.getName}. SourceIndex: ${data.sourceIndex}")
+        logger.info(s"${this.productPrefix} not implemented for ${data.getClass.getName}. SourceIndex: ${data.sourceIndex}")
         ArraySeq.empty
 
       case None =>
-        logger.info(s"Type information not found for node: ${node.data.getClass.getName}. SourceIndex: ${node.data.sourceIndex}")
+        logger.info(s"${this.productPrefix}: Type information not found for node: ${node.data.getClass.getName}. SourceIndex: ${node.data.sourceIndex}")
         ArraySeq.empty
     }
 
