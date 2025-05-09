@@ -24,12 +24,24 @@ private object GoToTypeIdent extends StrictImplicitLogging {
           workspace = workspace
         )
 
+      case Some(node @ Node(_: Ast.NamedVar, _)) =>
+        node.parent match {
+          case Some(Node(varDef: Ast.VarDef[_], _)) =>
+            searchCachedType(
+              cachedType = varDef.value.getCachedType(),
+              workspace = workspace
+            )
+
+          case _ =>
+            ArraySeq.empty
+        }
+
       case Some(Node(data, _)) =>
-        logger.info(s"Type-inference not implemented for ${data.getClass.getSimpleName}. SourceIndex: ${data.sourceIndex}")
+        logger.info(s"Type-inference not implemented for ${data.getClass.getName}. SourceIndex: ${data.sourceIndex}")
         ArraySeq.empty
 
       case None =>
-        logger.info(s"Type information not found for node: ${node.data.getClass.getSimpleName}. SourceIndex: ${node.data.sourceIndex}")
+        logger.info(s"Type information not found for node: ${node.data.getClass.getName}. SourceIndex: ${node.data.sourceIndex}")
         ArraySeq.empty
     }
 
