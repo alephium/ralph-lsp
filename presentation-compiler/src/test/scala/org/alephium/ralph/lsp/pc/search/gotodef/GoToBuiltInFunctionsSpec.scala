@@ -12,7 +12,7 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "built-in does not exists" in {
-      goToBuiltIn(
+      goToDefBuiltIn(
         code = """
             |Contract Test() {
             |  pub fn function() -> () {
@@ -29,7 +29,7 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
     "assert!" when {
       "native builtin library" in {
         // Expect go-to definition to work directly on the native builtin library
-        goToBuiltIn(
+        goToDefBuiltIn(
           code = """
               |Contract Test() {
               |  pub fn function() -> () {
@@ -69,7 +69,7 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
     }
 
     "verifyAbsoluteLocktime!" in {
-      goToBuiltIn(
+      goToDefBuiltIn(
         code = """
             |Contract Test() {
             |  pub fn function() -> () {
@@ -84,7 +84,7 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
     }
 
     "there are duplicate local and built-in function names" in {
-      goToBuiltIn(
+      goToDefBuiltIn(
         code = """
             |Contract Test() {
             |

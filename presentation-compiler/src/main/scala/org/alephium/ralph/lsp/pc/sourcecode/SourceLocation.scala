@@ -166,6 +166,22 @@ object SourceLocation extends StrictImplicitLogging {
 
   }
 
+  case class GoToTypeDef(
+      ast: Ast.TypeId,
+      source: CodeStrict)
+    extends GoTo {
+
+    override def index: Option[SourceIndex] =
+      ast.sourceIndex
+
+    def toLineRange(): Option[LineRange] =
+      index.map(_.toLineRange(source.parsed.code))
+
+    override def parsed: SourceCodeState.Parsed =
+      source.parsed
+
+  }
+
   sealed trait Code extends SourceLocation {
 
     def parsed: SourceCodeState.IsParsedAndCompiled
