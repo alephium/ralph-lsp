@@ -309,40 +309,42 @@ object TestCodeProvider {
    * @param code     The code with the search indicator '@@'.
    * @param expected Expected resulting built-in function.
    */
-  def goToBuiltIn(
+  def goToDefBuiltIn(
       code: String,
       expected: Option[String]): Assertion = {
     // Assert Node's AST
-    goToBuiltInStrict(
+    goToDefBuiltInStrict(
       code = code,
       expected = expected
     )
 
     // Assert `SoftAST`
-    goToBuiltInSoft(
+    goToDefBuiltInSoft(
       code = code,
       expected = expected
     )
   }
 
-  def goToBuiltInStrict(
+  def goToDefBuiltInStrict(
       code: String,
       expected: Option[String]): Assertion =
     // Assert Node's AST
-    goToDependencyStrict(
+    goToDependencyStrict[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
       code = ArraySeq(code),
       expected = expected,
-      downloader = BuiltInFunctionDownloader
+      downloader = BuiltInFunctionDownloader,
+      settings = testGoToDefSetting
     )
 
-  def goToBuiltInSoft(
+  def goToDefBuiltInSoft(
       code: String,
       expected: Option[String]): Assertion =
     // Assert `SoftAST`
-    goToDependencySoft(
+    goToDependencySoft[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
       code = ArraySeq(code),
       expected = expected,
-      downloader = BuiltInFunctionDownloader
+      downloader = BuiltInFunctionDownloader,
+      settings = (SoftAST, testGoToDefSetting)
     )
 
   /**
@@ -356,8 +358,8 @@ object TestCodeProvider {
    * @param expected The expected dependency line, including the highlighted range `>>range to expect<<`.
    * @param code     The code with the search indicator '@@'.
    */
-  def goToStd(expected: Option[String])(code: String*): Assertion =
-    goToDependency(
+  def goToDefStd(expected: Option[String])(code: String*): Assertion =
+    goToDefDependency(
       code = code.to(ArraySeq),
       expected = expected,
       downloader = StdInterfaceDownloader
@@ -528,20 +530,22 @@ object TestCodeProvider {
    *                   as they can be written to `~/ralph-lsp`.
    *                   We don't want generated libraries being written to `~/ralph-lsp`.
    */
-  private def goToDependency(
+  private def goToDefDependency(
       code: ArraySeq[String],
       expected: Option[String],
       downloader: DependencyDownloader.Native): Assertion = {
-    goToDependencyStrict(
+    goToDependencyStrict[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
       code = code,
       expected = expected,
-      downloader = downloader
+      downloader = downloader,
+      settings = testGoToDefSetting
     )
 
-    goToDependencySoft(
+    goToDependencySoft[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
       code = code,
       expected = expected,
-      downloader = downloader
+      downloader = downloader,
+      settings = (SoftAST, testGoToDefSetting)
     )
   }
 
@@ -556,18 +560,20 @@ object TestCodeProvider {
    *                   as they can be written to `~/ralph-lsp`.
    *                   We don't want generated libraries being written to `~/ralph-lsp`.
    */
-  private def goToDependencyStrict(
+  private def goToDependencyStrict[S, I, O <: SourceLocation.GoTo](
       code: ArraySeq[String],
       expected: Option[String],
-      downloader: DependencyDownloader.Native): Assertion = {
+      downloader: DependencyDownloader.Native,
+      settings: I
+    )(implicit provider: CodeProvider[S, I, O]): Assertion = {
     val codeWithoutGoToSymbols =
       code map TestCodeUtil.removeRangeSymbols
 
     // Execute go-to definition on strict-AST.
     val (searchResult, _, workspace) =
-      TestCodeProvider[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
+      TestCodeProvider[S, I, O](
         code = codeWithoutGoToSymbols,
-        searchSettings = testGoToDefSetting,
+        searchSettings = settings,
         dependencyDownloaders = ArraySeq(downloader)
       )
 
@@ -590,18 +596,20 @@ object TestCodeProvider {
    *                   as they can be written to `~/ralph-lsp`.
    *                   We don't want generated libraries being written to `~/ralph-lsp`.
    */
-  private def goToDependencySoft(
+  private def goToDependencySoft[S, I, O <: SourceLocation.GoTo](
       code: ArraySeq[String],
       expected: Option[String],
-      downloader: DependencyDownloader.Native): Assertion = {
+      downloader: DependencyDownloader.Native,
+      settings: I
+    )(implicit provider: CodeProvider[S, I, O]): Assertion = {
     val codeWithoutGoToSymbols =
       code map TestCodeUtil.removeRangeSymbols
 
     // Execute go-to definition on SoftAST.
     val (searchResult, _, workspace) =
-      TestCodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
+      TestCodeProvider[S, I, O](
         code = codeWithoutGoToSymbols,
-        searchSettings = (SoftAST, testGoToDefSetting),
+        searchSettings = settings,
         dependencyDownloaders = ArraySeq(downloader)
       )
 
@@ -627,7 +635,7 @@ object TestCodeProvider {
    */
   private def assertGoToDependency(
       expected: Option[String],
-      actual: Iterator[SourceLocation.GoToDef],
+      actual: Iterator[SourceLocation.GoTo],
       workspace: WorkspaceState.IsParsedAndCompiled,
       downloader: DependencyDownloader.Native): Assertion =
     expected match {
