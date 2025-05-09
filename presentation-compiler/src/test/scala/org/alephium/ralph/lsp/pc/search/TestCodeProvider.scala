@@ -366,6 +366,25 @@ object TestCodeProvider {
     )
 
   /**
+   * Tests directly on the `builtin` native library.
+   *
+   * Runs go-to type-definition where `@@` is positioned, expecting
+   * the resulting go-to type-definition to be in a built-in file
+   * contained in the `builtin` library downloaded by native dependency
+   * downloader [[BuiltInFunctionDownloader]].
+   *
+   * @param expected The expected dependency line, including the highlighted range `>>range to expect<<`.
+   * @param code     The code with the search indicator '@@'.
+   */
+  def goToTypeDefBuiltIn(expected: Option[String])(code: String*): Assertion =
+    goToDependencyStrict[SourceCodeState.Parsed, Unit, SourceLocation.GoToType](
+      code = code.to(ArraySeq),
+      expected = expected,
+      downloader = BuiltInFunctionDownloader,
+      settings = ()
+    )
+
+  /**
    * Runs go-to definition on a custom dependency and workspace source-code.
    * Other go-to functions test directly on native `std` and `builtin` libraries,
    * but this allows creating custom dependency code.

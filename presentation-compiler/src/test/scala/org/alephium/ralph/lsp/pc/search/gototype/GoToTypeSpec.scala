@@ -3,6 +3,7 @@
 
 package org.alephium.ralph.lsp.pc.search.gototype
 
+import org.alephium.ralph
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -41,6 +42,23 @@ class GoToTypeSpec extends AnyWordSpec with Matchers {
               |}
               |""".stripMargin
           )
+        }
+      }
+
+      "variables are defined in built-in library" when {
+        def doTest(primitiveType: ralph.Type) =
+          goToTypeDefBuiltIn(Some(s"Abstract Contract >>${primitiveType.signature}<<"))(
+            s"""
+               |Contract Child() {
+               |  fn main(primitive: ${primitiveType.signature}) -> () {
+               |    let copy1 = primiti@@ve
+               |  }
+               |}
+               |""".stripMargin
+          )
+
+        "primitives are searched" in {
+          ralph.Type.primitives foreach doTest
         }
       }
     }

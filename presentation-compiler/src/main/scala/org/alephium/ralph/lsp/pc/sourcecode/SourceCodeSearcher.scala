@@ -428,6 +428,21 @@ object SourceCodeSearcher extends StrictImplicitLogging {
 
           case Type.Contract(id) if typeId == id =>
             (typeId, code)
+
+          case Type.Bool if typeId.name == Type.Bool.signature =>
+            (typeId, code)
+
+          case Type.U256 if typeId.name == Type.U256.signature =>
+            (typeId, code)
+
+          case Type.I256 if typeId.name == Type.I256.signature =>
+            (typeId, code)
+
+          case Type.Address if typeId.name == Type.Address.signature =>
+            (typeId, code)
+
+          case Type.ByteVec if typeId.name == Type.ByteVec.signature =>
+            (typeId, code)
         }
 
       case None =>
