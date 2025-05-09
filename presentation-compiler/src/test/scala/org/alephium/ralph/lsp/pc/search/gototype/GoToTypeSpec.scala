@@ -15,10 +15,10 @@ class GoToTypeSpec extends AnyWordSpec with Matchers {
         "simple variable" in {
           goToType(
             """
-              |Abstract Contract Parent() { }
+              |Abstract Contract >>Parent<<() { }
               |
               |Contract Child() {
-              |  fn main(parent: >>Parent<<) -> () {
+              |  fn main(parent: Parent) -> () {
               |    let copy1 = paren@@t
               |  }
               |}
@@ -29,10 +29,10 @@ class GoToTypeSpec extends AnyWordSpec with Matchers {
         "copied variables" in {
           goToType(
             """
-              |Abstract Contract Parent() { }
+              |Abstract Contract >>Parent<<() { }
               |
               |Contract Child() {
-              |  fn main(parent: >>Parent<<) -> () {
+              |  fn main(parent: Parent) -> () {
               |    let copy1 = parent
               |    let copy2 = copy1
               |    let copy3 = copy2

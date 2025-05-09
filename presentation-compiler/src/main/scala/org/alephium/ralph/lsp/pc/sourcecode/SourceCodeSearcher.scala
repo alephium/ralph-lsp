@@ -421,13 +421,13 @@ object SourceCodeSearcher extends StrictImplicitLogging {
       case Some(typeId) =>
         types collect {
           case Type.NamedType(id) if typeId == id =>
-            (id, code)
+            (typeId, code)
 
           case Type.Struct(id) if typeId == id =>
-            (id, code)
+            (typeId, code)
 
           case Type.Contract(id) if typeId == id =>
-            (id, code)
+            (typeId, code)
         }
 
       case None =>
