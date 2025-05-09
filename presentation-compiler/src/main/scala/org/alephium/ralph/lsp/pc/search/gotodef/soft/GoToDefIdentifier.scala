@@ -170,7 +170,6 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    *                         return variables with the same name.
    * @return An iterator over the locations of the definitions.
    */
-  @tailrec
   private def search(
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
@@ -181,44 +180,41 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     val allTrees =
       WorkspaceSearcher.collectAllTreesSoft(workspace)
 
-    val inherited =
-      if (settings.includeInheritance)
-        searchInheritance(
+    def runSearch(detectCallSyntax: Boolean) = {
+      val inherited =
+        if (settings.includeInheritance)
+          searchInheritance(
+            target = identNode,
+            sourceCode = sourceCode,
+            build = workspace.build,
+            workspaceTrees = allTrees,
+            detectCallSyntax = detectCallSyntax
+          )
+        else
+          Iterator.empty
+
+      val local =
+        searchLocal(
+          from = sourceCode.part.toNode,
           target = identNode,
           sourceCode = sourceCode,
-          build = workspace.build,
-          workspaceTrees = allTrees,
           detectCallSyntax = detectCallSyntax
         )
-      else
-        Iterator.empty
 
-    val local =
-      searchLocal(
-        from = sourceCode.part.toNode,
-        target = identNode,
-        sourceCode = sourceCode,
-        detectCallSyntax = detectCallSyntax
-      )
+      val globals =
+        searchGlobal(
+          target = identNode,
+          trees = allTrees.iterator,
+          detectCallSyntax = detectCallSyntax
+        )
 
-    val globals =
-      searchGlobal(
-        target = identNode,
-        trees = allTrees.iterator,
-        detectCallSyntax = detectCallSyntax
-      )
-
-    val result =
       (local.iterator ++ inherited ++ globals).distinct
+    }
+
+    val result = runSearch(detectCallSyntax)
 
     if (detectCallSyntax && result.isEmpty)
-      search( // The restricted exact call syntax search returned no results. Executing a relaxed search.
-        identNode = identNode,
-        sourceCode = sourceCode,
-        workspace = workspace,
-        settings = settings,
-        detectCallSyntax = false
-      )
+      runSearch(detectCallSyntax = false) // The restricted exact call syntax search returned no results. Executing a relaxed search.
     else
       result
   }

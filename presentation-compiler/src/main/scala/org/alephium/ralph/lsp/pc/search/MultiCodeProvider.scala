@@ -67,28 +67,4 @@ object MultiCodeProvider {
   implicit val completion: MultiCodeProvider[Unit, Suggestion] =
     CompletionMultiCodeProvider
 
-  /**
-   * Executes the search.
-   */
-  def search[I, O](
-      fileURI: URI,
-      line: Int,
-      character: Int,
-      enableSoftParser: Boolean,
-      isCancelled: IsCancelled,
-      pcStates: PCStates,
-      settings: I
-    )(implicit provider: MultiCodeProvider[I, O],
-      logger: ClientLogger,
-      ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[O]]] =
-    provider.search(
-      fileURI = fileURI,
-      line = line,
-      character = character,
-      enableSoftParser = enableSoftParser,
-      isCancelled = isCancelled,
-      pcStates = pcStates,
-      settings = settings
-    )
-
 }
