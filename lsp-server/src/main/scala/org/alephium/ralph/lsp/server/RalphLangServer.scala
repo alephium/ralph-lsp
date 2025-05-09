@@ -9,9 +9,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.{PC, PCState, PCStates}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
 import org.alephium.ralph.lsp.pc.search.MultiCodeProvider
-import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotoref.multi.GoToRefMultiSetting
-import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
 import org.alephium.ralph.lsp.server
@@ -401,7 +399,8 @@ class RalphLangServer private (
     runFuture {
       isCancelled =>
         MultiCodeProvider
-          .search[Unit, Suggestion](
+          .completion
+          .search(
             fileURI = uri(params.getTextDocument.getUri),
             line = params.getPosition.getLine,
             character = params.getPosition.getCharacter,
@@ -417,7 +416,8 @@ class RalphLangServer private (
     runFuture {
       isCancelled =>
         MultiCodeProvider
-          .search[Unit, SourceLocation.GoToDef](
+          .goToDef
+          .search(
             fileURI = uri(params.getTextDocument.getUri),
             line = params.getPosition.getLine,
             character = params.getPosition.getCharacter,
@@ -433,7 +433,8 @@ class RalphLangServer private (
     runFuture {
       isCancelled =>
         MultiCodeProvider
-          .search[GoToRefMultiSetting, SourceLocation.GoToRefStrict](
+          .goToRef
+          .search(
             fileURI = uri(params.getTextDocument.getUri),
             line = params.getPosition.getLine,
             character = params.getPosition.getCharacter,
@@ -449,7 +450,8 @@ class RalphLangServer private (
     runFuture {
       isCancelled =>
         MultiCodeProvider
-          .search[Unit, SourceLocation.GoToRenameStrict](
+          .rename
+          .search(
             fileURI = uri(params.getTextDocument.getUri),
             line = params.getPosition.getLine,
             character = params.getPosition.getCharacter,
