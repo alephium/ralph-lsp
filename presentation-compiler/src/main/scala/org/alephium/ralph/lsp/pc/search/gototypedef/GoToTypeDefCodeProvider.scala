@@ -1,7 +1,7 @@
 // Copyright (c) Alephium
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package org.alephium.ralph.lsp.pc.search.gototype
+package org.alephium.ralph.lsp.pc.search.gototypedef
 
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
@@ -12,7 +12,7 @@ import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.Ast
 
-case object GoToTypeCodeProvider extends CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToType] with StrictImplicitLogging {
+case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToTypeDef] with StrictImplicitLogging {
 
   /**
    * Performs a search operation at the cursor index within the source-code of a workspace.
@@ -28,7 +28,7 @@ case object GoToTypeCodeProvider extends CodeProvider[SourceCodeState.Parsed, Un
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: Unit
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToType] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToTypeDef] =
     sourceCode.astStrict.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>
         statement match {
@@ -38,7 +38,7 @@ case object GoToTypeCodeProvider extends CodeProvider[SourceCodeState.Parsed, Un
           case tree: Tree.Source =>
             tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match {
               case Some(node @ Node(ident: Ast.Ident, _)) =>
-                GoToTypeIdent(
+                GoToTypeDefIdent(
                   node = node.upcast(ident),
                   workspace = workspace
                 ).iterator

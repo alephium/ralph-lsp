@@ -11,7 +11,7 @@ import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefCodeProvider, GoToDefSet
 import org.alephium.ralph.lsp.pc.search.gotodef.soft.GoToDefCodeProviderSoft
 import org.alephium.ralph.lsp.pc.search.gotoref.{GoToRefCodeProvider, GoToRefSetting}
 import org.alephium.ralph.lsp.pc.search.rename.GoToRenameCodeProvider
-import org.alephium.ralph.lsp.pc.search.gototype.GoToTypeCodeProvider
+import org.alephium.ralph.lsp.pc.search.gototypedef.GoToTypeDefCodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
@@ -69,8 +69,8 @@ object CodeProvider {
     GoToRenameCodeProvider
 
   /** The go-to type implementation of [[CodeProvider]]. */
-  implicit val goToType: CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToType] =
-    GoToTypeCodeProvider
+  implicit val goToTypeDef: CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToTypeDef] =
+    GoToTypeDefCodeProvider
 
   /**
    * Execute search at cursor position within the current workspace state.

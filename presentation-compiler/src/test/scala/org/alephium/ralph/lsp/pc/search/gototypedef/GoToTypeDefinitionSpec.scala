@@ -1,27 +1,27 @@
 // Copyright (c) Alephium
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package org.alephium.ralph.lsp.pc.search.gototype
+package org.alephium.ralph.lsp.pc.search.gototypedef
 
 import org.alephium.ralph
 import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class GoToTypeSpec extends AnyWordSpec with Matchers {
+class GoToTypeDefinitionSpec extends AnyWordSpec with Matchers {
 
   "go-to variable type" when {
 
     /**
-     * --------------------------------------------------------------------------------
+     * ----------------------------------------------------------------------------
      * Test cases for when the right-hand-side i.e. the variable value is searched.
-     * --------------------------------------------------------------------------------
+     * ----------------------------------------------------------------------------
      */
 
     "Right-hand-side: Assigned value is being search" when {
       "custom type `Parent`" when {
         "simple variable" in {
-          goToType(
+          goToTypeDef(
             """
               |Abstract Contract >>Parent<<() { }
               |
@@ -35,7 +35,7 @@ class GoToTypeSpec extends AnyWordSpec with Matchers {
         }
 
         "copied variables" in {
-          goToType(
+          goToTypeDef(
             """
               |Abstract Contract >>Parent<<() { }
               |
@@ -83,7 +83,7 @@ class GoToTypeSpec extends AnyWordSpec with Matchers {
     "Left-hand-side: Variable definition is being search" when {
       "custom type `Parent`" when {
         "simple variable" in {
-          goToType(
+          goToTypeDef(
             """
               |Abstract Contract >>Parent<<() { }
               |
@@ -97,7 +97,7 @@ class GoToTypeSpec extends AnyWordSpec with Matchers {
         }
 
         "copied variables" in {
-          goToType(
+          goToTypeDef(
             """
               |Abstract Contract >>Parent<<() { }
               |
@@ -136,7 +136,6 @@ class GoToTypeSpec extends AnyWordSpec with Matchers {
         }
       }
     }
-
   }
 
 }

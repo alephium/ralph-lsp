@@ -1,7 +1,7 @@
 // Copyright (c) Alephium
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package org.alephium.ralph.lsp.pc.search.gototype
+package org.alephium.ralph.lsp.pc.search.gototypedef
 
 import org.alephium.ralph.{Ast, Type}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceLocation}
@@ -11,7 +11,7 @@ import org.alephium.ralph.lsp.utils.Node
 
 import scala.collection.immutable.ArraySeq
 
-private case object GoToTypeIdent extends StrictImplicitLogging {
+private case object GoToTypeDefIdent extends StrictImplicitLogging {
 
   /**
    * Searches type-definitions given the identifier node [[Ast.Ident]].
@@ -23,7 +23,7 @@ private case object GoToTypeIdent extends StrictImplicitLogging {
   def apply(
       node: Node[Ast.Ident, Ast.Positioned],
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToType] =
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToTypeDef] =
     node.parent match {
       case Some(Node(variable: Ast.Variable[_], _)) =>
         searchCachedType(
@@ -55,7 +55,7 @@ private case object GoToTypeIdent extends StrictImplicitLogging {
   private def searchCachedType(
       cachedType: Option[Seq[Type]],
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToType] =
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToTypeDef] =
     cachedType match {
       case Some(variableTypes) =>
         searchTypes(
@@ -70,7 +70,7 @@ private case object GoToTypeIdent extends StrictImplicitLogging {
 
   private def searchTypes(
       variableTypes: Seq[Type],
-      workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.GoToType] = {
+      workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.GoToTypeDef] = {
     val workspaceTrees =
       WorkspaceSearcher.collectAllTrees(workspace)
 
@@ -82,7 +82,7 @@ private case object GoToTypeIdent extends StrictImplicitLogging {
 
     result map {
       case (typeId, code) =>
-        SourceLocation.GoToType(
+        SourceLocation.GoToTypeDef(
           ast = typeId,
           source = code
         )

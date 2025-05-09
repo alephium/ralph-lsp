@@ -166,7 +166,7 @@ object SourceLocation extends StrictImplicitLogging {
 
   }
 
-  case class GoToType(
+  case class GoToTypeDef(
       ast: Ast.TypeId,
       source: CodeStrict)
     extends GoTo {

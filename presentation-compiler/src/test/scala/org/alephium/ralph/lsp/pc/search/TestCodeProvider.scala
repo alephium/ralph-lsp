@@ -120,8 +120,8 @@ object TestCodeProvider {
       dependencyDownloaders = ArraySeq.empty
     )
 
-  def goToType(code: String*): List[(URI, LineRange)] =
-    goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToType](
+  def goToTypeDef(code: String*): List[(URI, LineRange)] =
+    goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToTypeDef](
       code = code.to(ArraySeq),
       searchSettings = (),
       dependencyDownloaders = ArraySeq.empty
@@ -377,7 +377,7 @@ object TestCodeProvider {
    * @param code     The code with the search indicator '@@'.
    */
   def goToTypeDefBuiltIn(expected: Option[String])(code: String*): Assertion =
-    goToDependencyStrict[SourceCodeState.Parsed, Unit, SourceLocation.GoToType](
+    goToDependencyStrict[SourceCodeState.Parsed, Unit, SourceLocation.GoToTypeDef](
       code = code.to(ArraySeq),
       expected = expected,
       downloader = BuiltInFunctionDownloader,
