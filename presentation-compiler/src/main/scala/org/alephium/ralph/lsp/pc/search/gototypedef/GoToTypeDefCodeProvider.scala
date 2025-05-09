@@ -54,6 +54,7 @@ case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed,
         }
 
       case None =>
+        logger.info(s"Statement not found at index: $cursorIndex. FileURI: ${sourceCode.fileURI}")
         Iterator.empty
     }
 
