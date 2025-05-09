@@ -116,6 +116,12 @@ object TestCodeProvider {
       searchSettings = ()
     )
 
+  def goToType(code: String*): List[(URI, LineRange)] =
+    goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToType](
+      code = code.to(ArraySeq),
+      searchSettings = ()
+    )
+
   /**
    * Background: Go-to references should output the same result, regardless of whether it is executed
    * on the definition/declaration or on the usages.
