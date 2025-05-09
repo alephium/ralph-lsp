@@ -69,13 +69,15 @@ object TestCodeProvider {
   def goToDefinitionStrict(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[(URI, LineRange)] =
     goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
       code = code.to(ArraySeq),
-      searchSettings = settings
+      searchSettings = settings,
+      dependencyDownloaders = ArraySeq.empty
     )
 
   def goToDefinitionSoft(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[(URI, LineRange)] =
     goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
       code = code.to(ArraySeq),
-      searchSettings = (SoftAST, settings)
+      searchSettings = (SoftAST, settings),
+      dependencyDownloaders = ArraySeq.empty
     )
 
   /** Executes go-to-definition providers for both StrictAST and [[SoftAST]] */
@@ -107,19 +109,22 @@ object TestCodeProvider {
   def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String*): List[(URI, LineRange)] =
     goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
       code = code.to(ArraySeq),
-      searchSettings = settings
+      searchSettings = settings,
+      dependencyDownloaders = ArraySeq.empty
     )
 
   def goToRename(code: String*): List[(URI, LineRange)] =
     goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
       code = code.to(ArraySeq),
-      searchSettings = ()
+      searchSettings = (),
+      dependencyDownloaders = ArraySeq.empty
     )
 
   def goToType(code: String*): List[(URI, LineRange)] =
     goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToType](
       code = code.to(ArraySeq),
-      searchSettings = ()
+      searchSettings = (),
+      dependencyDownloaders = ArraySeq.empty
     )
 
   /**
@@ -168,7 +173,8 @@ object TestCodeProvider {
     val firstResult =
       goTo(
         code = ArraySeq(code),
-        searchSettings = settings
+        searchSettings = settings,
+        dependencyDownloaders = ArraySeq.empty
       ).map(_._2)
 
     // remove the select indicator @@ from the code.
@@ -213,7 +219,8 @@ object TestCodeProvider {
           reportCodeOnFailure {
             goTo(
               code = ArraySeq(newCode),
-              searchSettings = settings
+              searchSettings = settings,
+              dependencyDownloaders = ArraySeq.empty
             ).map(_._2)
           }
 
@@ -235,7 +242,8 @@ object TestCodeProvider {
    */
   private def goTo[S, I, O <: SourceLocation.GoTo](
       code: ArraySeq[String],
-      searchSettings: I
+      searchSettings: I,
+      dependencyDownloaders: ArraySeq[DependencyDownloader.Native]
     )(implicit codeProvider: CodeProvider[S, I, O]): List[(URI, LineRange)] = {
     val expectedLineRanges =
       TestCodeUtil.extractLineRangeInfo(code)
@@ -249,7 +257,7 @@ object TestCodeProvider {
       TestCodeProvider[S, I, O](
         code = codeWithoutLineRangeSymbols,
         searchSettings = searchSettings,
-        dependencyDownloaders = ArraySeq.empty
+        dependencyDownloaders = dependencyDownloaders
       )
 
     // Expect GoToLocations to also contain the fileURI
