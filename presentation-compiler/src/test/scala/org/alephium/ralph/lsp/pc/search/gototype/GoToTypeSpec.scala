@@ -60,6 +60,11 @@ class GoToTypeSpec extends AnyWordSpec with Matchers {
         "primitives are searched" in {
           ralph.Type.primitives foreach doTest
         }
+
+        "panic is searched" ignore {
+          // TODO: Currently the type `Panic` is available in the built-in library.
+          doTest(ralph.Type.Panic)
+        }
       }
     }
 
