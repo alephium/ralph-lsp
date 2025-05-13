@@ -393,11 +393,11 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    *
    * @param types           The types of trees for which to collect source tree locations.
    * @param workspaceSource All workspace trees.
-   * @return An array sequence containing all source tree locations.
+   * @return A sequence containing all type identifiers and their respective source tree locations.
    */
   def collectTypes(
       types: Seq[Type],
-      workspaceSource: ArraySeq[SourceLocation.CodeStrict]): ArraySeq[SourceLocation.CodeStrict] =
+      workspaceSource: ArraySeq[SourceLocation.CodeStrict]): ArraySeq[(Ast.TypeId, SourceLocation.CodeStrict)] =
     workspaceSource flatMap {
       code =>
         collectTypes(
@@ -411,23 +411,38 @@ object SourceCodeSearcher extends StrictImplicitLogging {
    *
    * @param types The types for which to collect source trees.
    * @param code  The source code to search within.
-   * @return A sequence containing all matching source trees.
+   * @return A sequence containing all type identifiers and their respective source tree locations.
    */
   def collectTypes(
       types: Seq[Type],
-      code: SourceLocation.CodeStrict): Seq[SourceLocation.CodeStrict] =
+      code: SourceLocation.CodeStrict): Seq[(Ast.TypeId, SourceLocation.CodeStrict)] =
     // collect all trees with matching types
     code.tree.typeId() match {
       case Some(typeId) =>
         types collect {
           case Type.NamedType(id) if typeId == id =>
-            code
+            (typeId, code)
 
           case Type.Struct(id) if typeId == id =>
-            code
+            (typeId, code)
 
           case Type.Contract(id) if typeId == id =>
-            code
+            (typeId, code)
+
+          case Type.Bool if typeId.name == Type.Bool.signature =>
+            (typeId, code)
+
+          case Type.U256 if typeId.name == Type.U256.signature =>
+            (typeId, code)
+
+          case Type.I256 if typeId.name == Type.I256.signature =>
+            (typeId, code)
+
+          case Type.Address if typeId.name == Type.Address.signature =>
+            (typeId, code)
+
+          case Type.ByteVec if typeId.name == Type.ByteVec.signature =>
+            (typeId, code)
         }
 
       case None =>
@@ -453,7 +468,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
 
     // perform search on only the matching types
     collectFunctions(
-      trees = treesOfMatchingTypes,
+      trees = treesOfMatchingTypes.map(_._2),
       workspaceSource = workspaceSource
     )
   }
