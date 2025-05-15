@@ -4,14 +4,14 @@
 package org.alephium.ralph.lsp.pc.search.gototypedef
 
 import org.alephium.ralph.{Ast, Type}
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceLocation}
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.utils.Node
 
 import scala.collection.immutable.ArraySeq
 
-private case object GoToTypeDefIdent extends StrictImplicitLogging {
+case object GoToTypeDefIdent extends StrictImplicitLogging {
 
   /**
    * Searches type-definitions given the identifier node [[Ast.Ident]].
@@ -20,7 +20,7 @@ private case object GoToTypeDefIdent extends StrictImplicitLogging {
    * @param workspace The workspace state where the source-code is located.
    * @return An iterator over type-definition search results.
    */
-  def apply(
+  def goToNamedVar(
       node: Node[Ast.Ident, Ast.Positioned],
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToTypeDef] =
@@ -31,11 +31,12 @@ private case object GoToTypeDefIdent extends StrictImplicitLogging {
           workspace = workspace
         )
 
-      case Some(node @ Node(_: Ast.NamedVar, _)) =>
+      case Some(node @ Node(nardVar: Ast.NamedVar, _)) =>
         node.parent match {
           case Some(Node(varDef: Ast.VarDef[_], _)) =>
-            searchCachedType(
-              cachedType = varDef.value.getCachedType(),
+            searchTupledVarDef(
+              target = nardVar,
+              varDef = varDef,
               workspace = workspace
             )
 
@@ -52,41 +53,106 @@ private case object GoToTypeDefIdent extends StrictImplicitLogging {
         ArraySeq.empty
     }
 
+  /**
+   * Searches type-definitions given the anonymous variable node [[Ast.AnonymousVar]].
+   *
+   * @param anonVarNode The node representing the anonymous variable being searched.
+   * @param workspace   The workspace state where the source-code is located.
+   * @return An iterator over type-definition search results.
+   */
+  def goToAnonymousVar(
+      anonVarNode: Node[Ast.AnonymousVar, Ast.Positioned],
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToTypeDef] =
+    anonVarNode.parent match {
+      case Some(Node(varDef: Ast.VarDef[_], _)) =>
+        searchTupledVarDef(
+          target = anonVarNode.data,
+          varDef = varDef,
+          workspace = workspace
+        )
+
+      case Some(Node(data, _)) =>
+        logger.info(s"${this.productPrefix} not implemented for ${data.getClass.getName}. SourceIndex: ${data.sourceIndex}")
+        ArraySeq.empty
+
+      case None =>
+        logger.info(s"${this.productPrefix}: Type information not found for node: ${anonVarNode.data.getClass.getName}. SourceIndex: ${anonVarNode.data.sourceIndex}")
+        ArraySeq.empty
+    }
+
+  /**
+   * Handles tupled variable declarations.
+   *
+   * Example:
+   * {{{
+   *   let (a, b, c) = foo()
+   * }}}
+   *
+   * @param target    The identifier for one of the tuple elements being searched.
+   * @param varDef    The variable definition representing the full tuple declaration.
+   * @param workspace The workspace state containing the source code.
+   * @return Searched type-definition result for the specified element.
+   */
+  private def searchTupledVarDef(
+      target: Ast.VarDeclaration,
+      varDef: Ast.VarDef[_],
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToTypeDef] = {
+    // Find index of
+    val indexOfTarget =
+      varDef.vars.indexWhere {
+        varDec =>
+          // SourceIndex check is required, especially for `Ast.AnonymousVar`
+          // because multiple instances of it will always be considered equal.
+          // For example, in `let (_, _, _) = foo()`, all three placeholders
+          // correspond to the same anonymous variable instance.
+          varDec == target && varDec.sourceIndex.exists(target.sourceIndex.contains)
+      }
+
+    // Fetch the `Type` at the position-index of the target.
+    val typeOfTargetNode =
+      varDef
+        .value
+        .getCachedType()
+        .flatMap(_.lift(indexOfTarget))
+
+    searchCachedType(
+      cachedType = typeOfTargetNode.map(Seq(_)),
+      workspace = workspace
+    )
+  }
+
   private def searchCachedType(
       cachedType: Option[Seq[Type]],
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToTypeDef] =
     cachedType match {
-      case Some(variableTypes) =>
+      case Some(types) =>
         searchTypes(
-          variableTypes = variableTypes,
+          types = types,
           workspace = workspace
         )
 
       case None =>
-        logger.info("Type information not found in node's AST")
+        logger.trace("Type information not found in node's AST")
         ArraySeq.empty
     }
 
   private def searchTypes(
-      variableTypes: Seq[Type],
-      workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.GoToTypeDef] = {
-    val workspaceTrees =
-      WorkspaceSearcher.collectAllTrees(workspace)
-
-    val result =
-      SourceCodeSearcher.collectTypes(
-        types = variableTypes,
-        workspaceSource = workspaceTrees
+      types: Seq[Type],
+      workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.GoToTypeDef] =
+    WorkspaceSearcher
+      .collectTypes(
+        types = types,
+        workspace = workspace
       )
-
-    result map {
-      case (typeId, code) =>
-        SourceLocation.GoToTypeDef(
-          ast = typeId,
-          source = code
-        )
-    }
-  }
+      .map {
+        case (typeId, code) =>
+          SourceLocation.GoToTypeDef(
+            ast = typeId,
+            source = code
+          )
+      }
 
 }
