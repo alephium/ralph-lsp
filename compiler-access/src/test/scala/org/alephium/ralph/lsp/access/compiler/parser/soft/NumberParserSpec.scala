@@ -7,6 +7,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
+import org.alephium.ralph.lsp.access.util.TestFastParse.assertIsFastParseError
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -294,15 +295,55 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
     }
   }
 
-  "special cases" in {
+  /**
+   * Asserts numbers that are a bit funky.
+   * Refer to the documentation [[NumberParser.numberOrHex]].
+   */
+  "special cases with underscore" when {
+    "Success cases when numbers contain digits and underscores" in {
+      assertSimpleNumber("1_")
+      assertSimpleNumber("1_._")
+      assertSimpleNumber("1_.____0")
+      assertSimpleNumber("1_._0___0")
+      assertSimpleNumber("_1")
+      assertSimpleNumber("-_1")
+      assertSimpleNumber("+_1")
+      assertSimpleNumber("_1.0")
+      assertSimpleNumber("-_1.0")
+      assertSimpleNumber("+_1.0")
+    }
 
-    /**
-     * See documentation of [[NumberParser.numberOrHex]]
-     */
-    assertSimpleNumber("1_")
-    assertSimpleNumber("1_._")
-    assertSimpleNumber("1_.____0")
-    assertSimpleNumber("1_._0___0")
+    "Fail cases when underscore is at the head position" in {
+      // Underscores only
+      assertIsFastParseError(parseNumber("_"))
+      assertIsFastParseError(parseNumber("__"))
+      // Minus
+      assertIsFastParseError(parseNumber("-_"))
+      assertIsFastParseError(parseNumber("--_"))
+      assertIsFastParseError(parseNumber("_-"))
+      assertIsFastParseError(parseNumber("_--"))
+      // Plus
+      assertIsFastParseError(parseNumber("+_"))
+      assertIsFastParseError(parseNumber("++_"))
+      assertIsFastParseError(parseNumber("_+"))
+      assertIsFastParseError(parseNumber("_++"))
+      // Tail digits
+      assertIsFastParseError(parseNumber("_.1"))
+      // Scientific notation
+      assertIsFastParseError(parseNumber("_e"))
+      assertIsFastParseError(parseNumber("_E"))
+      assertIsFastParseError(parseNumber("_.e-"))
+      assertIsFastParseError(parseNumber("_.e-"))
+      assertIsFastParseError(parseNumber("_e-1"))
+      assertIsFastParseError(parseNumber("_E-1"))
+      // Characters
+      assertIsFastParseError(parseNumber("_s"))
+      assertIsFastParseError(parseNumber("_S"))
+      assertIsFastParseError(parseNumber("_.s-"))
+      assertIsFastParseError(parseNumber("_.s-"))
+      assertIsFastParseError(parseNumber("_s-1"))
+      assertIsFastParseError(parseNumber("_S-1"))
+    }
   }
 
 }

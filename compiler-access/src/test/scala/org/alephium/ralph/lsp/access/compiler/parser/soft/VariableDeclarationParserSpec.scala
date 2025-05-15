@@ -192,4 +192,27 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "Anonymous variable declaration" in {
+    val varDec =
+      parseVariableDeclaration("let _ = 1")
+
+    varDec shouldBe
+      SoftAST.VariableDeclaration(
+        index = indexOf(">>let _ = 1<<"),
+        let = Let(">>let<< _ = 1"),
+        postLetSpace = Some(Space("let>> <<_ = 1")),
+        assignment = SoftAST.Assignment(
+          index = indexOf("let >>_ = 1<<"),
+          expressionLeft = Identifier(
+            index = indexOf("let >>_<< = 1"),
+            text = "_"
+          ),
+          postIdentifierSpace = Some(Space("let _>> <<= 1")),
+          equalToken = Equal(indexOf("let _ >>=<< 1")),
+          postEqualSpace = Some(Space("let _ =>> <<1")),
+          expressionRight = Number("let _ = >>1<<")
+        )
+      )
+  }
+
 }
