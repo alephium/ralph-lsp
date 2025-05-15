@@ -9,8 +9,8 @@ import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
-import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.Ast
+import org.alephium.ralph.lsp.utils.Node
 
 case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToTypeDef] with StrictImplicitLogging {
 
@@ -38,10 +38,20 @@ case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed,
           case tree: Tree.Source =>
             tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match {
               case Some(node @ Node(ident: Ast.Ident, _)) =>
-                GoToTypeDefIdent(
-                  node = node.upcast(ident),
-                  workspace = workspace
-                ).iterator
+                GoToTypeDefIdent
+                  .goToNamedVar(
+                    node = node.upcast(ident),
+                    workspace = workspace
+                  )
+                  .iterator
+
+              case Some(node @ Node(ident: Ast.AnonymousVar, _)) =>
+                GoToTypeDefIdent
+                  .goToAnonymousVar(
+                    anonVarNode = node.upcast(ident),
+                    workspace = workspace
+                  )
+                  .iterator
 
               case Some(Node(data, _)) =>
                 logger.error(s"GoToType not implemented for ${data.getClass.getName}. Index: $cursorIndex. FileURI: ${sourceCode.fileURI}")

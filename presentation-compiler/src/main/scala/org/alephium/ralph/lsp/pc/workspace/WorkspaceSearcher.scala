@@ -252,6 +252,23 @@ object WorkspaceSearcher {
   }
 
   /**
+   * Collects source tree locations for the given types.
+   *
+   * @param types     The types to search.
+   * @param workspace The workspace to search for types.
+   * @return Type identifiers matching the searched types and their respective source trees.
+   */
+  def collectTypes(
+      types: Seq[Type],
+      workspace: WorkspaceState.IsSourceAware): ArraySeq[(Ast.TypeId, SourceLocation.CodeStrict)] = {
+    val workspaceTrees = collectAllTrees(workspace)
+    SourceCodeSearcher.collectTypes(
+      types = types,
+      workspaceSource = workspaceTrees
+    )
+  }
+
+  /**
    * Collects all global constants within the provided parsed workspace state.
    *
    * @param workspace The parsed workspace state from which to collect global constants.
