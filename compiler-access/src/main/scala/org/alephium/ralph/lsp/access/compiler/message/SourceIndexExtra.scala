@@ -169,6 +169,13 @@ object SourceIndexExtra {
     def toLineRange(code: String): LineRange =
       StringUtil.buildLineRange(code, sourceIndex.from, sourceIndex.to)
 
+    /** Checks if two [[SourceIndex]]s overlaps */
+    def overlaps(that: SourceIndex): Boolean =
+      sourceIndex.contains(that.from) ||
+        sourceIndex.contains(that.to) ||
+        that.contains(sourceIndex.from) ||
+        that.contains(sourceIndex.to)
+
   }
 
 }

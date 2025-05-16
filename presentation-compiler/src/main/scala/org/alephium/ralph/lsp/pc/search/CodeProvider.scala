@@ -3,7 +3,7 @@
 
 package org.alephium.ralph.lsp.pc.search
 
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LinePosition}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.search.completion.{CodeCompletionProvider, Suggestion}
@@ -12,6 +12,7 @@ import org.alephium.ralph.lsp.pc.search.gotodef.soft.GoToDefCodeProviderSoft
 import org.alephium.ralph.lsp.pc.search.gotoref.{GoToRefCodeProvider, GoToRefSetting}
 import org.alephium.ralph.lsp.pc.search.rename.GoToRenameCodeProvider
 import org.alephium.ralph.lsp.pc.search.gototypedef.GoToTypeDefCodeProvider
+import org.alephium.ralph.lsp.pc.search.inlayhints.InlayHintsCodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
@@ -71,6 +72,10 @@ object CodeProvider {
   /** The go-to type implementation of [[CodeProvider]]. */
   implicit val goToTypeDef: CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToTypeDef] =
     GoToTypeDefCodeProvider
+
+  /** The inlay-hint implementation of [[CodeProvider]]. */
+  implicit val inlayHints: CodeProvider[SourceCodeState.Parsed, LinePosition, SourceLocation.InlayHint] =
+    InlayHintsCodeProvider
 
   /**
    * Execute search at cursor position within the current workspace state.

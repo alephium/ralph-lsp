@@ -5,7 +5,7 @@ package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.{Ast, SourceIndex}
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
-import org.alephium.ralph.lsp.access.compiler.message.LineRange
+import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
@@ -179,6 +179,33 @@ object SourceLocation extends StrictImplicitLogging {
 
     override def parsed: SourceCodeState.Parsed =
       source.parsed
+
+  }
+
+  /**
+   * Represents information for inlay-hints.
+   *
+   * @param position  Position where the inlay-hint should be displayed.
+   * @param parsed    Source code where the inlay-hint is to be shown.
+   * @param hint The string content of the hint to be displayed inline (e.g. the inferred type name).
+   * @param typeDef   The type definition associated with the hint.
+   */
+  case class InlayHint(
+      position: SourceIndex,
+      parsed: SourceCodeState.Parsed,
+      hint: String,
+      typeDef: GoToTypeDef)
+    extends GoTo {
+
+    override def index: Option[SourceIndex] =
+      Some(position)
+
+    def toLineRange(): Option[LineRange] =
+      index.map(_.toLineRange(parsed.code))
+
+    /** The position of the hint to be displayed inline */
+    def inlayHintPosition(): Option[LinePosition] =
+      toLineRange().map(_.from)
 
   }
 
