@@ -3,12 +3,13 @@
 
 package org.alephium.ralph.lsp.pc.search
 
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LinePosition}
 import org.alephium.ralph.lsp.pc.PCStates
 import org.alephium.ralph.lsp.pc.search.completion.multi.CompletionMultiCodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.multi.GoToDefMultiCodeProvider
 import org.alephium.ralph.lsp.pc.search.gotoref.multi.{GoToRefMultiCodeProvider, GoToRefMultiSetting}
+import org.alephium.ralph.lsp.pc.search.inlayhints.multi.InlayHintsMultiCodeProvider
 import org.alephium.ralph.lsp.pc.search.rename.multi.GoToRenameMultiCodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.utils.IsCancelled
@@ -66,5 +67,8 @@ object MultiCodeProvider {
 
   implicit val completion: MultiCodeProvider[Unit, Suggestion] =
     CompletionMultiCodeProvider
+
+  implicit val inlayHints: MultiCodeProvider[LinePosition, SourceLocation.InlayHint] =
+    InlayHintsMultiCodeProvider
 
 }
