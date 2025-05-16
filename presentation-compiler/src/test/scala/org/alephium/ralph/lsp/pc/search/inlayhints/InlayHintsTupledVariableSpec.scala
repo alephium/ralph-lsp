@@ -271,8 +271,7 @@ class InlayHintsTupledVariableSpec extends AnyWordSpec with Matchers {
         """
           |Contract Test() {
           |  fn test() -> () {
-          |    let (_,
-          |         _) = tuple()
+          |    let (_, _) = tuple()
           |  }
           |
           |  fn tuple() -> (U256, Bool) {
@@ -289,8 +288,7 @@ class InlayHintsTupledVariableSpec extends AnyWordSpec with Matchers {
         """
           |Contract Test() {
           |  fn test() -> () {
-          |    let (_,
-          |         _) = tuple()
+          |    let (_, _) = tuple()
           |  }
           |
           |  @@
