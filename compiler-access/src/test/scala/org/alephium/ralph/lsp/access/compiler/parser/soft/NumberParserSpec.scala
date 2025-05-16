@@ -313,38 +313,58 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
       assertSimpleNumber("+_1.0")
     }
 
-    "Fail cases when underscore is at the head position" in {
-      // Underscores only
-      assertIsFastParseError(parseNumber("_"))
-      assertIsFastParseError(parseNumber("__"))
-      // Minus
-      assertIsFastParseError(parseNumber("-_"))
-      assertIsFastParseError(parseNumber("--_"))
-      assertIsFastParseError(parseNumber("_-"))
-      assertIsFastParseError(parseNumber("_--"))
-      // Plus
-      assertIsFastParseError(parseNumber("+_"))
-      assertIsFastParseError(parseNumber("++_"))
-      assertIsFastParseError(parseNumber("_+"))
-      assertIsFastParseError(parseNumber("_++"))
-      // Tail digits
-      assertIsFastParseError(parseNumber("_.1"))
-      // Scientific notation
-      assertIsFastParseError(parseNumber("_e"))
-      assertIsFastParseError(parseNumber("_E"))
-      assertIsFastParseError(parseNumber("_.e-"))
-      assertIsFastParseError(parseNumber("_.e-"))
-      assertIsFastParseError(parseNumber("_e-1"))
-      assertIsFastParseError(parseNumber("_E-1"))
-      // Characters
-      assertIsFastParseError(parseNumber("_s"))
-      assertIsFastParseError(parseNumber("_S"))
-      assertIsFastParseError(parseNumber("_.s-"))
-      assertIsFastParseError(parseNumber("_.s-"))
-      assertIsFastParseError(parseNumber("_s-1"))
-      assertIsFastParseError(parseNumber("_S-1"))
-      // Case where the tail symbolic character never appears within any number
-      assertIsFastParseError(parseNumber("_,"))
+    "Fail cases when underscore is at the head position" when {
+      "Underscores only" in {
+        assertIsFastParseError(parseNumber("_"))
+        assertIsFastParseError(parseNumber("__"))
+        assertIsFastParseError(parseNumber("___"))
+      }
+
+      "minus" in {
+        assertIsFastParseError(parseNumber("-_"))
+        assertIsFastParseError(parseNumber("--_"))
+        assertIsFastParseError(parseNumber("_-"))
+        assertIsFastParseError(parseNumber("_--"))
+      }
+
+      "plus" in {
+        assertIsFastParseError(parseNumber("+_"))
+        assertIsFastParseError(parseNumber("++_"))
+        assertIsFastParseError(parseNumber("_+"))
+        assertIsFastParseError(parseNumber("_++"))
+      }
+
+      "Tail digits" in {
+        assertIsFastParseError(parseNumber("_.1"))
+        assertIsFastParseError(parseNumber("_.2"))
+      }
+
+      "Scientific notation" in {
+        assertIsFastParseError(parseNumber("_e"))
+        assertIsFastParseError(parseNumber("_E"))
+        assertIsFastParseError(parseNumber("_.e-"))
+        assertIsFastParseError(parseNumber("_.e-"))
+        assertIsFastParseError(parseNumber("_e-1"))
+        assertIsFastParseError(parseNumber("_E-1"))
+      }
+
+      "non-number tail alphabets" in {
+        // Case where the tail character is a letter and never appears within any number
+        assertIsFastParseError(parseNumber("_s"))
+        assertIsFastParseError(parseNumber("_S"))
+        assertIsFastParseError(parseNumber("_.s-"))
+        assertIsFastParseError(parseNumber("_.s-"))
+        assertIsFastParseError(parseNumber("_s-1"))
+        assertIsFastParseError(parseNumber("_S-1"))
+      }
+
+      "non-number tail symbols" in {
+        // Case where the tail character is a symbol and never appears within any number
+        assertIsFastParseError(parseNumber("_,"))
+        assertIsFastParseError(parseNumber("_)"))
+        assertIsFastParseError(parseNumber("_$"))
+        assertIsFastParseError(parseNumber("_@"))
+      }
     }
   }
 
