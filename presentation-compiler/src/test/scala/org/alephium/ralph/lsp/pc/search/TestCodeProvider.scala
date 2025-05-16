@@ -5,7 +5,7 @@ package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.TestCommon
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LinePosition, LineRange}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.access.util.{StringUtil, TestCodeUtil}
@@ -126,6 +126,47 @@ object TestCodeProvider {
       searchSettings = (),
       dependencyDownloaders = ArraySeq.empty
     )
+
+  def inlayHints(code: String): List[SourceLocation.InlayHint] = {
+    // Replace all `>>inlay: Hints<<` with `>><<` because `goTo` dos not process code that is not real,
+    // and hints are not real code.
+    val emptyRangeMarkers =
+      code.replaceAll(""">>.+?<<""", ">><<")
+
+    // Execute goTo, which will also assert that the response contains a valid SourceIndex
+    val result =
+      goTo[SourceCodeState.Parsed, LinePosition, SourceLocation.InlayHint](
+        code = ArraySeq(emptyRangeMarkers),
+        // For tests, the end LinePosition is always set to the end of the code.
+        searchSettings = LinePosition(emptyRangeMarkers.linesIterator.size, 0),
+        dependencyDownloaders = DependencyDownloader.natives()
+      )
+
+    // Validate that the inlay-hints matches the ones provided in the code, for example `>>: U256<<`.
+    val expected =
+      TestCodeUtil
+        .extractLineRangeTextInfo(code)
+        .map {
+          case (range, rangeText) =>
+            val expectedRange =
+              LineRange(
+                from = range.from,
+                to = range.from
+              )
+
+            (expectedRange, rangeText)
+        }
+
+    val actual =
+      result map {
+        inlay =>
+          (inlay.toLineRange().value, inlay.hint)
+      }
+
+    actual shouldBe expected.toList
+
+    result
+  }
 
   /**
    * Background: Go-to references should output the same result, regardless of whether it is executed
