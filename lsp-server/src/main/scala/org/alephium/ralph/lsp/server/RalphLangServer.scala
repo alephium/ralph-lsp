@@ -4,7 +4,7 @@
 package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LinePosition}
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.{PC, PCState, PCStates}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
@@ -103,6 +103,7 @@ object RalphLangServer extends StrictImplicitLogging {
     capabilities.setDefinitionProvider(true)
     capabilities.setReferencesProvider(true)
     capabilities.setRenameProvider(true)
+    capabilities.setInlayHintProvider(true)
 
     // Workspace Capabilities
     val workspaceCapabilities  = new WorkspaceServerCapabilities()
@@ -461,6 +462,26 @@ class RalphLangServer private (
             settings = ()
           )
           .map(_.map(RenameConverter.toWorkspaceEdits(_, params.getNewName)))
+    }
+
+  override def inlayHint(params: InlayHintParams): CompletableFuture[util.List[InlayHint]] =
+    runFuture {
+      isCancelled =>
+        MultiCodeProvider
+          .inlayHints
+          .search(
+            fileURI = uri(params.getTextDocument.getUri),
+            line = params.getRange.getStart.getLine,
+            character = params.getRange.getStart.getCharacter,
+            enableSoftParser = enableSoftParser,
+            isCancelled = isCancelled,
+            pcStates = getPCStates(),
+            settings = LinePosition(
+              line = params.getRange.getEnd.getLine,
+              character = params.getRange.getEnd.getCharacter
+            )
+          )
+          .map(_.map(GoToConverter.toInlayHint))
     }
 
   override def didChangeWorkspaceFolders(params: DidChangeWorkspaceFoldersParams): Unit = {
