@@ -158,7 +158,15 @@ object TestCommon {
       code: Iterable[SourceLocation.GoTo]): Iterable[String] =
     code map {
       result =>
-        val index          = result.index.value
+        val index = {
+          val index = result.index.value
+          // If the width is `0`, ensure it is at least `1` so that the marker `^` is displayed in the error message.
+          if (index.width <= 0)
+            index.addToWidth(1)
+          else
+            index
+        }
+
         val error          = CompilerError(message, Some(index))
         val formattedError = error.toFormatter(result.parsed.code).format(Some(Console.RED))
         s"Index: $index\n$formattedError"
