@@ -46,7 +46,7 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
           )
       }
       .flatMap {
-        /**
+        /*
          * Convert type-definitions to inlay-hints.
          */
         case (_, Some(Left(error))) =>
