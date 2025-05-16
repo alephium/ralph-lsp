@@ -15,7 +15,7 @@ object CommonConverter {
       toPosition(range.to)
     )
 
-  @inline private def toPosition(position: LinePosition): lsp4j.Position =
+  @inline def toPosition(position: LinePosition): lsp4j.Position =
     new lsp4j.Position(position.line, position.character)
 
 }
