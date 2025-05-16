@@ -68,7 +68,7 @@ class InlayHintsSingleVariableSpec extends AnyWordSpec with Matchers {
       }
     }
 
-    "return non-empty" when {
+    "return non-empty for immutable" when {
       "the range position is at the root" in {
         inlayHints(
           """
@@ -114,6 +114,59 @@ class InlayHintsSingleVariableSpec extends AnyWordSpec with Matchers {
             |Contract Test() {
             |  fn test() -> () {
             |    let @@ one>>: U256<< = 1
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
+    }
+
+    "return non-empty mutable" when {
+      "the range position is at the root" in {
+        inlayHints(
+          """
+            |@@
+            |Contract Test() {
+            |  fn test() -> () {
+            |    let mut one>>: U256<< = 1
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "range position is within the contract" in {
+        inlayHints(
+          """
+            |Contract Test() {
+            |  @@
+            |  fn test() -> () {
+            |    let mut one>>: U256<< = 1
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "range position is within the function" in {
+        inlayHints(
+          """
+            |Contract Test() {
+            |  fn test() -> () {
+            |    @@
+            |    let mut one>>: U256<< = 1
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "range position is within the variable" in {
+        inlayHints(
+          """
+            |Contract Test() {
+            |  fn test() -> () {
+            |    let mut @@ one>>: U256<< = 1
             |  }
             |}
             |""".stripMargin

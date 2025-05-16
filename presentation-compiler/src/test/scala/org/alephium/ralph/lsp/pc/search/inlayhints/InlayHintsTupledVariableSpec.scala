@@ -40,7 +40,7 @@ class InlayHintsTupledVariableSpec extends AnyWordSpec with Matchers {
           |  @@
           |  fn test() -> () {
           |    let (one>>: U256<<,
-          |         bool>>: Bool<<) = tuple()
+          |         mut bool>>: Bool<<) = tuple()
           |  }
           |
           |  fn tuple() -> (U256, Bool) {
@@ -58,7 +58,7 @@ class InlayHintsTupledVariableSpec extends AnyWordSpec with Matchers {
           |
           |  fn test() -> () {
           |    @@
-          |    let (one>>: U256<<,
+          |    let (mut one>>: U256<<,
           |         bool>>: Bool<<) = tuple()
           |  }
           |
