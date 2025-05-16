@@ -343,6 +343,8 @@ class NumberParserSpec extends AnyWordSpec with Matchers {
       assertIsFastParseError(parseNumber("_.s-"))
       assertIsFastParseError(parseNumber("_s-1"))
       assertIsFastParseError(parseNumber("_S-1"))
+      // Case where the tail symbolic character never appears within any number
+      assertIsFastParseError(parseNumber("_,"))
     }
   }
 

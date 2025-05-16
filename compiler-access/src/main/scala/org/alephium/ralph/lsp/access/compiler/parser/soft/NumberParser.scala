@@ -32,12 +32,19 @@ private object NumberParser {
       Index ~
         numberOrHex.! ~
         Index
-    } map {
+    } flatMap {
       case (from, number, to) =>
-        SoftAST.CodeString(
-          index = range(from, to),
-          text = number
-        )
+        // This condition escapes the `numberOrHex` parser.
+        // Perform manual validation.
+        if (number == Token.Underscore.lexeme)
+          Fail(s"Not a number $number")
+        else
+          Pass(
+            SoftAST.CodeString(
+              index = range(from, to),
+              text = number
+            )
+          )
     }
 
   /**
