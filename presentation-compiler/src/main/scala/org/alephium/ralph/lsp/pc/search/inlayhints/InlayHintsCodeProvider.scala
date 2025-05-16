@@ -36,6 +36,7 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
       )
 
     eligibleNodes
+      .iterator
       .flatMap {
         node =>
           searchTypeDefinitions(
@@ -77,7 +78,6 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
         case (_, None) =>
           Iterable.empty
       }
-
   }
 
   /**
@@ -135,52 +135,42 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
   private def collectHintEligibleNodesInRange(
       rangeStart: Int,
       rangeEnd: LinePosition,
-      sourceCode: SourceCodeState.Parsed
-    )(implicit logger: ClientLogger): Iterator[Node[Ast.VarDeclaration, Ast.Positioned]] = {
-    val statementsInRange =
-      sourceCode
-        .astStrict
-        .statements
-        .find {
-          statement =>
-            statement.index.contains(rangeStart) || statement.index.isAhead(rangeStart)
-        }
+      sourceCode: SourceCodeState.Parsed): Seq[Node[Ast.VarDeclaration, Ast.Positioned]] = {
+    val endIndex =
+      StringUtil.computeIndex(
+        code = sourceCode.code,
+        line = rangeEnd.line,
+        character = rangeEnd.character
+      )
 
-    statementsInRange match {
-      case Some(statement) =>
-        statement match {
-          case _: Tree.Import =>
-            // request is for import go-to definition
-            Iterator.empty
+    val searchRange =
+      SourceIndex(
+        index = rangeStart,
+        width = endIndex - rangeStart,
+        fileURI = None
+      )
 
-          case tree: Tree.Source =>
-            val endIndex =
-              StringUtil.computeIndex(
-                code = sourceCode.code,
-                line = rangeEnd.line,
-                character = rangeEnd.character
-              )
+    sourceCode
+      .astStrict
+      .statements
+      .filter {
+        statement =>
+          statement.index overlaps searchRange
+      }
+      .flatMap {
+        case _: Tree.Import =>
+          // Imports don't require inlay-hints
+          Iterator.empty
 
-            val searchRange =
-              SourceIndex(
-                index = rangeStart,
-                width = endIndex - rangeStart,
-                fileURI = None
-              )
-
-            tree
-              .rootNode
-              .filterDown(_.data.sourceIndex.exists(_ overlaps searchRange))
-              .collect {
-                case node @ Node(varDef: Ast.VarDeclaration, _) =>
-                  node.upcast(varDef)
-              }
-        }
-
-      case None =>
-        logger.trace(s"${InlayHintsCodeProvider.productPrefix}: Statement not found for rangeStart: $rangeStart. File: ${sourceCode.fileURI}")
-        Iterator.empty
-    }
+        case tree: Tree.Source =>
+          tree
+            .rootNode
+            .filterDown(_.data.sourceIndex.exists(_ overlaps searchRange))
+            .collect {
+              case node @ Node(varDef: Ast.VarDeclaration, _) =>
+                node.upcast(varDef)
+            }
+      }
   }
 
 }
