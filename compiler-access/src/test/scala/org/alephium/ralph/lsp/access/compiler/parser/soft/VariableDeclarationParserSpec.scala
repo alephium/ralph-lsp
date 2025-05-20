@@ -9,6 +9,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.OptionValues._
 
 class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
 
@@ -212,6 +213,36 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
           postEqualSpace = Some(Space("let _ =>> <<1")),
           expressionRight = Number("let _ = >>1<<")
         )
+      )
+  }
+
+  "a tuple element is underscore" in {
+    val tupleVarDec =
+      parseVariableDeclaration("let (a, _) = blah")
+
+    tupleVarDec.let shouldBe Let(">>let<< (a, _) = blah")
+    tupleVarDec.postLetSpace shouldBe Some(Space("let>> <<(a, _) = blah"))
+
+    // left is a tuple
+    val left = tupleVarDec.assignment.expressionLeft.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
+    left.index shouldBe indexOf("let >>(a, _)<< = blah")
+    left.toCode() shouldBe "(a, _)"
+
+    // `a` is stored as an Identifier
+    left.tailExpressions should have size 1
+    val aExpression = left.headExpression.value
+    aExpression shouldBe Identifier("let (>>a<<, _) = blah")
+
+    // The underscore is stored as an Identifier
+    left.tailExpressions should have size 1
+    val underscore = left.tailExpressions.head
+    underscore.expression shouldBe Identifier("let (a, >>_<<) = blah")
+
+    // right is an assignment
+    tupleVarDec.assignment.expressionRight shouldBe
+      Identifier(
+        index = indexOf("let (a, _) = >>blah<<"),
+        text = "blah"
       )
   }
 
