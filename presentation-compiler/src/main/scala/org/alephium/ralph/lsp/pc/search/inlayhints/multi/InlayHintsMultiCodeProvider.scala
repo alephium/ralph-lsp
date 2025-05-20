@@ -43,7 +43,7 @@ private[search] case object InlayHintsMultiCodeProvider extends MultiCodeProvide
             state = pcState
           ).to(ArraySeq)
 
-        Future(Right(result))
+        Future.successful(Right(result))
     }
 
 }
