@@ -9,13 +9,13 @@ import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.PCSearcher.goTo
 import org.alephium.ralph.lsp.pc.search.MultiCodeProvider
 import org.alephium.ralph.lsp.utils.IsCancelled
-import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
 import scala.concurrent.{ExecutionContext, Future}
 
-private[search] case object InlayHintsMultiCodeProvider extends MultiCodeProvider[LinePosition, SourceLocation.InlayHint] {
+private[search] case object InlayHintsMultiCodeProvider extends MultiCodeProvider[LinePosition, SourceLocation.InlayHint] with StrictImplicitLogging {
 
   /** @inheritdoc */
   override def search(
@@ -30,7 +30,10 @@ private[search] case object InlayHintsMultiCodeProvider extends MultiCodeProvide
       ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[SourceLocation.InlayHint]]] =
     pcStates.get(fileURI) match {
       case Left(error) =>
-        Future.successful(Left(error))
+        // Dependency files are not part of the active workspace but should still support inlay hints.
+        // For now, instead of triggering an IDE error notification, log the reason.
+        logger.info(s"Inlay hints are not available for this file. Reason: ${error.message}.")
+        Future.successful(Right(ArraySeq.empty))
 
       case Right(pcState) =>
         val result =
