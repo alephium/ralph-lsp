@@ -5,7 +5,7 @@ package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.TestCommon
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
-import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRange}
+import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LinePosition, LineRange}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.access.util.{StringUtil, TestCodeUtil}
@@ -66,14 +66,14 @@ object TestCodeProvider {
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
-  def goToDefinitionStrict(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[(URI, LineRange)] =
+  def goToDefinitionStrict(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[SourceLocation.GoToDefStrict] =
     goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
       code = code.to(ArraySeq),
       searchSettings = settings,
       dependencyDownloaders = ArraySeq.empty
     )
 
-  def goToDefinitionSoft(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[(URI, LineRange)] =
+  def goToDefinitionSoft(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[SourceLocation.GoToDefSoft] =
     goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
       code = code.to(ArraySeq),
       searchSettings = (SoftAST, settings),
@@ -81,12 +81,12 @@ object TestCodeProvider {
     )
 
   /** Executes go-to-definition providers for both StrictAST and [[SoftAST]] */
-  def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[(URI, LineRange)] = {
+  def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[SourceLocation.GoToDefSoft] = {
     val resultStrict       = goToDefinitionStrict(settings)(code: _*)
-    val resultStrictRanges = resultStrict.map(_._2)
+    val resultStrictRanges = resultStrict.map(_.toLineRange().value)
 
     val resultSoft       = goToDefinitionSoft(settings)(code: _*)
-    val resultSoftRanges = resultSoft.map(_._2)
+    val resultSoftRanges = resultSoft.map(_.toLineRange().value)
 
     // Assert that both go-to-def services (Strict & Soft) return the same result.
     resultSoftRanges should contain theSameElementsAs resultStrictRanges
@@ -106,26 +106,67 @@ object TestCodeProvider {
       code = code
     )
 
-  def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String*): List[(URI, LineRange)] =
+  def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String*): List[SourceLocation.GoToRefStrict] =
     goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
       code = code.to(ArraySeq),
       searchSettings = settings,
       dependencyDownloaders = ArraySeq.empty
     )
 
-  def goToRename(code: String*): List[(URI, LineRange)] =
+  def goToRename(code: String*): List[SourceLocation.GoToRenameStrict] =
     goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
       code = code.to(ArraySeq),
       searchSettings = (),
       dependencyDownloaders = ArraySeq.empty
     )
 
-  def goToTypeDef(code: String*): List[(URI, LineRange)] =
+  def goToTypeDef(code: String*): List[SourceLocation.GoToTypeDef] =
     goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToTypeDef](
       code = code.to(ArraySeq),
       searchSettings = (),
       dependencyDownloaders = ArraySeq.empty
     )
+
+  def inlayHints(code: String): List[SourceLocation.InlayHint] = {
+    // Replace all `>>inlay: Hints<<` with `>><<` because `goTo` does not process code that is not real,
+    // and hints are not real code.
+    val emptyRangeMarkers =
+      code.replaceAll(""">>.+?<<""", ">><<")
+
+    // Execute goTo, which will also assert that the response contains a valid SourceIndex
+    val result =
+      goTo[SourceCodeState.Parsed, LinePosition, SourceLocation.InlayHint](
+        code = ArraySeq(emptyRangeMarkers),
+        // For tests, the end LinePosition is always set to the end of the code.
+        searchSettings = LinePosition(emptyRangeMarkers.linesIterator.size, 0),
+        dependencyDownloaders = DependencyDownloader.natives()
+      )
+
+    // Validate that the inlay-hints matches the ones provided in the code, for example `>>: U256<<`.
+    val expected =
+      TestCodeUtil
+        .extractLineRangeTextInfo(code)
+        .map {
+          case (range, rangeText) =>
+            val expectedRange =
+              LineRange(
+                from = range.from,
+                to = range.from
+              )
+
+            (expectedRange, rangeText)
+        }
+
+    val actual =
+      result map {
+        inlay =>
+          (inlay.toLineRange().value, inlay.hint)
+      }
+
+    actual shouldBe expected.toList
+
+    result
+  }
 
   /**
    * Background: Go-to references should output the same result, regardless of whether it is executed
@@ -175,7 +216,7 @@ object TestCodeProvider {
         code = ArraySeq(code),
         searchSettings = settings,
         dependencyDownloaders = ArraySeq.empty
-      ).map(_._2)
+      ).map(_.toLineRange().value)
 
     // remove the select indicator @@ from the code.
     val codeWithoutSelectSymbol =
@@ -221,7 +262,7 @@ object TestCodeProvider {
               code = ArraySeq(newCode),
               searchSettings = settings,
               dependencyDownloaders = ArraySeq.empty
-            ).map(_._2)
+            ).map(_.toLineRange().value)
           }
 
         // also check that the result is the same as the first ranges returned on declaration.
@@ -244,7 +285,7 @@ object TestCodeProvider {
       code: ArraySeq[String],
       searchSettings: I,
       dependencyDownloaders: ArraySeq[DependencyDownloader.Native]
-    )(implicit codeProvider: CodeProvider[S, I, O]): List[(URI, LineRange)] = {
+    )(implicit codeProvider: CodeProvider[S, I, O]): List[O] = {
     val expectedLineRanges =
       TestCodeUtil.extractLineRangeInfo(code)
 
@@ -295,7 +336,7 @@ object TestCodeProvider {
       actual should contain theSameElementsAs expectedGoToLocations
     }
 
-    actual
+    searchResultList
   }
 
   /**

@@ -184,6 +184,54 @@ object TestCodeUtil {
     }
   }
 
+  /**
+   * Given the following code string, extracts the text `": U256"` along with its range information.
+   *
+   * Example:
+   * {{{
+   *   @@
+   *   Contract Test() {
+   *     fn test() -> () {
+   *       let one>>: U256<< = 1
+   *     }
+   *   }
+   * }}}
+   *
+   * @param code The source code to analyse.
+   * @return The line range and the extracted text.
+   */
+  def extractLineRangeTextInfo(code: String): Array[(LineRange, String)] = {
+    // Remove `@@` markers
+    val codeWithoutAtMarker =
+      code.replace(TestCodeUtil.SEARCH_INDICATOR, "")
+
+    // Extract all line range information `>><<` markers
+    val (ranges, cleanCode, _, _) =
+      TestCodeUtil.lineRanges(codeWithoutAtMarker)
+
+    // Fetch the substring containing the line-ranges.
+    ranges map {
+      range =>
+        val fromIndex =
+          StringUtil.computeIndex(
+            code = cleanCode,
+            line = range.from.line,
+            character = range.from.character
+          )
+
+        val toIndex =
+          StringUtil.computeIndex(
+            code = cleanCode,
+            line = range.to.line,
+            character = range.to.character
+          )
+
+        val rangeText = cleanCode.substring(fromIndex, toIndex)
+
+        (range, rangeText)
+    }
+  }
+
   def clearTestMarkers(code: String): String =
     code.replaceAll(">>|<<|@@", "")
 
