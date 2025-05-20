@@ -128,7 +128,7 @@ object TestCodeProvider {
     )
 
   def inlayHints(code: String): List[SourceLocation.InlayHint] = {
-    // Replace all `>>inlay: Hints<<` with `>><<` because `goTo` dos not process code that is not real,
+    // Replace all `>>inlay: Hints<<` with `>><<` because `goTo` does not process code that is not real,
     // and hints are not real code.
     val emptyRangeMarkers =
       code.replaceAll(""">>.+?<<""", ">><<")
