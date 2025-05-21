@@ -10,9 +10,9 @@ import org.alephium.ralph.lsp.pc.search.completion.{CodeCompletionProvider, Sugg
 import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefCodeProvider, GoToDefSetting}
 import org.alephium.ralph.lsp.pc.search.gotodef.soft.GoToDefCodeProviderSoft
 import org.alephium.ralph.lsp.pc.search.gotoref.{GoToRefCodeProvider, GoToRefSetting}
-import org.alephium.ralph.lsp.pc.search.rename.GoToRenameCodeProvider
 import org.alephium.ralph.lsp.pc.search.gototypedef.GoToTypeDefCodeProvider
 import org.alephium.ralph.lsp.pc.search.inlayhints.InlayHintsCodeProvider
+import org.alephium.ralph.lsp.pc.search.rename.GoToRenameCodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
@@ -31,7 +31,7 @@ import java.net.URI
 trait CodeProvider[S, I, O] extends Product {
 
   /**
-   * Performs a search operation at the cursor index within the source-code of a workspace.
+   * Searches the source-code of a workspace at the given cursor index, excluding any workspace dependencies.
    *
    * @param cursorIndex    The index (character offset) in the source code representing the cursor position.
    * @param sourceCode     The source code state where the search is executed.
@@ -39,7 +39,7 @@ trait CodeProvider[S, I, O] extends Product {
    * @param searchSettings Provider-specific settings.
    * @return Search results.
    */
-  def search(
+  def searchLocal(
       cursorIndex: Int,
       sourceCode: S,
       workspace: WorkspaceState.IsSourceAware,
@@ -203,7 +203,7 @@ object CodeProvider {
               )
 
             // execute the search
-            provider.search(
+            provider.searchLocal(
               cursorIndex = cursorIndex,
               sourceCode = parsed.asInstanceOf[S],
               workspace = workspace,

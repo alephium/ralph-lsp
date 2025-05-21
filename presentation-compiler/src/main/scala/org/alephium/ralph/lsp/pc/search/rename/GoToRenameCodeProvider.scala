@@ -14,7 +14,7 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 private[search] case object GoToRenameCodeProvider extends CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict] {
 
   /** @inheritdoc */
-  override def search(
+  override def searchLocal(
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,

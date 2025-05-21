@@ -23,7 +23,7 @@ case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed,
    * @param searchSettings Provider-specific settings.
    * @return Search results.
    */
-  override def search(
+  override def searchLocal(
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,

@@ -12,13 +12,11 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 /**
  * Implements [[CodeProvider]] that provides go-to references results of type [[SourceLocation.GoToRefStrict]].
- *
- * To execution this function invoke [[CodeProvider.search]] with [[Boolean]] and [[SourceLocation.GoToRefStrict]] as type parameter.
  */
 private[search] case object GoToRefCodeProvider extends CodeProvider[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict] with StrictImplicitLogging {
 
   /** @inheritdoc */
-  override def search(
+  override def searchLocal(
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
