@@ -13,6 +13,7 @@ import org.alephium.ralph.lsp.pc.search.gotoref.{GoToRefCodeProvider, GoToRefSet
 import org.alephium.ralph.lsp.pc.search.gototypedef.GoToTypeDefCodeProvider
 import org.alephium.ralph.lsp.pc.search.inlayhints.InlayHintsCodeProvider
 import org.alephium.ralph.lsp.pc.search.rename.GoToRenameCodeProvider
+import org.alephium.ralph.lsp.pc.search.CodeProvider.{searchWorkspace, searchWorkspaceAndDependencies}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
@@ -31,7 +32,48 @@ import java.net.URI
 trait CodeProvider[S, I, O] extends Product {
 
   /**
+   * Searches the source-code of a workspace at the given position, including workspace dependencies.
+   *
+   * @note Use this function for all public search calls so that searches also include dependencies.
+   *       [[searchLocal]] will be made protected in the future to restrict it to local-only access.
+   *
+   * @param line           Line position in a document (zero-based).
+   * @param character      Character offset on a line in a document (zero-based).
+   * @param fileURI        The text document's uri.
+   * @param workspace      Current workspace state.
+   * @param searchSettings Provider-specific settings.
+   */
+  final def search(
+      line: Int,
+      character: Int,
+      fileURI: URI,
+      workspace: WorkspaceState.IsSourceAware,
+      searchSettings: I
+    )(implicit provider: CodeProvider[S, I, O],
+      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
+    // if the fileURI belongs to the workspace, then search just within that workspace
+    if (URIUtil.contains(workspace.build.contractURI, fileURI))
+      searchWorkspace[S, I, O](
+        line = line,
+        character = character,
+        fileURI = fileURI,
+        workspace = workspace,
+        searchSettings = searchSettings
+      )
+    else // else search all source files
+      searchWorkspaceAndDependencies[S, I, O](
+        line = line,
+        character = character,
+        fileURI = fileURI,
+        workspace = workspace,
+        searchSettings = searchSettings
+      )
+
+  /**
    * Searches the source-code of a workspace at the given cursor index, excluding any workspace dependencies.
+   *
+   * @note This function will be made protected in the future to restrict it to local-only access.
+   *       Use [[search]] instead for searches that should include workspace dependencies.
    *
    * @param cursorIndex    The index (character offset) in the source code representing the cursor position.
    * @param sourceCode     The source code state where the search is executed.
@@ -76,41 +118,6 @@ object CodeProvider {
   /** The inlay-hint implementation of [[CodeProvider]]. */
   implicit val inlayHints: CodeProvider[SourceCodeState.Parsed, LinePosition, SourceLocation.InlayHint] =
     InlayHintsCodeProvider
-
-  /**
-   * Execute search at cursor position within the current workspace state.
-   *
-   * @param line      Line position in a document (zero-based).
-   * @param character Character offset on a line in a document (zero-based).
-   * @param fileURI   The text document's uri.
-   * @param workspace Current workspace state.
-   * @tparam O The type to search.
-   */
-  def search[S, I, O](
-      line: Int,
-      character: Int,
-      fileURI: URI,
-      workspace: WorkspaceState.IsSourceAware,
-      searchSettings: I
-    )(implicit provider: CodeProvider[S, I, O],
-      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
-    // if the fileURI belongs to the workspace, then search just within that workspace
-    if (URIUtil.contains(workspace.build.contractURI, fileURI))
-      searchWorkspace[S, I, O](
-        line = line,
-        character = character,
-        fileURI = fileURI,
-        workspace = workspace,
-        searchSettings = searchSettings
-      )
-    else // else search all source files
-      searchWorkspaceAndDependencies[S, I, O](
-        line = line,
-        character = character,
-        fileURI = fileURI,
-        workspace = workspace,
-        searchSettings = searchSettings
-      )
 
   /**
    * Executes search on dependencies and the workspace that can use this dependency.

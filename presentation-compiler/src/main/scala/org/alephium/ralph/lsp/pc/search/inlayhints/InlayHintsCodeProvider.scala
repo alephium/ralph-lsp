@@ -113,7 +113,8 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
           // Find all type definitions at the range.
           val typeDefinitions =
             CodeProvider
-              .search[SourceCodeState.Parsed, Unit, SourceLocation.GoToTypeDef](
+              .goToTypeDef
+              .search(
                 line = varRange.from.line,
                 character = varRange.from.character,
                 fileURI = sourceCode.fileURI,

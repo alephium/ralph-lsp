@@ -208,7 +208,7 @@ object TestCodeProvider {
       replacer: String,
       settings: I,
       code: String
-    )(implicit codeProvider: CodeProvider[S, I, O]): Unit = {
+    )(implicit provider: CodeProvider[S, I, O]): Unit = {
     // Initially, execute the test defined.
     // This should be most expressed on the declaration.
     val firstResult =
@@ -285,7 +285,7 @@ object TestCodeProvider {
       code: ArraySeq[String],
       searchSettings: I,
       dependencyDownloaders: ArraySeq[DependencyDownloader.Native]
-    )(implicit codeProvider: CodeProvider[S, I, O]): List[O] = {
+    )(implicit provider: CodeProvider[S, I, O]): List[O] = {
     val expectedLineRanges =
       TestCodeUtil.extractLineRangeInfo(code)
 
@@ -474,7 +474,7 @@ object TestCodeProvider {
       dependency: String,
       workspace: String,
       searchSettings: I
-    )(implicit codeProvider: CodeProvider[S, I, O]): Unit = {
+    )(implicit provider: CodeProvider[S, I, O]): Unit = {
     implicit val clientLogger: ClientLogger = TestClientLogger
     implicit val file: FileAccess           = FileAccess.disk
     implicit val compiler: CompilerAccess   = CompilerAccess.ralphc
@@ -863,7 +863,7 @@ object TestCodeProvider {
 
     // execute code-provider.
     val result =
-      CodeProvider.search(
+      provider.search(
         line = line,
         character = character,
         fileURI = selectedFileURI,
