@@ -23,7 +23,7 @@ object PCSearcher extends StrictImplicitLogging {
    * @param searchSettings Settings defined for the input [[CodeProvider]].
    * @param isCancelled    Cancellation support instance.
    * @param state          Current presentation-compiler state.
-   * @param codeProvider   Target [[CodeProvider]] to use for responding to this request.
+   * @param provider       Target [[CodeProvider]] to use for responding to this request.
    * @param logger         Remote client and local logger.
    * @tparam I The type of input [[CodeProvider]] settings.
    * @tparam O The type of [[CodeProvider]] function output.
@@ -36,7 +36,7 @@ object PCSearcher extends StrictImplicitLogging {
       searchSettings: I,
       isCancelled: IsCancelled,
       state: PCState
-    )(implicit codeProvider: CodeProvider[S, I, O],
+    )(implicit provider: CodeProvider[S, I, O],
       logger: ClientLogger): Iterator[O] =
     if (!isFileScheme(fileURI) || isCancelled.check())
       Iterator.empty
@@ -44,7 +44,7 @@ object PCSearcher extends StrictImplicitLogging {
       state.workspace match {
         case sourceAware: WorkspaceState.IsSourceAware =>
           val goToResult =
-            CodeProvider.search[S, I, O](
+            provider.search(
               line = line,
               character = character,
               fileURI = fileURI,
@@ -62,7 +62,7 @@ object PCSearcher extends StrictImplicitLogging {
 
               case Some(Left(error)) =>
                 // Go-to definition failed: Log the error message
-                logger.info(s"${codeProvider.productPrefix} unsuccessful: " + error.message)
+                logger.info(s"${provider.productPrefix} unsuccessful: " + error.message)
                 Iterator.empty
 
               case None =>
@@ -73,7 +73,7 @@ object PCSearcher extends StrictImplicitLogging {
         case _: WorkspaceState.Created =>
           // Workspace must be compiled at least once to enable GoTo definition.
           // The server must've invoked the initial compilation in the boot-up initialize function.
-          logger.info(s"${codeProvider.productPrefix} unsuccessful: Workspace is not compiled")
+          logger.info(s"${provider.productPrefix} unsuccessful: Workspace is not compiled")
           Iterator.empty
       }
 

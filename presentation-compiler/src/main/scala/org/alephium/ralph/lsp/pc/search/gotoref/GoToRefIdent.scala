@@ -601,7 +601,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
       referenceSourceIndex =>
         CodeProvider
           .goToDef
-          .search(
+          .searchLocal(
             cursorIndex = referenceSourceIndex.index,
             sourceCode = sourceCode.parsed,
             workspace = workspace,

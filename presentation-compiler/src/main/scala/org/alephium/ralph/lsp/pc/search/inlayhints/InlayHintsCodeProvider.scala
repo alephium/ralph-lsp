@@ -17,12 +17,12 @@ import org.alephium.ralph.lsp.utils.Node
 /**
  * Implements [[CodeProvider]] that provides go-to definition results of type [[SourceLocation.InlayHint]].
  *
- * To execution this function invoke [[CodeProvider.search]] with [[SourceLocation.InlayHint]] as type parameter.
+ * To execution this function invoke [[CodeProvider.searchLocal]] with [[SourceLocation.InlayHint]] as type parameter.
  */
 private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCodeState.Parsed, LinePosition, SourceLocation.InlayHint] with StrictImplicitLogging {
 
   /** @inheritdoc */
-  override def search(
+  override def searchLocal(
       rangeStart: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
@@ -113,7 +113,8 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
           // Find all type definitions at the range.
           val typeDefinitions =
             CodeProvider
-              .search[SourceCodeState.Parsed, Unit, SourceLocation.GoToTypeDef](
+              .goToTypeDef
+              .search(
                 line = varRange.from.line,
                 character = varRange.from.character,
                 fileURI = sourceCode.fileURI,

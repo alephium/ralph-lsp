@@ -15,7 +15,7 @@ import org.alephium.ralph.lsp.utils.Node
 case object GoToDefCodeProviderSoft extends CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] with StrictImplicitLogging {
 
   /** @inheritdoc */
-  override def search(
+  override def searchLocal(
       cursorIndex: Int,
       sourceCode: SourceCodeState.IsParsed,
       workspace: WorkspaceState.IsSourceAware,

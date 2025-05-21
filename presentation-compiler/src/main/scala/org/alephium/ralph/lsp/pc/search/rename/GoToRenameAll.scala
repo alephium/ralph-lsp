@@ -96,7 +96,7 @@ private object GoToRenameAll extends StrictImplicitLogging {
         sourceCode: SourceCodeState.Parsed): Unit =
       CodeProvider
         .goToRef
-        .search(
+        .searchLocal(
           cursorIndex = cursorIndex,
           sourceCode = sourceCode,
           workspace = workspace,

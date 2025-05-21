@@ -6,7 +6,6 @@ package org.alephium.ralph.lsp.pc.search.completion.multi
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.search.{CodeProvider, MultiCodeProvider}
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
-import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.PCStates
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
@@ -76,13 +75,15 @@ private[search] case object CompletionMultiCodeProvider extends MultiCodeProvide
       workspace match {
         case sourceAware: WorkspaceState.IsSourceAware =>
           val completionResult =
-            CodeProvider.search[SourceCodeState.Parsed, Unit, Suggestion](
-              line = line,
-              character = character,
-              fileURI = fileURI,
-              workspace = sourceAware,
-              searchSettings = ()
-            )
+            CodeProvider
+              .codeCompleter
+              .search(
+                line = line,
+                character = character,
+                fileURI = fileURI,
+                workspace = sourceAware,
+                searchSettings = ()
+              )
 
           completionResult match {
             case Some(Right(suggestions)) =>
