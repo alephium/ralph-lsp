@@ -798,7 +798,7 @@ object SoftAST {
       copies.head
     }
 
-    /**
+    /*
      * Copies/Updates [[SourceIndex]] instances in the given `field` of the [[rootNode]] and appends the result to input buffer.
      *
      * @param field         A field within the root node to copy.
