@@ -4,7 +4,7 @@
 package org.alephium.ralph.lsp.pc.search.gotodef.soft
 
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefSetting, ScopeWalker}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
@@ -463,8 +463,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    *      let copy = pa@@ram // `param` is not visible to `Parent`
    *   }
    *
-   *   Abstract Contract(>>param<<: Type) {
-   *     pa@@ram // A virtual identifier is used to locate it
+   *   Abstract Contract Parent(>>param<<: Type) {
+   *     pa@@ram // A virtual identifier is created injected into this source's tree, and a local search is executed to find `>>param<<`.
    *   }
    * }}}
    *
@@ -480,21 +480,11 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       inherited: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
-    val virtualExpression =
-      buildVirtualExpression(
-        target = target,
-        position = point(inherited.part.index.to)
-      )
-
-    // fetch the only identifier as a Node
     val virtualNode =
-      virtualExpression
-        .toNode
-        .walkDown
-        .collectFirst {
-          case node @ Node(ident: SoftAST.Identifier, _) =>
-            node.upcast(ident)
-        }
+      buildVirtualNode(
+        target = target,
+        sourceIndex = point(inherited.part.index.to)
+      )
 
     virtualNode match {
       case Some(virtualNode) =>
@@ -514,8 +504,12 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   }
 
   /**
-   * Builds a virtual expression from the given [[SoftAST.Identifier]] tree,
-   * assigning the specified [[SourceIndex]] to all virtual expression nodes.
+   * Note: This function is used for searching within inheritance.
+   * For details see the documentation of the function [[searchInheritance]].
+   *
+   * Builds a virtual AST node for the given [[SoftAST.Identifier]] tree,
+   * assigning the specified [[SourceIndex]] to a maximum of two parents
+   * with the same [[SourceIndex]].
    *
    * A virtual node is created only for the following syntax:
    * - [[SoftAST.Identifier]] — e.g. `Transfer`
@@ -523,81 +517,47 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * - [[SoftAST.MethodCall]] — e.g. `Transfer.function`
    * - [[SoftAST.Emit]] — e.g. `emit <<any of the above three cases>>`
    *
-   * FIXME: To simplify this logic, this function should be replaced with `updateSourceIndex` in [[SoftAST]]:
-   *        {{{
-   *          def updateSourceIndex(newIndex: SourceIndex): SoftAST = ???
-   *        }}}
-   *
-   * @param target   The identifier tree to create the virtual expression from.
-   * @param position The source position to assign to each node.
+   * @param target      The identifier tree to create the virtual node for.
+   * @param sourceIndex The source position to assign to each node.
    * @return The created virtual expression.
    */
-  private def buildVirtualExpression(
+  private def buildVirtualNode(
       target: Node[SoftAST.Identifier, SoftAST],
-      position: SourceIndex): SoftAST.ExpressionAST = {
-    // create a virtual identifier at the end index
-    val virtualIdentifier =
-      SoftAST.Identifier(
-        index = position,
-        documentation = None,
-        code = SoftAST.CodeString(
-          index = position,
-          text = target.data.code.text
-        )
-      )
+      sourceIndex: SourceIndex): Option[Node[SoftAST.Identifier, SoftAST]] = {
+    val emitUpdated =
+      target
+        .walkParents
+        .take(2) // The identifier could be wrapped around an `emit` call, which can exist in the parent or the grandparent
+        .collectFirst {
+          case Node(emit: SoftAST.Emit, _) => // If the `emit` exists, deep-copy from that node.
+            emit.deepCopy(sourceIndex)
+        }
 
-    val virtualExpression =
-      if (target.isReferenceCall()) // create a virtual reference call
-        SoftAST.ReferenceCall(
-          index = position,
-          reference = virtualIdentifier,
-          preArgumentsSpace = None,
-          arguments = SoftAST.Group(
-            index = position,
-            openToken = None,
-            preHeadExpressionSpace = None,
-            headExpression = None,
-            postHeadExpressionSpace = None,
-            tailExpressions = Seq.empty,
-            closeToken = None
-          )
-        )
-      else if (target.isMethodCall()) // create a virtual method call
-        SoftAST.MethodCall(
-          index = position,
-          leftExpression = virtualIdentifier,
-          preDotSpace = None,
-          dotCalls = Seq(
-            SoftAST.DotCall(
-              index = position,
-              dot = SoftAST.TokenDocumented(
-                index = position,
-                documentation = None,
-                code = SoftAST.CodeToken(position, Token.Dot)
-              ),
-              postDotSpace = None,
-              // This is temporary, because the right-expression is not used when searching inheritance.
-              // FIXME: See the function documentation. `updateSourceIndex` would remove the need for this assumption.
-              rightExpression = SoftAST.ExpressionExpected(position)
-            )
-          )
-        )
-      else
-        virtualIdentifier // else use the identifier
+    val copiedTree =
+      emitUpdated match {
+        case Some(emit) =>
+          emit
 
-    if (target.isWithinEmit()) // wrap the virtual expression
-      SoftAST.Emit(
-        index = position,
-        emit = SoftAST.TokenDocumented(
-          index = position,
-          documentation = None,
-          code = SoftAST.CodeToken(position, Token.Emit)
-        ),
-        preExpressionSpace = None,
-        expression = virtualExpression
-      )
-    else
-      virtualExpression // else no wrap needed, use the created virtual expression
+        case None => // `Emit` does not exist.
+          target.parent match {
+            case Some(Node(exp @ (_: SoftAST.ReferenceCall), _)) =>
+              // If the identifier is wrapped around a reference call, deep-copy the reference call.
+              exp.deepCopy(sourceIndex)
+
+            case _ =>
+              // Otherwise deep copy the identifier.
+              target.data.deepCopy(sourceIndex)
+          }
+      }
+
+    // Return the target identifier contained in the new tree.
+    copiedTree
+      .toNode
+      .walkDown
+      .collectFirst {
+        case node @ Node(ident: SoftAST.Identifier, _) if ident.code.text == target.data.code.text =>
+          node.upcast(ident)
+      }
   }
 
   /**

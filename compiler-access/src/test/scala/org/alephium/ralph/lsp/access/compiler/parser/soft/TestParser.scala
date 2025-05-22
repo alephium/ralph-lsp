@@ -7,7 +7,10 @@ import fastparse.{P, Parsed}
 import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.utils.Node
+import org.alephium.ralph.SourceIndex
 import org.scalatest.matchers.should.Matchers._
+
+import scala.util.Random
 
 object TestParser {
 
@@ -120,6 +123,17 @@ object TestParser {
   def parseEmit(code: String): SoftAST.Emit =
     runSoftParser(EmitParser.parseOrFail(_))(code)
 
+  /**
+   * Test the result of [[SoftAST.deepCopy]] on the given AST.
+   */
+  def testDeepCopy[A <: SoftAST](ast: A): A = {
+    val newSourceIndex      = new SourceIndex(Random.nextInt(100), Random.nextInt(1000), None) // Generate a random SourceIndex
+    val newAST              = ast.deepCopy(newSourceIndex)                                     // Copy the tree with new SourceIndex
+    val newASTSourceIndexes = newAST.toNode.walkDown.map(_.data.index).distinct.toList         // Collect distinct SourceIndexes from the update tree
+    newASTSourceIndexes should contain only newSourceIndex // It should contain only the one new SourceIndex
+    newAST
+  }
+
   def findAnnotation(identifier: String)(code: String): Option[SoftAST.Annotation] =
     findAnnotation(
       identifier = identifier,
@@ -166,6 +180,9 @@ object TestParser {
         println(astToCode)
         throw throwable
     }
+
+    // Piggyback on all existing parser test-cases to test the `SoftAST.deepCody` function for different cases.
+    testDeepCopy(ast)
 
     ast
   }
