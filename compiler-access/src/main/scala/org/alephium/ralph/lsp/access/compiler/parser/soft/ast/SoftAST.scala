@@ -9,6 +9,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST.collectAST
 import org.alephium.ralph.lsp.utils.Node
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ArrayBuffer
 
 sealed trait SoftAST extends Product { self =>
 
@@ -58,6 +59,13 @@ sealed trait SoftAST extends Product { self =>
 
   def contains(anchor: SourceIndex): Boolean =
     this.index containsSoft anchor
+
+  /** Deep copies */
+  def deepCopy(newIndex: SourceIndex): this.type =
+    SoftAST.deepCopy(
+      newIndex = newIndex,
+      rootNode = this
+    )
 
 }
 
@@ -767,6 +775,88 @@ object SoftAST {
 
     case _ =>
       Seq.empty
+  }
+
+  /**
+   * Returns a copy of the given [[SoftAST]] instance with all [[SourceIndex]] values set to `newIndex`.
+   *
+   * @param newIndex The [[SourceIndex]] to assign to the given AST and all its children.
+   * @param rootNode The root AST node to start the copy from.
+   * @tparam A The type of the root node.
+   * @return A copy of [[A]] with all [[SourceIndex]] values updated to `newIndex`.
+   */
+  def deepCopy[A <: SoftAST](
+      newIndex: SourceIndex,
+      rootNode: A): A = {
+
+    def copyOneField(field: Any): Any = {
+      val copies = new ArrayBuffer[Any]()
+      runCopy(field, copies)
+      // If this assertion fails, it's due to a bug, which should be caught in test-cases.
+      // Because if the field is one, the copy result should contain only one copied field.
+      assert(copies.size == 1, s"Expected 1. Actual ${copies.size}")
+      copies.head
+    }
+
+    /**
+     * Copies/Updates [[SourceIndex]] instances in the given `field` of the [[rootNode]] and appends the result to input buffer.
+     *
+     * @param field         A field within the root node to copy.
+     * @param copiedFields The collection to which the updated field is appended.
+     */
+    def runCopy(
+        field: Any,
+        copiedFields: ArrayBuffer[Any]): Unit =
+      field match {
+        case _: SourceIndex =>
+          copiedFields addOne newIndex
+
+        case ast: SoftAST =>
+          copiedFields addOne ast.deepCopy(newIndex)
+
+        case Some(ast) =>
+          val copy = copyOneField(ast)
+          copiedFields addOne Some(copy)
+
+        case Left(ast) =>
+          val copy = copyOneField(ast)
+          copiedFields addOne Left(copy)
+
+        case Right(ast) =>
+          val copy = copyOneField(ast)
+          copiedFields addOne Right(copy)
+
+        case asts: Seq[_] =>
+          val innerCopiedFields = new ArrayBuffer[Any]()
+
+          asts foreach {
+            field =>
+              runCopy(
+                field = field,
+                copiedFields = innerCopiedFields
+              )
+          }
+
+          copiedFields addOne innerCopiedFields.toSeq
+
+        case otherField =>
+          copiedFields addOne otherField
+      }
+
+    // All the updated fields.
+    val copiedFieldsBuffer = new ArrayBuffer[Any]()
+
+    rootNode.productIterator foreach {
+      field =>
+        runCopy(
+          field = field,
+          copiedFields = copiedFieldsBuffer
+        )
+    }
+
+    val newFields   = copiedFieldsBuffer.toSeq
+    val constructor = rootNode.getClass.getConstructors.head
+    constructor.newInstance(newFields: _*).asInstanceOf[A]
   }
 
 }
