@@ -726,4 +726,54 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  /**
+   * Asserts inheritance search where virtual nodes are created.
+   */
+  "Inheritance using virtual nodes" when {
+    "Parent is missing closing block and the last function contains the same identifier" in {
+      goToDefinitionSoft()(
+        """
+          |Contract Parent {
+          |
+          |  let >>one<< = 1
+          |
+          |  def function() {
+          |    // Even though the Parent is missing the closing block
+          |    // this `one` is still out of scope for the `Child` contract.
+          |    let one = 1
+          |  }
+          |""".stripMargin,
+        """
+          |Contract Child extends Parent {
+          |   let >>one<< = on@@e.two()
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "Parent and the function both are missing closing blocks and the last function contains the same identifier" in {
+      pendingUntilFixed {
+        val _ =
+          goToDefinitionSoft()(
+            """
+              |Contract Parent {
+              |
+              |  let >>one<< = 1
+              |
+              |  def function() {
+              |    // This `one` escapes the scope of the function and is therefore
+              |    // accessible by the `Child`.
+              |    // This needs to be fixed. 
+              |    let one = 1
+              |""".stripMargin,
+            """
+              |Contract Child extends Parent {
+              |   let >>one<< = on@@e.two()
+              |}
+              |""".stripMargin
+          )
+      }
+    }
+  }
+
 }
