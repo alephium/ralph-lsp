@@ -11,11 +11,11 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "external function does not exist" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract Main(action: Action) {
           |  pub fn main() -> () {
-          |    let result = action.act@@()
+          |    let result = action.ac@@t()
           |  }
           |}
           |""".stripMargin
@@ -26,7 +26,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
   "return non-empty" when {
     "external abstract function exists" should {
       "go from template parameter" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Abstract Contract Action() {
             |  fn >>function<<() -> Bool
@@ -34,7 +34,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
             |
             |Contract Main(action: Action) {
             |  pub fn main() -> () {
-            |    let result = action.function@@()
+            |    let result = action.functio@@n()
             |  }
             |}
             |""".stripMargin
@@ -42,7 +42,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
       }
 
       "go from function parameter" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Abstract Contract Action() {
             |  fn >>function<<() -> Bool
@@ -50,7 +50,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
             |
             |Contract Main() {
             |  pub fn main(action: Action) -> () {
-            |    let result = action.function@@()
+            |    let result = action.functio@@n()
             |  }
             |}
             |""".stripMargin
@@ -60,7 +60,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
 
     "external function exists" should {
       "go from template parameter" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Action() {
             |  fn >>function<<() -> Bool {
@@ -70,7 +70,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
             |
             |Contract Main(action: Action) {
             |  pub fn main() -> () {
-            |    let result = action.function@@()
+            |    let result = action.functio@@n()
             |  }
             |}
             |""".stripMargin
@@ -78,7 +78,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
       }
 
       "go from function parameter" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract Action() {
             |  fn >>function<<() -> Bool {
@@ -88,7 +88,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
             |
             |Contract Main() {
             |  pub fn main(action: Action) -> () {
-            |    let result = action.function@@()
+            |    let result = action.functio@@n()
             |  }
             |}
             |""".stripMargin
@@ -97,7 +97,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
     }
 
     "external function exists in nested hierarchy" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
             |Interface Parent2 {
             |  fn not_used2() -> ()
@@ -119,7 +119,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
             |
             |Contract Main(action: Action0) {
             |  pub fn main() -> () {
-            |    let result = action.function@@()
+            |    let result = action.functio@@n()
             |  }
             |}
             |""".stripMargin

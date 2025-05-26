@@ -11,6 +11,7 @@ import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 
@@ -84,17 +85,25 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     parent match {
       case Some(node @ Node(_: SoftAST.ReferenceCall, _)) =>
         node.parent match {
-          case Some(Node(_: SoftAST.DotCall, _)) =>
-            // TODO - This needs type information from Strict-AST.
-            Iterator.empty
+          case Some(node @ Node(dotCall: SoftAST.DotCall, _)) =>
+            searchDotCall(
+              dotCallNode = node.upcast(dotCall),
+              identNode = identNode,
+              sourceCode = sourceCode,
+              workspace = workspace
+            )
 
           case _ =>
             runFullSearch()
         }
 
-      case Some(Node(_: SoftAST.DotCall, _)) =>
-        // TODO - This needs type information from Strict-AST.
-        Iterator.empty
+      case Some(node @ Node(dotCall: SoftAST.DotCall, _)) =>
+        searchDotCall(
+          dotCallNode = node.upcast(dotCall),
+          identNode = identNode,
+          sourceCode = sourceCode,
+          workspace = workspace
+        )
 
       case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
         node.parent match {
@@ -481,9 +490,9 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     val virtualNode =
-      buildVirtualNode(
+      buildVirtualNodeAtSourceEnd(
         target = target,
-        sourceIndex = point(inherited.part.index.to)
+        source = inherited
       )
 
     virtualNode match {
@@ -504,20 +513,35 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   }
 
   /**
-   * Note: This function is used for searching within inheritance.
-   * For details see the documentation of the function [[searchInheritance]].
+   * Builds a virtual AST node by duplicating the given [[SoftAST.Identifier]] tree and
+   * updating its [[SourceIndex]] such that its placed the end of the source.
    *
-   * Builds a virtual AST node for the given [[SoftAST.Identifier]] tree,
-   * assigning the specified [[SourceIndex]] to a maximum of two parents
-   * with the same [[SourceIndex]].
+   * @param target The identifier node to duplicate.
+   * @param source The source location - the node will be placed at its end.
+   * @return A new virtual node at the end of the source, or [[None]] if creating fails.
+   */
+  private def buildVirtualNodeAtSourceEnd(
+      target: Node[SoftAST.Identifier, SoftAST],
+      source: SourceLocation.CodeSoft): Option[Node[SoftAST.Identifier, SoftAST]] =
+    buildVirtualNode(
+      target = target,
+      sourceIndex = point(source.part.index.to)
+    )
+
+  /**
+   * Builds a virtual AST node by duplicating the given [[SoftAST.Identifier]] tree and
+   * assigning it the given [[SourceIndex]]. A maximum of two parent nodes are duplicated.
    *
    * A virtual node is created only for the following syntax:
-   * - [[SoftAST.Identifier]] — e.g. `Transfer`
-   * - [[SoftAST.ReferenceCall]] — e.g. `Transfer()`
-   * - [[SoftAST.MethodCall]] — e.g. `Transfer.function`
-   * - [[SoftAST.Emit]] — e.g. `emit <<any of the above three cases>>`
+   *  - [[SoftAST.Identifier]] — e.g. `Transfer`
+   *  - [[SoftAST.ReferenceCall]] — e.g. `Transfer()`
+   *  - [[SoftAST.MethodCall]] — e.g. `Transfer.function`
+   *  - [[SoftAST.Emit]] — e.g. `emit <<any of the above three cases>>`
    *
-   * @param target      The identifier tree to create the virtual node for.
+   * @note This function is used for searching within inheritance.
+   *       For details see the documentation of the function [[searchInheritance]].
+   *
+   * @param target      The identifier node to duplicate.
    * @param sourceIndex The source position to assign to each node.
    * @return The created virtual expression.
    */
@@ -887,6 +911,132 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           detectCallSyntax = detectCallSyntax
         )
     }
+
+  /**
+   * Expands and searches the given [[SoftAST.DotCall]].
+   *
+   * @param dotCallNode The node representing the [[SoftAST.DotCall]] being searched.
+   * @param identNode   The node representing the identifier being searched (i.e. the clicked/selected node).
+   * @param sourceCode  The block-part and its source code state where this search is executed.
+   * @param workspace   The workspace state where the source-code is located.
+   * @return An iterator over definition search results.
+   */
+  private def searchDotCall(
+      dotCallNode: Node[SoftAST.DotCall, SoftAST],
+      identNode: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    dotCallNode.parent match {
+      case Some(Node(method: SoftAST.MethodCall, _)) =>
+        // Dot calls are always children of MethodCall
+        searchTypeCall(
+          typeProperty = identNode,
+          theType = method.leftExpression,
+          sourceCode = sourceCode,
+          workspace = workspace
+        )
+
+      case Some(Node(invalid, _)) =>
+        // This call will never occur because DotCall is contained within MethodCall - see the AST.
+        // format: off
+        logger.error(s"Invalid ${classOf[SoftAST.DotCall].getSimpleName} hierarchy. Expected parent: ${classOf[SoftAST.MethodCall].getSimpleName}. Actual: ${invalid.getClass.getName}")
+        // format: on
+        Iterator.empty
+
+      case None =>
+        // This call will never occur because DotCall is contained within MethodCall - see the AST.
+        logger.error(s"Invalid ${classOf[SoftAST.DotCall].getSimpleName} hierarchy. Expected parent: ${classOf[SoftAST.MethodCall].getSimpleName}. Actual: None")
+        Iterator.empty
+    }
+
+  /**
+   * Searches for a property within the given type.
+   *
+   * For example, in the following code:
+   *  - `myContract` is the type.
+   *  - `function` is a property within that type.
+   * {{{
+   *   myContract.function()
+   *   myContract.function
+   * }}}
+   *
+   * @param theType      The type expression to search within.
+   * @param typeProperty The identifier node representing the property, this is the selected or clicked node.
+   * @param sourceCode   The block-part and its source code state where this search is executed.
+   * @param workspace    The workspace state where the source-code is located.
+   * @return An iterator matching properties found in the given type.
+   */
+  private def searchTypeCall(
+      theType: SoftAST.ExpressionAST,
+      typeProperty: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    // Find all the type definitions.
+    val typeDefs =
+      CodeProvider
+        .goToTypeDef
+        .search(
+          linePosition = theType.index.toLineRange(sourceCode.parsed.code).from,
+          fileURI = sourceCode.parsed.fileURI,
+          workspace = workspace,
+          searchSettings = ()
+        )
+
+    typeDefs match {
+      case Some(Right(typeDefs)) =>
+        // For each type-definition, search for the property `typeProperty` within it.
+        val settings =
+          GoToDefSetting(
+            includeAbstractFuncDef = false,
+            includeInheritance = true
+          )
+
+        // TODO: Execute in parallel
+        typeDefs flatMap {
+          typDef =>
+            // Type-defs come from ralph-compiler's AST, which is of type `CodeStrict`, convert it to `CodeSoft`.
+            typDef.source.toCodeSoft() match {
+              case Some(softTypeDef) =>
+                // create a virtual node at the end of the tree.
+                val virtualNode =
+                  buildVirtualNodeAtSourceEnd(
+                    target = typeProperty,
+                    source = softTypeDef
+                  )
+
+                virtualNode match {
+                  case Some(virtualNode) =>
+                    // Search within the type-definition, with the virtual node as the target.
+                    search(
+                      identNode = virtualNode,
+                      sourceCode = softTypeDef,
+                      workspace = workspace,
+                      settings = settings,
+                      detectCallSyntax = true
+                    )
+
+                  case None =>
+                    logger.error(s"Error: Virtual `Identifier` not found. TypeId: ${typDef.ast}. FileURI ${typDef.source.parsed.fileURI}")
+                    Iterator.empty
+                }
+
+              case None =>
+                logger.error(s"Type-definition could not be converted to SoftAST. TypeId: ${typDef.ast}. FileURI ${typDef.source.parsed.fileURI}")
+                Iterator.empty
+            }
+        }
+
+      case Some(Left(error)) =>
+        logger.error(s"Error searching type-definition for '${typeProperty.data.code.text}'. Reason: ${error.message}. FileURI: ${sourceCode.parsed.fileURI}")
+        Iterator.empty
+
+      case None =>
+        logger.info(s"No type-definitions found for '${typeProperty.data.code.text}'. FileURI: ${sourceCode.parsed.fileURI}")
+        Iterator.empty
+    }
+  }
 
   /**
    * Given a collection of expressions, expands each expression and searches within it for all possible definitions.
