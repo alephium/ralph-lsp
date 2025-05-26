@@ -7,6 +7,7 @@ import org.alephium.ralph.{Ast, SourceIndex}
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.{LinePosition, LineRange}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
+import org.alephium.ralph.lsp.access.compiler.message.error.FastParseError
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
@@ -226,6 +227,33 @@ object SourceLocation extends StrictImplicitLogging {
       tree: Tree.Source,
       parsed: SourceCodeState.Parsed)
     extends Code
+       with StrictImplicitLogging {
+
+    /** Converts this [[CodeStrict]] instance to [[CodeSoft]] by finding the same tree at that index. */
+    def toCodeSoft()(implicit logger: ClientLogger): Option[CodeSoft] =
+      toSoftAST() match {
+        case Right(part) =>
+          part map {
+            part =>
+              CodeSoft(
+                part = part,
+                parsed = parsed
+              )
+          }
+
+        case Left(error) =>
+          logger.error(error.error.toFormatter(parsed.code).format())
+          None
+      }
+
+    /** Converts this [[Tree.Source]] instance to [[SoftAST.BlockPartAST]] by finding the same tree at that index. */
+    private def toSoftAST(): Either[FastParseError, Option[SoftAST.BlockPartAST]] =
+      parsed
+        .astSoft
+        .fetch()
+        .map(_.parts.find(_.index containsSoft tree.index))
+
+  }
 
   case class CodeSoft(
       part: SoftAST.BlockPartAST,
