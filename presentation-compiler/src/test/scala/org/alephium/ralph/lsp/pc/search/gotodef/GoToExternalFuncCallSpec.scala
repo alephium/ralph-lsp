@@ -21,78 +21,166 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "external value does not exist" in {
+      goToDefinition()(
+        """
+          |Contract Main(action: Action) {
+          |  pub fn main() -> () {
+          |    let result = action.ac@@t
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
   "return non-empty" when {
     "external abstract function exists" should {
-      "go from template parameter" in {
-        goToDefinition()(
-          """
-            |Abstract Contract Action() {
-            |  fn >>function<<() -> Bool
-            |}
-            |
-            |Contract Main(action: Action) {
-            |  pub fn main() -> () {
-            |    let result = action.functio@@n()
-            |  }
-            |}
-            |""".stripMargin
-        )
+      "go from template parameter" when {
+        "function call has closing paren" in {
+          goToDefinition()(
+            """
+              |Abstract Contract Action() {
+              |  fn >>function<<() -> Bool
+              |}
+              |
+              |Contract Main(action: Action) {
+              |  pub fn main() -> () {
+              |    let result = action.functio@@n()
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "function does not have closing parens" in {
+          goToDefinitionSoft()(
+            """
+              |Abstract Contract Action() {
+              |  fn >>function<<() -> Bool
+              |}
+              |
+              |Contract Main(action: Action) {
+              |  pub fn main() -> () {
+              |    let result = action.functio@@n
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
       }
 
-      "go from function parameter" in {
-        goToDefinition()(
-          """
-            |Abstract Contract Action() {
-            |  fn >>function<<() -> Bool
-            |}
-            |
-            |Contract Main() {
-            |  pub fn main(action: Action) -> () {
-            |    let result = action.functio@@n()
-            |  }
-            |}
-            |""".stripMargin
-        )
+      "go from function parameter" when {
+        "function call has closing parens" in {
+          goToDefinition()(
+            """
+              |Abstract Contract Action() {
+              |  fn >>function<<() -> Bool
+              |}
+              |
+              |Contract Main() {
+              |  pub fn main(action: Action) -> () {
+              |    let result = action.functio@@n()
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "function call does not have closing parens" in {
+          goToDefinitionSoft()(
+            """
+              |Abstract Contract Action() {
+              |  fn >>function<<() -> Bool
+              |}
+              |
+              |Contract Main() {
+              |  pub fn main(action: Action) -> () {
+              |    let result = action.functio@@n
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
       }
     }
 
     "external function exists" should {
-      "go from template parameter" in {
-        goToDefinition()(
-          """
-            |Contract Action() {
-            |  fn >>function<<() -> Bool {
-            |    return true
-            |  }
-            |}
-            |
-            |Contract Main(action: Action) {
-            |  pub fn main() -> () {
-            |    let result = action.functio@@n()
-            |  }
-            |}
-            |""".stripMargin
-        )
+      "go from template parameter" when {
+        "function call has closing parens" in {
+          goToDefinition()(
+            """
+              |Contract Action() {
+              |  fn >>function<<() -> Bool {
+              |    return true
+              |  }
+              |}
+              |
+              |Contract Main(action: Action) {
+              |  pub fn main() -> () {
+              |    let result = action.functio@@n()
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "function call does not have closing parens" in {
+          goToDefinitionSoft()(
+            """
+              |Contract Action() {
+              |  fn >>function<<() -> Bool {
+              |    return true
+              |  }
+              |}
+              |
+              |Contract Main(action: Action) {
+              |  pub fn main() -> () {
+              |    let result = action.functio@@n
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
       }
 
-      "go from function parameter" in {
-        goToDefinition()(
-          """
-            |Contract Action() {
-            |  fn >>function<<() -> Bool {
-            |    return true
-            |  }
-            |}
-            |
-            |Contract Main() {
-            |  pub fn main(action: Action) -> () {
-            |    let result = action.functio@@n()
-            |  }
-            |}
-            |""".stripMargin
-        )
+      "go from function parameter" when {
+        "function call has closing parens" in {
+          goToDefinition()(
+            """
+              |Contract Action() {
+              |  fn >>function<<() -> Bool {
+              |    return true
+              |  }
+              |}
+              |
+              |Contract Main() {
+              |  pub fn main(action: Action) -> () {
+              |    let result = action.functio@@n()
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "function call does not have closing parens" in {
+          goToDefinitionSoft()(
+            """
+              |Contract Action() {
+              |  fn >>function<<() -> Bool {
+              |    return true
+              |  }
+              |}
+              |
+              |Contract Main() {
+              |  pub fn main(action: Action) -> () {
+              |    let result = action.functio@@n
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
       }
     }
 
