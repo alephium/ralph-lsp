@@ -32,6 +32,32 @@ import java.net.URI
 trait CodeProvider[S, I, O] extends Product {
 
   /**
+   * Searches the source-code of a workspace at the given [[LinePosition]], including workspace dependencies.
+   *
+   * @note Use this function for all public search calls so that searches also include dependencies.
+   *       [[searchLocal]] will be made protected in the future to restrict it to local-only access.
+   *
+   * @param linePosition   Line and character position in a document (zero-based).
+   * @param fileURI        The text document's uri.
+   * @param workspace      Current workspace state.
+   * @param searchSettings Provider-specific settings.
+   */
+  final def search(
+      linePosition: LinePosition,
+      fileURI: URI,
+      workspace: WorkspaceState.IsSourceAware,
+      searchSettings: I
+    )(implicit provider: CodeProvider[S, I, O],
+      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
+    search(
+      line = linePosition.line,
+      character = linePosition.character,
+      fileURI = fileURI,
+      workspace = workspace,
+      searchSettings = searchSettings
+    )
+
+  /**
    * Searches the source-code of a workspace at the given position, including workspace dependencies.
    *
    * @note Use this function for all public search calls so that searches also include dependencies.
