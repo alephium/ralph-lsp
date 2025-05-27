@@ -36,7 +36,7 @@ case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed,
             Iterator.empty
 
           case tree: Tree.Source =>
-            tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match {
+            tree.closest(cursorIndex) match {
               case Some(node @ Node(ident: Ast.Ident, _)) =>
                 GoToTypeDefIdent
                   .goToNamedVar(
