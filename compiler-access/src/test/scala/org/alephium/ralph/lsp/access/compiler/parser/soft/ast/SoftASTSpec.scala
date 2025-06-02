@@ -5,8 +5,11 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft.ast
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
+import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.OptionValues._
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 
 class SoftASTSpec extends AnyWordSpec with Matchers {
 
@@ -50,6 +53,49 @@ class SoftASTSpec extends AnyWordSpec with Matchers {
         )
 
       TestParser.testDeepCopy(randomCode)
+    }
+  }
+
+  "findAtIndex" should {
+    "find the node with exact SourceIndex" in {
+      val (index, code) =
+        indexCodeOf {
+          """
+            |Contract AnotherContract() {
+            |  
+            |  fn function1() -> {
+            |     while(true) {
+            |      let copy = object.variable.function().cache.function()
+            |    }
+            |  }
+            |
+            |  fn function() -> {
+            |    while(true) { }
+            |
+            |     {
+            |       for (a; b; c) {
+            |          let copy = object.variable.function().>>cache<<.function()
+            |       }
+            |     }
+            |  }
+            |}
+            |""".stripMargin
+        }
+
+      val softAST =
+        parseSoft(code)
+
+      val actual =
+        softAST.toNode.findAtIndex(index).value.data
+
+      val expected =
+        Identifier(
+          index = index,
+          text = "cache"
+        )
+
+      actual shouldBe expected
+
     }
   }
 

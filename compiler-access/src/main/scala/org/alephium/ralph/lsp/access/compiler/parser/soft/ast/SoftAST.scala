@@ -109,6 +109,24 @@ object SoftAST {
           false
       }
 
+    /**
+     * Finds a node that exactly matches the given [[SourceIndex]],
+     * starting the search from this node, traversing downwards.
+     *
+     * It filters out all subtrees that do not contain the target [[SourceIndex]],
+     * avoiding unnecessary visits.
+     *
+     * @note [[SoftAST]] does not set or use [[SourceIndex.fileURI]],
+     *       therefore, this field is expected to be [[None]] for all cases.
+     *
+     * @param index The [[SourceIndex]] to find.
+     * @return The matched node with the [[SourceIndex]].
+     */
+    final def findAtIndex(index: SourceIndex): Option[Node[SoftAST, SoftAST]] =
+      node
+        .filterDown(_.data.index containsSoft index)
+        .find(_.data.index == index)
+
   }
 
   implicit class NodeIdentifierExtensions(val node: Node[SoftAST.Identifier, SoftAST]) extends AnyVal {
