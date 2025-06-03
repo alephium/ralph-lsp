@@ -83,25 +83,20 @@ class EmitParserSpec extends AnyWordSpec with Matchers {
             index = indexOf("emit >>contract.createEvent()<<"),
             leftExpression = Identifier("emit >>contract<<.createEvent()"),
             preDotSpace = None,
-            dotCalls = Seq(
-              SoftAST.DotCall(
-                index = indexOf("emit contract>>.createEvent()<<"),
-                dot = Dot("emit contract>>.<<createEvent()"),
-                postDotSpace = None,
-                rightExpression = SoftAST.ReferenceCall(
-                  index = indexOf("emit contract.>>createEvent()<<"),
-                  reference = Identifier("emit contract.>>createEvent<<()"),
-                  preArgumentsSpace = None,
-                  arguments = SoftAST.Group(
-                    index = indexOf("emit contract.createEvent>>()<<"),
-                    openToken = Some(OpenParen("emit contract.createEvent>>(<<)")),
-                    preHeadExpressionSpace = None,
-                    headExpression = None,
-                    postHeadExpressionSpace = None,
-                    tailExpressions = Seq.empty,
-                    closeToken = Some(CloseParen("emit contract.createEvent(>>)<<"))
-                  )
-                )
+            dot = Dot("emit contract>>.<<createEvent()"),
+            postDotSpace = None,
+            rightExpression = SoftAST.ReferenceCall(
+              index = indexOf("emit contract.>>createEvent()<<"),
+              reference = Identifier("emit contract.>>createEvent<<()"),
+              preArgumentsSpace = None,
+              arguments = SoftAST.Group(
+                index = indexOf("emit contract.createEvent>>()<<"),
+                openToken = Some(OpenParen("emit contract.createEvent>>(<<)")),
+                preHeadExpressionSpace = None,
+                headExpression = None,
+                postHeadExpressionSpace = None,
+                tailExpressions = Seq.empty,
+                closeToken = Some(CloseParen("emit contract.createEvent(>>)<<"))
               )
             )
           )

@@ -168,11 +168,11 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
     "call is a value call" in {
       goToDefinitionSoft() {
         """
-          |Contract >>variable<<() {}
+          |Contract variable() {}
           |event variable(a: Bool)
           |
           |Contract Test(>>variable<<: Var) {
-          |  Contract >>variable<<() {}
+          |  Contract variable() {}
           |  event variable(a: Bool)
           |
           |  fn variable() -> () {}
@@ -212,11 +212,11 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
     "call is method call" in {
       goToDefinitionSoft() {
         """
-          |Contract >>variable<<() {}
+          |Contract variable() {}
           |event variable(a: Bool)
           |
           |Contract Test(>>variable<<: Var) {
-          |  Contract >>variable<<() {}
+          |  Contract variable() {}
           |  event variable(a: Bool)
           |
           |  fn variable() -> () {}

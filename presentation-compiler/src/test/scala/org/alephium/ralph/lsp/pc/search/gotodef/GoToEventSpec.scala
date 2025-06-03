@@ -238,13 +238,13 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
             |
             |  event TransferNotUsed(to: Address, amount: U256)
             |
-            |  event Transfer(to: Address, amount: U256)
+            |  event >>Transfer<<(to: Address, amount: U256)
             |
             |}
             |
             |Contract >>Transfer<<() extends Parent() {
             |
-            |  event Transfer(to: Address, amount: U256)
+            |  event >>Transfer<<(to: Address, amount: U256)
             |
             |  pub fn function() -> () {
             |    emit (Transfe@@r.function(), b, c)
@@ -328,11 +328,11 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
             "event is defined locally" in {
               goToDefinitionSoft()(
                 """
-                  |Contract transfer() {
+                  |Contract >>transfer<<() {
                   |
                   |  event >>transfer<<(to: Address)
                   |
-                  |  pub fn transfer() -> () { }
+                  |  pub fn >>transfer<<() -> () { }
                   |
                   |  pub fn function() -> () {
                   |    emit transf@@er.transfer().transfer
@@ -350,9 +350,9 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
                     | event >>transfer<<(to: Address)
                     |}
                     |
-                    |Contract transfer() extends parent {
+                    |Contract >>transfer<<() extends parent {
                     |
-                    |  pub fn transfer() -> () { }
+                    |  pub fn >>transfer<<() -> () { }
                     |
                     |  pub fn function() -> () {
                     |    emit transf@@er.transfer().transfer
@@ -369,9 +369,9 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
                     | event >>transfer<<
                     |}
                     |
-                    |Contract transfer() extends parent {
+                    |Contract >>transfer<<() extends parent {
                     |
-                    |  pub fn transfer() -> () { }
+                    |  pub fn >>transfer<<() -> () { }
                     |
                     |  pub fn function() -> () {
                     |    emit transf@@er.transfer().transfer
@@ -387,9 +387,9 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
                 """
                   |event >>transfer<<(to: Address)
                   |
-                  |Contract transfer() extends parent {
+                  |Contract >>transfer<<() extends parent {
                   |
-                  |  pub fn transfer() -> () { }
+                  |  pub fn >>transfer<<() -> () { }
                   |
                   |  pub fn function() -> () {
                   |    emit transf@@er.transfer().transfer

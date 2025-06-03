@@ -5,29 +5,60 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
+import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST.{ExpressionAST, Space, TokenDocumented}
 
 private object MethodCallParser {
+
+  /** This type is used internally for sequentially parsing dot calls. */
+  private case class DotCall(
+      index: SourceIndex,
+      dot: TokenDocumented[Token.Dot.type],
+      postDotSpace: Option[Space],
+      rightExpression: ExpressionAST)
 
   def parseOrFail[Unknown: P]: P[SoftAST.MethodCall] =
     P {
       Index ~
         ExpressionParser.parseSubset(leftExpression) ~
         SpaceParser.parseOrFail.? ~
-        dotCall.rep(1) ~
-        Index
-    } map {
-      case (from, leftExpression, preDotSpace, dotCalls, to) =>
-        SoftAST.MethodCall(
-          index = range(from, to),
-          leftExpression = leftExpression,
-          preDotSpace = preDotSpace,
-          dotCalls = dotCalls
-        )
+        dotCall.rep(1)
+    } flatMap {
+      case (from, leftExpression, preDotSpace, headDotCall :: tailDotCalls) =>
+        // Dot calls are sequentially parsed, convert them to `MethodCall` in the order of their execution.
+        val headMethodCall =
+          SoftAST.MethodCall(
+            index = range(from, headDotCall.index.to),
+            leftExpression = leftExpression,
+            preDotSpace = preDotSpace,
+            dot = headDotCall.dot,
+            postDotSpace = headDotCall.postDotSpace,
+            rightExpression = headDotCall.rightExpression
+          )
+
+        val result =
+          tailDotCalls.foldLeft(headMethodCall) {
+            case (left, dot) =>
+              SoftAST.MethodCall(
+                index = range(left.index.from, dot.index.to),
+                leftExpression = left,
+                preDotSpace = preDotSpace,
+                dot = dot.dot,
+                postDotSpace = dot.postDotSpace,
+                rightExpression = dot.rightExpression
+              )
+          }
+
+        Pass(result)
+
+      case (_, _, _, dotCalls) =>
+        // This will never occur because `dotCall.rep(1)` disallows it.
+        Fail(s"Expected at least one dot call. Actual: ${dotCalls.size}")
     }
 
-  private def dotCall[Unknown: P]: P[SoftAST.DotCall] =
+  private def dotCall[Unknown: P]: P[DotCall] =
     P {
       Index ~
         TokenParser.parseOrFail(Token.Dot) ~
@@ -36,7 +67,7 @@ private object MethodCallParser {
         Index
     } map {
       case (from, dot, postDotSpace, rightExpression, to) =>
-        SoftAST.DotCall(
+        DotCall(
           index = range(from, to),
           dot = dot,
           postDotSpace = postDotSpace,

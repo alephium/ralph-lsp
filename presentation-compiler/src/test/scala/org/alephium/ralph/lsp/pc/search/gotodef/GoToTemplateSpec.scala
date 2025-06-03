@@ -216,7 +216,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
       "variable exists, but the call is a method call" in {
         goToDefinitionSoft() {
           """
-            |Contract >>variable<<() { }
+            |Contract variable() { }
             |
             |Contract Test(instance: variable) {
             |  let >>variable<< = instance
