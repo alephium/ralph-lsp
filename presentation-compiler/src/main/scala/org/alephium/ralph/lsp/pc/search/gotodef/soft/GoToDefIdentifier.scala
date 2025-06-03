@@ -85,24 +85,28 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     parent match {
       case Some(node @ Node(_: SoftAST.ReferenceCall, _)) =>
         node.parent match {
-          case Some(node @ Node(dotCall: SoftAST.DotCall, _)) =>
-            searchDotCall(
-              dotCallNode = node.upcast(dotCall),
+          case Some(node @ Node(methodCall: SoftAST.MethodCall, _)) =>
+            searchMethodCall(
+              methodCallNode = node.upcast(methodCall),
               identNode = identNode,
               sourceCode = sourceCode,
-              workspace = workspace
+              workspace = workspace,
+              settings = settings,
+              detectCallSyntax = true
             )
 
           case _ =>
             runFullSearch()
         }
 
-      case Some(node @ Node(dotCall: SoftAST.DotCall, _)) =>
-        searchDotCall(
-          dotCallNode = node.upcast(dotCall),
+      case Some(node @ Node(methodCall: SoftAST.MethodCall, _)) =>
+        searchMethodCall(
+          methodCallNode = node.upcast(methodCall),
           identNode = identNode,
           sourceCode = sourceCode,
-          workspace = workspace
+          workspace = workspace,
+          settings = settings,
+          detectCallSyntax = true
         )
 
       case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
@@ -564,12 +568,13 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
         case None => // `Emit` does not exist.
           target.parent match {
-            case Some(Node(exp @ (_: SoftAST.ReferenceCall), _)) =>
+            case Some(Node(exp @ (_: SoftAST.ReferenceCall | _: SoftAST.MethodCall), _)) =>
+              // MethodCall - Allow enums through `MyEnu@@m.One`. TODO: Need more user/behaviour testing.
               // If the identifier is wrapped around a reference call, deep-copy the reference call.
               exp.deepCopy(sourceIndex)
 
             case _ =>
-              // Otherwise deep copy the identifier.
+              // Otherwise, deep copy the identifier.
               target.data.deepCopy(sourceIndex)
           }
       }
@@ -676,7 +681,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
     // Check if the name matches the identifier.
     val nameMatches =
-      if (!detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()))
+      if (!detectCallSyntax || (!target.isReferenceCall() && target.isMethodCall() && !target.isWithinEmit()))
         searchIdentifier(
           identifier = enumAST.identifier,
           target = target,
@@ -769,7 +774,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     // Check if the name matches the identifier.
-    if (!detectCallSyntax || ((target.isReferenceCall() || target.isMethodCall()) && !target.isWithinEmit()))
+    if (!detectCallSyntax || (target.isReferenceCall() && !target.isWithinEmit()))
       searchIdentifier(
         identifier = templateIdentifier.identifier,
         target = target,
@@ -791,7 +796,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    if (!detectCallSyntax || target.isWithinEmit())
+    if (!detectCallSyntax || (target.isWithinEmit() && !target.isMethodCall()))
       searchIdentifier(
         identifier = event.identifier,
         target = target,
@@ -913,41 +918,49 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     }
 
   /**
-   * Expands and searches the given [[SoftAST.DotCall]].
+   * Expands and searches the given [[SoftAST.MethodCall]].
    *
-   * @param dotCallNode The node representing the [[SoftAST.DotCall]] being searched.
-   * @param identNode   The node representing the identifier being searched (i.e. the clicked/selected node).
-   * @param sourceCode  The block-part and its source code state where this search is executed.
-   * @param workspace   The workspace state where the source-code is located.
+   * @param methodCallNode The node representing the [[SoftAST.MethodCall]] being searched.
+   * @param identNode      The node representing the identifier being searched (i.e. the clicked/selected node).
+   * @param sourceCode     The block-part and its source code state where this search is executed.
+   * @param workspace      The workspace state where the source-code is located.
    * @return An iterator over definition search results.
    */
-  private def searchDotCall(
-      dotCallNode: Node[SoftAST.DotCall, SoftAST],
+  private def searchMethodCall(
+      methodCallNode: Node[SoftAST.MethodCall, SoftAST],
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      workspace: WorkspaceState.IsSourceAware
+      workspace: WorkspaceState.IsSourceAware,
+      settings: GoToDefSetting,
+      detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    dotCallNode.parent match {
-      case Some(Node(method: SoftAST.MethodCall, _)) =>
-        // Dot calls are always children of MethodCall
+    methodCallNode.data.leftExpression match {
+      case _: SoftAST.ReferenceCall | _: SoftAST.Identifier if methodCallNode.data.leftExpression contains identNode =>
+        /*
+         * A method-call's definitions can be searched without searching its type-information,
+         * if the *left* expression of the method-call is being searched, and it's either a reference-call or an identifier.
+         *
+         * {{{
+         *   contra@@ct().function()   // reference-call
+         *   contra@@ct.function()     // identifier
+         * }}}
+         */
+        search(
+          identNode = identNode,
+          sourceCode = sourceCode,
+          workspace = workspace,
+          settings = settings,
+          detectCallSyntax = detectCallSyntax
+        )
+
+      case _ =>
+        // Otherwise, type information is needed.
         searchTypeCall(
           typeProperty = identNode,
-          theType = method.leftExpression,
+          theType = methodCallNode.data.leftExpression,
           sourceCode = sourceCode,
           workspace = workspace
         )
-
-      case Some(Node(invalid, _)) =>
-        // This call will never occur because DotCall is contained within MethodCall - see the AST.
-        // format: off
-        logger.error(s"Invalid ${classOf[SoftAST.DotCall].getSimpleName} hierarchy. Expected parent: ${classOf[SoftAST.MethodCall].getSimpleName}. Actual: ${invalid.getClass.getName}")
-        // format: on
-        Iterator.empty
-
-      case None =>
-        // This call will never occur because DotCall is contained within MethodCall - see the AST.
-        logger.error(s"Invalid ${classOf[SoftAST.DotCall].getSimpleName} hierarchy. Expected parent: ${classOf[SoftAST.MethodCall].getSimpleName}. Actual: None")
-        Iterator.empty
     }
 
   /**

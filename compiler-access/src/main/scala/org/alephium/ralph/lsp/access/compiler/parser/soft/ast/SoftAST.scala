@@ -546,15 +546,10 @@ object SoftAST {
       index: SourceIndex,
       leftExpression: ExpressionAST,
       preDotSpace: Option[Space],
-      dotCalls: Seq[DotCall])
-    extends ExpressionAST
-
-  case class DotCall(
-      index: SourceIndex,
       dot: TokenDocumented[Token.Dot.type],
       postDotSpace: Option[Space],
       rightExpression: ExpressionAST)
-    extends SoftAST
+    extends ExpressionAST
 
   case class Emit(
       index: SourceIndex,

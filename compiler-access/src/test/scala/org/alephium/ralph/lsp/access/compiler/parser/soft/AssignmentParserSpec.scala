@@ -110,8 +110,10 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
         // left expression is a method call
         val methodCall = assignment.expressionLeft.asInstanceOf[SoftAST.MethodCall]
         methodCall.index shouldBe indexOf(">>obj.func(param).counter<< = 0")
-        val objectName = methodCall.leftExpression.asInstanceOf[SoftAST.Identifier]
-        objectName.code.text shouldBe "obj"
+        val leftMethodCall = methodCall.leftExpression.asInstanceOf[SoftAST.MethodCall]
+        leftMethodCall.toCode() shouldBe "obj.func(param)"
+        val rightIdent = methodCall.rightExpression.asInstanceOf[SoftAST.Identifier]
+        rightIdent.code.text shouldBe "counter"
 
         // right expression is a number
         val number = assignment.expressionRight.asInstanceOf[SoftAST.Number]
@@ -129,8 +131,6 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
         // left expression is a method call
         val left = assignment.expressionLeft.asInstanceOf[SoftAST.MethodCall]
         left.index shouldBe indexOf(">>obj.func(param).counter<< = cache.getNumber()")
-        val objectName = left.leftExpression.asInstanceOf[SoftAST.Identifier]
-        objectName.code.text shouldBe "obj"
 
         // right expression is also a method call
         val right = assignment.expressionRight.asInstanceOf[SoftAST.MethodCall]
@@ -148,8 +148,6 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
         // left expression is a method call
         val methodCall = assignment.expressionLeft.asInstanceOf[SoftAST.MethodCall]
         methodCall.index shouldBe indexOf(">>obj.func(param).counter<< = 0")
-        val objectName = methodCall.leftExpression.asInstanceOf[SoftAST.Identifier]
-        objectName.code.text shouldBe "obj"
 
         // right expression is a number
         assignment.expressionRight shouldBe

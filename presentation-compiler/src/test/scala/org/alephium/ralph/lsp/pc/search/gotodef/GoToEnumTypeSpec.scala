@@ -220,16 +220,82 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "enum is within function parameter" in {
+      goToDefinitionSoft()(
+        """
+          |enum >>EnumType<< {
+          |  Field0 = 0
+          |  Field1 = 1
+          |}
+          |
+          |Abstract Contract Parent2() {
+          |
+          |  enum EnumTypeNotUsed {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |
+          |  enum >>EnumType<< {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |}
+          |
+          |enum >>EnumType<< {
+          |  Field0 = 0
+          |  Field1 = 1
+          |}
+          |
+          |Abstract Contract Parent1() extends Parent2() {
+          |
+          |  enum >>EnumType<< {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |
+          |  enum EnumTypeNotUsed {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |}
+          |
+          |enum >>EnumType<< {
+          |  Field0 = 0
+          |  Field1 = 1
+          |}
+          |
+          |Contract MyContract() extends Parent1() {
+          |
+          |  enum >>EnumType<< {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |
+          |  enum >>EnumType<< {
+          |    Field0 = 0
+          |    Field1 = 1
+          |  }
+          |
+          |  pub fn function() -> () {
+          |    let go_to_enum = object.function(param1, Enu@@mType.Field0, param2)
+          |  }
+          |}
+          |
+          |enum >>EnumType<< {
+          |  Field0 = 0
+          |  Field1 = 1
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
   "duplicates identifier" when {
     "enum is called" in {
-      // FIXME: Currently the `Contract` and the `enum` both are returned.
-      //        Only the `Enum` should be returned.
-      //        This will be resolved by type-inference code-provider, which is not yet implemented.
       goToDefinitionSoft()(
         """
-          |Contract >>Enum<< {
+          |Contract Enum {
           |
           |  enum >>Enum<< {}
           |  const Enum = 1
@@ -249,7 +315,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
           """
             |Contract Enum {
             |
-            |  enum >>Enum<< {}
+            |  enum Enum {}
             |  const >>Enum<< = 1
             |
             |  fn main() -> () {

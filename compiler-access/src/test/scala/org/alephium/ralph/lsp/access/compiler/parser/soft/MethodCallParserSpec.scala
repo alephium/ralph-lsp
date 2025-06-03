@@ -39,80 +39,113 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
   "pass" when {
     "dot is provided" when {
       "no expressions" in {
-        val dot = parseMethodCall(".")
+        val method = parseMethodCall(".")
 
-        dot shouldBe
+        method shouldBe
           SoftAST.MethodCall(
             index = indexOf(">>.<<"),
             leftExpression = ExpressionExpected(">><<."),
             preDotSpace = None,
-            dotCalls = Seq(
-              SoftAST.DotCall(
-                index = indexOf(">>.<<"),
-                dot = Dot(">>.<<"),
-                postDotSpace = None,
-                rightExpression = ExpressionExpected(".>><<")
-              )
-            )
+            dot = Dot(">>.<<"),
+            postDotSpace = None,
+            rightExpression = ExpressionExpected(".>><<")
           )
       }
 
       "no left expression" in {
-        val dot = parseMethodCall(".right")
+        val method = parseMethodCall(".right")
 
-        dot shouldBe
+        method shouldBe
           SoftAST.MethodCall(
             index = indexOf(">>.right<<"),
             leftExpression = ExpressionExpected(">><<.right"),
             preDotSpace = None,
-            dotCalls = Seq(
-              SoftAST.DotCall(
-                index = indexOf(">>.right<<"),
-                dot = Dot(">>.<<right"),
-                postDotSpace = None,
-                rightExpression = Identifier(".>>right<<")
-              )
-            )
+            dot = Dot(">>.<<right"),
+            postDotSpace = None,
+            rightExpression = Identifier(".>>right<<")
           )
       }
 
       "no right expression" in {
-        val dot = parseMethodCall("left.")
+        val method = parseMethodCall("left.")
 
-        dot shouldBe
+        method shouldBe
           SoftAST.MethodCall(
             index = indexOf(">>left.<<"),
             leftExpression = Identifier(">>left<<."),
             preDotSpace = None,
-            dotCalls = Seq(
-              SoftAST.DotCall(
-                index = indexOf("left>>.<<"),
-                dot = Dot("left>>.<<"),
-                postDotSpace = None,
-                rightExpression = ExpressionExpected("left.>><<")
-              )
-            )
+            dot = Dot("left>>.<<"),
+            postDotSpace = None,
+            rightExpression = ExpressionExpected("left.>><<")
           )
       }
 
       "with expressions" in {
-        val dot = parseMethodCall("left.right")
+        val method = parseMethodCall("left.right")
 
-        dot shouldBe
+        method shouldBe
           SoftAST.MethodCall(
             index = indexOf(">>left.right<<"),
             leftExpression = Identifier(">>left<<.right"),
             preDotSpace = None,
-            dotCalls = Seq(
-              SoftAST.DotCall(
-                index = indexOf("left>>.right<<"),
-                dot = Dot("left>>.<<right"),
-                postDotSpace = None,
-                rightExpression = Identifier("left.>>right<<")
-              )
-            )
+            dot = Dot("left>>.<<right"),
+            postDotSpace = None,
+            rightExpression = Identifier("left.>>right<<")
           )
       }
+    }
+
+    "three method calls" in {
+      val actual = parseMethodCall("a.b.c")
+
+      val expected =
+        SoftAST.MethodCall(
+          index = indexOf(">>a.b.c<<"),
+          leftExpression = SoftAST.MethodCall(
+            index = indexOf(">>a.b<<.c"),
+            leftExpression = Identifier(">>a<<.b.c"),
+            preDotSpace = None,
+            dot = Dot("a>>.<<b.c"),
+            postDotSpace = None,
+            rightExpression = Identifier("a.>>b<<.c")
+          ),
+          preDotSpace = None,
+          dot = Dot("a.b>>.<<c"),
+          postDotSpace = None,
+          rightExpression = Identifier("a.b.>>c<<")
+        )
+
+      actual shouldBe expected
+    }
+
+    "four method calls" in {
+      val actual = parseMethodCall("a.b.c.d")
+
+      val expected =
+        SoftAST.MethodCall(
+          index = indexOf(">>a.b.c.d<<"),
+          leftExpression = SoftAST.MethodCall(
+            index = indexOf(">>a.b.c<<.d"),
+            leftExpression = SoftAST.MethodCall(
+              index = indexOf(">>a.b<<.c.d"),
+              leftExpression = Identifier(">>a<<.b.c.d"),
+              preDotSpace = None,
+              dot = Dot("a>>.<<b.c.d"),
+              postDotSpace = None,
+              rightExpression = Identifier("a.>>b<<.c.d")
+            ),
+            preDotSpace = None,
+            dot = Dot("a.b>>.<<c.d"),
+            postDotSpace = None,
+            rightExpression = Identifier("a.b.>>c<<.d")
+          ),
+          preDotSpace = None,
+          dot = Dot("a.b.c>>.<<d"),
+          postDotSpace = None,
+          rightExpression = Identifier("a.b.c.>>d<<")
+        )
+
+      actual shouldBe expected
     }
   }
 
