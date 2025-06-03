@@ -293,9 +293,6 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
 
   "duplicates identifier" when {
     "enum is called" in {
-      // FIXME: Currently the `Contract` and the `enum` both are returned.
-      //        Only the `Enum` should be returned.
-      //        This will be resolved by type-inference code-provider, which is not yet implemented.
       goToDefinitionSoft()(
         """
           |Contract Enum {
