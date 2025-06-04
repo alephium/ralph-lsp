@@ -171,7 +171,7 @@ class RalphLangServer private (
    *       }}}
    */
   private val enableSoftParser: Boolean =
-    false
+    true
 
   def getState(): ServerState =
     thisServer.state
