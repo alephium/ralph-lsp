@@ -191,7 +191,7 @@ object BuiltInFunctionDownloader extends DependencyDownloader.Native {
       .replaceAll("\\?:", ":")
       .replaceAll("<Contract>", "TheContract")
       .replaceAll("Bool\\|I256\\|U256\\|Address", "From")
-      .replaceAll("\\.\\.\\.any", "any: Sequence")
-      .replaceAll("fn len!\\(array\\)", "fn len!(array: Array)")
+      .replaceAll("\\.\\.\\.any", "any:Sequence")
+      .replaceAll("fn len!\\(array\\)", "fn len!(array:Array)")
 
 }
