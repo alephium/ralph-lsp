@@ -21,6 +21,7 @@ object TestRalphc {
       ignoreCheckExternalCallerWarnings    <- Arbitrary.arbitrary[Boolean]
       ignoreUnusedFunctionReturnWarnings   <- Arbitrary.arbitrary[Boolean]
       skipAbstractContractCheck            <- Arbitrary.arbitrary[Boolean]
+      skipTests                            <- Arbitrary.arbitrary[Boolean]
     } yield CompilerOptions(
       ignoreUnusedConstantsWarnings = ignoreUnusedConstantsWarnings,
       ignoreUnusedVariablesWarnings = ignoreUnusedVariablesWarnings,
@@ -29,7 +30,8 @@ object TestRalphc {
       ignoreUpdateFieldsCheckWarnings = ignoreUpdateFieldsCheckWarnings,
       ignoreCheckExternalCallerWarnings = ignoreCheckExternalCallerWarnings,
       ignoreUnusedFunctionReturnWarnings = ignoreUnusedFunctionReturnWarnings,
-      skipAbstractContractCheck = skipAbstractContractCheck
+      skipAbstractContractCheck = skipAbstractContractCheck,
+      skipTests = skipTests
     )
 
   def genCompilerOptionsJSON(): Gen[CompilerOptionsParsed] =

@@ -193,5 +193,8 @@ object BuiltInFunctionDownloader extends DependencyDownloader.Native {
       .replaceAll("Bool\\|I256\\|U256\\|Address", "From")
       .replaceAll("\\.\\.\\.any", "any:Sequence")
       .replaceAll("fn len!\\(array\\)", "fn len!(array:Array)")
+      .replaceFirst("""fn testEqual!.+""", "fn testEqual!(left:Primitive, right:Primitive) -> ()")
+      .replaceFirst("""fn testFail!.+""", "fn testFail!(expr:Expression) -> ()")
+      .replaceFirst("""fn testError!.+""", "fn testError!(expr:Expression, errorCode:U256) -> ()")
 
 }

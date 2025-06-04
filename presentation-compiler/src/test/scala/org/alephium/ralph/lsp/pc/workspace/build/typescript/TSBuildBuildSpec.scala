@@ -95,7 +95,8 @@ class TSBuildBuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPr
                     ignoreCheckExternalCallerWarnings = compilerOptions.ignoreCheckExternalCallerWarnings,
                     ignoreUnusedFunctionReturnWarnings = compilerOptions.ignoreUnusedFunctionReturnWarnings,
                     skipAbstractContractCheck = compilerOptions.skipAbstractContractCheck,
-                    errorOnWarnings = Gen.option(Random.nextBoolean()).sample.get
+                    errorOnWarnings = Gen.option(Random.nextBoolean()).sample.get,
+                    skipTests = compilerOptions.skipTests
                   )
               }
             )
@@ -147,7 +148,8 @@ class TSBuildBuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPr
               ignoreCheckExternalCallerWarnings = Some(true),
               ignoreUnusedFunctionReturnWarnings = Some(true),
               skipAbstractContractCheck = Some(true),
-              errorOnWarnings = Some(true)
+              errorOnWarnings = Some(true),
+              skipTests = Some(true)
             )
           )
         )
@@ -190,7 +192,8 @@ class TSBuildBuildSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenPr
                   ignoreUpdateFieldsCheckWarnings = Some(tsBuild.compilerOptions.value.ignoreUpdateFieldsCheckWarnings.value),
                   ignoreCheckExternalCallerWarnings = Some(tsBuild.compilerOptions.value.ignoreCheckExternalCallerWarnings.value),
                   ignoreUnusedFunctionReturnWarnings = Some(tsBuild.compilerOptions.value.ignoreUnusedFunctionReturnWarnings.value),
-                  skipAbstractContractCheck = Some(tsBuild.compilerOptions.value.skipAbstractContractCheck.value)
+                  skipAbstractContractCheck = Some(tsBuild.compilerOptions.value.skipAbstractContractCheck.value),
+                  skipTests = Some(tsBuild.compilerOptions.value.skipTests.value)
                 )
               ),
               contractPath = tsBuild.sourceDir.value,

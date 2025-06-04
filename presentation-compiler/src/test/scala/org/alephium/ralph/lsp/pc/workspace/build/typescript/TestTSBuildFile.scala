@@ -19,6 +19,7 @@ object TestTSBuildFile {
       ignoreUnusedFunctionReturnWarnings   <- Gen.option(arbitrary[Boolean])
       skipAbstractContractCheck            <- Gen.option(arbitrary[Boolean])
       errorOnWarnings                      <- Gen.option(arbitrary[Boolean])
+      skipTests                            <- Gen.option(arbitrary[Boolean])
     } yield TSConfig.CompilerOptions(
       ignoreUnusedConstantsWarnings = ignoreUnusedConstantsWarnings,
       ignoreUnusedVariablesWarnings = ignoreUnusedVariablesWarnings,
@@ -28,7 +29,8 @@ object TestTSBuildFile {
       ignoreCheckExternalCallerWarnings = ignoreCheckExternalCallerWarnings,
       ignoreUnusedFunctionReturnWarnings = ignoreUnusedFunctionReturnWarnings,
       skipAbstractContractCheck = skipAbstractContractCheck,
-      errorOnWarnings = errorOnWarnings
+      errorOnWarnings = errorOnWarnings,
+      skipTests = skipTests
     )
 
   def genTSConfig: Gen[TSConfig] =
@@ -72,6 +74,7 @@ object TestTSBuildFile {
         |  ${printOption("ignoreUnusedFunctionReturnWarnings", compilerOptions.ignoreUnusedFunctionReturnWarnings)}
         |  ${printOption("skipAbstractContractCheck", compilerOptions.skipAbstractContractCheck)}
         |  ${printOption("errorOnWarnings", compilerOptions.errorOnWarnings)}
+        |  ${printOption("skipTests", compilerOptions.skipTests)}
         |}""".stripMargin
     }
 

@@ -30,7 +30,8 @@ object TSConfig {
       ignoreCheckExternalCallerWarnings: Option[Boolean],
       ignoreUnusedFunctionReturnWarnings: Option[Boolean],
       skipAbstractContractCheck: Option[Boolean],
-      errorOnWarnings: Option[Boolean])
+      errorOnWarnings: Option[Boolean],
+      skipTests: Option[Boolean])
 
   object CompilerOptions {
 
@@ -44,7 +45,8 @@ object TSConfig {
         ignoreCheckExternalCallerWarnings = None,
         ignoreUnusedFunctionReturnWarnings = None,
         skipAbstractContractCheck = None,
-        errorOnWarnings = None
+        errorOnWarnings = None,
+        skipTests = None
       )
 
   }
