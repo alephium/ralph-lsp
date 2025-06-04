@@ -25,11 +25,11 @@ object TSConfig {
       ignoreCheckExternalCallerWarnings: Option[Boolean],
       ignoreUnusedFunctionReturnWarnings: Option[Boolean],
       skipAbstractContractCheck: Option[Boolean],
-      errorOnWarnings: Option[Boolean] = None)
+      errorOnWarnings: Option[Boolean])
 
   object CompilerOptions {
 
-    def empty: CompilerOptions = CompilerOptions(None, None, None, None, None, None, None, None)
+    def empty: CompilerOptions = CompilerOptions(None, None, None, None, None, None, None, None, None)
 
   }
 
