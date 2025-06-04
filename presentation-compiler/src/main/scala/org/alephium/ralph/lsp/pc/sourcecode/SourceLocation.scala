@@ -210,6 +210,27 @@ object SourceLocation extends StrictImplicitLogging {
 
   }
 
+  /**
+   * Represents information for Hover.
+   *
+   * @param contentPosition  Position where the hover information was found.
+   * @param content   String content to be displayed in the hover.
+   * @param parsed    The source file containing the source tree.
+   */
+  case class Hover(
+      content: String,
+      contentPosition: SourceIndex,
+      parsed: SourceCodeState.IsParsedAndCompiled)
+    extends GoTo {
+
+    override def index: Option[SourceIndex] =
+      Some(contentPosition)
+
+    override def toLineRange(): Option[LineRange] =
+      index.map(_.toLineRange(parsed.code))
+
+  }
+
   sealed trait Code extends SourceLocation {
 
     def parsed: SourceCodeState.IsParsedAndCompiled
