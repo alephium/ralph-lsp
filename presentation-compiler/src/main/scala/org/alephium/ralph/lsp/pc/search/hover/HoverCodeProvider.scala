@@ -97,12 +97,32 @@ private[search] case object HoverCodeProvider extends CodeProvider[SourceCodeSta
    */
   def buildHoverContent(declaration: SoftAST.DeclarationAST): Option[(String, SourceIndex)] =
     declaration match {
-      case _: SoftAST.Function => None
-      case _: SoftAST.Template => None
-      case _: SoftAST.Enum     => None
-      case _: SoftAST.Struct   => None
-      case _: SoftAST.Event    => None
-      case _: SoftAST.Const    => None
+      case function: SoftAST.Function => Some(buildFunctionContent(function))
+      case _: SoftAST.Template        => None
+      case _: SoftAST.Enum            => None
+      case _: SoftAST.Struct          => None
+      case _: SoftAST.Event           => None
+      case _: SoftAST.Const           => None
     }
+
+  /**
+   * Builds the content for a function declaration.
+   *
+   * Blocks and post-signature spaces are not included in the content,
+   * so their width is subtracted from the function's index width.
+   *
+   * @param function The function declaration to build the content for.
+   * @return A tuple containing the function declaration code and its source index.
+   */
+  private def buildFunctionContent(function: SoftAST.Function): (String, SourceIndex) = {
+
+    val blockIndexWidth              = function.block.map(_.index.width).getOrElse(0)
+    val postSignatureSpaceIndexWidth = function.postSignatureSpace.map(_.index.width).getOrElse(0)
+
+    val index = function.index.copy(width = function.index.width - postSignatureSpaceIndexWidth - blockIndexWidth)
+
+    (function.copy(block = None).toCode(), index)
+
+  }
 
 }
