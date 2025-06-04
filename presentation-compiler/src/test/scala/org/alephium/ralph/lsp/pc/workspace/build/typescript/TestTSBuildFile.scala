@@ -17,16 +17,18 @@ object TestTSBuildFile {
       ignoreUpdateFieldsCheckWarnings      <- Gen.option(arbitrary[Boolean])
       ignoreCheckExternalCallerWarnings    <- Gen.option(arbitrary[Boolean])
       ignoreUnusedFunctionReturnWarnings   <- Gen.option(arbitrary[Boolean])
+      skipAbstractContractCheck            <- Gen.option(arbitrary[Boolean])
       errorOnWarnings                      <- Gen.option(arbitrary[Boolean])
     } yield TSConfig.CompilerOptions(
-      ignoreUnusedConstantsWarnings,
-      ignoreUnusedVariablesWarnings,
-      ignoreUnusedFieldsWarnings,
-      ignoreUnusedPrivateFunctionsWarnings,
-      ignoreUpdateFieldsCheckWarnings,
-      ignoreCheckExternalCallerWarnings,
-      ignoreUnusedFunctionReturnWarnings,
-      errorOnWarnings
+      ignoreUnusedConstantsWarnings = ignoreUnusedConstantsWarnings,
+      ignoreUnusedVariablesWarnings = ignoreUnusedVariablesWarnings,
+      ignoreUnusedFieldsWarnings = ignoreUnusedFieldsWarnings,
+      ignoreUnusedPrivateFunctionsWarnings = ignoreUnusedPrivateFunctionsWarnings,
+      ignoreUpdateFieldsCheckWarnings = ignoreUpdateFieldsCheckWarnings,
+      ignoreCheckExternalCallerWarnings = ignoreCheckExternalCallerWarnings,
+      ignoreUnusedFunctionReturnWarnings = ignoreUnusedFunctionReturnWarnings,
+      skipAbstractContractCheck = skipAbstractContractCheck,
+      errorOnWarnings = errorOnWarnings
     )
 
   def genTSConfig: Gen[TSConfig] =
