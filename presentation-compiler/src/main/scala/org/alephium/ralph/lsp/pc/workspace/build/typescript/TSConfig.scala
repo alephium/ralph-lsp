@@ -14,7 +14,12 @@ case class TSConfig(
 
 object TSConfig {
 
-  def empty: TSConfig = TSConfig(None, None, None)
+  def empty: TSConfig =
+    TSConfig(
+      sourceDir = None,
+      artifactDir = None,
+      compilerOptions = None
+    )
 
   case class CompilerOptions(
       ignoreUnusedConstantsWarnings: Option[Boolean],
@@ -29,7 +34,18 @@ object TSConfig {
 
   object CompilerOptions {
 
-    def empty: CompilerOptions = CompilerOptions(None, None, None, None, None, None, None, None, None)
+    def empty: CompilerOptions =
+      CompilerOptions(
+        ignoreUnusedConstantsWarnings = None,
+        ignoreUnusedVariablesWarnings = None,
+        ignoreUnusedFieldsWarnings = None,
+        ignoreUnusedPrivateFunctionsWarnings = None,
+        ignoreUpdateFieldsCheckWarnings = None,
+        ignoreCheckExternalCallerWarnings = None,
+        ignoreUnusedFunctionReturnWarnings = None,
+        skipAbstractContractCheck = None,
+        errorOnWarnings = None
+      )
 
   }
 
