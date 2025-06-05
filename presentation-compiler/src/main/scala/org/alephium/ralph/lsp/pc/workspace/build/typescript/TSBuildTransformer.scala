@@ -86,7 +86,8 @@ object TSBuildTransformer {
       "ignoreCheckExternalCallerWarnings",
       "ignoreUnusedFunctionReturnWarnings",
       "skipAbstractContractCheck",
-      "errorOnWarnings"
+      "errorOnWarnings",
+      "skipTests"
     )
 
   private val optionsRegex: Regex =
@@ -161,7 +162,8 @@ object TSBuildTransformer {
             ignoreCheckExternalCallerWarnings = parseBooleanOption(optionsMap.get("ignoreCheckExternalCallerWarnings")),
             ignoreUnusedFunctionReturnWarnings = parseBooleanOption(optionsMap.get("ignoreUnusedFunctionReturnWarnings")),
             skipAbstractContractCheck = parseBooleanOption(optionsMap.get("skipAbstractContractCheck")),
-            errorOnWarnings = parseBooleanOption(optionsMap.get("errorOnWarnings"))
+            errorOnWarnings = parseBooleanOption(optionsMap.get("errorOnWarnings")),
+            skipTests = parseBooleanOption(optionsMap.get("skipTests"))
           )
       }
     )

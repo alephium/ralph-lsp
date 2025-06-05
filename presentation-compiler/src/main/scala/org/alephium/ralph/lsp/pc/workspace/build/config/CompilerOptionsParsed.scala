@@ -23,7 +23,8 @@ object CompilerOptionsParsed {
       ignoreUpdateFieldsCheckWarnings = Some(options.ignoreUpdateFieldsCheckWarnings),
       ignoreCheckExternalCallerWarnings = Some(options.ignoreCheckExternalCallerWarnings),
       ignoreUnusedFunctionReturnWarnings = Some(options.ignoreUnusedFunctionReturnWarnings),
-      skipAbstractContractCheck = Some(options.skipAbstractContractCheck)
+      skipAbstractContractCheck = Some(options.skipAbstractContractCheck),
+      skipTests = Some(options.skipTests)
     )
 
   /**
@@ -41,7 +42,8 @@ object CompilerOptionsParsed {
       ignoreUpdateFieldsCheckWarnings = options.ignoreUpdateFieldsCheckWarnings,
       ignoreCheckExternalCallerWarnings = options.ignoreCheckExternalCallerWarnings,
       ignoreUnusedFunctionReturnWarnings = options.ignoreUnusedFunctionReturnWarnings,
-      skipAbstractContractCheck = options.skipAbstractContractCheck
+      skipAbstractContractCheck = options.skipAbstractContractCheck,
+      skipTests = options.skipTests
     )
 
 }
@@ -57,7 +59,8 @@ case class CompilerOptionsParsed(
     ignoreUpdateFieldsCheckWarnings: Option[Boolean] = None,
     ignoreCheckExternalCallerWarnings: Option[Boolean] = None,
     ignoreUnusedFunctionReturnWarnings: Option[Boolean] = None,
-    skipAbstractContractCheck: Option[Boolean] = None) {
+    skipAbstractContractCheck: Option[Boolean] = None,
+    skipTests: Option[Boolean] = None) {
 
   /**
    * Converts this [[CompilerOptionsParsed]] instance to a [[CompilerOptions]] instance.
@@ -74,7 +77,8 @@ case class CompilerOptionsParsed(
       ignoreUpdateFieldsCheckWarnings = ignoreUpdateFieldsCheckWarnings getOrElse CompilerOptions.Default.ignoreUpdateFieldsCheckWarnings,
       ignoreCheckExternalCallerWarnings = ignoreCheckExternalCallerWarnings getOrElse CompilerOptions.Default.ignoreCheckExternalCallerWarnings,
       ignoreUnusedFunctionReturnWarnings = ignoreUnusedFunctionReturnWarnings getOrElse CompilerOptions.Default.ignoreUnusedFunctionReturnWarnings,
-      skipAbstractContractCheck = skipAbstractContractCheck getOrElse CompilerOptions.Default.skipAbstractContractCheck
+      skipAbstractContractCheck = skipAbstractContractCheck getOrElse CompilerOptions.Default.skipAbstractContractCheck,
+      skipTests = skipTests getOrElse CompilerOptions.Default.skipTests
     )
 
 }

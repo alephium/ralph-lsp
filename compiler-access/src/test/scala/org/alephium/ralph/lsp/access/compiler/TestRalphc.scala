@@ -25,7 +25,8 @@ object TestRalphc {
       events = Seq.empty,
       constantVars = Seq.empty,
       enums = Seq.empty,
-      inheritances = Seq.empty
+      inheritances = Seq.empty,
+      unitTests = Seq.empty
     )
 
   def createCompiledContract(
@@ -35,7 +36,8 @@ object TestRalphc {
       code = StatefulContract(0, AVector.empty),
       ast = createTestContract(typeId),
       warnings = AVector.from(warnings),
-      debugCode = StatefulContract(0, AVector.empty)
+      debugCode = StatefulContract(0, AVector.empty),
+      tests = None
     )
 
   def createCompiledContract(
@@ -45,7 +47,8 @@ object TestRalphc {
       code = StatefulContract(0, AVector.empty),
       ast = ast,
       warnings = AVector.from(warnings),
-      debugCode = StatefulContract(0, AVector.empty)
+      debugCode = StatefulContract(0, AVector.empty),
+      tests = None
     )
 
 }
