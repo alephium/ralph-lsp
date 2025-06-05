@@ -68,7 +68,7 @@ case object GoToDefCodeProviderSoft extends CodeProvider[SourceCodeState.IsParse
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
-    blockPart.toNode.findLast(_.index contains cursorIndex) match {
+    blockPart.toNode.findLastChild(_.data.index contains cursorIndex) match {
       case Some(Node(_: SoftAST.CodeToken[_], _)) =>
         // Tokens (fn, Contract etc.) do not require go-to-definitions
         Iterator.empty
