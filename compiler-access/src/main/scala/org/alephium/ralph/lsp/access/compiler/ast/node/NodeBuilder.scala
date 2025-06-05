@@ -36,7 +36,8 @@ object NodeBuilder extends StrictLogging {
             buildParents(ast.constantVars) ++
             buildParents(ast.enums) ++
             buildParents(ast.inheritances) ++
-            buildParents(ast.maps)
+            buildParents(ast.maps) ++
+            buildParents(ast.unitTests)
 
         case ast: Ast.ContractInterface =>
           buildParents(ast.stdId.toSeq) ++
