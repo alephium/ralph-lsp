@@ -60,6 +60,8 @@ private[search] case object HoverCodeProvider extends CodeProvider[SourceCodeSta
                   definition
                     .walkParents
                     .collectFirst { // Find the nearest parent.
+                      case Node(declaration: SoftAST.ExpressionAST, _) =>
+                        HoverExpression(declaration, sourceCode, workspace)
                       case Node(declaration: SoftAST.DeclarationAST, _) =>
                         HoverDeclaration(declaration, sourceCode)
                     }
