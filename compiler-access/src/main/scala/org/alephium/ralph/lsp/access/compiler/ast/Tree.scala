@@ -5,6 +5,7 @@ package org.alephium.ralph.lsp.access.compiler.ast
 
 import org.alephium.ralph.{Ast, SourceIndex}
 import org.alephium.ralph.lsp.access.compiler.ast.node.NodeBuilder
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.utils.Node
 
 /** Ralph Syntax Tree (AST) */
@@ -63,6 +64,12 @@ object Tree {
 
     def typeId(): Option[Ast.TypeId] =
       AstExtra.getTypeId(ast)
+
+    /**
+     * find the node closest to this source-index
+     */
+    def closest(index: Int): Option[Node[Ast.Positioned, Ast.Positioned]] =
+      rootNode.findLast(_.sourceIndex.exists(_ contains index))
 
   }
 

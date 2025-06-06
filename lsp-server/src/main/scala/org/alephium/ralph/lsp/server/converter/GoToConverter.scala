@@ -28,6 +28,24 @@ object GoToConverter extends StrictImplicitLogging {
     CollectionUtil.toJavaList(javaLocations)
   }
 
+  /** Convert [[SourceLocation.Hover]]s to LSP4J's either type [[lsp4j.Hover]] */
+  def toHover(hoverInfos: Iterable[SourceLocation.Hover]): lsp4j.Hover =
+    if (hoverInfos.isEmpty) {
+      // If there are no hover infos, return an empty hover
+      return new lsp4j.Hover()
+    } else {
+      val markdown = hoverInfos
+        .map(_.content)
+        .mkString("```ralph\n", "\n", "\n```")
+
+      new lsp4j.Hover(
+        new lsp4j.MarkupContent(
+          lsp4j.MarkupKind.MARKDOWN,
+          markdown
+        )
+      )
+    }
+
   def toInlayHint(types: ArraySeq[SourceLocation.InlayHint])(implicit logger: ClientLogger): util.List[InlayHint] =
     types
       .flatMap(toInlayHint)
