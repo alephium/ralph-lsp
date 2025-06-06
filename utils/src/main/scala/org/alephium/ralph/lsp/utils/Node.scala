@@ -144,6 +144,8 @@ case class Node[+A, B] private (
    * Find the last node for which this predicate is true.
    *
    * This function is useful for find the closest node that contains a source-index.
+   *
+   * Use [[findLastChild]] for depth-first search.
    */
   def findLast(f: B => Boolean): Option[Node[B, B]] =
     self
@@ -155,6 +157,28 @@ case class Node[+A, B] private (
           else
             closest
       }
+
+  /**
+   * Depth-first search.
+   *
+   * Finds the last node for which the predicate is true, skipping the node
+   * and its children if the predicate fails for the parent node.
+   */
+  def findLastChild(f: Node[B, B] => Boolean): Option[Node[B, B]] = {
+    val selfCasted =
+      self.asInstanceOf[Node[B, B]]
+
+    if (f(selfCasted))
+      children
+        .iterator
+        .flatMap(_.findLastChild(f))
+        .foldLeft(Some(selfCasted)) {
+          case (_, next) =>
+            Some(next)
+        }
+    else
+      None
+  }
 
   /**
    * Upcasts this node's data type [[A]] to a narrower type.
