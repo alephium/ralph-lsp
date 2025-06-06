@@ -4,7 +4,7 @@ object Version {
 
   val scala213 = "2.13.15"
   val web3     = "0.38.0"
-  val ralphc   = "3.15.1"
+  val ralphc   = "3.15.2"
 
 }
 
