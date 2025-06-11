@@ -939,7 +939,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
       case _ =>
         // Otherwise, type information is needed.
-        searchTypeCall(
+        searchTypeCallStrict(
           typeProperty = identNode,
           theType = methodCallNode.data.leftExpression,
           sourceCode = sourceCode,
@@ -964,7 +964,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param cache        The workspace state and its cached trees.
    * @return An iterator matching properties found in the given type.
    */
-  private def searchTypeCall(
+  private def searchTypeCallStrict(
       theType: SoftAST.ExpressionAST,
       typeProperty: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
