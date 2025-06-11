@@ -24,24 +24,54 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
   }
 
   "return self" when {
-    "enum field definition is selected" in {
-      goToDefinition()(
-        """
-          |// This parent is not inherited
-          |Abstract Contract ParentNotUsed() {
-          |
-          |  enum EnumType {
-          |    Field0 = 0
-          |    Field1 = 1
-          |  }
-          |}
-          |
-          |enum EnumType {
-          |  >>Field@@0<< = 0
-          |  Field1 = 1
-          |}
-          |""".stripMargin
-      )
+    "enum field definition is selected" when {
+      "duplicate private enum exists" in {
+        goToDefinition()(
+          """
+            |// This parent is not inherited
+            |Abstract Contract ParentNotUsed() {
+            |
+            |  enum EnumType {
+            |    Field0 = 0
+            |    Field1 = 1
+            |  }
+            |}
+            |
+            |enum EnumType {
+            |  >>Field@@0<< = 0
+            |  Field1 = 1
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "second enum type has syntax error" in {
+        goToDefinition()(
+          """
+            |enum EnumType {
+            |  Field0 = 0
+            |  Field1 = 1
+            |}
+            |
+            |enum EnumType {
+            |  >>Field@@0<< = 0
+            |  Field1
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "no values are defined" in {
+        goToDefinitionSoft()(
+          """
+            |enum EnumType
+            |
+            |enum EnumType {
+            |  >>Field@@0<< =
+            |}
+            |""".stripMargin
+        )
+      }
     }
   }
 
@@ -295,6 +325,73 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
             |}
             |""".stripMargin
         )
+      }
+    }
+  }
+
+  "SoftAST: Static calls" when {
+
+    /**
+     * [[org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST]] tests access
+     * to any type definition values as static calls.
+     *
+     * Both the following are static calls.
+     *
+     * {{{
+     *   MyEnum.Value
+     *   MyContract.encodeFields!()
+     * }}}
+     *
+     * But this applies not only to values, but also functions.
+     */
+    "single enum value is accessed" in {
+      goToDefinitionSoft() {
+        """
+          |enum MyEnum {
+          |  >>One<< = 1
+          |}
+          |
+          |MyEnum.On@@e
+          |""".stripMargin
+      }
+    }
+
+    "duplicate enum value is accessed" in {
+      goToDefinitionSoft() {
+        """
+          |enum MyEnum {
+          |  >>One<< = 1
+          |  >>One<< = 11
+          |}
+          |
+          |MyEnum.On@@e
+          |""".stripMargin
+      }
+    }
+
+    "enum is accessed as a reference call, but no function exists" in {
+      goToDefinitionSoft() {
+        """
+          |enum MyEnum {
+          |  >>One<< = 1
+          |  >>One<< = 11
+          |}
+          |
+          |MyEnum.On@@e()
+          |""".stripMargin
+      }
+    }
+
+    "a method is invoked an enum value" in {
+      goToDefinitionSoft() {
+        """
+          |enum MyEnum {
+          |  >>One<< = 1
+          |  >>One<< = 11
+          |}
+          |
+          |MyEnum.On@@e.toI256
+          |""".stripMargin
       }
     }
   }
