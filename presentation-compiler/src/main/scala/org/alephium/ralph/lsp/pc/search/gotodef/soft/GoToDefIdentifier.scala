@@ -204,7 +204,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         from = sourceCode.part.toNode,
         target = identNode,
         sourceCode = sourceCode,
-        detectCallSyntax = detectCallSyntax
+        detectCallSyntax = detectCallSyntax,
+        enableAssignmentSearch = false
       )
 
     val globals =
@@ -301,19 +302,21 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   /**
    * Expands and searches for all possible local definitions starting from the given position.
    *
-   * @param from             The position from where the search should begin.
-   * @param target           The identifier being searched.
-   * @param sourceCode       The source code state where the `from` node is located.
-   * @param detectCallSyntax If `true`, ensures that when a function is called,
-   *                         the search is restricted to reference calls only and does not
-   *                         return variables with the same name.
+   * @param from                   The position from where the search should begin.
+   * @param target                 The identifier being searched.
+   * @param sourceCode             The source code state where the `from` node is located.
+   * @param detectCallSyntax       If `true`, ensures that when a function is called,
+   *                               the search is restricted to reference calls only and does not
+   *                               return variables with the same name.
+   * @param enableAssignmentSearch If `true`, search all left-hand side expressions in [[SoftAST.Assignment]].
    * @return An iterator over the locations of the definitions.
    */
   private def searchLocal(
       from: Node[SoftAST, SoftAST],
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      detectCallSyntax: Boolean): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+      detectCallSyntax: Boolean,
+      enableAssignmentSearch: Boolean): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     // Reference calls are then ones ending with parentheses, for example `refCall()`.
     // Reference calls should only search for function and contract calls, not variables.
     ScopeWalker.walk(
@@ -337,6 +340,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case Node(binding: SoftAST.MutableBinding, _) if !detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()) =>
         searchExpression(
           expression = binding,
+          target = target,
+          sourceCode = sourceCode
+        )
+
+      case Node(assignment: SoftAST.Assignment, _) if enableAssignmentSearch && (!detectCallSyntax || !target.isReferenceCall()) =>
+        // Used for enums. Only enums contains immutable assignments, which are basically variable definitions.
+        searchExpression(
+          expression = assignment,
           target = target,
           sourceCode = sourceCode
         )
@@ -490,7 +501,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           from = inherited.part.toNode,
           target = virtualNode,
           sourceCode = inherited,
-          detectCallSyntax = detectCallSyntax
+          detectCallSyntax = detectCallSyntax,
+          enableAssignmentSearch = false
         )
 
       case None =>
@@ -610,7 +622,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
               block = block,
               target = target,
               sourceCode = sourceCode,
-              detectCallSyntax = detectCallSyntax
+              detectCallSyntax = detectCallSyntax,
+              enableAssignmentSearch = false
             )
 
           paramMatches ++ blockMatches
@@ -656,7 +669,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             block = block,
             target = target,
             sourceCode = sourceCode,
-            detectCallSyntax = detectCallSyntax
+            detectCallSyntax = detectCallSyntax,
+            enableAssignmentSearch = true
           )
 
         case _ =>
@@ -724,7 +738,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             block = block,
             target = target,
             sourceCode = sourceCode,
-            detectCallSyntax = detectCallSyntax
+            detectCallSyntax = detectCallSyntax,
+            enableAssignmentSearch = false
           )
 
         case _ =>
@@ -826,13 +841,15 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       block: SoftAST.Block,
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      detectCallSyntax: Boolean): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+      detectCallSyntax: Boolean,
+      enableAssignmentSearch: Boolean): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     if (block contains target)
       searchLocal(
         from = block.toNode,
         target = target,
         sourceCode = sourceCode,
-        detectCallSyntax = detectCallSyntax
+        detectCallSyntax = detectCallSyntax,
+        enableAssignmentSearch = enableAssignmentSearch
       )
     else
       Iterable.empty
@@ -918,8 +935,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    methodCallNode.data.leftExpression match {
-      case _: SoftAST.ReferenceCall | _: SoftAST.Identifier if methodCallNode.data.leftExpression contains identNode =>
+    (methodCallNode.data.leftExpression, methodCallNode.data.rightExpression) match {
+      case (left @ (_: SoftAST.ReferenceCall | _: SoftAST.Identifier), _) if left contains identNode =>
         /*
          * A method-call's definitions can be searched without searching its type-information,
          * if the *left* expression of the method-call is being searched, and it's either a reference-call or an identifier.
@@ -937,6 +954,68 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           detectCallSyntax = detectCallSyntax
         )
 
+      case (left: SoftAST.Identifier, right @ (_: SoftAST.Identifier | _: SoftAST.ReferenceCall)) if right contains identNode =>
+        /**
+         * This might be a static call.
+         *
+         * {{{
+         *   MyEnum.Valu@@e                // Static call on an Enum
+         *   MyContract.encodeFiel@@ds!()    // Static call on a Contract
+         * }}}
+         */
+
+        // Node of the type name `MyEnum` or `MyContract`
+        val leftNode = methodCallNode.findAtIndex(left.index)
+
+        // The identifier node of the right side, which can be an identifier or a reference-call.
+        val rightNode =
+          methodCallNode
+            .findAtIndex(right.index)
+            .flatMap {
+              node =>
+                node.walkDown.collectFirst {
+                  case node @ Node(ident: SoftAST.Identifier, _) if right contains ident =>
+                    node.upcast(ident)
+                }
+            }
+
+        (leftNode, rightNode) match {
+          case (Some(leftNode @ Node(left: SoftAST.Identifier, _)), Some(rightNode @ Node(right: SoftAST.Identifier, _))) =>
+            // This could be a static-call.
+            val result =
+              searchStaticCallSoft(
+                left = leftNode.upcast(left),
+                right = rightNode.upcast(right),
+                sourceCode = sourceCode,
+                cache = cache,
+                settings = settings,
+                detectCallSyntax = detectCallSyntax
+              )
+
+            if (result.nonEmpty)
+              result
+            else
+              // If no result, execute a typed-search which searches strict-AST for the node's type information.
+              searchTypeCallStrict(
+                typeProperty = identNode,
+                theType = left,
+                sourceCode = sourceCode,
+                cache = cache
+              )
+
+          case (leftNode, rightNode) =>
+            // Unlikely to occur: If either is empty, then this is due to a bug searching for the identifier nodes. Log it for debugging.
+            if (leftNode.zip(rightNode).isEmpty)
+              logger.error(s"Not found: Static-call Node info. left: ${leftNode.map(_.toCode())}. right: ${rightNode.map(_.toCode())}. FileURI: ${sourceCode.parsed.fileURI}")
+
+            searchTypeCallStrict(
+              typeProperty = identNode,
+              theType = left,
+              sourceCode = sourceCode,
+              cache = cache
+            )
+        }
+
       case _ =>
         // Otherwise, type information is needed.
         searchTypeCallStrict(
@@ -946,6 +1025,126 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           cache = cache
         )
     }
+
+  /**
+   * Performs a static call search.
+   *
+   * Examples:
+   * {{{
+   *   MyEnum.Value
+   *   MyContract.encodeFields!(...)
+   * }}}
+   *
+   * @param left             Left-hand side of the static call expression.
+   * @param right            Right-hand side of the static call expression.
+   * @param sourceCode       The source-code where this search was executed.
+   * @param cache            Workspace state and its cached trees.
+   * @param detectCallSyntax If `true`, attemtps to match call-like syntax.
+   * @return Matched source-locations.
+   */
+  private def searchStaticCallSoft(
+      left: Node[SoftAST.Identifier, SoftAST],
+      right: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      cache: SearchCache,
+      settings: GoToDefSetting,
+      detectCallSyntax: Boolean
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    val typeDef =
+      searchTypeDefinitionSoft(
+        typeIdentifier = left,
+        sourceCode = sourceCode,
+        cache = cache,
+        settings = settings,
+        detectCallSyntax = detectCallSyntax
+      )
+
+    typeDef flatMap {
+      // Static calls are only evaluated for `Enum`s and `Contract`s.
+      case SourceLocation.NodeSoft(definition @ (_: SoftAST.Enum | _: SoftAST.Template), source) =>
+        val virtualNode =
+          buildVirtualNode(
+            target = right,
+            sourceIndex = point(definition.index.to)
+          )
+
+        virtualNode match {
+          case Some(virtualNode) =>
+            search(
+              identNode = virtualNode,
+              sourceCode = source,
+              cache = cache,
+              settings = settings,
+              detectCallSyntax = detectCallSyntax
+            )
+
+          case None =>
+            logger.error(s"Error: Virtual `Identifier` not found. TypeId: ${definition.toCode()}. FileURI ${source.parsed.fileURI}")
+            Iterator.empty
+        }
+
+      case _ =>
+        logger.trace(s"Not a static call: ${left.toCode()}.${right.toCode()}")
+        Iterator.empty
+    }
+  }
+
+  /**
+   * A basic type-def search on [[SoftAST]]. Search only if the exact type-name/identifier is known.
+   *
+   * {{{
+   *   MyEnu@@m.Value               // Can handle this
+   *   MyContr@@act.encodeFields()  // Can handle this
+   *
+   *   fn function(contract: MyContract) -> () {
+   *     // Cannot handle this. Requires type-inference which is handled by [[searchTypeCallStrict]].
+   *     contra@@ct.encodeFields()
+   *   }
+   * }}}
+   *
+   * @param typeIdentifier
+   * @param sourceCode
+   * @param cache
+   * @param settings
+   * @param detectCallSyntax
+   * @param logger
+   * @return
+   */
+  private def searchTypeDefinitionSoft(
+      typeIdentifier: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      cache: SearchCache,
+      settings: GoToDefSetting,
+      detectCallSyntax: Boolean
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.TypeDefinitionAST]] = {
+    val definitions =
+      search(
+        identNode = typeIdentifier,
+        sourceCode = sourceCode,
+        cache = cache,
+        settings = settings,
+        detectCallSyntax = detectCallSyntax
+      )
+
+    definitions flatMap {
+      definition =>
+        // Lift the type-name `CodeString` of each type-def to concrete `TypeDeclaration`.
+        definition.source.part.toNode.findAtIndex(definition.ast.index) match {
+          case Some(node) =>
+            node
+              .walkParents
+              .collectFirst {
+                case Node(typeDef: SoftAST.TypeDefinitionAST, _) if typeDef.identifier contains definition.ast =>
+                  // Lift the type from `CodeString` to `TypeDefinitionAST`.
+                  definition.copy(ast = typeDef)
+              }
+
+          case None =>
+            logger.error(s"Node not found for definition: ${definition.ast.text}. Index: ${definition.ast.index}. FileURI: ${definition.source.parsed.fileURI}")
+            Iterator.empty
+        }
+    }
+  }
 
   /**
    * Searches for a property within the given type.
