@@ -955,7 +955,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         )
 
       case (left: SoftAST.Identifier, right @ (_: SoftAST.Identifier | _: SoftAST.ReferenceCall)) if right contains identNode =>
-        /**
+        /*
          * This might be a static call.
          *
          * {{{
