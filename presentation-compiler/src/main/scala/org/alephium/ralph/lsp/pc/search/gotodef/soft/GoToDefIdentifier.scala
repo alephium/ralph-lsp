@@ -1090,7 +1090,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   }
 
   /**
-   * A basic type-def search on [[SoftAST]]. Search only if the exact type-name/identifier is known.
+   * Performs a basic type-def search on [[SoftAST]].
+   * Use this search only if the exact type-name/identifier is known.
    *
    * {{{
    *   MyEnu@@m.Value               // Can handle this
@@ -1102,13 +1103,11 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    *   }
    * }}}
    *
-   * @param typeIdentifier
-   * @param sourceCode
-   * @param cache
-   * @param settings
-   * @param detectCallSyntax
-   * @param logger
-   * @return
+   * @param typeIdentifier   The reference identifier being searched.
+   * @param sourceCode       The source code where this search was executed.
+   * @param cache            The workspace state and its cached trees.
+   * @param detectCallSyntax If `true`, detects the type of search based on the syntax.
+   * @return Type definitions matching the given type identifier.
    */
   private def searchTypeDefinitionSoft(
       typeIdentifier: Node[SoftAST.Identifier, SoftAST],
@@ -1133,8 +1132,9 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           case Some(node) =>
             node
               .walkParents
+              .takeWhile(_.data contains definition.ast) // traverse only the up to the parent that contains the definition
               .collectFirst {
-                case Node(typeDef: SoftAST.TypeDefinitionAST, _) if typeDef.identifier contains definition.ast =>
+                case Node(typeDef: SoftAST.TypeDefinitionAST, _) =>
                   // Lift the type from `CodeString` to `TypeDefinitionAST`.
                   definition.copy(ast = typeDef)
               }
