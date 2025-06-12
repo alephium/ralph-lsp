@@ -49,6 +49,28 @@ object BuiltInFunctionInfo {
             returns = function.returns
           )
       }
+      .:+(buildEncodeFields())
+
+  /**
+   * [[BuiltIn.statefulFuncsSeq]] does not include the static function `encodeFields`.
+   * This manually builds it within the category [[Category.Contract]].
+   *
+   * Documentation borrowed from <a href="https://docs.alephium.org/ralph/built-in-functions/#encodefields">#encodefields</a>.
+   *
+   * @return Built-in function information for `encodeFields!`.
+   */
+  private def buildEncodeFields(): BuiltInFunctionInfo = {
+    val name = "encodeFields"
+
+    BuiltInFunctionInfo(
+      name = name,
+      category = Category.Contract,
+      signature = s"fn $name!(fields:Fields) -> (ByteVec, ByteVec)",
+      doc = "Encode the fields for creating a contract",
+      params = Seq("@param fields the fields of the to-be-created target contract"),
+      returns = "@returns two ByteVecs: the first one is the encoded immutable fields, and the second one is the encoded mutable fields"
+    )
+  }
 
 }
 
