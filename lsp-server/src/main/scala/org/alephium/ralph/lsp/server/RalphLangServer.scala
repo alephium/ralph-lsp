@@ -104,6 +104,7 @@ object RalphLangServer extends StrictImplicitLogging {
     capabilities.setReferencesProvider(true)
     capabilities.setRenameProvider(true)
     capabilities.setInlayHintProvider(true)
+    capabilities.setHoverProvider(true)
 
     // Workspace Capabilities
     val workspaceCapabilities  = new WorkspaceServerCapabilities()
@@ -428,6 +429,23 @@ class RalphLangServer private (
             settings = ()
           )
           .map(_.map(GoToConverter.toLocationEither))
+    }
+
+  override def hover(params: HoverParams): CompletableFuture[Hover] =
+    runFuture {
+      isCancelled =>
+        MultiCodeProvider
+          .hover
+          .search(
+            fileURI = uri(params.getTextDocument.getUri),
+            line = params.getPosition.getLine,
+            character = params.getPosition.getCharacter,
+            enableSoftParser = enableSoftParser,
+            isCancelled = isCancelled,
+            pcStates = getPCStates(),
+            settings = ()
+          )
+          .map(_.map(GoToConverter.toHover))
     }
 
   override def references(params: ReferenceParams): CompletableFuture[util.List[_ <: Location]] =
