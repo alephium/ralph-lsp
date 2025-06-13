@@ -166,7 +166,17 @@ object SoftAST {
    */
   sealed trait BlockPartAST   extends SoftAST
   sealed trait DeclarationAST extends BlockPartAST
-  sealed trait ExpressionAST  extends BlockPartAST
+
+  /**
+   * Represents declarations that define new named type.
+   */
+  sealed trait TypeDefinitionAST extends DeclarationAST {
+
+    def identifier: IdentifierAST
+
+  }
+
+  sealed trait ExpressionAST extends BlockPartAST
 
   case class ExpressionExpected(
       index: SourceIndex)
@@ -265,7 +275,7 @@ object SoftAST {
       postParamSpace: Option[Space],
       inheritance: Seq[Inheritance],
       block: Option[Block])
-    extends DeclarationAST
+    extends TypeDefinitionAST
 
   case class Abstract(
       index: SourceIndex,
@@ -280,7 +290,7 @@ object SoftAST {
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
       params: Group[Token.OpenParen.type, Token.CloseParen.type])
-    extends DeclarationAST
+    extends TypeDefinitionAST
 
   case class Struct(
       index: SourceIndex,
@@ -289,7 +299,7 @@ object SoftAST {
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
       params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
-    extends DeclarationAST
+    extends TypeDefinitionAST
 
   case class Enum(
       index: SourceIndex,
@@ -298,7 +308,7 @@ object SoftAST {
       identifier: IdentifierAST,
       preBlockSpace: Option[Space],
       block: Option[Block])
-    extends DeclarationAST
+    extends TypeDefinitionAST
 
   case class Const(
       index: SourceIndex,

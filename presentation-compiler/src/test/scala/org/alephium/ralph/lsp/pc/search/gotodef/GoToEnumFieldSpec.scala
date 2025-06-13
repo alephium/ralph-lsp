@@ -11,7 +11,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "enum type does not exist" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |Contract MyContract() {
           |  pub fn function() -> () {
@@ -24,30 +24,60 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
   }
 
   "return self" when {
-    "enum field definition is selected" in {
-      goToDefinitionStrict()(
-        """
-          |// This parent is not inherited
-          |Abstract Contract ParentNotUsed() {
-          |
-          |  enum EnumType {
-          |    Field0 = 0
-          |    Field1 = 1
-          |  }
-          |}
-          |
-          |enum EnumType {
-          |  >>Field@@0<< = 0
-          |  Field1 = 1
-          |}
-          |""".stripMargin
-      )
+    "enum field definition is selected" when {
+      "duplicate private enum exists" in {
+        goToDefinition()(
+          """
+            |// This parent is not inherited
+            |Abstract Contract ParentNotUsed() {
+            |
+            |  enum EnumType {
+            |    Field0 = 0
+            |    Field1 = 1
+            |  }
+            |}
+            |
+            |enum EnumType {
+            |  >>Field@@0<< = 0
+            |  Field1 = 1
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "second enum type has syntax error" in {
+        goToDefinition()(
+          """
+            |enum EnumType {
+            |  Field0 = 0
+            |  Field1 = 1
+            |}
+            |
+            |enum EnumType {
+            |  >>Field@@0<< = 0
+            |  Field1
+            |}
+            |""".stripMargin
+        )
+      }
+
+      "no values are defined" in {
+        goToDefinitionSoft()(
+          """
+            |enum EnumType
+            |
+            |enum EnumType {
+            |  >>Field@@0<< =
+            |}
+            |""".stripMargin
+        )
+      }
     }
   }
 
   "return non-empty" when {
     "user selects the first enum field" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |// This parent is not inherited
           |Abstract Contract ParentNotUsed() {
@@ -93,7 +123,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
     }
 
     "user selects the second enum field" in {
-      goToDefinitionStrict()(
+      goToDefinition()(
         """
           |enum EnumType {
           |  Field0 = 0
@@ -132,7 +162,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
 
     "there are duplicate enum types and fields" when {
       "user selects the first enum field" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |enum EnumType {
             |  >>Field0<< = 0
@@ -178,7 +208,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
       }
 
       "user selects the second enum field" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |enum EnumType {
             |  Field0 = 0
@@ -209,7 +239,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
 
     "there are duplicate enum types with distinct fields" when {
       "user selects the first enum field" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |enum EnumType {
             |  >>Field0<< = 0
@@ -240,7 +270,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
       }
 
       "user selects the third enum field" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Contract MyContract() {
             |
@@ -266,7 +296,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
       }
 
       "an enum field is selected that's implemented within a parent" in {
-        goToDefinitionStrict()(
+        goToDefinition()(
           """
             |Abstract Contract Parent2() {
             |  enum EnumType {
@@ -290,11 +320,78 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
             |  }
             |
             |  pub fn function() -> () {
-            |    let field0 = EnumType.Field0@@
+            |    let field0 = EnumType.Fiel@@d0
             |  }
             |}
             |""".stripMargin
         )
+      }
+    }
+  }
+
+  "SoftAST: Static calls" when {
+
+    /**
+     * [[org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST]] tests access
+     * to any type definition values as static calls.
+     *
+     * Both the following are static calls.
+     *
+     * {{{
+     *   MyEnum.Value
+     *   MyContract.encodeFields!()
+     * }}}
+     *
+     * But this applies not only to values, but also functions.
+     */
+    "single enum value is accessed" in {
+      goToDefinitionSoft() {
+        """
+          |enum MyEnum {
+          |  >>One<< = 1
+          |}
+          |
+          |MyEnum.On@@e
+          |""".stripMargin
+      }
+    }
+
+    "duplicate enum value is accessed" in {
+      goToDefinitionSoft() {
+        """
+          |enum MyEnum {
+          |  >>One<< = 1
+          |  >>One<< = 11
+          |}
+          |
+          |MyEnum.On@@e
+          |""".stripMargin
+      }
+    }
+
+    "enum is accessed as a reference call, but no function exists" in {
+      goToDefinitionSoft() {
+        """
+          |enum MyEnum {
+          |  >>One<< = 1
+          |  >>One<< = 11
+          |}
+          |
+          |MyEnum.On@@e()
+          |""".stripMargin
+      }
+    }
+
+    "a method is invoked an enum value" in {
+      goToDefinitionSoft() {
+        """
+          |enum MyEnum {
+          |  >>One<< = 1
+          |  >>One<< = 11
+          |}
+          |
+          |MyEnum.On@@e.toI256
+          |""".stripMargin
       }
     }
   }
