@@ -7,16 +7,13 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefSetting, ScopeWalker}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceLocation}
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.pc.search.CodeProvider
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
-import org.alephium.ralph.lsp.pc.workspace.build.BuildState
 
 import scala.annotation.tailrec
-import scala.collection.immutable.ArraySeq
 
 private object GoToDefIdentifier extends StrictImplicitLogging {
 
@@ -39,7 +36,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       identNode = identNode,
       parent = identNode.parent,
       sourceCode = sourceCode,
-      workspace = workspace,
+      cache = SearchCache(workspace),
       settings = settings
     )
 
@@ -55,21 +52,21 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param identNode  The node representing the identifier being searched.
    * @param parent     One of the identifier node's parents.
    * @param sourceCode The block-part and its source code state where this search is executed.
-   * @param workspace  The workspace state where the source-code is located.
+   * @param cache      The workspace state and its cached trees.
    * @return An iterator over definition search results.
    */
   private def searchParent(
       identNode: Node[SoftAST.Identifier, SoftAST],
       parent: Option[Node[SoftAST, SoftAST]],
       sourceCode: SourceLocation.CodeSoft,
-      workspace: WorkspaceState.IsSourceAware,
+      cache: SearchCache,
       settings: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] = {
     @inline def runFullSearch() =
       search(
         identNode = identNode,
         sourceCode = sourceCode,
-        workspace = workspace,
+        cache = cache,
         settings = settings,
         detectCallSyntax = true
       )
@@ -90,7 +87,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
               methodCallNode = node.upcast(methodCall),
               identNode = identNode,
               sourceCode = sourceCode,
-              workspace = workspace,
+              cache = cache,
               settings = settings,
               detectCallSyntax = true
             )
@@ -104,7 +101,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           methodCallNode = node.upcast(methodCall),
           identNode = identNode,
           sourceCode = sourceCode,
-          workspace = workspace,
+          cache = cache,
           settings = settings,
           detectCallSyntax = true
         )
@@ -146,7 +143,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           group = node.upcast(group),
           identNode = identNode,
           sourceCode = sourceCode,
-          workspace = workspace,
+          cache = cache,
           settings = settings,
           detectCallSyntax = true
         )
@@ -158,7 +155,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
               group = node.upcast(group),
               identNode = identNode,
               sourceCode = sourceCode,
-              workspace = workspace,
+              cache = cache,
               settings = settings,
               detectCallSyntax = true
             )
@@ -183,51 +180,50 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    *                         return variables with the same name.
    * @return An iterator over the locations of the definitions.
    */
+  @tailrec
   private def search(
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      workspace: WorkspaceState.IsSourceAware,
+      cache: SearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
-    val allTrees =
-      WorkspaceSearcher.collectAllTreesSoft(workspace)
-
-    def runSearch(detectCallSyntax: Boolean) = {
-      val inherited =
-        if (settings.includeInheritance)
-          searchInheritance(
-            target = identNode,
-            sourceCode = sourceCode,
-            build = workspace.build,
-            workspaceTrees = allTrees,
-            detectCallSyntax = detectCallSyntax
-          )
-        else
-          Iterator.empty
-
-      val local =
-        searchLocal(
-          from = sourceCode.part.toNode,
+    val inherited =
+      if (settings.includeInheritance)
+        searchInheritance(
           target = identNode,
           sourceCode = sourceCode,
+          cache = cache,
           detectCallSyntax = detectCallSyntax
         )
+      else
+        Iterator.empty
 
-      val globals =
-        searchGlobal(
-          target = identNode,
-          trees = allTrees.iterator,
-          detectCallSyntax = detectCallSyntax
-        )
+    val local =
+      searchLocal(
+        from = sourceCode.part.toNode,
+        target = identNode,
+        sourceCode = sourceCode,
+        detectCallSyntax = detectCallSyntax
+      )
 
-      (local.iterator ++ inherited ++ globals).distinct
-    }
+    val globals =
+      searchGlobal(
+        target = identNode,
+        trees = cache.trees.iterator,
+        detectCallSyntax = detectCallSyntax
+      )
 
-    val result = runSearch(detectCallSyntax)
+    val result = (local.iterator ++ inherited ++ globals).distinct
 
     if (detectCallSyntax && result.isEmpty)
-      runSearch(detectCallSyntax = false) // The restricted exact call syntax search returned no results. Executing a relaxed search.
+      search(
+        identNode = identNode,
+        sourceCode = sourceCode,
+        cache = cache,
+        settings = settings,
+        detectCallSyntax = false // The restricted exact call syntax search returned no results. Executing a relaxed search.
+      )
     else
       result
   }
@@ -392,8 +388,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    *
    * @param target           The identifier being searched.
    * @param sourceCode       The source code state where the `target` node is located.
-   * @param build            Current workspace build.
-   * @param workspaceTrees   All workspace trees in scope, including the imported code.
+   * @param cache            The workspace state and its cached trees.
    * @param detectCallSyntax If `true`, ensures that when a function is called,
    *                         the search is restricted to reference calls only and does not
    *                         return variables with the same name.
@@ -402,39 +397,28 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   private def searchInheritance(
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      build: BuildState.Compiled,
-      workspaceTrees: ArraySeq[SourceLocation.CodeSoft],
+      cache: SearchCache,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     // The actual inherited code as defined in the AST
     val inheritedTrees =
       SourceCodeSearcher.collectInheritedParents(
         source = sourceCode,
-        allSource = workspaceTrees
+        allSource = cache.trees
       )
 
     // Inheritance search must include all built-in interfaces.
     val builtInTrees =
-      WorkspaceSearcher.collectAllDependencyTreesSoft(
-        dependencyID = DependencyID.BuiltIn,
-        build = build
-      ) match {
-        case Some((builtIn, builtInTrees)) =>
-          // Primitives should not be included within inheritance search.
-          builtInTrees.filter(!_.parsed.isPrimitive(builtIn))
-
-        case None =>
-          Iterator.empty
-      }
+      cache.builtInTrees
 
     // Merge both the actual inherited trees and the built-in trees.
     val allInheritedTrees =
-      inheritedTrees ++ builtInTrees
+      inheritedTrees.iterator ++ builtInTrees
 
     // Execute inheritance search.
     searchInheritance(
       target = target,
-      inheritance = allInheritedTrees.iterator,
+      inheritance = allInheritedTrees,
       detectCallSyntax = detectCallSyntax
     )
   }
@@ -859,7 +843,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param group            The node representing the group being searched.
    * @param identNode        The node representing the identifier being searched, which is also a child of the group.
    * @param sourceCode       The block-part and its source code state where this search is executed.
-   * @param workspace        The workspace state where the source-code is located.
+   * @param cache            The workspace state and its cached trees.
    * @param detectCallSyntax If `true`, ensures that when a function is called,
    *                         the search is restricted to reference calls only and does not
    *                         return variables with the same name.
@@ -869,7 +853,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       group: Node[SoftAST.Group[_, _], SoftAST],
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      workspace: WorkspaceState.IsSourceAware,
+      cache: SearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
@@ -902,7 +886,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         search(
           identNode = identNode,
           sourceCode = sourceCode,
-          workspace = workspace,
+          cache = cache,
           settings = updatedSettings,
           detectCallSyntax = detectCallSyntax
         )
@@ -911,7 +895,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         search(
           identNode = identNode,
           sourceCode = sourceCode,
-          workspace = workspace,
+          cache = cache,
           settings = settings,
           detectCallSyntax = detectCallSyntax
         )
@@ -923,14 +907,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param methodCallNode The node representing the [[SoftAST.MethodCall]] being searched.
    * @param identNode      The node representing the identifier being searched (i.e. the clicked/selected node).
    * @param sourceCode     The block-part and its source code state where this search is executed.
-   * @param workspace      The workspace state where the source-code is located.
+   * @param cache          The workspace state and its cached trees.
    * @return An iterator over definition search results.
    */
   private def searchMethodCall(
       methodCallNode: Node[SoftAST.MethodCall, SoftAST],
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      workspace: WorkspaceState.IsSourceAware,
+      cache: SearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
@@ -948,7 +932,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         search(
           identNode = identNode,
           sourceCode = sourceCode,
-          workspace = workspace,
+          cache = cache,
           settings = settings,
           detectCallSyntax = detectCallSyntax
         )
@@ -959,7 +943,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           typeProperty = identNode,
           theType = methodCallNode.data.leftExpression,
           sourceCode = sourceCode,
-          workspace = workspace
+          cache = cache
         )
     }
 
@@ -977,14 +961,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param theType      The type expression to search within.
    * @param typeProperty The identifier node representing the property, this is the selected or clicked node.
    * @param sourceCode   The block-part and its source code state where this search is executed.
-   * @param workspace    The workspace state where the source-code is located.
+   * @param cache        The workspace state and its cached trees.
    * @return An iterator matching properties found in the given type.
    */
   private def searchTypeCall(
       theType: SoftAST.ExpressionAST,
       typeProperty: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      workspace: WorkspaceState.IsSourceAware
+      cache: SearchCache
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     // Find all the type definitions.
     val typeDefs =
@@ -993,7 +977,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         .search(
           linePosition = theType.index.toLineRange(sourceCode.parsed.code).from,
           fileURI = sourceCode.parsed.fileURI,
-          workspace = workspace,
+          workspace = cache.workspace,
           searchSettings = ()
         )
 
@@ -1025,7 +1009,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
                     search(
                       identNode = virtualNode,
                       sourceCode = softTypeDef,
-                      workspace = workspace,
+                      cache = cache,
                       settings = settings,
                       detectCallSyntax = true
                     )
