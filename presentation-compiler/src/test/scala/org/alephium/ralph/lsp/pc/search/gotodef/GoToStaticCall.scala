@@ -13,10 +13,10 @@ class GoToStaticCall extends AnyWordSpec with Matchers {
     goToDefinitionSoft()(
       """
         |Contract Test {
-        |  fn >>encodeFields<<() -> ()
+        |  fn >>static_function<<() -> ()
         |}
         |
-        |Test.encodeFiel@@ds
+        |Test.static_functi@@on
         |""".stripMargin
     )
   }
@@ -25,12 +25,12 @@ class GoToStaticCall extends AnyWordSpec with Matchers {
     goToDefinitionSoft()(
       """
         |Contract Test {
-        |  fn >>encodeFields<<() -> ()
-        |  fn >>encodeFields<<(paramA: A) -> ()
-        |  fn >>encodeFields<<(paramA: A, paramB: A) -> ()
+        |  fn >>static_function<<() -> ()
+        |  fn >>static_function<<(paramA: A) -> ()
+        |  fn >>static_function<<(paramA: A, paramB: B) -> ()
         |}
         |
-        |Test.encodeFiel@@ds
+        |Test.static_functi@@on
         |""".stripMargin
     )
   }
@@ -39,16 +39,53 @@ class GoToStaticCall extends AnyWordSpec with Matchers {
     goToDefinitionSoft()(
       """
         |Contract Test {
-        |  fn >>encodeFields<<() -> ()
-        |  fn >>encodeFields<<(paramA: A) -> ()
-        |  fn >>encodeFields<<(paramA: A, paramB: A) -> ()
+        |  fn >>static_function<<() -> ()
+        |  fn >>static_function<<(paramA: A) -> ()
+        |  fn >>static_function<<(paramA: A, paramB: B) -> ()
         |}
         |
         |Contract Main {
-        |  Test.encodeFiel@@ds
+        |  Test.static_functi@@on
         |}
         |""".stripMargin
     )
+  }
+
+  "go-to static function encodeFields!" when {
+    "from global scope" in {
+      goToDefBuiltInSoft(
+        code = """
+            |Contract Test { }
+            |
+            |Test.encodeFiel@@ds!
+            |""".stripMargin,
+        expected = Some("fn >>encodeFields!<<(fields:Fields) -> (ByteVec, ByteVec)")
+      )
+    }
+
+    "from contract scope" in {
+      goToDefBuiltInSoft(
+        code = """
+            |Contract Test { }
+            |
+            |Contract Main {
+            |  Test.encodeFiel@@ds!
+            |}
+            |""".stripMargin,
+        expected = Some("fn >>encodeFields!<<(fields:Fields) -> (ByteVec, ByteVec)")
+      )
+    }
+
+    "from self scope" in {
+      goToDefBuiltInSoft(
+        code = """
+            |Contract Main {
+            |  Main.encodeFiel@@ds!
+            |}
+            |""".stripMargin,
+        expected = Some("fn >>encodeFields!<<(fields:Fields) -> (ByteVec, ByteVec)")
+      )
+    }
   }
 
 }
