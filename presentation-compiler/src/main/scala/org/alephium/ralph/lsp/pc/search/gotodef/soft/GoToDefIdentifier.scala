@@ -80,43 +80,6 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       )
 
     parent match {
-      case Some(node @ Node(_: SoftAST.ReferenceCall, _)) =>
-        node.parent match {
-          case Some(node @ Node(methodCall: SoftAST.MethodCall, _)) =>
-            searchMethodCall(
-              methodCallNode = node.upcast(methodCall),
-              identNode = identNode,
-              sourceCode = sourceCode,
-              cache = cache,
-              settings = settings,
-              detectCallSyntax = true
-            )
-
-          case _ =>
-            runFullSearch()
-        }
-
-      case Some(node @ Node(methodCall: SoftAST.MethodCall, _)) =>
-        searchMethodCall(
-          methodCallNode = node.upcast(methodCall),
-          identNode = identNode,
-          sourceCode = sourceCode,
-          cache = cache,
-          settings = settings,
-          detectCallSyntax = true
-        )
-
-      case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
-        node.parent match {
-          // If it's an assignment, it must also be a variable declaration for the current node to be a self.
-          case Some(Node(_: SoftAST.VariableDeclaration | _: SoftAST.Const, _)) =>
-            self()
-
-          case _ =>
-            // invoke full scope search.
-            runFullSearch()
-        }
-
       case Some(Node(assignment: SoftAST.TypeAssignment, _)) if assignment.expressionLeft == identNode.data =>
         self()
 
@@ -137,6 +100,17 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
       case Some(Node(struct: SoftAST.Struct, _)) if struct.identifier == identNode.data =>
         self()
+
+      case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
+        node.parent match {
+          // If it's an assignment, it must also be a variable declaration for the current node to be a self.
+          case Some(Node(_: SoftAST.VariableDeclaration | _: SoftAST.Const, _)) =>
+            self()
+
+          case _ =>
+            // invoke full scope search.
+            runFullSearch()
+        }
 
       case Some(node @ Node(group: SoftAST.Group[_, _], _)) =>
         searchGroup(
@@ -164,6 +138,32 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             logger.trace(s"GroupTail not contained with a group. Index: ${tail.index}. File: ${sourceCode.parsed.fileURI}")
             runFullSearch()
         }
+
+      case Some(node @ Node(_: SoftAST.ReferenceCall, _)) =>
+        node.parent match {
+          case Some(node @ Node(methodCall: SoftAST.MethodCall, _)) =>
+            searchMethodCall(
+              methodCallNode = node.upcast(methodCall),
+              identNode = identNode,
+              sourceCode = sourceCode,
+              cache = cache,
+              settings = settings,
+              detectCallSyntax = true
+            )
+
+          case _ =>
+            runFullSearch()
+        }
+
+      case Some(node @ Node(methodCall: SoftAST.MethodCall, _)) =>
+        searchMethodCall(
+          methodCallNode = node.upcast(methodCall),
+          identNode = identNode,
+          sourceCode = sourceCode,
+          cache = cache,
+          settings = settings,
+          detectCallSyntax = true
+        )
 
       case _ =>
         runFullSearch()
