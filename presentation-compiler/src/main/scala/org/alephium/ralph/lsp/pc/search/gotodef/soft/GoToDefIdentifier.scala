@@ -80,43 +80,6 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       )
 
     parent match {
-      case Some(node @ Node(_: SoftAST.ReferenceCall, _)) =>
-        node.parent match {
-          case Some(node @ Node(methodCall: SoftAST.MethodCall, _)) =>
-            searchMethodCall(
-              methodCallNode = node.upcast(methodCall),
-              identNode = identNode,
-              sourceCode = sourceCode,
-              cache = cache,
-              settings = settings,
-              detectCallSyntax = true
-            )
-
-          case _ =>
-            runFullSearch()
-        }
-
-      case Some(node @ Node(methodCall: SoftAST.MethodCall, _)) =>
-        searchMethodCall(
-          methodCallNode = node.upcast(methodCall),
-          identNode = identNode,
-          sourceCode = sourceCode,
-          cache = cache,
-          settings = settings,
-          detectCallSyntax = true
-        )
-
-      case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
-        node.parent match {
-          // If it's an assignment, it must also be a variable declaration for the current node to be a self.
-          case Some(Node(_: SoftAST.VariableDeclaration | _: SoftAST.Const, _)) =>
-            self()
-
-          case _ =>
-            // invoke full scope search.
-            runFullSearch()
-        }
-
       case Some(Node(assignment: SoftAST.TypeAssignment, _)) if assignment.expressionLeft == identNode.data =>
         self()
 
@@ -137,6 +100,17 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
       case Some(Node(struct: SoftAST.Struct, _)) if struct.identifier == identNode.data =>
         self()
+
+      case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
+        node.parent match {
+          // If it's an assignment, it must also be a variable declaration for the current node to be a self.
+          case Some(Node(_: SoftAST.VariableDeclaration | _: SoftAST.Const, _)) =>
+            self()
+
+          case _ =>
+            // invoke full scope search.
+            runFullSearch()
+        }
 
       case Some(node @ Node(group: SoftAST.Group[_, _], _)) =>
         searchGroup(
@@ -164,6 +138,32 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             logger.trace(s"GroupTail not contained with a group. Index: ${tail.index}. File: ${sourceCode.parsed.fileURI}")
             runFullSearch()
         }
+
+      case Some(node @ Node(_: SoftAST.ReferenceCall, _)) =>
+        node.parent match {
+          case Some(node @ Node(methodCall: SoftAST.MethodCall, _)) =>
+            searchMethodCall(
+              methodCallNode = node.upcast(methodCall),
+              identNode = identNode,
+              sourceCode = sourceCode,
+              cache = cache,
+              settings = settings,
+              detectCallSyntax = true
+            )
+
+          case _ =>
+            runFullSearch()
+        }
+
+      case Some(node @ Node(methodCall: SoftAST.MethodCall, _)) =>
+        searchMethodCall(
+          methodCallNode = node.upcast(methodCall),
+          identNode = identNode,
+          sourceCode = sourceCode,
+          cache = cache,
+          settings = settings,
+          detectCallSyntax = true
+        )
 
       case _ =>
         runFullSearch()
@@ -997,10 +997,12 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             else
               // If no result, execute a typed-search which searches strict-AST for the node's type information.
               searchTypeCallStrict(
-                typeProperty = identNode,
                 theType = left,
+                typeProperty = identNode,
                 sourceCode = sourceCode,
-                cache = cache
+                cache = cache,
+                settings = settings,
+                detectCallSyntax = detectCallSyntax
               )
 
           case (leftNode, rightNode) =>
@@ -1009,20 +1011,24 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
               logger.error(s"Not found: Static-call Node info. left: ${leftNode.map(_.toCode())}. right: ${rightNode.map(_.toCode())}. FileURI: ${sourceCode.parsed.fileURI}")
 
             searchTypeCallStrict(
-              typeProperty = identNode,
               theType = left,
+              typeProperty = identNode,
               sourceCode = sourceCode,
-              cache = cache
+              cache = cache,
+              settings = settings,
+              detectCallSyntax = detectCallSyntax
             )
         }
 
       case _ =>
         // Otherwise, type information is needed.
         searchTypeCallStrict(
-          typeProperty = identNode,
           theType = methodCallNode.data.leftExpression,
+          typeProperty = identNode,
           sourceCode = sourceCode,
-          cache = cache
+          cache = cache,
+          settings = settings,
+          detectCallSyntax = detectCallSyntax
         )
     }
 
@@ -1167,7 +1173,9 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       theType: SoftAST.ExpressionAST,
       typeProperty: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      cache: SearchCache
+      cache: SearchCache,
+      settings: GoToDefSetting,
+      detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     // Find all the type definitions.
     val typeDefs =
@@ -1182,13 +1190,6 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
     typeDefs match {
       case Some(Right(typeDefs)) =>
-        // For each type-definition, search for the property `typeProperty` within it.
-        val settings =
-          GoToDefSetting(
-            includeAbstractFuncDef = false,
-            includeInheritance = true
-          )
-
         // TODO: Execute in parallel
         typeDefs flatMap {
           typDef =>
@@ -1210,7 +1211,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
                       sourceCode = softTypeDef,
                       cache = cache,
                       settings = settings,
-                      detectCallSyntax = true
+                      detectCallSyntax = detectCallSyntax
                     )
 
                   case None =>
