@@ -180,6 +180,7 @@ private object GroupParser {
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
+        StringInterpolationParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 

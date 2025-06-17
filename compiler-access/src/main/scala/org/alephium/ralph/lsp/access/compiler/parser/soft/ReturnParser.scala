@@ -40,6 +40,7 @@ private object ReturnParser {
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
+        StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
