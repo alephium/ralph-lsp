@@ -45,10 +45,9 @@ private object StringInterpolationParser {
         .parseOrFail(Token.Dollar, Token.Tick)
         .map(Seq(_)) |
         // Parse escaped interpolation
-        TokenParser
-          .parseOrFailUndocumented(Token.Dollar)
+        CodeParser
+          .parseOrFail(Token.Dollar)
           .rep(min = 2, max = 2)
-          .map(_.map(_.code))
     }
 
   /** Parse interpolated text */
