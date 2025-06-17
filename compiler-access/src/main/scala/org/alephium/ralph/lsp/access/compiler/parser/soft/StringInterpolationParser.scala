@@ -47,7 +47,7 @@ private object StringInterpolationParser {
         // Parse escaped interpolation
         CodeParser
           .parseOrFail(Token.Dollar)
-          .rep(min = 2, max = 2)
+          .rep(exactly = 2)
     }
 
   /** Parse interpolated text */
