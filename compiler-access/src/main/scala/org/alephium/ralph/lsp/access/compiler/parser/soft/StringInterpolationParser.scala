@@ -38,7 +38,7 @@ private object StringInterpolationParser {
     }
 
   /** Parse non-interpolated text */
-  private def nonInterpolation[Unknown: P] =
+  private def nonInterpolation[Unknown: P]: P[Seq[SoftAST.Code]] =
     P {
       // Parse text not containing the dollar
       TextParser
