@@ -59,4 +59,22 @@ object CollectionUtil {
 
   }
 
+  /**
+   * Merges consecutive [[Left]] or [[Right]] elements in a sequence of `Either[Seq[Code], Seq[InterpolatedBlock]]`.
+   */
+  def mergeConsecutive[L, R](seq: Seq[Either[Seq[L], Seq[R]]]): Seq[Either[Seq[L], Seq[R]]] =
+    seq.foldLeft(Seq.empty[Either[Seq[L], Seq[R]]]) {
+      case (result, current) =>
+        (result.lastOption, current) match {
+          case (Some(Left(previous)), Left(current)) =>
+            result.init :+ Left(previous ++ current)
+
+          case (Some(Right(previous)), Right(current)) =>
+            result.init :+ Right(previous ++ current)
+
+          case _ =>
+            result :+ current
+        }
+    }
+
 }

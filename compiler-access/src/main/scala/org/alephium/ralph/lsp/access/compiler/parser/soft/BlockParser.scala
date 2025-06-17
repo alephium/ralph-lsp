@@ -5,10 +5,22 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object BlockParser {
+
+  /**
+   * Parses a mandatory block.
+   */
+  def parse[Unknown: P]: P[SoftAST.BlockExpectedAST] =
+    P(Index ~ parseOrFail.?) map {
+      case (_, Some(block)) =>
+        block
+
+      case (from, None) =>
+        SoftAST.BlockExpected(point(from))
+    }
 
   /**
    * Parses a block's body such a parent block is already defined.

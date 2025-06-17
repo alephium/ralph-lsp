@@ -36,7 +36,7 @@ val commonSettings =
         "-Xlint:doc-detached",
         "-Xlint:inaccessible",
         "-Xlint:infer-any",
-        "-Xlint:missing-interpolator",
+        // "-Xlint:missing-interpolator",
         "-Xlint:nullary-unit",
         "-Xlint:option-implicit",
         "-Xlint:package-object-classes",

@@ -5,10 +5,26 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object CodeParser {
+
+  /**
+   * Parses a mandatory token.
+   *
+   * @param token The expected token.
+   * @return The parsed token if matched.
+   *         Else fails with [[SoftAST.TokenExpected]] error.
+   */
+  def parse[Unknown: P, T <: Token](token: T): P[SoftAST.CodeTokenAST[T]] =
+    P(Index ~ parseOrFail(token).?) map {
+      case (_, Some(token)) =>
+        token
+
+      case (from, None) =>
+        SoftAST.TokenExpected(point(from), token)
+    }
 
   def parseOrFail[Unknown: P, T <: Token](token: T): P[SoftAST.CodeToken[T]] =
     P {
