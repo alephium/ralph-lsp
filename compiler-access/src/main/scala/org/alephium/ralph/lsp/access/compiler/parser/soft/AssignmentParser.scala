@@ -66,6 +66,7 @@ private object AssignmentParser {
         )
     }
 
+  /** TODO: Review this function - Most of these parsers can be removed. */
   private def leftExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
       MethodCallParser.parseOrFail |
@@ -74,6 +75,7 @@ private object AssignmentParser {
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
+        StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
@@ -92,6 +94,7 @@ private object AssignmentParser {
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
+        StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
         IdentifierParser.parseOrFail
     }

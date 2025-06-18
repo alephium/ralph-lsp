@@ -16,49 +16,56 @@ val inliningOptions =
      */
   )
 
+val testOptions =
+  Seq(
+    "-deprecation",
+    "-encoding",
+    "utf-8",
+    "-explaintypes",
+    "-feature",
+    "-unchecked",
+    "-Xfatal-warnings",
+    "-Xlint:adapted-args",
+    "-Xlint:constant",
+    "-Xlint:delayedinit-select",
+    "-Xlint:doc-detached",
+    "-Xlint:inaccessible",
+    "-Xlint:infer-any",
+    "-Xlint:nullary-unit",
+    "-Xlint:option-implicit",
+    "-Xlint:package-object-classes",
+    "-Xlint:poly-implicit-overload",
+    "-Xlint:private-shadow",
+    "-Xlint:stars-align",
+    "-Xlint:type-parameter-shadow",
+    "-Xlint:nonlocal-return",
+    "-Ywarn-dead-code",
+    "-Ywarn-extra-implicit",
+    "-Ywarn-numeric-widen",
+    "-Ywarn-unused:implicits",
+    "-Ywarn-unused:imports",
+    "-Ywarn-unused:locals",
+    "-Ywarn-unused:params",
+    "-Ywarn-unused:patvars",
+    "-Ywarn-unused:privates",
+    "-Ywarn-value-discard"
+  ) ++ inliningOptions
+
+/**
+ * "-Xlint:missing-interpolator" is excluded from test to allow testing of Ralphc's string-interpolation feature.
+ */
+val mainOptions =
+  testOptions :+ "-Xlint:missing-interpolator"
+
 val commonSettings =
   Seq(
     organization := "org.alephium",
     scalaVersion := Version.scala213,
-    scalacOptions ++=
-      Seq(
-        "-deprecation",
-        "-encoding",
-        "utf-8",
-        "-explaintypes",
-        "-feature",
-        "-unchecked",
-        // "-Xsource:3.1",
-        "-Xfatal-warnings",
-        "-Xlint:adapted-args",
-        "-Xlint:constant",
-        "-Xlint:delayedinit-select",
-        "-Xlint:doc-detached",
-        "-Xlint:inaccessible",
-        "-Xlint:infer-any",
-        "-Xlint:missing-interpolator",
-        "-Xlint:nullary-unit",
-        "-Xlint:option-implicit",
-        "-Xlint:package-object-classes",
-        "-Xlint:poly-implicit-overload",
-        "-Xlint:private-shadow",
-        "-Xlint:stars-align",
-        "-Xlint:type-parameter-shadow",
-        "-Xlint:nonlocal-return",
-        "-Ywarn-dead-code",
-        "-Ywarn-extra-implicit",
-        "-Ywarn-numeric-widen",
-        "-Ywarn-unused:implicits",
-        "-Ywarn-unused:imports",
-        "-Ywarn-unused:locals",
-        "-Ywarn-unused:params",
-        "-Ywarn-unused:patvars",
-        "-Ywarn-unused:privates",
-        "-Ywarn-value-discard"
-      ) ++ inliningOptions,
     Compile / doc / scalacOptions ++= Seq(
       "-no-link-warnings"
-    )
+    ),
+    Compile / scalacOptions := mainOptions,
+    Test / scalacOptions    := testOptions
   )
 
 lazy val utils =

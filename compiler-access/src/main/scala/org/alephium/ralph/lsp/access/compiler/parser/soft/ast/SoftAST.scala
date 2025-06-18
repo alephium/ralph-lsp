@@ -223,6 +223,8 @@ object SoftAST {
 
   sealed trait TokenDocExpectedAST[+T <: Token] extends SoftAST
 
+  sealed trait BlockExpectedAST extends SoftAST
+
   /**
    * Represents a token that may contain code comments or documentation.
    *
@@ -245,11 +247,14 @@ object SoftAST {
 
   }
 
-  case class TokenExpected[T <: Token](
+  sealed trait CodeTokenAST[+T <: Token] extends SoftAST
+
+  case class TokenExpected[+T <: Token](
       index: SourceIndex,
       token: T)
     extends TokenExpectedErrorAST(token)
        with TokenDocExpectedAST[T]
+       with CodeTokenAST[T]
 
   /**
    * Represents a token that is also an expression, e.g. `true` & `false`.
@@ -376,6 +381,11 @@ object SoftAST {
       parts: Seq[BlockPartAST])
     extends BlockAST
 
+  case class BlockExpected(
+      index: SourceIndex)
+    extends ExpectedErrorAST("Block")
+       with BlockExpectedAST
+
   /**
    * Represents a code block enclosed within curly braces `{}`.
    */
@@ -385,6 +395,7 @@ object SoftAST {
       parts: Seq[BlockPartAST],
       closeCurly: TokenDocExpectedAST[Token.CloseCurly.type])
     extends BlockAST
+       with BlockExpectedAST
 
   case class ExpressionBlock(
       index: SourceIndex,
@@ -681,6 +692,19 @@ object SoftAST {
       endTick: TokenDocExpectedAST[Token.Tick.type])
     extends ExpressionAST
 
+  case class StringInterpolation(
+      index: SourceIndex,
+      startTick: TokenDocumented[Token.Tick.type],
+      interpolation: Seq[Either[Seq[Code], Seq[InterpolatedBlock]]],
+      endTick: CodeTokenAST[Token.Tick.type])
+    extends ExpressionAST
+
+  case class InterpolatedBlock(
+      index: SourceIndex,
+      dollar: CodeToken[Token.Dollar.type],
+      block: BlockExpectedAST)
+    extends SoftAST
+
   case class StringLiteral(
       index: SourceIndex,
       startQuote: TokenDocumented[Token.Quote.type],
@@ -773,7 +797,8 @@ object SoftAST {
   case class CodeToken[+T <: Token](
       index: SourceIndex,
       token: T)
-    extends Code {
+    extends Code
+       with CodeTokenAST[T] {
 
     override def text: String =
       token.lexeme

@@ -424,6 +424,15 @@ object TestSoftAST {
       token = Token.Tick
     )
 
+  def Dollar(code: String): SoftAST.TokenDocumented[Token.Dollar.type] =
+    Dollar(indexOf(code))
+
+  def Dollar(index: SourceIndex): SoftAST.TokenDocumented[Token.Dollar.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Dollar
+    )
+
   def Quote(code: String): SoftAST.TokenDocumented[Token.Quote.type] =
     Quote(indexOf(code))
 

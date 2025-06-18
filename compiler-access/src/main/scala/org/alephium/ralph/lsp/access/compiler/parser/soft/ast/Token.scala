@@ -109,6 +109,7 @@ object Token {
   case object Tick                                              extends Punctuator("`") with Reserved
   case object Quote                                             extends Punctuator("\"") with Reserved
   case object B                                                 extends Punctuator("b") with Token
+  case object Dollar                                            extends Punctuator("$") with Reserved
 
   sealed abstract class Data(override val lexeme: String) extends Token
   case object Const                                       extends Data("const") with Reserved

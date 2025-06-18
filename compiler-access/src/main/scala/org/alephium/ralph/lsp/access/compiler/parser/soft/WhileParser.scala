@@ -51,6 +51,7 @@ private object WhileParser {
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
+        StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
