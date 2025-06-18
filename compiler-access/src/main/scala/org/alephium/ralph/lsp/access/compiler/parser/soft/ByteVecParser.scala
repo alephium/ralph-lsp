@@ -25,6 +25,11 @@ private object ByteVecParser {
         )
     }
 
+  /**
+   * TODO: The characters matched should be restricted to "0-9a-fA-F".
+   *       Other characters should result in syntax error.
+   *       But this validation is deferred to `ralphc`.
+   */
   private def hexString[Unknown: P]: P[String] =
     P(CharIn("0-9a-zA-Z").rep(1).!)
 
