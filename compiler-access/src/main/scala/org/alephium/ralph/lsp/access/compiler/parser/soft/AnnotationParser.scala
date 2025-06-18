@@ -29,7 +29,7 @@ private object AnnotationParser {
         SpaceParser.parseOrFail.? ~
         IdentifierParser.parse ~
         SpaceParser.parseOrFail.? ~
-        ParameterParser.parseOrFail.? ~
+        TupleParser.parseOrFail.? ~
         SpaceParser.parseOrFail.? ~
         Index
     } map {

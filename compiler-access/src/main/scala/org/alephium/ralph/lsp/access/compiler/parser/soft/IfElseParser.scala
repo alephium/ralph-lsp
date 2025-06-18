@@ -16,7 +16,7 @@ private object IfElseParser {
         TokenParser.parseOrFail(Token.If) ~
         TokenParser.isBoundary(Token.OpenParen, Token.OpenCurly) ~
         SpaceParser.parseOrFail.? ~
-        ParameterParser.parse ~
+        TupleParser.parse ~
         SpaceParser.parseOrFail.? ~
         BlockParser.parseOrFail.? ~
         // do not read the space if `else` is not provided

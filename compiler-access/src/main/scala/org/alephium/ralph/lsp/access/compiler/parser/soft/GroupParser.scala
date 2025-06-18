@@ -54,9 +54,9 @@ private object GroupParser {
   def parseOrFail[Unknown: P]: P[SoftAST.Group[Nothing, Nothing]] =
     P {
       Index ~
-        expression(Token.OpenParen, Token.CloseParen).? ~
+        expression.? ~
         SpaceParser.parseOrFail.? ~
-        tail(Token.OpenParen, Token.CloseParen).rep(1) ~
+        tail.rep(1) ~
         Index
     } map {
       case (from, headExpression, postHeadSpace, tailParams, to) =>
@@ -96,9 +96,9 @@ private object GroupParser {
         TokenParser.parse(required, open) ~
         SpaceParser.parseOrFail.? ~
         Index ~
-        expression(open, close).? ~
+        expression.? ~
         SpaceParser.parseOrFail.? ~
-        tail(open, close).rep ~
+        tail.rep ~
         TokenParser.parse(close) ~
         Index
     } map {
@@ -143,14 +143,12 @@ private object GroupParser {
    *
    * @return An instance of [[SoftAST.GroupTail]].
    */
-  private def tail[Unknown: P, O <: Token, C <: Token](
-      open: O,
-      close: C): P[SoftAST.GroupTail] =
+  private def tail[Unknown: P]: P[SoftAST.GroupTail] =
     P {
       Index ~
         TokenParser.parseOrFail(Token.Comma) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parseSubset(expression(open, close)) ~
+        ExpressionParser.parseSubset(expression) ~
         SpaceParser.parseOrFail.? ~
         Index
     } map {
@@ -164,9 +162,7 @@ private object GroupParser {
         )
     }
 
-  private def expression[Unknown: P, O <: Token, C <: Token](
-      open: O,
-      close: C): P[SoftAST.ExpressionAST] =
+  private def expression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
       TypeAssignmentParser.parseOrFail |
         AssignmentParser.parseOrFail |
@@ -176,7 +172,7 @@ private object GroupParser {
         IfElseParser.parseOrFail |
         ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
-        GroupParser.parseOrFail(open, close) |
+        TupleParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |

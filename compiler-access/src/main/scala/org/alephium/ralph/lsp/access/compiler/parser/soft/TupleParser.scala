@@ -6,7 +6,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object ParameterParser {
+private object TupleParser {
 
   def parse[Unknown: P]: P[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]] =
     GroupParser.parse(

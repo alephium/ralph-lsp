@@ -30,7 +30,7 @@ private object ReferenceCallParser {
       Index ~
         IdentifierParser.parse(required) ~
         SpaceParser.parseOrFail.? ~
-        ParameterParser.parse(required) ~
+        TupleParser.parse(required) ~
         Index
     } map {
       case (from, identifier, space, arguments, to) =>
