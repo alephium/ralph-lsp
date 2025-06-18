@@ -677,6 +677,12 @@ object SoftAST {
       unit: Option[UnitAlph])
     extends ExpressionAST
 
+  case class ByteVec(
+      index: SourceIndex,
+      hash: TokenDocumented[Token.Hash.type],
+      hex: Option[CodeString])
+    extends ExpressionAST
+
   case class UnitAlph(
       index: SourceIndex,
       space: Option[Space],

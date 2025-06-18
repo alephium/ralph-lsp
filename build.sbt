@@ -130,7 +130,7 @@ lazy val `lsp-server` =
   project
     .settings(
       commonSettings,
-      scalacOptions += "-Xmixin-force-forwarders:false", // duplicate RPC method initialized.
+      Compile / scalacOptions += "-Xmixin-force-forwarders:false", // duplicate RPC method initialized.
       assembly / mainClass       := Some(MAIN_CLASS),
       assembly / assemblyJarName := JAR_NAME,
       assemblyMergeStrategy := {

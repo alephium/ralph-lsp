@@ -47,6 +47,7 @@ private object ExpressionParser {
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
         TupleParser.parseOrFail |
+        ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |

@@ -183,9 +183,24 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
       }
 
       "right expression is a ByteVec" in {
-        // ByteVec is valid syntax, but has no parser implemented.
-        // Until then, ByteVec is reported as Unresolved.
         val root = parseSoft("mut number = #00112233")
+
+        root.parts should have size 1
+        val assignment = root.parts.head.asInstanceOf[SoftAST.Assignment]
+
+        val left = assignment.expressionLeft.asInstanceOf[SoftAST.MutableBinding]
+        left.toCode() shouldBe "mut number"
+
+        assignment.expressionRight shouldBe
+          SoftAST.ByteVec(
+            index = indexOf("mut number = >>#00112233<<"),
+            hash = Hash("mut number = >>#<<00112233"),
+            hex = Some(CodeString("mut number = #>>00112233<<"))
+          )
+      }
+
+      "right expression is invalid" in {
+        val root = parseSoft("""mut number = 😵""")
 
         root.parts should have size 2
         val assignment = root.parts.head.asInstanceOf[SoftAST.Assignment]
@@ -194,12 +209,12 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
         val left = assignment.expressionLeft.asInstanceOf[SoftAST.MutableBinding]
         left.toCode() shouldBe "mut number"
 
-        assignment.expressionRight shouldBe ExpressionExpected("mut number = >><<#00112233")
+        assignment.expressionRight shouldBe ExpressionExpected("mut number = >><<😵")
 
         unresolved shouldBe
           Unresolved(
-            index = indexOf("mut number = >>#00112233<<"),
-            text = "#00112233"
+            index = indexOf("mut number = >>😵<<"),
+            text = "😵"
           )
       }
     }
