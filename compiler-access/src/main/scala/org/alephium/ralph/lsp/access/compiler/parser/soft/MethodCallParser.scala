@@ -79,6 +79,7 @@ private object MethodCallParser {
     P {
       ReferenceCallParser.parseOrFail |
         ParameterParser.parseOrFail |
+        ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |

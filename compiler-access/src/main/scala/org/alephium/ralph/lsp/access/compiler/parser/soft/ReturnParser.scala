@@ -37,6 +37,7 @@ private object ReturnParser {
         ElseParser.parseOrFail |
         AnnotationParser.parseOrFail |
         ParameterParser.parseOrFail |
+        ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
