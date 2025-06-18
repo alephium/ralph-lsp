@@ -18,7 +18,7 @@ private object TemplateParser {
         SpaceParser.parseOrFail.? ~
         IdentifierParser.parse ~
         SpaceParser.parseOrFail.? ~
-        ParameterParser.parseOrFail.? ~
+        TupleParser.parseOrFail.? ~
         SpaceParser.parseOrFail.? ~
         InheritanceParser.parseOrFail.rep ~
         BlockParser.parseOrFail.? ~

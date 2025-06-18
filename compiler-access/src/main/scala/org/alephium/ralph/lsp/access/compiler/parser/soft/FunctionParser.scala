@@ -53,7 +53,7 @@ private object FunctionParser {
       Index ~
         IdentifierParser.parse ~
         SpaceParser.parseOrFail.? ~
-        ParameterParser.parse ~
+        TupleParser.parse ~
         SpaceParser.parseOrFail.? ~
         returnSignature ~
         Index
@@ -108,7 +108,7 @@ private object FunctionParser {
     P {
       IfElseParser.parseOrFail |
         ElseParser.parseOrFail |
-        ParameterParser.parseOrFail |
+        TupleParser.parseOrFail |
         NumberParser.parseOrFail |
         IdentifierParser.parseOrFail
     }

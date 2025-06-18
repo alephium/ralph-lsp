@@ -36,7 +36,7 @@ object TestParser {
     runSoftParser(FunctionParser.parseOrFail(_))(code)
 
   def parseTuple(code: String): SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type] =
-    runSoftParser(ParameterParser.parse(_))(code)
+    runSoftParser(TupleParser.parse(_))(code)
 
   def parseBlock(code: String): SoftAST.Block =
     runSoftParser(BlockParser.parseOrFail(_))(code)
