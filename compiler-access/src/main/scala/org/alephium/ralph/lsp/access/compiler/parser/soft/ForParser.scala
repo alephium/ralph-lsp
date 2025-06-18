@@ -87,6 +87,7 @@ private object ForParser {
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
         ParameterParser.parseOrFail |
+        ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |

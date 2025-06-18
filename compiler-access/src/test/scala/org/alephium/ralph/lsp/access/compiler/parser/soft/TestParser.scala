@@ -126,6 +126,9 @@ object TestParser {
   def parseEmit(code: String): SoftAST.Emit =
     runSoftParser(EmitParser.parseOrFail(_))(code)
 
+  def parseByteVec(code: String): SoftAST.ByteVec =
+    runSoftParser(ByteVecParser.parseOrFail(_))(code)
+
   /**
    * Test the result of [[SoftAST.deepCopy]] on the given AST.
    */

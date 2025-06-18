@@ -72,6 +72,7 @@ private object AssignmentParser {
       MethodCallParser.parseOrFail |
         MutableBindingParser.parseOrFail |
         ParameterParser.parseOrFail |
+        ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
@@ -91,6 +92,7 @@ private object AssignmentParser {
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
         ParameterParser.parseOrFail |
+        ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
