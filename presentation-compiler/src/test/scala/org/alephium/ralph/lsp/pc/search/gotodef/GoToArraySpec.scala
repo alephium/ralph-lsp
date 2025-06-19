@@ -24,29 +24,70 @@ class GoToArraySpec extends AnyWordSpec with Matchers {
   }
 
   "return non-empty" when {
-    "there is a single array definition" in {
-      goToDefinition()(
-        """
-          |Contract Test(>>array<<: [U256; 2])  {
-          |  fn main() -> () {
-          |    let head = arra@@y[0]
-          |  }
-          |}
-          |""".stripMargin
-      )
-    }
-
-    "there are duplicate array definitions" when {
-      "without inheritance" in {
+    "there is a single array definition" when {
+      "strict" in {
         goToDefinition()(
           """
             |Contract Test(>>array<<: [U256; 2])  {
-            |  fn main(>>array<<: [U256; 2]) -> () {
+            |  fn main() -> () {
             |    let head = arra@@y[0]
             |  }
             |}
             |""".stripMargin
         )
+      }
+
+      "soft" when {
+        "no function" in {
+          goToDefinitionSoft()(
+            """
+              |Contract Test(>>array<<: [U256; 2])  {
+              |  arra@@y[0]
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "no contract" in {
+          goToDefinitionSoft()(
+            """
+              |let >>array<< = []
+              |arra@@y[0]
+              |""".stripMargin
+          )
+        }
+      }
+    }
+
+    "there are duplicate array definitions" when {
+      "without inheritance" when {
+        "strict" in {
+          goToDefinition()(
+            """
+              |Contract Test(>>array<<: [U256; 2])  {
+              |  fn main(>>array<<: [U256; 2]) -> () {
+              |    let head = arra@@y[0]
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "soft" in {
+          goToDefinitionSoft()(
+            """
+              |Contract Test(>>array<<: [U256; 2])  {
+              |
+              |  let >>array<< = [0, 1]
+              |
+              |  fn main(>>array<<: [U256; 2]) {
+              |    let >>array<< = [0, 1]
+              |    let head = arra@@y[0]
+              |  }
+              |}
+              |""".stripMargin
+          )
+        }
       }
 
       "within inheritance" when {
