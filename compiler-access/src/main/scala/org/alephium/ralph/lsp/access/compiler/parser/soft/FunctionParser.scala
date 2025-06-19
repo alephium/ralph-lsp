@@ -112,6 +112,7 @@ private object FunctionParser {
         ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 

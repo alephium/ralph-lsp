@@ -54,6 +54,7 @@ private object WhileParser {
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 

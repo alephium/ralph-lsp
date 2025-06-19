@@ -45,6 +45,7 @@ private object InfixCallParser {
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 
@@ -65,6 +66,7 @@ private object InfixCallParser {
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 

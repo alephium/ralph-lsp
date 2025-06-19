@@ -44,6 +44,7 @@ private object ReturnParser {
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 

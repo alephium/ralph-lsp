@@ -78,6 +78,7 @@ private object AssignmentParser {
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 
@@ -99,6 +100,7 @@ private object AssignmentParser {
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 
