@@ -10,6 +10,9 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
 private object ExpressionParser {
 
+  def parse[Unknown: P]: P[SoftAST.ExpressionAST] =
+    parseSubset(parseOrFail)
+
   /**
    * Attempts to execute a subset of expression parsers.
    *
