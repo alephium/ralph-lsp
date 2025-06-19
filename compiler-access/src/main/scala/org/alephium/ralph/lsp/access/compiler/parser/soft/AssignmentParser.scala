@@ -92,6 +92,7 @@ private object AssignmentParser {
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
         TupleParser.parseOrFail |
+        ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |

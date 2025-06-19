@@ -50,6 +50,7 @@ private object ExpressionParser {
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
         TupleParser.parseOrFail |
+        ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
