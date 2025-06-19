@@ -100,4 +100,22 @@ class ArrayAccessParserSpec extends AnyWordSpec with Matchers {
       )
   }
 
+  "complex index-access via root SoftParser" in {
+    val root =
+      parseSoft("contract.function().array[map.getIndex(forValue)]")
+
+    root.parts should have size 1
+    val methodCall = root.parts.head.asInstanceOf[SoftAST.MethodCall]
+    // Left expression is another method-call. Left does not require any further testing.
+    methodCall.leftExpression.asInstanceOf[SoftAST.MethodCall].toCode() shouldBe "contract.function()"
+    // Right expression is array access.
+    val right = methodCall.rightExpression.asInstanceOf[SoftAST.ArrayAccess]
+    right.toCode() shouldBe "array[map.getIndex(forValue)]"
+    right.identifier shouldBe Identifier("contract.function().>>array<<[map.getIndex(forValue)]")
+    // Right's accessed-index is also a method-call.
+    val accessIndex = right.accessIndex.asInstanceOf[SoftAST.MethodCall]
+    accessIndex.index shouldBe indexOf("contract.function().array[>>map.getIndex(forValue)<<]")
+    accessIndex.toCode() shouldBe "map.getIndex(forValue)"
+  }
+
 }
