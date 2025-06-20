@@ -770,6 +770,17 @@ object SoftAST {
       closeBracket: TokenDocExpectedAST[Token.BlockBracket.type])
     extends ArrayAST
 
+  case class ArrayAccess(
+      index: SourceIndex,
+      identifier: Identifier,
+      preOpenBracketSpace: Option[Space],
+      openBracket: TokenDocumented[Token.OpenBracket.type],
+      preAccessIndex: Option[Space],
+      accessIndex: ExpressionAST,
+      preCloseBracketSpace: Option[Space],
+      closeBracket: TokenDocExpectedAST[Token.BlockBracket.type])
+    extends ExpressionAST
+
   case class Space(
       code: CodeString)
     extends CodeAST

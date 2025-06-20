@@ -41,6 +41,7 @@ private object EmitParser {
         BlockParser.parseOrFail |
         IfElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 

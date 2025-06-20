@@ -85,12 +85,14 @@ private object MethodCallParser {
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 
   private def rightExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
       ReferenceCallParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
 
