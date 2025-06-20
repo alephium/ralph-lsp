@@ -748,6 +748,28 @@ object SoftAST {
       block: Option[Block])
     extends ExpressionAST
 
+  sealed trait ArrayAST extends ExpressionAST
+
+  case class ArrayInline(group: Group[Token.OpenBracket.type, Token.BlockBracket.type]) extends ArrayAST {
+
+    override def index: SourceIndex =
+      group.index
+
+  }
+
+  case class ArraySized(
+      index: SourceIndex,
+      openBracket: TokenDocumented[Token.OpenBracket.type],
+      preTypeSpace: Option[Space],
+      tpe: IdentifierAST,
+      preSemiColonSpace: Option[Space],
+      semiColon: TokenDocumented[Token.Semicolon.type],
+      preSizeSpace: Option[Space],
+      size: ExpressionAST,
+      preCloseBracketSpace: Option[Space],
+      closeBracket: TokenDocExpectedAST[Token.BlockBracket.type])
+    extends ArrayAST
+
   case class Space(
       code: CodeString)
     extends CodeAST
