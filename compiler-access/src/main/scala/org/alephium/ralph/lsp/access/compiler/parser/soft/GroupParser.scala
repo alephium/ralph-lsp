@@ -173,6 +173,7 @@ private object GroupParser {
         ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         TupleParser.parseOrFail |
+        ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |

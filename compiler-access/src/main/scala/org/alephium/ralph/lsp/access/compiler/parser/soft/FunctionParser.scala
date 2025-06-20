@@ -109,6 +109,7 @@ private object FunctionParser {
       IfElseParser.parseOrFail |
         ElseParser.parseOrFail |
         TupleParser.parseOrFail |
+        ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         IdentifierParser.parseOrFail

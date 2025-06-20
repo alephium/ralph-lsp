@@ -38,6 +38,7 @@ private object InfixCallParser {
         ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         TupleParser.parseOrFail |
+        ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
@@ -57,6 +58,7 @@ private object InfixCallParser {
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
         TupleParser.parseOrFail |
+        ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
