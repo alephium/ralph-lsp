@@ -11,6 +11,7 @@ import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefCodeProvider, GoToDefSet
 import org.alephium.ralph.lsp.pc.search.gotodef.soft.GoToDefCodeProviderSoft
 import org.alephium.ralph.lsp.pc.search.gotoref.{GoToRefCodeProvider, GoToRefSetting}
 import org.alephium.ralph.lsp.pc.search.gototypedef.GoToTypeDefCodeProvider
+import org.alephium.ralph.lsp.pc.search.hover.HoverCodeProvider
 import org.alephium.ralph.lsp.pc.search.inlayhints.InlayHintsCodeProvider
 import org.alephium.ralph.lsp.pc.search.rename.GoToRenameCodeProvider
 import org.alephium.ralph.lsp.pc.search.CodeProvider.{searchWorkspace, searchWorkspaceAndDependencies}
@@ -144,6 +145,10 @@ object CodeProvider {
   /** The inlay-hint implementation of [[CodeProvider]]. */
   implicit val inlayHints: CodeProvider[SourceCodeState.Parsed, LinePosition, SourceLocation.InlayHint] =
     InlayHintsCodeProvider
+
+  /** The hover implementation of [[CodeProvider]]. */
+  implicit val hover: CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.Hover] =
+    HoverCodeProvider
 
   /**
    * Executes search on dependencies and the workspace that can use this dependency.

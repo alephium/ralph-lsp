@@ -127,6 +127,13 @@ object TestCodeProvider {
       dependencyDownloaders = ArraySeq.empty
     )
 
+  def hover(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[SourceLocation.Hover] =
+    goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.Hover](
+      code = code.to(ArraySeq),
+      searchSettings = (SoftAST, settings),
+      dependencyDownloaders = ArraySeq.empty
+    )
+
   def inlayHints(code: String): List[SourceLocation.InlayHint] = {
     // Replace all `>>inlay: Hints<<` with `>><<` because `goTo` does not process code that is not real,
     // and hints are not real code.

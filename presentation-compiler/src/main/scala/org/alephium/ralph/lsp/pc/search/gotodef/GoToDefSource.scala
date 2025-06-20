@@ -4,7 +4,6 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.Ast
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.Node
@@ -26,7 +25,7 @@ private object GoToDefSource extends StrictImplicitLogging {
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
-    sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
+    sourceCode.tree.closest(cursorIndex) match { // find the node closest to this source-index
       case Some(closest) =>
         closest match {
           case identNode @ Node(ident: Ast.Ident, _) =>
