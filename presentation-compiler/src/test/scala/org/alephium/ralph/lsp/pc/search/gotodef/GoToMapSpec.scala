@@ -58,6 +58,48 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
         )
       }
     }
+
+    "soft parseable (contains syntax errors - not strict parseable)" when {
+      "duplicates exist" when {
+        "first map is selected" in {
+          goToDefinitionSoft() {
+            """
+              |mapping[U256, U256] >>ma@@p<<
+              |mapping[U256, U256] map
+              |""".stripMargin
+          }
+        }
+
+        "second map is selected" in {
+          goToDefinitionSoft() {
+            """
+              |mapping[U256, U256] map
+              |mapping[U256, U256] >>ma@@p<<
+              |""".stripMargin
+          }
+        }
+      }
+
+      "types are not provided" when {
+        "first map is selected" in {
+          goToDefinitionSoft() {
+            """
+              |mapping[] >>ma@@p<<
+              |mapping[] map
+              |""".stripMargin
+          }
+        }
+
+        "second map is selected" in {
+          goToDefinitionSoft() {
+            """
+              |mapping[] map
+              |mapping[] >>ma@@p<<
+              |""".stripMargin
+          }
+        }
+      }
+    }
   }
 
   "return non-empty" when {
@@ -173,6 +215,35 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
           |}
           |""".stripMargin
       )
+    }
+
+    "soft parseable (contains syntax errors - not strict parseable)" when {
+      "the map is within" when {
+        "contract block" in {
+          goToDefinitionSoft() {
+            """
+              |Contract Main {
+              |  mapping[Blah, ] >>map<<
+              |  ma@@p
+              |""".stripMargin
+          }
+        }
+
+        "function block" in {
+          goToDefinitionSoft() {
+            """
+              |Contract Main {
+              |  mapping >>map<<
+              |
+              |  fn main {
+              |    mapping[] >>map<<
+              |    ma@@p
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+      }
     }
   }
 
