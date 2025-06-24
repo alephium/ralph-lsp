@@ -4,7 +4,6 @@
 package org.alephium.ralph.lsp.pc.search.completion
 
 import org.alephium.ralph.Ast
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.Node
@@ -25,7 +24,7 @@ object SourceCodeCompleter {
       sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): Iterator[Suggestion] =
-    sourceCode.tree.rootNode.findLast(_.sourceIndex.exists(_ contains cursorIndex)) match { // find the node closest to this source-index
+    sourceCode.tree.closest(cursorIndex) match { // find the node closest to this source-index
       case Some(node @ Node(ident: Ast.Ident, _)) =>
         IdentCompleter.suggest(
           cursorIndex = cursorIndex,
