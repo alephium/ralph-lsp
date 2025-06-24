@@ -116,20 +116,22 @@ private case object HoverExpression extends StrictImplicitLogging {
       variableDeclaration: SoftAST.VariableDeclaration,
       typeId: Ast.TypeId): SoftAST.VariableDeclaration = {
 
+    val varDec = variableDeclaration.deepCopy(SourceIndex.empty)
+
     // Create a type assignment node showing the variable and its type.
     val typeAssignment =
       SoftAST.TypeAssignment(
         index = SourceIndex.empty,
         annotations = Seq.empty,
-        expressionLeft = variableDeclaration.assignment.expressionLeft,
+        expressionLeft = varDec.assignment.expressionLeft,
         preColonSpace = None,
         colon = SoftAST.TokenDocumented(SourceIndex.empty, None, SoftAST.CodeToken(SourceIndex.empty, Token.Colon)),
-        postColonSpace = variableDeclaration.assignment.postIdentifierSpace,
+        postColonSpace = varDec.assignment.postIdentifierSpace,
         expressionRight = SoftAST.Identifier(SourceIndex.empty, None, SoftAST.CodeString(SourceIndex.empty, typeId.name))
       )
 
-    variableDeclaration.copy(
-      assignment = variableDeclaration
+    varDec.copy(
+      assignment = varDec
         .assignment
         .copy(
           // Replace the left-hand side with the type assignment for display.
@@ -142,7 +144,7 @@ private case object HoverExpression extends StrictImplicitLogging {
           expressionRight = SoftAST.ExpressionExpected(SourceIndex.empty)
         ),
       // TODO: Add documentation if needed
-      let = variableDeclaration.let.copy(documentation = None)
+      let = varDec.let.copy(documentation = None)
     )
   }
 

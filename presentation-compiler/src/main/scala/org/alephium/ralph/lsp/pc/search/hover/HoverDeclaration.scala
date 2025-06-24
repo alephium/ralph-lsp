@@ -3,6 +3,7 @@
 
 package org.alephium.ralph.lsp.pc.search.hover
 
+import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
@@ -58,6 +59,6 @@ private case object HoverDeclaration extends StrictImplicitLogging {
    */
   private def hoverFunction(function: SoftAST.Function): SoftAST.Function =
     // TODO: Remove unnecessary spaces
-    function.copy(block = None, postSignatureSpace = None)
+    function.deepCopy(SourceIndex.empty).copy(block = None, postSignatureSpace = None)
 
 }
