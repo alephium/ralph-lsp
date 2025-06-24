@@ -652,6 +652,21 @@ object SoftAST {
       assignment: Assignment)
     extends ExpressionAST
 
+  /**
+   * [[TypeAssignment]] cannot be used to represent maps
+   * because it defines the type on the right-hand side, for example, `variable: Type`.
+   * But `mapping` defines the type on the left `mapping[A, B] map`.
+   * Therefore, the need for this new AST to represent the `mapping` syntax.
+   */
+  case class MapAssignment(
+      index: SourceIndex,
+      mapping: TokenDocumented[Token.Mapping.type],
+      preTypesSpace: Option[Space],
+      types: TypeParamsExpectedAST,
+      preIdentifierSpace: Option[Space],
+      identifier: IdentifierAST)
+    extends ExpressionAST
+
   /** Syntax: mut [identifier] */
   case class MutableBinding(
       index: SourceIndex,
@@ -748,7 +763,8 @@ object SoftAST {
       block: Option[Block])
     extends ExpressionAST
 
-  sealed trait ArrayAST extends ExpressionAST
+  sealed trait TypeParamsExpectedAST extends ExpressionAST
+  sealed trait ArrayAST              extends TypeParamsExpectedAST
 
   case class ArrayInline(group: Group[Token.OpenBracket.type, Token.BlockBracket.type]) extends ArrayAST {
 
@@ -780,6 +796,8 @@ object SoftAST {
       preCloseBracketSpace: Option[Space],
       closeBracket: TokenDocExpectedAST[Token.BlockBracket.type])
     extends ExpressionAST
+
+  case class TypeParamsExpected(index: SourceIndex) extends ExpectedErrorAST("Type params") with TypeParamsExpectedAST
 
   case class Space(
       code: CodeString)
