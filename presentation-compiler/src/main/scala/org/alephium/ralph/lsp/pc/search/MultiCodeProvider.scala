@@ -10,6 +10,7 @@ import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.multi.GoToDefMultiCodeProvider
 import org.alephium.ralph.lsp.pc.search.gotoref.multi.{GoToRefMultiCodeProvider, GoToRefMultiSetting}
 import org.alephium.ralph.lsp.pc.search.inlayhints.multi.InlayHintsMultiCodeProvider
+import org.alephium.ralph.lsp.pc.search.hover.multi.HoverMultiCodeProvider
 import org.alephium.ralph.lsp.pc.search.rename.multi.GoToRenameMultiCodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.utils.IsCancelled
@@ -70,5 +71,8 @@ object MultiCodeProvider {
 
   implicit val inlayHints: MultiCodeProvider[LinePosition, SourceLocation.InlayHint] =
     InlayHintsMultiCodeProvider
+
+  implicit val hover: MultiCodeProvider[Unit, SourceLocation.Hover] =
+    HoverMultiCodeProvider
 
 }
