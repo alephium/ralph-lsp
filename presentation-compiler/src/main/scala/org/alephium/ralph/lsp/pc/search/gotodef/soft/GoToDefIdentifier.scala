@@ -101,6 +101,9 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case Some(Node(struct: SoftAST.Struct, _)) if struct.identifier == identNode.data =>
         self()
 
+      case Some(Node(map: SoftAST.MapAssignment, _)) if map.identifier == identNode.data =>
+        self()
+
       case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
         node.parent match {
           // If it's an assignment, it must also be a variable declaration for the current node to be a self.
@@ -333,6 +336,13 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case Node(assignment: SoftAST.TypeAssignment, _) if !detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()) =>
         searchExpression(
           expression = assignment,
+          target = target,
+          sourceCode = sourceCode
+        )
+
+      case Node(map: SoftAST.MapAssignment, _) if !detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()) =>
+        searchExpression(
+          expression = map,
           target = target,
           sourceCode = sourceCode
         )
@@ -1308,6 +1318,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         // expand type assigment and search within the left expression
         searchExpression(
           expression = ast.expressionLeft,
+          target = target,
+          sourceCode = sourceCode
+        )
+
+      case map: SoftAST.MapAssignment =>
+        // expand mapping assignment and search within the identifier
+        searchIdentifier(
+          identifier = map.identifier,
           target = target,
           sourceCode = sourceCode
         )
