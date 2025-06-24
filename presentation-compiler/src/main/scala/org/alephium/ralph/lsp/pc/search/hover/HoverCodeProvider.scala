@@ -8,6 +8,7 @@ import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.gotodef._
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
 /**
@@ -59,9 +60,8 @@ private[search] case object HoverCodeProvider extends CodeProvider[SourceCodeSta
                   definition
                     .walkParents
                     .collectFirst { // Find the nearest parent.
-                      // TODO add cases here
-                      case _ =>
-                        None
+                      case Node(declaration: SoftAST.DeclarationAST, _) =>
+                        HoverDeclaration(declaration, sourceCode)
                     }
                     .flatten
 
