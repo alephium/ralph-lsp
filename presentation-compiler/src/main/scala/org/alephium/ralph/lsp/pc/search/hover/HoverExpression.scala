@@ -3,12 +3,11 @@
 
 package org.alephium.ralph.lsp.pc.search.hover
 
-import org.alephium.ralph.Ast
-import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.{Ast, SourceIndex}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast._
 import org.alephium.ralph.lsp.pc.search.CodeProvider
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.utils.Node
@@ -28,7 +27,7 @@ private case object HoverExpression extends StrictImplicitLogging {
    */
   def apply(
       expression: SoftAST.ExpressionAST,
-      sourceCode: SourceCodeState.IsParsed,
+      sourceCode: SourceLocation.CodeSoft,
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): Option[SourceLocation.Hover] =
     expression match {
@@ -40,7 +39,7 @@ private case object HoverExpression extends StrictImplicitLogging {
           content =>
             SourceLocation.Hover(
               content = content,
-              parsed = sourceCode
+              code = sourceCode
             )
         }
 
@@ -62,7 +61,7 @@ private case object HoverExpression extends StrictImplicitLogging {
    */
   private def hoverAssignment(
       assignment: SoftAST.Assignment,
-      sourceCode: SourceCodeState.IsParsed,
+      sourceCode: SourceLocation.CodeSoft,
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): Option[SourceLocation.Hover] =
     // Assignment can be a `let` or a `const`.
@@ -91,7 +90,7 @@ private case object HoverExpression extends StrictImplicitLogging {
    */
   private def hoverVariableDeclaration(
       variableDeclaration: SoftAST.VariableDeclaration,
-      sourceCode: SourceCodeState.IsParsed,
+      sourceCode: SourceLocation.CodeSoft,
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): Option[SoftAST.VariableDeclaration] =
     findAssignmentType(variableDeclaration.assignment, sourceCode, workspace) match {
@@ -161,15 +160,15 @@ private case object HoverExpression extends StrictImplicitLogging {
    */
   private def findAssignmentType(
       assignment: SoftAST.Assignment,
-      sourceCode: SourceCodeState.IsParsed,
+      sourceCode: SourceLocation.CodeSoft,
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): Option[Ast.TypeId] = {
     // Find all the type definitions
     val typeDefs = CodeProvider
       .goToTypeDef
       .search(
-        linePosition = assignment.index.toLineRange(sourceCode.code).from,
-        fileURI = sourceCode.fileURI,
+        linePosition = assignment.index.toLineRange(sourceCode.parsed.code).from,
+        fileURI = sourceCode.parsed.fileURI,
         workspace = workspace,
         searchSettings = ()
       )
@@ -180,11 +179,11 @@ private case object HoverExpression extends StrictImplicitLogging {
         typeDefs.nextOption().map(_.ast)
 
       case Some(Left(error)) =>
-        logger.error(s"Error searching type-definition for '${assignment.toCode()}'. Reason: ${error.message}. FileURI: ${sourceCode.fileURI}")
+        logger.error(s"Error searching type-definition for '${assignment.toCode()}'. Reason: ${error.message}. FileURI: ${sourceCode.parsed.fileURI}")
         None
 
       case None =>
-        logger.info(s"No type-definitions found for '${assignment.toCode()}'. FileURI: ${sourceCode.fileURI}")
+        logger.info(s"No type-definitions found for '${assignment.toCode()}'. FileURI: ${sourceCode.parsed.fileURI}")
         None
     }
   }

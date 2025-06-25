@@ -213,12 +213,12 @@ object SourceLocation extends StrictImplicitLogging {
   /**
    * Represents information for Hover.
    *
-   * @param content   The ast containing the content to be displayed on hover.
-   * @param parsed    The source file containing the source tree.
+   * @param content The ast containing the content to be displayed on hover.
+   * @param code    The source file containing the source tree.
    */
   case class Hover(
       content: SoftAST,
-      parsed: SourceCodeState.IsParsedAndCompiled)
+      code: CodeSoft)
     extends GoTo {
 
     override def index: Option[SourceIndex] =
@@ -226,6 +226,9 @@ object SourceLocation extends StrictImplicitLogging {
 
     override def toLineRange(): Option[LineRange] =
       None
+
+    override def parsed: SourceCodeState.IsParsedAndCompiled =
+      code.parsed
 
   }
 
