@@ -64,7 +64,6 @@ private[search] case object HoverMultiCodeProvider extends MultiCodeProvider[Uni
             Right(
               currentStates.flatMap {
                 state =>
-                  logger.error(s"$state")
                   goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.Hover](
                     fileURI = fileURI,
                     line = line,
