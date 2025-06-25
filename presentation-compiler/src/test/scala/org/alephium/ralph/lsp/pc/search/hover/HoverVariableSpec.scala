@@ -22,14 +22,13 @@ class HoverVariableSpec extends AnyWordSpec with Matchers {
             |
             |}
             |""".stripMargin
-      }
+      }()
     }
   }
 
   "return variable with type" when {
     "hover on self" in {
-      hover()(
-        code = """
+      hover()(code = """
             |Contract HoverTest() {
             |
             |  pub fn function() -> () {
@@ -38,14 +37,13 @@ class HoverVariableSpec extends AnyWordSpec with Matchers {
             |  }
             |
             |}
-            |""".stripMargin,
+            |""".stripMargin)(
         expected = "let varA: Bool"
       )
     }
 
     "variable exist" in {
-      hover()(
-        code = """
+      hover()(code = """
             |Contract HoverTest() {
             |
             |  pub fn function() -> () {
@@ -55,14 +53,13 @@ class HoverVariableSpec extends AnyWordSpec with Matchers {
             |  }
             |
             |}
-            |""".stripMargin,
+            |""".stripMargin)(
         expected = "let varA: Bool"
       )
     }
 
     "variable has comment" in {
-      hover()(
-        code = """
+      hover()(code = """
             |Contract HoverTest() {
             |
             |  pub fn function() -> () {
@@ -73,14 +70,13 @@ class HoverVariableSpec extends AnyWordSpec with Matchers {
             |  }
             |
             |}
-            |""".stripMargin,
+            |""".stripMargin)(
         expected = "let varA: Bool"
       )
     }
 
     "variable is assigned with a function" in {
-      hover()(
-        code = """
+      hover()(code = """
             |Contract HoverTest() {
             |
             |  pub fn someFunction() -> U256 {
@@ -93,7 +89,7 @@ class HoverVariableSpec extends AnyWordSpec with Matchers {
             |  }
             |
             |}
-            |""".stripMargin,
+            |""".stripMargin)(
         expected = "let varA: U256"
       )
     }
@@ -101,8 +97,7 @@ class HoverVariableSpec extends AnyWordSpec with Matchers {
 
   "return variable with assignment" when {
     "type doesn't exist" in {
-      hover()(
-        code = """
+      hover()(code = """
             |Contract HoverTest() {
             |
             |  pub fn function() -> () {
@@ -112,14 +107,13 @@ class HoverVariableSpec extends AnyWordSpec with Matchers {
             |  }
             |
             |}
-            |""".stripMargin,
+            |""".stripMargin)(
         expected = "let varA = AAA"
       )
     }
 
     "assignment function doesn't compile" in {
-      hover()(
-        code = """
+      hover()(code = """
             |Contract HoverTest() {
             |
             |  pub fn wrongFunction() -> U256 {
@@ -133,7 +127,7 @@ class HoverVariableSpec extends AnyWordSpec with Matchers {
             |  }
             |
             |}
-            |""".stripMargin,
+            |""".stripMargin)(
         expected = "let varA = wrongFunction()"
       )
     }

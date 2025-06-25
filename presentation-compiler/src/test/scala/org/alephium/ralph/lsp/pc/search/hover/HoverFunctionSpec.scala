@@ -19,33 +19,31 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
           |  }
           |}
           |""".stripMargin
-      }
+      }()
     }
   }
 
   "return self" when {
     "the blockless function itself is selected" in {
-      hover()(
-        code = """
+      hover()(code = """
           |Abstract Contract Action() {
           |  fn funct@@ion() -> Bool
           |}
           |
-          |""".stripMargin,
+          |""".stripMargin)(
         expected = "fn function() -> Bool"
       )
     }
 
     "the function itself is selected" in {
-      hover()(
-        code = """
+      hover()(code = """
           |Abstract Contract Action() {
           |  fn funct@@ion() -> Bool {
           |    true
           |  }
           |}
           |
-          |""".stripMargin,
+          |""".stripMargin)(
         expected = "fn function() -> Bool"
       )
     }
@@ -53,15 +51,14 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
     "duplicate functions exist" when {
       "second duplicate is selected" should {
         "still select only itself" in {
-          hover()(
-            code = """
+          hover()(code = """
               |Abstract Contract Action() {
               |  fn function() -> Bool
               |
               |  fn funct@@ion() -> Bool
               |}
               |
-              |""".stripMargin,
+              |""".stripMargin)(
             expected = "fn function() -> Bool"
           )
         }
@@ -71,8 +68,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
 
   "hover the function" when {
     "function exists" in {
-      hover()(
-        code = """
+      hover()(code = """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean: Bool) -> () {
           |    let foo = func@@tion_b()
@@ -82,15 +78,14 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
           |
           |  }
           |}
-          |""".stripMargin,
+          |""".stripMargin)(
         expected = "pub fn function_b(boolean: Bool) -> ()"
       )
     }
 
     // FIXME: Currently we are not reformatting
     "function is not formatted" in {
-      hover()(
-        code = """
+      hover()(code = """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean : Bool) -> () {
           |    let foo = func@@tion_b()
@@ -101,15 +96,14 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
           |) ->    () {
           |  }
           |}
-          |""".stripMargin,
+          |""".stripMargin)(
         expected = """|pub   fn  function_b  (
                       | boolean  :  Bool
                       |) ->    ()""".stripMargin
       )
     }
     "function exits in a parent" in {
-      hover()(
-        code = """
+      hover()(code = """
             |Abstract Contract Parent() {
             |  pub fn function(boolean: Bool) -> () { }
             |}
@@ -120,7 +114,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
             |    func@@tion(boolean)
             |  }
             |}
-            |""".stripMargin,
+            |""".stripMargin)(
         expected = "pub fn function(boolean: Bool) -> ()"
       )
     }
@@ -132,8 +126,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
          *  This happen due to the soft parser, a compiler error is raised
          *  but still we can propose every match as hover information.
          */
-        hover()(
-          code = """
+        hover()(code = """
             |Abstract Contract Test() {
             |
             |  fn function() -> ()
@@ -148,7 +141,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
             |    func@@tion()
             |  }
             |}
-            |""".stripMargin,
+            |""".stripMargin)(
           expected = List(
             "fn function() -> ()",
             "fn function(address: Address) -> ()",
@@ -159,8 +152,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
     }
 
     "function has documentation" in {
-      hover()(
-        code = """
+      hover()(code = """
           |Contract MyContract(interface: MyInterface) {
           |  pub fn function_a(boolean: Bool) -> () {
           |    let foo = func@@tion_b()
@@ -174,7 +166,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
           |
           |  }
           |}
-          |""".stripMargin,
+          |""".stripMargin)(
         expected = """|// This is a function that does something.
              |  // And it does it well.
              |
@@ -187,21 +179,19 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
     "return the hover info" when {
       "function-call is selected" when {
         "the function exists" in {
-          hover()(
-            code = """
+          hover()(code = """
               |{
               |  let function = 1
               |  fn function() -> () {}
               |  let call = functio@@n()
               |}
-              |""".stripMargin,
+              |""".stripMargin)(
             expected = "fn function() -> ()"
           )
         }
 
         "the function is called within another function" in {
-          hover()(
-            code = """
+          hover()(code = """
               |{
               |  let function = 1
               |
@@ -211,14 +201,13 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
               |    let call = functio@@n()
               |  }
               |}
-              |""".stripMargin,
+              |""".stripMargin)(
             expected = "fn function() "
           )
         }
 
         "multiple functions and variables exist" in {
-          hover()(
-            code = """
+          hover()(code = """
               |{
               |  let function =
               |
@@ -234,7 +223,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
               |
               |  fn function() -> ()
               |}
-              |""".stripMargin,
+              |""".stripMargin)(
             expected = List(
               "fn function() -> ()",
               "fn function() -> ()",
@@ -244,19 +233,17 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
         }
 
         "recursive function call" in {
-          hover()(
-            code = """
+          hover()(code = """
               |fn function() -> () {
               |  let call = functio@@n()
               |  let function = 1
-              |""".stripMargin,
+              |""".stripMargin)(
             expected = "fn function() -> ()"
           )
         }
 
         "function is declared within inheritance" in {
-          hover()(
-            code = """
+          hover()(code = """
               |Abstract Contract GrandParent(function) {
               |  let function = 1
               |
@@ -284,7 +271,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
               |
               |  fn function() -> D { }
               |}
-              |""".stripMargin,
+              |""".stripMargin)(
             expected = List(
               "fn function() -> A",
               "fn function() -> B",
@@ -297,22 +284,20 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
 
       "variable-reference is selected" when {
         "the riable exist" in {
-          hover()(
-            code = """
+          hover()(code = """
             |{
             |  let var = 1
             |  fn variable() -> () {}
             |  let copy = variab@@le
             |}
-            |""".stripMargin,
+            |""".stripMargin)(
             expected = "fn variable() -> ()"
           )
         }
       }
 
       "the variable is accessed within a function" in {
-        hover()(
-          code = """
+        hover()(code = """
             |{
             |  let var = 1
             |
@@ -322,14 +307,13 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
             |    let copy = variab@@le
             |  }
             |}
-            |""".stripMargin,
+            |""".stripMargin)(
           expected = "fn variable() -> ()"
         )
       }
 
       "multiple functions named `variable` and variables exist" in {
-        hover()(
-          code = """
+        hover()(code = """
             |{
             |  let var =
             |
@@ -345,7 +329,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
             |
             |  fn variable() -> ()
             |}
-            |""".stripMargin,
+            |""".stripMargin)(
           expected = List(
             "fn variable() -> ()",
             "fn variable() -> ()",
@@ -355,19 +339,17 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
       }
 
       "recursive function named `variable`" in {
-        hover()(
-          code = """
+        hover()(code = """
             |fn variable() -> () {
             |  let copy = variab@@le
             |  let var = 1
-            |""".stripMargin,
+            |""".stripMargin)(
           expected = "fn variable() -> ()"
         )
       }
 
       "function named `variable` is declared within inheritance" in {
-        hover()(
-          code = """
+        hover()(code = """
             |Abstract Contract GrandParent() {
             |  let var = 1
             |
@@ -394,7 +376,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
             |
             |  fn variable() -> D { }
             |}
-            |""".stripMargin,
+            |""".stripMargin)(
           expected = List(
             "fn variable() -> A",
             "fn variable() -> B",
@@ -403,6 +385,70 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
           ): _*
         )
       }
+    }
+  }
+
+  "hover function within the workspace" should {
+    "function exits in a workspace parent" in {
+      hover()(
+        code = """
+        |Abstract Contract Parent() {
+        |  pub fn function(boolean: Bool) -> () { }
+        |}
+        |""".stripMargin,
+        """
+        |Contract MyContract() extends Parent() {
+        |
+        |  pub fn foo(boolean: Bool) -> () {
+        |    func@@tion(boolean)
+        |  }
+        |}
+        |""".stripMargin
+      )(
+        expected = "pub fn function(boolean: Bool) -> ()"
+      )
+    }
+
+    "function comes from another workspace contract" in {
+      hover()(
+        code = """
+        |Contract Bar() {
+        |  pub fn bar(boolean: Bool) -> () { }
+        |}
+        |""".stripMargin,
+        """
+        |Contract MyContract() {
+        |
+        |  pub fn foo(bar: Bar) -> () {
+        |    bar.b@@ar(true)
+        |  }
+        |}
+        |""".stripMargin
+      )(
+        expected = "pub fn bar(boolean: Bool) -> ()"
+      )
+    }
+
+    // FIXME: Wrong `foo` is selected
+    "FIXME: function with same name comes from another workspace contract" in {
+      hover()(
+        code = """
+        |Contract Bar() {
+        |  pub fn foo(boolean: Bool) -> () { }
+        |}
+        |""".stripMargin,
+        """
+        |Contract MyContract() {
+        |
+        |  pub fn foo(bar: Bar) -> () {
+        |    bar.fo@@o(true)
+        |  }
+        |}
+        |""".stripMargin
+      )(
+        // FIXME: Should be: "pub fn foo(boolean: Bool) -> ()"
+        expected = "pub fn foo(bar: Bar) -> ()"
+      )
     }
   }
 
