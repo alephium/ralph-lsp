@@ -5,7 +5,7 @@ package org.alephium.ralph.lsp.pc.search.hover
 
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
+import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
 private case object HoverDeclaration extends StrictImplicitLogging {
@@ -19,13 +19,13 @@ private case object HoverDeclaration extends StrictImplicitLogging {
    */
   def apply(
       declaration: SoftAST.DeclarationAST,
-      sourceCode: SourceCodeState.IsParsed
+      sourceCode: SourceLocation.CodeSoft
     )(implicit logger: ClientLogger): Option[SourceLocation.Hover] =
     hoverDeclaration(declaration).map {
       content =>
         SourceLocation.Hover(
           content = content,
-          parsed = sourceCode
+          code = sourceCode
         )
     }
 

@@ -25,54 +25,36 @@ private[search] case object HoverCodeProvider extends CodeProvider[SourceCodeSta
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: (SoftAST.type, GoToDefSetting)
     )(implicit logger: ClientLogger): Iterator[SourceLocation.Hover] =
-    // find the statement where this cursorIndex sits.
-    sourceCode.astSoft.fetch() match {
-      case Left(error) =>
-        // This will be removed when integration is complete,
-        // when SourceCodeState.ErrorParser responds to SoftParser errors.
-        // Note: SoftParser is not expected to fail given any input, so this is less likely to occur.
-        //       Log it for now.
-        logger.error {
-          s"""SoftParser Error: Failed to parse source code.
-             |File: ${sourceCode.fileURI}
-             |Error Message: ${error.message}""".stripMargin
-        }
+    CodeProvider
+      .goToDefSoft
+      .searchLocal(
+        cursorIndex = cursorIndex,
+        sourceCode = sourceCode,
+        workspace = workspace,
+        searchSettings = searchSettings
+      )
+      .flatMap {
+        case SourceLocation.File(parsedFile) =>
+          logger.info(s"Hover requested not implemented for imports: ${parsedFile.fileURI}")
+          None
 
-        Iterator.empty
+        case SourceLocation.NodeSoft(definition, code) =>
+          code.part.toNode.findAtIndex(definition.index) match { // Find the exact location of the definition.
+            case Some(definition) =>
+              definition
+                .walkParents
+                .collectFirst { // Find the nearest parent.
+                  case Node(declaration: SoftAST.DeclarationAST, _) =>
+                    HoverDeclaration(declaration, code)
 
-      case Right(softAST) =>
-        CodeProvider
-          .goToDefSoft
-          .searchLocal(
-            cursorIndex = cursorIndex,
-            sourceCode = sourceCode,
-            workspace = workspace,
-            searchSettings = searchSettings
-          )
-          .flatMap {
-            case SourceLocation.File(parsedFile) =>
-              logger.info(s"Hover requested not implemented for imports: ${parsedFile.fileURI}")
+                  case Node(declaration: SoftAST.ExpressionAST, _) =>
+                    HoverExpression(declaration, code, workspace)
+                }
+                .flatten
+
+            case None =>
               None
-
-            case SourceLocation.NodeSoft(definition, _) =>
-              softAST.toNode.findAtIndex(definition.index) match { // Find the exact location of the definition.
-                case Some(definition) =>
-                  definition
-                    .walkParents
-                    .collectFirst { // Find the nearest parent.
-                      case Node(declaration: SoftAST.DeclarationAST, _) =>
-                        HoverDeclaration(declaration, sourceCode)
-
-                      case Node(declaration: SoftAST.ExpressionAST, _) =>
-                        HoverExpression(declaration, sourceCode, workspace)
-
-                    }
-                    .flatten
-
-                case None =>
-                  None
-              }
           }
-    }
+      }
 
 }
