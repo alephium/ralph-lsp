@@ -129,10 +129,10 @@ object TestCodeProvider {
 
   def hover(
       settings: GoToDefSetting = testGoToDefSetting
-    )(code: String,
-      expected: String*): List[SourceLocation.Hover] = {
+    )(code: String*
+    )(expected: String*): List[SourceLocation.Hover] = {
     val result = TestCodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.Hover](
-      code = ArraySeq(code),
+      code = code.to(ArraySeq),
       searchSettings = (SoftAST, settings),
       dependencyDownloaders = ArraySeq(BuiltInFunctionDownloader)
     )._1.toList
