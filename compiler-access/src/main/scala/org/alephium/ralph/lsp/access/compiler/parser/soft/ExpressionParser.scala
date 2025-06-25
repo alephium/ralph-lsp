@@ -34,7 +34,8 @@ private object ExpressionParser {
 
   def parseOrFail[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
-      TypeAssignmentParser.parseOrFail |
+      MapAssignmentParser.parseOrFail |
+        TypeAssignmentParser.parseOrFail |
         AssignmentParser.parseOrFail |
         InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |
