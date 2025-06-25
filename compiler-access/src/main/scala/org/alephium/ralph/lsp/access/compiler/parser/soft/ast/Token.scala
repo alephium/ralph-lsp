@@ -117,6 +117,7 @@ object Token {
   sealed abstract class DataDefinition(override val lexeme: String) extends Data(lexeme)
   case object Let                                                   extends DataDefinition("let") with Reserved
   case object Mut                                                   extends DataDefinition("mut") with Reserved
+  case object Mapping                                               extends DataDefinition("mapping") with Reserved
 
   sealed abstract class DataTemplate(override val lexeme: String) extends Data(lexeme)
   case object Struct                                              extends DataTemplate("struct") with Reserved

@@ -478,6 +478,15 @@ object TestSoftAST {
       token = Token.Mut
     )
 
+  def Mapping(code: String): SoftAST.TokenDocumented[Token.Mapping.type] =
+    Mapping(indexOf(code))
+
+  def Mapping(index: SourceIndex): SoftAST.TokenDocumented[Token.Mapping.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.Mapping
+    )
+
   def Struct(code: String): SoftAST.TokenDocumented[Token.Struct.type] =
     Struct(indexOf(code))
 
