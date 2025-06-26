@@ -135,6 +135,9 @@ object TestParser {
   def parseArrayAccess(code: String): SoftAST.ArrayAccess =
     runSoftParser(ArrayAccessParser.parseOrFail(_))(code)
 
+  def parseMapAssignment(code: String): SoftAST.MapAssignment =
+    runSoftParser(MapAssignmentParser.parseOrFail(_))(code)
+
   /**
    * Test the result of [[SoftAST.deepCopy]] on the given AST.
    */

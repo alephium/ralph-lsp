@@ -182,6 +182,22 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
           )
         }
       }
+
+      "unique contract name with duplicate function names" in {
+        goToDefinition()(
+          """
+            |Contract ConA() {
+            |  pub fn >>foo<<(boolean: Bool) -> () { }
+            |}
+            |
+            |Contract ConB()  {
+            |  pub fn foo(conA: ConA) -> () {
+            |    conA.fo@@o(true)
+            |  }
+            |}
+            |""".stripMargin
+        )
+      }
     }
 
     "external function exists in nested hierarchy" in {
