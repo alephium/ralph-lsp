@@ -429,8 +429,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
       )
     }
 
-    // FIXME: Wrong `foo` is selected
-    "FIXME: function with same name comes from another workspace contract" in {
+    "function with same name comes from another workspace contract" in {
       hover()(
         code = """
         |Contract Bar() {
@@ -446,8 +445,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
         |}
         |""".stripMargin
       )(
-        // FIXME: Should be: "pub fn foo(boolean: Bool) -> ()"
-        expected = "pub fn foo(bar: Bar) -> ()"
+        expected = "pub fn foo(boolean: Bool) -> ()"
       )
     }
   }
