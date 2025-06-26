@@ -1146,14 +1146,13 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         // Lift the type-name `CodeString` of each type-def to concrete `TypeDeclaration`.
         definition.source.part.toNode.findAtIndex(definition.ast.index) match {
           case Some(node) =>
-            node
-              .walkParents
-              .takeWhile(_.data contains definition.ast) // traverse only the up to the parent that contains the definition
-              .collectFirst {
-                case Node(typeDef: SoftAST.TypeDefinitionAST, _) =>
-                  // Lift the type from `CodeString` to `TypeDefinitionAST`.
-                  definition.copy(ast = typeDef)
-              }
+            // Single parent check only because SoftAST only does static type search (e.g. `MyContract.function`).
+            // So the identifier must be within a subtype of `TypeDefinitionAST`.
+            node.parent.collectFirst {
+              case Node(typeDef: SoftAST.TypeDefinitionAST, _) if typeDef contains definition.ast =>
+                // Lift the type from `CodeString` to `TypeDefinitionAST`.
+                definition.copy(ast = typeDef)
+            }
 
           case None =>
             logger.error(s"Node not found for definition: ${definition.ast.text}. Index: ${definition.ast.index}. FileURI: ${definition.source.parsed.fileURI}")
