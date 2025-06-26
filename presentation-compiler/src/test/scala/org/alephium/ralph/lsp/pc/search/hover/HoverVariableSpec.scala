@@ -93,6 +93,74 @@ class HoverVariableSpec extends AnyWordSpec with Matchers {
         expected = "let varA: U256"
       )
     }
+
+    "annonymous variable" in {
+      hover()(code = """
+        |Contract HoverTest() {
+        |
+        |  pub fn function() -> () {
+        |    let @@_ = true
+        |  }
+        |}
+        |""".stripMargin)(
+        expected = "let _: Bool"
+      )
+    }
+
+    // TODO: Support tuple
+    "Tuple type" in {
+      hover()(code = """
+      |Contract HoverTest() {
+      |  fn bar() -> (U256, Boolean) {
+      |    return 1, false
+      |  }
+      |  pub fn function() -> () {
+      |    let (varA, varB) = bar()
+      |    let varC = v@@arA
+      |  }
+      |}""".stripMargin)(
+        // TODO: Should be: "let varA: U256"
+      )
+    }
+
+    // TODO: Support mutable variable
+    "mutable variable" in {
+      hover()(code = """
+        |Contract HoverTest() {
+        |
+        |  pub fn function() -> () {
+        |    let mut index = 0
+        |     while (index <= 4) {
+        |       bar(in@@dex)
+        |       index += 1
+        |     }
+        |  }
+        |}
+        |""".stripMargin)(
+        // TODO: Should be: "let mut index: U256"
+      )
+    }
+
+    // TODO: Support variable from contract
+    "variable assignment from contract " in {
+      hover()(code = """
+
+        |Contract Bar(id: U256) {
+        |  pub fn func() -> U256 {
+        |  }
+        |}
+        |
+        |Contract Foo2() {
+        |  pub fn foo() -> () {
+        |    let b@@ar = Bar(1)
+        |  }
+        |}
+        |""".stripMargin)(
+        // TODO: Should be: "let bar: Bar"
+        expected = "let bar = Bar(1)"
+      )
+    }
+
   }
 
   "return variable with assignment" when {
