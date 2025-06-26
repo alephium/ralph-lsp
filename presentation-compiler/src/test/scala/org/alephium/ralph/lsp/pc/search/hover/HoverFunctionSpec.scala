@@ -173,6 +173,24 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
              |  pub fn function_b(boolean: Bool) -> ()""".stripMargin
       )
     }
+
+    "function has annotation" in {
+      hover()(code = """
+          |Contract MyContract(interface: MyInterface) {
+          |  pub fn function_a(boolean: Bool) -> () {
+          |    func@@tion_b(true)
+          |  }
+          |
+          |  @using(checkExternalCaller = false)
+          |  pub fn function_b(boolean: Bool) -> () {
+          |
+          |  }
+          |}
+          |""".stripMargin)(
+        expected = """ |@using(checkExternalCaller = false)
+                       |  pub fn function_b(boolean: Bool) -> ()""".stripMargin
+      )
+    }
   }
 
   "detect call syntax" should {
@@ -446,6 +464,26 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
         |""".stripMargin
       )(
         expected = "pub fn foo(boolean: Bool) -> ()"
+      )
+    }
+  }
+
+  "hover builtin function" should {
+    "return the builtin function" in {
+      hover()(code = """
+              |Contract Test() {
+              |  pub fn function() -> () {
+              |    ass@@ert!()
+              |  }
+              |}
+              |""".stripMargin)(
+        expected =
+          // \u0020 escapes a space, we do this to avoid the editor to remove the trailing space
+          s"""|// Tests the condition or checks invariants.
+              |  // @param condition the condition to be checked
+              |  // @param errorCode the error code to throw if the check fails
+              |  // @returns\u0020
+              |  fn assert!(condition:Bool, errorCode:U256) -> ()""".stripMargin
       )
     }
   }
