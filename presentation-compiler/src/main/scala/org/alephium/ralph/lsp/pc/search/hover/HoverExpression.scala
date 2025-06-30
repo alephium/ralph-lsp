@@ -43,6 +43,9 @@ private case object HoverExpression extends StrictImplicitLogging {
             )
         }
 
+      case mutableBinding: SoftAST.MutableBinding =>
+        hoverMutableBinding(mutableBinding, sourceCode, workspace)
+
       case other =>
         logger.error(s"Hover not implemented for expression '${other.getClass.getSimpleName}' at source index '${other.index}'")
         None
@@ -74,6 +77,27 @@ private case object HoverExpression extends StrictImplicitLogging {
 
       case _ =>
         // An `Assignment` without a parent should not exist.
+        None
+    }
+
+  /**
+   * Retrieves hover content for a mutable binding,
+   * if the mutable binding is part of an assignment.
+   *
+   * @param mutableBinding The mutable binding to process.
+   * @param sourceCode The source code state.
+   * @param workspace The workspace state.
+   * @return An optional hover content for the mutable binding.
+   */
+  private def hoverMutableBinding(
+      mutableBinding: SoftAST.MutableBinding,
+      sourceCode: SourceLocation.CodeSoft,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Option[SourceLocation.Hover] =
+    mutableBinding.toNode.parent match {
+      case Some(Node(assignment: SoftAST.Assignment, _)) =>
+        hoverAssignment(assignment, sourceCode, workspace)
+      case _ =>
         None
     }
 
