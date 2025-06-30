@@ -3,12 +3,13 @@
 
 package org.alephium.ralph.lsp.pc.sourcecode
 
+import org.alephium.ralph.{Ast, CompiledContract, CompiledScript, Warning}
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error.StringError
-import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.lsp.access.compiler.CompilerRunResult
 import org.alephium.ralph.lsp.pc.sourcecode.warning.StringWarning
-import org.alephium.ralph.{CompiledScript, Warning, Ast, CompiledContract}
+import org.alephium.ralph.lsp.utils.log.ClientLogger
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -28,8 +29,8 @@ private object SourceCodeStateBuilder {
   def toSourceCodeState(
       parsedCode: ArraySeq[SourceCodeState.Parsed],
       workspaceErrorURI: URI,
-      compilationResult: Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript], Array[Warning])]
-    )(implicit logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsedAndCompiled]] =
+      compilationResult: Either[CompilerMessage.AnyError, CompilerRunResult]
+    )(implicit logger: ClientLogger): Either[CompilerMessage.AnyError, SourceCodeCompilerRun] =
     compilationResult match {
       case Left(error) =>
         // update the error to SourceCodeState
@@ -38,23 +39,35 @@ private object SourceCodeStateBuilder {
           error = error
         ) match {
           case Some(updatedSourceCode) =>
-            Right(updatedSourceCode)
+            val run =
+              SourceCodeCompilerRun(
+                compiledSource = updatedSourceCode,
+                compilerRunGlobalState = None
+              )
+
+            Right(run)
 
           case None =>
             Left(error)
         }
 
-      case Right((compiledContracts, compiledScripts, warnings)) =>
+      case Right(compiledRun) =>
         val state =
           buildCompiledSourceCodeState(
             parsedCode = parsedCode,
-            compiledContracts = compiledContracts,
-            compiledScripts = compiledScripts,
-            warnings = warnings,
+            compiledContracts = compiledRun.contracts,
+            compiledScripts = compiledRun.scripts,
+            warnings = compiledRun.warnings,
             workspaceErrorURI = workspaceErrorURI
           )
 
-        Right(state)
+        val run =
+          SourceCodeCompilerRun(
+            compiledSource = state,
+            compilerRunGlobalState = Some(compiledRun.globalState)
+          )
+
+        Right(run)
     }
 
   /**

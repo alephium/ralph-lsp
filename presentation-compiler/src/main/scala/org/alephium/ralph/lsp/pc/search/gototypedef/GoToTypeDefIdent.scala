@@ -110,12 +110,36 @@ case object GoToTypeDefIdent extends StrictImplicitLogging {
           varDec == target && varDec.sourceIndex.exists(target.sourceIndex.contains)
       }
 
-    // Fetch the `Type` at the position-index of the target.
     val typeOfTargetNode =
       varDef
         .value
         .getCachedType()
-        .flatMap(_.lift(indexOfTarget))
+        .flatMap {
+          types =>
+            // See issue #1292 on dev alephium - It's safe to assume a maximum of one element in types.
+            types.headOption flatMap {
+              case Type.Struct(id) =>
+                workspace match {
+                  // Structs are stored in ralphc's global state, which is created when the ralphc compiler is executed.
+                  // Therefore, the workspace state must be IsCompiled.
+                  case compiled: WorkspaceState.IsCompiled =>
+                    compiled.compilerRunGlobalState flatMap {
+                      state =>
+                        state
+                          .getStruct(id)
+                          .flatMap(_.fields.lift(indexOfTarget))
+                          .map(_.tpe)
+                    }
+
+                  case _ =>
+                    None
+                }
+
+              case _ =>
+                // Fetch the `Type` at the position-index of the target.
+                types.lift(indexOfTarget)
+            }
+        }
 
     searchCachedType(
       cachedType = typeOfTargetNode.map(Seq(_)),

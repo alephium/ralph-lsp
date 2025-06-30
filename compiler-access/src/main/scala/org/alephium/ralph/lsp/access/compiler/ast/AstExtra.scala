@@ -4,8 +4,8 @@
 package org.alephium.ralph.lsp.access.compiler.ast
 
 import org.alephium.protocol.vm.StatelessContext
+import org.alephium.ralph.{Ast, Type}
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra
-import org.alephium.ralph.{Type, Ast}
 
 object AstExtra {
 
@@ -82,7 +82,7 @@ object AstExtra {
       case Type.Contract(id) =>
         Some(id)
 
-      case Type.Bool | Type.I256 | Type.U256 | Type.ByteVec | Type.Address | _: Type.FixedSizeArray | _: Type.Map | Type.Panic =>
+      case Type.Bool | Type.I256 | Type.U256 | Type.ByteVec | Type.Address | _: Type.FixedSizeArray | _: Type.Map | Type.Panic | _: Type.Tuple =>
         None
 
     }

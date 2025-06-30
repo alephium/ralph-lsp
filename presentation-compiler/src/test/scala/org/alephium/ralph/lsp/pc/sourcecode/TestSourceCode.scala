@@ -258,8 +258,8 @@ object TestSourceCode {
         workspaceErrorURI = parsed.fileURI
       )
 
-    result.value should have size 1
-    result.value.head
+    result.value.compiledSource should have size 1
+    result.value.compiledSource.head
   }
 
   def persist[S <: SourceCodeState](

@@ -37,6 +37,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
             workspaceErrorURI = TestFile.genFolderURI().sample.value
           )
           .value
+          .compiledSource
 
       result shouldBe empty
     }
@@ -57,6 +58,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
             workspaceErrorURI = TestFile.genFolderURI().sample.value
           )
           .value
+          .compiledSource
 
       result shouldBe empty
     }
@@ -92,6 +94,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
             workspaceErrorURI = Paths.get(source.head.fileURI).getParent.toUri // workspace URI
           )
           .value
+          .compiledSource
           .map(_.asInstanceOf[SourceCodeState.Compiled])
 
       result should have size source.size.toLong
@@ -201,7 +204,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
 
       // They should compile ok
       val compiledDependencyFiles =
-        dependencyCompilationResult.value.map(_.asInstanceOf[SourceCodeState.Compiled])
+        dependencyCompilationResult.value.compiledSource.map(_.asInstanceOf[SourceCodeState.Compiled])
 
       // Parsed the input source file
       val usingCode =
@@ -234,7 +237,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
               |""".stripMargin
 
           val compilationResult =
-            buildDependencyAndTest(code).value
+            buildDependencyAndTest(code).value.compiledSource
 
           val actual =
             compilationResult.map(_.asInstanceOf[SourceCodeState.Compiled])
@@ -260,7 +263,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
                 |""".stripMargin
 
             val compilationResult =
-              buildDependencyAndTest(code).value
+              buildDependencyAndTest(code).value.compiledSource
 
             compilationResult should have size 1
             val errorCompilation = compilationResult.head.asInstanceOf[SourceCodeState.ErrorCompilation]
@@ -287,7 +290,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
                 |""".stripMargin
 
             val compilationResult =
-              buildDependencyAndTest(code).value
+              buildDependencyAndTest(code).value.compiledSource
 
             compilationResult should have size 1
             val compiled = compilationResult.head.asInstanceOf[SourceCodeState.Compiled]
@@ -339,6 +342,7 @@ class SourceCodeCompileSpec extends AnyWordSpec with Matchers with ScalaCheckDri
             workspaceErrorURI = TestFile.genFolderURI().sample.value
           )
           .value
+          .compiledSource
           .head
           .asInstanceOf[SourceCodeState.Compiled]
           .compiledCode
