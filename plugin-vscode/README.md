@@ -9,6 +9,7 @@ The Ralph LSP is an implementation of the [language server protocol](https://mic
 * [Find References](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_references)
 * [Completion](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_completion)
 * [Rename](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_rename)
+* [Hover](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_hover)
 * [Workspace Folders](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_workspaceFolders)
 * [Inlay Hints](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_inlayHint)
 * More to come...
@@ -19,7 +20,7 @@ Java 11 or higher.
 
 ## Workspace folders
 
-To learn how to work with multiple project folders in VSCode, see the official documentation 
+To learn how to work with multiple project folders in VSCode, see the official documentation
 on [Multi-Root Workspaces](https://code.visualstudio.com/docs/editor/workspaces/multi-root-workspaces).
 
 ## FAQ
