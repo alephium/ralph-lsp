@@ -20,7 +20,7 @@ case object GoToTypeDefIdent extends StrictImplicitLogging {
    * @param workspace The workspace state where the source-code is located.
    * @return An iterator over type-definition search results.
    */
-  def goToNamedVar(
+  def goToIdent(
       node: Node[Ast.Ident, Ast.Positioned],
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToTypeDef] =

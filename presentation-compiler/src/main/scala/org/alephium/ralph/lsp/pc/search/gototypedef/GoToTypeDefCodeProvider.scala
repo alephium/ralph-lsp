@@ -39,7 +39,7 @@ case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed,
             tree.closest(cursorIndex) match {
               case Some(node @ Node(ident: Ast.Ident, _)) =>
                 GoToTypeDefIdent
-                  .goToNamedVar(
+                  .goToIdent(
                     node = node.upcast(ident),
                     workspace = workspace
                   )
