@@ -8,9 +8,9 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.imports.Importer
+import org.alephium.ralph.lsp.utils.{LazyVal, URIUtil}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.utils.CollectionUtil._
-import org.alephium.ralph.lsp.utils.{LazyVal, URIUtil}
 
 import java.net.URI
 import scala.annotation.tailrec
@@ -181,7 +181,7 @@ private[pc] object SourceCode {
       compilerOptions: CompilerOptions,
       workspaceErrorURI: URI
     )(implicit compiler: CompilerAccess,
-      logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsedAndCompiled]] =
+      logger: ClientLogger): Either[CompilerMessage.AnyError, SourceCodeCompilerRun] =
     Importer.typeCheck(
       sourceCode = sourceCode,
       dependency = dependency
@@ -193,7 +193,7 @@ private[pc] object SourceCode {
           sourceCode.merge(importErrorCode)(Ordering.by(_.fileURI))
 
         // new source-code with import errors
-        Right(newCode)
+        Right(SourceCodeCompilerRun(newCode, None))
 
       case Right(importedCode) =>
         // flatten the inheritance within dependency
@@ -233,7 +233,7 @@ private[pc] object SourceCode {
       compilerOptions: CompilerOptions,
       workspaceErrorURI: URI
     )(implicit compiler: CompilerAccess,
-      logger: ClientLogger): Either[CompilerMessage.AnyError, ArraySeq[SourceCodeState.IsParsedAndCompiled]] = {
+      logger: ClientLogger): Either[CompilerMessage.AnyError, SourceCodeCompilerRun] = {
     val sourceTreesOnly =
       sourceTrees.map(_.tree)
 
