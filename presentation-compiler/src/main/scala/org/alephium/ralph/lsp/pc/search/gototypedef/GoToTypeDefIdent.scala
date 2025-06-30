@@ -31,18 +31,40 @@ case object GoToTypeDefIdent extends StrictImplicitLogging {
           workspace = workspace
         )
 
-      case Some(node @ Node(nardVar: Ast.NamedVar, _)) =>
-        node.parent match {
-          case Some(Node(varDef: Ast.VarDef[_], _)) =>
-            searchTupledVarDef(
-              target = nardVar,
-              varDef = varDef,
-              workspace = workspace
-            )
+      case Some(node @ Node(namedVar: Ast.NamedVar, _)) =>
+        goToNamedVar(
+          node = node.upcast(namedVar),
+          namedVar = namedVar,
+          workspace = workspace
+        )
+      case Some(Node(data, _)) =>
+        logger.info(s"${this.productPrefix} not implemented for ${data.getClass.getName}. SourceIndex: ${data.sourceIndex}")
+        ArraySeq.empty
 
-          case _ =>
-            ArraySeq.empty
-        }
+      case None =>
+        logger.info(s"${this.productPrefix}: Type information not found for node: ${node.data.getClass.getName}. SourceIndex: ${node.data.sourceIndex}")
+        ArraySeq.empty
+    }
+
+  /**
+   * Searches type-definitions given the named variable node [[Ast.NamedVar]].
+   *
+   * @param node      The node representing the named variable being searched.
+   * @param workspace The workspace state where the source-code is located.
+   * @return An iterator over type-definition search results.
+   */
+  def goToNamedVar(
+      node: Node[Ast.NamedVar, Ast.Positioned],
+      namedVar: Ast.NamedVar,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToTypeDef] =
+    node.parent match {
+      case Some(Node(varDef: Ast.VarDef[_], _)) =>
+        searchTupledVarDef(
+          target = namedVar,
+          varDef = varDef,
+          workspace = workspace
+        )
 
       case Some(Node(data, _)) =>
         logger.info(s"${this.productPrefix} not implemented for ${data.getClass.getName}. SourceIndex: ${data.sourceIndex}")
