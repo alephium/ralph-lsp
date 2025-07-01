@@ -54,7 +54,9 @@ private object RalphCompilerAccess extends CompilerAccess with StrictImplicitLog
       parsedSource: Seq[Ast.GlobalDefinition],
       options: CompilerOptions,
       workspaceErrorURI: URI
-    )(implicit logger: ClientLogger): Either[CompilerMessage.AnyError, CompilerRunResult] =
+    )(implicit logger: ClientLogger): CompilerRunResult = {
+    var runGlobalState: CompilerRunGlobalState = null
+
     try {
       val allContracts     = Seq.newBuilder[Ast.ContractWithState]
       val otherDefinitions = Seq.newBuilder[Ast.GlobalDefinition]
@@ -79,6 +81,8 @@ private object RalphCompilerAccess extends CompilerAccess with StrictImplicitLog
 
       val globalState =
         Ast.GlobalState.from[StatefulContext](otherDefinitions.result())
+
+      runGlobalState = CompilerRunGlobalState(globalState)
 
       val multiContract =
         Ast.MultiContract(
@@ -120,16 +124,26 @@ private object RalphCompilerAccess extends CompilerAccess with StrictImplicitLog
       val allWarnings =
         extractedContractWarnings ++ extractedScriptWarnings ++ warnings
 
-      val run =
-        CompilerRunResult(
-          contracts = statefulContracts,
-          scripts = statefulScripts,
-          warnings = allWarnings,
-          globalState = CompilerRunGlobalState(Some(globalState))
-        )
+      CompilerRunResult.Compiled(
+        contracts = statefulContracts,
+        scripts = statefulScripts,
+        warnings = allWarnings,
+        globalState = runGlobalState
+      )
+    } catch {
+      case throwable: Throwable =>
+        val error =
+          TryUtil.toCompilerMessage(
+            fileURI = workspaceErrorURI,
+            throwable = throwable
+          )
 
-      Right(run)
-    } catch TryUtil.catchAllThrows(workspaceErrorURI)
+        CompilerRunResult.Errored(
+          error = error,
+          globalState = Option(runGlobalState)
+        )
+    }
+  }
 
   private def extractWarnings(contracts: Array[CompiledCodeWrapper])(implicit logger: ClientLogger): Array[Warning] =
     contracts flatMap extractWarnings

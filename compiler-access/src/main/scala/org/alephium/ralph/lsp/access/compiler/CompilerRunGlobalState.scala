@@ -8,7 +8,7 @@ import org.alephium.ralph.Ast
 
 object CompilerRunGlobalState {
 
-  def apply(state: Option[Ast.GlobalState[StatefulContext]]): CompilerRunGlobalState =
+  def apply(state: Ast.GlobalState[StatefulContext]): CompilerRunGlobalState =
     new CompilerRunGlobalState(state)
 
 }
@@ -16,10 +16,10 @@ object CompilerRunGlobalState {
 /**
  * Exposes the APIs of ralphc returned global state ([[Ast.GlobalState]]) from a completed compiler run.
  */
-class CompilerRunGlobalState private (globalState: Option[Ast.GlobalState[StatefulContext]]) {
+class CompilerRunGlobalState private (globalState: Ast.GlobalState[StatefulContext]) {
 
   def getStruct(typeId: Ast.TypeId): Option[Ast.Struct] =
-    globalState.flatMap(_.tryGetStruct(typeId))
+    globalState.tryGetStruct(typeId)
 
   /**
    * LSP does not assert the contents of [[Ast.GlobalState]]. This is managed by ralphc.

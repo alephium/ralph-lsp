@@ -4,7 +4,7 @@
 package org.alephium.ralph.lsp.pc.sourcecode
 
 import org.alephium.ralph.CompilerOptions
-import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.{CompilerAccess, CompilerRunResult}
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, SourceIndexExtra}
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.sourcecode.imports.Importer
@@ -181,7 +181,7 @@ private[pc] object SourceCode {
       compilerOptions: CompilerOptions,
       workspaceErrorURI: URI
     )(implicit compiler: CompilerAccess,
-      logger: ClientLogger): Either[CompilerMessage.AnyError, SourceCodeCompilerRun] =
+      logger: ClientLogger): Either[CompilerRunResult.Errored, SourceCodeCompilerRun] =
     Importer.typeCheck(
       sourceCode = sourceCode,
       dependency = dependency
@@ -233,7 +233,7 @@ private[pc] object SourceCode {
       compilerOptions: CompilerOptions,
       workspaceErrorURI: URI
     )(implicit compiler: CompilerAccess,
-      logger: ClientLogger): Either[CompilerMessage.AnyError, SourceCodeCompilerRun] = {
+      logger: ClientLogger): Either[CompilerRunResult.Errored, SourceCodeCompilerRun] = {
     val sourceTreesOnly =
       sourceTrees.map(_.tree)
 
