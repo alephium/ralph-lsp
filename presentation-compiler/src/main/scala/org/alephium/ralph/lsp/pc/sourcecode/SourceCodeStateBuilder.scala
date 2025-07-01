@@ -29,20 +29,20 @@ private object SourceCodeStateBuilder {
   def toSourceCodeState(
       parsedCode: ArraySeq[SourceCodeState.Parsed],
       workspaceErrorURI: URI,
-      compilationResult: Either[CompilerMessage.AnyError, CompilerRunResult]
-    )(implicit logger: ClientLogger): Either[CompilerMessage.AnyError, SourceCodeCompilerRun] =
+      compilationResult: CompilerRunResult
+    )(implicit logger: ClientLogger): Either[CompilerRunResult.Errored, SourceCodeCompilerRun] =
     compilationResult match {
-      case Left(error) =>
+      case error: CompilerRunResult.Errored =>
         // update the error to SourceCodeState
         toCompilationError(
           parsedCode = parsedCode,
-          error = error
+          error = error.error
         ) match {
           case Some(updatedSourceCode) =>
             val run =
               SourceCodeCompilerRun(
                 compiledSource = updatedSourceCode,
-                compilerRunGlobalState = None
+                compilerRunGlobalState = error.globalState
               )
 
             Right(run)
@@ -51,20 +51,20 @@ private object SourceCodeStateBuilder {
             Left(error)
         }
 
-      case Right(compiledRun) =>
+      case compiled: CompilerRunResult.Compiled =>
         val state =
           buildCompiledSourceCodeState(
             parsedCode = parsedCode,
-            compiledContracts = compiledRun.contracts,
-            compiledScripts = compiledRun.scripts,
-            warnings = compiledRun.warnings,
+            compiledContracts = compiled.contracts,
+            compiledScripts = compiled.scripts,
+            warnings = compiled.warnings,
             workspaceErrorURI = workspaceErrorURI
           )
 
         val run =
           SourceCodeCompilerRun(
             compiledSource = state,
-            compilerRunGlobalState = Some(compiledRun.globalState)
+            compilerRunGlobalState = Some(compiled.globalState)
           )
 
         Right(run)

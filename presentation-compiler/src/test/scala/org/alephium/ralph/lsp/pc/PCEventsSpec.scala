@@ -90,7 +90,7 @@ class PCEventsSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
                 // expected workspace
                 workspace = WorkspaceState.Compiled(
                   sourceCode = ArraySeq.empty, // there is no source code
-                  compilerRunGlobalState = Some(CompilerRunGlobalState(None)),
+                  compilerRunGlobalState = Some(CompilerRunGlobalState(null)),
                   parsed = WorkspaceState.Parsed( // Workspace is successfully parsed
                     build = BuildState.Compiled(
                       dependencies = build.dependencies,               // default dependencies are written
