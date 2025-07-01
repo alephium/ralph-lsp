@@ -94,6 +94,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
             val compiled =
               compiledResult
                 .value
+                .compiledSource
                 .asInstanceOf[ArraySeq[SourceCodeState.Compiled]]
 
             // it should contain only one result

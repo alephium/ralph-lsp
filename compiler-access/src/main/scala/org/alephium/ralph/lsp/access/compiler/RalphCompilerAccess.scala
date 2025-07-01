@@ -54,7 +54,7 @@ private object RalphCompilerAccess extends CompilerAccess with StrictImplicitLog
       parsedSource: Seq[Ast.GlobalDefinition],
       options: CompilerOptions,
       workspaceErrorURI: URI
-    )(implicit logger: ClientLogger): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript], Array[Warning])] =
+    )(implicit logger: ClientLogger): Either[CompilerMessage.AnyError, CompilerRunResult] =
     try {
       val allContracts     = Seq.newBuilder[Ast.ContractWithState]
       val otherDefinitions = Seq.newBuilder[Ast.GlobalDefinition]
@@ -120,7 +120,15 @@ private object RalphCompilerAccess extends CompilerAccess with StrictImplicitLog
       val allWarnings =
         extractedContractWarnings ++ extractedScriptWarnings ++ warnings
 
-      Right((statefulContracts, statefulScripts, allWarnings))
+      val run =
+        CompilerRunResult(
+          contracts = statefulContracts,
+          scripts = statefulScripts,
+          warnings = allWarnings,
+          globalState = CompilerRunGlobalState(Some(globalState))
+        )
+
+      Right(run)
     } catch TryUtil.catchAllThrows(workspaceErrorURI)
 
   private def extractWarnings(contracts: Array[CompiledCodeWrapper])(implicit logger: ClientLogger): Array[Warning] =
