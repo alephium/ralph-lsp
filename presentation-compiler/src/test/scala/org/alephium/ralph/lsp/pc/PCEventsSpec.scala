@@ -5,15 +5,15 @@ package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.CompilerOptions
 import org.alephium.ralph.lsp.TestFile
-import org.alephium.ralph.lsp.access.compiler.CompilerAccess
+import org.alephium.ralph.lsp.access.compiler.{CompilerAccess, CompilerRunGlobalState}
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.utils.log.ClientLogger
-import org.alephium.ralph.lsp.pc.sourcecode.{TestSourceCode, SourceCodeState}
-import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfigState, RalphcConfig}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, TestSourceCode}
+import org.alephium.ralph.lsp.pc.workspace.build.config.{RalphcConfig, RalphcConfigState}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
-import org.alephium.ralph.lsp.pc.workspace.build.{TestRalphc, BuildState, TestBuild}
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceState, TestWorkspace, WorkspaceFileEvent}
+import org.alephium.ralph.lsp.pc.workspace.build.{BuildState, TestBuild, TestRalphc}
+import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, WorkspaceFileEvent, WorkspaceState}
 import org.scalacheck.Gen
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.OptionValues.convertOptionToValuable
@@ -89,8 +89,9 @@ class PCEventsSpec extends AnyWordSpec with Matchers with ScalaCheckDrivenProper
               PCState(
                 // expected workspace
                 workspace = WorkspaceState.Compiled(
-                  sourceCode = ArraySeq.empty,    // there is no source code
-                  parsed = WorkspaceState.Parsed( // Workspace is successful parsed
+                  sourceCode = ArraySeq.empty, // there is no source code
+                  compilerRunGlobalState = Some(CompilerRunGlobalState(null)),
+                  parsed = WorkspaceState.Parsed( // Workspace is successfully parsed
                     build = BuildState.Compiled(
                       dependencies = build.dependencies,               // default dependencies are written
                       dependencyPath = Dependency.defaultPath().value, // Default dependency build path i.e. `.ralph-lsp` is used

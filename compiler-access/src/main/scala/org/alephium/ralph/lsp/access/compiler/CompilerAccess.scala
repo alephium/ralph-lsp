@@ -62,6 +62,6 @@ trait CompilerAccess {
       parsedSource: Seq[Ast.GlobalDefinition],
       options: CompilerOptions,
       workspaceErrorURI: URI
-    )(implicit logger: ClientLogger): Either[CompilerMessage.AnyError, (Array[CompiledContract], Array[CompiledScript], Array[Warning])]
+    )(implicit logger: ClientLogger): CompilerRunResult
 
 }

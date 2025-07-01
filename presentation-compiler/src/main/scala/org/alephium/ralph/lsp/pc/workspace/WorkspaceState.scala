@@ -4,6 +4,7 @@
 package org.alephium.ralph.lsp.pc.workspace
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.CompilerRunGlobalState
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.build.typescript.TSBuild
 import org.alephium.ralph.lsp.pc.workspace.build.{Build, BuildState}
@@ -49,6 +50,8 @@ object WorkspaceState {
 
     def parsed: WorkspaceState.Parsed
 
+    def compilerRunGlobalState: Option[CompilerRunGlobalState]
+
     final def build: BuildState.Compiled =
       parsed.build
 
@@ -79,6 +82,7 @@ object WorkspaceState {
    */
   case class Errored(
       sourceCode: ArraySeq[SourceCodeState.IsParsedAndCompiled],
+      compilerRunGlobalState: Option[CompilerRunGlobalState],
       workspaceErrors: ArraySeq[CompilerMessage.AnyError],
       parsed: WorkspaceState.Parsed)
     extends IsCompiled
@@ -91,6 +95,7 @@ object WorkspaceState {
    */
   case class Compiled(
       sourceCode: ArraySeq[SourceCodeState.Compiled],
+      compilerRunGlobalState: Option[CompilerRunGlobalState],
       parsed: WorkspaceState.Parsed)
     extends IsCompiled
 
