@@ -97,6 +97,7 @@ private case object HoverExpression extends StrictImplicitLogging {
     mutableBinding.toNode.parent match {
       case Some(Node(assignment: SoftAST.Assignment, _)) =>
         hoverAssignment(assignment, sourceCode, workspace)
+
       case _ =>
         None
     }
@@ -120,6 +121,7 @@ private case object HoverExpression extends StrictImplicitLogging {
     findAssignmentType(variableDeclaration.assignment, sourceCode, workspace) match {
       case Some(typeId) =>
         Some(hoverVariableDeclarationWithType(variableDeclaration, typeId))
+
       case None =>
         // If the type is not found, just return the assignment code.
         // TODO: Consider if this fallback is desirable, especially for long expressions.
