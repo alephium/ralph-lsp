@@ -37,6 +37,7 @@ case object GoToTypeDefIdent extends StrictImplicitLogging {
           namedVar = namedVar,
           workspace = workspace
         )
+
       case Some(Node(data, _)) =>
         logger.info(s"${this.productPrefix} not implemented for ${data.getClass.getName}. SourceIndex: ${data.sourceIndex}")
         ArraySeq.empty
