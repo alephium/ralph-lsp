@@ -22,7 +22,7 @@ class HoverMultiSpec extends AnyWordSpec with Matchers {
   implicit val ec: ExecutionContext     = ExecutionContext.Implicits.global
 
   "return only one hover info" in {
-    val result = hoverMulti(
+    val result = hoverMultiWithNativeDependency(
       workspaces = ArraySeq(
         """
             |Contract HoverTest() {
