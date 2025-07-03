@@ -25,7 +25,8 @@ private case object HoverDeclaration extends StrictImplicitLogging {
       content =>
         SourceLocation.Hover(
           content = content,
-          code = sourceCode
+          code = sourceCode,
+          initialAST = declaration
         )
     }
 
