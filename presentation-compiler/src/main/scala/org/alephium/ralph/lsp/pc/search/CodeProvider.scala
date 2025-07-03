@@ -166,8 +166,8 @@ object CodeProvider {
       searchSettings: I
     )(implicit provider: CodeProvider[S, I, O],
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
-    // Search on dependencies should only run for go-to definitions requests. Code-completion is ignored.
-    if (provider == CodeProvider.goToDef || provider == CodeProvider.goToRef)
+    // Search on dependencies should only run for go-to definitions and hover requests. Code-completion is ignored.
+    if (provider == CodeProvider.goToDef || provider == CodeProvider.goToRef || provider == CodeProvider.hover)
       workspace
         .build
         .dependencies

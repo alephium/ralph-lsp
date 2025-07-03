@@ -123,24 +123,6 @@ class HoverVariableSpec extends AnyWordSpec with Matchers {
       )
     }
 
-    // TODO: Support mutable variable
-    "mutable variable" in {
-      hover()(code = """
-        |Contract HoverTest() {
-        |
-        |  pub fn function() -> () {
-        |    let mut index = 0
-        |     while (index <= 4) {
-        |       bar(in@@dex)
-        |       index += 1
-        |     }
-        |  }
-        |}
-        |""".stripMargin)(
-        // TODO: Should be: "let mut index: U256"
-      )
-    }
-
     // TODO: Support variable from contract
     "variable assignment from contract " in {
       hover()(code = """
@@ -160,7 +142,53 @@ class HoverVariableSpec extends AnyWordSpec with Matchers {
         expected = "let bar = Bar(1)"
       )
     }
+  }
 
+  "mutable variable" when {
+    "code compiles" in {
+      hover()(code = """
+        |Contract HoverTest() {
+        |
+        |  pub fn function() -> () {
+        |    let mut index = 0
+        |     while (index <= 4) {
+        |       bar(in@@dex)
+        |       index += 1
+        |     }
+        |  }
+        |}
+        |""".stripMargin)(
+        "let mut index: U256"
+      )
+    }
+
+    "hover self" in {
+      hover()(code = """
+        |Contract HoverTest() {
+        |
+        |  pub fn function() -> () {
+        |    let mut i@@ndex = 0
+        |  }
+        |}
+        |""".stripMargin)(
+        "let mut index: U256"
+      )
+    }
+
+    "code doesn't compile" in {
+      hover()(code = """
+        |Contract HoverTest() {
+        |
+        |  pub fn function() -> () {
+        |    let mut index = 0
+        |     while (i@@ndex)
+        |  }
+        |}
+        |""".stripMargin)(
+        // Type can't be found as it doesn't compile
+        "let mut index = 0"
+      )
+    }
   }
 
   "return variable with assignment" when {

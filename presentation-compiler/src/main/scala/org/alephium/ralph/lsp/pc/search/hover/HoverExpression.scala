@@ -39,9 +39,13 @@ private case object HoverExpression extends StrictImplicitLogging {
           content =>
             SourceLocation.Hover(
               content = content,
-              code = sourceCode
+              code = sourceCode,
+              initialAST = expression
             )
         }
+
+      case mutableBinding: SoftAST.MutableBinding =>
+        hoverMutableBinding(mutableBinding, sourceCode, workspace)
 
       case other =>
         logger.error(s"Hover not implemented for expression '${other.getClass.getSimpleName}' at source index '${other.index}'")
@@ -78,6 +82,28 @@ private case object HoverExpression extends StrictImplicitLogging {
     }
 
   /**
+   * Retrieves hover content for a mutable binding,
+   * if the mutable binding is part of an assignment.
+   *
+   * @param mutableBinding The mutable binding to process.
+   * @param sourceCode The source code state.
+   * @param workspace The workspace state.
+   * @return An optional hover content for the mutable binding.
+   */
+  private def hoverMutableBinding(
+      mutableBinding: SoftAST.MutableBinding,
+      sourceCode: SourceLocation.CodeSoft,
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): Option[SourceLocation.Hover] =
+    mutableBinding.toNode.parent match {
+      case Some(Node(assignment: SoftAST.Assignment, _)) =>
+        hoverAssignment(assignment, sourceCode, workspace)
+
+      case _ =>
+        None
+    }
+
+  /**
    * Retrieves hover content for a variable declaration.
    *
    * Attempts to resolve the type of the variable's assignment and creates
@@ -96,6 +122,7 @@ private case object HoverExpression extends StrictImplicitLogging {
     findAssignmentType(variableDeclaration.assignment, sourceCode, workspace) match {
       case Some(typeId) =>
         Some(hoverVariableDeclarationWithType(variableDeclaration, typeId))
+
       case None =>
         // If the type is not found, just return the assignment code.
         // TODO: Consider if this fallback is desirable, especially for long expressions.

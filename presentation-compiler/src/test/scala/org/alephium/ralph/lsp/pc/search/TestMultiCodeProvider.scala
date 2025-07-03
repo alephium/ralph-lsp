@@ -214,6 +214,50 @@ object TestMultiCodeProvider extends ScalaFutures {
     )._1.value
 
   /**
+   * Runs the [[org.alephium.ralph.lsp.pc.search.hover.multi.HoverMultiCodeProvider]] on the given workspaces,
+   * which contains the selection indicator `@@`.
+   *
+   * @param workspaces The source code for the workspaces.
+   * @return The hover results.
+   */
+  def hoverMulti(
+      workspaces: ArraySeq[String]*
+    )(implicit logger: ClientLogger,
+      file: FileAccess,
+      compiler: CompilerAccess,
+      ec: ExecutionContext): ArraySeq[SourceLocation.Hover] =
+    hoverMultiWithDependency(
+      dependencyID = DependencyID.Std,
+      dependency = ArraySeq.empty,
+      workspaces = workspaces: _*
+    )
+
+  /**
+   * Runs the [[org.alephium.ralph.lsp.pc.search.hover.multi.HoverMultiCodeProvider]] on the given workspaces and dependency,
+   * which contains the selection indicator `@@`.
+   *
+   * @param dependencyID The ID to assign to the created dependency.
+   * @param dependency   The source code for the dependency.
+   * @param workspaces   The source code for the workspaces.
+   * @return The hover results.
+   */
+  def hoverMultiWithDependency(
+      dependencyID: DependencyID,
+      dependency: ArraySeq[String],
+      workspaces: ArraySeq[String]*
+    )(implicit logger: ClientLogger,
+      file: FileAccess,
+      compiler: CompilerAccess,
+      ec: ExecutionContext): ArraySeq[SourceLocation.Hover] =
+    search[Unit, SourceLocation.Hover](
+      enableSoftParser = true,
+      settings = (),
+      dependencyID = dependencyID,
+      dependency = dependency.to(ArraySeq),
+      workspaces = workspaces.to(ArraySeq)
+    )._1.value
+
+  /**
    * Runs the [[MultiCodeProvider]] on the given workspaces and dependency,
    * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
    *

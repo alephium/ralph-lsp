@@ -39,7 +39,7 @@ case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed,
             tree.closest(cursorIndex) match {
               case Some(node @ Node(ident: Ast.Ident, _)) =>
                 GoToTypeDefIdent
-                  .goToNamedVar(
+                  .goToIdent(
                     node = node.upcast(ident),
                     workspace = workspace
                   )
@@ -49,6 +49,15 @@ case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed,
                 GoToTypeDefIdent
                   .goToAnonymousVar(
                     anonVarNode = node.upcast(ident),
+                    workspace = workspace
+                  )
+                  .iterator
+
+              case Some(node @ Node(namedVar: Ast.NamedVar, _)) =>
+                GoToTypeDefIdent
+                  .goToNamedVar(
+                    node = node.upcast(namedVar),
+                    namedVar = namedVar,
                     workspace = workspace
                   )
                   .iterator
