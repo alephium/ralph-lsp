@@ -60,21 +60,21 @@ private[search] case object HoverMultiCodeProvider extends MultiCodeProvider[Uni
           Future.successful(Left(error))
 
         case Right(currentStates) =>
-          Future.successful(
-            Right(
-              currentStates.flatMap {
-                state =>
-                  goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.Hover](
-                    fileURI = fileURI,
-                    line = line,
-                    character = character,
-                    searchSettings = (SoftAST, settings),
-                    isCancelled = isCancelled,
-                    state = state
-                  )
-              }
-            )
-          )
+          val hovers = currentStates.flatMap {
+            state =>
+              goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.Hover](
+                fileURI = fileURI,
+                line = line,
+                character = character,
+                searchSettings = (SoftAST, settings),
+                isCancelled = isCancelled,
+                state = state
+              )
+          }
+
+          val distinct = SourceLocation.distinctByLocation(hovers)
+
+          Future.successful(Right(distinct))
       }
     } else {
       logger.debug("Hover search is not implemented yet for strict parsing")

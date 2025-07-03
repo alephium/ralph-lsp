@@ -7,6 +7,7 @@ import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
 import org.alephium.ralph.lsp.pc.search.TestMultiCodeProvider._
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -21,23 +22,35 @@ class HoverMultiSpec extends AnyWordSpec with Matchers {
   implicit val logger: ClientLogger     = TestClientLogger
   implicit val ec: ExecutionContext     = ExecutionContext.Implicits.global
 
-  "return only one hover info" in {
-    val result = hoverMulti(
-      workspaces = ArraySeq(
-        """
-            |Contract HoverTest() {
-            |
-            |  pub fn function() -> () {
-            |
-            |    let varA = true
-            |    let varB = v@@arA
-            |  }
-            |}
-            |""".stripMargin
+  "return only one hover info" when {
+    "hovering in dependency in a multi-workspace" in {
+      val hovers = hoverMultiWithDependency(
+        dependencyID = DependencyID.Std,
+        dependency = ArraySeq(
+          s"""|Interface Utils {
+              |  pub fn ass@@ert() -> ()
+              |}
+              |""".stripMargin
+        ),
+        workspaces = ArraySeq(
+          """
+              |Contract HoverTest() {
+              |  pub fn function() -> () { }
+              |}
+              |""".stripMargin
+        ),
+        ArraySeq(
+          """
+              |Contract HoverTest() {
+              |  pub fn function() -> () { }
+              |}
+              |""".stripMargin
+        )
       )
-    )
 
-    result.map(_.content.toCode()) shouldBe ArraySeq("let varA: Bool")
+      hovers.size shouldBe 1
+      hovers.map(_.content.toCode()) shouldBe ArraySeq(s"""pub fn assert() -> ()""".stripMargin)
+    }
   }
 
 }
