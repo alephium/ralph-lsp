@@ -203,31 +203,211 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
     "external function exists in nested hierarchy" in {
       goToDefinition()(
         """
-            |Interface Parent2 {
-            |  fn not_used2() -> ()
-            |
-            |  fn >>function<<() -> ()
-            |}
-            |
-            |Abstract Contract Parent1() implements Parent2 {
-            |  fn not_used1() -> ()
-            |
-            |  fn >>function<<() -> () {
-            |
-            |  }
-            |}
-            |
-            |Abstract Contract Action0() extends Parent1() {
-            |  fn not_used0() -> ()
-            |}
-            |
-            |Contract Main(action: Action0) {
-            |  pub fn main() -> () {
-            |    let result = action.functio@@n()
-            |  }
-            |}
-            |""".stripMargin
+          |Interface Parent2 {
+          |  fn not_used2() -> ()
+          |
+          |  fn >>function<<() -> ()
+          |}
+          |
+          |Abstract Contract Parent1() implements Parent2 {
+          |  fn not_used1() -> ()
+          |
+          |  fn >>function<<() -> () {
+          |
+          |  }
+          |}
+          |
+          |Abstract Contract Action0() extends Parent1() {
+          |  fn not_used0() -> ()
+          |}
+          |
+          |Contract Main(action: Action0) {
+          |  pub fn main() -> () {
+          |    let result = action.functio@@n()
+          |  }
+          |}
+          |""".stripMargin
       )
+    }
+
+    "chained two calls" when {
+      "initial call is a local function call" when {
+        "variable is assigned" in {
+          goToDefinitionSoft() {
+            """
+              |Abstract Contract Parent() {
+              |  fn >>function1<<() -> Bool
+              |}
+              |
+              |Contract Child(parent: Parent) {
+              |
+              |  fn function0() -> Parent {
+              |    return parent
+              |  }
+              |
+              |  fn main() -> () {
+              |    let variable = function0().functi@@on1()
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "variable is not assigned" in {
+          goToDefinitionSoft() {
+            """
+              |Abstract Contract Parent() {
+              |  fn >>function1<<() -> Bool
+              |}
+              |
+              |Contract Child(parent: Parent) {
+              |
+              |  fn function0() -> Parent {
+              |    return parent
+              |  }
+              |
+              |  fn main() -> () {
+              |    function0().functi@@on1()
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+      }
+
+      "initial call is a type" when {
+        "variable is assigned" in {
+          goToDefinitionSoft() {
+            """
+              |Abstract Contract Parent() {
+              |  fn >>function1<<() -> Bool
+              |}
+              |
+              |Contract Child() {
+              |
+              |  fn main(parent: Parent) -> () {
+              |    let variable = parent.functi@@on1()
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "variable is not assigned" in {
+          goToDefinitionSoft() {
+            """
+              |Abstract Contract Parent() {
+              |  fn >>function1<<() -> Bool
+              |}
+              |
+              |Contract Child() {
+              |
+              |  fn main(parent: Parent) -> () {
+              |    parent.functi@@on1()
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+      }
+    }
+
+    "chained three calls" when {
+      "initial call is a local function call" when {
+        "variable is assigned" in {
+          goToDefinitionSoft() {
+            """
+              |Abstract Contract GrandParent() {
+              |  fn >>function2<<() -> Bool
+              |}
+              |
+              |Abstract Contract Parent() {
+              |  fn function1() -> GrandParent
+              |}
+              |
+              |Contract Child(parent: Parent) {
+              |
+              |  fn function0() -> Parent {
+              |    return parent
+              |  }
+              |
+              |  fn main() -> () {
+              |    let variable = function0().function1().functio@@n2()
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "variable is not assigned" in {
+          goToDefinitionSoft() {
+            """
+              |Abstract Contract GrandParent() {
+              |  fn >>function2<<() -> Bool
+              |}
+              |
+              |Abstract Contract Parent() {
+              |  fn function1() -> GrandParent
+              |}
+              |
+              |Contract Child(parent: Parent) {
+              |
+              |  fn function0() -> Parent {
+              |    return parent
+              |  }
+              |
+              |  fn main() -> () {
+              |    function0().function1().functio@@n2()
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+      }
+
+      "initial call is a type" when {
+        "variable is assigned" in {
+          goToDefinitionSoft() {
+            """
+              |Abstract Contract GrandParent() {
+              |  fn >>function2<<() -> Bool
+              |}
+              |
+              |Abstract Contract Parent() {
+              |  fn function1() -> GrandParent
+              |}
+              |
+              |Contract Child() {
+              |
+              |  fn main(parent: Parent) -> () {
+              |    let variable = parent.function1().functio@@n2()
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "variable is not assigned" in {
+          goToDefinitionSoft() {
+            """
+              |Abstract Contract GrandParent() {
+              |  fn >>function2<<() -> Bool
+              |}
+              |
+              |Abstract Contract Parent() {
+              |  fn function1() -> GrandParent
+              |}
+              |
+              |Contract Child() {
+              |
+              |  fn main(parent: Parent) -> () {
+              |    parent.function1().functio@@n2()
+              |  }
+              |}
+              |""".stripMargin
+          }
+        }
+      }
     }
   }
 

@@ -1030,16 +1030,45 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             )
         }
 
-      case _ =>
-        // Otherwise, type information is needed.
+      case (SoftAST.ReferenceCall(_, ident: SoftAST.Identifier, _, _), right) if right contains identNode =>
+        // This is a chained method call, where the left side is a reference call.
+        // For example: `one().two()`
+        //               - `two()` is the identNode
+        //               - `one()` is the left reference call.
+        // To process this, fetch the return type of `one()` and search for the `identNode` in the returned typed.
         searchTypeCallStrict(
-          theType = methodCallNode.data.leftExpression,
+          theType = ident,
           typeProperty = identNode,
           sourceCode = sourceCode,
           cache = cache,
           settings = settings,
           detectCallSyntax = detectCallSyntax
         )
+
+      case (SoftAST.MethodCall(_, _, _, _, _, leftExpressionsRightSide: SoftAST.ReferenceCallOrIdentifier), right) if right contains identNode =>
+        // This is a chained method call, where the left side is another method call.
+        // For example: `one().two().three()`
+        //               - `three()` is the identNode
+        //               - `one().two()` is the left method call.
+        // To process this, fetch the return type of `two()`, and search for the `identNode` in the returned typed.
+        leftExpressionsRightSide.identifier match {
+          case theType: SoftAST.Identifier =>
+            searchTypeCallStrict(
+              theType = theType,
+              typeProperty = identNode,
+              sourceCode = sourceCode,
+              cache = cache,
+              settings = settings,
+              detectCallSyntax = detectCallSyntax
+            )
+
+          case _: SoftAST.IdentifierExpected =>
+            Iterator.empty
+        }
+
+      case _ =>
+        // To avoid incorrect renaming results - do not execute `searchStaticCallSoft` for tree hierarchy that is unknown.
+        Iterator.empty
     }
 
   /**
@@ -1179,7 +1208,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @return An iterator matching properties found in the given type.
    */
   private def searchTypeCallStrict(
-      theType: SoftAST.ExpressionAST,
+      theType: SoftAST.Identifier,
       typeProperty: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       cache: SearchCache,
