@@ -82,6 +82,46 @@ case object GoToTypeDefIdent extends StrictImplicitLogging {
     }
 
   /**
+   * Searches type-definitions given the function ID node [[Ast.FuncId]].
+   *
+   * @param funcIdNode The node representing the function ID being searched.
+   * @param workspace  The workspace state where the source-code is located.
+   * @return An iterator over type-definition search results.
+   */
+  def goToFuncId(
+      funcIdNode: Node[Ast.FuncId, Ast.Positioned],
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToTypeDef] =
+    funcIdNode.parent match {
+      case Some(Node(call: Ast.CallExpr[_], _)) =>
+        searchCachedType(
+          cachedType = call.getCachedType(),
+          workspace = workspace
+        )
+
+      case Some(Node(call: Ast.ContractCallExpr, _)) =>
+        searchCachedType(
+          cachedType = call.getCachedType(),
+          workspace = workspace
+        )
+
+      case Some(Node(data @ (_: Ast.FuncCall[_] | _: Ast.ContractCall), _)) =>
+        // TODO: How to fetch the type-info here?
+        //       - See issue #1295 on dev alephium.
+        //       - See ignored test-cases in `GoToTypeDefFuncIdSpec`.
+        logger.info(s"${this.productPrefix} not implemented for ${data.getClass.getName}. SourceIndex: ${data.sourceIndex}")
+        ArraySeq.empty
+
+      case Some(Node(data, _)) =>
+        logger.info(s"${this.productPrefix} not implemented for ${data.getClass.getName}. SourceIndex: ${data.sourceIndex}")
+        ArraySeq.empty
+
+      case None =>
+        logger.info(s"${this.productPrefix}: Type information not found for node: ${funcIdNode.data.getClass.getName}. SourceIndex: ${funcIdNode.data.sourceIndex}")
+        ArraySeq.empty
+    }
+
+  /**
    * Handles tupled variable declarations.
    *
    * Example:
