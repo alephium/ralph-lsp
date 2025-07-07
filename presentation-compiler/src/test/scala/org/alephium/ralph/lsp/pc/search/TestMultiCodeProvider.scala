@@ -15,6 +15,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, TestSourceCode}
 import org.alephium.ralph.lsp.pc.workspace.{TestWorkspace, Workspace, WorkspaceState}
 import org.alephium.ralph.lsp.pc.workspace.build.{TestBuild, TestRalphc}
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{DependencyID, TestDependency}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader.DependencyDownloader
 import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.utils.IsCancelled
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
@@ -74,8 +75,8 @@ object TestMultiCodeProvider extends ScalaFutures {
     goTo[Unit, SourceLocation.GoToDef](
       enableSoftParser = enableSoftParser,
       settings = (),
-      dependencyID = dependencyID,
-      dependency = dependency.to(ArraySeq),
+      customDependency = Some((dependencyID, dependency.to(ArraySeq))),
+      dependencyDownloaders = ArraySeq.empty,
       workspaces = workspaces.to(ArraySeq)
     )
 
@@ -120,8 +121,8 @@ object TestMultiCodeProvider extends ScalaFutures {
     goTo[GoToRefMultiSetting, SourceLocation.GoToRefStrict](
       enableSoftParser = false,
       settings = settings,
-      dependencyID = dependencyID,
-      dependency = dependency.to(ArraySeq),
+      customDependency = Some((dependencyID, dependency.to(ArraySeq))),
+      dependencyDownloaders = ArraySeq.empty,
       workspaces = workspaces.to(ArraySeq)
     )
 
@@ -164,8 +165,8 @@ object TestMultiCodeProvider extends ScalaFutures {
     goTo[Unit, SourceLocation.GoToRenameStrict](
       enableSoftParser = false,
       settings = (),
-      dependencyID = dependencyID,
-      dependency = dependency.to(ArraySeq),
+      customDependency = Some((dependencyID, dependency.to(ArraySeq))),
+      dependencyDownloaders = ArraySeq.empty,
       workspaces = workspaces.to(ArraySeq)
     )
 
@@ -208,8 +209,8 @@ object TestMultiCodeProvider extends ScalaFutures {
     search[Unit, Suggestion](
       enableSoftParser = false,
       settings = (),
-      dependencyID = dependencyID,
-      dependency = dependency.to(ArraySeq),
+      customDependency = Some((dependencyID, dependency.to(ArraySeq))),
+      dependencyDownloaders = ArraySeq.empty,
       workspaces = workspaces.to(ArraySeq)
     )._1.value
 
@@ -217,11 +218,11 @@ object TestMultiCodeProvider extends ScalaFutures {
    * Runs the [[MultiCodeProvider]] on the given workspaces and dependency,
    * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
    *
-   * @param enableSoftParser Whether to use the soft parser.
-   * @param settings         Settings for the [[MultiCodeProvider]].
-   * @param dependencyID     The ID to assign to the created dependency.
-   * @param dependency       The source code for the dependency.
-   * @param workspaces       The source code for the workspaces.
+   * @param enableSoftParser      Whether to use the soft parser.
+   * @param settings              Settings for the [[MultiCodeProvider]].
+   * @param customDependency      Custom dependency ID its corresponding source-code to use for building the custom dependency library.
+   * @param dependencyDownloaders Default dependency downloaders to include along with the custom dependencies.
+   * @param workspaces            The source code for the workspaces.
    * @tparam I [[MultiCodeProvider]]s settings type.
    * @tparam O [[MultiCodeProvider]]s output type.
    * @return The line range pairs pointing to the resolved locations.
@@ -229,8 +230,8 @@ object TestMultiCodeProvider extends ScalaFutures {
   private def goTo[I, O <: SourceLocation.GoTo](
       enableSoftParser: Boolean,
       settings: I,
-      dependencyID: DependencyID,
-      dependency: ArraySeq[String],
+      customDependency: Option[(DependencyID, ArraySeq[String])],
+      dependencyDownloaders: ArraySeq[DependencyDownloader.Native],
       workspaces: ArraySeq[ArraySeq[String]]
     )(implicit provider: MultiCodeProvider[I, O],
       logger: ClientLogger,
@@ -241,8 +242,8 @@ object TestMultiCodeProvider extends ScalaFutures {
       search(
         enableSoftParser = enableSoftParser,
         settings = settings,
-        dependencyID = dependencyID,
-        dependency = dependency,
+        customDependency = customDependency,
+        dependencyDownloaders = dependencyDownloaders,
         workspaces = workspaces
       )
 
@@ -251,7 +252,7 @@ object TestMultiCodeProvider extends ScalaFutures {
 
     // all dependency and workspaces source code
     val allCodeWithMarkers =
-      workspaces.flatten ++ dependency
+      workspaces.flatten ++ customDependency.toList.flatMap(_._2)
 
     // `>><<` marker information
     val lineRangeInfo =
@@ -296,11 +297,11 @@ object TestMultiCodeProvider extends ScalaFutures {
    * Runs the [[MultiCodeProvider]] on the given workspaces and dependency,
    * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
    *
-   * @param enableSoftParser Whether to use the soft parser.
-   * @param settings         Settings for the [[MultiCodeProvider]].
-   * @param dependencyID     The ID to assign to the created dependency.
-   * @param dependency       The source code for the dependency.
-   * @param workspaces       The source code for the workspaces.
+   * @param enableSoftParser      Whether to use the soft parser.
+   * @param settings              Settings for the [[MultiCodeProvider]].
+   * @param customDependency      Custom dependency ID its corresponding source-code to use for building the custom dependency library.
+   * @param dependencyDownloaders Default dependency downloaders to include along with the custom dependencies.
+   * @param workspaces            The source code for the workspaces.
    * @tparam I [[MultiCodeProvider]]s settings type.
    * @tparam O [[MultiCodeProvider]]s output type.
    * @return A pair containing the search result and the test compiled workspaces created (deleted from disk).
@@ -308,8 +309,8 @@ object TestMultiCodeProvider extends ScalaFutures {
   private def search[I, O](
       enableSoftParser: Boolean,
       settings: I,
-      dependencyID: DependencyID,
-      dependency: ArraySeq[String],
+      customDependency: Option[(DependencyID, ArraySeq[String])],
+      dependencyDownloaders: ArraySeq[DependencyDownloader.Native],
       workspaces: ArraySeq[ArraySeq[String]]
     )(implicit provider: MultiCodeProvider[I, O],
       logger: ClientLogger,
@@ -321,17 +322,20 @@ object TestMultiCodeProvider extends ScalaFutures {
     val dependencyAbsolutePath =
       Paths.get(TestFile.genFolderURI().sample.value).toString
 
-    // Build a dependency downloader that returns the given dependency-code.
-    val dependencyDownloader =
-      if (dependency.nonEmpty)
-        ArraySeq(
-          TestDependency.buildDependencyDownloader(
-            depId = dependencyID,
-            depCode = dependency map TestCodeUtil.clearTestMarkers
-          )
-        )
-      else
-        ArraySeq.empty
+    // Build dependency downloaders for the test workspace.
+    val allDependencyDownloaders =
+      customDependency.foldLeft(dependencyDownloaders: ArraySeq[DependencyDownloader]) {
+        case (downloaders, (id, code)) =>
+          // Custom dependency code is provided - create custom dependency downloader for that code.
+          val custom =
+            TestDependency.buildDependencyDownloader(
+              depId = id,
+              depCode = code map TestCodeUtil.clearTestMarkers
+            )
+
+          // merge all downloaders.
+          downloaders :+ custom
+      }
 
     // create a compiled workspace from the given source-code and the dependency downloader.
     val compiledWorkspace =
@@ -342,7 +346,7 @@ object TestMultiCodeProvider extends ScalaFutures {
             TestBuild
               .genCompiledOK(
                 config = TestRalphc.genRalphcParsedConfig(dependenciesFolderName = Some(dependencyAbsolutePath)),
-                dependencyDownloaders = dependencyDownloader
+                dependencyDownloaders = allDependencyDownloaders
               )
               .sample
               .value
@@ -367,7 +371,7 @@ object TestMultiCodeProvider extends ScalaFutures {
 
     // all dependency and workspaces source code
     val allCodeWithMarkers =
-      workspaces.flatten ++ dependency
+      workspaces.flatten ++ customDependency.toList.flatMap(_._2)
 
     // `@@` marker information
     val ((atLocation, codeWithAt), _) =
