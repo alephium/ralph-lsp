@@ -253,8 +253,8 @@ object TestMultiCodeProvider extends ScalaFutures {
     search[Unit, SourceLocation.Hover](
       enableSoftParser = true,
       settings = (),
-      dependencyID = dependencyID,
-      dependency = dependency.to(ArraySeq),
+      customDependency = Some((dependencyID, dependency.to(ArraySeq))),
+      dependencyDownloaders = ArraySeq.empty,
       workspaces = workspaces.to(ArraySeq)
     )._1.value
 
