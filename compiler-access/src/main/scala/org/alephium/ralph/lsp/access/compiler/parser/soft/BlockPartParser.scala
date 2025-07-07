@@ -23,7 +23,7 @@ private object BlockPartParser {
         InheritanceParser.parseOrFail |
         expression(blockExpressions) |
         CommentParser.parseOrFail |
-        UnresolvedParser.parseOrFail(stop)
+        UnresolvedParser.parseOrFailSpaceDelimited(stop)
     }
 
   private def expression[Unknown: P](blockExpressions: Boolean): P[SoftAST.BlockPartAST] =
