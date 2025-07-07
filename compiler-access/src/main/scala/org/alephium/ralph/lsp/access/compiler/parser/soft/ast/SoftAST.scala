@@ -794,6 +794,7 @@ object SoftAST {
       preAccessIndex: Option[Space],
       accessIndex: ExpressionAST,
       preCloseBracketSpace: Option[Space],
+      unresolved: Option[SoftAST.Unresolved],
       closeBracket: TokenDocExpectedAST[Token.BlockBracket.type])
     extends ExpressionAST
 

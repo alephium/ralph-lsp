@@ -9,6 +9,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.OptionValues._
 
 class ArrayAccessParserSpec extends AnyWordSpec with Matchers {
 
@@ -25,6 +26,7 @@ class ArrayAccessParserSpec extends AnyWordSpec with Matchers {
         preAccessIndex = None,
         accessIndex = ExpressionExpected("array[>><<]"),
         preCloseBracketSpace = None,
+        unresolved = None,
         closeBracket = BlockBracket("array[>>]<<")
       )
   }
@@ -42,6 +44,7 @@ class ArrayAccessParserSpec extends AnyWordSpec with Matchers {
         preAccessIndex = None,
         accessIndex = Number("array[>>0<<]"),
         preCloseBracketSpace = None,
+        unresolved = None,
         closeBracket = BlockBracket("array[0>>]<<")
       )
   }
@@ -91,6 +94,7 @@ class ArrayAccessParserSpec extends AnyWordSpec with Matchers {
             |""".stripMargin.trim
         ),
         preCloseBracketSpace = None,
+        unresolved = None,
         closeBracket = BlockBracket(
           """
             |array
@@ -116,6 +120,61 @@ class ArrayAccessParserSpec extends AnyWordSpec with Matchers {
     val accessIndex = right.accessIndex.asInstanceOf[SoftAST.MethodCall]
     accessIndex.index shouldBe indexOf("contract.function().array[>>map.getIndex(forValue)<<]")
     accessIndex.toCode() shouldBe "map.getIndex(forValue)"
+  }
+
+  "infix call access" in {
+    val ast =
+      parseArrayAccess("array[1 + 2 + CONSTANT]")
+
+    ast.accessIndex shouldBe a[SoftAST.InfixExpression]
+    ast.accessIndex.toCode() shouldBe "1 + 2 + CONSTANT"
+  }
+
+  "method call access" in {
+    val ast =
+      parseArrayAccess("array[contract.function()]")
+
+    ast.accessIndex shouldBe a[SoftAST.MethodCall]
+    ast.accessIndex.toCode() shouldBe "contract.function()"
+  }
+
+  "unresolved expression" when {
+    "annotation" in {
+      val ast =
+        parseArrayAccess("array[@stuff]")
+
+      ast.unresolved.value.toCode() shouldBe "@stuff"
+    }
+
+    "space" in {
+      val ast =
+        parseArrayAccess("array[index blah]")
+
+      ast.unresolved.value.toCode() shouldBe "blah"
+    }
+
+    "emoji" in {
+      val ast =
+        parseArrayAccess("array[🤙]")
+
+      ast.unresolved.value.toCode() shouldBe "🤙"
+    }
+
+    "valid code followed by emoji" when {
+      "identifier" in {
+        val ast =
+          parseArrayAccess("array[index 🤙]")
+
+        ast.unresolved.value.toCode() shouldBe "🤙"
+      }
+
+      "infix expression" in {
+        val ast =
+          parseArrayAccess("array[1 + 2 🤙]")
+
+        ast.unresolved.value.toCode() shouldBe "🤙"
+      }
+    }
   }
 
 }
