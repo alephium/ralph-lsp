@@ -31,12 +31,13 @@ object ArrayAccessParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.OpenBracket) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parse ~
+        ExpressionParser.parseSubset(expression) ~
         SpaceParser.parseOrFail.? ~
+        UnresolvedParser.parseOrFail(Token.BlockBracket).? ~
         TokenParser.parse(Token.BlockBracket) ~
         Index
     } map {
-      case (from, identifier, preOpenBracketSpace, openBracket, preTypeSpace, accessIndex, preCloseBracketSpace, closeBracket, to) =>
+      case (from, identifier, preOpenBracketSpace, openBracket, preTypeSpace, accessIndex, preCloseBracketSpace, unresolved, closeBracket, to) =>
         SoftAST.ArrayAccess(
           index = range(from, to),
           identifier = identifier,
@@ -45,8 +46,19 @@ object ArrayAccessParser {
           preAccessIndex = preTypeSpace,
           accessIndex = accessIndex,
           preCloseBracketSpace = preCloseBracketSpace,
+          unresolved = unresolved,
           closeBracket = closeBracket
         )
+    }
+
+  private def expression[Unknown: P]: P[SoftAST.ExpressionAST] =
+    P {
+      InfixCallParser.parseOrFail |
+        MethodCallParser.parseOrFail |
+        ReferenceCallParser.parseOrFail |
+        ByteVecParser.parseOrFail |
+        NumberParser.parseOrFail |
+        IdentifierParser.parseOrFail
     }
 
 }

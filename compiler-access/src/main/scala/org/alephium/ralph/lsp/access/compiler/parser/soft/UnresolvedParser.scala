@@ -10,11 +10,11 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object UnresolvedParser {
 
-  def parseOrFail[Unknown: P](stop: Seq[Token]): P[SoftAST.Unresolved] =
+  def parseOrFail[Unknown: P](stop: Token*): P[SoftAST.Unresolved] =
     P {
       Index ~
         CommentParser.parseOrFail.? ~
-        CodeParser.parseOrFail(TokenParser.WhileNotOrFail(stop ++ Token.spaces).!) ~
+        CodeParser.parseOrFail(TokenParser.WhileNotOrFail(stop).!) ~
         Index
     } map {
       case (from, comment, text, to) =>
@@ -24,5 +24,8 @@ private object UnresolvedParser {
           code = text
         )
     }
+
+  def parseOrFailSpaceDelimited[Unknown: P](stop: Seq[Token]): P[SoftAST.Unresolved] =
+    parseOrFail(stop ++ Token.spaces: _*)
 
 }
