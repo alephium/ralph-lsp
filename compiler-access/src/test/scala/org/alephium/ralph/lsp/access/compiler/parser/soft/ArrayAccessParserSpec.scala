@@ -4,7 +4,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
@@ -174,6 +174,13 @@ class ArrayAccessParserSpec extends AnyWordSpec with Matchers {
 
         ast.unresolved.value.toCode() shouldBe "🤙"
       }
+    }
+
+    "closing bracket is missing" in {
+      val ast = parseArrayAccess("array[🤙")
+
+      ast.unresolved.value.toCode() shouldBe "🤙"
+      ast.closeBracket shouldBe TokenExpected("array[🤙>><<", Token.BlockBracket)
     }
   }
 
