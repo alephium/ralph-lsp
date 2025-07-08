@@ -50,11 +50,11 @@ private object CommentParser {
   private def one[Unknown: P]: P[SoftAST.Comment] =
     P {
       Index ~
-        TokenParser.parseOrFailUndocumented(Token.DoubleForwardSlash) ~
+        CodeParser.parseOrFail(Token.DoubleForwardSlash) ~
         SpaceParser.parseOrFailSingleLine.? ~
         TextParser.parseOrFail(Token.Newline).? ~
         // read the tail space only if the next line is also a comment
-        (SpaceParser.parseOrFail ~ &(TokenParser.parseOrFailUndocumented(Token.DoubleForwardSlash))).? ~
+        (SpaceParser.parseOrFail ~ &(CodeParser.parseOrFail(Token.DoubleForwardSlash))).? ~
         Index
     } map {
       case (from, doubleForwardSlash, preTextSpace, text, postTextSpace, to) =>

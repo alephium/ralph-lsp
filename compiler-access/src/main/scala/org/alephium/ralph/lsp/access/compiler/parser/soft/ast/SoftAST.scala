@@ -201,15 +201,6 @@ object SoftAST {
 
   }
 
-  /**
-   * Has an [[Token]] type associates with it.
-   */
-  sealed trait TokenAST[+T <: Token] extends CodeAST {
-
-    def code: CodeToken[T]
-
-  }
-
   abstract class ErrorAST(val message: String) extends SoftAST {
 
     // Also display the error message in the Tree representation
@@ -239,13 +230,6 @@ object SoftAST {
       code: CodeToken[T])
     extends TokenDocExpectedAST[T]
        with CodeDocumentedAST
-
-  case class TokenUndocumented[+T <: Token](code: CodeToken[T]) extends TokenAST[T] {
-
-    override def index: SourceIndex =
-      code.index
-
-  }
 
   sealed trait CodeTokenAST[+T <: Token] extends SoftAST
 
@@ -519,7 +503,7 @@ object SoftAST {
 
   case class Comment(
       index: SourceIndex,
-      doubleForwardSlash: TokenUndocumented[Token.DoubleForwardSlash.type],
+      doubleForwardSlash: CodeToken[Token.DoubleForwardSlash.type],
       preTextSpace: Option[Space],
       text: Option[CodeString],
       postTextSpace: Option[Space])

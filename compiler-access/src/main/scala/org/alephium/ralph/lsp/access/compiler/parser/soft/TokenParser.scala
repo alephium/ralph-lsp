@@ -38,9 +38,6 @@ private object TokenParser {
         )
     }
 
-  def parseOrFailUndocumented[Unknown: P, T <: Token](token: T): P[SoftAST.TokenUndocumented[T]] =
-    P(CodeParser.parseOrFail(token)) map (SoftAST.TokenUndocumented(_))
-
   /**
    * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.
    */
