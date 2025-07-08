@@ -12,11 +12,8 @@ import org.scalatest.wordspec.AnyWordSpec
 class IdentifierParserSpec extends AnyWordSpec with Matchers {
 
   "disallow reserved tokens to be used as identifier" when {
-    val reserved =
-      Token.reserved.diff(Seq(Token.Hash)) // Remove hash because `let hash = #` is valid
-
     "tail has space" in {
-      reserved foreach {
+      Token.reserved foreach {
         reserved =>
           assertIsFastParseError {
             parseIdentifier(s"${reserved.lexeme} ")
@@ -25,12 +22,29 @@ class IdentifierParserSpec extends AnyWordSpec with Matchers {
     }
 
     "tail is end-of-file" in {
-      reserved foreach {
+      Token.reserved foreach {
         reserved =>
           assertIsFastParseError {
             parseIdentifier(reserved.lexeme)
           }
       }
+    }
+  }
+
+  "disallow numbers to be identifier" in {
+    Array(
+      "1",
+      "1.0",
+      "0.0",
+      "0u",
+      "0i",
+      "1f",
+      "1d"
+    ) foreach {
+      number =>
+        assertIsFastParseError {
+          parseIdentifier(number)
+        }
     }
   }
 
