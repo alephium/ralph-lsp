@@ -359,15 +359,13 @@ object TestSoftAST {
       token = Token.Semicolon
     )
 
-  def DoubleForwardSlash(code: String): SoftAST.TokenUndocumented[Token.DoubleForwardSlash.type] =
+  def DoubleForwardSlash(code: String): SoftAST.CodeToken[Token.DoubleForwardSlash.type] =
     DoubleForwardSlash(indexOf(code))
 
-  def DoubleForwardSlash(index: SourceIndex): SoftAST.TokenUndocumented[Token.DoubleForwardSlash.type] =
-    SoftAST.TokenUndocumented(
-      SoftAST.CodeToken(
-        index = index,
-        token = Token.DoubleForwardSlash
-      )
+  def DoubleForwardSlash(index: SourceIndex): SoftAST.CodeToken[Token.DoubleForwardSlash.type] =
+    SoftAST.CodeToken(
+      index = index,
+      token = Token.DoubleForwardSlash
     )
 
   def Newline(code: String): SoftAST.TokenDocumented[Token.Newline.type] =
