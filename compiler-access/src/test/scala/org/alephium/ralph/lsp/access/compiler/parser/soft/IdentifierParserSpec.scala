@@ -31,4 +31,21 @@ class IdentifierParserSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "disallow numbers to be identifier" in {
+    Array(
+      "1",
+      "1.0",
+      "0.0",
+      "0u",
+      "0i",
+      "1f",
+      "1d"
+    ) foreach {
+      number =>
+        assertIsFastParseError {
+          parseIdentifier(number)
+        }
+    }
+  }
+
 }

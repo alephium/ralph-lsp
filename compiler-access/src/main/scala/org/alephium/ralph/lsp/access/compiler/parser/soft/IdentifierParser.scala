@@ -6,7 +6,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 
 private object IdentifierParser {
 
@@ -26,10 +26,11 @@ private object IdentifierParser {
     }
 
   /**
-   * Parses identifiers as long as they are not reserved tokens [[Token.Reserved]].
+   * Parses identifiers as long as they are not reserved tokens
+   * [[org.alephium.ralph.lsp.access.compiler.parser.soft.ast.Token.Reserved]].
    *
    * For example, the following code will result in an [[SoftAST.IdentifierExpected]] error
-   * because `let` is a reserved token [[Token.Let]]:
+   * because `let` is a reserved token [[org.alephium.ralph.lsp.access.compiler.parser.soft.ast.Token.Let]]:
    *
    * {{{
    *    fn let() -> ()
@@ -56,9 +57,6 @@ private object IdentifierParser {
     }
 
   private def isDevDefinedName[Unknown: P]: P[Unit] =
-    CharsWhile {
-      char =>
-        char.isLetterOrDigit || Token.Underscore.lexeme.contains(char) || Token.Exclamation.lexeme.contains(char)
-    }
+    P(CharIn("a-zA-Z_") ~ CharIn("a-zA-Z0-9_!").rep)
 
 }
