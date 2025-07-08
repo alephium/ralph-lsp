@@ -777,7 +777,7 @@ object SoftAST {
       index: SourceIndex,
       openBracket: TokenDocumented[Token.OpenBracket.type],
       preTypeSpace: Option[Space],
-      tpe: IdentifierAST,
+      tpe: ExpressionAST,
       preSemiColonSpace: Option[Space],
       semiColon: TokenDocumented[Token.Semicolon.type],
       preSizeSpace: Option[Space],
