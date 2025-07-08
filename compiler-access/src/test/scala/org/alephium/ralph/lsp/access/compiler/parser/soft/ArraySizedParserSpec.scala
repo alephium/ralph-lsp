@@ -22,7 +22,7 @@ class ArraySizedParserSpec extends AnyWordSpec with Matchers {
           index = indexOf(">>[;]<<"),
           openBracket = OpenBracket(">>[<<;]"),
           preTypeSpace = None,
-          tpe = IdentifierExpected("[>><<;]"),
+          tpe = ExpressionExpected("[>><<;]"),
           preSemiColonSpace = None,
           semiColon = Semicolon("[>>;<<]"),
           preSizeSpace = None,
@@ -41,7 +41,7 @@ class ArraySizedParserSpec extends AnyWordSpec with Matchers {
           index = indexOf(">>[;<<"),
           openBracket = OpenBracket(">>[<<;"),
           preTypeSpace = None,
-          tpe = IdentifierExpected("[>><<;"),
+          tpe = ExpressionExpected("[>><<;"),
           preSemiColonSpace = None,
           semiColon = Semicolon("[>>;<<"),
           preSizeSpace = None,
@@ -74,6 +74,33 @@ class ArraySizedParserSpec extends AnyWordSpec with Matchers {
         preCloseBracketSpace = None,
         closeBracket = BlockBracket("[Type; Size>>]<<")
       )
+  }
+
+  "allow expressions" in {
+    val _ast =
+      parseArray("[if(true) true else false; getSize()]")
+
+    val ast = _ast.asInstanceOf[SoftAST.ArraySized]
+
+    ast.copy(tpe = null, size = null) shouldBe
+      SoftAST.ArraySized(
+        index = indexOf(">>[if(true) true else false; getSize()]<<"),
+        openBracket = OpenBracket(">>[<<if(true) true else false; getSize()]"),
+        preTypeSpace = None,
+        tpe = null,
+        preSemiColonSpace = None,
+        semiColon = Semicolon("[if(true) true else false>>;<< getSize()]"),
+        preSizeSpace = Some(Space("[if(true) true else false;>> <<getSize()]")),
+        size = null,
+        preCloseBracketSpace = None,
+        closeBracket = BlockBracket("[if(true) true else false; getSize()>>]<<")
+      )
+
+    ast.tpe shouldBe a[SoftAST.IfElse]
+    ast.tpe.toCode() shouldBe "if(true) true else false"
+
+    ast.size shouldBe a[SoftAST.ReferenceCall]
+    ast.size.toCode() shouldBe "getSize()"
   }
 
 }
