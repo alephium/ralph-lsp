@@ -29,20 +29,20 @@ class ElseParserSpec extends AnyWordSpec with Matchers {
         SoftAST.Else(
           index = indexOf(">>else<<"),
           elseToken = Else(">>else<<"),
-          preBlockSpace = None,
-          block = None
+          preBodySpace = None,
+          body = Right(ExpressionExpected("else>><<"))
         )
     }
 
-    "fully defined" in {
+    "fully defined with a block" in {
       val elseAST = parseElse("else{ }")
 
       elseAST shouldBe
         SoftAST.Else(
           index = indexOf(">>else{ }<<"),
           elseToken = Else(">>else<<{ }"),
-          preBlockSpace = None,
-          block = Some(
+          preBodySpace = None,
+          body = Left(
             SoftAST.Block(
               index = indexOf("else>>{ }<<"),
               openCurly = OpenCurly("else>>{<< }"),
@@ -53,6 +53,18 @@ class ElseParserSpec extends AnyWordSpec with Matchers {
         )
     }
 
+    "fully defined with an unblocked expressions" in {
+      val elseAST = parseElse("else blah")
+
+      elseAST shouldBe
+        SoftAST.Else(
+          index = indexOf(">>else blah<<"),
+          elseToken = Else(">>else<< blah"),
+          preBodySpace = Some(Space("else>> <<blah")),
+          body = Right(Identifier("else >>blah<<"))
+        )
+    }
+
     "close curly is missing" in {
       val elseAST = parseElse("else{ ")
 
@@ -60,8 +72,8 @@ class ElseParserSpec extends AnyWordSpec with Matchers {
         SoftAST.Else(
           index = indexOf(">>else{ <<"),
           elseToken = Else(">>else<<{ "),
-          preBlockSpace = None,
-          block = Some(
+          preBodySpace = None,
+          body = Left(
             SoftAST.Block(
               index = indexOf("else>>{ <<"),
               openCurly = OpenCurly("else>>{<< "),

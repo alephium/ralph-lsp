@@ -16,15 +16,15 @@ private object ElseParser {
         TokenParser.parseOrFail(Token.Else) ~
         TokenParser.isBoundary(Token.OpenParen, Token.OpenCurly) ~
         SpaceParser.parseOrFail.? ~
-        BlockParser.parseOrFail.? ~
+        IfElseParser.parseBody ~
         Index
     } map {
-      case (from, elseToken, preBlockSpace, block, to) =>
+      case (from, elseToken, preBodySpace, body, to) =>
         SoftAST.Else(
           index = range(from, to),
           elseToken = elseToken,
-          preBlockSpace = preBlockSpace,
-          block = block
+          preBodySpace = preBodySpace,
+          body = body
         )
     }
 
