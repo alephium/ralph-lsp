@@ -750,8 +750,8 @@ object SoftAST {
       ifToken: TokenDocumented[Token.If.type],
       preGroupSpace: Option[Space],
       group: Group[Token.OpenParen.type, Token.CloseParen.type],
-      preBlockSpace: Option[Space],
-      block: Option[Block],
+      preBodySpace: Option[Space],
+      body: Either[Block, ExpressionAST],
       preElseSpace: Option[Space],
       elseStatement: Option[Else])
     extends ExpressionAST
@@ -759,8 +759,8 @@ object SoftAST {
   case class Else(
       index: SourceIndex,
       elseToken: TokenDocumented[Token.Else.type],
-      preBlockSpace: Option[Space],
-      block: Option[Block])
+      preBodySpace: Option[Space],
+      body: Either[Block, ExpressionAST])
     extends ExpressionAST
 
   sealed trait TypeParamsExpectedAST extends ExpressionAST

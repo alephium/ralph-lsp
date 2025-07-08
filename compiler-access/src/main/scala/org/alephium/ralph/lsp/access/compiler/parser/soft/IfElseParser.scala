@@ -18,12 +18,12 @@ private object IfElseParser {
         SpaceParser.parseOrFail.? ~
         TupleParser.parse ~
         SpaceParser.parseOrFail.? ~
-        BlockParser.parseOrFail.? ~
+        (BlockParser.parseOrFail.map(Left(_)) | ExpressionParser.parse.map(Right(_))) ~
         // do not read the space if `else` is not provided
         (SpaceParser.parseOrFail.? ~ ElseParser.parseOrFail).? ~
         Index
     } map {
-      case (from, ifToken, preGroupSpace, group, preBlockSpace, block, elseStatement, to) =>
+      case (from, ifToken, preGroupSpace, group, preBodySpace, block, elseStatement, to) =>
         val (elseSpace, elseAST) =
           elseStatement match {
             case Some((space, statement)) =>
@@ -38,11 +38,15 @@ private object IfElseParser {
           ifToken = ifToken,
           preGroupSpace = preGroupSpace,
           group = group,
-          preBlockSpace = preBlockSpace,
-          block = block,
+          preBodySpace = preBodySpace,
+          body = block,
           preElseSpace = elseSpace,
           elseStatement = elseAST
         )
     }
+
+  /** Parses the body of an `if` or `else` expression */
+  def parseBody[Unknown: P]: P[Either[SoftAST.Block, SoftAST.ExpressionAST]] =
+    P(BlockParser.parseOrFail.map(Left(_)) | ExpressionParser.parse.map(Right(_)))
 
 }

@@ -11,6 +11,7 @@ import org.alephium.ralph.lsp.access.util.TestFastParse._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
+import org.scalatest.EitherValues._
 
 class IfElseParserSpec extends AnyWordSpec with Matchers {
 
@@ -40,8 +41,8 @@ class IfElseParserSpec extends AnyWordSpec with Matchers {
             tailExpressions = Seq.empty,
             closeToken = Some(TokenExpected("if>><<", Token.CloseParen))
           ),
-          preBlockSpace = None,
-          block = None,
+          preBodySpace = None,
+          body = Right(ExpressionExpected("if>><<")),
           preElseSpace = None,
           elseStatement = None
         )
@@ -56,8 +57,8 @@ class IfElseParserSpec extends AnyWordSpec with Matchers {
           ifToken = If(">>if<<(a + b == 1)"),
           preGroupSpace = None,
           group = null,
-          preBlockSpace = None,
-          block = None,
+          preBodySpace = None,
+          body = Right(ExpressionExpected("if(a + b == 1)>><<")),
           preElseSpace = None,
           elseStatement = None
         )
@@ -65,43 +66,86 @@ class IfElseParserSpec extends AnyWordSpec with Matchers {
       ifElse.group.toCode() shouldBe "(a + b == 1)"
     }
 
-    "`if` is fully defined" in {
+    "`if` is fully defined with an unblocked expression" in {
+      val ifElse = parseIfElse("if(a + b == 1) true")
+
+      ifElse.copy(group = null) shouldBe
+        SoftAST.IfElse(
+          index = indexOf(">>if(a + b == 1) true<<"),
+          ifToken = If(">>if<<(a + b == 1) true"),
+          preGroupSpace = None,
+          group = null,
+          preBodySpace = Some(Space("if(a + b == 1)>> <<true")),
+          body = Right(SoftAST.TokenExpression(True("if(a + b == 1) >>true<<"))),
+          preElseSpace = None,
+          elseStatement = None
+        )
+
+      ifElse.group.toCode() shouldBe "(a + b == 1)"
+    }
+
+    "`if` is fully defined with a block" in {
       val ifElse = parseIfElse("if(a + b == 1) { }")
 
-      ifElse.copy(group = null, block = null) shouldBe
+      ifElse.copy(group = null, body = null) shouldBe
         SoftAST.IfElse(
           index = indexOf(">>if(a + b == 1) { }<<"),
           ifToken = If(">>if<<(a + b == 1) { }"),
           preGroupSpace = None,
           group = null,
-          preBlockSpace = Some(Space("if(a + b == 1)>> <<{ }")),
-          block = null,
+          preBodySpace = Some(Space("if(a + b == 1)>> <<{ }")),
+          body = null,
           preElseSpace = None,
           elseStatement = None
         )
 
       ifElse.group.toCode() shouldBe "(a + b == 1)"
-      ifElse.block.value.toCode() shouldBe "{ }"
+      ifElse.body.left.value.toCode() shouldBe "{ }"
     }
 
-    "`if` and `else` are both defined" in {
+    "`if` and `else` are both defined with blocks" in {
       val ifElse = parseIfElse("if(a + b == 1) { } else { }")
 
-      ifElse.copy(group = null, block = null, elseStatement = null) shouldBe
+      ifElse.copy(group = null, body = null, elseStatement = null) shouldBe
         SoftAST.IfElse(
           index = indexOf(">>if(a + b == 1) { } else { }<<"),
           ifToken = If(">>if<<(a + b == 1) { } else { }"),
           preGroupSpace = None,
           group = null,
-          preBlockSpace = Some(Space("if(a + b == 1)>> <<{ } else { }")),
-          block = null,
+          preBodySpace = Some(Space("if(a + b == 1)>> <<{ } else { }")),
+          body = null,
           preElseSpace = Some(Space("if(a + b == 1) { }>> <<else { }")),
           elseStatement = null
         )
 
       ifElse.group.toCode() shouldBe "(a + b == 1)"
-      ifElse.block.value.toCode() shouldBe "{ }"
+      ifElse.body.left.value.toCode() shouldBe "{ }"
       ifElse.elseStatement.value.toCode() shouldBe "else { }"
+    }
+
+    "`if` and `else` are both defined with unblocked expressions" in {
+      val ifElse = parseIfElse("if(a + b == 1) true else false")
+
+      ifElse.copy(group = null) shouldBe
+        SoftAST.IfElse(
+          index = indexOf(">>if(a + b == 1) true else false<<"),
+          ifToken = If(">>if<<(a + b == 1) true else false"),
+          preGroupSpace = None,
+          group = null,
+          preBodySpace = Some(Space("if(a + b == 1)>> <<true else false")),
+          body = Right(SoftAST.TokenExpression(True("if(a + b == 1) >>true<< else false"))),
+          preElseSpace = Some(Space("if(a + b == 1) true>> <<else false")),
+          elseStatement = Some(
+            SoftAST.Else(
+              index = indexOf("if(a + b == 1) true >>else false<<"),
+              elseToken = Else("if(a + b == 1) true >>else<< false"),
+              preBodySpace = Some(Space("if(a + b == 1) true else>> <<false")),
+              body = Right(SoftAST.TokenExpression(False("if(a + b == 1) true else >>false<<")))
+            )
+          )
+        )
+
+      ifElse.group.toCode() shouldBe "(a + b == 1)"
     }
 
     "not read the tail `if` space if `else` is not defined" in {
