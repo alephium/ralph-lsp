@@ -18,7 +18,7 @@ private object ArrayParser {
       Index ~
         TokenParser.parseOrFail(Token.OpenBracket) ~
         SpaceParser.parseOrFail.? ~
-        IdentifierParser.parse ~
+        ExpressionParser.parse ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.Semicolon) ~
         SpaceParser.parseOrFail.? ~
