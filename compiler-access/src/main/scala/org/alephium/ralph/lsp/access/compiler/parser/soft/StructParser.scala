@@ -15,7 +15,7 @@ private object StructParser {
     // Therefore, process them first before the others.
     val head = Token.spaces :+ Token.Comma :+ Token.CloseCurly
     val tail = Token.reserved
-    head ++ tail
+    (head ++ tail).distinct
   }
 
   def parseOrFail[Unknown: P]: P[SoftAST.Struct] =
@@ -46,7 +46,7 @@ private object StructParser {
 
   private def expressions[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
-      TypeAssignmentParser.parseOrFail |
+      TypeAssignmentParser.parse | // A type assignment is required
         UnresolvedParser.parseOrFail(stops: _*)
     }
 

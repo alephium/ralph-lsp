@@ -618,7 +618,7 @@ object SoftAST {
       annotations: Seq[Annotation],
       expressionLeft: ExpressionAST,
       preColonSpace: Option[Space],
-      colon: TokenDocumented[Token.Colon.type],
+      colon: TokenDocExpectedAST[Token.Colon.type],
       postColonSpace: Option[Space],
       expressionRight: ExpressionAST)
     extends ExpressionAST
