@@ -72,8 +72,80 @@ class StructParserSpec extends AnyWordSpec {
       struct.params.toCode() shouldBe "{ z: U256, mut foo: Foo }"
       struct.params.openToken.value shouldBe OpenCurly("struct Bar >>{<< z: U256, mut foo: Foo }")
       struct.params.closeToken.value shouldBe CloseCurly("struct Bar { z: U256, mut foo: Foo >>}<<")
+    }
+
+    "type is missing" when {
+      "single type param" in {
+        val struct = parseStruct("struct MyStruct{ name }")
+
+        struct shouldBe
+          SoftAST.Struct(
+            index = indexOf(">>struct MyStruct{ name }<<"),
+            structToken = Struct(">>struct<< MyStruct{ name }"),
+            preIdentifierSpace = Some(Space("struct>> <<MyStruct{ name }")),
+            identifier = Identifier("struct >>MyStruct<<{ name }"),
+            preParamSpace = None,
+            params = SoftAST.Group(
+              index = indexOf("struct MyStruct>>{ name }<<"),
+              openToken = Some(OpenCurly("struct MyStruct>>{<< name }")),
+              preHeadExpressionSpace = Some(Space("struct MyStruct{>> <<name }")),
+              headExpression = Some(Unresolved("struct MyStruct{ >>name<< }")),
+              postHeadExpressionSpace = Some(Space("struct MyStruct{ name>> <<}")),
+              tailExpressions = Seq.empty,
+              closeToken = Some(CloseCurly("struct MyStruct{ name >>}<<"))
+            )
+          )
+      }
+
+      "3 type params" in {
+        // `one` and `three` are stored as unresolved
+        // `two` is stored with its right-hand-side stored as expression-expected
+        val struct = parseStruct("struct MyStruct{ one, two:, three }")
+
+        struct shouldBe
+          SoftAST.Struct(
+            index = indexOf(">>struct MyStruct{ one, two:, three }<<"),
+            structToken = Struct(">>struct<< MyStruct{ one, two:, three }"),
+            preIdentifierSpace = Some(Space("struct>> <<MyStruct{ one, two:, three }")),
+            identifier = Identifier("struct >>MyStruct<<{ one, two:, three }"),
+            preParamSpace = None,
+            params = SoftAST.Group(
+              index = indexOf("struct MyStruct>>{ one, two:, three }<<"),
+              openToken = Some(OpenCurly("struct MyStruct>>{<< one, two:, three }")),
+              preHeadExpressionSpace = Some(Space("struct MyStruct{>> <<one, two:, three }")),
+              headExpression = Some(Unresolved("struct MyStruct{ >>one<<, two:, three }")),
+              postHeadExpressionSpace = None,
+              tailExpressions = Seq(
+                SoftAST.GroupTail(
+                  index = indexOf("struct MyStruct{ one>>, two:<<, three }"),
+                  comma = Comma("struct MyStruct{ one>>,<< two:, three }"),
+                  preExpressionSpace = Some(Space("struct MyStruct{ one,>> <<two:, three }")),
+                  expression = SoftAST.TypeAssignment(
+                    index = indexOf("struct MyStruct{ one, >>two:<<, three }"),
+                    annotations = Seq.empty,
+                    expressionLeft = Identifier("struct MyStruct{ one, >>two<<:, three }"),
+                    preColonSpace = None,
+                    colon = Colon("struct MyStruct{ one, two>>:<<, three }"),
+                    postColonSpace = None,
+                    expressionRight = ExpressionExpected("struct MyStruct{ one, two:>><<, three }")
+                  ),
+                  postExpressionSpace = None
+                ),
+                SoftAST.GroupTail(
+                  index = indexOf("struct MyStruct{ one, two:>>, three <<}"),
+                  comma = Comma("struct MyStruct{ one, two:>>,<< three }"),
+                  preExpressionSpace = Some(Space("struct MyStruct{ one, two:,>> <<three }")),
+                  expression = Unresolved("struct MyStruct{ one, two:, >>three<< }"),
+                  postExpressionSpace = Some(Space("struct MyStruct{ one, two:, three>> <<}"))
+                )
+              ),
+              closeToken = Some(CloseCurly("struct MyStruct{ one, two:, three >>}<<"))
+            )
+          )
+      }
 
     }
+
   }
 
 }
