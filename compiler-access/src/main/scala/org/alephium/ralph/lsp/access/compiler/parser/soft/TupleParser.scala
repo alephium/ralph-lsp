@@ -11,20 +11,23 @@ private object TupleParser {
   def parse[Unknown: P]: P[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]] =
     GroupParser.parse(
       open = Token.OpenParen,
-      close = Token.CloseParen
+      close = Token.CloseParen,
+      expressionsParseOrFail = GroupParser.defaultExpressions
     )
 
   def parse[Unknown: P](required: Boolean): P[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]] =
     GroupParser.parse(
       required = required,
       open = Token.OpenParen,
-      close = Token.CloseParen
+      close = Token.CloseParen,
+      expressionsParseOrFail = GroupParser.defaultExpressions
     )
 
   def parseOrFail[Unknown: P]: P[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]] =
     GroupParser.parseOrFail(
       open = Token.OpenParen,
-      close = Token.CloseParen
+      close = Token.CloseParen,
+      expressionsParseOrFail = GroupParser.defaultExpressions
     )
 
 }

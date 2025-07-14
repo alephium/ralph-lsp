@@ -12,35 +12,41 @@ private object GroupParser {
 
   def parse[Unknown: P, O <: Token, C <: Token](
       open: O,
-      close: C): P[SoftAST.Group[O, C]] =
+      close: C,
+      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[O, C]] =
     P {
       group(
         required = true,
         open = open,
-        close = close
+        close = close,
+        expressionsParseOrFail = expressionsParseOrFail
       )
     }
 
   def parse[Unknown: P, O <: Token, C <: Token](
       required: Boolean,
       open: O,
-      close: C): P[SoftAST.Group[O, C]] =
+      close: C,
+      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[O, C]] =
     P {
       group(
         required,
         open = open,
-        close = close
+        close = close,
+        expressionsParseOrFail = expressionsParseOrFail
       )
     }
 
   def parseOrFail[Unknown: P, O <: Token, C <: Token](
       open: O,
-      close: C): P[SoftAST.Group[O, C]] =
+      close: C,
+      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[O, C]] =
     P {
       group(
         required = false,
         open = open,
-        close = close
+        close = close,
+        expressionsParseOrFail = expressionsParseOrFail
       )
     }
 
@@ -51,12 +57,12 @@ private object GroupParser {
    *
    * @return An instance of [[SoftAST.Group]] without enclosing tokens.
    */
-  def parseOrFail[Unknown: P]: P[SoftAST.Group[Nothing, Nothing]] =
+  def parseOrFail[Unknown: P](expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[Nothing, Nothing]] =
     P {
       Index ~
-        expression.? ~
+        expressionsParseOrFail.? ~
         SpaceParser.parseOrFail.? ~
-        tail.rep(1) ~
+        tail(expressionsParseOrFail).rep(1) ~
         Index
     } map {
       case (from, headExpression, postHeadSpace, tailParams, to) =>
@@ -90,15 +96,16 @@ private object GroupParser {
   private def group[Unknown: P, O <: Token, C <: Token](
       required: Boolean,
       open: O,
-      close: C): P[SoftAST.Group[O, C]] =
+      close: C,
+      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[O, C]] =
     P {
       Index ~
         TokenParser.parse(required, open) ~
         SpaceParser.parseOrFail.? ~
         Index ~
-        expression.? ~
+        expressionsParseOrFail.? ~
         SpaceParser.parseOrFail.? ~
-        tail.rep ~
+        tail(expressionsParseOrFail).rep ~
         TokenParser.parse(close) ~
         Index
     } map {
@@ -143,12 +150,12 @@ private object GroupParser {
    *
    * @return An instance of [[SoftAST.GroupTail]].
    */
-  private def tail[Unknown: P]: P[SoftAST.GroupTail] =
+  private def tail[Unknown: P](expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.GroupTail] =
     P {
       Index ~
         TokenParser.parseOrFail(Token.Comma) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parseSubset(expression) ~
+        ExpressionParser.parseSubset(expressionsParseOrFail) ~
         SpaceParser.parseOrFail.? ~
         Index
     } map {
@@ -162,7 +169,11 @@ private object GroupParser {
         )
     }
 
-  private def expression[Unknown: P]: P[SoftAST.ExpressionAST] =
+  /**
+   * TODO: This is a temporary placeholder.
+   *       It should be replaced as a function input parameter.
+   */
+  def defaultExpressions[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
       TypeAssignmentParser.parseOrFail |
         AssignmentParser.parseOrFail |

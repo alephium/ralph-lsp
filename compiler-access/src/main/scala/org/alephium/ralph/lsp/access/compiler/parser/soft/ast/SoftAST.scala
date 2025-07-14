@@ -515,7 +515,7 @@ object SoftAST {
       code: CodeString)
     extends ErrorAST(s"Cannot resolve '${code.text}'")
        with CodeDocumentedAST
-       with BlockPartAST
+       with ExpressionAST
 
   sealed trait ReferenceCallOrIdentifier extends SoftAST {
 
