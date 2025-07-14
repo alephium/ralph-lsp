@@ -125,7 +125,8 @@ object TestCommon {
         // print the actual result
         printAsError(
           message = message,
-          code = code
+          // For readability sort by index, so the error outputs are in the order of their position
+          code = code.toList.sortBy(_.index.map(_.index))
         )
 
         throw throwable
