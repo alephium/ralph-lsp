@@ -89,8 +89,18 @@ class StructParserSpec extends AnyWordSpec {
               index = indexOf("struct MyStruct>>{ name }<<"),
               openToken = Some(OpenCurly("struct MyStruct>>{<< name }")),
               preHeadExpressionSpace = Some(Space("struct MyStruct{>> <<name }")),
-              headExpression = Some(Unresolved("struct MyStruct{ >>name<< }")),
-              postHeadExpressionSpace = Some(Space("struct MyStruct{ name>> <<}")),
+              headExpression = Some(
+                SoftAST.TypeAssignment(
+                  index = indexOf("struct MyStruct{ >>name <<}"),
+                  annotations = Seq.empty,
+                  expressionLeft = Identifier("struct MyStruct{ >>name<< }"),
+                  preColonSpace = Some(Space("struct MyStruct{ name>> <<}")),
+                  colon = TokenExpected("struct MyStruct{ name >><<}", Token.Colon),
+                  postColonSpace = None,
+                  expressionRight = ExpressionExpected("struct MyStruct{ name >><<}")
+                )
+              ),
+              postHeadExpressionSpace = None,
               tailExpressions = Seq.empty,
               closeToken = Some(CloseCurly("struct MyStruct{ name >>}<<"))
             )
@@ -113,7 +123,17 @@ class StructParserSpec extends AnyWordSpec {
               index = indexOf("struct MyStruct>>{ one, two:, three }<<"),
               openToken = Some(OpenCurly("struct MyStruct>>{<< one, two:, three }")),
               preHeadExpressionSpace = Some(Space("struct MyStruct{>> <<one, two:, three }")),
-              headExpression = Some(Unresolved("struct MyStruct{ >>one<<, two:, three }")),
+              headExpression = Some(
+                SoftAST.TypeAssignment(
+                  index = indexOf("struct MyStruct{ >>one<<, two:, three }"),
+                  annotations = Seq.empty,
+                  expressionLeft = Identifier("struct MyStruct{ >>one<<, two:, three }"),
+                  preColonSpace = None,
+                  colon = TokenExpected("struct MyStruct{ one>><<, two:, three }", Token.Colon),
+                  postColonSpace = None,
+                  expressionRight = ExpressionExpected("struct MyStruct{ one>><<, two:, three }")
+                )
+              ),
               postHeadExpressionSpace = None,
               tailExpressions = Seq(
                 SoftAST.GroupTail(
@@ -135,11 +155,65 @@ class StructParserSpec extends AnyWordSpec {
                   index = indexOf("struct MyStruct{ one, two:>>, three <<}"),
                   comma = Comma("struct MyStruct{ one, two:>>,<< three }"),
                   preExpressionSpace = Some(Space("struct MyStruct{ one, two:,>> <<three }")),
-                  expression = Unresolved("struct MyStruct{ one, two:, >>three<< }"),
-                  postExpressionSpace = Some(Space("struct MyStruct{ one, two:, three>> <<}"))
+                  expression = SoftAST.TypeAssignment(
+                    index = indexOf("struct MyStruct{ one, two:, >>three <<}"),
+                    annotations = Seq.empty,
+                    expressionLeft = Identifier("struct MyStruct{ one, two:, >>three<< }"),
+                    preColonSpace = Some(Space("struct MyStruct{ one, two:, three>> <<}")),
+                    colon = TokenExpected("struct MyStruct{ one, two:, three >><<}", Token.Colon),
+                    postColonSpace = None,
+                    expressionRight = ExpressionExpected("struct MyStruct{ one, two:, three >><<}")
+                  ),
+                  postExpressionSpace = None
                 )
               ),
               closeToken = Some(CloseCurly("struct MyStruct{ one, two:, three >>}<<"))
+            )
+          )
+      }
+    }
+
+    "unresolved" when {
+      "invalid single token parameter" in {
+        val struct = parseStruct("struct MyStruct{ ⚠️ }")
+
+        struct shouldBe
+          SoftAST.Struct(
+            index = indexOf(">>struct MyStruct{ ⚠️ }<<"),
+            structToken = Struct(">>struct<< MyStruct{ ⚠️ }"),
+            preIdentifierSpace = Some(Space("struct>> <<MyStruct{ ⚠️ }")),
+            identifier = Identifier("struct >>MyStruct<<{ ⚠️ }"),
+            preParamSpace = None,
+            params = SoftAST.Group(
+              index = indexOf("struct MyStruct>>{ ⚠️ }<<"),
+              openToken = Some(OpenCurly("struct MyStruct>>{<< ⚠️ }")),
+              preHeadExpressionSpace = Some(Space("struct MyStruct{>> <<⚠️ }")),
+              headExpression = Some(Unresolved("struct MyStruct{ >>⚠️<< }")),
+              postHeadExpressionSpace = Some(Space("struct MyStruct{ ⚠️>> <<}")),
+              tailExpressions = Seq.empty,
+              closeToken = Some(CloseCurly("struct MyStruct{ ⚠️ >>}<<"))
+            )
+          )
+      }
+
+      "invalid single double parameter" in {
+        val struct = parseStruct("struct MyStruct{ ⚠️⚠️ }")
+
+        struct shouldBe
+          SoftAST.Struct(
+            index = indexOf(">>struct MyStruct{ ⚠️⚠️ }<<"),
+            structToken = Struct(">>struct<< MyStruct{ ⚠️⚠️ }"),
+            preIdentifierSpace = Some(Space("struct>> <<MyStruct{ ⚠️⚠️ }")),
+            identifier = Identifier("struct >>MyStruct<<{ ⚠️⚠️ }"),
+            preParamSpace = None,
+            params = SoftAST.Group(
+              index = indexOf("struct MyStruct>>{ ⚠️⚠️ }<<"),
+              openToken = Some(OpenCurly("struct MyStruct>>{<< ⚠️⚠️ }")),
+              preHeadExpressionSpace = Some(Space("struct MyStruct{>> <<⚠️⚠️ }")),
+              headExpression = Some(Unresolved("struct MyStruct{ >>⚠️⚠️<< }")),
+              postHeadExpressionSpace = Some(Space("struct MyStruct{ ⚠️⚠️>> <<}")),
+              tailExpressions = Seq.empty,
+              closeToken = Some(CloseCurly("struct MyStruct{ ⚠️⚠️ >>}<<"))
             )
           )
       }
