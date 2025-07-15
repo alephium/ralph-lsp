@@ -105,6 +105,72 @@ class StructConstructorParserSpec extends AnyWordSpec {
     }
   }
 
+  "parse nested struct constructors" in {
+    val ast = parseStructConstructor("Customer { id: 01234, info: Info { phone: 56789 }}")
+
+    ast shouldBe
+      SoftAST.StructConstructor(
+        index = indexOf(">>Customer { id: 01234, info: Info { phone: 56789 }}<<"),
+        identifier = Identifier(">>Customer<< { id: 01234, info: Info { phone: 56789 }}"),
+        preParamSpace = Some(Space("Customer>> <<{ id: 01234, info: Info { phone: 56789 }}")),
+        params = SoftAST.Group(
+          index = indexOf("Customer >>{ id: 01234, info: Info { phone: 56789 }}<<"),
+          openToken = Some(OpenCurly("Customer >>{<< id: 01234, info: Info { phone: 56789 }}")),
+          preHeadExpressionSpace = Some(Space("Customer {>> <<id: 01234, info: Info { phone: 56789 }}")),
+          headExpression = Some(
+            SoftAST.StructFieldAssignment(
+              index = indexOf("Customer { >>id: 01234<<, info: Info { phone: 56789 }}"),
+              expressionLeft = Identifier("Customer { >>id<<: 01234, info: Info { phone: 56789 }}"),
+              preColonSpace = None,
+              colon = Colon("Customer { id>>:<< 01234, info: Info { phone: 56789 }}"),
+              preExpressionSpace = Some(Space("Customer { id:>> <<01234, info: Info { phone: 56789 }}")),
+              expressionRight = Number("Customer { id: >>01234<<, info: Info { phone: 56789 }}")
+            )
+          ),
+          postHeadExpressionSpace = None,
+          tailExpressions = Seq(
+            SoftAST.GroupTail(
+              index = indexOf("Customer { id: 01234>>, info: Info { phone: 56789 }<<}"),
+              comma = Comma("Customer { id: 01234>>,<< info: Info { phone: 56789 }}"),
+              preExpressionSpace = Some(Space("Customer { id: 01234,>> <<info: Info { phone: 56789 }}")),
+              expression = SoftAST.StructFieldAssignment(
+                index = indexOf("Customer { id: 01234, >>info: Info { phone: 56789 }<<}"),
+                expressionLeft = Identifier("Customer { id: 01234, >>info<<: Info { phone: 56789 }}"),
+                preColonSpace = None,
+                colon = Colon("Customer { id: 01234, info>>:<< Info { phone: 56789 }}"),
+                preExpressionSpace = Some(Space("Customer { id: 01234, info:>> <<Info { phone: 56789 }}")),
+                expressionRight = SoftAST.StructConstructor(
+                  index = indexOf("Customer { id: 01234, info: >>Info { phone: 56789 }<<}"),
+                  identifier = Identifier("Customer { id: 01234, info: >>Info<< { phone: 56789 }}"),
+                  preParamSpace = Some(Space("Customer { id: 01234, info: Info>> <<{ phone: 56789 }}")),
+                  params = SoftAST.Group(
+                    index = indexOf("Customer { id: 01234, info: Info >>{ phone: 56789 }<<}"),
+                    openToken = Some(OpenCurly("Customer { id: 01234, info: Info >>{<< phone: 56789 }}")),
+                    preHeadExpressionSpace = Some(Space("Customer { id: 01234, info: Info {>> <<phone: 56789 }}")),
+                    headExpression = Some(
+                      SoftAST.StructFieldAssignment(
+                        index = indexOf("Customer { id: 01234, info: Info { >>phone: 56789<< }}"),
+                        expressionLeft = Identifier("Customer { id: 01234, info: Info { >>phone<<: 56789 }}"),
+                        preColonSpace = None,
+                        colon = Colon("Customer { id: 01234, info: Info { phone>>:<< 56789 }}"),
+                        preExpressionSpace = Some(Space("Customer { id: 01234, info: Info { phone:>> <<56789 }}")),
+                        expressionRight = Number("Customer { id: 01234, info: Info { phone: >>56789<< }}")
+                      )
+                    ),
+                    postHeadExpressionSpace = Some(Space("Customer { id: 01234, info: Info { phone: 56789>> <<}}")),
+                    tailExpressions = Seq.empty,
+                    closeToken = Some(CloseCurly("Customer { id: 01234, info: Info { phone: 56789 >>}<<}"))
+                  )
+                )
+              ),
+              postExpressionSpace = None
+            )
+          ),
+          closeToken = Some(CloseCurly("Customer { id: 01234, info: Info { phone: 56789 }>>}<<"))
+        )
+      )
+  }
+
   "identifier followed by a nonempty block" should {
     "parse as a constructor" in {
       val ast = parseStructConstructor("MyStruct {number: 1}")
