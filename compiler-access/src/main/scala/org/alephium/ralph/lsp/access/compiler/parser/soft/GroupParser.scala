@@ -183,6 +183,7 @@ private object GroupParser {
         IfElseParser.parseOrFail |
         ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
+        StructConstructorParser.parseOrFail |
         TupleParser.parseOrFail |
         ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |

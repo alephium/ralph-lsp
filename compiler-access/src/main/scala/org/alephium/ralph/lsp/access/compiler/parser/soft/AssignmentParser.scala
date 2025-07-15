@@ -91,6 +91,7 @@ private object AssignmentParser {
         IfElseParser.parseOrFail |
         ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
+        StructConstructorParser.parseOrFail |
         AnnotationParser.parseOrFail |
         TupleParser.parseOrFail |
         ArrayParser.parseOrFail |

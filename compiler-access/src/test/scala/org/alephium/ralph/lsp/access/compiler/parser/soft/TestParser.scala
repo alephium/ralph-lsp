@@ -87,6 +87,12 @@ object TestParser {
   def parseStruct(code: String): SoftAST.Struct =
     runSoftParser(StructParser.parseOrFail(_))(code)
 
+  def parseStructConstructor(code: String): SoftAST.StructConstructor =
+    runSoftParser(StructConstructorParser.parseOrFail(_))(code)
+
+  def parseStructConstructorNoCodeCheck(code: String): SoftAST.StructConstructor =
+    runAnyParser(StructConstructorParser.parseOrFail(_))(code)
+
   def parseEnum(code: String): SoftAST.Enum =
     runSoftParser(EnumParser.parseOrFail(_))(code)
 

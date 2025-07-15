@@ -623,6 +623,15 @@ object SoftAST {
       expressionRight: ExpressionAST)
     extends ExpressionAST
 
+  case class StructFieldAssignment(
+      index: SourceIndex,
+      expressionLeft: ExpressionAST,
+      preColonSpace: Option[Space],
+      colon: TokenDocExpectedAST[Token.Colon.type],
+      preExpressionSpace: Option[Space],
+      expressionRight: ExpressionAST)
+    extends ExpressionAST
+
   case class AccessModifier(
       index: SourceIndex,
       pub: TokenDocumented[Token.Pub.type],
@@ -780,6 +789,13 @@ object SoftAST {
       preCloseBracketSpace: Option[Space],
       unresolved: Option[SoftAST.Unresolved],
       closeBracket: TokenDocExpectedAST[Token.BlockBracket.type])
+    extends ExpressionAST
+
+  case class StructConstructor(
+      index: SourceIndex,
+      identifier: IdentifierAST,
+      preParamSpace: Option[Space],
+      params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
     extends ExpressionAST
 
   case class TypeParamsExpected(index: SourceIndex) extends ExpectedErrorAST("Type params") with TypeParamsExpectedAST
