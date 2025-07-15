@@ -74,6 +74,28 @@ class StructParserSpec extends AnyWordSpec {
       struct.params.closeToken.value shouldBe CloseCurly("struct Bar { z: U256, mut foo: Foo >>}<<")
     }
 
+    "well defined struct with zero fields" in {
+      val struct = parseStruct("struct MyStruct{ }")
+
+      struct shouldBe
+        SoftAST.Struct(
+          index = indexOf(">>struct MyStruct{ }<<"),
+          structToken = Struct(">>struct<< MyStruct{ }"),
+          preIdentifierSpace = Some(Space("struct>> <<MyStruct{ }")),
+          identifier = Identifier("struct >>MyStruct<<{ }"),
+          preParamSpace = None,
+          params = SoftAST.Group(
+            index = indexOf("struct MyStruct>>{ }<<"),
+            openToken = Some(OpenCurly("struct MyStruct>>{<< }")),
+            preHeadExpressionSpace = Some(Space("struct MyStruct{>> <<}")),
+            headExpression = None,
+            postHeadExpressionSpace = None,
+            tailExpressions = Seq.empty,
+            closeToken = Some(CloseCurly("struct MyStruct{ >>}<<"))
+          )
+        )
+    }
+
     "type is missing" when {
       "single type param" in {
         val struct = parseStruct("struct MyStruct{ name }")
