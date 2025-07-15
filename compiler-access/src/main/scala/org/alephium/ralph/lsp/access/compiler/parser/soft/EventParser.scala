@@ -18,7 +18,7 @@ private object EventParser {
         SpaceParser.parseOrFail.? ~
         IdentifierParser.parse ~
         SpaceParser.parseOrFail.? ~
-        TupleParser.parse ~
+        TypeAssignmentGroupParser.parse(Token.OpenParen, Token.CloseParen) ~
         Index
     } map {
       case (from, eventToken, preIdentifierSpace, identifier, preParamSpace, params, to) =>

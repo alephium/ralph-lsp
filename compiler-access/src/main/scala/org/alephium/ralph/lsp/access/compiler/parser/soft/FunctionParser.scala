@@ -53,7 +53,7 @@ private object FunctionParser {
       Index ~
         IdentifierParser.parse ~
         SpaceParser.parseOrFail.? ~
-        TupleParser.parse ~
+        TypeAssignmentGroupParser.parse(Token.OpenParen, Token.CloseParen) ~
         SpaceParser.parseOrFail.? ~
         returnSignature ~
         Index
