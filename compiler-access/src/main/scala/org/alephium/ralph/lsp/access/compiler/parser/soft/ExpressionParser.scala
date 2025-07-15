@@ -49,6 +49,7 @@ private object ExpressionParser {
         ElseParser.parseOrFail |
         EmitParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
+        StructConstructorParser.parseOrFail |
         AnnotationParser.parseOrFail |
         TupleParser.parseOrFail |
         ArrayParser.parseOrFail |
