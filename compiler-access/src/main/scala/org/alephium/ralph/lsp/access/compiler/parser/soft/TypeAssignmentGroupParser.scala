@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object TypeAssignmentGroupParser {
 
-  private def stops[C <: Token](close: C) = {
+  def stops[C <: Token](close: C) = {
     // In struct's case, the tokens 'space, comma, close' are likely to occur to more often than other tokens.
     // Therefore, process them first before the others.
     val head = Token.spaces :+ Token.Comma :+ close
