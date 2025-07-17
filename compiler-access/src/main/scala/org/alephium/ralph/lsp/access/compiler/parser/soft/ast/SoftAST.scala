@@ -180,7 +180,7 @@ object SoftAST {
 
   case class ExpressionExpected(
       index: SourceIndex)
-    extends ExpectedErrorAST("Symbol")
+    extends ExpectedErrorAST("Expression")
        with ExpressionAST
 
   /**
