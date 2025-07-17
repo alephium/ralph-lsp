@@ -169,8 +169,7 @@ class AssetApprovalParserSpec extends AnyWordSpec with Matchers {
     tailGroup.expressions should have size 2
     tailGroup.headExpression.value.toCode() shouldBe "user1 -> ALPH: amount10"
     tailGroup.tailExpressions should have size 1
-    tailGroup.tailExpressions.head.toCode() shouldBe ", tokenId: amount11\n"
-
+    tailGroup.tailExpressions.head.toCode() shouldBe s", tokenId: amount11${Token.Newline.lexeme}"
   }
 
 }
