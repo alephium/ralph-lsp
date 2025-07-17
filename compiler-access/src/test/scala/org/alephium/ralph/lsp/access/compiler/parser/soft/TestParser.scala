@@ -38,6 +38,9 @@ object TestParser {
   def parseTuple(code: String): SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type] =
     runSoftParser(TupleParser.parse(_))(code)
 
+  def parseNonEmptyTuple(code: String): SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type] =
+    runSoftParser(TupleParser.parseOrFail(assertNonEmpty = true)(_))(code)
+
   def parseBlock(code: String): SoftAST.Block =
     runSoftParser(BlockParser.parseOrFail(_))(code)
 

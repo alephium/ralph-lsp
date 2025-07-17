@@ -45,6 +45,7 @@ private object ArrayParser {
   private def inline[Unknown: P]: P[SoftAST.ArrayInline] =
     GroupParser
       .parseOrFail(
+        assertNonEmpty = false,
         open = Token.OpenBracket,
         close = Token.BlockBracket,
         delimiter = Token.Comma,

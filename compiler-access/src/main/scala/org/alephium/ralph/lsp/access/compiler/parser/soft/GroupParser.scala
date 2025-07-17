@@ -18,6 +18,7 @@ private object GroupParser {
     P {
       group(
         required = true,
+        assertNonEmpty = false,
         open = open,
         close = close,
         delimiter = delimiter,
@@ -34,6 +35,7 @@ private object GroupParser {
     P {
       group(
         required = required,
+        assertNonEmpty = false,
         open = open,
         close = close,
         delimiter = delimiter,
@@ -42,6 +44,7 @@ private object GroupParser {
     }
 
   def parseOrFail[Unknown: P, O <: Token, C <: Token, D <: Token](
+      assertNonEmpty: Boolean,
       open: O,
       close: C,
       delimiter: D,
@@ -49,6 +52,7 @@ private object GroupParser {
     P {
       group(
         required = false,
+        assertNonEmpty = assertNonEmpty,
         open = open,
         close = close,
         delimiter = delimiter,
@@ -76,6 +80,7 @@ private object GroupParser {
       case (from, headExpression, postHeadSpace, tailParams, to) =>
         val headExpressionAdjusted =
           adjustHeadExpression(
+            assertNonEmpty = false,
             headParamIndex = from,
             headExpression = headExpression,
             tailParams = tailParams
@@ -102,6 +107,7 @@ private object GroupParser {
    */
   private def group[Unknown: P, O <: Token, C <: Token, D <: Token](
       required: Boolean,
+      assertNonEmpty: Boolean,
       open: O,
       close: C,
       delimiter: D,
@@ -120,6 +126,7 @@ private object GroupParser {
       case (from, openParen, preHeadSpace, headParamIndex, headExpression, postHeadSpace, tailParams, closeParen, to) =>
         val headExpressionAdjusted =
           adjustHeadExpression(
+            assertNonEmpty = assertNonEmpty,
             headParamIndex = headParamIndex,
             headExpression = headExpression,
             tailParams = tailParams
@@ -141,12 +148,16 @@ private object GroupParser {
    * Look ahead check: If tail param is provided, but head param is missing, report the head param as required.
    *
    * For example, in the case of `(, tailArgs)`, head param is missing which is required.
+   *
+   * @param assertNonEmpty If `true`, asserts that the group contains at least one element.
+   *                       Reports an error at the opening token if empty.
    */
   private def adjustHeadExpression[D <: Token](
+      assertNonEmpty: Boolean,
       headParamIndex: Int,
       headExpression: Option[SoftAST.ExpressionAST],
       tailParams: Seq[SoftAST.GroupTail[D]]): Option[SoftAST.ExpressionAST] =
-    if (tailParams.nonEmpty && headExpression.isEmpty)
+    if ((tailParams.nonEmpty && headExpression.isEmpty) || (assertNonEmpty && headExpression.isEmpty && tailParams.isEmpty))
       Some(SoftAST.ExpressionExpected(point(headParamIndex)))
     else
       headExpression
@@ -194,7 +205,7 @@ private object GroupParser {
         ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         StructConstructorParser.parseOrFail |
-        TupleParser.parseOrFail |
+        TupleParser.parseOrFail(assertNonEmpty = false) |
         ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |

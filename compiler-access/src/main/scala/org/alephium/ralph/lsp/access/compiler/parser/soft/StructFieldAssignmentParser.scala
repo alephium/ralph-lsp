@@ -53,7 +53,7 @@ object StructFieldAssignmentParser {
         ReferenceCallParser.parseOrFail |
         StructConstructorParser.parseOrFail |
         AnnotationParser.parseOrFail |
-        TupleParser.parseOrFail |
+        TupleParser.parseOrFail(assertNonEmpty = false) |
         ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |

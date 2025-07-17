@@ -78,7 +78,7 @@ private object MethodCallParser {
   private def leftExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
       ReferenceCallParser.parseOrFail |
-        TupleParser.parseOrFail |
+        TupleParser.parseOrFail(assertNonEmpty = false) |
         ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |

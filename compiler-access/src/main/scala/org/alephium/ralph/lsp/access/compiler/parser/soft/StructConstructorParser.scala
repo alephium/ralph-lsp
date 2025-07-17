@@ -19,6 +19,7 @@ private object StructConstructorParser {
         IdentifierParser.parseOrFail ~
         SpaceParser.parseOrFail.? ~
         GroupParser.parseOrFail(
+          assertNonEmpty = false,
           open = Token.OpenCurly,
           close = Token.CloseCurly,
           delimiter = Token.Comma,

@@ -30,6 +30,7 @@ private object TypeAssignmentGroupParser {
       open: O,
       close: C): P[SoftAST.Group[O, C, Token.Comma.type]] =
     GroupParser.parseOrFail(
+      assertNonEmpty = false,
       open = open,
       close = close,
       delimiter = Token.Comma,
