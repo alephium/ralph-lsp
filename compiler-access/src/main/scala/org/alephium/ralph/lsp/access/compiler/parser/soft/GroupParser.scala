@@ -78,7 +78,7 @@ private object GroupParser {
           openToken = None,
           preHeadExpressionSpace = None,
           headExpression = headExpressionAdjusted,
-          postHeadExpressionSpace = postHeadSpace,
+          preTailExpressionSpace = postHeadSpace,
           tailExpressions = tailParams,
           closeToken = None
         )
@@ -122,7 +122,7 @@ private object GroupParser {
           openToken = Some(openParen),
           preHeadExpressionSpace = preHeadSpace,
           headExpression = headExpressionAdjusted,
-          postHeadExpressionSpace = postHeadSpace,
+          preTailExpressionSpace = postHeadSpace,
           tailExpressions = tailParams,
           closeToken = Some(closeParen)
         )

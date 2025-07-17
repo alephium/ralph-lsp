@@ -40,7 +40,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
           openToken = Some(OpenParen(">>(<<)")),
           preHeadExpressionSpace = None,
           headExpression = None,
-          postHeadExpressionSpace = None,
+          preTailExpressionSpace = None,
           tailExpressions = Seq.empty,
           closeToken = Some(CloseParen("(>>)<<)"))
         )
@@ -58,7 +58,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
           openToken = Some(OpenParen(">>(<< )")),
           preHeadExpressionSpace = Some(Space("(>> <<)")),
           headExpression = None,
-          postHeadExpressionSpace = None,
+          preTailExpressionSpace = None,
           tailExpressions = Seq.empty,
           closeToken = Some(CloseParen("( >>)<<)"))
         )
@@ -201,7 +201,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
             openToken = Some(OpenParen("(a, >>(<<b, c))")),
             preHeadExpressionSpace = None,
             headExpression = Some(Identifier("(a, (>>b<<, c))")),
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq(
               SoftAST.GroupTail(
                 index = indexOf("(a, (b>>, c<<))"),
@@ -231,7 +231,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
               text = "a"
             )
           ),
-          postHeadExpressionSpace = None,
+          preTailExpressionSpace = None,
           tailExpressions = Seq(
             SoftAST.GroupTail(
               index = indexOf("(a>>, <<, ( , z)"),
@@ -249,7 +249,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
                 openToken = Some(OpenParen("(a, , >>(<< , z)")),
                 preHeadExpressionSpace = Some(Space("(a, , (>> <<, z)")),
                 headExpression = Some(ExpressionExpected("(a, , ( >><<, z)")),
-                postHeadExpressionSpace = None,
+                preTailExpressionSpace = None,
                 tailExpressions = Seq(
                   SoftAST.GroupTail(
                     index = indexOf("(a, , ( >>, z<<)"),
@@ -293,7 +293,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
                     rightExpression = Number("((1 + >>2<<) * 3)")
                   )
                 ),
-                postHeadExpressionSpace = None,
+                preTailExpressionSpace = None,
                 tailExpressions = Seq.empty,
                 closeToken = Some(CloseParen("((1 + 2>>)<< * 3)"))
               ),
@@ -303,7 +303,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
               rightExpression = Number("((1 + 2) * >>3<<)")
             )
           ),
-          postHeadExpressionSpace = None,
+          preTailExpressionSpace = None,
           tailExpressions = Seq.empty,
           closeToken = Some(CloseParen("((1 + 2) * 3>>)<<"))
         )

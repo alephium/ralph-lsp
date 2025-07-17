@@ -50,7 +50,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
             openToken = Some(OpenCurly("MyStruct >>{<<")),
             preHeadExpressionSpace = None,
             headExpression = None,
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(TokenExpected("MyStruct {>><<", Token.CloseCurly))
           )
@@ -72,7 +72,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
             openToken = Some(OpenCurly("MyStruct >>{<<}")),
             preHeadExpressionSpace = None,
             headExpression = None,
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(CloseCurly("MyStruct {>>}<<"))
           )
@@ -127,7 +127,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
               expressionRight = Number("Customer { id: >>01234<<, info: Info { phone: 56789 }}")
             )
           ),
-          postHeadExpressionSpace = None,
+          preTailExpressionSpace = None,
           tailExpressions = Seq(
             SoftAST.GroupTail(
               index = indexOf("Customer { id: 01234>>, info: Info { phone: 56789 }<<}"),
@@ -157,7 +157,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
                         expressionRight = Number("Customer { id: 01234, info: Info { phone: >>56789<< }}")
                       )
                     ),
-                    postHeadExpressionSpace = Some(Space("Customer { id: 01234, info: Info { phone: 56789>> <<}}")),
+                    preTailExpressionSpace = Some(Space("Customer { id: 01234, info: Info { phone: 56789>> <<}}")),
                     tailExpressions = Seq.empty,
                     closeToken = Some(CloseCurly("Customer { id: 01234, info: Info { phone: 56789 >>}<<}"))
                   )
@@ -194,7 +194,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
                 expressionRight = Number("MyStruct {number: >>1<<}")
               )
             ),
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(CloseCurly("MyStruct {number: 1>>}<<"))
           )
@@ -225,7 +225,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
                 expressionRight = ExpressionExpected("MyStruct{ name >><<}")
               )
             ),
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(CloseCurly("MyStruct{ name >>}<<"))
           )
@@ -256,7 +256,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
                 expressionRight = ExpressionExpected("MyStruct{ one>><<, two:, three }")
               )
             ),
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq(
               SoftAST.GroupTail(
                 index = indexOf("MyStruct{ one>>, two:<<, three }"),
@@ -307,7 +307,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
             openToken = Some(OpenCurly("MyStruct>>{<< ⚠️ }")),
             preHeadExpressionSpace = Some(Space("MyStruct{>> <<⚠️ }")),
             headExpression = Some(Unresolved("MyStruct{ >>⚠️<< }")),
-            postHeadExpressionSpace = Some(Space("MyStruct{ ⚠️>> <<}")),
+            preTailExpressionSpace = Some(Space("MyStruct{ ⚠️>> <<}")),
             tailExpressions = Seq.empty,
             closeToken = Some(CloseCurly("MyStruct{ ⚠️ >>}<<"))
           )
@@ -327,7 +327,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
             openToken = Some(OpenCurly("MyStruct>>{<< ⚠️⚠️ }")),
             preHeadExpressionSpace = Some(Space("MyStruct{>> <<⚠️⚠️ }")),
             headExpression = Some(Unresolved("MyStruct{ >>⚠️⚠️<< }")),
-            postHeadExpressionSpace = Some(Space("MyStruct{ ⚠️⚠️>> <<}")),
+            preTailExpressionSpace = Some(Space("MyStruct{ ⚠️⚠️>> <<}")),
             tailExpressions = Seq.empty,
             closeToken = Some(CloseCurly("MyStruct{ ⚠️⚠️ >>}<<"))
           )

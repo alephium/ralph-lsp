@@ -54,7 +54,7 @@ class ReturnParserSpec extends AnyWordSpec with Matchers {
             openToken = None,
             preHeadExpressionSpace = None,
             headExpression = Some(Identifier("return >>value<<,")),
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq(
               SoftAST.GroupTail(
                 index = indexOf("return value>>,<<"),
@@ -83,7 +83,7 @@ class ReturnParserSpec extends AnyWordSpec with Matchers {
             openToken = None,
             preHeadExpressionSpace = None,
             headExpression = Some(ExpressionExpected("return >><<,value")),
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq(
               SoftAST.GroupTail(
                 index = indexOf("return >>,value<<"),

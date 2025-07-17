@@ -25,7 +25,7 @@ class ArrayInlineParserSpec extends AnyWordSpec with Matchers {
             openToken = Some(OpenBracket(">>[<<]")),
             preHeadExpressionSpace = None,
             headExpression = None,
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(BlockBracket("[>>]<<"))
           )
@@ -43,7 +43,7 @@ class ArrayInlineParserSpec extends AnyWordSpec with Matchers {
             openToken = Some(OpenBracket(">>[<<")),
             preHeadExpressionSpace = None,
             headExpression = None,
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(TokenExpected("[>><<", Token.BlockBracket))
           )
@@ -68,7 +68,7 @@ class ArrayInlineParserSpec extends AnyWordSpec with Matchers {
             openToken = Some(OpenBracket(">>[<<0]")),
             preHeadExpressionSpace = None,
             headExpression = Some(Number("[>>0<<]")),
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(BlockBracket("[0>>]<<"))
           )
@@ -86,7 +86,7 @@ class ArrayInlineParserSpec extends AnyWordSpec with Matchers {
             openToken = Some(OpenBracket(">>[<<abc]")),
             preHeadExpressionSpace = None,
             headExpression = Some(Identifier("[>>abc<<]")),
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(BlockBracket("[abc>>]<<"))
           )
@@ -113,7 +113,7 @@ class ArrayInlineParserSpec extends AnyWordSpec with Matchers {
                 rightExpression = Identifier("[ instance.>>value<< ]")
               )
             ),
-            postHeadExpressionSpace = Some(Space("[ instance.value>> <<]")),
+            preTailExpressionSpace = Some(Space("[ instance.value>> <<]")),
             tailExpressions = Seq.empty,
             closeToken = Some(BlockBracket("[ instance.value >>]<<"))
           )

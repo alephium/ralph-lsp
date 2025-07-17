@@ -42,7 +42,7 @@ class MapAssignmentParserSpec extends AnyWordSpec with Matchers {
             openToken = Some(OpenBracket("mapping>>[<<")),
             preHeadExpressionSpace = None,
             headExpression = None,
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(TokenExpected("mapping[>><<", Token.BlockBracket))
           )
@@ -67,7 +67,7 @@ class MapAssignmentParserSpec extends AnyWordSpec with Matchers {
             openToken = Some(OpenBracket("mapping>>[<<Key")),
             preHeadExpressionSpace = None,
             headExpression = Some(Identifier("mapping[>>Key<<")),
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(TokenExpected("mapping[Key>><<", Token.BlockBracket))
           )

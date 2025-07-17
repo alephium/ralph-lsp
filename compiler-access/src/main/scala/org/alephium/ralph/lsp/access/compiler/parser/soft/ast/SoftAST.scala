@@ -433,7 +433,7 @@ object SoftAST {
       openToken: Option[TokenDocExpectedAST[O]],
       preHeadExpressionSpace: Option[Space],
       headExpression: Option[ExpressionAST],
-      postHeadExpressionSpace: Option[Space],
+      preTailExpressionSpace: Option[Space],
       tailExpressions: Seq[GroupTail],
       closeToken: Option[TokenDocExpectedAST[C]])
     extends ExpressionAST {

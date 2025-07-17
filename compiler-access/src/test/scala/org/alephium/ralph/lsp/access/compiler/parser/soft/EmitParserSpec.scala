@@ -63,7 +63,7 @@ class EmitParserSpec extends AnyWordSpec with Matchers {
               openToken = Some(OpenParen("emit createEvent>>(<<)")),
               preHeadExpressionSpace = None,
               headExpression = None,
-              postHeadExpressionSpace = None,
+              preTailExpressionSpace = None,
               tailExpressions = Seq.empty,
               closeToken = Some(CloseParen("emit createEvent(>>)<<"))
             )
@@ -94,7 +94,7 @@ class EmitParserSpec extends AnyWordSpec with Matchers {
                 openToken = Some(OpenParen("emit contract.createEvent>>(<<)")),
                 preHeadExpressionSpace = None,
                 headExpression = None,
-                postHeadExpressionSpace = None,
+                preTailExpressionSpace = None,
                 tailExpressions = Seq.empty,
                 closeToken = Some(CloseParen("emit contract.createEvent(>>)<<"))
               )

@@ -71,7 +71,7 @@ class InheritanceParserSpec extends AnyWordSpec with Matchers {
                 openToken = Some(OpenParen(s"${token.lexeme} A>>(<<), B")),
                 preHeadExpressionSpace = None,
                 headExpression = None,
-                postHeadExpressionSpace = None,
+                preTailExpressionSpace = None,
                 tailExpressions = Seq.empty,
                 closeToken = Some(CloseParen(s"${token.lexeme} A(>>)<<, B"))
               )
