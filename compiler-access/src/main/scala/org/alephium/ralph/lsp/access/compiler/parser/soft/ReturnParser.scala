@@ -30,7 +30,7 @@ private object ReturnParser {
 
   private def expression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
-      GroupParser.parseOrFail(GroupParser.defaultExpressions) |
+      GroupParser.parseOrFailMany(GroupParser.defaultExpressions) |
         InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |
         IfElseParser.parseOrFail |

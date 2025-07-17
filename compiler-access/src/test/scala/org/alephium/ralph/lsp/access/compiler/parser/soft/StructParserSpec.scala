@@ -42,7 +42,7 @@ class StructParserSpec extends AnyWordSpec {
             openToken = Some(SoftAST.TokenExpected(indexOf("struct>><<"), Token.OpenCurly)),
             preHeadExpressionSpace = None,
             headExpression = None,
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(SoftAST.TokenExpected(indexOf("struct>><<"), Token.CloseCurly))
           )
@@ -89,7 +89,7 @@ class StructParserSpec extends AnyWordSpec {
             openToken = Some(OpenCurly("struct MyStruct>>{<< }")),
             preHeadExpressionSpace = Some(Space("struct MyStruct{>> <<}")),
             headExpression = None,
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(CloseCurly("struct MyStruct{ >>}<<"))
           )
@@ -122,7 +122,7 @@ class StructParserSpec extends AnyWordSpec {
                   expressionRight = ExpressionExpected("struct MyStruct{ name >><<}")
                 )
               ),
-              postHeadExpressionSpace = None,
+              preTailExpressionSpace = None,
               tailExpressions = Seq.empty,
               closeToken = Some(CloseCurly("struct MyStruct{ name >>}<<"))
             )
@@ -156,11 +156,11 @@ class StructParserSpec extends AnyWordSpec {
                   expressionRight = ExpressionExpected("struct MyStruct{ one>><<, two:, three }")
                 )
               ),
-              postHeadExpressionSpace = None,
+              preTailExpressionSpace = None,
               tailExpressions = Seq(
                 SoftAST.GroupTail(
                   index = indexOf("struct MyStruct{ one>>, two:<<, three }"),
-                  comma = Comma("struct MyStruct{ one>>,<< two:, three }"),
+                  delimiter = Comma("struct MyStruct{ one>>,<< two:, three }"),
                   preExpressionSpace = Some(Space("struct MyStruct{ one,>> <<two:, three }")),
                   expression = SoftAST.TypeAssignment(
                     index = indexOf("struct MyStruct{ one, >>two:<<, three }"),
@@ -175,7 +175,7 @@ class StructParserSpec extends AnyWordSpec {
                 ),
                 SoftAST.GroupTail(
                   index = indexOf("struct MyStruct{ one, two:>>, three <<}"),
-                  comma = Comma("struct MyStruct{ one, two:>>,<< three }"),
+                  delimiter = Comma("struct MyStruct{ one, two:>>,<< three }"),
                   preExpressionSpace = Some(Space("struct MyStruct{ one, two:,>> <<three }")),
                   expression = SoftAST.TypeAssignment(
                     index = indexOf("struct MyStruct{ one, two:, >>three <<}"),
@@ -211,7 +211,7 @@ class StructParserSpec extends AnyWordSpec {
               openToken = Some(OpenCurly("struct MyStruct>>{<< ⚠️ }")),
               preHeadExpressionSpace = Some(Space("struct MyStruct{>> <<⚠️ }")),
               headExpression = Some(Unresolved("struct MyStruct{ >>⚠️<< }")),
-              postHeadExpressionSpace = Some(Space("struct MyStruct{ ⚠️>> <<}")),
+              preTailExpressionSpace = Some(Space("struct MyStruct{ ⚠️>> <<}")),
               tailExpressions = Seq.empty,
               closeToken = Some(CloseCurly("struct MyStruct{ ⚠️ >>}<<"))
             )
@@ -233,7 +233,7 @@ class StructParserSpec extends AnyWordSpec {
               openToken = Some(OpenCurly("struct MyStruct>>{<< ⚠️⚠️ }")),
               preHeadExpressionSpace = Some(Space("struct MyStruct{>> <<⚠️⚠️ }")),
               headExpression = Some(Unresolved("struct MyStruct{ >>⚠️⚠️<< }")),
-              postHeadExpressionSpace = Some(Space("struct MyStruct{ ⚠️⚠️>> <<}")),
+              preTailExpressionSpace = Some(Space("struct MyStruct{ ⚠️⚠️>> <<}")),
               tailExpressions = Seq.empty,
               closeToken = Some(CloseCurly("struct MyStruct{ ⚠️⚠️ >>}<<"))
             )

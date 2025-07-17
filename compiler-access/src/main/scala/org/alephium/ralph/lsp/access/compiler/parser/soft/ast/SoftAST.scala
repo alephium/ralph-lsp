@@ -180,7 +180,7 @@ object SoftAST {
 
   case class ExpressionExpected(
       index: SourceIndex)
-    extends ExpectedErrorAST("Symbol")
+    extends ExpectedErrorAST("Expression")
        with ExpressionAST
 
   /**
@@ -260,7 +260,7 @@ object SoftAST {
       preIdentifierSpace: Option[Space],
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
-      params: Option[Group[Token.OpenParen.type, Token.CloseParen.type]],
+      params: Option[Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type]],
       postParamSpace: Option[Space],
       inheritance: Seq[Inheritance],
       block: Option[Block])
@@ -278,7 +278,7 @@ object SoftAST {
       preIdentifierSpace: Option[Space],
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
-      params: Group[Token.OpenParen.type, Token.CloseParen.type])
+      params: Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type])
     extends TypeDefinitionAST
 
   case class Struct(
@@ -287,7 +287,7 @@ object SoftAST {
       preIdentifierSpace: Option[Space],
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
-      params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
+      params: Group[Token.OpenCurly.type, Token.CloseCurly.type, Token.Comma.type])
     extends TypeDefinitionAST
 
   case class Enum(
@@ -413,7 +413,7 @@ object SoftAST {
       index: SourceIndex,
       fnName: IdentifierAST,
       preParamSpace: Option[Space],
-      params: Group[Token.OpenParen.type, Token.CloseParen.type],
+      params: Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type],
       postParamSpace: Option[Space],
       returned: FunctionReturnAST)
     extends SoftAST
@@ -428,13 +428,13 @@ object SoftAST {
    *  - fn `(a: Type, b: Type, c)`
    *  - `enum` etc
    */
-  case class Group[O <: Token, C <: Token](
+  case class Group[O <: Token, C <: Token, D <: Token](
       index: SourceIndex,
       openToken: Option[TokenDocExpectedAST[O]],
       preHeadExpressionSpace: Option[Space],
       headExpression: Option[ExpressionAST],
-      postHeadExpressionSpace: Option[Space],
-      tailExpressions: Seq[GroupTail],
+      preTailExpressionSpace: Option[Space],
+      tailExpressions: Seq[GroupTail[D]],
       closeToken: Option[TokenDocExpectedAST[C]])
     extends ExpressionAST {
 
@@ -445,9 +445,9 @@ object SoftAST {
   }
 
   /** Comma separated tail expressions of a [[Group]] */
-  case class GroupTail(
+  case class GroupTail[D <: Token](
       index: SourceIndex,
-      comma: TokenDocumented[Token.Comma.type],
+      delimiter: TokenDocumented[D],
       preExpressionSpace: Option[Space],
       expression: ExpressionAST,
       postExpressionSpace: Option[Space])
@@ -534,7 +534,7 @@ object SoftAST {
       index: SourceIndex,
       reference: IdentifierAST,
       preArgumentsSpace: Option[Space],
-      arguments: Group[Token.OpenParen.type, Token.CloseParen.type])
+      arguments: Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type])
     extends ReferenceCallOrIdentifier
        with ExpressionAST
 
@@ -552,7 +552,7 @@ object SoftAST {
       leftExpression: ExpressionAST,
       preDotSpace: Option[Space],
       dot: TokenDocumented[Token.Dot.type],
-      postDotSpace: Option[Space],
+      preRightExpressionSpace: Option[Space],
       rightExpression: ExpressionAST)
     extends ExpressionAST
 
@@ -674,7 +674,7 @@ object SoftAST {
       preIdentifierSpace: Option[Space],
       identifier: IdentifierAST,
       postIdentifierSpace: Option[Space],
-      tuple: Option[Group[Token.OpenParen.type, Token.CloseParen.type]],
+      tuple: Option[Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type]],
       postTupleSpace: Option[Space])
     extends ExpressionAST
 
@@ -742,7 +742,7 @@ object SoftAST {
       index: SourceIndex,
       ifToken: TokenDocumented[Token.If.type],
       preGroupSpace: Option[Space],
-      group: Group[Token.OpenParen.type, Token.CloseParen.type],
+      group: Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type],
       preBodySpace: Option[Space],
       body: Either[Block, ExpressionAST],
       preElseSpace: Option[Space],
@@ -759,7 +759,7 @@ object SoftAST {
   sealed trait TypeParamsExpectedAST extends ExpressionAST
   sealed trait ArrayAST              extends TypeParamsExpectedAST
 
-  case class ArrayInline(group: Group[Token.OpenBracket.type, Token.BlockBracket.type]) extends ArrayAST {
+  case class ArrayInline(group: Group[Token.OpenBracket.type, Token.BlockBracket.type, Token.Comma.type]) extends ArrayAST {
 
     override def index: SourceIndex =
       group.index
@@ -795,7 +795,7 @@ object SoftAST {
       index: SourceIndex,
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
-      params: Group[Token.OpenCurly.type, Token.CloseCurly.type])
+      params: Group[Token.OpenCurly.type, Token.CloseCurly.type, Token.Comma.type])
     extends ExpressionAST
 
   case class TypeParamsExpected(index: SourceIndex) extends ExpectedErrorAST("Type params") with TypeParamsExpectedAST

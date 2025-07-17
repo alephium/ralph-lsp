@@ -37,7 +37,7 @@ class IfElseParserSpec extends AnyWordSpec with Matchers {
             openToken = Some(TokenExpected("if>><<", Token.OpenParen)),
             preHeadExpressionSpace = None,
             headExpression = None,
-            postHeadExpressionSpace = None,
+            preTailExpressionSpace = None,
             tailExpressions = Seq.empty,
             closeToken = Some(TokenExpected("if>><<", Token.CloseParen))
           ),

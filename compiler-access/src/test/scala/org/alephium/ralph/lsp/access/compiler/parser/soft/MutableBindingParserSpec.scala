@@ -60,7 +60,7 @@ class MutableBindingParserSpec extends AnyWordSpec with Matchers {
         parseSoft("(a, b, mut variable)")
 
       root.parts should have size 1
-      val tuple = root.parts.head.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
+      val tuple = root.parts.head.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type]]
 
       tuple.headExpression shouldBe defined
       tuple.tailExpressions should have size 2 // there are two tail expressions
@@ -90,7 +90,7 @@ class MutableBindingParserSpec extends AnyWordSpec with Matchers {
           }
 
         root.parts should have size 2
-        val tuple = root.parts.head.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
+        val tuple = root.parts.head.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type]]
 
         tuple.headExpression shouldBe defined
         tuple.tailExpressions should have size 2 // there are two tail expressions

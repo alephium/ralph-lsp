@@ -47,7 +47,7 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
             leftExpression = ExpressionExpected(">><<."),
             preDotSpace = None,
             dot = Dot(">>.<<"),
-            postDotSpace = None,
+            preRightExpressionSpace = None,
             rightExpression = ExpressionExpected(".>><<")
           )
       }
@@ -61,7 +61,7 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
             leftExpression = ExpressionExpected(">><<.right"),
             preDotSpace = None,
             dot = Dot(">>.<<right"),
-            postDotSpace = None,
+            preRightExpressionSpace = None,
             rightExpression = Identifier(".>>right<<")
           )
       }
@@ -75,7 +75,7 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
             leftExpression = Identifier(">>left<<."),
             preDotSpace = None,
             dot = Dot("left>>.<<"),
-            postDotSpace = None,
+            preRightExpressionSpace = None,
             rightExpression = ExpressionExpected("left.>><<")
           )
       }
@@ -89,7 +89,7 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
             leftExpression = Identifier(">>left<<.right"),
             preDotSpace = None,
             dot = Dot("left>>.<<right"),
-            postDotSpace = None,
+            preRightExpressionSpace = None,
             rightExpression = Identifier("left.>>right<<")
           )
       }
@@ -106,12 +106,12 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
             leftExpression = Identifier(">>a<<.b.c"),
             preDotSpace = None,
             dot = Dot("a>>.<<b.c"),
-            postDotSpace = None,
+            preRightExpressionSpace = None,
             rightExpression = Identifier("a.>>b<<.c")
           ),
           preDotSpace = None,
           dot = Dot("a.b>>.<<c"),
-          postDotSpace = None,
+          preRightExpressionSpace = None,
           rightExpression = Identifier("a.b.>>c<<")
         )
 
@@ -131,17 +131,17 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
               leftExpression = Identifier(">>a<<.b.c.d"),
               preDotSpace = None,
               dot = Dot("a>>.<<b.c.d"),
-              postDotSpace = None,
+              preRightExpressionSpace = None,
               rightExpression = Identifier("a.>>b<<.c.d")
             ),
             preDotSpace = None,
             dot = Dot("a.b>>.<<c.d"),
-            postDotSpace = None,
+            preRightExpressionSpace = None,
             rightExpression = Identifier("a.b.>>c<<.d")
           ),
           preDotSpace = None,
           dot = Dot("a.b.c>>.<<d"),
-          postDotSpace = None,
+          preRightExpressionSpace = None,
           rightExpression = Identifier("a.b.c.>>d<<")
         )
 

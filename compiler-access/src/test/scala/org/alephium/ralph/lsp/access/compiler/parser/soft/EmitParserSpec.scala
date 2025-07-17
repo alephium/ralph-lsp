@@ -63,7 +63,7 @@ class EmitParserSpec extends AnyWordSpec with Matchers {
               openToken = Some(OpenParen("emit createEvent>>(<<)")),
               preHeadExpressionSpace = None,
               headExpression = None,
-              postHeadExpressionSpace = None,
+              preTailExpressionSpace = None,
               tailExpressions = Seq.empty,
               closeToken = Some(CloseParen("emit createEvent(>>)<<"))
             )
@@ -84,7 +84,7 @@ class EmitParserSpec extends AnyWordSpec with Matchers {
             leftExpression = Identifier("emit >>contract<<.createEvent()"),
             preDotSpace = None,
             dot = Dot("emit contract>>.<<createEvent()"),
-            postDotSpace = None,
+            preRightExpressionSpace = None,
             rightExpression = SoftAST.ReferenceCall(
               index = indexOf("emit contract.>>createEvent()<<"),
               reference = Identifier("emit contract.>>createEvent<<()"),
@@ -94,7 +94,7 @@ class EmitParserSpec extends AnyWordSpec with Matchers {
                 openToken = Some(OpenParen("emit contract.createEvent>>(<<)")),
                 preHeadExpressionSpace = None,
                 headExpression = None,
-                postHeadExpressionSpace = None,
+                preTailExpressionSpace = None,
                 tailExpressions = Seq.empty,
                 closeToken = Some(CloseParen("emit contract.createEvent(>>)<<"))
               )

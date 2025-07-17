@@ -161,7 +161,7 @@ class AssignmentParserSpec extends AnyWordSpec with Matchers {
       "right expression is a method call" in {
         val assignment = parseAssignment("(a, mut b, c) = cache.get(id).toTuple")
 
-        val left = assignment.expressionLeft.asInstanceOf[SoftAST.Group[_, _]]
+        val left = assignment.expressionLeft.asInstanceOf[SoftAST.Group[_, _, _]]
         left.toCode() shouldBe "(a, mut b, c)"
 
         val right = assignment.expressionRight.asInstanceOf[SoftAST.MethodCall]

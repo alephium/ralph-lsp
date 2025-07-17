@@ -10,59 +10,67 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object GroupParser {
 
-  def parse[Unknown: P, O <: Token, C <: Token](
+  def parse[Unknown: P, O <: Token, C <: Token, D <: Token](
       open: O,
       close: C,
-      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[O, C]] =
+      delimiter: D,
+      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[O, C, D]] =
     P {
       group(
         required = true,
         open = open,
         close = close,
+        delimiter = delimiter,
         expressionsParseOrFail = expressionsParseOrFail
       )
     }
 
-  def parse[Unknown: P, O <: Token, C <: Token](
+  def parse[Unknown: P, O <: Token, C <: Token, D <: Token](
       required: Boolean,
       open: O,
       close: C,
-      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[O, C]] =
+      delimiter: D,
+      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[O, C, D]] =
     P {
       group(
-        required,
+        required = required,
         open = open,
         close = close,
+        delimiter = delimiter,
         expressionsParseOrFail = expressionsParseOrFail
       )
     }
 
-  def parseOrFail[Unknown: P, O <: Token, C <: Token](
+  def parseOrFail[Unknown: P, O <: Token, C <: Token, D <: Token](
       open: O,
       close: C,
-      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[O, C]] =
+      delimiter: D,
+      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[O, C, D]] =
     P {
       group(
         required = false,
         open = open,
         close = close,
+        delimiter = delimiter,
         expressionsParseOrFail = expressionsParseOrFail
       )
     }
 
   /**
-   * Parses a sequence of comma separated expressions.
+   * Requires at least two expression for a successful parse.
    *
-   * Syntax: expr1, expr2, (expr3, expr4), ...
+   * This is primarily used by [[ReturnParser]] for cases where a tuple is returned.
+   * If it's not a tuple, then a group with single element should not be created, instead,
+   * it should get processed by [[ReturnParser]] as a [[SoftAST.Identifier]].
    *
    * @return An instance of [[SoftAST.Group]] without enclosing tokens.
    */
-  def parseOrFail[Unknown: P](expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[Nothing, Nothing]] =
+  def parseOrFailMany[Unknown: P](expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[Nothing, Nothing, Token.Comma.type]] =
     P {
       Index ~
         expressionsParseOrFail.? ~
         SpaceParser.parseOrFail.? ~
-        tail(expressionsParseOrFail).rep(1) ~
+        tail(Token.Comma, expressionsParseOrFail).rep(1) ~
         Index
     } map {
       case (from, headExpression, postHeadSpace, tailParams, to) =>
@@ -78,11 +86,10 @@ private object GroupParser {
           openToken = None,
           preHeadExpressionSpace = None,
           headExpression = headExpressionAdjusted,
-          postHeadExpressionSpace = postHeadSpace,
+          preTailExpressionSpace = postHeadSpace,
           tailExpressions = tailParams,
           closeToken = None
         )
-
     }
 
   /**
@@ -93,11 +100,12 @@ private object GroupParser {
    * @param required Determines if the parser should fail when the opening parenthesis is missing.
    * @return An instance of [[SoftAST.Group]].
    */
-  private def group[Unknown: P, O <: Token, C <: Token](
+  private def group[Unknown: P, O <: Token, C <: Token, D <: Token](
       required: Boolean,
       open: O,
       close: C,
-      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[O, C]] =
+      delimiter: D,
+      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[O, C, D]] =
     P {
       Index ~
         TokenParser.parse(required, open) ~
@@ -105,7 +113,7 @@ private object GroupParser {
         Index ~
         expressionsParseOrFail.? ~
         SpaceParser.parseOrFail.? ~
-        tail(expressionsParseOrFail).rep ~
+        tail(delimiter, expressionsParseOrFail).rep ~
         TokenParser.parse(close) ~
         Index
     } map {
@@ -122,7 +130,7 @@ private object GroupParser {
           openToken = Some(openParen),
           preHeadExpressionSpace = preHeadSpace,
           headExpression = headExpressionAdjusted,
-          postHeadExpressionSpace = postHeadSpace,
+          preTailExpressionSpace = postHeadSpace,
           tailExpressions = tailParams,
           closeToken = Some(closeParen)
         )
@@ -134,10 +142,10 @@ private object GroupParser {
    *
    * For example, in the case of `(, tailArgs)`, head param is missing which is required.
    */
-  private def adjustHeadExpression(
+  private def adjustHeadExpression[D <: Token](
       headParamIndex: Int,
       headExpression: Option[SoftAST.ExpressionAST],
-      tailParams: Seq[SoftAST.GroupTail]): Option[SoftAST.ExpressionAST] =
+      tailParams: Seq[SoftAST.GroupTail[D]]): Option[SoftAST.ExpressionAST] =
     if (tailParams.nonEmpty && headExpression.isEmpty)
       Some(SoftAST.ExpressionExpected(point(headParamIndex)))
     else
@@ -150,10 +158,12 @@ private object GroupParser {
    *
    * @return An instance of [[SoftAST.GroupTail]].
    */
-  private def tail[Unknown: P](expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.GroupTail] =
+  private def tail[Unknown: P, D <: Token](
+      delimiter: D,
+      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.GroupTail[D]] =
     P {
       Index ~
-        TokenParser.parseOrFail(Token.Comma) ~
+        TokenParser.parseOrFail(delimiter) ~
         SpaceParser.parseOrFail.? ~
         ExpressionParser.parseSubset(expressionsParseOrFail) ~
         SpaceParser.parseOrFail.? ~
@@ -162,7 +172,7 @@ private object GroupParser {
       case (from, comma, preParamNameSpace, argumentName, postParamNameSpace, to) =>
         SoftAST.GroupTail(
           index = range(from, to),
-          comma = comma,
+          delimiter = comma,
           preExpressionSpace = preParamNameSpace,
           expression = argumentName,
           postExpressionSpace = postParamNameSpace
