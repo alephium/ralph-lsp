@@ -76,7 +76,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
      * First root part is a Tuple
      */
     val tuple =
-      block.headExpression.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
+      block.headExpression.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type]]
 
     tuple.openToken.value shouldBe OpenParen(">>(<<aaa typename")
 
@@ -136,7 +136,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
     tuple.tailExpressions should have size 1
     val bbb = tuple.tailExpressions.head
 
-    bbb.comma shouldBe Comma("(aaa: typename>>,<< bbb: type2)")
+    bbb.delimiter shouldBe Comma("(aaa: typename>>,<< bbb: type2)")
 
     bbb.preExpressionSpace.value shouldBe Space("(aaa: typename,>> <<bbb: type2)")
 
@@ -164,7 +164,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
     tuple.tailExpressions should have size 1
     val tupleTail = tuple.tailExpressions.head
 
-    tupleTail.comma shouldBe Comma("(aaa: typename>>,<< bbb: (tuple1, tuple2))")
+    tupleTail.delimiter shouldBe Comma("(aaa: typename>>,<< bbb: (tuple1, tuple2))")
 
     tupleTail.preExpressionSpace.value shouldBe Space("(aaa: typename,>> <<bbb: (tuple1, tuple2))")
 
@@ -177,7 +177,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
       )
 
     // A quick text to check that the tuple is actually a tuple
-    bbb.expressionRight shouldBe a[SoftAST.Group[_, _]]
+    bbb.expressionRight shouldBe a[SoftAST.Group[_, _, _]]
     // Convert the tpe to code and it should be the tuple
     bbb.expressionRight.toCode() shouldBe "(tuple1, tuple2)"
   }
@@ -194,7 +194,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
       lastTuple shouldBe
         SoftAST.GroupTail(
           index = indexOf("(a>>, (b, c)<<)"),
-          comma = Comma("(a>>,<< (b, c))"),
+          delimiter = Comma("(a>>,<< (b, c))"),
           preExpressionSpace = Some(Space("(a,>> <<(b, c))")),
           expression = SoftAST.Group(
             index = indexOf("(a, >>(b, c)<<)"),
@@ -205,7 +205,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
             tailExpressions = Seq(
               SoftAST.GroupTail(
                 index = indexOf("(a, (b>>, c<<))"),
-                comma = Comma("(a, (b>>,<< c))"),
+                delimiter = Comma("(a, (b>>,<< c))"),
                 preExpressionSpace = Some(Space("(a, (b,>> <<c))")),
                 expression = Identifier("(a, (b, >>c<<))"),
                 postExpressionSpace = None
@@ -235,14 +235,14 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
           tailExpressions = Seq(
             SoftAST.GroupTail(
               index = indexOf("(a>>, <<, ( , z)"),
-              comma = Comma("(a>>,<< , ( , z)"),
+              delimiter = Comma("(a>>,<< , ( , z)"),
               preExpressionSpace = Some(Space("(a,>> <<, ( , z)")),
               expression = ExpressionExpected("(a, >><<, ( , z)"),
               postExpressionSpace = None
             ),
             SoftAST.GroupTail(
               index = indexOf("(a, >>, ( , z)<<"),
-              comma = Comma("(a, >>,<< ( , z)"),
+              delimiter = Comma("(a, >>,<< ( , z)"),
               preExpressionSpace = Some(Space("(a, ,>> <<( , z)")),
               expression = SoftAST.Group(
                 index = indexOf("(a, , >>( , z)<<"),
@@ -253,7 +253,7 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
                 tailExpressions = Seq(
                   SoftAST.GroupTail(
                     index = indexOf("(a, , ( >>, z<<)"),
-                    comma = Comma("(a, , ( >>,<< z)"),
+                    delimiter = Comma("(a, , ( >>,<< z)"),
                     preExpressionSpace = Some(Space("(a, , ( ,>> <<z)")),
                     expression = Identifier("(a, , ( , >>z<<)"),
                     postExpressionSpace = None

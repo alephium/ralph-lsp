@@ -115,7 +115,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             runFullSearch()
         }
 
-      case Some(node @ Node(group: SoftAST.Group[_, _], _)) =>
+      case Some(node @ Node(group: SoftAST.Group[_, _, _], _)) =>
         searchGroup(
           group = node.upcast(group),
           identNode = identNode,
@@ -125,9 +125,9 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           detectCallSyntax = true
         )
 
-      case Some(node @ Node(tail: SoftAST.GroupTail, _)) =>
+      case Some(node @ Node(tail: SoftAST.GroupTail[_], _)) =>
         node.parent match {
-          case Some(node @ Node(group: SoftAST.Group[_, _], _)) => // a `GroupTail` is always contained with a `Group`
+          case Some(node @ Node(group: SoftAST.Group[_, _, _], _)) => // a `GroupTail` is always contained with a `Group`
             searchGroup(
               group = node.upcast(group),
               identNode = identNode,
@@ -877,7 +877,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @return An iterator over definition search results.
    */
   private def searchGroup(
-      group: Node[SoftAST.Group[_, _], SoftAST],
+      group: Node[SoftAST.Group[_, _, _], SoftAST],
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       cache: SearchCache,
@@ -1358,7 +1358,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           sourceCode = sourceCode
         )
 
-      case group: SoftAST.Group[_, _] =>
+      case group: SoftAST.Group[_, _, _] =>
         // Expand the group and search the expressions within
         searchExpressions(
           expressions = group.expressions,

@@ -4,7 +4,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
@@ -58,7 +58,7 @@ class ReturnParserSpec extends AnyWordSpec with Matchers {
             tailExpressions = Seq(
               SoftAST.GroupTail(
                 index = indexOf("return value>>,<<"),
-                comma = Comma("return value>>,<<"),
+                delimiter = Comma("return value>>,<<"),
                 preExpressionSpace = None,
                 expression = ExpressionExpected("return value,>><<"),
                 postExpressionSpace = None
@@ -87,7 +87,7 @@ class ReturnParserSpec extends AnyWordSpec with Matchers {
             tailExpressions = Seq(
               SoftAST.GroupTail(
                 index = indexOf("return >>,value<<"),
-                comma = Comma("return >>,<<value"),
+                delimiter = Comma("return >>,<<value"),
                 preExpressionSpace = None,
                 expression = Identifier("return ,>>value<<"),
                 postExpressionSpace = None
@@ -105,7 +105,8 @@ class ReturnParserSpec extends AnyWordSpec with Matchers {
       returned.returnToken shouldBe Return(">>return<< value, (1 + 2), function.get(1)")
 
       // Assert the Group's code
-      val group = returned.rightExpression.asInstanceOf[SoftAST.Group[Nothing, Nothing]]
+      val group = returned.rightExpression.asInstanceOf[SoftAST.Group[Nothing, Nothing, Token.Comma.type]]
+      group.tailExpressions.head.delimiter.code.token shouldBe Token.Comma // It's actually a Comma
       group.toCode() shouldBe "value, (1 + 2), function.get(1)"
 
       // Assert the Group's head expression
@@ -114,7 +115,7 @@ class ReturnParserSpec extends AnyWordSpec with Matchers {
       // Assert the Group's tail expressions
       group.tailExpressions should have size 2
       // Tail's head expression
-      group.tailExpressions.head.expression shouldBe a[SoftAST.Group[_, _]]
+      group.tailExpressions.head.expression shouldBe a[SoftAST.Group[_, _, _]]
       group.tailExpressions.head.expression.toCode() shouldBe "(1 + 2)"
       // Tail's last expression
       group.tailExpressions.last.expression shouldBe a[SoftAST.MethodCall]

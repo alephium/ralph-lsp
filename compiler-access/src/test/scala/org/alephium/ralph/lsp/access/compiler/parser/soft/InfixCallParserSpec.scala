@@ -16,10 +16,10 @@ class InfixCallParserSpec extends AnyWordSpec with Matchers {
       val infix =
         parseInfixCall("(one + one) <= (this - that)")
 
-      val left = infix.leftExpression.asInstanceOf[SoftAST.Group[_, _]]
+      val left = infix.leftExpression.asInstanceOf[SoftAST.Group[_, _, _]]
       left.toCode() shouldBe "(one + one)"
 
-      val right = infix.rightExpression.asInstanceOf[SoftAST.Group[_, _]]
+      val right = infix.rightExpression.asInstanceOf[SoftAST.Group[_, _, _]]
       right.toCode() shouldBe "(this - that)"
 
       infix.operator shouldBe LessThanOrEqual("(one + one) >><=<< (this - that)")

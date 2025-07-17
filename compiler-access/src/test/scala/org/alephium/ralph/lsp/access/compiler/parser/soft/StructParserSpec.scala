@@ -160,7 +160,7 @@ class StructParserSpec extends AnyWordSpec {
               tailExpressions = Seq(
                 SoftAST.GroupTail(
                   index = indexOf("struct MyStruct{ one>>, two:<<, three }"),
-                  comma = Comma("struct MyStruct{ one>>,<< two:, three }"),
+                  delimiter = Comma("struct MyStruct{ one>>,<< two:, three }"),
                   preExpressionSpace = Some(Space("struct MyStruct{ one,>> <<two:, three }")),
                   expression = SoftAST.TypeAssignment(
                     index = indexOf("struct MyStruct{ one, >>two:<<, three }"),
@@ -175,7 +175,7 @@ class StructParserSpec extends AnyWordSpec {
                 ),
                 SoftAST.GroupTail(
                   index = indexOf("struct MyStruct{ one, two:>>, three <<}"),
-                  comma = Comma("struct MyStruct{ one, two:>>,<< three }"),
+                  delimiter = Comma("struct MyStruct{ one, two:>>,<< three }"),
                   preExpressionSpace = Some(Space("struct MyStruct{ one, two:,>> <<three }")),
                   expression = SoftAST.TypeAssignment(
                     index = indexOf("struct MyStruct{ one, two:, >>three <<}"),

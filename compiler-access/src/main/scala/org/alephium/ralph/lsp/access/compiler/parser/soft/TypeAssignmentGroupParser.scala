@@ -18,19 +18,21 @@ private object TypeAssignmentGroupParser {
 
   def parse[Unknown: P, O <: Token, C <: Token](
       open: O,
-      close: C): P[SoftAST.Group[O, C]] =
+      close: C): P[SoftAST.Group[O, C, Token.Comma.type]] =
     GroupParser.parse(
       open = open,
       close = close,
+      delimiter = Token.Comma,
       expressionsParseOrFail = groupExpression(close)
     )
 
   def parseOrFail[Unknown: P, O <: Token, C <: Token](
       open: O,
-      close: C): P[SoftAST.Group[O, C]] =
+      close: C): P[SoftAST.Group[O, C, Token.Comma.type]] =
     GroupParser.parseOrFail(
       open = open,
       close = close,
+      delimiter = Token.Comma,
       expressionsParseOrFail = groupExpression(close)
     )
 

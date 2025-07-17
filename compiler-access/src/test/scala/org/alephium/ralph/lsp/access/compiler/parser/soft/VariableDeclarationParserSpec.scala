@@ -180,7 +180,7 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
       tupleVarDec.postLetSpace shouldBe Some(Space("let>> <<(a, b, c) = blah"))
 
       // left is a tuple
-      val left = tupleVarDec.assignment.expressionLeft.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
+      val left = tupleVarDec.assignment.expressionLeft.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type]]
       left.index shouldBe indexOf("let >>(a, b, c)<< = blah")
       left.toCode() shouldBe "(a, b, c)"
 
@@ -224,7 +224,7 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
     tupleVarDec.postLetSpace shouldBe Some(Space("let>> <<(a, _) = blah"))
 
     // left is a tuple
-    val left = tupleVarDec.assignment.expressionLeft.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type]]
+    val left = tupleVarDec.assignment.expressionLeft.asInstanceOf[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type]]
     left.index shouldBe indexOf("let >>(a, _)<< = blah")
     left.toCode() shouldBe "(a, _)"
 

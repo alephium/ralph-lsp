@@ -21,6 +21,7 @@ private object StructConstructorParser {
         GroupParser.parseOrFail(
           open = Token.OpenCurly,
           close = Token.CloseCurly,
+          delimiter = Token.Comma,
           expressionsParseOrFail = expressions
         ) ~
         Index

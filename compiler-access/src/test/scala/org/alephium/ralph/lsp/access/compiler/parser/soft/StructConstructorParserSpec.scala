@@ -131,7 +131,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
           tailExpressions = Seq(
             SoftAST.GroupTail(
               index = indexOf("Customer { id: 01234>>, info: Info { phone: 56789 }<<}"),
-              comma = Comma("Customer { id: 01234>>,<< info: Info { phone: 56789 }}"),
+              delimiter = Comma("Customer { id: 01234>>,<< info: Info { phone: 56789 }}"),
               preExpressionSpace = Some(Space("Customer { id: 01234,>> <<info: Info { phone: 56789 }}")),
               expression = SoftAST.StructFieldAssignment(
                 index = indexOf("Customer { id: 01234, >>info: Info { phone: 56789 }<<}"),
@@ -260,7 +260,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
             tailExpressions = Seq(
               SoftAST.GroupTail(
                 index = indexOf("MyStruct{ one>>, two:<<, three }"),
-                comma = Comma("MyStruct{ one>>,<< two:, three }"),
+                delimiter = Comma("MyStruct{ one>>,<< two:, three }"),
                 preExpressionSpace = Some(Space("MyStruct{ one,>> <<two:, three }")),
                 expression = SoftAST.StructFieldAssignment(
                   index = indexOf("MyStruct{ one, >>two:<<, three }"),
@@ -274,7 +274,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
               ),
               SoftAST.GroupTail(
                 index = indexOf("MyStruct{ one, two:>>, three <<}"),
-                comma = Comma("MyStruct{ one, two:>>,<< three }"),
+                delimiter = Comma("MyStruct{ one, two:>>,<< three }"),
                 preExpressionSpace = Some(Space("MyStruct{ one, two:,>> <<three }")),
                 expression = SoftAST.StructFieldAssignment(
                   index = indexOf("MyStruct{ one, two:, >>three <<}"),

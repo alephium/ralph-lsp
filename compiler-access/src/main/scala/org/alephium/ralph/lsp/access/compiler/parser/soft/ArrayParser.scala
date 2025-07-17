@@ -47,6 +47,7 @@ private object ArrayParser {
       .parseOrFail(
         open = Token.OpenBracket,
         close = Token.BlockBracket,
+        delimiter = Token.Comma,
         expressionsParseOrFail = GroupParser.defaultExpressions
       )
       .map(SoftAST.ArrayInline)
