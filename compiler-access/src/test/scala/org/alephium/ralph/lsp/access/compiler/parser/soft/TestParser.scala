@@ -153,6 +153,9 @@ object TestParser {
   def parseArrowAssignment(code: String): SoftAST.ArrowAssignment =
     runSoftParser(ArrowAssignmentParser.parseOrFail(_))(code)
 
+  def parseReferenceCall(code: String): SoftAST.ReferenceCall =
+    runSoftParser(ReferenceCallParser.parseOrFail(_))(code)
+
   /**
    * Test the result of [[SoftAST.deepCopy]] on the given AST.
    */
