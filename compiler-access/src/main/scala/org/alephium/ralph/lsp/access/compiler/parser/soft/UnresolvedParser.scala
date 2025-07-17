@@ -25,7 +25,7 @@ private object UnresolvedParser {
         )
     }
 
-  def parseOrFailSpaceDelimited[Unknown: P](stop: Seq[Token]): P[SoftAST.Unresolved] =
+  def parseOrFailSpaceDelimited[Unknown: P](stop: Token*): P[SoftAST.Unresolved] =
     parseOrFail(stop ++ Token.spaces: _*)
 
 }
