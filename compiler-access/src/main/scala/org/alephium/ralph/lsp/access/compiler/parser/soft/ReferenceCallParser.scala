@@ -30,14 +30,18 @@ private object ReferenceCallParser {
       Index ~
         IdentifierParser.parse(required) ~
         SpaceParser.parseOrFail.? ~
+        AssetApprovalParser.parseOrFail.? ~
+        SpaceParser.parseOrFail.? ~
         TupleParser.parse(required) ~
         Index
     } map {
-      case (from, identifier, space, arguments, to) =>
+      case (from, identifier, preAssetApprovalSpace, assetApproval, preArgumentsSpace, arguments, to) =>
         SoftAST.ReferenceCall(
           index = range(from, to),
           reference = identifier,
-          preArgumentsSpace = space,
+          preAssetApprovalSpace = preAssetApprovalSpace,
+          assetApproval = assetApproval,
+          preArgumentsSpace = preArgumentsSpace,
           arguments = arguments
         )
     }

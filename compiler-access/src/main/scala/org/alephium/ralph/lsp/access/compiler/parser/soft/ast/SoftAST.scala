@@ -533,6 +533,8 @@ object SoftAST {
   case class ReferenceCall(
       index: SourceIndex,
       reference: IdentifierAST,
+      preAssetApprovalSpace: Option[Space],
+      assetApproval: Option[AssetApproval],
       preArgumentsSpace: Option[Space],
       arguments: Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type])
     extends ReferenceCallOrIdentifier
@@ -552,8 +554,10 @@ object SoftAST {
       leftExpression: ExpressionAST,
       preDotSpace: Option[Space],
       dot: TokenDocumented[Token.Dot.type],
-      preRightExpressionSpace: Option[Space],
-      rightExpression: ExpressionAST)
+      postDotSpace: Option[Space],
+      rightExpression: ExpressionAST,
+      preAssetApprovalSpace: Option[Space],
+      assetApproval: Option[SoftAST.AssetApproval])
     extends ExpressionAST
 
   case class Emit(

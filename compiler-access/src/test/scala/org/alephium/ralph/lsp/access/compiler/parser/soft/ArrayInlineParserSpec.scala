@@ -109,8 +109,10 @@ class ArrayInlineParserSpec extends AnyWordSpec with Matchers {
                 leftExpression = Identifier("[ >>instance<<.value ]"),
                 preDotSpace = None,
                 dot = Dot("[ instance>>.<<value ]"),
-                preRightExpressionSpace = None,
-                rightExpression = Identifier("[ instance.>>value<< ]")
+                postDotSpace = None,
+                rightExpression = Identifier("[ instance.>>value<< ]"),
+                preAssetApprovalSpace = None,
+                assetApproval = None
               )
             ),
             preTailExpressionSpace = Some(Space("[ instance.value>> <<]")),

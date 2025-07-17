@@ -65,6 +65,8 @@ class InheritanceParserSpec extends AnyWordSpec with Matchers {
             headReference = SoftAST.ReferenceCall(
               index = indexOf(s"${token.lexeme} >>A()<<, B"),
               reference = Identifier(s"${token.lexeme} >>A<<(), B"),
+              preAssetApprovalSpace = None,
+              assetApproval = None,
               preArgumentsSpace = None,
               arguments = SoftAST.Group(
                 index = indexOf(s"${token.lexeme} A>>()<<, B"),

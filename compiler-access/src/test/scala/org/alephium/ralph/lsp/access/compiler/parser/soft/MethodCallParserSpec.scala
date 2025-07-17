@@ -47,8 +47,10 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
             leftExpression = ExpressionExpected(">><<."),
             preDotSpace = None,
             dot = Dot(">>.<<"),
-            preRightExpressionSpace = None,
-            rightExpression = ExpressionExpected(".>><<")
+            postDotSpace = None,
+            rightExpression = ExpressionExpected(".>><<"),
+            preAssetApprovalSpace = None,
+            assetApproval = None
           )
       }
 
@@ -61,8 +63,10 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
             leftExpression = ExpressionExpected(">><<.right"),
             preDotSpace = None,
             dot = Dot(">>.<<right"),
-            preRightExpressionSpace = None,
-            rightExpression = Identifier(".>>right<<")
+            postDotSpace = None,
+            rightExpression = Identifier(".>>right<<"),
+            preAssetApprovalSpace = None,
+            assetApproval = None
           )
       }
 
@@ -75,8 +79,10 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
             leftExpression = Identifier(">>left<<."),
             preDotSpace = None,
             dot = Dot("left>>.<<"),
-            preRightExpressionSpace = None,
-            rightExpression = ExpressionExpected("left.>><<")
+            postDotSpace = None,
+            rightExpression = ExpressionExpected("left.>><<"),
+            preAssetApprovalSpace = None,
+            assetApproval = None
           )
       }
 
@@ -89,8 +95,10 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
             leftExpression = Identifier(">>left<<.right"),
             preDotSpace = None,
             dot = Dot("left>>.<<right"),
-            preRightExpressionSpace = None,
-            rightExpression = Identifier("left.>>right<<")
+            postDotSpace = None,
+            rightExpression = Identifier("left.>>right<<"),
+            preAssetApprovalSpace = None,
+            assetApproval = None
           )
       }
     }
@@ -106,13 +114,17 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
             leftExpression = Identifier(">>a<<.b.c"),
             preDotSpace = None,
             dot = Dot("a>>.<<b.c"),
-            preRightExpressionSpace = None,
-            rightExpression = Identifier("a.>>b<<.c")
+            postDotSpace = None,
+            rightExpression = Identifier("a.>>b<<.c"),
+            preAssetApprovalSpace = None,
+            assetApproval = None
           ),
           preDotSpace = None,
           dot = Dot("a.b>>.<<c"),
-          preRightExpressionSpace = None,
-          rightExpression = Identifier("a.b.>>c<<")
+          postDotSpace = None,
+          rightExpression = Identifier("a.b.>>c<<"),
+          preAssetApprovalSpace = None,
+          assetApproval = None
         )
 
       actual shouldBe expected
@@ -131,18 +143,24 @@ class MethodCallParserSpec extends AnyWordSpec with Matchers {
               leftExpression = Identifier(">>a<<.b.c.d"),
               preDotSpace = None,
               dot = Dot("a>>.<<b.c.d"),
-              preRightExpressionSpace = None,
-              rightExpression = Identifier("a.>>b<<.c.d")
+              postDotSpace = None,
+              rightExpression = Identifier("a.>>b<<.c.d"),
+              preAssetApprovalSpace = None,
+              assetApproval = None
             ),
             preDotSpace = None,
             dot = Dot("a.b>>.<<c.d"),
-            preRightExpressionSpace = None,
-            rightExpression = Identifier("a.b.>>c<<.d")
+            postDotSpace = None,
+            rightExpression = Identifier("a.b.>>c<<.d"),
+            preAssetApprovalSpace = None,
+            assetApproval = None
           ),
           preDotSpace = None,
           dot = Dot("a.b.c>>.<<d"),
-          preRightExpressionSpace = None,
-          rightExpression = Identifier("a.b.c.>>d<<")
+          postDotSpace = None,
+          rightExpression = Identifier("a.b.c.>>d<<"),
+          preAssetApprovalSpace = None,
+          assetApproval = None
         )
 
       actual shouldBe expected
