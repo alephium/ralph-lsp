@@ -61,6 +61,44 @@ private object GroupParser {
     }
 
   /**
+   * Parses a sequence of comma separated expressions.
+   *
+   * Syntax: expr1, expr2, (expr3, expr4), ...
+   *
+   * @return An instance of [[SoftAST.Group]] without enclosing tokens.
+   */
+  def parseOrFail[Unknown: P, D <: Token](
+      delimiter: D,
+      expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[Nothing, Nothing, D]] =
+    P {
+      Index ~
+        expressionsParseOrFail ~
+        // Tail space must only be read if a tail expression exists
+        (SpaceParser.parseOrFail.? ~ tail(delimiter, expressionsParseOrFail).rep(1)).? ~
+        Index
+    } map {
+      case (from, headExpression, tail, to) =>
+        val (preTailExpressionSpace, tailExpressions) =
+          tail match {
+            case Some((space, tail)) =>
+              (space, tail)
+
+            case None =>
+              (None, Seq.empty)
+          }
+
+        SoftAST.Group(
+          index = range(from, to),
+          openToken = None,
+          preHeadExpressionSpace = None,
+          headExpression = Some(headExpression),
+          preTailExpressionSpace = preTailExpressionSpace,
+          tailExpressions = tailExpressions,
+          closeToken = None
+        )
+    }
+
+  /**
    * Requires at least two expression for a successful parse.
    *
    * This is primarily used by [[ReturnParser]] for cases where a tuple is returned.

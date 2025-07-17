@@ -807,6 +807,15 @@ object SoftAST {
       rightExpression: ExpressionAST)
     extends ExpressionAST
 
+  case class AssetApproval(
+      assets: SoftAST.Group[Token.OpenCurly.type, Token.CloseCurly.type, Token.Semicolon.type])
+    extends ExpressionAST {
+
+    override def index: SourceIndex =
+      assets.index
+
+  }
+
   case class TypeParamsExpected(index: SourceIndex) extends ExpectedErrorAST("Type params") with TypeParamsExpectedAST
 
   case class Space(

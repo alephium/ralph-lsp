@@ -147,6 +147,9 @@ object TestParser {
   def parseMapAssignment(code: String): SoftAST.MapAssignment =
     runSoftParser(MapAssignmentParser.parseOrFail(_))(code)
 
+  def parseAssetApproval(code: String): SoftAST.AssetApproval =
+    runSoftParser(AssetApprovalParser.parseOrFail(_))(code)
+
   def parseArrowAssignment(code: String): SoftAST.ArrowAssignment =
     runSoftParser(ArrowAssignmentParser.parseOrFail(_))(code)
 
