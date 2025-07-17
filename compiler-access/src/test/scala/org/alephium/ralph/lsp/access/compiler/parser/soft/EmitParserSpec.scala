@@ -84,7 +84,7 @@ class EmitParserSpec extends AnyWordSpec with Matchers {
             leftExpression = Identifier("emit >>contract<<.createEvent()"),
             preDotSpace = None,
             dot = Dot("emit contract>>.<<createEvent()"),
-            postDotSpace = None,
+            preRightExpressionSpace = None,
             rightExpression = SoftAST.ReferenceCall(
               index = indexOf("emit contract.>>createEvent()<<"),
               reference = Identifier("emit contract.>>createEvent<<()"),

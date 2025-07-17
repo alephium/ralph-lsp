@@ -552,7 +552,7 @@ object SoftAST {
       leftExpression: ExpressionAST,
       preDotSpace: Option[Space],
       dot: TokenDocumented[Token.Dot.type],
-      postDotSpace: Option[Space],
+      preRightExpressionSpace: Option[Space],
       rightExpression: ExpressionAST)
     extends ExpressionAST
 

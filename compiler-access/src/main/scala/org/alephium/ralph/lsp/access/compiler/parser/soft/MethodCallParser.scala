@@ -16,7 +16,7 @@ private object MethodCallParser {
   private case class DotCall(
       index: SourceIndex,
       dot: TokenDocumented[Token.Dot.type],
-      postDotSpace: Option[Space],
+      preRightExpressionSpace: Option[Space],
       rightExpression: ExpressionAST)
 
   def parseOrFail[Unknown: P]: P[SoftAST.MethodCall] =
@@ -34,7 +34,7 @@ private object MethodCallParser {
             leftExpression = leftExpression,
             preDotSpace = preDotSpace,
             dot = headDotCall.dot,
-            postDotSpace = headDotCall.postDotSpace,
+            preRightExpressionSpace = headDotCall.preRightExpressionSpace,
             rightExpression = headDotCall.rightExpression
           )
 
@@ -46,7 +46,7 @@ private object MethodCallParser {
                 leftExpression = left,
                 preDotSpace = preDotSpace,
                 dot = dot.dot,
-                postDotSpace = dot.postDotSpace,
+                preRightExpressionSpace = dot.preRightExpressionSpace,
                 rightExpression = dot.rightExpression
               )
           }
@@ -66,11 +66,11 @@ private object MethodCallParser {
         ExpressionParser.parseSubset(rightExpression) ~
         Index
     } map {
-      case (from, dot, postDotSpace, rightExpression, to) =>
+      case (from, dot, preRightExpressionSpace, rightExpression, to) =>
         DotCall(
           index = range(from, to),
           dot = dot,
-          postDotSpace = postDotSpace,
+          preRightExpressionSpace = preRightExpressionSpace,
           rightExpression = rightExpression
         )
     }
