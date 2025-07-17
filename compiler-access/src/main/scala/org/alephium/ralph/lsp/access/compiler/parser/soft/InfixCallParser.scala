@@ -37,7 +37,7 @@ private object InfixCallParser {
         IfElseParser.parseOrFail |
         ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
-        TupleParser.parseOrFail |
+        TupleParser.parseOrFail(assertNonEmpty = false) |
         ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
@@ -58,7 +58,7 @@ private object InfixCallParser {
         ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
-        TupleParser.parseOrFail |
+        TupleParser.parseOrFail(assertNonEmpty = false) |
         ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |

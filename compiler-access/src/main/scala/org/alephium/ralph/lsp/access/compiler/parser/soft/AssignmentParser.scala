@@ -71,7 +71,7 @@ private object AssignmentParser {
     P {
       MethodCallParser.parseOrFail |
         MutableBindingParser.parseOrFail |
-        TupleParser.parseOrFail |
+        TupleParser.parseOrFail(assertNonEmpty = true) |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
@@ -93,7 +93,7 @@ private object AssignmentParser {
         ReferenceCallParser.parseOrFail |
         StructConstructorParser.parseOrFail |
         AnnotationParser.parseOrFail |
-        TupleParser.parseOrFail |
+        TupleParser.parseOrFail(assertNonEmpty = true) |
         ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |

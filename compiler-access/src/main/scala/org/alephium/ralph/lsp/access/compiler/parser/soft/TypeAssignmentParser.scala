@@ -71,7 +71,7 @@ private object TypeAssignmentParser {
 
   private def rightExpression[Unknown: P] =
     P {
-      TupleParser.parseOrFail |
+      TupleParser.parseOrFail(assertNonEmpty = false) |
         ArrayParser.parseOrFail |
         IdentifierParser.parseOrFail
     }

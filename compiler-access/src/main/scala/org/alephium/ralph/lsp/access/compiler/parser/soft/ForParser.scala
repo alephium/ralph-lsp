@@ -86,7 +86,7 @@ private object ForParser {
         ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         AnnotationParser.parseOrFail |
-        TupleParser.parseOrFail |
+        TupleParser.parseOrFail(assertNonEmpty = true) |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |

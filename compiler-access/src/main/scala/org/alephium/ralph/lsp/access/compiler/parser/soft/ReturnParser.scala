@@ -36,7 +36,7 @@ private object ReturnParser {
         IfElseParser.parseOrFail |
         ElseParser.parseOrFail |
         AnnotationParser.parseOrFail |
-        TupleParser.parseOrFail |
+        TupleParser.parseOrFail(assertNonEmpty = true) |
         ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |

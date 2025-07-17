@@ -25,8 +25,9 @@ private object TupleParser {
       expressionsParseOrFail = GroupParser.defaultExpressions
     )
 
-  def parseOrFail[Unknown: P]: P[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type]] =
+  def parseOrFail[Unknown: P](assertNonEmpty: Boolean): P[SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type]] =
     GroupParser.parseOrFail(
+      assertNonEmpty = assertNonEmpty,
       open = Token.OpenParen,
       close = Token.CloseParen,
       delimiter = Token.Comma,

@@ -11,7 +11,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
-class GroupParserSpec extends AnyWordSpec with Matchers {
+class TupleParserSpec extends AnyWordSpec with Matchers {
 
   "missing opening paren" in {
     val tuple =
@@ -310,6 +310,38 @@ class GroupParserSpec extends AnyWordSpec with Matchers {
 
     }
 
+  }
+
+  "parse non-empty tuple" when {
+    "empty tuple is well defined" in {
+      val tuple = parseNonEmptyTuple("()")
+
+      tuple shouldBe
+        SoftAST.Group(
+          index = indexOf(">>()<<"),
+          openToken = Some(OpenParen(">>(<<)")),
+          preHeadExpressionSpace = None,
+          headExpression = Some(ExpressionExpected("(>><<)")),
+          preTailExpressionSpace = None,
+          tailExpressions = Seq.empty,
+          closeToken = Some(CloseParen("(>>)<<"))
+        )
+    }
+
+    "closing paren is missing" in {
+      val tuple = parseNonEmptyTuple("(")
+
+      tuple shouldBe
+        SoftAST.Group(
+          index = indexOf(">>(<<"),
+          openToken = Some(OpenParen(">>(<<")),
+          preHeadExpressionSpace = None,
+          headExpression = Some(ExpressionExpected("(>><<")),
+          preTailExpressionSpace = None,
+          tailExpressions = Seq.empty,
+          closeToken = Some(TokenExpected("(>><<", Token.CloseParen))
+        )
+    }
   }
 
 }
