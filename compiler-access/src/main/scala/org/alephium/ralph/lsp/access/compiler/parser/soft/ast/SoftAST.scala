@@ -798,6 +798,15 @@ object SoftAST {
       params: Group[Token.OpenCurly.type, Token.CloseCurly.type, Token.Comma.type])
     extends ExpressionAST
 
+  case class ArrowAssignment(
+      index: SourceIndex,
+      leftExpression: ExpressionAST,
+      preArrowSpace: Option[Space],
+      forwardArrow: TokenDocExpectedAST[Token.ForwardArrow.type],
+      preRightExpressionSpace: Option[Space],
+      rightExpression: ExpressionAST)
+    extends ExpressionAST
+
   case class TypeParamsExpected(index: SourceIndex) extends ExpectedErrorAST("Type params") with TypeParamsExpectedAST
 
   case class Space(
