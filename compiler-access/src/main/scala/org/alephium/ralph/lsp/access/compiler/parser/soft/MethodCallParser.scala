@@ -17,7 +17,9 @@ private object MethodCallParser {
       index: SourceIndex,
       dot: TokenDocumented[Token.Dot.type],
       preRightExpressionSpace: Option[Space],
-      rightExpression: ExpressionAST)
+      rightExpression: ExpressionAST,
+      preAssetApprovalSpace: Option[Space],
+      assetApproval: Option[SoftAST.AssetApproval])
 
   def parseOrFail[Unknown: P]: P[SoftAST.MethodCall] =
     P {
@@ -34,8 +36,10 @@ private object MethodCallParser {
             leftExpression = leftExpression,
             preDotSpace = preDotSpace,
             dot = headDotCall.dot,
-            preRightExpressionSpace = headDotCall.preRightExpressionSpace,
-            rightExpression = headDotCall.rightExpression
+            postDotSpace = headDotCall.preRightExpressionSpace,
+            rightExpression = headDotCall.rightExpression,
+            preAssetApprovalSpace = headDotCall.preAssetApprovalSpace,
+            assetApproval = headDotCall.assetApproval
           )
 
         val result =
@@ -46,8 +50,10 @@ private object MethodCallParser {
                 leftExpression = left,
                 preDotSpace = preDotSpace,
                 dot = dot.dot,
-                preRightExpressionSpace = dot.preRightExpressionSpace,
-                rightExpression = dot.rightExpression
+                postDotSpace = dot.preRightExpressionSpace,
+                rightExpression = dot.rightExpression,
+                preAssetApprovalSpace = dot.preAssetApprovalSpace,
+                assetApproval = dot.assetApproval
               )
           }
 
@@ -64,14 +70,17 @@ private object MethodCallParser {
         TokenParser.parseOrFail(Token.Dot) ~
         SpaceParser.parseOrFail.? ~
         ExpressionParser.parseSubset(rightExpression) ~
+        (SpaceParser.parseOrFail.? ~ AssetApprovalParser.parseOrFail).? ~
         Index
     } map {
-      case (from, dot, preRightExpressionSpace, rightExpression, to) =>
+      case (from, dot, preRightExpressionSpace, rightExpression, assetApproval, to) =>
         DotCall(
           index = range(from, to),
           dot = dot,
           preRightExpressionSpace = preRightExpressionSpace,
-          rightExpression = rightExpression
+          rightExpression = rightExpression,
+          preAssetApprovalSpace = assetApproval.flatMap(_._1),
+          assetApproval = assetApproval.map(_._2)
         )
     }
 

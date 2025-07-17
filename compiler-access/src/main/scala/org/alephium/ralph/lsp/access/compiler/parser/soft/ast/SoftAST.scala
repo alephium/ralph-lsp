@@ -533,6 +533,8 @@ object SoftAST {
   case class ReferenceCall(
       index: SourceIndex,
       reference: IdentifierAST,
+      preAssetApprovalSpace: Option[Space],
+      assetApproval: Option[AssetApproval],
       preArgumentsSpace: Option[Space],
       arguments: Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type])
     extends ReferenceCallOrIdentifier
@@ -552,8 +554,10 @@ object SoftAST {
       leftExpression: ExpressionAST,
       preDotSpace: Option[Space],
       dot: TokenDocumented[Token.Dot.type],
-      preRightExpressionSpace: Option[Space],
-      rightExpression: ExpressionAST)
+      postDotSpace: Option[Space],
+      rightExpression: ExpressionAST,
+      preAssetApprovalSpace: Option[Space],
+      assetApproval: Option[SoftAST.AssetApproval])
     extends ExpressionAST
 
   case class Emit(
@@ -806,6 +810,15 @@ object SoftAST {
       preRightExpressionSpace: Option[Space],
       rightExpression: ExpressionAST)
     extends ExpressionAST
+
+  case class AssetApproval(
+      assets: SoftAST.Group[Token.OpenCurly.type, Token.CloseCurly.type, Token.Semicolon.type])
+    extends ExpressionAST {
+
+    override def index: SourceIndex =
+      assets.index
+
+  }
 
   case class TypeParamsExpected(index: SourceIndex) extends ExpectedErrorAST("Type params") with TypeParamsExpectedAST
 

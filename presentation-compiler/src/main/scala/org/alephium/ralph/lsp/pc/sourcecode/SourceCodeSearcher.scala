@@ -1002,7 +1002,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
       case thisId: SoftAST.Identifier if thisId.code.text == inheritanceId.code.text =>
         thisId
 
-      case refCall @ SoftAST.ReferenceCall(_, SoftAST.Identifier(_, _, code), _, _) if code.text == inheritanceId.code.text =>
+      case refCall @ SoftAST.ReferenceCall(_, SoftAST.Identifier(_, _, code), _, _, _, _) if code.text == inheritanceId.code.text =>
         refCall
     }
 

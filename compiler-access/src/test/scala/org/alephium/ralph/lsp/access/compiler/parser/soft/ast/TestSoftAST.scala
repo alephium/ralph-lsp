@@ -5,8 +5,26 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft.ast
 
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.util.TestCodeUtil.{indexChunkOf, indexOf}
+import org.alephium.ralph.lsp.utils.Node
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.Assertion
 
 object TestSoftAST {
+
+  implicit class SoftASTTestExtensions(ast: SoftAST) {
+
+    def assertNoErrors(): Assertion = {
+      // There are no errors
+      val errors =
+        ast.toNode.walkDown.collect {
+          case Node(error: SoftAST.ErrorAST, _) =>
+            error
+        }
+
+      errors shouldBe empty
+    }
+
+  }
 
   def EqualEqual(code: String): SoftAST.TokenDocumented[Token.EqualEqual.type] =
     EqualEqual(indexOf(code))

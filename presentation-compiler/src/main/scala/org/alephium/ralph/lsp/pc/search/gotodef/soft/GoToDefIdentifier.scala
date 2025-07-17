@@ -1030,7 +1030,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             )
         }
 
-      case (SoftAST.ReferenceCall(_, ident: SoftAST.Identifier, _, _), right) if right contains identNode =>
+      case (SoftAST.ReferenceCall(_, ident: SoftAST.Identifier, _, _, _, _), right) if right contains identNode =>
         // This is a chained method call, where the left side is a reference call.
         // For example: `one().two()`
         //               - `two()` is the identNode
@@ -1045,7 +1045,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           detectCallSyntax = detectCallSyntax
         )
 
-      case (SoftAST.MethodCall(_, _, _, _, _, leftExpressionsRightSide: SoftAST.ReferenceCallOrIdentifier), right) if right contains identNode =>
+      case (SoftAST.MethodCall(_, _, _, _, _, leftExpressionsRightSide: SoftAST.ReferenceCallOrIdentifier, _, _), right) if right contains identNode =>
         // This is a chained method call, where the left side is another method call.
         // For example: `one().two().three()`
         //               - `three()` is the identNode
