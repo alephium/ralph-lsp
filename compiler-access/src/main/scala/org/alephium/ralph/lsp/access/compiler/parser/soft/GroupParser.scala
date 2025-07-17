@@ -57,13 +57,15 @@ private object GroupParser {
     }
 
   /**
-   * Parses a sequence of comma separated expressions.
+   * Requires at least two expression for a successful parse.
    *
-   * Syntax: expr1, expr2, (expr3, expr4), ...
+   * This is primarily used by [[ReturnParser]] for cases where a tuple is returned.
+   * If it's not a tuple, then a group with single element should not be created, instead,
+   * it should get processed by [[ReturnParser]] as a [[SoftAST.Identifier]].
    *
    * @return An instance of [[SoftAST.Group]] without enclosing tokens.
    */
-  def parseOrFail[Unknown: P](expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[Nothing, Nothing, Token.Comma.type]] =
+  def parseOrFailMany[Unknown: P](expressionsParseOrFail: => P[SoftAST.ExpressionAST]): P[SoftAST.Group[Nothing, Nothing, Token.Comma.type]] =
     P {
       Index ~
         expressionsParseOrFail.? ~
