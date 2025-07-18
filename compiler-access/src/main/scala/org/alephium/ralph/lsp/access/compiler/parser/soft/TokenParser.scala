@@ -40,11 +40,13 @@ private object TokenParser {
 
   /**
    * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.
+   *
+   * Prefix check is not required here because [[Token.reserved]] contains all tokens and are sorted.
    */
-  def Reserved[Unknown: P](remove: Token.Reserved*): P[Token.Reserved] =
+  def Reserved[Unknown: P](): P[Token.Reserved] =
     ParserUtil.orTokenCombinator(
       prefixCheck = false,
-      tokens = Token.reserved.diff(remove).iterator
+      tokens = Token.reserved.iterator
     )
 
   /**

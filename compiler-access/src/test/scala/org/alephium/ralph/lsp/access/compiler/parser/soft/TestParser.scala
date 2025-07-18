@@ -50,14 +50,14 @@ object TestParser {
   def parseComment(code: String): SoftAST.Comments =
     runSoftParser(CommentParser.parseOrFail(_))(code)
 
-  def parseReservedToken(remove: Token.Reserved*)(code: String): Token.Reserved =
-    runAnyParser(TokenParser.Reserved(remove: _*)(_))(code)
+  def parseReservedToken()(code: String): Token.Reserved =
+    runAnyParser(TokenParser.Reserved()(_))(code)
 
   def parseInfixOperatorOrFail(code: String): SoftAST.TokenDocumented[Token.InfixOperator] =
     runAnyParser(TokenParser.InfixOperatorOrFail(_))(code)
 
-  def parseReservedTokenOrError(remove: Token.Reserved*)(code: String): Either[Parsed.Failure, Token.Reserved] =
-    runAnyParserOrError(TokenParser.Reserved(remove: _*)(_))(code)
+  def parseReservedTokenOrError()(code: String): Either[Parsed.Failure, Token.Reserved] =
+    runAnyParserOrError(TokenParser.Reserved()(_))(code)
 
   def parseIdentifier(code: String): SoftAST.IdentifierAST =
     runSoftParser(IdentifierParser.parseOrFail(_))(code)
