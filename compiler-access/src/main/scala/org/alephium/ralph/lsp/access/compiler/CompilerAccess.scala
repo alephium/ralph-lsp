@@ -49,7 +49,7 @@ trait CompilerAccess {
    * @param code Code to parse.
    * @return Parsing error or successfully parsed AST.
    */
-  def parseContracts(
+  def parseStrict(
       fileURI: URI,
       code: String): Either[CompilerMessage.AnyError, Tree.Root]
 
@@ -58,7 +58,7 @@ trait CompilerAccess {
    *
    * @param workspaceErrorURI The [[URI]] to report errors to when `fileURI` is absent from compilation errors.
    */
-  def compileContracts(
+  def compile(
       parsedSource: Seq[Ast.GlobalDefinition],
       options: CompilerOptions,
       workspaceErrorURI: URI

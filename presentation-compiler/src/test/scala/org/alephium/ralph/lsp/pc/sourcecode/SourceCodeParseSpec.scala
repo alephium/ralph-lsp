@@ -152,7 +152,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
                   SourceCodeState.Parsed(
                     fileURI = currentState.fileURI,
                     code = goodCode,
-                    astStrict = compiler.parseContracts(currentState.fileURI, goodCode).value,
+                    astStrict = compiler.parseStrict(currentState.fileURI, goodCode).value,
                     astSoft = LazyVal(compiler.parseSoft(goodCode))
                   )
 
@@ -201,7 +201,7 @@ class SourceCodeParseSpec extends AnyWordSpec with Matchers with ScalaCheckDrive
             SourceCodeState.ErrorParser(
               fileURI = onDisk.fileURI,
               code = code,
-              errors = Seq(compiler.parseContracts(onDisk.fileURI, code).left.value),
+              errors = Seq(compiler.parseStrict(onDisk.fileURI, code).left.value),
               astSoft = LazyVal(compiler.parseSoft(code))
             )
 

@@ -58,7 +58,7 @@ private[pc] object SourceCode {
     }
 
   /**
-   * Parse a source file, given its current sate.
+   * Parse a source file, given its current state.
    *
    * @param sourceState Current state of the source code
    * @param compiler    Target compiler
@@ -71,7 +71,7 @@ private[pc] object SourceCode {
       compiler: CompilerAccess): SourceCodeState =
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
-        compiler.parseContracts(fileURI, code) match {
+        compiler.parseStrict(fileURI, code) match {
           case Left(error) =>
             SourceCodeState.ErrorParser(
               fileURI = fileURI,
@@ -105,20 +105,20 @@ private[pc] object SourceCode {
         parsed // code is already in parsed state, return the same state
 
       case error: SourceCodeState.ErrorParser =>
-        // This code was already contain parser errors, no need to reparse.
+        // This code already contained parser errors, no need to reparse.
         error
 
       case error: SourceCodeState.ErrorCompilation =>
         // This code contains compilations errors that might have been fixed.
-        // Since it is already parsed, return the existing parsed state, without re-parsing.
+        // Since it is already parsed, return the existing parsed state, without reparsing.
         error.parsed
     }
 
   /**
    * Insert the updated code for the given file-URI to the collection.
    *
-   * Downgrade the current state of updated source-code so it gets re-parsed and re-compiled.
-   * Also checks if the file is deleted so it could be removed from compilation.
+   * Downgrade the current state of updated source-code so it gets reparsed and recompiled.
+   * It also checks if the file is deleted so it could be removed from compilation.
    *
    * @param fileURI     Updated code's file-location
    * @param updatedCode The updated code
@@ -132,7 +132,7 @@ private[pc] object SourceCode {
     )(implicit file: FileAccess): ArraySeq[SourceCodeState] =
     updatedCode match {
       case Some(newCode) =>
-        // new source code, store it as un-compiled.
+        // new source code, store it as uncompiled.
         val newState =
           SourceCodeState.UnCompiled(fileURI, newCode)
 
@@ -140,7 +140,7 @@ private[pc] object SourceCode {
         sourceCode put newState
 
       case None =>
-        // no source code sent from client, check it still exists.
+        // no source code sent from the client, check it still exists.
         file.exists(fileURI, SourceIndexExtra.zero(fileURI)) match {
           case Left(error) =>
             // failed to check
@@ -154,7 +154,7 @@ private[pc] object SourceCode {
 
           case Right(exists) =>
             if (exists) {
-              // source-code exists, set it as on-disk so it gets read during the next parse & compilation.
+              // source-code exists, set it as on-disk so it gets read during the next parse and compilation.
               val newState =
                 SourceCodeState.OnDisk(fileURI)
 
@@ -187,8 +187,8 @@ private[pc] object SourceCode {
       dependency = dependency
     ) match {
       case Left(importErrorCode) =>
-        // import type check resulted in errors. For example: It contains unknown imports.
-        // merge existing source-code with errored source-code
+        // Import type check resulted in errors. For example, It contains unknown imports.
+        // Merge existing source-code with errored source-code
         val newCode =
           sourceCode.merge(importErrorCode)(Ordering.by(_.fileURI))
 
@@ -215,7 +215,7 @@ private[pc] object SourceCode {
     }
 
   /**
-   * Compile a group of source-code files that are dependant on each other.
+   * Compile a group of source-code files that are dependent on each other.
    *
    * Pre-requisite: It is assumed that imports are already processed.
    * If not, use [[SourceCode.compile]] instead.
@@ -249,7 +249,7 @@ private[pc] object SourceCode {
 
     // compile the source-code
     val compilationResult =
-      compiler.compileContracts(
+      compiler.compile(
         parsedSource = multiContractDef,
         options = compilerOptions,
         workspaceErrorURI = workspaceErrorURI

@@ -36,7 +36,7 @@ private object RalphCompilerAccess extends CompilerAccess with StrictImplicitLog
     }
 
   /** @inheritdoc */
-  def parseContracts(
+  def parseStrict(
       fileURI: URI,
       code: String): Either[CompilerMessage.AnyError, Tree.Root] =
     try
@@ -50,7 +50,7 @@ private object RalphCompilerAccess extends CompilerAccess with StrictImplicitLog
     catch TryUtil.catchAllThrows(fileURI)
 
   /** @inheritdoc */
-  def compileContracts(
+  def compile(
       parsedSource: Seq[Ast.GlobalDefinition],
       options: CompilerOptions,
       workspaceErrorURI: URI
