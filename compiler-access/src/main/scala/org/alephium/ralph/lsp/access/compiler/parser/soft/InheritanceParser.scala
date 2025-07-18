@@ -19,7 +19,7 @@ private object InheritanceParser {
   def parseOrFail[Unknown: P]: P[SoftAST.Inheritance] =
     P {
       Index ~
-        (TokenParser.parseOrFail(Token.Implements) | TokenParser.parseOrFail(Token.Extends)) ~
+        TokenParser.parseOrFailOneOf(prefixCheck = false, tokens = Iterator(Token.Implements, Token.Extends)) ~
         TokenParser.isBoundary() ~
         SpaceParser.parseOrFail.? ~
         referenceCallOrIdentifier ~

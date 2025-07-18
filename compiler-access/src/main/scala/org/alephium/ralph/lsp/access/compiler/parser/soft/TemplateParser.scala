@@ -40,12 +40,14 @@ private object TemplateParser {
     }
 
   private def templateType[Unknown: P]: P[SoftAST.TokenDocumented[Token.TemplateDefinition]] =
+    P(typeDefinitions ~ TokenParser.isBoundary())
+
+  private def typeDefinitions[Unknown: P]: P[SoftAST.TokenDocumented[Token.TemplateDefinition]] =
     P {
-      (TokenParser.parseOrFail(Token.Contract) |
-        TokenParser.parseOrFail(Token.TxScript) |
-        TokenParser.parseOrFail(Token.AssetScript) |
-        TokenParser.parseOrFail(Token.Interface)) ~
-        TokenParser.isBoundary()
+      TokenParser.parseOrFailOneOf(
+        prefixCheck = false,
+        tokens = Iterator(Token.Contract, Token.TxScript, Token.AssetScript, Token.Interface)
+      )
     }
 
   private def abstractToken[Unknown: P]: P[SoftAST.Abstract] =
