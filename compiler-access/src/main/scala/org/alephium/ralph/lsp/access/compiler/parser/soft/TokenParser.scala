@@ -42,7 +42,10 @@ private object TokenParser {
    * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.
    */
   def Reserved[Unknown: P](remove: Token.Reserved*): P[Token.Reserved] =
-    ParserUtil.orTokenCombinator(Token.reserved.diff(remove).iterator)
+    ParserUtil.orTokenCombinator(
+      prefixCheck = false,
+      tokens = Token.reserved.diff(remove).iterator
+    )
 
   /**
    * Parses all tokens of type [[Token.InfixOperator]] and also their comments.
@@ -61,10 +64,10 @@ private object TokenParser {
    * @param tokens the token to check for.
    */
   def WhileNotOrFail[Unknown: P](tokens: Seq[Token]): P[Unit] =
-    P((!ParserUtil.orTokenCombinator(tokens.iterator) ~ AnyChar).rep(1))
+    P((!ParserUtil.orTokenCombinator(prefixCheck = true, tokens = tokens.iterator) ~ AnyChar).rep(1))
 
   def WhileInOrFail[Unknown: P](tokens: Seq[Token]): P[Unit] =
-    P(ParserUtil.orTokenCombinator(tokens.iterator).rep(1))
+    P(ParserUtil.orTokenCombinator(prefixCheck = true, tokens = tokens.iterator).rep(1))
 
   /**
    * Checks if the next character breaks (token boundary) the previously parsed token.

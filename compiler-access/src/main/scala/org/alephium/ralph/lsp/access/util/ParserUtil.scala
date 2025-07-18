@@ -4,6 +4,7 @@
 package org.alephium.ralph.lsp.access.util
 
 import fastparse._
+import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.Token
 
 object ParserUtil {
@@ -31,16 +32,35 @@ object ParserUtil {
         Fail("Expected nonempty items in orCombinator")
     }
 
-  def orTokenCombinator[Unknown: P, T <: Token](tokens: Iterator[T]): P[T] =
+  def orTokenCombinator[Unknown: P, T <: Token](
+      prefixCheck: Boolean,
+      tokens: Iterator[T]): P[T] =
     orCombinator(
       items = tokens,
-      parser = createParser(_: T)
+      parser = createParser(prefixCheck, _: T)
     )
 
-  @inline private def createParser[Unknown: P, T <: Token](token: T): P[T] =
+  @inline private def createParser[Unknown: P, T <: Token](
+      prefixCheck: Boolean,
+      token: T): P[T] =
+    P {
+      if (prefixCheck)
+        doPrefixCheck(token) ~ parseTokenOnly(token)
+      else
+        parseTokenOnly(token)
+    }
+
+  @inline private def parseTokenOnly[Unknown: P, T <: Token](token: T): P[T] =
     P(token.lexeme) map {
       _ =>
         token
     }
+
+  /** For example, ensure that if the input token is `+` that the parsed token is neither `++` nor `+=` */
+  @inline private def doPrefixCheck[Unknown: P, T <: Token](token: T): P[Unit] =
+    if (token.otherReservedTokensWithThisPrefix.isEmpty)
+      Pass(())
+    else
+      P(!orTokenCombinator(prefixCheck = true, tokens = token.otherReservedTokensWithThisPrefix.iterator))
 
 }
