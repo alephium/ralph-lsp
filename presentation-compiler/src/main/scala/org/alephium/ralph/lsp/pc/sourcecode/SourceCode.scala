@@ -71,7 +71,7 @@ private[pc] object SourceCode {
       compiler: CompilerAccess): SourceCodeState =
     sourceState match {
       case SourceCodeState.UnCompiled(fileURI, code) =>
-        compiler.parseContracts(fileURI, code) match {
+        compiler.parseStrict(fileURI, code) match {
           case Left(error) =>
             SourceCodeState.ErrorParser(
               fileURI = fileURI,
@@ -249,7 +249,7 @@ private[pc] object SourceCode {
 
     // compile the source-code
     val compilationResult =
-      compiler.compileContracts(
+      compiler.compile(
         parsedSource = multiContractDef,
         options = compilerOptions,
         workspaceErrorURI = workspaceErrorURI
