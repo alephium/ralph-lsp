@@ -7,6 +7,7 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.Token
+import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -58,6 +59,28 @@ class TokenParserSpec extends AnyWordSpec {
 
       "//" in {
         Token.DoubleForwardSlash.otherReservedTokensWithThisPrefix shouldBe empty
+      }
+    }
+  }
+
+  "parseOrFailOneOf" when {
+    "multiple tokens with same prefixes" should {
+      "parse the one with exact match" in {
+        val tokens =
+          List(
+            Token.Plus,
+            Token.PlusPlus,
+            Token.PlusEquals
+          )
+
+        val expected =
+          PlusEquals(indexOf(">>+=<<"))
+
+        tokens.permutations foreach {
+          _ =>
+            val actual = parseOrFailOneOf(prefixCheck = true, tokens: _*)("+=")
+            actual shouldBe expected
+        }
       }
     }
   }
