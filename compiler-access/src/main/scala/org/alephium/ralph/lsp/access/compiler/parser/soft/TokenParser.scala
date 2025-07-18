@@ -29,7 +29,12 @@ private object TokenParser {
     }
 
   def parseOrFail[Unknown: P, T <: Token](token: T): P[SoftAST.TokenDocumented[T]] =
-    P(Index ~ CommentParser.parseOrFail.? ~ CodeParser.parseOrFail(token) ~ Index) map {
+    P {
+      Index ~
+        CommentParser.parseOrFail.? ~
+        CodeParser.parseOrFail(token) ~
+        Index
+    } map {
       case (from, documentation, token, to) =>
         SoftAST.TokenDocumented(
           index = range(from, to),
@@ -39,19 +44,53 @@ private object TokenParser {
     }
 
   /**
-   * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.
+   * Parses the first successful token from the given iterator of tokens, failing if none succeed.
+   *
+   * @param prefixCheck If `true`, performs the prefix check before parsing each token.
+   * @param tokens      The tokens to parse.
    */
-  def Reserved[Unknown: P](remove: Token.Reserved*): P[Token.Reserved] =
-    ParserUtil.orTokenCombinator(Token.reserved.diff(remove).iterator)
+  def parseOrFailOneOf[Unknown: P, T <: Token](
+      prefixCheck: Boolean,
+      tokens: Iterator[T]): P[SoftAST.TokenDocumented[T]] =
+    P {
+      Index ~
+        CommentParser.parseOrFail.? ~
+        Index ~
+        ParserUtil.orTokenCombinator(prefixCheck = prefixCheck, tokens = tokens) ~
+        Index
+    } map {
+      case (commentFrom, documentation, tokenFrom, token, to) =>
+        SoftAST.TokenDocumented(
+          index = range(commentFrom, to),
+          documentation = documentation,
+          code = SoftAST.CodeToken(
+            index = range(tokenFrom, to),
+            token = token
+          )
+        )
+    }
+
+  /**
+   * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.
+   *
+   * Prefix check is not required here because [[Token.reserved]] contains all tokens and are sorted.
+   */
+  def Reserved[Unknown: P](): P[Token.Reserved] =
+    ParserUtil.orTokenCombinator(
+      prefixCheck = false,
+      tokens = Token.reserved.iterator
+    )
 
   /**
    * Parses all tokens of type [[Token.InfixOperator]] and also their comments.
    */
   def InfixOperatorOrFail[Unknown: P]: P[SoftAST.TokenDocumented[Token.InfixOperator]] =
-    ParserUtil.orCombinator(
-      items = Token.infix.iterator,
-      parser = TokenParser.parseOrFail(_: Token.InfixOperator)
-    )
+    P {
+      parseOrFailOneOf(
+        prefixCheck = false,
+        tokens = Token.infix.iterator
+      )
+    }
 
   /**
    * Reads characters until at least one of the input tokens is matched.
@@ -61,10 +100,10 @@ private object TokenParser {
    * @param tokens the token to check for.
    */
   def WhileNotOrFail[Unknown: P](tokens: Seq[Token]): P[Unit] =
-    P((!ParserUtil.orTokenCombinator(tokens.iterator) ~ AnyChar).rep(1))
+    P((!ParserUtil.orTokenCombinator(prefixCheck = true, tokens = tokens.iterator) ~ AnyChar).rep(1))
 
   def WhileInOrFail[Unknown: P](tokens: Seq[Token]): P[Unit] =
-    P(ParserUtil.orTokenCombinator(tokens.iterator).rep(1))
+    P(ParserUtil.orTokenCombinator(prefixCheck = true, tokens = tokens.iterator).rep(1))
 
   /**
    * Checks if the next character breaks (token boundary) the previously parsed token.

@@ -8,6 +8,7 @@ import org.alephium.ralph.error.CompilerError
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.SourceIndex
+import org.alephium.ralph.lsp.access.util.ParserUtil
 import org.scalatest.matchers.should.Matchers._
 
 import scala.util.Random
@@ -50,14 +51,14 @@ object TestParser {
   def parseComment(code: String): SoftAST.Comments =
     runSoftParser(CommentParser.parseOrFail(_))(code)
 
-  def parseReservedToken(remove: Token.Reserved*)(code: String): Token.Reserved =
-    runAnyParser(TokenParser.Reserved(remove: _*)(_))(code)
+  def parseReservedToken()(code: String): Token.Reserved =
+    runAnyParser(TokenParser.Reserved()(_))(code)
 
   def parseInfixOperatorOrFail(code: String): SoftAST.TokenDocumented[Token.InfixOperator] =
     runAnyParser(TokenParser.InfixOperatorOrFail(_))(code)
 
-  def parseReservedTokenOrError(remove: Token.Reserved*)(code: String): Either[Parsed.Failure, Token.Reserved] =
-    runAnyParserOrError(TokenParser.Reserved(remove: _*)(_))(code)
+  def parseReservedTokenOrError()(code: String): Either[Parsed.Failure, Token.Reserved] =
+    runAnyParserOrError(TokenParser.Reserved()(_))(code)
 
   def parseIdentifier(code: String): SoftAST.IdentifierAST =
     runSoftParser(IdentifierParser.parseOrFail(_))(code)
@@ -155,6 +156,18 @@ object TestParser {
 
   def parseReferenceCall(code: String): SoftAST.ReferenceCall =
     runSoftParser(ReferenceCallParser.parseOrFail(_))(code)
+
+  def parseOrTokenCombinator[T <: Token](
+      prefixCheck: Boolean,
+      tokens: T*
+    )(code: String): T =
+    runAnyParser(ParserUtil.orTokenCombinator(prefixCheck, tokens.iterator)(_))(code)
+
+  def parseOrFailOneOf[T <: Token](
+      prefixCheck: Boolean,
+      tokens: T*
+    )(code: String): SoftAST.TokenDocumented[T] =
+    runSoftParser(TokenParser.parseOrFailOneOf(prefixCheck, tokens.iterator)(_))(code)
 
   /**
    * Test the result of [[SoftAST.deepCopy]] on the given AST.
