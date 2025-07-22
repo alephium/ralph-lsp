@@ -98,13 +98,21 @@ object TestCodeProvider {
       referencesFinder: Regex,
       referenceReplacement: String,
       settings: GoToDefSetting = testGoToDefSetting
-    )(code: String): Unit =
+    )(code: String): Unit = {
     goToForAll[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
       finder = referencesFinder,
       replacer = referenceReplacement,
       settings = settings,
       code = code
     )
+
+    goToForAll[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
+      finder = referencesFinder,
+      replacer = referenceReplacement,
+      settings = (SoftAST, settings),
+      code = code
+    )
+  }
 
   def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String*): List[SourceLocation.GoToRefStrict] =
     goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](

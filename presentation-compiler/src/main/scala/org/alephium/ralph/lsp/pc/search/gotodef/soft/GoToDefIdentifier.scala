@@ -14,6 +14,7 @@ import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 
 import scala.annotation.tailrec
+import scala.collection.immutable.ArraySeq
 
 private object GoToDefIdentifier extends StrictImplicitLogging {
 
@@ -86,7 +87,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case Some(Node(assignment: SoftAST.MutableBinding, _)) if assignment.identifier == identNode.data =>
         self()
 
-      case Some(Node(function: SoftAST.FunctionSignature, _)) if function.fnName == identNode.data =>
+      // Full search must be executed when `includeAbstractFuncDef == true`
+      case Some(Node(function: SoftAST.FunctionSignature, _)) if !settings.includeAbstractFuncDef && function.fnName == identNode.data =>
         self()
 
       case Some(Node(template: SoftAST.Template, _)) if template.identifier == identNode.data =>
@@ -197,6 +199,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           target = identNode,
           sourceCode = sourceCode,
           cache = cache,
+          includeAbstractFuncDef = settings.includeAbstractFuncDef,
           detectCallSyntax = detectCallSyntax
         )
       else
@@ -419,14 +422,28 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       cache: SearchCache,
+      includeAbstractFuncDef: Boolean,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     // The actual inherited code as defined in the AST
-    val inheritedTrees =
+    val parents =
       SourceCodeSearcher.collectInheritedParents(
         source = sourceCode,
         allSource = cache.trees
       )
+
+    // Also collect implementing children when `includeAbstractFuncDef == true`
+    val children =
+      if (includeAbstractFuncDef)
+        SourceCodeSearcher.collectImplementingChildren(
+          source = sourceCode,
+          allSource = cache.trees
+        )
+      else
+        ArraySeq.empty
+
+    val inheritedTrees =
+      parents ++ children
 
     // Inheritance search must include all built-in interfaces.
     val builtInTrees =
