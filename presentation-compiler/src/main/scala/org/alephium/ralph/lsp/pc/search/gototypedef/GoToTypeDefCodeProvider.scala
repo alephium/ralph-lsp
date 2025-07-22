@@ -65,7 +65,6 @@ case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed,
                 GoToTypeDefIdent
                   .goToNamedVar(
                     node = node.upcast(namedVar),
-                    namedVar = namedVar,
                     workspace = workspace
                   )
                   .iterator
