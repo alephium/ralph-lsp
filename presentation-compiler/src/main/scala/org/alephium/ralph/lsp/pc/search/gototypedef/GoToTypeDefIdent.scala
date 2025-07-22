@@ -34,7 +34,6 @@ case object GoToTypeDefIdent extends StrictImplicitLogging {
       case Some(node @ Node(namedVar: Ast.NamedVar, _)) =>
         goToNamedVar(
           node = node.upcast(namedVar),
-          namedVar = namedVar,
           workspace = workspace
         )
 
@@ -56,13 +55,12 @@ case object GoToTypeDefIdent extends StrictImplicitLogging {
    */
   def goToNamedVar(
       node: Node[Ast.NamedVar, Ast.Positioned],
-      namedVar: Ast.NamedVar,
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToTypeDef] =
     node.parent match {
       case Some(Node(varDef: Ast.VarDef[_], _)) =>
         searchTupledVarDef(
-          target = namedVar,
+          target = node.data,
           varDef = varDef,
           workspace = workspace
         )
