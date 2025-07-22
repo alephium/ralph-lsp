@@ -143,6 +143,33 @@ case object GoToTypeDefIdent extends StrictImplicitLogging {
     }
 
   /**
+   * Searches type-definitions for the given type id.
+   *
+   * @param node      The node representing the type being searched.
+   * @param workspace The workspace state where the source-code is located.
+   * @return An iterator over type-definition search results.
+   */
+  def goToTypeId(
+      node: Node[Ast.TypeId, Ast.Positioned],
+      workspace: WorkspaceState.IsSourceAware
+    )(implicit logger: ClientLogger): ArraySeq[SourceLocation.GoToTypeDef] =
+    node.parent match {
+      case Some(Node(contract: Ast.ContractConv[_], _)) =>
+        searchCachedType(
+          cachedType = contract.getCachedType(),
+          workspace = workspace
+        )
+
+      case Some(Node(data, _)) =>
+        logger.info(s"${this.productPrefix} not implemented for ${data.getClass.getName}. SourceIndex: ${data.sourceIndex}")
+        ArraySeq.empty
+
+      case None =>
+        logger.info(s"${this.productPrefix}: Type information not found for node: ${node.data.getClass.getName}. SourceIndex: ${node.data.sourceIndex}")
+        ArraySeq.empty
+    }
+
+  /**
    * Handles tupled variable declarations.
    *
    * Example:

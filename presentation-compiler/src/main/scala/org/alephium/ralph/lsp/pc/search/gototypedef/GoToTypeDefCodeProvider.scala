@@ -69,6 +69,14 @@ case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed,
                   )
                   .iterator
 
+              case Some(node @ Node(typeId: Ast.TypeId, _)) =>
+                GoToTypeDefIdent
+                  .goToTypeId(
+                    node = node.upcast(typeId),
+                    workspace = workspace
+                  )
+                  .iterator
+
               case Some(Node(data, _)) =>
                 logger.error(s"GoToType not implemented for ${data.getClass.getName}. Index: $cursorIndex. FileURI: ${sourceCode.fileURI}")
                 Iterator.empty
