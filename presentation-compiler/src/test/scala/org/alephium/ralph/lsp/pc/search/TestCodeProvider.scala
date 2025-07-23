@@ -796,7 +796,13 @@ object TestCodeProvider {
 
       // there must be one `@@` marker
       val (atPosition, atSource) =
-        _withAt.value
+        _withAt match {
+          case Some(value) =>
+            value
+
+          case None =>
+            fail("Missing '@@' symbol in test code")
+        }
 
       (atPosition, atSource, withoutAt)
     }
