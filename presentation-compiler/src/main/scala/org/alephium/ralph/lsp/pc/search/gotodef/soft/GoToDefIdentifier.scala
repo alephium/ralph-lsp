@@ -277,6 +277,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           detectCallSyntax = detectCallSyntax
         )
 
+      case struct: SoftAST.Struct =>
+        searchStructIdentifier(
+          structIdentifier = struct.identifier,
+          target = target,
+          sourceCode = sourceCode,
+          detectCallSyntax = detectCallSyntax
+        )
+
       case event: SoftAST.Event =>
         searchEvent(
           event = event,
@@ -329,35 +337,35 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       from = from,
       anchor = target.data.index
     ) {
-      case Node(variable: SoftAST.VariableDeclaration, _) if !detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()) =>
+      case Node(variable: SoftAST.VariableDeclaration, _) if !detectCallSyntax || (!target.is_RefCall_StructCont_Or_TypeAssignsType() && !target.isWithinEmit()) =>
         searchExpression(
           expression = variable,
           target = target,
           sourceCode = sourceCode
         )
 
-      case Node(assignment: SoftAST.TypeAssignment, _) if !detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()) =>
+      case Node(assignment: SoftAST.TypeAssignment, _) if !detectCallSyntax || (!target.is_RefCall_StructCont_Or_TypeAssignsType() && !target.isWithinEmit()) =>
         searchExpression(
           expression = assignment,
           target = target,
           sourceCode = sourceCode
         )
 
-      case Node(map: SoftAST.MapAssignment, _) if !detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()) =>
+      case Node(map: SoftAST.MapAssignment, _) if !detectCallSyntax || (!target.is_RefCall_StructCont_Or_TypeAssignsType() && !target.isWithinEmit()) =>
         searchExpression(
           expression = map,
           target = target,
           sourceCode = sourceCode
         )
 
-      case Node(binding: SoftAST.MutableBinding, _) if !detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit()) =>
+      case Node(binding: SoftAST.MutableBinding, _) if !detectCallSyntax || (!target.is_RefCall_StructCont_Or_TypeAssignsType() && !target.isWithinEmit()) =>
         searchExpression(
           expression = binding,
           target = target,
           sourceCode = sourceCode
         )
 
-      case Node(assignment: SoftAST.Assignment, _) if enableAssignmentSearch && (!detectCallSyntax || !target.isReferenceCall()) =>
+      case Node(assignment: SoftAST.Assignment, _) if enableAssignmentSearch && (!detectCallSyntax || !target.is_RefCall_StructCont_Or_TypeAssignsType()) =>
         // Used for enums. Only enums contains immutable assignments, which are basically variable definitions.
         searchExpression(
           expression = assignment,
@@ -400,6 +408,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case Node(enumAST: SoftAST.Enum, _) =>
         searchEnum(
           enumAST = enumAST,
+          target = target,
+          sourceCode = sourceCode,
+          detectCallSyntax = detectCallSyntax
+        )
+
+      case Node(event: SoftAST.Struct, _) =>
+        searchStructIdentifier(
+          structIdentifier = event.identifier,
           target = target,
           sourceCode = sourceCode,
           detectCallSyntax = detectCallSyntax
@@ -634,7 +650,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         case Some(block) if block.contains(target) =>
           // Search the parameters
           val paramMatches =
-            if (detectCallSyntax && (target.isReferenceCall() || target.isWithinEmit()))
+            if (detectCallSyntax && (target.is_RefCall_StructCont_Or_TypeAssignsType() || target.isWithinEmit()))
               Iterator.empty
             else
               searchExpression(
@@ -706,7 +722,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
     // Check if the name matches the identifier.
     val nameMatches =
-      if (!detectCallSyntax || (!target.isReferenceCall() && target.isMethodCall() && !target.isWithinEmit()))
+      if (!detectCallSyntax || (target.isMethodCall() && !target.isWithinEmit()))
         searchIdentifier(
           identifier = enumAST.identifier,
           target = target,
@@ -724,9 +740,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param template         The template to expand and search.
    * @param target           The identifier being searched.
    * @param sourceCode       The source code state where the function belongs.
-   * @param detectCallSyntax If `true`, ensures that when a function is called,
-   *                         the search is restricted to reference calls only and does not
-   *                         return variables with the same name.
+   * @param detectCallSyntax If `true`, restricts the search to syntax that matches the template being operated on.
    * @return An iterator over the locations of the definitions.
    */
   private def searchTemplate(
@@ -739,7 +753,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     //  - The target belongs to the template's inheritance group
     val paramMatches =
       if (template.block.exists(_.contains(target)) || template.inheritance.exists(_.contains(target)))
-        if (detectCallSyntax && (target.isReferenceCall() || target.isWithinEmit()))
+        if (detectCallSyntax && (target.is_RefCall_StructCont_Or_TypeAssignsType() || target.isWithinEmit()))
           Iterator.empty
         else
           template.params match {
@@ -791,7 +805,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param templateIdentifier The template identifier to search.
    * @param target             The identifier being searched.
    * @param sourceCode         The source code state where the template identifier belongs.
-   * @param detectCallSyntax   If `true`, restricts the search to `event` only when an `emit` is defined.
+   * @param detectCallSyntax   If `true`, restricts the search to syntax the matches the template being operated on.
    * @return An iterator over the locations of the definitions.
    */
   private def searchTemplateIdentifier(
@@ -800,9 +814,45 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     // Check if the name matches the identifier.
-    if (!detectCallSyntax || (target.isReferenceCall() && !target.isWithinEmit()))
+    if (!detectCallSyntax || (target.is_RefCall_Or_TypeAssignsType() && !target.isWithinEmit()))
       searchIdentifier(
         identifier = templateIdentifier.identifier,
+        target = target,
+        sourceCode = sourceCode
+      )
+    else
+      Iterator.empty
+
+  /**
+   * Given a struct identifier, expands and searches it for a possible target identifier definition.
+   *
+   * @param structIdentifier The struct identifier to search.
+   * @param target           The identifier being searched.
+   * @param sourceCode       The source code state where the struct identifier belongs.
+   * @param detectCallSyntax If `true`, restricts the search to syntax the matches the struct being operated on.
+   *                         For example, struct constructor or type assignment:
+   *                         {{{
+   *                           // Constructor
+   *                           TheStruct@@ {
+   *                             field1: ...,
+   *                             field2: ...
+   *                           }
+   *
+   *                           // Type assignment
+   *                           fn function(param: TheStruct@@)
+   *                         }}}
+   *
+   * @return An iterator over the locations of the definitions.
+   */
+  private def searchStructIdentifier(
+      structIdentifier: SoftAST.IdentifierAST,
+      target: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    // Check if the name matches the identifier.
+    if (!detectCallSyntax || (target.is_StructCont_Or_TypeAssignsType() && !target.isWithinEmit()))
+      searchIdentifier(
+        identifier = structIdentifier.identifier,
         target = target,
         sourceCode = sourceCode
       )
@@ -844,7 +894,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    if (!detectCallSyntax || (!target.isReferenceCall() && !target.isWithinEmit() && !target.isMethodCall()))
+    if (!detectCallSyntax || (!target.is_RefCall_StructCont_TypeAssignsType_Or_MethodCall() && !target.isWithinEmit()))
       searchExpression(
         expression = constant.assignment.expressionLeft,
         target = target,

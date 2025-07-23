@@ -60,4 +60,128 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "struct is accessed" when {
+    "from contract parameter" in {
+      goToDefinitionSoft() {
+        """
+          |struct >>MyStruct<< { }
+          |
+          |Contract Test(struct: MyStru@@ct) { }
+          |""".stripMargin
+      }
+    }
+
+    "from function parameter" when {
+      "global" in {
+        goToDefinitionSoft() {
+          """
+            |struct >>MyStruct<< { }
+            |
+            |Contract Test {
+            |
+            |  fn main(struct: MyStru@@ct)
+            |
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "local" in {
+        goToDefinitionSoft() {
+          """
+            |
+            |Contract Test {
+            |
+            |  struct >>MyStruct<< { }
+            |
+            |  fn main(struct: MyStru@@ct)
+            |
+            |}
+            |""".stripMargin
+        }
+      }
+    }
+
+    "from local variable" when {
+      "global" in {
+        goToDefinitionSoft() {
+          """
+            |struct >>MyStruct<< { }
+            |
+            |Contract Test {
+            |
+            |  fn main() {
+            |    MyStru@@ct {}
+            |  }
+            |
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "local" in {
+        goToDefinitionSoft() {
+          """
+            |Contract Test {
+            |
+            |  fn main() {
+            |    MyStru@@ct {}
+            |  }
+            |
+            | struct >>MyStruct<< { }
+            |
+            |}
+            |""".stripMargin
+        }
+      }
+    }
+  }
+
+  "duplicate structs" in {
+    goToDefinitionSoft() {
+      """
+        |struct >>MyStruct<< { }
+        |
+        |Contract Test {
+        |
+        |  struct >>MyStruct<< { }
+        |
+        |  fn main() -> () {
+        |    MyStru@@ct { }
+        |  }
+        |
+        | struct >>MyStruct<< { }
+        |}
+        |
+        |struct >>MyStruct<< { }
+        |""".stripMargin
+    }
+  }
+
+  "nested structs" when {
+    "single" in {
+      goToDefinitionSoft() {
+        """
+          |struct >>Node<< {
+          |  child: No@@de
+          |}
+          |""".stripMargin
+      }
+    }
+
+    "duplicated" in {
+      goToDefinitionSoft() {
+        """
+          |struct >>Node<< {}
+          |
+          |struct >>Node<< {
+          |  child: No@@de
+          |}
+          |
+          |struct >>Node<< {}
+          |""".stripMargin
+      }
+    }
+  }
+
 }

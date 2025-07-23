@@ -16,10 +16,12 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
           """
             |Contract >>variable<<() {}
             |event >>variable<<(a: Bool)
+            |struct >>variable<< { a: Bool }
             |
             |Contract Test() {
             |  Contract >>variable<<() {}
             |  event >>variable<<(a: Bool)
+            |  struct >>variable<< { a: Bool }
             |
             |  fn >>variable<<() -> () {}
             |
@@ -38,10 +40,12 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
         """
           |Contract variable() {}
           |event variable(a: Bool)
+          |struct variable { a: Bool }
           |
           |Contract Test(>>variable<<: Var) {
           |  Contract variable() {}
           |  event variable(a: Bool)
+          |  struct variable { a: Bool }
           |
           |  fn variable() -> () {}
           |
@@ -61,10 +65,12 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
         """
           |Contract >>variable<<() {}
           |event variable(a: Bool)
+          |struct variable { a: Bool }
           |
           |Contract Test(variable: Var) {
           |  Contract >>variable<<() {}
           |  event variable(a: Bool)
+          |  struct variable { a: Bool }
           |
           |  fn >>variable<<() -> () {}
           |
@@ -82,10 +88,12 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
         """
           |Contract >>variable<<() {}
           |event variable(a: Bool)
+          |struct variable { a: Bool }
           |
           |Contract Test(variable: Var) {
           |  Contract >>variable<<() {}
           |  event variable(a: Bool)
+          |  struct variable { a: Bool }
           |
           |  fn >>variable<<() -> () {}
           |
@@ -105,10 +113,12 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
         """
           |Contract variable() {}
           |event >>variable<<(a: Bool)
+          |struct variable { a: Bool }
           |
           |Contract Test(variable: Var) {
           |  Contract variable() {}
           |  event >>variable<<(a: Bool)
+          |  struct variable { a: Bool }
           |
           |  fn variable() -> () {}
           |
@@ -126,10 +136,12 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
         """
           |Contract variable() {}
           |event >>variable<<(a: Bool)
+          |struct variable { a: Bool }
           |
           |Contract Test(variable: Var) {
           |  Contract variable() {}
           |  event >>variable<<(a: Bool)
+          |  struct variable { a: Bool }
           |
           |  fn variable() -> () {}
           |
@@ -147,10 +159,12 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
         """
           |Contract >>variable<<() {}
           |event variable(a: Bool)
+          |struct variable { a: Bool }
           |
           |Contract Test(variable: Var) {
           |  Contract >>variable<<() {}
           |  event variable(a: Bool)
+          |  struct variable { a: Bool }
           |
           |  fn >>variable<<() -> () {}
           |
@@ -170,10 +184,12 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
         """
           |Contract variable() {}
           |event variable(a: Bool)
+          |struct variable { a: Bool }
           |
           |Contract Test(>>variable<<: Var) {
           |  Contract variable() {}
           |  event variable(a: Bool)
+          |  struct variable { a: Bool }
           |
           |  fn variable() -> () {}
           |
@@ -193,10 +209,12 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
         """
           |Contract variable() {}
           |event variable(a: Bool)
+          |struct variable { a: Bool }
           |
           |Contract Test(>>variable<<: Var) {
           |  Contract variable() {}
           |  event variable(a: Bool)
+          |  struct variable { a: Bool }
           |
           |  fn variable() -> () {}
           |
@@ -214,16 +232,66 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
         """
           |Contract variable() {}
           |event variable(a: Bool)
+          |struct variable { a: Bool }
           |
           |Contract Test(>>variable<<: Var) {
           |  Contract variable() {}
           |  event variable(a: Bool)
+          |  struct variable { a: Bool }
           |
           |  fn variable() -> () {}
           |
           |  fn main(>>variable<<: Var) -> () {
           |    let >>variable<< = 1
           |    variab@@le.method()
+          |  }
+          |}
+          |""".stripMargin
+      }
+    }
+  }
+
+  "jump to only the struct definition" when {
+    "call is struct constructor call" in {
+      goToDefinitionSoft() {
+        """
+          |Contract variable() {}
+          |event variable(a: Bool)
+          |struct >>variable<< { a: Bool }
+          |
+          |Contract Test(variable: Var) {
+          |  Contract variable() {}
+          |  event variable(a: Bool)
+          |  struct >>variable<< { a: Bool }
+          |
+          |  fn variable() -> () {}
+          |
+          |  fn main(variable: Var) -> () {
+          |    let variable = 1
+          |    variab@@le {}
+          |  }
+          |}
+          |""".stripMargin
+      }
+    }
+
+    "call is reference call with asset approval" in {
+      goToDefinitionSoft() {
+        """
+          |Contract >>variable<<() {}
+          |event variable(a: Bool)
+          |struct variable { a: Bool }
+          |
+          |Contract Test(variable: Var) {
+          |  Contract >>variable<<() {}
+          |  event variable(a: Bool)
+          |  struct variable { a: Bool }
+          |
+          |  fn >>variable<<() -> () {}
+          |
+          |  fn main(variable: Var) -> () {
+          |    let variable = 1
+          |    variab@@le{user -> 1}()
           |  }
           |}
           |""".stripMargin

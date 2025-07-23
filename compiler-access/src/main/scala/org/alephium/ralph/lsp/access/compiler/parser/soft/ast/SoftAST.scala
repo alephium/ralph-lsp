@@ -133,14 +133,68 @@ object SoftAST {
 
     def isReferenceCall(): Boolean =
       node.parent match {
-        case Some(Node(_: SoftAST.ReferenceCall, _)) => true
-        case _                                       => false
+        case Some(Node(_: SoftAST.ReferenceCall, _)) =>
+          true
+
+        case _ =>
+          false
       }
 
     def isMethodCall(): Boolean =
       node.parent match {
-        case Some(Node(_: SoftAST.MethodCall, _)) => true
-        case _                                    => false
+        case Some(Node(_: SoftAST.MethodCall, _)) =>
+          true
+
+        case _ =>
+          false
+      }
+
+    def is_RefCall_StructCont_Or_TypeAssignsType(): Boolean =
+      node.parent match {
+        case Some(Node(_: SoftAST.ReferenceCall | _: SoftAST.StructConstructor, _)) =>
+          true
+
+        case Some(Node(assignment: SoftAST.TypeAssignment, _)) if assignment.expressionRight.contains(node) =>
+          true
+
+        case _ =>
+          false
+      }
+
+    def is_RefCall_StructCont_TypeAssignsType_Or_MethodCall(): Boolean =
+      node.parent match {
+        case Some(Node(_: SoftAST.ReferenceCall | _: SoftAST.StructConstructor | _: SoftAST.MethodCall, _)) =>
+          true
+
+        case Some(Node(assignment: SoftAST.TypeAssignment, _)) if assignment.expressionRight.contains(node) =>
+          true
+
+        case _ =>
+          false
+      }
+
+    def is_RefCall_Or_TypeAssignsType(): Boolean =
+      node.parent match {
+        case Some(Node(_: SoftAST.ReferenceCall, _)) =>
+          true
+
+        case Some(Node(assignment: SoftAST.TypeAssignment, _)) if assignment.expressionRight.contains(node) =>
+          true
+
+        case _ =>
+          false
+      }
+
+    def is_StructCont_Or_TypeAssignsType(): Boolean =
+      node.parent match {
+        case Some(Node(_: SoftAST.StructConstructor, _)) =>
+          true
+
+        case Some(Node(assignment: SoftAST.TypeAssignment, _)) if assignment.expressionRight.contains(node) =>
+          true
+
+        case _ =>
+          false
       }
 
     /**
