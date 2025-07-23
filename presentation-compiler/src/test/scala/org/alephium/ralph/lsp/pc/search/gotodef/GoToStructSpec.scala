@@ -89,7 +89,6 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
       "local" in {
         goToDefinitionSoft() {
           """
-            |
             |Contract Test {
             |
             |  struct >>MyStruct<< { }
