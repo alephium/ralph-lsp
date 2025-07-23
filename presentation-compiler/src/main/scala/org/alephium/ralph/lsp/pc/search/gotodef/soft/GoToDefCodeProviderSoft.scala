@@ -12,6 +12,8 @@ import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.utils.Node
 
+import scala.annotation.tailrec
+
 case object GoToDefCodeProviderSoft extends CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] with StrictImplicitLogging {
 
   /** @inheritdoc */
@@ -45,7 +47,8 @@ case object GoToDefCodeProviderSoft extends CodeProvider[SourceCodeState.IsParse
               blockPart = blockPart,
               sourceCode = sourceCode,
               workspace = workspace,
-              settings = searchSettings._2
+              settings = searchSettings._2,
+              allowLeftShift = true
             )
 
           case None =>
@@ -56,30 +59,64 @@ case object GoToDefCodeProviderSoft extends CodeProvider[SourceCodeState.IsParse
   /**
    * Searches the given bodyPart.
    *
-   * @param cursorIndex The index location where the search operation is performed.
-   * @param blockPart   The first code block where the search is executed.
-   * @param sourceCode  The parsed state of the source-code where the search is executed.
-   * @param workspace   The workspace state where the source-code is located.
+   * @param cursorIndex    The index location where the search operation is performed.
+   * @param blockPart      The first code block where the search is executed.
+   * @param sourceCode     The parsed state of the source-code where the search is executed.
+   * @param workspace      The workspace state where the source-code is located.
+   * @param allowLeftShift If true, and the cursor is at the end of a code string, this flag
+   *                       allows shifting the cursor left by one position to include the last
+   *                       character in the search. Used to avoid searching the tail space or token
+   *                       which would produce no result.
    */
+  @tailrec
   private def searchBlockPart(
       cursorIndex: Int,
       blockPart: SoftAST.BlockPartAST,
       sourceCode: SourceCodeState.IsParsed,
       workspace: WorkspaceState.IsSourceAware,
-      settings: GoToDefSetting
+      settings: GoToDefSetting,
+      allowLeftShift: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
     blockPart.toNode.findLastChild(_.data.index contains cursorIndex) match {
-      case Some(Node(_: SoftAST.CodeToken[_], _)) =>
-        // Tokens (fn, Contract etc.) do not require go-to-definitions
-        Iterator.empty
+      case Some(Node(token: SoftAST.CodeToken[_], _)) =>
+        if (allowLeftShift && token.index.from == cursorIndex)
+          searchBlockPart(
+            cursorIndex = cursorIndex - 1,
+            blockPart = blockPart,
+            sourceCode = sourceCode,
+            workspace = workspace,
+            settings = settings,
+            allowLeftShift = false // already shifted once, disable shifting again
+          )
+        else
+          Iterator.empty // Tokens (fn, Contract etc.) do not require go-to-definitions
 
-      case Some(node @ Node(codeString: SoftAST.CodeString, _)) =>
-        GoToDefCodeString(
-          node = node.upcast(codeString),
-          sourceCode = SourceLocation.CodeSoft(blockPart, sourceCode),
-          workspace = workspace,
-          settings = settings
-        )
+      case Some(node @ Node(_: SoftAST.CodeString, _)) =>
+        node.parent match {
+          case Some(Node(space: SoftAST.Space, _)) =>
+            if (allowLeftShift && space.index.from == cursorIndex)
+              searchBlockPart(
+                cursorIndex = cursorIndex - 1,
+                blockPart = blockPart,
+                sourceCode = sourceCode,
+                workspace = workspace,
+                settings = settings,
+                allowLeftShift = false // already shifted once, disable shifting again
+              )
+            else
+              Iterator.empty // Spaces do not require go-to-definition
+
+          case Some(node @ Node(id: SoftAST.Identifier, _)) =>
+            GoToDefIdentifier(
+              identNode = node.upcast(id),
+              sourceCode = SourceLocation.CodeSoft(blockPart, sourceCode),
+              workspace = workspace,
+              settings = settings
+            )
+
+          case _ =>
+            Iterator.empty
+        }
 
       case Some(node) =>
         logger.trace(s"Go-to-definition not implemented for AST '${node.data.getClass.getSimpleName}' at source index '${node.data.index}'. File: ${sourceCode.fileURI}")
