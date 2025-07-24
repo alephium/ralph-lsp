@@ -24,7 +24,7 @@ private object ImportParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.Import) ~
-        TokenParser.isBoundary(Token.Quote) ~
+        TokenParser.isBoundary() ~
         SpaceParser.parseOrFail.? ~
         StringLiteralParser.parseOrFail.? ~
         Index

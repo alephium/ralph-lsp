@@ -14,7 +14,7 @@ private object WhileParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.While) ~
-        TokenParser.isBoundary(Token.OpenParen) ~
+        TokenParser.isBoundary() ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.OpenParen) ~
         SpaceParser.parseOrFail.? ~
@@ -55,7 +55,8 @@ private object WhileParser {
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
         ArrayAccessParser.parseOrFail |
-        IdentifierParser.parseOrFail
+        IdentifierParser.parseOrFail |
+        UnresolvedParser.parseOrFail(Token.CloseParen, Token.CloseCurly)
     }
 
 }

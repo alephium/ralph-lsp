@@ -83,6 +83,25 @@ class WhileParserSpec extends AnyWordSpec with Matchers {
           block = None
         )
     }
+
+    "`while` followed by an invalid syntax boundary" in {
+      val actual =
+        parseWhile("while$")
+
+      actual shouldBe
+        SoftAST.While(
+          index = indexOf(">>while$<<"),
+          whileToken = While(">>while<<$"),
+          postWhileSpace = None,
+          openParen = TokenExpected("while>><<$", Token.OpenParen),
+          postOpenParenSpace = None,
+          expression = Unresolved("while>>$<<"),
+          postExpressionSpace = None,
+          closeParen = TokenExpected("while$>><<", Token.CloseParen),
+          postCloseParenSpace = None,
+          block = None
+        )
+    }
   }
 
 }

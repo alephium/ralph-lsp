@@ -72,7 +72,7 @@ private object NumberParser {
   private def numberOrHex[Unknown: P]: P[Unit] =
     P {
       CharIn("\\+", "\\-").? ~
-        !(Token.Underscore.lexeme.rep(1) ~ (TokenParser.isBoundary(Token.Dot, Token.Minus, Token.Plus) | CharIn("a-zA-Z"))) ~
+        !(Token.Underscore.lexeme.rep(1) ~ (TokenParser.isBoundary() | CharIn("a-zA-Z"))) ~
         CharsWhileIn("0-9_") ~
         ("." ~ CharsWhileIn("0-9_")).? ~
         (!Token.AlphLowercase.lexeme ~ (StringIn("e-", "E-") | CharIn("0-9a-zA-Z_"))).rep
