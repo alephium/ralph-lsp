@@ -55,7 +55,8 @@ private object WhileParser {
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
         ArrayAccessParser.parseOrFail |
-        IdentifierParser.parseOrFail
+        IdentifierParser.parseOrFail |
+        UnresolvedParser.parseOrFail(Token.CloseParen, Token.CloseCurly)
     }
 
 }
