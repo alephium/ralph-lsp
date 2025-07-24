@@ -7,7 +7,7 @@ import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LinePosi
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.search.completion.{CodeCompletionProvider, Suggestion}
-import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefCodeProvider, GoToDefSetting}
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotodef.soft.GoToDefCodeProviderSoft
 import org.alephium.ralph.lsp.pc.search.gotoref.{GoToRefCodeProvider, GoToRefSetting}
 import org.alephium.ralph.lsp.pc.search.gototypedef.GoToTypeDefCodeProvider
@@ -124,9 +124,6 @@ object CodeProvider {
     CodeCompletionProvider
 
   /** The go-to definition implementation of [[CodeProvider]]. */
-  implicit val goToDef: CodeProvider[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict] =
-    GoToDefCodeProvider
-
   implicit val goToDefSoft: CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] =
     GoToDefCodeProviderSoft
 
@@ -167,7 +164,7 @@ object CodeProvider {
     )(implicit provider: CodeProvider[S, I, O],
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     // Search on dependencies should only run for go-to definitions and hover requests. Code-completion is ignored.
-    if (provider == CodeProvider.goToDef || provider == CodeProvider.goToRef || provider == CodeProvider.hover)
+    if (provider == CodeProvider.goToDefSoft || provider == CodeProvider.goToRef || provider == CodeProvider.hover)
       workspace
         .build
         .dependencies

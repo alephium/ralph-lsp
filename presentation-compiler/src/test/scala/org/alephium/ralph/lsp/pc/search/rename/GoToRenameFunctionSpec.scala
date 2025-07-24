@@ -9,67 +9,63 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class GoToRenameFunctionSpec extends AnyWordSpec with Matchers {
 
-  "not rename" when {
-    "overloaded functions do not have an abstract function" in {
-      goToRenameForAll(">>function<<".r, ">>functi@@on<<") {
-        """
-          |Abstract Contract Parent() {
-          |  fn function() -> () {
-          |
-          |  }
-          |}
-          |
-          |Contract Child() extends Parent() {
-          |  fn >>functi@@on<<() -> () {
-          |
-          |  }
-          |}
-          |""".stripMargin
-      }
+  "overloaded function is not an abstract function" in {
+    goToRenameForAll(">>function<<".r, ">>functi@@on<<") {
+      """
+        |Abstract Contract Parent() {
+        |  fn >>function<<() -> () {
+        |
+        |  }
+        |}
+        |
+        |Contract Child() extends Parent() {
+        |  fn >>functi@@on<<() -> () {
+        |
+        |  }
+        |}
+        |""".stripMargin
     }
   }
 
-  "rename successfully" when {
-    "abstract function and its function implementation exist" in {
-      goToRenameForAll(">>function<<".r, ">>functi@@on<<") {
-        """
-          |Abstract Contract Parent() {
-          |  fn >>function<<() -> ()
-          |}
-          |
-          |Contract Child() extends Parent() {
-          |  fn >>functi@@on<<() -> () {
-          |
-          |  }
-          |}
-          |""".stripMargin
-      }
+  "abstract function and its function implementation exist" in {
+    goToRenameForAll(">>function<<".r, ">>functi@@on<<") {
+      """
+        |Abstract Contract Parent() {
+        |  fn >>function<<() -> ()
+        |}
+        |
+        |Contract Child() extends Parent() {
+        |  fn >>functi@@on<<() -> () {
+        |
+        |  }
+        |}
+        |""".stripMargin
     }
+  }
 
-    "overloaded abstract functions and their overloaded function implementations exist" in {
-      goToRenameForAll(">>function<<".r, ">>functi@@on<<") {
-        """
-          |Abstract Contract GrandParent() {
-          |  fn >>function<<() -> ()
-          |}
-          |
-          |Abstract Contract Parent() extends GrandParent() {
-          |  fn >>function<<() -> ()
-          |}
-          |
-          |Contract Child() extends Parent() {
-          |  fn >>function<<() -> () {
-          |
-          |  }
-          |}
-          |
-          |Contract Child() extends Parent() {
-          |  fn >>functi@@on<<() -> () {
-          |
-          |  }
-          |}
-          |""".stripMargin
-      }
+  "overloaded abstract functions and their overloaded function implementations exist" in {
+    goToRenameForAll(">>function<<".r, ">>functi@@on<<") {
+      """
+        |Abstract Contract GrandParent() {
+        |  fn >>function<<() -> ()
+        |}
+        |
+        |Abstract Contract Parent() extends GrandParent() {
+        |  fn >>function<<() -> ()
+        |}
+        |
+        |Contract Child() extends Parent() {
+        |  fn >>function<<() -> () {
+        |
+        |  }
+        |}
+        |
+        |Contract Child() extends Parent() {
+        |  fn >>functi@@on<<() -> () {
+        |
+        |  }
+        |}
+        |""".stripMargin
     }
   }
 

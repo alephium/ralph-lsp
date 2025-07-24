@@ -23,180 +23,11 @@ class GoToDefinitionMultiSpec extends AnyWordSpec with Matchers with ScalaFuture
   implicit val logger: ClientLogger     = TestClientLogger
   implicit val ec: ExecutionContext     = ExecutionContext.Implicits.global
 
-  "search only the strict-ast" when {
-    "soft-parser is disabled" when {
-      "one workspace exists" in {
-        goToDefMulti()(
-          ArraySeq(
-            // `Child` has valid syntax and is strict and soft parseable.
-            """
-              |Contract Child() extends Parent() {
-              |  fn >>function<<() -> () {
-              |    let call = func@@tion()
-              |  }
-              |}
-              |""".stripMargin,
-            // `Parent` is only soft parseable.
-            """
-              |Contract Parent {
-              |  fn function()
-              |}
-              |""".stripMargin
-          )
-        )
-      }
-
-      "two workspaces exists" in {
-        goToDefMulti()(
-          /**
-           * Workspace 1
-           */
-          ArraySeq(
-            """
-              |// This is a copy of workspace2's first source-file.
-              |// This workspace should not be searched since the search is executed in Workspace2
-              |Contract Child() extends Parent() {
-              |  fn function() -> () {
-              |    let call = function()
-              |  }
-              |}
-              |""".stripMargin
-          ),
-
-          /**
-           * Workspace 2
-           */
-          ArraySeq(
-            // `Child` has valid syntax and is strict and soft parseable.
-            """
-              |Contract Child() extends Parent() {
-              |  fn >>function<<() -> () {
-              |    let call = func@@tion()
-              |  }
-              |}
-              |""".stripMargin,
-            // `Parent` is only soft parseable.
-            """
-              |Contract Parent {
-              |  fn function()
-              |}
-              |""".stripMargin
-          )
-        )
-      }
-
-      "definition exists in dependency" when {
-        "strict-parser is enabled" in {
-          goToDefMultiWithDependency()(
-            dependencyID = DependencyID.Std,
-            dependency = ArraySeq(
-              """
-                |Contract Parent() {
-                |  fn >>parent<<() -> () { }
-                |}
-                |""".stripMargin
-            ),
-
-            /**
-             * Workspace 1
-             */
-            workspaces = ArraySeq(
-              """
-                |// This is a copy of workspace2's first source-file.
-                |// This workspace should not be searched since the search is executed in Workspace2
-                |Contract Child() extends Parent() {
-                |  fn function() -> () {
-                |    let call = function()
-                |  }
-                |}
-                |""".stripMargin
-            ),
-
-            /**
-             * Workspace 2
-             */
-            ArraySeq(
-              // `Child` has valid syntax and is strict and soft parseable.
-              """
-                |import "std/file0"
-                |
-                |Contract Child() extends Parent() {
-                |  fn function() -> () {
-                |    let call = paren@@t()
-                |  }
-                |}
-                |""".stripMargin,
-              // `Parent` is only soft parseable.
-              """
-                |Contract Parent {
-                |  fn function()
-                |}
-                |""".stripMargin
-            )
-          )
-        }
-
-        "soft-parser is enabled" in {
-          goToDefMultiWithDependency(enableSoftParser = true)(
-            dependencyID = DependencyID.Std,
-            dependency = ArraySeq(
-              """
-                |Contract Parent() {
-                |  fn >>parent<<() -> () { }
-                |}
-                |""".stripMargin
-            ),
-
-            /**
-             * Workspace 1
-             */
-            workspaces = ArraySeq(
-              """
-                |// This is a copy of workspace2's first source-file.
-                |// This workspace should not be searched since the search is executed in Workspace2
-                |Contract Child() extends Parent() {
-                |  fn function() -> () {
-                |    let call = function()
-                |  }
-                |}
-                |""".stripMargin
-            ),
-
-            /**
-             * Workspace 2
-             */
-            ArraySeq(
-              // `Child` has valid syntax and is strict and soft parseable.
-              """
-                |import "std/file0"
-                |
-                |Contract Child extends Parent {
-                |  paren@@t
-                |}
-                |""".stripMargin,
-              // `Parent` is only soft parseable.
-              """
-                |Contract Parent {
-                |  fn function()
-                |}
-                |""".stripMargin
-            )
-          )
-        }
-      }
-    }
-  }
-
-  "search both strict & Soft ASTs" when {
-    "soft-parser is enabled" in {
-      // When soft parsing is enabled, search results are returned for both `Parent` and `Child` contracts.
-      // Even though `Parent` has syntax errors, it is soft-parsable.
-      goToDefMulti(enableSoftParser = true)(
-        /**
-         * Workspace 1
-         */
-        // `Child` has valid syntax and is strict and soft parseable.
+  "search" when {
+    "one workspace exists" in {
+      goToDefMulti()(
         ArraySeq(
+          // `Child` has valid syntax.
           """
             |Contract Child() extends Parent() {
             |  fn >>function<<() -> () {
@@ -204,10 +35,29 @@ class GoToDefinitionMultiSpec extends AnyWordSpec with Matchers with ScalaFuture
             |  }
             |}
             |""".stripMargin,
-          // `Parent` is only soft parseable.
+          // `Parent` has error syntax.
           """
             |Contract Parent {
             |  fn >>function<<()
+            |}
+            |""".stripMargin
+        )
+      )
+    }
+
+    "two workspaces exists" in {
+      goToDefMulti()(
+        /**
+         * Workspace 1
+         */
+        ArraySeq(
+          """
+            |// This is a copy of workspace2's first source-file.
+            |// This workspace should not be searched since the search is executed in Workspace2
+            |Contract Child() extends Parent() {
+            |  fn function() -> () {
+            |    let call = function()
+            |  }
             |}
             |""".stripMargin
         ),
@@ -216,8 +66,64 @@ class GoToDefinitionMultiSpec extends AnyWordSpec with Matchers with ScalaFuture
          * Workspace 2
          */
         ArraySeq(
+          // `Child` has valid syntax and is strict and soft parseable.
           """
-            |// Not accessed because it is in a different workspace
+            |Contract Child() extends Parent() {
+            |  fn >>function<<() -> () {
+            |    let call = func@@tion()
+            |  }
+            |}
+            |""".stripMargin,
+          // `Parent` has error syntax.
+          """
+            |Contract Parent {
+            |  fn >>function<<()
+            |}
+            |""".stripMargin
+        )
+      )
+    }
+
+    "definition exists in dependency" in {
+      goToDefMultiWithDependency()(
+        dependencyID = DependencyID.Std,
+        dependency = ArraySeq(
+          """
+            |Contract Parent() {
+            |  fn >>parent<<() -> () { }
+            |}
+            |""".stripMargin
+        ),
+
+        /**
+         * Workspace 1
+         */
+        workspaces = ArraySeq(
+          """
+            |// This is a copy of workspace2's first source-file.
+            |// This workspace should not be searched since the search is executed in Workspace2
+            |Contract Child() extends Parent() {
+            |  fn function() -> () {
+            |    let call = function()
+            |  }
+            |}
+            |""".stripMargin
+        ),
+
+        /**
+         * Workspace 2
+         */
+        ArraySeq(
+          // `Child` has valid syntax and is strict and soft parseable.
+          """
+            |import "std/file0"
+            |
+            |Contract Child extends Parent {
+            |  paren@@t
+            |}
+            |""".stripMargin,
+          // `Parent` is only soft parseable.
+          """
             |Contract Parent {
             |  fn function()
             |}
@@ -225,6 +131,44 @@ class GoToDefinitionMultiSpec extends AnyWordSpec with Matchers with ScalaFuture
         )
       )
     }
+  }
+
+  "search both strict & Soft ASTs" in {
+    // When soft parsing is enabled, search results are returned for both `Parent` and `Child` contracts.
+    // Even though `Parent` has syntax errors, it is soft-parsable.
+    goToDefMulti()(
+      /**
+       * Workspace 1
+       */
+      // `Child` has valid syntax and is strict and soft parseable.
+      ArraySeq(
+        """
+          |Contract Child() extends Parent() {
+          |  fn >>function<<() -> () {
+          |    let call = func@@tion()
+          |  }
+          |}
+          |""".stripMargin,
+        // `Parent` is only soft parseable.
+        """
+          |Contract Parent {
+          |  fn >>function<<()
+          |}
+          |""".stripMargin
+      ),
+
+      /**
+       * Workspace 2
+       */
+      ArraySeq(
+        """
+          |// Not accessed because it is in a different workspace
+          |Contract Parent {
+          |  fn function()
+          |}
+          |""".stripMargin
+      )
+    )
   }
 
 }

@@ -66,13 +66,6 @@ object TestCodeProvider {
    *
    * @param code The containing `@@` and `>>...<<` symbols.
    */
-  def goToDefinitionStrict(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[SourceLocation.GoToDefStrict] =
-    goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
-      code = code.to(ArraySeq),
-      searchSettings = settings,
-      dependencyDownloaders = ArraySeq.empty
-    )
-
   def goToDefinitionSoft(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[SourceLocation.GoToDefSoft] =
     goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
       code = code.to(ArraySeq),
@@ -81,38 +74,20 @@ object TestCodeProvider {
     )
 
   /** Executes go-to-definition providers for both StrictAST and [[SoftAST]] */
-  def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[SourceLocation.GoToDefSoft] = {
-    val resultStrict       = goToDefinitionStrict(settings)(code: _*)
-    val resultStrictRanges = resultStrict.map(_.toLineRange().value)
-
-    val resultSoft       = goToDefinitionSoft(settings)(code: _*)
-    val resultSoftRanges = resultSoft.map(_.toLineRange().value)
-
-    // Assert that both go-to-def services (Strict & Soft) return the same result.
-    resultSoftRanges should contain theSameElementsAs resultStrictRanges
-    // return either one of the results because they both contain the same result
-    resultSoft
-  }
+  def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[SourceLocation.GoToDefSoft] =
+    goToDefinitionSoft(settings)(code: _*)
 
   def goToDefinitionForAll(
       referencesFinder: Regex,
       referenceReplacement: String,
       settings: GoToDefSetting = testGoToDefSetting
-    )(code: String): Unit = {
-    goToForAll[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
-      finder = referencesFinder,
-      replacer = referenceReplacement,
-      settings = settings,
-      code = code
-    )
-
+    )(code: String): Unit =
     goToForAll[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
       finder = referencesFinder,
       replacer = referenceReplacement,
       settings = (SoftAST, settings),
       code = code
     )
-  }
 
   def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String*): List[SourceLocation.GoToRefStrict] =
     goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
@@ -375,29 +350,10 @@ object TestCodeProvider {
    */
   def goToDefBuiltIn(
       code: String,
-      expected: Option[String]): Assertion = {
-    // Assert Node's AST
-    goToDefBuiltInStrict(
-      code = code,
-      expected = expected
-    )
-
-    // Assert `SoftAST`
+      expected: Option[String]): Assertion =
     goToDefBuiltInSoft(
       code = code,
       expected = expected
-    )
-  }
-
-  def goToDefBuiltInStrict(
-      code: String,
-      expected: Option[String]): Assertion =
-    // Assert Node's AST
-    goToDependencyStrict[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
-      code = ArraySeq(code),
-      expected = expected,
-      downloader = BuiltInFunctionDownloader,
-      settings = testGoToDefSetting
     )
 
   def goToDefBuiltInSoft(
@@ -475,11 +431,11 @@ object TestCodeProvider {
       dependency: String,
       workspace: String,
       setting: GoToDefSetting = testGoToDefSetting): Unit =
-    goTo[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
+    goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
       dependencyId = dependencyId,
       dependency = dependency,
       workspace = workspace,
-      searchSettings = setting
+      searchSettings = (SoftAST, setting)
     )
 
   /**
@@ -616,21 +572,13 @@ object TestCodeProvider {
   private def goToDefDependency(
       code: ArraySeq[String],
       expected: Option[String],
-      downloader: DependencyDownloader.Native): Assertion = {
-    goToDependencyStrict[SourceCodeState.Parsed, GoToDefSetting, SourceLocation.GoToDefStrict](
-      code = code,
-      expected = expected,
-      downloader = downloader,
-      settings = testGoToDefSetting
-    )
-
+      downloader: DependencyDownloader.Native): Assertion =
     goToDependencySoft[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
       code = code,
       expected = expected,
       downloader = downloader,
       settings = (SoftAST, testGoToDefSetting)
     )
-  }
 
   /**
    * Runs go-to definition where @@ is positioned, expecting

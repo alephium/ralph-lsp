@@ -6,6 +6,7 @@ package org.alephium.ralph.lsp.pc.search.gotoref
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefIdent, GoToDefSetting}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
@@ -600,20 +601,24 @@ private object GoToRefIdent extends StrictImplicitLogging {
     reference.ast.sourceIndex exists {
       referenceSourceIndex =>
         CodeProvider
-          .goToDef
+          .goToDefSoft
           .searchLocal(
             cursorIndex = referenceSourceIndex.index,
             sourceCode = sourceCode.parsed,
             workspace = workspace,
-            searchSettings = goToDefSetting
+            searchSettings = (SoftAST, goToDefSetting)
           )
           .exists {
             case SourceLocation.File(_) =>
               false
 
-            case SourceLocation.NodeStrict(foundDefinition, _) =>
-              // The following could be tested with `ast eq ident`
-              foundDefinition == definition && foundDefinition.sourceIndex == definition.sourceIndex
+            case SourceLocation.NodeSoft(foundDefinition: SoftAST.CodeString, _) =>
+              foundDefinition.text == definition.name && definition.sourceIndex.exists(_ isEqualToSoft foundDefinition.index)
+
+            case SourceLocation.NodeSoft(definition, _) =>
+              // FIXME: Fix goToDef return type to `CodeString`
+              logger.error(s"Unexpected goToDef result of type '${definition.getClass.getName}'")
+              false
           }
     }
 
