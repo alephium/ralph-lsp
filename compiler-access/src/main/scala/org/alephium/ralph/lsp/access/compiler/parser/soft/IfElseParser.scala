@@ -14,7 +14,7 @@ private object IfElseParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.If) ~
-        TokenParser.isBoundary(Token.OpenParen, Token.OpenCurly) ~
+        TokenParser.isBoundary() ~
         SpaceParser.parseOrFail.? ~
         TupleParser.parse ~
         SpaceParser.parseOrFail.? ~

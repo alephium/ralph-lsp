@@ -14,7 +14,7 @@ private object ForParser {
     P {
       Index ~
         TokenParser.parseOrFail(Token.For) ~
-        TokenParser.isBoundary(Token.OpenParen) ~
+        TokenParser.isBoundary() ~
         SpaceParser.parseOrFail.? ~
         TokenParser.parse(Token.OpenParen) ~
         SpaceParser.parseOrFail.? ~

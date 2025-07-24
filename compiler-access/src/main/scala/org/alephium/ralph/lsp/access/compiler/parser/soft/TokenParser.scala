@@ -108,7 +108,7 @@ private object TokenParser {
   /**
    * Checks if the next character breaks (token boundary) the previously parsed token.
    */
-  def isBoundary[Unknown: P](breakers: Token*): P[Unit] =
-    P(&(TokenParser.WhileInOrFail(breakers ++ Token.spaces) | End))
+  def isBoundary[Unknown: P](): P[Unit] =
+    P(&(CharPred(!_.isLetterOrDigit) | End))
 
 }
