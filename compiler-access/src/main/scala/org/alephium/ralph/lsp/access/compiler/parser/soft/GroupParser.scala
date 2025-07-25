@@ -248,6 +248,7 @@ private object GroupParser {
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
+        AlphParser.parseOrFail |
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         ArrayAccessParser.parseOrFail |

@@ -160,7 +160,7 @@ object Token {
   case object True                                                    extends PrimitiveBoolean("true") with Reserved
   case object False                                                   extends PrimitiveBoolean("false") with Reserved
 
-  sealed abstract class PrimitiveUnit(override val lexeme: String) extends Primitive(lexeme)
+  sealed abstract class PrimitiveUnit(override val lexeme: String) extends Primitive(lexeme) with Expression
   case object AlphLowercase                                        extends PrimitiveUnit("alph") with Reserved
   case object AlphUppercase                                        extends PrimitiveUnit("ALPH") with Reserved
 

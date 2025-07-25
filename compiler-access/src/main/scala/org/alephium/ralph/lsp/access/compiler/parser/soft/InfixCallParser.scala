@@ -42,6 +42,7 @@ private object InfixCallParser {
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
+        AlphParser.parseOrFail |
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
@@ -63,6 +64,7 @@ private object InfixCallParser {
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
+        AlphParser.parseOrFail |
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |

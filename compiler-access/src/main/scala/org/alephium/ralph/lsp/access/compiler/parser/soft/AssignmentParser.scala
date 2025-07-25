@@ -75,6 +75,7 @@ private object AssignmentParser {
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
+        AlphParser.parseOrFail |
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
@@ -98,6 +99,7 @@ private object AssignmentParser {
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
+        AlphParser.parseOrFail |
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
