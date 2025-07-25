@@ -35,6 +35,8 @@ private object ReturnParser {
         MethodCallParser.parseOrFail |
         IfElseParser.parseOrFail |
         ElseParser.parseOrFail |
+        ReferenceCallParser.parseOrFail |
+        StructConstructorParser.parseOrFail |
         AnnotationParser.parseOrFail |
         TupleParser.parseOrFail(assertNonEmpty = true) |
         ArrayParser.parseOrFail |
