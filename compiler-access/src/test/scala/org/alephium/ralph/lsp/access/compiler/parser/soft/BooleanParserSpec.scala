@@ -5,11 +5,26 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
+import org.alephium.ralph.lsp.access.util.TestFastParse._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
 class BooleanParserSpec extends AnyWordSpec with Matchers {
+
+  "fail" when {
+    "prefix is boolean" in {
+      assertIsFastParseError {
+        parseBoolean("truely")
+      }
+    }
+
+    "prefix is false" in {
+      assertIsFastParseError {
+        parseBoolean("falsely")
+      }
+    }
+  }
 
   "true" in {
     parseBoolean("true").token shouldBe True(">>true<<")
