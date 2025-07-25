@@ -41,6 +41,7 @@ private object ReturnParser {
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
+        AlphParser.parseOrFail |
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |

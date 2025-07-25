@@ -90,6 +90,7 @@ private object ForParser {
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
+        AlphParser.parseOrFail |
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
