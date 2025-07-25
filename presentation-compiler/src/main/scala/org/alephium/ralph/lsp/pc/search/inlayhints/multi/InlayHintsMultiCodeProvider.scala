@@ -22,7 +22,6 @@ private[search] case object InlayHintsMultiCodeProvider extends MultiCodeProvide
       fileURI: URI,
       line: Int,
       character: Int,
-      enableSoftParser: Boolean,
       isCancelled: IsCancelled,
       pcStates: PCStates,
       settings: LinePosition

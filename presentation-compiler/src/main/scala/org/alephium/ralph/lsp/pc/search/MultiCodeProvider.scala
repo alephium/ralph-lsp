@@ -32,21 +32,18 @@ trait MultiCodeProvider[I, O] {
   /**
    * Searches for results in the given file and position.
    *
-   * @param fileURI          The URI of the file where this search is executed.
-   * @param line             The line number where the search begins.
-   * @param character        The character offset within the line.
-   * @param enableSoftParser Whether to use a soft parser.
-   * @param isCancelled      Check whether the search should be cancelled.
-   * @param pcStates         Current presentation-compiler states of each workspace.
-   * @param settings         Provider-specific settings.
-   *
+   * @param fileURI     The URI of the file where this search is executed.
+   * @param line        The line number where the search begins.
+   * @param character   The character offset within the line.
+   * @param isCancelled Check whether the search should be cancelled.
+   * @param pcStates    Current presentation-compiler states of each workspace.
+   * @param settings    Provider-specific settings.
    * @return Either an error or search results.
    */
   def search(
       fileURI: URI,
       line: Int,
       character: Int,
-      enableSoftParser: Boolean,
       isCancelled: IsCancelled,
       pcStates: PCStates,
       settings: I

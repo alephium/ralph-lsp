@@ -36,18 +36,16 @@ object TestMultiCodeProvider extends ScalaFutures {
    * Runs the [[org.alephium.ralph.lsp.pc.search.gotodef.multi.GoToDefMultiCodeProvider]] on the given workspaces,
    * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
    *
-   * @param enableSoftParser Whether to use the soft parser.
-   * @param workspaces       The source code for the workspaces.
+   * @param workspaces The source code for the workspaces.
    * @return The line range pairs pointing to the resolved locations.
    */
   def goToDefMulti(
-      enableSoftParser: Boolean = false
     )(workspaces: ArraySeq[String]*
     )(implicit logger: ClientLogger,
       file: FileAccess,
       compiler: CompilerAccess,
       ec: ExecutionContext): ArraySeq[(URI, LineRange)] =
-    goToDefMultiWithDependency(enableSoftParser = enableSoftParser)(
+    goToDefMultiWithDependency()(
       dependencyID = DependencyID.Std,
       dependency = ArraySeq.empty,
       workspaces = workspaces: _*
@@ -57,14 +55,12 @@ object TestMultiCodeProvider extends ScalaFutures {
    * Runs the [[org.alephium.ralph.lsp.pc.search.gotodef.multi.GoToDefMultiCodeProvider]] on the given workspaces and dependency,
    * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
    *
-   * @param enableSoftParser Whether to use the soft parser.
-   * @param dependencyID     The ID to assign to the created dependency.
-   * @param dependency       The source code for the dependency.
-   * @param workspaces       The source code for the workspaces.
+   * @param dependencyID The ID to assign to the created dependency.
+   * @param dependency   The source code for the dependency.
+   * @param workspaces   The source code for the workspaces.
    * @return The line range pairs pointing to the resolved locations.
    */
   def goToDefMultiWithDependency(
-      enableSoftParser: Boolean = false
     )(dependencyID: DependencyID,
       dependency: ArraySeq[String],
       workspaces: ArraySeq[String]*
@@ -73,7 +69,6 @@ object TestMultiCodeProvider extends ScalaFutures {
       compiler: CompilerAccess,
       ec: ExecutionContext): ArraySeq[(URI, LineRange)] =
     goTo[Unit, SourceLocation.GoToDef](
-      enableSoftParser = enableSoftParser,
       settings = (),
       customDependency = Some((dependencyID, dependency.to(ArraySeq))),
       dependencyDownloaders = ArraySeq.empty,
@@ -119,7 +114,6 @@ object TestMultiCodeProvider extends ScalaFutures {
       compiler: CompilerAccess,
       ec: ExecutionContext): ArraySeq[(URI, LineRange)] =
     goTo[GoToRefMultiSetting, SourceLocation.GoToRefStrict](
-      enableSoftParser = false,
       settings = settings,
       customDependency = Some((dependencyID, dependency.to(ArraySeq))),
       dependencyDownloaders = ArraySeq.empty,
@@ -163,7 +157,6 @@ object TestMultiCodeProvider extends ScalaFutures {
       compiler: CompilerAccess,
       ec: ExecutionContext): ArraySeq[(URI, LineRange)] =
     goTo[Unit, SourceLocation.GoToRenameStrict](
-      enableSoftParser = false,
       settings = (),
       customDependency = Some((dependencyID, dependency.to(ArraySeq))),
       dependencyDownloaders = ArraySeq.empty,
@@ -207,7 +200,6 @@ object TestMultiCodeProvider extends ScalaFutures {
       compiler: CompilerAccess,
       ec: ExecutionContext): ArraySeq[Suggestion] =
     search[Unit, Suggestion](
-      enableSoftParser = false,
       settings = (),
       customDependency = Some((dependencyID, dependency.to(ArraySeq))),
       dependencyDownloaders = ArraySeq.empty,
@@ -251,7 +243,6 @@ object TestMultiCodeProvider extends ScalaFutures {
       compiler: CompilerAccess,
       ec: ExecutionContext): ArraySeq[SourceLocation.Hover] =
     search[Unit, SourceLocation.Hover](
-      enableSoftParser = true,
       settings = (),
       customDependency = Some((dependencyID, dependency.to(ArraySeq))),
       dependencyDownloaders = ArraySeq.empty,
@@ -262,7 +253,6 @@ object TestMultiCodeProvider extends ScalaFutures {
    * Runs the [[MultiCodeProvider]] on the given workspaces and dependency,
    * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
    *
-   * @param enableSoftParser      Whether to use the soft parser.
    * @param settings              Settings for the [[MultiCodeProvider]].
    * @param customDependency      Custom dependency ID its corresponding source-code to use for building the custom dependency library.
    * @param dependencyDownloaders Default dependency downloaders to include along with the custom dependencies.
@@ -272,7 +262,6 @@ object TestMultiCodeProvider extends ScalaFutures {
    * @return The line range pairs pointing to the resolved locations.
    */
   private def goTo[I, O <: SourceLocation.GoTo](
-      enableSoftParser: Boolean,
       settings: I,
       customDependency: Option[(DependencyID, ArraySeq[String])],
       dependencyDownloaders: ArraySeq[DependencyDownloader.Native],
@@ -284,7 +273,6 @@ object TestMultiCodeProvider extends ScalaFutures {
       ec: ExecutionContext): ArraySeq[(URI, LineRange)] = {
     val (result, compiledWorkspace) =
       search(
-        enableSoftParser = enableSoftParser,
         settings = settings,
         customDependency = customDependency,
         dependencyDownloaders = dependencyDownloaders,
@@ -341,7 +329,6 @@ object TestMultiCodeProvider extends ScalaFutures {
    * Runs the [[MultiCodeProvider]] on the given workspaces and dependency,
    * which contains the selection indicator `@@` and may also include the result indicator `>><<`.
    *
-   * @param enableSoftParser      Whether to use the soft parser.
    * @param settings              Settings for the [[MultiCodeProvider]].
    * @param customDependency      Custom dependency ID its corresponding source-code to use for building the custom dependency library.
    * @param dependencyDownloaders Default dependency downloaders to include along with the custom dependencies.
@@ -351,7 +338,6 @@ object TestMultiCodeProvider extends ScalaFutures {
    * @return A pair containing the search result and the test compiled workspaces created (deleted from disk).
    */
   private def search[I, O](
-      enableSoftParser: Boolean,
       settings: I,
       customDependency: Option[(DependencyID, ArraySeq[String])],
       dependencyDownloaders: ArraySeq[DependencyDownloader.Native],
@@ -442,7 +428,6 @@ object TestMultiCodeProvider extends ScalaFutures {
           fileURI = codeWithAt.fileURI,
           line = atLocation.line,
           character = atLocation.character,
-          enableSoftParser = enableSoftParser,
           // format: off
           isCancelled = IsCancelled(() => false), // format: on
           pcStates = PCStates(pcStates),
