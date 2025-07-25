@@ -62,9 +62,8 @@ class AssetApprovalParserSpec extends AnyWordSpec with Matchers {
                   preArrowSpace = Some(Space("{user>> <<-> asset: amount}")),
                   forwardArrow = ForwardArrow("{user >>-><< asset: amount}"),
                   preRightExpressionSpace = Some(Space("{user - >> <<asset: amount}")),
-                  rightExpression = SoftAST.TypeAssignment(
+                  rightExpression = SoftAST.AssetAssignment(
                     index = indexOf("{user -> >>asset: amount<<}"),
-                    annotations = Seq.empty,
                     expressionLeft = Identifier("{user -> >>asset<<: amount}"),
                     preColonSpace = None,
                     colon = Colon("{user -> asset>>:<< amount}"),
@@ -81,6 +80,101 @@ class AssetApprovalParserSpec extends AnyWordSpec with Matchers {
           preTailExpressionSpace = None,
           tailExpressions = Seq.empty,
           closeToken = Some(CloseCurly("{user -> asset: amount>>}<<"))
+        )
+      )
+  }
+
+  "alph assignment (Case 2 from issue #546)" in {
+    val ast =
+      parseAssetApproval("{address -> ALPH : 1 alph}")
+
+    ast shouldBe
+      SoftAST.AssetApproval(
+        SoftAST.Group(
+          index = indexOf(">>{address -> ALPH : 1 alph}<<"),
+          openToken = Some(OpenCurly(">>{<<address -> ALPH : 1 alph}")),
+          preHeadExpressionSpace = None,
+          headExpression = Some(
+            SoftAST.Group(
+              index = indexOf("{>>address -> ALPH : 1 alph<<}"),
+              openToken = None,
+              preHeadExpressionSpace = None,
+              headExpression = Some(
+                SoftAST.ArrowAssignment(
+                  index = indexOf("{>>address -> ALPH : 1 alph<<}"),
+                  leftExpression = Identifier("{>>address<< -> ALPH : 1 alph}"),
+                  preArrowSpace = Some(Space("{address>> <<-> ALPH : 1 alph}")),
+                  forwardArrow = ForwardArrow("{address >>-><< ALPH : 1 alph}"),
+                  preRightExpressionSpace = Some(Space("{address - >> <<ALPH : 1 alph}")),
+                  rightExpression = SoftAST.AssetAssignment(
+                    index = indexOf("{address -> >>ALPH : 1 alph<<}"),
+                    expressionLeft = SoftAST.TokenExpression(AlphUppercase("{address -> >>ALPH<< : 1 alph}")),
+                    preColonSpace = Some(Space("{address -> ALPH>> <<: 1 alph}")),
+                    colon = Colon("{address -> ALPH >>:<< 1 alph}"),
+                    postColonSpace = Some(Space("{address -> ALPH :>> <<1 alph}")),
+                    expressionRight = SoftAST.Number(
+                      index = indexOf("{address -> ALPH : >>1 alph<<}"),
+                      documentation = None,
+                      number = Number("{address -> ALPH : >>1<< alph}").number,
+                      unit = Some(
+                        SoftAST.UnitAlph(
+                          index = indexOf("{address -> ALPH : 1>> alph<<}"),
+                          space = Some(Space("{address -> ALPH : 1>> <<alph}")),
+                          unit = AlphLowercase("{address -> ALPH : 1 >>alph<<}")
+                        )
+                      )
+                    )
+                  )
+                )
+              ),
+              preTailExpressionSpace = None,
+              tailExpressions = Seq.empty,
+              closeToken = None
+            )
+          ),
+          preTailExpressionSpace = None,
+          tailExpressions = Seq.empty,
+          closeToken = Some(CloseCurly("{address -> ALPH : 1 alph>>}<<"))
+        )
+      )
+  }
+
+  "boundary test (Issue #546)" in {
+    val ast = parseAssetApproval("{1 alph}")
+
+    ast shouldBe
+      SoftAST.AssetApproval(
+        assets = SoftAST.Group(
+          index = indexOf(">>{1 alph}<<"),
+          openToken = Some(OpenCurly(">>{<<1 alph}")),
+          preHeadExpressionSpace = None,
+          headExpression = Some(
+            SoftAST.Group(
+              index = indexOf("{>>1 alph<<}"),
+              openToken = None,
+              preHeadExpressionSpace = None,
+              headExpression = Some(
+                SoftAST.Number(
+                  index = indexOf("{>>1 alph<<}"),
+                  documentation = None,
+                  number = CodeString("{>>1<< alph}"),
+                  unit = Some(
+                    SoftAST.UnitAlph(
+                      index = indexOf("{1>> alph<<}"),
+                      space = Some(Space("{1>> <<alph}")),
+                      unit = AlphLowercase("{1 >>alph<<}")
+                    )
+                  )
+                )
+              ),
+              preTailExpressionSpace = None,
+              tailExpressions = Seq.empty,
+              closeToken = None
+            )
+          ),
+          preTailExpressionSpace = None,
+          tailExpressions = Seq.empty,
+          closeToken = Some(CloseCurly("{1 alph>>}<<"))
         )
       )
   }
@@ -103,8 +197,7 @@ class AssetApprovalParserSpec extends AnyWordSpec with Matchers {
     ast.assets.tailExpressions.head.toCode() shouldBe "; user -> asset: amount"
   }
 
-  // FIXME: To resolve in the next PR with the second part of the issue https://github.com/alephium/ralph-lsp/issues/546
-  "two asset groups, each with multiple subgroups are defined" ignore {
+  "two asset groups, each with multiple subgroups are defined" in {
     val ast =
       parseAssetApproval(
         """{
@@ -170,46 +263,6 @@ class AssetApprovalParserSpec extends AnyWordSpec with Matchers {
     tailGroup.headExpression.value.toCode() shouldBe "user1 -> ALPH: amount10"
     tailGroup.tailExpressions should have size 1
     tailGroup.tailExpressions.head.toCode() shouldBe s", tokenId: amount11${Token.Newline.lexeme}"
-  }
-
-  "boundary test (Issue #546)" in {
-    val ast = parseAssetApproval("{1 alph}")
-
-    ast shouldBe
-      SoftAST.AssetApproval(
-        assets = SoftAST.Group(
-          index = indexOf(">>{1 alph}<<"),
-          openToken = Some(OpenCurly(">>{<<1 alph}")),
-          preHeadExpressionSpace = None,
-          headExpression = Some(
-            SoftAST.Group(
-              index = indexOf("{>>1 alph<<}"),
-              openToken = None,
-              preHeadExpressionSpace = None,
-              headExpression = Some(
-                SoftAST.Number(
-                  index = indexOf("{>>1 alph<<}"),
-                  documentation = None,
-                  number = CodeString("{>>1<< alph}"),
-                  unit = Some(
-                    SoftAST.UnitAlph(
-                      index = indexOf("{1>> alph<<}"),
-                      space = Some(Space("{1>> <<alph}")),
-                      unit = AlphLowercase("{1 >>alph<<}")
-                    )
-                  )
-                )
-              ),
-              preTailExpressionSpace = None,
-              tailExpressions = Seq.empty,
-              closeToken = None
-            )
-          ),
-          preTailExpressionSpace = None,
-          tailExpressions = Seq.empty,
-          closeToken = Some(CloseCurly("{1 alph>>}<<"))
-        )
-      )
   }
 
 }

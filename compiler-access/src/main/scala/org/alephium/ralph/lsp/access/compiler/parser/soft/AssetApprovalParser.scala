@@ -30,9 +30,8 @@ object AssetApprovalParser {
   private def expression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
       ArrowAssignmentParser.parseOrFail |
-        TypeAssignmentParser.parseOrFail |
-        NumberParser.parseOrFail |
-        UnresolvedParser.parseOrFailSpaceDelimited(Token.Comma, Token.CloseCurly, Token.ForwardArrow)
+        AssetAssignmentParser.parseOrFail |
+        NumberParser.parseOrFail
     }
 
 }

@@ -8,39 +8,36 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object ReturnParser {
+private object AssetAssignmentParser {
 
-  def parseOrFail[Unknown: P]: P[SoftAST.Return] =
+  def parseOrFail[Unknown: P]: P[SoftAST.AssetAssignment] =
     P {
       Index ~
-        TokenParser.parseOrFail(Token.Return) ~
-        TokenParser.isBoundary() ~
+        ExpressionParser.parseSubset(leftExpression) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parseSubset(expression) ~
+        TokenParser.parseOrFail(Token.Colon) ~
+        SpaceParser.parseOrFail.? ~
+        ExpressionParser.parse ~ // On the right, parse anything other than type-assignment
         Index
     } map {
-      case (from, returnStatement, space, expression, to) =>
-        SoftAST.Return(
+      case (from, left, postIdentifierSpace, equalToken, postEqualSpace, right, to) =>
+        SoftAST.AssetAssignment(
           index = range(from, to),
-          returnToken = returnStatement,
-          preExpressionSpace = space,
-          rightExpression = expression
+          expressionLeft = left,
+          preColonSpace = postIdentifierSpace,
+          colon = equalToken,
+          postColonSpace = postEqualSpace,
+          expressionRight = right
         )
     }
 
-  private def expression[Unknown: P]: P[SoftAST.ExpressionAST] =
+  private def leftExpression[Unknown: P] =
     P {
-      GroupParser.parseOrFailMany(GroupParser.defaultExpressions) |
-        InfixCallParser.parseOrFail |
-        MethodCallParser.parseOrFail |
-        IfElseParser.parseOrFail |
-        ElseParser.parseOrFail |
+      MethodCallParser.parseOrFail |
+        MutableBindingParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         StructConstructorParser.parseOrFail |
-        AnnotationParser.parseOrFail |
-        TupleParser.parseOrFail(assertNonEmpty = true) |
         ArrayParser.parseOrFail |
-        ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
         BooleanParser.parseOrFail |
         AlphParser.parseOrFail |

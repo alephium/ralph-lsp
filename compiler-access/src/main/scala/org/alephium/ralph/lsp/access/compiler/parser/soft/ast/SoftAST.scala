@@ -690,6 +690,15 @@ object SoftAST {
       expressionRight: ExpressionAST)
     extends ExpressionAST
 
+  case class AssetAssignment(
+      index: SourceIndex,
+      expressionLeft: ExpressionAST,
+      preColonSpace: Option[Space],
+      colon: TokenDocExpectedAST[Token.Colon.type],
+      postColonSpace: Option[Space],
+      expressionRight: ExpressionAST)
+    extends ExpressionAST
+
   case class AccessModifier(
       index: SourceIndex,
       pub: TokenDocumented[Token.Pub.type],
