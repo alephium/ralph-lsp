@@ -45,8 +45,7 @@ private object AssetAssignmentParser {
         StringInterpolationParser.parseOrFail |
         StringLiteralParser.parseOrFail |
         ArrayAccessParser.parseOrFail |
-        IdentifierParser.parseOrFail |
-        UnresolvedParser.parseOrFailSpaceDelimited(Token.Colon)
+        IdentifierParser.parseOrFail
     }
 
 }
