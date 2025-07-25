@@ -32,10 +32,22 @@ private object ExpressionParser {
         SoftAST.ExpressionExpected(range(from, to))
     }
 
+  /**
+   * [[TypeAssignmentParser]] is excluded from this list because
+   * type assignments must be parsed at specific locations:
+   *  - Function input parameters
+   *  - Contract input parameters
+   *  - Struct input parameters
+   *  - Event input parameters
+   *
+   *  But to handle cases where syntax looks similar to type assignment,
+   *  for example, `left: Right`, [[AssetAssignmentParser]] is used.
+   *  This ensures that renaming does not occur for similar syntax not meant to be type-assignments.
+   */
   def parseOrFail[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
       MapAssignmentParser.parseOrFail |
-        TypeAssignmentParser.parseOrFail |
+        AssetAssignmentParser.parseOrFail |
         AssignmentParser.parseOrFail |
         InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |

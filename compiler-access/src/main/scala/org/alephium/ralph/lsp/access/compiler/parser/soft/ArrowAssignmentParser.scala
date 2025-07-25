@@ -23,7 +23,7 @@ private object ArrowAssignmentParser {
         SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.ForwardArrow) ~
         SpaceParser.parseOrFail.? ~
-        ExpressionParser.parse ~
+        ExpressionParser.parseSubset(rightExpression) ~
         Index
     } map {
       case (from, leftExpression, preArrowSpace, forwardArrow, preRightExpressionSpace, rightExpression, to) =>
@@ -39,8 +39,38 @@ private object ArrowAssignmentParser {
 
   private def leftExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
-      IdentifierParser.parseOrFail |
+      MethodCallParser.parseOrFail |
+        MutableBindingParser.parseOrFail |
+        ReferenceCallParser.parseOrFail |
+        StructConstructorParser.parseOrFail |
+        ArrayParser.parseOrFail |
+        NumberParser.parseOrFail |
+        BooleanParser.parseOrFail |
+        AlphParser.parseOrFail |
+        BStringParser.parseOrFail |
+        StringInterpolationParser.parseOrFail |
+        StringLiteralParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
+        IdentifierParser.parseOrFail |
         UnresolvedParser.parseOrFailSpaceDelimited(Token.ForwardArrow)
+    }
+
+  private def rightExpression[Unknown: P]: P[SoftAST.ExpressionAST] =
+    P {
+      AssetAssignmentParser.parseOrFail |
+        InfixCallParser.parseOrFail |
+        MethodCallParser.parseOrFail |
+        ReferenceCallParser.parseOrFail |
+        StructConstructorParser.parseOrFail |
+        ArrayParser.parseOrFail |
+        ByteVecParser.parseOrFail |
+        NumberParser.parseOrFail |
+        BooleanParser.parseOrFail |
+        BStringParser.parseOrFail |
+        StringInterpolationParser.parseOrFail |
+        StringLiteralParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
+        IdentifierParser.parseOrFail
     }
 
 }

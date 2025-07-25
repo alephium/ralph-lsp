@@ -74,6 +74,75 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         }
       }
     }
+
+    "no enclosing blocks" when {
+
+      /**
+       * Type assignment on their own does not get parsed as
+       * [[org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST.TypeAssignment]].
+       * Why? See the comment for
+       * [[org.alephium.ralph.lsp.access.compiler.parser.soft.ExpressionParser.parseOrFail]].
+       */
+      "type name is defined" in {
+        goToDefinitionSoft() {
+          """
+            |variab@@le: SomeType
+            |""".stripMargin
+        }
+      }
+
+      "duplicate identifiers are defined" in {
+        goToDefinitionSoft() {
+          """
+            |{
+            |  variab@@le: SomeType
+            |    variable:     SomeType
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "type name is not defined" in {
+        goToDefinitionSoft() {
+          """
+            |variab@@le:
+            |""".stripMargin
+        }
+      }
+
+      "type name is not defined with duplicate identifiers" in {
+        goToDefinitionSoft() {
+          """
+            |{
+            |  variab@@le:
+            |  variable:
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "type name is defined for another variable" in {
+        goToDefinitionSoft() {
+          """
+            |{
+            |  variab@@le:
+            |  anotherVariable: SomeType
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "type name is defined for duplicate variable" in {
+        goToDefinitionSoft() {
+          """
+            |{
+            |  variab@@le:
+            |  variable: SomeType
+            |}
+            |""".stripMargin
+        }
+      }
+    }
   }
 
   "return self" when {
@@ -192,68 +261,6 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
     }
 
-    "no enclosing blocks" when {
-      "type name is defined" in {
-        goToDefinitionSoft() {
-          """
-            |>>variab@@le<<: SomeType
-            |""".stripMargin
-        }
-      }
-
-      "duplicate identifiers are defined" in {
-        goToDefinitionSoft() {
-          """
-            |{
-            |  >>variab@@le<<: SomeType
-            |    variable:     SomeType
-            |}
-            |""".stripMargin
-        }
-      }
-
-      "type name is not defined" in {
-        goToDefinitionSoft() {
-          """
-            |>>variab@@le<<:
-            |""".stripMargin
-        }
-      }
-
-      "type name is not defined with duplicate identifiers" in {
-        goToDefinitionSoft() {
-          """
-            |{
-            |  >>variab@@le<<:
-            |  variable:
-            |}
-            |""".stripMargin
-        }
-      }
-
-      "type name is defined for another variable" in {
-        goToDefinitionSoft() {
-          """
-            |{
-            |  >>variab@@le<<:
-            |  anotherVariable: SomeType
-            |}
-            |""".stripMargin
-        }
-      }
-
-      "type name is defined for duplicate variable" in {
-        goToDefinitionSoft() {
-          """
-            |{
-            |  >>variab@@le<<:
-            |  variable: SomeType
-            |}
-            |""".stripMargin
-        }
-      }
-    }
-
     "mutable arguments" when {
       "defined as a Contract parameter" when {
         "single param exists" in {
@@ -333,6 +340,68 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
                   |""".stripMargin
               }
             }
+          }
+        }
+      }
+
+      "no enclosing blocks" when {
+        "type name is defined" in {
+          goToDefinitionSoft() {
+            """
+              |mut >>variab@@le<<: SomeType
+              |""".stripMargin
+          }
+        }
+
+        "duplicate identifiers are defined" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  mut >>variab@@le<<: SomeType
+              |    mut variable:     SomeType
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "type name is not defined" in {
+          goToDefinitionSoft() {
+            """
+              |mut >>variab@@le<<:
+              |""".stripMargin
+          }
+        }
+
+        "type name is not defined with duplicate identifiers" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  mut >>variab@@le<<:
+              |  mut variable:
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "type name is defined for another variable" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  mut >>variab@@le<<:
+              |  anotherVariable: SomeType
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "type name is defined for duplicate variable" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  mut >>variab@@le<<:
+              |  variable: SomeType
+              |}
+              |""".stripMargin
           }
         }
       }
