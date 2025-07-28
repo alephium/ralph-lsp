@@ -72,13 +72,6 @@ private object AssignmentParser {
       MethodCallParser.parseOrFail |
         MutableBindingParser.parseOrFail |
         TupleParser.parseOrFail(assertNonEmpty = true) |
-        ByteVecParser.parseOrFail |
-        NumberParser.parseOrFail |
-        BooleanParser.parseOrFail |
-        AlphParser.parseOrFail |
-        BStringParser.parseOrFail |
-        StringInterpolationParser.parseOrFail |
-        StringLiteralParser.parseOrFail |
         ArrayAccessParser.parseOrFail |
         IdentifierParser.parseOrFail
     }
