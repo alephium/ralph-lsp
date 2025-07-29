@@ -39,6 +39,7 @@ private object AssetAssignmentParser {
         StructConstructorParser.parseOrFail |
         ArrayParser.parseOrFail |
         NumberParser.parseOrFail |
+        UnaryParser.parseOrFail |
         BooleanParser.parseOrFail |
         AlphParser.parseOrFail |
         BStringParser.parseOrFail |

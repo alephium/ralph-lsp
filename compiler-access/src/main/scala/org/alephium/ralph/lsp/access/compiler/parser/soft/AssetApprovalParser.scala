@@ -31,7 +31,8 @@ object AssetApprovalParser {
     P {
       ArrowAssignmentParser.parseOrFail |
         AssetAssignmentParser.parseOrFail |
-        NumberParser.parseOrFail
+        NumberParser.parseOrFail |
+        UnaryParser.parseOrFail
     }
 
 }

@@ -50,6 +50,7 @@ private object WhileParser {
         AnnotationParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
+        UnaryParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |

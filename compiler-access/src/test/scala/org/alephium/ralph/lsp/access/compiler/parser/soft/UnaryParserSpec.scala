@@ -26,6 +26,23 @@ class UnaryParserSpec extends AnyWordSpec with Matchers {
           }
       }
     }
+
+    "negative and positive numbers" should {
+      "not get parsed as `Unary` because they are numbers" when {
+        "negative number" in {
+          val root = parseSoft("-1")
+          root.parts should have size 1
+          root.parts.head shouldBe a[SoftAST.Number]
+        }
+
+        "positive number" in {
+          val root = parseSoft("+1")
+          root.parts should have size 1
+          root.parts.head shouldBe a[SoftAST.Number]
+        }
+      }
+    }
+
   }
 
   "single empty unary operator" in {
@@ -37,6 +54,23 @@ class UnaryParserSpec extends AnyWordSpec with Matchers {
         unaryOperator = Exclamation(">>!<<"),
         preExpressionSpace = None,
         expression = ExpressionExpected("!>><<")
+      )
+  }
+
+  "double empty unary operator" in {
+    val ast = parseUnary("!!")
+
+    ast shouldBe
+      SoftAST.Unary(
+        index = indexOf(">>!!<<"),
+        unaryOperator = Exclamation(">>!<<!"),
+        preExpressionSpace = None,
+        expression = SoftAST.Unary(
+          index = indexOf("!>>!<<"),
+          unaryOperator = Exclamation("!>>!<<"),
+          preExpressionSpace = None,
+          expression = ExpressionExpected("!!>><<")
+        )
       )
   }
 

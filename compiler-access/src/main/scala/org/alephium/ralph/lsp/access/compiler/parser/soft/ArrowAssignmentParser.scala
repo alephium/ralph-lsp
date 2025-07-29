@@ -45,6 +45,7 @@ private object ArrowAssignmentParser {
         StructConstructorParser.parseOrFail |
         ArrayParser.parseOrFail |
         NumberParser.parseOrFail |
+        UnaryParser.parseOrFail |
         BooleanParser.parseOrFail |
         AlphParser.parseOrFail |
         BStringParser.parseOrFail |
@@ -65,6 +66,7 @@ private object ArrowAssignmentParser {
         ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
+        UnaryParser.parseOrFail |
         BooleanParser.parseOrFail |
         BStringParser.parseOrFail |
         StringInterpolationParser.parseOrFail |
