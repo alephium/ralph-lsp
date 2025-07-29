@@ -95,4 +95,53 @@ class UnaryParserSpec extends AnyWordSpec with Matchers {
       )
   }
 
+  "tupled boolean" when {
+    "one element" in {
+      val ast = parseUnary("!(true)")
+
+      ast shouldBe
+        SoftAST.Unary(
+          index = indexOf(">>!(true)<<"),
+          unaryOperator = Exclamation(">>!<<(true)"),
+          preExpressionSpace = None,
+          expression = SoftAST.Group(
+            index = indexOf("!>>(true)<<"),
+            openToken = Some(OpenParen("!>>(<<true)")),
+            preHeadExpressionSpace = None,
+            headExpression = Some(SoftAST.TokenExpression(True("!(>>true<<)"))),
+            preTailExpressionSpace = None,
+            tailExpressions = Seq.empty,
+            closeToken = Some(CloseParen("!(true>>)<<"))
+          )
+        )
+    }
+
+    "nested unary" in {
+      val ast = parseUnary("!(!true)")
+
+      ast shouldBe
+        SoftAST.Unary(
+          index = indexOf(">>!(!true)<<"),
+          unaryOperator = Exclamation(">>!<<(!true)"),
+          preExpressionSpace = None,
+          expression = SoftAST.Group(
+            index = indexOf("!>>(!true)<<"),
+            openToken = Some(OpenParen("!>>(<<!true)")),
+            preHeadExpressionSpace = None,
+            headExpression = Some(
+              SoftAST.Unary(
+                index = indexOf("!(>>!true<<)"),
+                unaryOperator = Exclamation("!(>>!<<true)"),
+                preExpressionSpace = None,
+                expression = SoftAST.TokenExpression(True("!(!>>true<<)"))
+              )
+            ),
+            preTailExpressionSpace = None,
+            tailExpressions = Seq.empty,
+            closeToken = Some(CloseParen("!(!true>>)<<"))
+          )
+        )
+    }
+  }
+
 }
