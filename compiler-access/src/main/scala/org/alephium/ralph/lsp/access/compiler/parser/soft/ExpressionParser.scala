@@ -67,6 +67,7 @@ private object ExpressionParser {
         ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
+        UnaryParser.parseOrFail |
         BooleanParser.parseOrFail |
         AlphParser.parseOrFail |
         BStringParser.parseOrFail |

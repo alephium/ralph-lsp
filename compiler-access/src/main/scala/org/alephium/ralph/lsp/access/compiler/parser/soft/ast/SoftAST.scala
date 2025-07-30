@@ -895,6 +895,13 @@ object SoftAST {
 
   }
 
+  case class Unary(
+      index: SourceIndex,
+      unaryOperator: TokenDocumented[Token.Unary],
+      preExpressionSpace: Option[Space],
+      expression: ExpressionAST)
+    extends ExpressionAST
+
   sealed trait Code extends SoftAST {
 
     def text: String
