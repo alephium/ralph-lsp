@@ -9,6 +9,7 @@ import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.utils.Node
 
@@ -113,6 +114,20 @@ case object GoToDefCodeProviderSoft extends CodeProvider[SourceCodeState.IsParse
               workspace = workspace,
               settings = settings
             )
+
+          case Some(node @ Node(path: SoftAST.Path, _)) =>
+            GoToDefImport(
+              cursorIndex = cursorIndex,
+              path = node.upcast(path),
+              dependency = workspace.build.findDependency(DependencyID.Std)
+            ).iterator
+
+          case Some(Node(string: SoftAST.StringLiteral, _)) =>
+            GoToDefImport(
+              cursorIndex = cursorIndex,
+              string = string,
+              dependency = workspace.build.findDependency(DependencyID.Std)
+            ).iterator
 
           case _ =>
             Iterator.empty

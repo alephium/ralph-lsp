@@ -30,13 +30,21 @@ sealed trait SourceCodeState {
    *
    * Can be concurrently accessed or not accessed at all.
    *
+   * @return A string representing this source file's import identifier.
+   */
+  lazy val importIdentifierString: Option[String] =
+    Importer.importIdentifier(fileURI)
+
+  /**
+   * Lazily initialise import statements for all files.
+   *
+   * Can be concurrently accessed or not accessed at all.
+   *
    * @return An AST representing this source file's import string literal.
    * @see [[Importer.importIdentifier]]
    */
   lazy val importIdentifier: Option[Tree.Import] =
-    Importer
-      .importIdentifier(fileURI)
-      .flatMap(RalphParserExtension.lazyParseImportIdentifier(_, fileURI))
+    importIdentifierString.flatMap(RalphParserExtension.lazyParseImportIdentifier(_, fileURI))
 
 }
 

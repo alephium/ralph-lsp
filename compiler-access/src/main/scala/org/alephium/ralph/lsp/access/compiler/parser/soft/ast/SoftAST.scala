@@ -797,6 +797,9 @@ object SoftAST {
     def text: String =
       (head ++ tail).foldLeft("")(_ + _.toCode())
 
+    def paths: Iterable[CodeString] =
+      head.flatMap(_.toOption()) ++ tail.flatMap(_.text.toOption())
+
   }
 
   case class Path(
@@ -917,7 +920,18 @@ object SoftAST {
 
   }
 
-  sealed trait CodeStringAST extends SoftAST
+  sealed trait CodeStringAST extends SoftAST {
+
+    def toOption(): Option[CodeString] =
+      this match {
+        case code: CodeString =>
+          Some(code)
+
+        case _: CodeStringExpected =>
+          None
+      }
+
+  }
 
   /**
    * Represents a string within a segment of code.
