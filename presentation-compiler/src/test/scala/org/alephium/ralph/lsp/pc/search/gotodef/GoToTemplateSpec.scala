@@ -243,4 +243,20 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "go to dependency template" when {
+    "interface is constructed" in {
+      goToDefStd(Some("Interface >>INFTCollection<< {")) {
+        """
+          |import "std/nft_collection_interface"
+          |
+          |Contract Main() {
+          |  fn test() -> () {
+          |    INFTCollect@@ion(#).blah()
+          |  }
+          |}
+          |""".stripMargin
+      }
+    }
+  }
+
 }
