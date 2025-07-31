@@ -13,6 +13,7 @@ private object TemplateParser {
   def parseOrFail[Unknown: P]: P[SoftAST.Template] =
     P {
       Index ~
+        AnnotationParser.parseOrFail.rep ~
         abstractToken.? ~
         templateType ~
         SpaceParser.parseOrFail.? ~
@@ -24,9 +25,10 @@ private object TemplateParser {
         BlockParser.parseOrFail.? ~
         Index
     } map {
-      case (from, abstractToken, templateType, preIdentifierSpace, identifier, preParamSpace, params, postParamSpace, inheritance, block, to) =>
+      case (from, annotations, abstractToken, templateType, preIdentifierSpace, identifier, preParamSpace, params, postParamSpace, inheritance, block, to) =>
         SoftAST.Template(
           index = range(from, to),
+          annotations = annotations,
           abstracted = abstractToken,
           templateType = templateType,
           preIdentifierSpace = preIdentifierSpace,

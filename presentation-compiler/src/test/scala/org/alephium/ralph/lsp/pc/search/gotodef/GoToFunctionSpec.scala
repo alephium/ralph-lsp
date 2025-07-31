@@ -385,4 +385,20 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "go to dependency function" when {
+    "constructed interface invokes a function" in {
+      goToDefStd(Some("pub fn >>validateNFT<<(nftId: ByteVec, nftIndex: U256) -> ()")) {
+        """
+          |import "std/nft_collection_interface"
+          |
+          |Contract Main() {
+          |  fn test() -> () {
+          |    INFTCollection(#).validate@@NFT()
+          |  }
+          |}
+          |""".stripMargin
+      }
+    }
+  }
+
 }

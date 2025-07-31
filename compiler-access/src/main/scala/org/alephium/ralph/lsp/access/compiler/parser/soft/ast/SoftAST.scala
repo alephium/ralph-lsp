@@ -309,6 +309,7 @@ object SoftAST {
 
   case class Template(
       index: SourceIndex,
+      annotations: Seq[Annotation],
       abstracted: Option[Abstract],
       templateType: TokenDocumented[Token.TemplateDefinition],
       preIdentifierSpace: Option[Space],
