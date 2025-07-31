@@ -54,6 +54,7 @@ object Token {
   sealed trait Space         extends Token
   sealed trait InfixOperator extends Token
   sealed trait Expression    extends Token // A token that is also an expression.
+  sealed trait Unary         extends Token
 
   sealed abstract class Operator(override val lexeme: String) extends Token
   case object EqualEqual                                      extends Operator("==") with Reserved with InfixOperator
@@ -73,14 +74,14 @@ object Token {
   case object ModuloExponentiation                            extends Operator("|**|") with Reserved with InfixOperator
   case object ModuloMultiplication                            extends Operator("|*|") with Reserved with InfixOperator
   case object Exponentiation                                  extends Operator("**") with Reserved with InfixOperator
-  case object Minus                                           extends Operator("-") with Reserved with InfixOperator
-  case object Plus                                            extends Operator("+") with Reserved with InfixOperator
+  case object Minus                                           extends Operator("-") with Reserved with InfixOperator with Unary
+  case object Plus                                            extends Operator("+") with Reserved with InfixOperator with Unary
   case object Asterisk                                        extends Operator("*") with Reserved with InfixOperator
   case object ForwardSlash                                    extends Operator("/") with Reserved with InfixOperator
   case object GreaterThan                                     extends Operator(">") with Reserved with InfixOperator
   case object LessThan                                        extends Operator("<") with Reserved with InfixOperator
   case object Equal                                           extends Operator("=") with Reserved
-  case object Exclamation                                     extends Operator("!") with Reserved
+  case object Exclamation                                     extends Operator("!") with Reserved with Unary
   case object Bar                                             extends Operator("|") with Reserved with InfixOperator
   case object Ampersand                                       extends Operator("&") with Reserved with InfixOperator
   case object Caret                                           extends Operator("^") with Reserved with InfixOperator
@@ -184,5 +185,11 @@ object Token {
 
   val inlineSpaces: List[Space] =
     spaces.filter(_ != Token.Newline)
+
+  val unary: Array[Unary] =
+    EnumerationMacros
+      .sealedInstancesOf[Unary]
+      .toArray
+      .sorted
 
 }

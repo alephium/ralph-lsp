@@ -89,6 +89,7 @@ private object ForParser {
         TupleParser.parseOrFail(assertNonEmpty = true) |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |
+        UnaryParser.parseOrFail |
         BooleanParser.parseOrFail |
         AlphParser.parseOrFail |
         BStringParser.parseOrFail |

@@ -73,7 +73,7 @@ object TestCodeProvider {
       dependencyDownloaders = ArraySeq.empty
     )
 
-  /** Executes go-to-definition providers for both StrictAST and [[SoftAST]] */
+  /** Executes go-to-definition providers for both StrictAST and [[AST]] */
   def goToDefinition(settings: GoToDefSetting = testGoToDefSetting)(code: String*): List[SourceLocation.GoToDefSoft] =
     goToDefinitionSoft(settings)(code: _*)
 
@@ -378,7 +378,7 @@ object TestCodeProvider {
    * @param expected The expected dependency line, including the highlighted range `>>range to expect<<`.
    * @param code     The code with the search indicator '@@'.
    */
-  def goToDefStd(expected: Option[String])(code: String*): Assertion =
+  def goToDefStd(expected: Iterable[String])(code: String*): Assertion =
     goToDefDependency(
       code = code.to(ArraySeq),
       expected = expected,
@@ -571,7 +571,7 @@ object TestCodeProvider {
    */
   private def goToDefDependency(
       code: ArraySeq[String],
-      expected: Option[String],
+      expected: Iterable[String],
       downloader: DependencyDownloader.Native): Assertion =
     goToDependencySoft[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
       code = code,
@@ -593,7 +593,7 @@ object TestCodeProvider {
    */
   private def goToDependencyStrict[S, I, O <: SourceLocation.GoTo](
       code: ArraySeq[String],
-      expected: Option[String],
+      expected: Iterable[String],
       downloader: DependencyDownloader.Native,
       settings: I
     )(implicit provider: CodeProvider[S, I, O]): Assertion = {
@@ -629,7 +629,7 @@ object TestCodeProvider {
    */
   private def goToDependencySoft[S, I, O <: SourceLocation.GoTo](
       code: ArraySeq[String],
-      expected: Option[String],
+      expected: Iterable[String],
       downloader: DependencyDownloader.Native,
       settings: I
     )(implicit provider: CodeProvider[S, I, O]): Assertion = {
@@ -665,59 +665,63 @@ object TestCodeProvider {
    *                   We don't want generated libraries being written to `~/ralph-lsp`.
    */
   private def assertGoToDependency(
-      expected: Option[String],
+      expected: Iterable[String],
       actual: Iterator[SourceLocation.GoTo],
       workspace: WorkspaceState.IsParsedAndCompiled,
       downloader: DependencyDownloader.Native): Assertion =
-    expected match {
-      case Some(expectedLineWithRange) =>
-        val expectedLineWithoutRange =
-          TestCodeUtil.removeRangeSymbols(expectedLineWithRange)
+    if (expected.isEmpty) {
+      actual shouldBe empty
+    } else {
+      val expectedResults =
+        expected flatMap {
+          expectedLineWithRange =>
+            val expectedLineWithoutRange =
+              TestCodeUtil.removeRangeSymbols(expectedLineWithRange)
 
-        val expectedResults =
-          workspace
-            .build
-            .findDependency(downloader.dependencyID)
-            .to(ArraySeq)
-            .flatMap(_.sourceCode)
-            .filter(_.code.contains(expectedLineWithoutRange)) // filter source-files that contain this code function.
-            .flatMap {
-              builtInFile =>
-                // insert symbol >>..<<
-                val codeWithRangeSymbols =
-                  builtInFile
-                    .code
-                    .replace(expectedLineWithoutRange, expectedLineWithRange)
+            val expectedResults =
+              workspace
+                .build
+                .findDependency(downloader.dependencyID)
+                .to(ArraySeq)
+                .flatMap(_.sourceCode)
+                .filter(_.code.contains(expectedLineWithoutRange)) // filter source-files that contain this code function.
+                .flatMap {
+                  builtInFile =>
+                    // insert symbol >>..<<
+                    val codeWithRangeSymbols =
+                      builtInFile
+                        .code
+                        .replace(expectedLineWithoutRange, expectedLineWithRange)
 
-                if (builtInFile.code == codeWithRangeSymbols)
-                  fail(s"Range symbols `>> <<` not provided in expected: \"$expectedLineWithRange\".")
+                    if (builtInFile.code == codeWithRangeSymbols)
+                      fail(s"Range symbols `>> <<` not provided in expected: \"$expectedLineWithRange\".")
 
-                // compute the line range
-                TestCodeUtil
-                  .lineRangesOnly(codeWithRangeSymbols)
-                  .map {
-                    lineRange =>
-                      (builtInFile.fileURI, lineRange)
-                  }
-            }
+                    // compute the line range
+                    TestCodeUtil
+                      .lineRangesOnly(codeWithRangeSymbols)
+                      .map {
+                        lineRange =>
+                          (builtInFile.fileURI, lineRange)
+                      }
+                }
 
-        if (expectedResults.isEmpty)
-          fail(s"Could not find the expected line '$expectedLineWithRange'.")
+            if (expectedResults.isEmpty)
+              fail(s"Could not find the expected line '$expectedLineWithRange'.")
+            else
+              expectedResults
+        }
 
-        // For actual search result assert only the fileURI and line-ranges
-        val actualResults =
-          actual
-            .toList
-            .map {
-              result =>
-                (result.parsed.fileURI, result.toLineRange().value)
-            }
+      // For actual search result assert only the fileURI and line-ranges
+      val actualResults =
+        actual
+          .toList
+          .map {
+            result =>
+              (result.parsed.fileURI, result.toLineRange().value)
+          }
 
-        // assert that the go-to definition jumps to all text between the go-to symbols << and >>
-        actualResults should contain theSameElementsAs expectedResults
-
-      case None =>
-        actual shouldBe empty
+      // assert that the go-to definition jumps to all text between the go-to symbols << and >>
+      actualResults should contain theSameElementsAs expectedResults
     }
 
   /**

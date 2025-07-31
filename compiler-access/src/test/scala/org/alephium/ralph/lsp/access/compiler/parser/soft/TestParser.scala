@@ -160,6 +160,9 @@ object TestParser {
   def parseReferenceCall(code: String): SoftAST.ReferenceCall =
     runSoftParser(ReferenceCallParser.parseOrFail(_))(code)
 
+  def parseUnary(code: String): SoftAST.Unary =
+    runSoftParser(UnaryParser.parseOrFail(_))(code)
+
   def parseOrTokenCombinator[T <: Token](
       prefixCheck: Boolean,
       tokens: T*
