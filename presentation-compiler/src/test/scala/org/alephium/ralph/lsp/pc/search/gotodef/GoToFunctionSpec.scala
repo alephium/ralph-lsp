@@ -101,7 +101,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
       }
 
       "soft-parseable" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Abstract Contract Parent2() {
             |  pub fn >>function_b<<(boolean: Bool) -> () { }
@@ -190,7 +190,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
     "return the function definition" when {
       "function-call is selected" when {
         "the function exists" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  let function = 1
@@ -202,7 +202,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
         }
 
         "the function is called within another function" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  let function = 1
@@ -218,7 +218,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
         }
 
         "multiple functions and variables exist" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  let function =
@@ -240,7 +240,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
         }
 
         "recursive function call" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |fn >>function<<() -> () {
               |  let call = functio@@n()
@@ -250,7 +250,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
         }
 
         "function is declared within inheritance" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Abstract Contract GrandParent(function) {
               |  let function = 1
@@ -289,7 +289,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
 
     "variable-reference is selected" when {
       "the variable does not exist" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |{
             |  let var = 1
@@ -301,7 +301,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
       }
 
       "the variable is accessed within a function" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |{
             |  let var = 1
@@ -317,7 +317,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
       }
 
       "multiple functions named `variable` and variables exist" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |{
             |  let var =
@@ -339,7 +339,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
       }
 
       "recursive function named `variable`" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |fn >>variable<<() -> () {
             |  let copy = variab@@le
@@ -349,7 +349,7 @@ class GoToFunctionSpec extends AnyWordSpec with Matchers {
       }
 
       "function named `variable` is declared within inheritance" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Abstract Contract GrandParent() {
             |  let var = 1

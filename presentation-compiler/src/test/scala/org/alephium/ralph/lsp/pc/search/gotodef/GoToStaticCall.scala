@@ -10,7 +10,7 @@ import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 class GoToStaticCall extends AnyWordSpec with Matchers {
 
   "access single static functions" in {
-    goToDefinitionSoft()(
+    goToDefinition()(
       """
         |Contract Test {
         |  fn >>static_function<<() -> ()
@@ -22,7 +22,7 @@ class GoToStaticCall extends AnyWordSpec with Matchers {
   }
 
   "access duplicate static functions" in {
-    goToDefinitionSoft()(
+    goToDefinition()(
       """
         |Contract Test {
         |  fn >>static_function<<() -> ()
@@ -36,7 +36,7 @@ class GoToStaticCall extends AnyWordSpec with Matchers {
   }
 
   "access within another contract" in {
-    goToDefinitionSoft()(
+    goToDefinition()(
       """
         |Contract Test {
         |  fn >>static_function<<() -> ()
@@ -53,7 +53,7 @@ class GoToStaticCall extends AnyWordSpec with Matchers {
 
   "go-to static function encodeFields!" when {
     "from global scope" in {
-      goToDefBuiltInSoft(
+      goToDefBuiltIn(
         code = """
             |Contract Test { }
             |
@@ -64,7 +64,7 @@ class GoToStaticCall extends AnyWordSpec with Matchers {
     }
 
     "from contract scope" in {
-      goToDefBuiltInSoft(
+      goToDefBuiltIn(
         code = """
             |Contract Test { }
             |
@@ -77,7 +77,7 @@ class GoToStaticCall extends AnyWordSpec with Matchers {
     }
 
     "from self scope" in {
-      goToDefBuiltInSoft(
+      goToDefBuiltIn(
         code = """
             |Contract Main {
             |  Main.encodeFiel@@ds!

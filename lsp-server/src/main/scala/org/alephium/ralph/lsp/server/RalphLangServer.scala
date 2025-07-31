@@ -159,21 +159,6 @@ class RalphLangServer private (
 
   import org.alephium.ralph.lsp.server.RalphLangServer._
 
-  /**
-   * If true, allows go-to-definition API to
-   * use [[org.alephium.ralph.lsp.access.compiler.parser.soft.SoftParser]]
-   * for more syntax-error tolerant responses.
-   *
-   * TODO: Moved to `ralph.json` as a build configuration.
-   *       {{{
-   *         "experimental": {
-   *            "enableSoftParser": true
-   *          }
-   *       }}}
-   */
-  private val enableSoftParser: Boolean =
-    false
-
   def getState(): ServerState =
     thisServer.state
 
@@ -406,7 +391,6 @@ class RalphLangServer private (
             fileURI = uri(params.getTextDocument.getUri),
             line = params.getPosition.getLine,
             character = params.getPosition.getCharacter,
-            enableSoftParser = enableSoftParser,
             isCancelled = isCancelled,
             pcStates = getPCStates(),
             settings = ()
@@ -423,7 +407,6 @@ class RalphLangServer private (
             fileURI = uri(params.getTextDocument.getUri),
             line = params.getPosition.getLine,
             character = params.getPosition.getCharacter,
-            enableSoftParser = enableSoftParser,
             isCancelled = isCancelled,
             pcStates = getPCStates(),
             settings = ()
@@ -440,7 +423,6 @@ class RalphLangServer private (
             fileURI = uri(params.getTextDocument.getUri),
             line = params.getPosition.getLine,
             character = params.getPosition.getCharacter,
-            enableSoftParser = enableSoftParser,
             isCancelled = isCancelled,
             pcStates = getPCStates(),
             settings = ()
@@ -457,7 +439,6 @@ class RalphLangServer private (
             fileURI = uri(params.getTextDocument.getUri),
             line = params.getPosition.getLine,
             character = params.getPosition.getCharacter,
-            enableSoftParser = enableSoftParser,
             isCancelled = isCancelled,
             pcStates = getPCStates(),
             settings = GoToRefMultiSetting(params.getContext.isIncludeDeclaration)
@@ -474,7 +455,6 @@ class RalphLangServer private (
             fileURI = uri(params.getTextDocument.getUri),
             line = params.getPosition.getLine,
             character = params.getPosition.getCharacter,
-            enableSoftParser = enableSoftParser,
             isCancelled = isCancelled,
             pcStates = getPCStates(),
             settings = ()
@@ -491,7 +471,6 @@ class RalphLangServer private (
             fileURI = uri(params.getTextDocument.getUri),
             line = params.getRange.getStart.getLine,
             character = params.getRange.getStart.getCharacter,
-            enableSoftParser = enableSoftParser,
             isCancelled = isCancelled,
             pcStates = getPCStates(),
             settings = LinePosition(

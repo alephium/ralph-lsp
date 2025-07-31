@@ -62,7 +62,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
       }
 
       "no values are defined" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |enum EnumType
             |
@@ -345,7 +345,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
      * But this applies not only to values, but also functions.
      */
     "single enum value is accessed" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |enum MyEnum {
           |  >>One<< = 1
@@ -357,7 +357,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
     }
 
     "duplicate enum value is accessed" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |enum MyEnum {
           |  >>One<< = 1
@@ -370,7 +370,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
     }
 
     "enum is accessed as a reference call, but no function exists" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |enum MyEnum {
           |  >>One<< = 1
@@ -383,7 +383,7 @@ class GoToEnumFieldSpec extends AnyWordSpec with Matchers {
     }
 
     "a method is invoked an enum value" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |enum MyEnum {
           |  >>One<< = 1

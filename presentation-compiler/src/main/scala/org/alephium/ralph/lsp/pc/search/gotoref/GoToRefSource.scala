@@ -4,6 +4,7 @@
 package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.Ast
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
@@ -28,24 +29,31 @@ private object GoToRefSource extends StrictImplicitLogging {
       settings: GoToRefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     CodeProvider
-      .goToDef
+      .goToDefSoft
       .searchLocal( // find definitions for the token at the given cursorIndex.
         cursorIndex = cursorIndex,
         sourceCode = sourceCode,
         workspace = workspace,
-        searchSettings = settings.goToDefSetting
+        searchSettings = (SoftAST, settings.goToDefSetting)
       )
       .flatMap {
         case SourceLocation.File(_) =>
           Iterator.empty
 
-        case location @ SourceLocation.NodeStrict(_, _) =>
-          // find references for the definitions
-          goTo(
-            defLocation = location,
-            workspace = workspace,
-            settings = settings
-          )
+        case location @ SourceLocation.NodeSoft(ast, _) =>
+          location.toNodeStrict() match {
+            case Some(location) =>
+              // find references for the definitions
+              goTo(
+                defLocation = location,
+                workspace = workspace,
+                settings = settings
+              )
+
+            case None =>
+              logger.trace(s"Strict not found for AST: ${ast.getClass.getSimpleName}")
+              Iterator.empty
+          }
       }
       .distinctBy { // There could be multiple definitions for a reference which could result in duplicates.
         node =>     // Ensure duplicates are removed.

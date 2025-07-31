@@ -12,7 +12,7 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
   "jump all non-variable definitions" when {
     "variable does not exist" when {
       "call is a value call" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract >>variable<<() {}
             |event >>variable<<(a: Bool)
@@ -36,7 +36,7 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
 
   "jump only to the arguments" when {
     "call is a value call" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |Contract variable() {}
           |event variable(a: Bool)
@@ -61,7 +61,7 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
 
   "jump only the contracts and functions" when {
     "call is a reference call" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |Contract >>variable<<() {}
           |event variable(a: Bool)
@@ -84,7 +84,7 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
     }
 
     "call is a reference call, followed by a method call" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |Contract >>variable<<() {}
           |event variable(a: Bool)
@@ -109,7 +109,7 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
 
   "jump only to the event" when {
     "call is an emit reference call" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |Contract variable() {}
           |event >>variable<<(a: Bool)
@@ -132,7 +132,7 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
     }
 
     "call is an emit value call" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |Contract variable() {}
           |event >>variable<<(a: Bool)
@@ -155,7 +155,7 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
     }
 
     "call is a reference call, followed by a method call" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |Contract >>variable<<() {}
           |event variable(a: Bool)
@@ -180,7 +180,7 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
 
   "jump only to the contracts, arguments and variables" when {
     "call is a value call" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |Contract variable() {}
           |event variable(a: Bool)
@@ -205,7 +205,7 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
 
   "jump to only the variable definition" when {
     "call is value call" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |Contract variable() {}
           |event variable(a: Bool)
@@ -228,7 +228,7 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
     }
 
     "call is method call" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |Contract variable() {}
           |event variable(a: Bool)
@@ -253,7 +253,7 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
 
   "jump to only the struct definition" when {
     "call is struct constructor call" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |Contract variable() {}
           |event variable(a: Bool)
@@ -276,7 +276,7 @@ class DetectCallSyntaxSpec extends AnyWordSpec with Matchers {
     }
 
     "call is reference call with asset approval" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |Contract >>variable<<() {}
           |event variable(a: Bool)

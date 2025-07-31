@@ -27,7 +27,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "no Contract" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |pub fn function() -> () {
             |  // varB does not exists
@@ -38,7 +38,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "no function definition" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |let varA = v@@arB
             |""".stripMargin
@@ -46,7 +46,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "let is misspelled" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |le varA = v@@arB
             |""".stripMargin
@@ -81,7 +81,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     // When `let` is misspelled, this statement is an assignment, not a variable declaration.
     // So it should not jump to self.
     "let is misspelled" in {
-      goToDefinitionSoft()(
+      goToDefinition()(
         """
           |le var@@A = 123
           |""".stripMargin
@@ -89,7 +89,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
 
     "let is misspelled & assignment is empty" in {
-      goToDefinitionSoft()(
+      goToDefinition()(
         """
           |le var@@A =
           |""".stripMargin
@@ -97,7 +97,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     }
 
     "let is not defined" in {
-      goToDefinitionSoft()(
+      goToDefinition()(
         """
           |var@@A =
           |""".stripMargin
@@ -122,7 +122,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "Contract is not defined" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |pub fn function() -> () {
             |  let >>var@@A<< = 123
@@ -133,7 +133,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "function is not defined" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |let >>var@@A<< = 123
             |""".stripMargin
@@ -160,7 +160,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
         "source is not well defined" when {
           "outer Contract is not defined" in {
-            goToDefinitionSoft()(
+            goToDefinition()(
               """
                 |fn function( -> () {
                 |  let >>var@@A<< = 123
@@ -171,7 +171,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
           }
 
           "outer function is not defined" in {
-            goToDefinitionSoft()(
+            goToDefinition()(
               """
                 |{
                 |  let >>var@@A<< = 123
@@ -183,7 +183,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
           "let is not defined" when {
             "for second varA" in {
-              goToDefinitionSoft()(
+              goToDefinition()(
                 """
                   |{
                   |  let >>var@@A<< = 123
@@ -194,7 +194,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             }
 
             "both varAs" in {
-              goToDefinitionSoft()(
+              goToDefinition()(
                 """
                   |{
                   |  var@@A = 123
@@ -205,7 +205,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             }
 
             "assignment value is not defined for the first var" in {
-              goToDefinitionSoft()(
+              goToDefinition()(
                 """
                   |{
                   |  var@@A = 123
@@ -216,7 +216,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             }
 
             "variable initialised value is referencing itself" in {
-              goToDefinitionSoft()(
+              goToDefinition()(
                 """
                   |let >>varA<< = var@@A
                   |""".stripMargin
@@ -245,7 +245,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
     "a group defined" when {
       "first item is selected" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |let (>>fir@@st<<, second) = function()
             |""".stripMargin
@@ -253,7 +253,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "second item is selected" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |let (first, >>secon@@d<<) =
             |""".stripMargin
@@ -282,7 +282,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       "syntax is not well defined" when {
         "variables are defined in root scope" when {
           "accessed in root scope" in {
-            goToDefinitionSoft() {
+            goToDefinition() {
               """
                 |let >>varA<< = 123
                 |let varB = var@@A
@@ -303,7 +303,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
           }
 
           "accessed in child scopes" in {
-            goToDefinitionSoft() {
+            goToDefinition() {
               """
                 |let >>varA<< = 123
                 |let varB = varA
@@ -327,7 +327,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
               // FIXME: Because `Contract Test` sits between two groups of expressions,
               //        both groups of expressions do not recognise each other.
               //        This is fixed if a physical block `{}` is provided, for example in the test below.
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |let >>varA<< = 123
                   |let varB = varA
@@ -341,7 +341,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             }
 
             "physical block is defined" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |{
                   |  let >>varA<< = 123
@@ -357,7 +357,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             }
 
             "let is not assigned" in {
-              goToDefinitionSoft()(
+              goToDefinition()(
                 """
                   |let >>varA<<
                   |let copy = var@@A
@@ -366,7 +366,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             }
 
             "duplicate function names & parameters" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |{
                   |  fn function(param: Type) -> () { }
@@ -404,7 +404,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         "syntax is not well defined" when {
           "variables are defined in root scope" when {
             "accessed in root scope" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |let >>varA<< = 123
                   |let varB = var@@A
@@ -428,7 +428,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             }
 
             "accessed in child scopes" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |let >>varA<< = 123
                   |let varB = varA
@@ -454,7 +454,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
       }
 
       "defined as a group" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |Contract GoToTest() {
             |
@@ -562,7 +562,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     "return variable definition" when {
       "function-call is selected" when {
         "the function does not exist" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |let >>function<< = 1
               |// no function named `function` exists, but a variable named `function` exists
@@ -572,7 +572,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         }
 
         "a function with a different name exists" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  let >>function<< = 1
@@ -586,7 +586,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         }
 
         "multiple variables exist" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  let >>function<< =
@@ -602,7 +602,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         }
 
         "variable named `function` is declared after its usage" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |fn test() -> () {
               |  let call = functio@@n()
@@ -612,7 +612,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         }
 
         "variable named `function` is declared within inheritance" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Abstract Contract GrandParent(>>function<<) {
               |  let >>function<< = 1
@@ -643,7 +643,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
 
       "variable-reference is selected" when {
         "the variable exist" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  let >>variable<< = 1
@@ -655,7 +655,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         }
 
         "a variable is accessed within a function" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  let >>variable<< = 1
@@ -669,7 +669,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         }
 
         "multiple variables exist" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  let >>variable<< =
@@ -685,7 +685,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         }
 
         "variable is declared after its usage" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |fn test() -> () {
               |  let copy = variab@@le
@@ -695,7 +695,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         }
 
         "variable is declared within inheritance" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Abstract Contract GrandParent(>>variable<<) {
               |  let >>variable<< = 1
@@ -731,7 +731,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
    */
   "Inheritance using virtual nodes" when {
     "Parent is missing closing block and the last function contains the same identifier" in {
-      goToDefinitionSoft()(
+      goToDefinition()(
         """
           |Contract Parent {
           |
@@ -754,7 +754,7 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
     "Parent and the function both are missing closing blocks and the last function contains the same identifier" in {
       pendingUntilFixed {
         val _ =
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Contract Parent {
               |

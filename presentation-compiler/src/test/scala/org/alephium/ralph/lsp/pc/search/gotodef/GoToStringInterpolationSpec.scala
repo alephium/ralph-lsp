@@ -30,7 +30,7 @@ class GoToStringInterpolationSpec extends AnyWordSpec with Matchers {
     "SoftAST" when {
       "BString is string interpolated" when {
         "within a block" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |{
               |  let message = b`some debug message`
@@ -41,7 +41,7 @@ class GoToStringInterpolationSpec extends AnyWordSpec with Matchers {
         }
 
         "without block" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |let message = b`some debug message`
               |let log = b`Info: ${messag@@e}`
@@ -73,7 +73,7 @@ class GoToStringInterpolationSpec extends AnyWordSpec with Matchers {
     "SoftAST" when {
       "nested interpolated strings" when {
         "within a block" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |{
               |  let ERROR_ID = 404
@@ -85,7 +85,7 @@ class GoToStringInterpolationSpec extends AnyWordSpec with Matchers {
         }
 
         "without block" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |let ERROR_ID = 404
               |let >>message<< = `Error: ${ERROR_ID}. Message: Some debug message`
