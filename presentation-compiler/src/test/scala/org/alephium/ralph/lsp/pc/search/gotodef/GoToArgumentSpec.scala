@@ -39,7 +39,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
     "argument exists in another block" when {
       "the block is external to the function" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract Test(interface: MyInterface) {
             |  
@@ -57,7 +57,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
 
       "the block is within the function" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract Test(interface: MyInterface) {
             |  
@@ -84,7 +84,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
        * [[org.alephium.ralph.lsp.access.compiler.parser.soft.ExpressionParser.parseOrFail]].
        */
       "type name is defined" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |variab@@le: SomeType
             |""".stripMargin
@@ -92,7 +92,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
 
       "duplicate identifiers are defined" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |{
             |  variab@@le: SomeType
@@ -103,7 +103,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
 
       "type name is not defined" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |variab@@le:
             |""".stripMargin
@@ -111,7 +111,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
 
       "type name is not defined with duplicate identifiers" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |{
             |  variab@@le:
@@ -122,7 +122,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
 
       "type name is defined for another variable" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |{
             |  variab@@le:
@@ -133,7 +133,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
 
       "type name is defined for duplicate variable" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |{
             |  variab@@le:
@@ -162,7 +162,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
       "Contract block does not exist" when {
         "first param is selected" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Contract Test(>>interfa@@ce<<: MyInterface,
               |              interface2: MyInterface)
@@ -171,7 +171,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         }
 
         "second param is selected" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Contract Test(interface: MyInterface,
               |              >>interfa@@ce2<<: MyInterface)
@@ -181,7 +181,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
         "param is mutable" when {
           "first param is selected" in {
-            goToDefinitionSoft() {
+            goToDefinition() {
               """
                 |Contract Test(mut >>interfa@@ce<<: MyInterface,
                 |                    interface2: MyInterface)
@@ -190,7 +190,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
           }
 
           "second param is selected" in {
-            goToDefinitionSoft() {
+            goToDefinition() {
               """
                 |Contract Test(      interface: MyInterface,
                 |              mut >>interfa@@ce2<<: MyInterface)
@@ -215,7 +215,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
 
       "Contract block does not exist" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |fn test(>>interfa@@ce<<: MyInterface) -> () { }
             |""".stripMargin
@@ -223,7 +223,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
 
       "function has syntax errors" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |fn test(>>interfa@@ce<<: MyInterface -> ( {
             |""".stripMargin
@@ -264,7 +264,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     "mutable arguments" when {
       "defined as a Contract parameter" when {
         "single param exists" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Contract contract(mut >>para@@m<<: Type)
               |""".stripMargin
@@ -273,7 +273,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
         "duplicate params exist" when {
           "first param is selected" in {
-            goToDefinitionSoft() {
+            goToDefinition() {
               """
                 |Contract contract(mut >>para@@m<<: Type,
                 |                  mut param: Type)
@@ -283,7 +283,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
           "but types are not defined" when {
             "first param is selected" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |Contract contract(mut >>para@@m<<,
                   |                  mut param:)
@@ -292,7 +292,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
             }
 
             "second param is selected" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |Contract contract(mut param,
                   |                  mut >>para@@m<<)
@@ -305,7 +305,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
       "defined as a function parameter" when {
         "single param exists" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |fn function(mut >>para@@m<<: Type)
               |""".stripMargin
@@ -314,7 +314,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
         "duplicate params exist" when {
           "first param is selected" in {
-            goToDefinitionSoft() {
+            goToDefinition() {
               """
                 |fn function(mut >>para@@m<<: Type,
                 |            mut param: Type)
@@ -324,7 +324,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
           "but types are not defined" when {
             "first param is selected" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |fn function(mut >>para@@m<<,
                   |            mut param:)
@@ -333,7 +333,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
             }
 
             "second param is selected" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |fn function(mut param,
                   |            mut >>para@@m<<)
@@ -346,7 +346,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
       "no enclosing blocks" when {
         "type name is defined" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |mut >>variab@@le<<: SomeType
               |""".stripMargin
@@ -354,7 +354,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         }
 
         "duplicate identifiers are defined" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  mut >>variab@@le<<: SomeType
@@ -365,7 +365,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         }
 
         "type name is not defined" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |mut >>variab@@le<<:
               |""".stripMargin
@@ -373,7 +373,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         }
 
         "type name is not defined with duplicate identifiers" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  mut >>variab@@le<<:
@@ -384,7 +384,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         }
 
         "type name is defined for another variable" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  mut >>variab@@le<<:
@@ -395,7 +395,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         }
 
         "type name is defined for duplicate variable" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  mut >>variab@@le<<:
@@ -410,7 +410,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
     "identifier only arguments" when {
       "defined as a Contract parameter" when {
         "single param exists" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Contract contract(>>para@@m<<)
               |""".stripMargin
@@ -419,7 +419,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
         "duplicate params exist" when {
           "first param is selected" in {
-            goToDefinitionSoft() {
+            goToDefinition() {
               """
                 |Contract contract(>>para@@m<<,
                 |                  param)
@@ -429,7 +429,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
           "but types are not defined" when {
             "first param is selected" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |Contract contract(>>para@@m<<,
                   |                  param)
@@ -438,7 +438,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
             }
 
             "second param is selected" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |Contract contract(param,
                   |                  >>para@@m<<)
@@ -451,7 +451,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
       "defined as a function parameter" when {
         "single param exists" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |fn function(>>para@@m<<)
               |""".stripMargin
@@ -460,7 +460,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
         "duplicate params exist" when {
           "first param is selected" in {
-            goToDefinitionSoft() {
+            goToDefinition() {
               """
                 |fn function(>>para@@m<<,
                 |            param)
@@ -470,7 +470,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
 
           "but types are not defined" when {
             "first param is selected" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |fn function(>>para@@m<<,
                   |            param)
@@ -479,7 +479,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
             }
 
             "second param is selected" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |fn function(param,
                   |            >>para@@m<<)
@@ -508,7 +508,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
 
       "the code is soft parseable" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract GoToField(>>interface<<: MyInterface) {
             |  fn local_function(boolean: Bool -> {
@@ -571,7 +571,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
       }
 
       "soft parseable" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Abstract Contract Parent() {
             |
@@ -709,7 +709,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
             }
 
             "soft-parsable" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |Abstract Contract SomeType() { }
                   |
@@ -743,7 +743,7 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
             }
 
             "soft parseable" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |let param = 1
                   |

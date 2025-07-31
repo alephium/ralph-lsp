@@ -50,7 +50,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
 
       "soft-parseable" when {
         "value is not defined" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |const >>My@@Constant<< =
               |""".stripMargin
@@ -58,7 +58,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
         }
 
         "assignment is not defined" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |const >>My@@Constant<<
               |""".stripMargin
@@ -82,7 +82,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
       }
 
       "soft-parseable" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract Test() {
             |
@@ -114,7 +114,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
 
     "soft-parseable" when {
       "function name is not defined" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |Contract Child() {
             |
@@ -129,7 +129,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
       }
 
       "constant is not assigned an identifier" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |Contract Child() {
             |
@@ -142,7 +142,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
       }
 
       "blocks are not defined" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |const >>MyConstant<< = 0
             |MyCo@@nstant
@@ -151,7 +151,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
       }
 
       "block is defined for reference" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |const >>MyConstant<< = 0
             |
@@ -213,7 +213,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
     }
 
     "soft-parseable (contains errors)" in {
-      goToDefinitionSoft()(
+      goToDefinition()(
         """
           |const >>MyConstant<<
           |blah

@@ -39,7 +39,7 @@ class GoToArraySpec extends AnyWordSpec with Matchers {
 
       "soft" when {
         "no function" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Contract Test(>>array<<: [U256; 2])  {
               |  arra@@y[0]
@@ -49,7 +49,7 @@ class GoToArraySpec extends AnyWordSpec with Matchers {
         }
 
         "no contract" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |let >>array<< = []
               |arra@@y[0]
@@ -74,7 +74,7 @@ class GoToArraySpec extends AnyWordSpec with Matchers {
         }
 
         "soft" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Contract Test(>>array<<: [U256; 2])  {
               |

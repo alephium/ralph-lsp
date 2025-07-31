@@ -55,7 +55,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
         }
 
         "function does not have closing parens" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Abstract Contract Action() {
               |  fn >>function<<() -> Bool
@@ -89,7 +89,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
         }
 
         "function call does not have closing parens" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Abstract Contract Action() {
               |  fn >>function<<() -> Bool
@@ -127,7 +127,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
         }
 
         "function call does not have closing parens" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Contract Action() {
               |  fn >>function<<() -> Bool {
@@ -165,7 +165,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
         }
 
         "function call does not have closing parens" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Contract Action() {
               |  fn >>function<<() -> Bool {
@@ -233,7 +233,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
     "chained two calls" when {
       "initial call is a local function call" when {
         "variable is assigned" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Abstract Contract Parent() {
               |  fn >>function1<<() -> Bool
@@ -254,7 +254,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
         }
 
         "variable is not assigned" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Abstract Contract Parent() {
               |  fn >>function1<<() -> Bool
@@ -277,7 +277,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
 
       "initial call is a type" when {
         "variable is assigned" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Abstract Contract Parent() {
               |  fn >>function1<<() -> Bool
@@ -294,7 +294,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
         }
 
         "variable is not assigned" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Abstract Contract Parent() {
               |  fn >>function1<<() -> Bool
@@ -315,7 +315,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
     "chained three calls" when {
       "initial call is a local function call" when {
         "variable is assigned" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Abstract Contract GrandParent() {
               |  fn >>function2<<() -> Bool
@@ -340,7 +340,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
         }
 
         "variable is not assigned" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Abstract Contract GrandParent() {
               |  fn >>function2<<() -> Bool
@@ -367,7 +367,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
 
       "initial call is a type" when {
         "variable is assigned" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Abstract Contract GrandParent() {
               |  fn >>function2<<() -> Bool
@@ -388,7 +388,7 @@ class GoToExternalFuncCallSpec extends AnyWordSpec with Matchers {
         }
 
         "variable is not assigned" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Abstract Contract GrandParent() {
               |  fn >>function2<<() -> Bool

@@ -62,7 +62,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
     "soft parseable (contains syntax errors - not strict parseable)" when {
       "duplicates exist" when {
         "first map is selected" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |mapping[U256, U256] >>ma@@p<<
               |mapping[U256, U256] map
@@ -71,7 +71,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
         }
 
         "second map is selected" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |mapping[U256, U256] map
               |mapping[U256, U256] >>ma@@p<<
@@ -82,7 +82,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
 
       "types are not provided" when {
         "first map is selected" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |mapping[] >>ma@@p<<
               |mapping[] map
@@ -91,7 +91,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
         }
 
         "second map is selected" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |mapping[] map
               |mapping[] >>ma@@p<<
@@ -220,7 +220,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
     "soft parseable (contains syntax errors - not strict parseable)" when {
       "the map is within" when {
         "contract block" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Contract Main {
               |  mapping[Blah, ] >>map<<
@@ -230,7 +230,7 @@ class GoToMapSpec extends AnyWordSpec with Matchers {
         }
 
         "function block" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Contract Main {
               |  mapping >>map<<
