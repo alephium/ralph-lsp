@@ -12,6 +12,7 @@ import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 
 import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
