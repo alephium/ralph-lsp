@@ -12,7 +12,7 @@ import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.pc.search.CodeProvider
-import org.alephium.ralph.lsp.pc.search.cache.SearchCache
+import org.alephium.ralph.lsp.pc.search.cache.{SearchCache, WorkspaceSearchCache}
 
 import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
@@ -38,7 +38,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       identNode = identNode,
       parent = identNode.parent,
       sourceCode = sourceCode,
-      cache = SearchCache(workspace),
+      cache = SearchCache().get(workspace),
       settings = settings
     )
 
@@ -61,7 +61,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       identNode: Node[SoftAST.Identifier, SoftAST],
       parent: Option[Node[SoftAST, SoftAST]],
       sourceCode: SourceLocation.CodeSoft,
-      cache: SearchCache,
+      cache: WorkspaceSearchCache,
       settings: GoToDefSetting
     )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] = {
     @inline def runFullSearch() =
@@ -190,7 +190,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   private def search(
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      cache: SearchCache,
+      cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
@@ -438,7 +438,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   private def searchInheritance(
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      cache: SearchCache,
+      cache: WorkspaceSearchCache,
       includeAbstractFuncDef: Boolean,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
@@ -948,7 +948,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       group: Node[SoftAST.Group[_, _, _], SoftAST],
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      cache: SearchCache,
+      cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
@@ -1009,7 +1009,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       methodCallNode: Node[SoftAST.MethodCall, SoftAST],
       identNode: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      cache: SearchCache,
+      cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
@@ -1159,7 +1159,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       left: Node[SoftAST.Identifier, SoftAST],
       right: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      cache: SearchCache,
+      cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
@@ -1225,7 +1225,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   private def searchTypeDefinitionSoft(
       typeIdentifier: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      cache: SearchCache,
+      cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.TypeDefinitionAST]] = {
@@ -1279,7 +1279,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       theType: SoftAST.Identifier,
       typeProperty: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      cache: SearchCache,
+      cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
