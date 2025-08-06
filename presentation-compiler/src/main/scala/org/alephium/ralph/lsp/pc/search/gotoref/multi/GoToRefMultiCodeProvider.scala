@@ -10,6 +10,7 @@ import org.alephium.ralph.lsp.pc.{PCSearcher, PCStates}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
 import org.alephium.ralph.lsp.pc.search.MultiCodeProvider
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.utils.IsCancelled
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
@@ -43,7 +44,8 @@ private[search] case object GoToRefMultiCodeProvider extends MultiCodeProvider[G
       isCancelled: IsCancelled,
       pcStates: PCStates,
       settings: GoToRefMultiSetting
-    )(implicit logger: ClientLogger,
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger,
       ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[SourceLocation.GoToRefStrict]]] =
     MultiCodeProvider
       .goToDef
@@ -103,7 +105,8 @@ private[search] case object GoToRefMultiCodeProvider extends MultiCodeProvider[G
       settings: GoToRefSetting,
       isCancelled: IsCancelled,
       pcStates: PCStates
-    )(implicit logger: ClientLogger,
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger,
       ec: ExecutionContext): Future[ArraySeq[SourceLocation.GoToRefStrict]] =
     definition.index match {
       case Some(index) =>

@@ -3,12 +3,14 @@
 
 package org.alephium.ralph.lsp.utils
 
-import org.alephium.ralph.lsp.utils.log.StrictImplicitLogging
-
 import java.lang.ref.WeakReference
 import java.util
 
-abstract class WeakHashMapBase[K, V](cache: util.WeakHashMap[K, WeakReference[V]]) extends StrictImplicitLogging {
+/**
+ * The value are also stored as [[WeakReference]]s to handle cyclic cases
+ * where the value stores a strong reference back to the key.
+ */
+abstract class WeakHashMapBase[K, V](cache: util.WeakHashMap[K, WeakReference[V]]) {
 
   def getOrPut(
       key: K,
@@ -26,9 +28,9 @@ abstract class WeakHashMapBase[K, V](cache: util.WeakHashMap[K, WeakReference[V]
       if (existingValue != null) {
         existingValue.asInstanceOf[V]
       } else {
-        val newCache = value
-        cache.put(key, new WeakReference(newCache))
-        newCache
+        val newValue = value
+        cache.put(key, new WeakReference(newValue))
+        newValue
       }
     }
 

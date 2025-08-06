@@ -33,12 +33,13 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeSoft,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
     searchParent(
       identNode = identNode,
       parent = identNode.parent,
       sourceCode = sourceCode,
-      cache = SearchCache().get(workspace),
+      cache = searchCache.get(workspace),
       settings = settings
     )
 
@@ -63,7 +64,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeSoft,
       cache: WorkspaceSearchCache,
       settings: GoToDefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] = {
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] = {
     @inline def runFullSearch() =
       search(
         identNode = identNode,
@@ -1012,7 +1014,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     (methodCallNode.data.leftExpression, methodCallNode.data.rightExpression) match {
       case (left @ (_: SoftAST.ReferenceCall | _: SoftAST.Identifier), _) if left contains identNode =>
         /*
@@ -1282,7 +1285,8 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     // Find all the type definitions.
     val typeDefs =
       CodeProvider

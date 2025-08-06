@@ -10,6 +10,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.PCSearcher.goTo
 import org.alephium.ralph.lsp.pc.search.MultiCodeProvider
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.utils.IsCancelled
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
@@ -42,7 +43,8 @@ private[search] case object HoverMultiCodeProvider extends MultiCodeProvider[Uni
       isCancelled: IsCancelled,
       pcStates: PCStates,
       settings: Unit
-    )(implicit logger: ClientLogger,
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger,
       ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[SourceLocation.Hover]]] = {
     /*
      * Hover information relies on the definition of the symbol at the cursor position.

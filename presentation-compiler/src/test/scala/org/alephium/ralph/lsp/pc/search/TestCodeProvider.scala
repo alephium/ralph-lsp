@@ -10,6 +10,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.access.util.{StringUtil, TestCodeUtil}
 import org.alephium.ralph.lsp.pc.client.TestClientLogger
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
@@ -920,6 +921,9 @@ object TestCodeProvider {
     // parse and compile workspace
     val compiledWorkspace =
       Workspace.parseAndCompile(workspace)
+
+    implicit val searchCache: SearchCache =
+      SearchCache(maxWorkspaces = 1)
 
     // execute code-provider.
     val result =

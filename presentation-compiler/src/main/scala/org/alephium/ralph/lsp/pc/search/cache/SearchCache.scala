@@ -9,7 +9,17 @@ import org.alephium.ralph.lsp.utils.WeakHashMapBase
 
 import java.util
 
-case class SearchCache() extends WeakHashMapBase[WorkspaceState.IsSourceAware, WorkspaceSearchCache](new util.WeakHashMap(1, 1)) {
+/**
+ * A cache that stores [[WorkspaceState]] related search information.
+ *
+ * The [[util.WeakHashMap]] is configured to `initialCapacity` and `loadFactor` both set to `1` because
+ * workspace are not expected to often and dynamically.
+ *
+ * `loadFactor = 1` because the workspaces are expected to be mostly single-root workspaces, rather than multi-root workspaces.
+ *
+ * TODO: Check if setting [[maxWorkspaces]] to the currently configured multi-root workspaces improves performance.
+ */
+case class SearchCache(maxWorkspaces: Int) extends WeakHashMapBase[WorkspaceState.IsSourceAware, WorkspaceSearchCache](new util.WeakHashMap(maxWorkspaces, 1)) {
 
   def get(
       workspace: WorkspaceState.IsSourceAware

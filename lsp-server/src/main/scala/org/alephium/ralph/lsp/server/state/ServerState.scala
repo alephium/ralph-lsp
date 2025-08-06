@@ -4,6 +4,7 @@
 package org.alephium.ralph.lsp.server.state
 
 import org.alephium.ralph.lsp.pc.{PCState, PCStates}
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.server.RalphLangClient
 
 import java.net.URI
@@ -23,6 +24,7 @@ case class ServerState(
     client: Option[RalphLangClient],
     listener: Option[JFuture[Void]],
     pcStates: PCStates,
+    searchCache: SearchCache,
     clientAllowsWatchedFilesDynamicRegistration: Boolean,
     trace: Trace,
     shutdownReceived: Boolean) {
