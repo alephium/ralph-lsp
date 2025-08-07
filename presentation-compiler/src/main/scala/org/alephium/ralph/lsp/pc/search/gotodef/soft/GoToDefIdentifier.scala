@@ -84,7 +84,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       )
 
     parent match {
-      case Some(Node(_: SoftAST.StructFieldAssignment, _)) =>
+      case Some(Node(assignment: SoftAST.StructFieldAssignment, _)) if assignment.expressionLeft contains identNode.data =>
         // TODO: Process struct field assignments - Issue https://github.com/alephium/ralph-lsp/issues/322
         Iterator.empty
 

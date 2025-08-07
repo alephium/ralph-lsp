@@ -71,4 +71,28 @@ class GoToStructFieldSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "struct field values" when {
+    "variable is defined before the struct" in {
+      goToDefinitionSoft() {
+        """
+          |{
+          |  let >>value<< = 1
+          |  let instance = Struct { value: val@@ue }
+          |}
+          |""".stripMargin
+      }
+    }
+
+    "variable is defined after the struct" in {
+      goToDefinitionSoft() {
+        """
+          |{
+          |  let instance = Struct { value: v@@alue }
+          |  let >>value<< = 1
+          |}
+          |""".stripMargin
+      }
+    }
+  }
+
 }
