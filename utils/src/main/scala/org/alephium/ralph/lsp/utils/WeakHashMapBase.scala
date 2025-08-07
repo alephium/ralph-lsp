@@ -12,6 +12,9 @@ import java.util
  */
 abstract class WeakHashMapBase[K, V](cache: util.WeakHashMap[K, WeakReference[V]]) {
 
+  def size: Int =
+    cache.size()
+
   protected def getOrPut(
       key: K,
       value: => V): V =

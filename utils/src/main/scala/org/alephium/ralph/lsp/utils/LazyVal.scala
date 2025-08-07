@@ -21,6 +21,12 @@ class LazyVal[A] private (
     load: () => A,
     @volatile private var value: Option[A]) {
 
+  def isDefined: Boolean =
+    value.isDefined
+
+  def isEmpty: Boolean =
+    value.isEmpty
+
   def fetch(): A =
     this.value match {
       case None =>
