@@ -13,7 +13,7 @@ import java.util
  * A cache that stores [[WorkspaceState]] related search information.
  *
  * The [[util.WeakHashMap]] is configured to `initialCapacity` and `loadFactor` both set to `1` because
- * workspace are not expected to often and dynamically.
+ * workspace are not expected to change often and dynamically.
  *
  * `loadFactor = 1` because the workspaces are expected to be mostly single-root workspaces, rather than multi-root workspaces.
  *
