@@ -44,6 +44,30 @@ class GoToStructFieldSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
         }
       }
+
+      "duplicate struct field name and variable name" when {
+        "variable is defined before the struct" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  let value = 1
+              |  let instance = Struct { v@@alue: 2 }
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "variable is defined after the struct" in {
+          goToDefinitionSoft() {
+            """
+              |{
+              |  let instance = Struct { v@@alue: 2 }
+              |  let value = 1
+              |}
+              |""".stripMargin
+          }
+        }
+      }
     }
   }
 
