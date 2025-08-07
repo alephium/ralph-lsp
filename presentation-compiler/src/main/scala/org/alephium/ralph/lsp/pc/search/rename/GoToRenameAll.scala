@@ -6,6 +6,7 @@ package org.alephium.ralph.lsp.pc.search.rename
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
@@ -31,7 +32,8 @@ private object GoToRenameAll extends StrictImplicitLogging {
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToRenameStrict] = {
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.GoToRenameStrict] = {
     val references =
       collectReferences(
         cursorIndex = cursorIndex,
@@ -73,7 +75,8 @@ private object GoToRenameAll extends StrictImplicitLogging {
       cursorIndex: Int,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterable[SourceLocation.GoToRenameStrict] = {
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterable[SourceLocation.GoToRenameStrict] = {
     // collects all nodes that must be renamed
     val nodesToRename =
       ListBuffer.empty[(SourceLocation.GoToRenameStrict, SourceIndex)]

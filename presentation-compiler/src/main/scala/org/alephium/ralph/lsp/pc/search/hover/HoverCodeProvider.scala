@@ -5,8 +5,9 @@ package org.alephium.ralph.lsp.pc.search.hover
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.search.gotodef._
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.Node
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
@@ -24,7 +25,8 @@ private[search] case object HoverCodeProvider extends CodeProvider[SourceCodeSta
       sourceCode: SourceCodeState.IsParsed,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: (SoftAST.type, GoToDefSetting)
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.Hover] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.Hover] =
     CodeProvider
       .goToDefSoft
       .searchLocal(

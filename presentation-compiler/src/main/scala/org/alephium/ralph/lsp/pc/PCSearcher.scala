@@ -4,6 +4,7 @@
 package org.alephium.ralph.lsp.pc
 
 import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.URIUtil.isFileScheme
@@ -37,6 +38,7 @@ object PCSearcher extends StrictImplicitLogging {
       isCancelled: IsCancelled,
       state: PCState
     )(implicit provider: CodeProvider[S, I, O],
+      searchCache: SearchCache,
       logger: ClientLogger): Iterator[O] =
     if (!isFileScheme(fileURI) || isCancelled.check())
       Iterator.empty

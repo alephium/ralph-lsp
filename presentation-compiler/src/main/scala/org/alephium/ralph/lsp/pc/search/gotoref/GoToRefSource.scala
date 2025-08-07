@@ -5,6 +5,7 @@ package org.alephium.ralph.lsp.pc.search.gotoref
 
 import org.alephium.ralph.Ast
 import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.Node
@@ -26,7 +27,8 @@ private object GoToRefSource extends StrictImplicitLogging {
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToRefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     CodeProvider
       .goToDef
       .searchLocal( // find definitions for the token at the given cursorIndex.
@@ -64,7 +66,8 @@ private object GoToRefSource extends StrictImplicitLogging {
       defLocation: SourceLocation.NodeStrict[Ast.Positioned],
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToRefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] = {
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] = {
     val defNode =
       defLocation
         .source

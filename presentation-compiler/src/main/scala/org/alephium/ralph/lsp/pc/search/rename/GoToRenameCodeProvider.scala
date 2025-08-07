@@ -5,7 +5,8 @@ package org.alephium.ralph.lsp.pc.search.rename
 
 import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.pc.search.CodeProvider
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 /**
@@ -19,7 +20,8 @@ private[search] case object GoToRenameCodeProvider extends CodeProvider[SourceCo
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: Unit
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToRenameStrict] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.GoToRenameStrict] =
     GoToRenameAll.rename(
       cursorIndex = cursorIndex,
       sourceCode = sourceCode,

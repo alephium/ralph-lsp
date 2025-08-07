@@ -6,6 +6,7 @@ package org.alephium.ralph.lsp.pc.search.gotodef.soft
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
@@ -23,7 +24,8 @@ case object GoToDefCodeProviderSoft extends CodeProvider[SourceCodeState.IsParse
       sourceCode: SourceCodeState.IsParsed,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: (SoftAST.type, GoToDefSetting)
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
     sourceCode.astSoft.fetch() match {
       case Left(error) =>
         // This will be removed when integration is complete,
@@ -77,7 +79,8 @@ case object GoToDefCodeProviderSoft extends CodeProvider[SourceCodeState.IsParse
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting,
       allowLeftShift: Boolean
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
     blockPart.toNode.findLastChild(_.data.index contains cursorIndex) match {
       case Some(Node(token: SoftAST.CodeToken[_], _)) =>
         if (allowLeftShift && token.index.from == cursorIndex)

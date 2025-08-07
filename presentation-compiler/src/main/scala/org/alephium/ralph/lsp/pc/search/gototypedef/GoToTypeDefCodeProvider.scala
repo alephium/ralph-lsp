@@ -10,6 +10,7 @@ import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.Ast
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.utils.Node
 
 case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToTypeDef] with StrictImplicitLogging {
@@ -28,7 +29,8 @@ case object GoToTypeDefCodeProvider extends CodeProvider[SourceCodeState.Parsed,
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: Unit
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.GoToTypeDef] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.GoToTypeDef] =
     sourceCode.astStrict.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>
         statement match {

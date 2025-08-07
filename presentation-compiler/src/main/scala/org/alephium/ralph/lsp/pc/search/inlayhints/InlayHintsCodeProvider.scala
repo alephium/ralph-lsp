@@ -9,6 +9,7 @@ import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LinePosi
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
@@ -27,7 +28,8 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
       rangeEnd: LinePosition
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.InlayHint] = {
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.InlayHint] = {
     val eligibleNodes =
       collectHintEligibleNodesInRange(
         rangeStart = rangeStart,
@@ -92,7 +94,8 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
       node: Node[Ast.VarDeclaration, Ast.Positioned],
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware
-    )(implicit logger: ClientLogger): Iterator[(SourceIndex, Option[Either[CompilerMessage.Error, Iterator[SourceLocation.GoToTypeDef]]])] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[(SourceIndex, Option[Either[CompilerMessage.Error, Iterator[SourceLocation.GoToTypeDef]]])] =
     // Collect all identifiers in the assignment.
     node
       .walkDown
