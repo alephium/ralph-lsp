@@ -8,6 +8,7 @@ import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.search.CodeProvider
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefIdent, GoToDefSetting}
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
@@ -29,7 +30,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToRefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Positioned]] =
     definition.parent match {
       case Some(parent) =>
         parent match {
@@ -229,7 +231,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
       goToDefSetting: GoToDefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
     goToNearestBlockInScope(fromNode, sourceCode.tree)
       .iterator
       .flatMap {
@@ -256,7 +259,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToRefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
     goToNearestFuncDef(argumentNode) match {
       case Some(functionNode) =>
         // It's a function argument, search within this function's body.
@@ -291,7 +295,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToRefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] = {
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] = {
     val contractInheritanceUsage =
       goToArgumentsUsageInInheritanceDefinition(
         argument = argument,
@@ -363,7 +368,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
       goToDefSetting: GoToDefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
     WorkspaceSearcher
       .collectImplementingChildren(sourceCode, workspace)
       .childTrees
@@ -519,7 +525,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
       goToDefSetting: GoToDefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] = {
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] = {
     val children =
       if (sourceCode.tree.ast == constantDef)
         // Is a global constant, fetch all workspace trees.
@@ -557,7 +564,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
       goToDefSetting: GoToDefSetting
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
     from
       .walkDown
       .collect {
@@ -597,7 +605,8 @@ private object GoToRefIdent extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeStrict,
       workspace: WorkspaceState.IsSourceAware,
       goToDefSetting: GoToDefSetting
-    )(implicit logger: ClientLogger): Boolean =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Boolean =
     reference.ast.sourceIndex exists {
       referenceSourceIndex =>
         CodeProvider

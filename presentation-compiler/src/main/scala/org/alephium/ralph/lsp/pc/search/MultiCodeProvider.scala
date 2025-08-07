@@ -5,6 +5,7 @@ package org.alephium.ralph.lsp.pc.search
 
 import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LinePosition}
 import org.alephium.ralph.lsp.pc.PCStates
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.search.completion.multi.CompletionMultiCodeProvider
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotodef.multi.GoToDefMultiCodeProvider
@@ -47,7 +48,8 @@ trait MultiCodeProvider[I, O] {
       isCancelled: IsCancelled,
       pcStates: PCStates,
       settings: I
-    )(implicit logger: ClientLogger,
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger,
       ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[O]]]
 
 }

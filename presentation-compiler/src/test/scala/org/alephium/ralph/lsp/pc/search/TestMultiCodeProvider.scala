@@ -9,6 +9,7 @@ import org.alephium.ralph.lsp.access.compiler.message.{CompilerMessage, LineRang
 import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.access.util.TestCodeUtil
 import org.alephium.ralph.lsp.pc.{PCState, PCStates}
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.search.gotoref.multi.GoToRefMultiSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, TestSourceCode}
@@ -420,6 +421,9 @@ object TestMultiCodeProvider extends ScalaFutures {
             tsErrors = None
           )
       }
+
+    implicit val searchCache: SearchCache =
+      SearchCache(maxWorkspaces = 1)
 
     // Execute the multi-code provider on the `PCState`s
     val result =

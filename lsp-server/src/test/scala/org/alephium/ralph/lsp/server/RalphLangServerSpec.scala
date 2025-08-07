@@ -5,7 +5,8 @@ package org.alephium.ralph.lsp.server
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.file.FileAccess
-import org.alephium.ralph.lsp.pc.{PCStates, PCState}
+import org.alephium.ralph.lsp.pc.{PCState, PCStates}
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 import org.eclipse.lsp4j._
@@ -82,6 +83,7 @@ class RalphLangServerSpec extends AnyWordSpec with Matchers with MockFactory wit
                 )
               )
             ),
+          searchCache = SearchCache(maxWorkspaces = 1),
           clientAllowsWatchedFilesDynamicRegistration = false,
           trace = Trace.Off,
           shutdownReceived = false

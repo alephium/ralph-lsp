@@ -7,6 +7,7 @@ import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.search.{CodeProvider, MultiCodeProvider}
 import org.alephium.ralph.lsp.pc.search.completion.Suggestion
 import org.alephium.ralph.lsp.pc.PCStates
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.utils.IsCancelled
@@ -26,7 +27,8 @@ private[search] case object CompletionMultiCodeProvider extends MultiCodeProvide
       isCancelled: IsCancelled,
       pcStates: PCStates,
       settings: Unit
-    )(implicit logger: ClientLogger,
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger,
       ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[Suggestion]]] =
     if (isCancelled.check() || !isFileScheme(fileURI))
       Future.successful(Right(ArraySeq.empty))
@@ -67,7 +69,8 @@ private[search] case object CompletionMultiCodeProvider extends MultiCodeProvide
       character: Int,
       isCancelled: IsCancelled,
       workspace: WorkspaceState
-    )(implicit logger: ClientLogger): ArraySeq[Suggestion] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): ArraySeq[Suggestion] =
     if (isCancelled.check())
       ArraySeq.empty
     else

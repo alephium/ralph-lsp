@@ -6,6 +6,7 @@ package org.alephium.ralph.lsp.pc.search.rename.multi
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.pc.{PCSearcher, PCStates}
 import org.alephium.ralph.lsp.pc.search.MultiCodeProvider
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.utils.IsCancelled
@@ -34,7 +35,8 @@ case object GoToRenameMultiCodeProvider extends MultiCodeProvider[Unit, SourceLo
       isCancelled: IsCancelled,
       pcStates: PCStates,
       settings: Unit
-    )(implicit logger: ClientLogger,
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger,
       ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[SourceLocation.GoToRenameStrict]]] =
     Future {
       pcStates.findContains(fileURI) match {

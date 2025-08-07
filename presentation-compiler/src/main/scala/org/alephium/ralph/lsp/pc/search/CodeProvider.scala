@@ -15,6 +15,7 @@ import org.alephium.ralph.lsp.pc.search.hover.HoverCodeProvider
 import org.alephium.ralph.lsp.pc.search.inlayhints.InlayHintsCodeProvider
 import org.alephium.ralph.lsp.pc.search.rename.GoToRenameCodeProvider
 import org.alephium.ralph.lsp.pc.search.CodeProvider.{searchWorkspace, searchWorkspaceAndDependencies}
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
 import org.alephium.ralph.lsp.utils.log.ClientLogger
@@ -49,6 +50,7 @@ trait CodeProvider[S, I, O] extends Product {
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: I
     )(implicit provider: CodeProvider[S, I, O],
+      searchCache: SearchCache,
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     search(
       line = linePosition.line,
@@ -77,6 +79,7 @@ trait CodeProvider[S, I, O] extends Product {
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: I
     )(implicit provider: CodeProvider[S, I, O],
+      searchCache: SearchCache,
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     // if the fileURI belongs to the workspace, then search just within that workspace
     if (URIUtil.contains(workspace.build.contractURI, fileURI))
@@ -113,7 +116,8 @@ trait CodeProvider[S, I, O] extends Product {
       sourceCode: S,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: I
-    )(implicit logger: ClientLogger): Iterator[O]
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[O]
 
 }
 
@@ -162,6 +166,7 @@ object CodeProvider {
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: I
     )(implicit provider: CodeProvider[S, I, O],
+      searchCache: SearchCache,
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     // Search on dependencies should only run for go-to definitions and hover requests. Code-completion is ignored.
     if (provider == CodeProvider.goToDefSoft || provider == CodeProvider.goToRef || provider == CodeProvider.hover)
@@ -220,6 +225,7 @@ object CodeProvider {
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: I
     )(implicit provider: CodeProvider[S, I, O],
+      searchCache: SearchCache,
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     getParsedStateForCodeProvider(
       fileURI = fileURI,

@@ -9,6 +9,7 @@ import org.alephium.ralph.lsp.access.file.FileAccess
 import org.alephium.ralph.lsp.pc.{PC, PCState, PCStates}
 import org.alephium.ralph.lsp.pc.diagnostic.Diagnostics
 import org.alephium.ralph.lsp.pc.search.MultiCodeProvider
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.search.gotoref.multi.GoToRefMultiSetting
 import org.alephium.ralph.lsp.pc.workspace._
 import org.alephium.ralph.lsp.pc.workspace.build.error.ErrorUnknownFileType
@@ -47,6 +48,7 @@ object RalphLangServer extends StrictImplicitLogging {
         client = Some(client),
         listener = Some(listener),
         pcStates = PCStates.empty,
+        searchCache = SearchCache(maxWorkspaces = 1),
         clientAllowsWatchedFilesDynamicRegistration = clientAllowsWatchedFilesDynamicRegistration,
         trace = Trace.Off,
         shutdownReceived = false
@@ -64,6 +66,7 @@ object RalphLangServer extends StrictImplicitLogging {
         client = None,
         listener = None,
         pcStates = PCStates.empty,
+        searchCache = SearchCache(maxWorkspaces = 1),
         clientAllowsWatchedFilesDynamicRegistration = false,
         trace = Trace.Off,
         shutdownReceived = false
@@ -167,6 +170,9 @@ class RalphLangServer private (
       client = getClient(),
       trace = state.trace
     )
+
+  private implicit def searchCache: SearchCache =
+    thisServer.state.searchCache
 
   /**
    * An initial call to this function is required before this server can start processing request.

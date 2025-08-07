@@ -7,7 +7,8 @@ import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.lsp.pc.search.CodeProvider
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceLocation, SourceCodeState}
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
 
@@ -22,7 +23,8 @@ private[search] case object CodeCompletionProvider extends CodeProvider[SourceCo
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: Unit
-    )(implicit logger: ClientLogger): Iterator[Suggestion] =
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[Suggestion] =
     // find the statement where this cursorIndex sits.
     sourceCode.astStrict.statements.find(_.index contains cursorIndex) match {
       case Some(statement) =>

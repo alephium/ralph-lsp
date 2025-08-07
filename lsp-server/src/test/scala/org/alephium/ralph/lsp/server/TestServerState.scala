@@ -3,7 +3,8 @@
 
 package org.alephium.ralph.lsp.server
 
-import org.alephium.ralph.lsp.pc.{PCStates, PCState}
+import org.alephium.ralph.lsp.pc.{PCState, PCStates}
+import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.server.state.{ServerState, Trace}
 
@@ -28,6 +29,7 @@ object TestServerState {
       client = None,
       listener = None,
       pcStates = PCStates(pcStates.to(ArraySeq)),
+      searchCache = SearchCache(maxWorkspaces = pcStates.size),
       clientAllowsWatchedFilesDynamicRegistration = Random.nextBoolean(),
       trace = Random.shuffle(Trace.all.toList).head,
       shutdownReceived = Random.nextBoolean()

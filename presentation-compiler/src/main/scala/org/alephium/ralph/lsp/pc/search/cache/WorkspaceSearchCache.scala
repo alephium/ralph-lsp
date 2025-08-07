@@ -1,7 +1,7 @@
 // Copyright (c) Alephium
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package org.alephium.ralph.lsp.pc.search.gotodef.soft
+package org.alephium.ralph.lsp.pc.search.cache
 
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
@@ -10,23 +10,21 @@ import org.alephium.ralph.lsp.utils.log.ClientLogger
 
 import scala.collection.immutable.ArraySeq
 
-object SearchCache {
+object WorkspaceSearchCache {
 
-  def apply(workspaceState: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): SearchCache =
-    new SearchCache(workspaceState)
+  def apply(workspaceState: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): WorkspaceSearchCache =
+    new WorkspaceSearchCache(workspaceState)
 
 }
 
 /**
  * Caches data created and reused when searching local, inherited and global scopes.
  *
- * A single search may accesses these scopes multiple times.
- *
- * TODO: Move this to a centralised cache to increase reusability.
+ * A single search may access these scopes multiple times.
  *
  * @param workspace The workspace being search.
  */
-final class SearchCache(val workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger) {
+final class WorkspaceSearchCache(val workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger) {
 
   /**
    * All workspace source trees in-scope.
