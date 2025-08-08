@@ -134,7 +134,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
 
     "soft-parseable" when {
       "type identifier is selected" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract >>MyCode<<
             |TxScript >>MyCode<<
@@ -145,7 +145,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
       }
 
       "reference call is selected" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract >>MyCode<<
             |TxScript >>MyCode<<
@@ -185,7 +185,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
   "detect call syntax" should {
     "jump to contract" when {
       "variable with the same name does not exist" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract >>variable<<() { }
             |
@@ -198,7 +198,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
       }
 
       "variable exists, but the call is a reference call" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract >>variable<<() { }
             |
@@ -214,7 +214,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
 
     "jump to the contract and the variable" when {
       "variable exists, but the call is a method call" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract variable() { }
             |
@@ -229,7 +229,7 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
 
     "jump to the variable" when {
       "variable with the same name exists" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract variable() { }
             |

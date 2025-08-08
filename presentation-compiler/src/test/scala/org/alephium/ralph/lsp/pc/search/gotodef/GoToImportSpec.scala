@@ -87,7 +87,7 @@ class GoToImportSpec extends AnyWordSpec with Matchers {
 
     "only folder name is provided (file name is missing)" when {
       "first character" in {
-        goToDefStdSoft(expected) {
+        goToDefStd(expected) {
           """
             |import "@@std"
             |
@@ -97,7 +97,7 @@ class GoToImportSpec extends AnyWordSpec with Matchers {
       }
 
       "mid character" in {
-        goToDefStdSoft(expected) {
+        goToDefStd(expected) {
           """
             |import "st@@d"
             |
@@ -107,7 +107,7 @@ class GoToImportSpec extends AnyWordSpec with Matchers {
       }
 
       "last character" in {
-        goToDefStdSoft(expected) {
+        goToDefStd(expected) {
           """
             |import "std@@"
             |

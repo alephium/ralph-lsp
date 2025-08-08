@@ -28,7 +28,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
     "emit is a chained function call" when {
       "reference-call is search" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |Contract transfer() {
             |
@@ -43,7 +43,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
       }
 
       "dot call value is search" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |Contract transfer() {
             |
@@ -108,7 +108,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
     "soft-parseable" when {
       "the event definition is search (self-select)" when {
         "event fields are defined" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  event >>Transf@@er<<(to: Address, amount: U256
@@ -119,7 +119,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
         }
 
         "event fields are not defined" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  event >>Transf@@er<<
@@ -132,7 +132,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
       "duplicate event definitions exist" when {
         "event fields are defined" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  event Transfer(to, amount)
@@ -145,7 +145,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
         }
 
         "event fields are not defined" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  event Transfer
@@ -186,7 +186,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
       }
 
       "emitting a value call" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |Abstract Contract Parent() {
             |
@@ -209,7 +209,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
       }
 
       "emitting a function call" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |Abstract Contract Parent() {
             |
@@ -232,7 +232,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
       }
 
       "emitting a tuple" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |Abstract Contract Parent() {
             |
@@ -306,7 +306,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
           }
 
           "`emit` call is not a reference-call, i.e. it's only a type value" in {
-            goToDefinitionSoft()(
+            goToDefinition()(
               """
                 |Contract Transfer() {
                 |  fn function() -> () {}
@@ -326,7 +326,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
           "emit is value call" when {
             "event is defined locally" in {
-              goToDefinitionSoft()(
+              goToDefinition()(
                 """
                   |Contract >>transfer<<() {
                   |
@@ -344,7 +344,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
             "event is defined in inheritance" when {
               "event parameters are defined" in {
-                goToDefinitionSoft()(
+                goToDefinition()(
                   """
                     |Contract parent {
                     | event >>transfer<<(to: Address)
@@ -363,7 +363,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
               }
 
               "event parameters are not defined" in {
-                goToDefinitionSoft()(
+                goToDefinition()(
                   """
                     |Contract parent {
                     | event >>transfer<<
@@ -383,7 +383,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
             }
 
             "event is defined globally" in {
-              goToDefinitionSoft()(
+              goToDefinition()(
                 """
                   |event >>transfer<<(to: Address)
                   |
@@ -402,7 +402,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
           "no event parameters exist" when {
             "event is defined locally" in {
-              goToDefinitionSoft()(
+              goToDefinition()(
                 """
                   |Contract transfer() {
                   |  fn function() -> () {}
@@ -421,7 +421,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
             }
 
             "event is defined within inheritance" in {
-              goToDefinitionSoft()(
+              goToDefinition()(
                 """
                   |Contract transfer {
                   |  event >>transfer<<
@@ -442,7 +442,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
         }
 
         "the event is global and a duplicate function exist" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Contract Transfer() {
               |  fn function() -> () {}
@@ -465,7 +465,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
       "go to the contract and the function" when {
         "the event is not defined" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Contract >>Transfer<<() {
               |  fn function() -> () {}
@@ -490,7 +490,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
     "an event, contract and a function exist with the same name" should {
       "go to the event" when {
         "no other definition is found" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Contract MyContract() {
               |
@@ -505,7 +505,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
         }
 
         "the event is global" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |event >>Transfer<<(to: Address)
               |
@@ -520,7 +520,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
         }
 
         "the event is global and local" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |event >>Transfer<<(to: Address)
               |
@@ -539,7 +539,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
 
       "not go to definitions" when {
         "call is a reference call" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Contract >>Transfer<<() {
               |  fn function() -> () {}
@@ -563,7 +563,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
         }
 
         "call is a value call" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Contract Transfer() {
               |  fn function() -> () {}
@@ -587,7 +587,7 @@ class GoToEventSpec extends AnyWordSpec with Matchers {
         }
 
         "call is an assignment" in {
-          goToDefinitionSoft()(
+          goToDefinition()(
             """
               |Contract Transfer() {
               |  fn function() -> () {}

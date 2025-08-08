@@ -12,7 +12,7 @@ class GoToEventFieldSpec extends AnyWordSpec with Matchers {
   "return empty" when {
     "an event field and an assignment value have duplicate names" when {
       "event is defined external to the contract" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |event MyEvent(eventField: Bool)
             |
@@ -47,7 +47,7 @@ class GoToEventFieldSpec extends AnyWordSpec with Matchers {
     "the event field is selected" when {
       "soft-parseable" when {
         "valid syntax" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |event MyEvent(>>eventFie@@ld<<: Bool)
               |""".stripMargin
@@ -55,7 +55,7 @@ class GoToEventFieldSpec extends AnyWordSpec with Matchers {
         }
 
         "event name is not defined" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |event (>>eventFie@@ld<<: Bool)
               |""".stripMargin
@@ -63,7 +63,7 @@ class GoToEventFieldSpec extends AnyWordSpec with Matchers {
         }
 
         "event field type is not defined" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |event (>>eventFie@@ld<<)
               |""".stripMargin
@@ -71,7 +71,7 @@ class GoToEventFieldSpec extends AnyWordSpec with Matchers {
         }
 
         "closing paren is not defined" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |event (>>eventFie@@ld<<
               |""".stripMargin

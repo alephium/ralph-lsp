@@ -12,7 +12,7 @@ class AllowLeftShiftSpec extends AnyWordSpec with Matchers {
   "allow searching" when {
     "the last character" when {
       "is followed by space" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct >>MyStruct<< { }
             |
@@ -22,7 +22,7 @@ class AllowLeftShiftSpec extends AnyWordSpec with Matchers {
       }
 
       "is followed by another token" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct >>MyStruct<< { }
             |
@@ -34,7 +34,7 @@ class AllowLeftShiftSpec extends AnyWordSpec with Matchers {
 
     "the first character" when {
       "is followed by space" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct >>MyStruct<< { }
             |
@@ -44,7 +44,7 @@ class AllowLeftShiftSpec extends AnyWordSpec with Matchers {
       }
 
       "is followed by another token" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct >>MyStruct<< { }
             |
@@ -58,7 +58,7 @@ class AllowLeftShiftSpec extends AnyWordSpec with Matchers {
   "disallow searching" when {
     "the shift results in multiple spaces" when {
       "a" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct MyStruct { }
             |
@@ -68,7 +68,7 @@ class AllowLeftShiftSpec extends AnyWordSpec with Matchers {
       }
 
       "b" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct MyStruct { }
             |
@@ -78,7 +78,7 @@ class AllowLeftShiftSpec extends AnyWordSpec with Matchers {
       }
 
       "c" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct MyStruct { }
             |
@@ -90,7 +90,7 @@ class AllowLeftShiftSpec extends AnyWordSpec with Matchers {
 
     "the shift results in multiple tokens" when {
       "a" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct MyStruct { }
             |
@@ -100,7 +100,7 @@ class AllowLeftShiftSpec extends AnyWordSpec with Matchers {
       }
 
       "b" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct MyStruct { }
             |
@@ -110,7 +110,7 @@ class AllowLeftShiftSpec extends AnyWordSpec with Matchers {
       }
 
       "c" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct MyStruct { }
             |

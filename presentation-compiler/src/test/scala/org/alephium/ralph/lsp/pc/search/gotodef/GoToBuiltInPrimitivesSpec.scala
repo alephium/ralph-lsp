@@ -11,7 +11,7 @@ class GoToBuiltInPrimitivesSpec extends AnyWordSpec with Matchers {
 
   "jump to primitive" when {
     "Bool" in {
-      goToDefBuiltInSoft(
+      goToDefBuiltIn(
         code = """
             |Abstract Contract Test(bool: Boo@@l) {}
             |""".stripMargin,
@@ -20,7 +20,7 @@ class GoToBuiltInPrimitivesSpec extends AnyWordSpec with Matchers {
     }
 
     "U256" in {
-      goToDefBuiltInSoft(
+      goToDefBuiltIn(
         code = """
             |Contract Test() {
             |  fn function(int: U25@@6) -> () { }
@@ -31,7 +31,7 @@ class GoToBuiltInPrimitivesSpec extends AnyWordSpec with Matchers {
     }
 
     "I256" in {
-      goToDefBuiltInSoft(
+      goToDefBuiltIn(
         code = """
             |Contract Test() {
             |  fn function(int: I25@@6) -> () { }
@@ -42,7 +42,7 @@ class GoToBuiltInPrimitivesSpec extends AnyWordSpec with Matchers {
     }
 
     "ByteVec" in {
-      goToDefBuiltInSoft(
+      goToDefBuiltIn(
         code = """
             |Contract Test() {
             |  fn function(int: ByteVe@@c) -> () { }
@@ -53,7 +53,7 @@ class GoToBuiltInPrimitivesSpec extends AnyWordSpec with Matchers {
     }
 
     "Address" in {
-      goToDefBuiltInSoft(
+      goToDefBuiltIn(
         code = """
             |Abstract Contract Test(bool: Addres@@s) {}
             |""".stripMargin,

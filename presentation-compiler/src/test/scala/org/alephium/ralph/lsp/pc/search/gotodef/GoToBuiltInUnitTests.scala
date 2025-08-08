@@ -26,7 +26,7 @@ class GoToBuiltInUnitTests extends AnyWordSpec with Matchers {
 
     "soft" when {
       "no contract" in {
-        goToDefBuiltInSoft(
+        goToDefBuiltIn(
           code = """
               |test "simple test" {
               |  testEq@@ual!(2 + 3, 5)
@@ -37,7 +37,7 @@ class GoToBuiltInUnitTests extends AnyWordSpec with Matchers {
       }
 
       "contains syntax errors" in {
-        goToDefBuiltInSoft(
+        goToDefBuiltIn(
           code = """
               |test "simple test" {
               |  testEq@@ual!(2 +

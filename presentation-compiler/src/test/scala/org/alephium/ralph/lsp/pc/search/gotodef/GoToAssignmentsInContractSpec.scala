@@ -45,7 +45,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
     "soft-parseable" when {
       "variable is defined in another scope" when {
         "function" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |fn function() -> () {
               |  {
@@ -59,7 +59,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
         }
 
         "Contract" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |Contract Test() {
               |  {
@@ -126,7 +126,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
         "the code is soft-parseable" when {
           "the function and variable have unique names" when {
             "variable is defined within an inner block" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |fn function() -> () {
                   |  {
@@ -140,7 +140,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
 
             "variable is defined without an assignment value" when {
               "the assignment's left expression is selected" in {
-                goToDefinitionSoft() {
+                goToDefinition() {
                   """
                     |fn function() -> () {
                     |  let >>counter<<
@@ -151,7 +151,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
               }
 
               "the assignment's right expression is selected" in {
-                goToDefinitionSoft() {
+                goToDefinition() {
                   """
                     |fn function() -> () {
                     |  let >>counter<<
@@ -165,7 +165,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
 
           "the function and variable have duplicate names" when {
             "variable is defined within an inner block" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |fn counter() -> () {
                   |  {
@@ -179,7 +179,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
 
             "variable is defined without an assignment value" when {
               "the assignment's left expression is selected" in {
-                goToDefinitionSoft() {
+                goToDefinition() {
                   """
                     |fn counter() -> () {
                     |  let >>counter<<
@@ -190,7 +190,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
               }
 
               "the assignment's right expression is selected" in {
-                goToDefinitionSoft() {
+                goToDefinition() {
                   """
                     |fn counter() -> () {
                     |  let >>counter<<
@@ -221,7 +221,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
         "soft-parseable" when {
           "argument type name is not provided" when {
             "mutable argument" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |fn function(mut >>counter<<) -> () {
                   |  counte@@r = counter + 1
@@ -231,7 +231,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
             }
 
             "immutable argument" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |fn function(>>counter<<) -> () {
                   |  counte@@r = counter + 1
@@ -242,7 +242,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
           }
 
           "function has syntax errors" in {
-            goToDefinitionSoft() {
+            goToDefinition() {
               """
                 |fn function(>>counter<< -> ( {
                 |  counte@@r = counter + 1
@@ -301,7 +301,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
         "soft-parseable" when {
           "type name is not provided" when {
             "mutable argument" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |Contract GoToAssignment(mut >>counter<<) extends Parent(counter) {
                   |
@@ -314,7 +314,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
             }
 
             "immutable argument" in {
-              goToDefinitionSoft() {
+              goToDefinition() {
                 """
                   |Contract GoToAssignment(>>counter<<) extends Parent(counter) {
                   |
@@ -328,7 +328,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
 
             "no function" when {
               "the assignment's left expression is selected" in {
-                goToDefinitionSoft() {
+                goToDefinition() {
                   """
                     |Contract GoToAssignment(>>counter<<) extends Parent(counter) {
                     |
@@ -340,7 +340,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
               }
 
               "the assignment's right expression is selected" in {
-                goToDefinitionSoft() {
+                goToDefinition() {
                   """
                     |Contract GoToAssignment(>>counter<<) extends Parent(counter) {
                     |
@@ -386,7 +386,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
 
         "soft-parseable" when {
           "single source-file" in {
-            goToDefinitionSoft() {
+            goToDefinition() {
               """
                 |Contract Parent2(>>counter<< { }
                 |
@@ -426,7 +426,7 @@ class GoToAssignmentsInContractSpec extends AnyWordSpec with Matchers {
           }
 
           "multiple source-files" in {
-            goToDefinitionSoft()(
+            goToDefinition()(
               """
                 |Contract Parent2(>>counter<< { }
                 |""".stripMargin,
