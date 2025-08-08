@@ -155,7 +155,7 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
           """
             |const >>MyConstant<< = 0
             |
-            |contract block {
+            |Contract block {
             |  MyCo@@nstant
             |}
             |""".stripMargin
