@@ -129,22 +129,70 @@ object SourceCodeState {
     extends IsError
        with IsAccessed
 
-  /** Represents: Code is successfully parsed */
+  /**
+   * Represents code that is successfully parsed.
+   *
+   * Equality and hashing are based only on [[fileURI]], [[code]] and [[astStrict]].
+   * The [[astSoft]] field is excluded from equality and hashCode computations
+   * to avoid unnecessary cache invalidation in [[org.alephium.ralph.lsp.pc.search.cache.SearchCache]],
+   * since it is computed lazily and may or may not be populated.
+   */
   case class Parsed(
       fileURI: URI,
       code: String,
       astStrict: Tree.Root,
       astSoft: LazyVal[Either[FastParseError, SoftAST.RootBlock]])
-    extends IsParsed
+    extends IsParsed {
 
-  /** Represents: Error during the parser phase. */
+    private def equalityFields: (URI, String, Tree.Root) =
+      (fileURI, code, astStrict)
+
+    override def equals(that: Any): Boolean =
+      that match {
+        case that: Parsed =>
+          this.equalityFields == that.equalityFields
+
+        case _ =>
+          false
+      }
+
+    override def hashCode(): Int =
+      equalityFields.##
+
+  }
+
+  /**
+   * Represents code that errored during the parser phase.
+   *
+   * Equality and hashing are based only on [[fileURI]], [[code]] and [[errors]].
+   * The [[astSoft]] field is excluded from equality and hashCode computations
+   * to avoid unnecessary cache invalidation in [[org.alephium.ralph.lsp.pc.search.cache.SearchCache]],
+   * since it is computed lazily and may or may not be populated.
+   */
   case class ErrorParser(
       fileURI: URI,
       code: String,
       errors: Seq[CompilerMessage.AnyError],
       astSoft: LazyVal[Either[FastParseError, SoftAST.RootBlock]])
     extends IsParserOrCompilationError
-       with IsParsed
+       with IsParsed {
+
+    private def equalityFields =
+      (fileURI, code, errors)
+
+    override def equals(that: Any): Boolean =
+      that match {
+        case that: ErrorParser =>
+          this.equalityFields == that.equalityFields
+
+        case _ =>
+          false
+      }
+
+    override def hashCode(): Int =
+      equalityFields.##
+
+  }
 
   /** Represents: Code is successfully compiled */
   case class Compiled(
