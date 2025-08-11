@@ -57,26 +57,23 @@ private[search] case object HoverMultiCodeProvider extends MultiCodeProvider[Uni
       )
 
     if (enableSoftParser) {
-      pcStates.getOneOrAll(fileURI) match {
+      pcStates.get(fileURI) match {
         case Left(error) =>
-          Future.successful(Left(error))
+          logger.info(s"${HoverMultiCodeProvider.productPrefix} not available for this file. Reason: ${error.message}.")
+          Future.successful(Right(ArraySeq.empty))
 
-        case Right(currentStates) =>
-          val hovers = currentStates.flatMap {
-            state =>
-              goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.Hover](
-                fileURI = fileURI,
-                line = line,
-                character = character,
-                searchSettings = (SoftAST, settings),
-                isCancelled = isCancelled,
-                state = state
-              )
-          }
+        case Right(state) =>
+          val hovers =
+            goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.Hover](
+              fileURI = fileURI,
+              line = line,
+              character = character,
+              searchSettings = (SoftAST, settings),
+              isCancelled = isCancelled,
+              state = state
+            ).to(ArraySeq)
 
-          val distinct = SourceLocation.distinctByLocation(hovers)
-
-          Future.successful(Right(distinct))
+          Future.successful(Right(hovers))
       }
     } else {
       logger.debug("Hover search is not implemented yet for strict parsing")

@@ -12,13 +12,13 @@ import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.MultiCodeProvider
 import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.utils.IsCancelled
-import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
 import scala.concurrent.{ExecutionContext, Future}
 
-private[search] case object GoToDefMultiCodeProvider extends MultiCodeProvider[Unit, SourceLocation.GoToDef] {
+private[search] case object GoToDefMultiCodeProvider extends MultiCodeProvider[Unit, SourceLocation.GoToDef] with StrictImplicitLogging {
 
   /**
    * Searches the definition location(s) for a symbol at the given position in a file.
@@ -76,29 +76,29 @@ private[search] case object GoToDefMultiCodeProvider extends MultiCodeProvider[U
         )
       }
 
-    pcStates.getOneOrAll(fileURI) match {
+    pcStates.get(fileURI) match {
       case Left(error) =>
-        Future.successful(Left(error))
+        logger.info(s"${GoToDefMultiCodeProvider.productPrefix} not available for this file. Reason: ${error.message}.")
+        Future.successful(Right(ArraySeq.empty))
 
-      case Right(currentStates) =>
+      case Right(state) =>
         // Compute soft AST locations asynchronously
         val softLocations =
           if (enableSoftParser)
-            currentStates map searchSoft
+            searchSoft(state)
           else
-            ArraySeq.empty
+            Future.successful(Iterator.empty)
 
         // Compute strict AST locations within the current thread
         val strictLocations =
-          currentStates map searchStrict
+          searchStrict(state)
 
         for {
-          soft   <- Future.sequence(softLocations)
-          strict <- Future.sequence(strictLocations)
+          soft   <- softLocations
+          strict <- strictLocations
         } yield {
-          val softFlattened   = soft.flatten
-          val strictFlattened = strict.flatten
-          val distinct        = SourceLocation.distinctByLocation(softFlattened ++ strictFlattened)
+          val merged   = (soft ++ strict).to(ArraySeq)
+          val distinct = SourceLocation.distinctByLocation(merged)
           Right(distinct)
         }
     }
