@@ -70,9 +70,9 @@ case class PCStates(states: ArraySeq[PCState]) extends AnyVal {
           case workspace: WorkspaceState.IsSourceAware if CompilerAccess.isRalphFileExtension(fileURI) =>
             /*
              * When the workspace is source-aware and the file is a `.ral` source-file, the file must processed
-             * be within the configured `contractURI` or the configured `dependencyPath`. Any other file is must not be processed.
+             * be within the configured `contractURI` or the configured `dependencyPath`. Any other file must not be processed.
              *
-             * This must be a `contractURI` and `dependencyPath` and not upper level check on `state.workspace.workspaceURI`
+             * The check must on `contractURI` and `dependencyPath`, and not an upper level check on `state.workspace.workspaceURI`
              * because if there is a "Workspace-A" containing a `dependencies` folders that it itself does not point to,
              * but another "Workspace-B" uses "Workspace-A"'s `dependencies` path as its dependency, then simply
              * invoking `state.workspace.workspaceURI contains fileURI` will return "Workspace-A"'s `PCState`
