@@ -3,11 +3,12 @@
 
 package org.alephium.ralph.lsp.pc
 
-import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
+import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.pc.PCStates._
-import org.alephium.ralph.lsp.pc.error.{ErrorSourceNotInWorkspace, ErrorWorkspaceFolderNotSupplied}
+import org.alephium.ralph.lsp.pc.error.ErrorSourceNotInWorkspace
+import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.CollectionUtil.CollectionUtilImplicits
-import org.alephium.ralph.lsp.utils.URIUtil.URIUtilImplicits
+import org.alephium.ralph.lsp.utils.URIUtil._
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
@@ -63,19 +64,29 @@ case class PCStates(states: ArraySeq[PCState]) extends AnyVal {
    * Gets the [[PCState]] of a workspace that contains the given `fileURI`.
    */
   def findContains(fileURI: URI): Option[PCState] =
-    states.find(_.workspace.workspaceURI contains fileURI)
+    states find {
+      state =>
+        state.workspace match {
+          case workspace: WorkspaceState.IsSourceAware if CompilerAccess.isRalphFileExtension(fileURI) =>
+            /*
+             * When the workspace is source-aware and the file is a `.ral` source-file, the file must processed
+             * be within the configured `contractURI` or the configured `dependencyPath`. Any other file is must not be processed.
+             *
+             * This must be a `contractURI` and `dependencyPath` and not upper level check on `state.workspace.workspaceURI`
+             * because if there is a "Workspace-A" containing a `dependencies` folders that it itself does not point to,
+             * but another "Workspace-B" uses "Workspace-A"'s `dependencies` path as its dependency, then simply
+             * invoking `state.workspace.workspaceURI contains fileURI` will return "Workspace-A"'s `PCState`
+             * which would be incorrect.
+             *
+             * TODO: Implement the above case as a test-case.
+             */
+            workspace.build.contractURI.contains(fileURI) || workspace.build.dependencyPath.contains(fileURI)
 
-  /**
-   * Gets the [[PCState]] for the workspace containing `fileURI`, if it exists.
-   * If no matching workspace is found, it returns all [[PCState]]s.
-   *
-   * @param fileURI The `URI` of a file inside a workspace.
-   * @return Either an error or an array of [[PCState]]s.
-   */
-  def getOneOrAll(fileURI: URI): Either[CompilerMessage.Error, ArraySeq[PCState]] =
-    get(fileURI)
-      .map(ArraySeq(_))
-      .orElse(getAll())
+          case _ =>
+            // If for some reason the workspace is not compiled, then the best we can do is search for it at the `workspaceURI` level.
+            state.workspace.workspaceURI contains fileURI
+        }
+    }
 
   /**
    * Gets the [[PCState]] for the workspace containing `fileURI`.
@@ -92,17 +103,5 @@ case class PCStates(states: ArraySeq[PCState]) extends AnyVal {
       case None =>
         Left(ErrorSourceNotInWorkspace(fileURI))
     }
-
-  /**
-   * Returns all available [[PCState]]s, or an error if no workspaces exist.
-   * This shouldn't normally happen since `initialized` is always called first.
-   *
-   * @return Either the error [[ErrorWorkspaceFolderNotSupplied]] or an array of all [[PCState]]s.
-   */
-  private def getAll(): Either[ErrorWorkspaceFolderNotSupplied.type, ArraySeq[PCState]] =
-    if (states.isEmpty)
-      Left(ErrorWorkspaceFolderNotSupplied)
-    else
-      Right(states)
 
 }
