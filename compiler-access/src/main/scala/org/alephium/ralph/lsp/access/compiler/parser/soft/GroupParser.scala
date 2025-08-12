@@ -243,6 +243,7 @@ private object GroupParser {
         ElseParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         StructConstructorParser.parseOrFail |
+        AnnotationParser.parseOrFail |
         TupleParser.parseOrFail(assertNonEmpty = false) |
         ArrayParser.parseOrFail |
         ByteVecParser.parseOrFail |
