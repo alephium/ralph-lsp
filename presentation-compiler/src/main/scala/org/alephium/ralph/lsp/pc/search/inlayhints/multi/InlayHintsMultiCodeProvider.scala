@@ -33,7 +33,7 @@ private[search] case object InlayHintsMultiCodeProvider extends MultiCodeProvide
       case Left(error) =>
         // Dependency files are not part of the active workspace but should still support inlay hints.
         // For now, instead of triggering an IDE error notification, log the reason.
-        logger.info(s"Inlay hints are not available for this file. Reason: ${error.message}.")
+        logger.info(s"${InlayHintsMultiCodeProvider.productPrefix} not available for this file. Reason: ${error.message}.")
         Future.successful(Right(ArraySeq.empty))
 
       case Right(pcState) =>

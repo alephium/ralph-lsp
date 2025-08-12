@@ -5,12 +5,11 @@ package org.alephium.ralph.lsp.pc.search.hover.multi
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
-import org.alephium.ralph.lsp.pc.PCStates
+import org.alephium.ralph.lsp.pc.{PCSearcher, PCStates}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
-import org.alephium.ralph.lsp.pc.PCSearcher.goTo
 import org.alephium.ralph.lsp.pc.search.MultiCodeProvider
 import org.alephium.ralph.lsp.pc.search.cache.SearchCache
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.utils.IsCancelled
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
@@ -26,12 +25,12 @@ private[search] case object HoverMultiCodeProvider extends MultiCodeProvider[Uni
    * This function is used by the LSP to resolve hover requests across multiple workspaces.
    * For single-workspace search, use [[org.alephium.ralph.lsp.pc.search.hover.HoverCodeProvider]].
    *
-   * @param fileURI     The URI of the file where this search is executed.
-   * @param line        The line number where the search begins.
-   * @param character   The character offset within the line.
-   * @param isCancelled Check whether the search should be cancelled.
-   * @param pcStates    Current presentation-compiler states of each workspace.
-   * @param settings    Provider-specific settings.
+   * @param fileURI          The URI of the file where this search is executed.
+   * @param line             The line number where the search begins.
+   * @param character        The character offset within the line.
+   * @param isCancelled      Check whether the search should be cancelled.
+   * @param pcStates         Current presentation-compiler states of each workspace.
+   * @param settings         Provider-specific settings.
    * @return Either an error or searched hover results.
    */
   override def search(
@@ -43,38 +42,38 @@ private[search] case object HoverMultiCodeProvider extends MultiCodeProvider[Uni
       settings: Unit
     )(implicit searchCache: SearchCache,
       logger: ClientLogger,
-      ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[SourceLocation.Hover]]] = {
-    /*
-     * Hover information relies on the definition of the symbol at the cursor position.
-     * Therefore, `GoToDef` is used to find the definition first
-     */
-    val settings =
-      GoToDefSetting(
-        includeAbstractFuncDef = false,
-        includeInheritance = true
-      )
+      ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[SourceLocation.Hover]]] =
+    Future {
+      pcStates.get(fileURI) match {
+        case Left(error) =>
+          logger.info(s"${HoverMultiCodeProvider.productPrefix} not available for this file. Reason: ${error.message}.")
+          Right(ArraySeq.empty)
 
-    pcStates.getOneOrAll(fileURI) match {
-      case Left(error) =>
-        Future.successful(Left(error))
-
-      case Right(currentStates) =>
-        val hovers = currentStates.flatMap {
-          state =>
-            goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.Hover](
-              fileURI = fileURI,
-              line = line,
-              character = character,
-              searchSettings = (SoftAST, settings),
-              isCancelled = isCancelled,
-              state = state
+        case Right(state) =>
+          /*
+           * Hover information relies on the definition of the symbol at the cursor position.
+           * Therefore, `GoToDef` is used to find the definition first
+           */
+          val settings =
+            GoToDefSetting(
+              includeAbstractFuncDef = false,
+              includeInheritance = true
             )
-        }
 
-        val distinct = SourceLocation.distinctByLocation(hovers)
+          val result =
+            PCSearcher
+              .goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.Hover](
+                fileURI = fileURI,
+                line = line,
+                character = character,
+                searchSettings = (SoftAST, settings),
+                isCancelled = isCancelled,
+                state = state
+              )
+              .to(ArraySeq)
 
-        Future.successful(Right(distinct))
+          Right(result)
+      }
     }
-  }
 
 }

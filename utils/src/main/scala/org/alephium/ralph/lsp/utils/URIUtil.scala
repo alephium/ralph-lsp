@@ -19,6 +19,16 @@ object URIUtil {
 
   }
 
+  implicit class PathURIUtilImplicits(val path: Path) extends AnyVal {
+
+    def contains(child: URI): Boolean =
+      URIUtil.contains(
+        parent = path,
+        child = child
+      )
+
+  }
+
   /**
    * Build URI and clean it from escaped characters. Happen on Windows
    */

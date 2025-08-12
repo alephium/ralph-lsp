@@ -5,20 +5,19 @@ package org.alephium.ralph.lsp.pc.search.gotodef.multi
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
-import org.alephium.ralph.lsp.pc.PCStates
-import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
-import org.alephium.ralph.lsp.pc.PCSearcher.goTo
+import org.alephium.ralph.lsp.pc.{PCSearcher, PCStates}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.MultiCodeProvider
 import org.alephium.ralph.lsp.pc.search.cache.SearchCache
+import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.utils.IsCancelled
-import org.alephium.ralph.lsp.utils.log.ClientLogger
+import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
 import java.net.URI
 import scala.collection.immutable.ArraySeq
 import scala.concurrent.{ExecutionContext, Future}
 
-private[search] case object GoToDefMultiCodeProvider extends MultiCodeProvider[Unit, SourceLocation.GoToDef] {
+private[search] case object GoToDefMultiCodeProvider extends MultiCodeProvider[Unit, SourceLocation.GoToDef] with StrictImplicitLogging {
 
   /**
    * Searches the definition location(s) for a symbol at the given position in a file.
@@ -43,35 +42,34 @@ private[search] case object GoToDefMultiCodeProvider extends MultiCodeProvider[U
       settings: Unit
     )(implicit searchCache: SearchCache,
       logger: ClientLogger,
-      ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[SourceLocation.GoToDef]]] = {
-    val settings =
-      GoToDefSetting(
-        includeAbstractFuncDef = false,
-        includeInheritance = true
-      )
+      ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[SourceLocation.GoToDef]]] =
+    Future {
+      pcStates.get(fileURI) match {
+        case Left(error) =>
+          logger.info(s"${GoToDefMultiCodeProvider.productPrefix} not available for this file. Reason: ${error.message}.")
+          Right(ArraySeq.empty)
 
-    pcStates.getOneOrAll(fileURI) match {
-      case Left(error) =>
-        Future.successful(Left(error))
+        case Right(state) =>
+          val settings =
+            GoToDefSetting(
+              includeAbstractFuncDef = false,
+              includeInheritance = true
+            )
 
-      case Right(currentStates) =>
-        Future
-          .traverse(currentStates) {
-            state =>
-              Future {
-                goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
-                  fileURI = fileURI,
-                  line = line,
-                  character = character,
-                  searchSettings = (SoftAST, settings),
-                  isCancelled = isCancelled,
-                  state = state
-                )
-              }
-          }
-          .map(_.flatten)
-          .map(Right(_))
+          val result =
+            PCSearcher
+              .goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft](
+                fileURI = fileURI,
+                line = line,
+                character = character,
+                searchSettings = (SoftAST, settings),
+                isCancelled = isCancelled,
+                state = state
+              )
+              .to(ArraySeq)
+
+          Right(result)
+      }
     }
-  }
 
 }
