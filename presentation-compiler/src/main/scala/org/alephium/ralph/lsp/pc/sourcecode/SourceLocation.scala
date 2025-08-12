@@ -170,7 +170,7 @@ object SourceLocation extends StrictImplicitLogging {
      *
      * @return a node representing Strict-AST.
      */
-    def toNodeStrict(): Option[NodeStrict[Ast.Positioned]] =
+    def toNodeStrict()(implicit logger: ClientLogger): Option[NodeStrict[Ast.Positioned]] =
       source.parsed match {
         case parsed: SourceCodeState.Parsed =>
           parsed
@@ -178,26 +178,25 @@ object SourceLocation extends StrictImplicitLogging {
             .statements
             .find(_.index containsSoft ast.index)
             .flatMap {
-              statement =>
-                statement match {
-                  case _: Tree.Import =>
-                    None // SoftAST does not support import jump definitions yet.
+              case tree: Tree.Import =>
+                // NodeSoft and NodeStrict do not point to a `File`. Files (import go-to-def) are stored in the `File` type.
+                logger.error(s"Expected: ${Tree.Source.getClass.getName}. Actual: ${tree.getClass.getName}")
+                None
 
-                  case tree: Tree.Source =>
-                    tree
-                      .rootNode
-                      .findLast(_.sourceIndex.exists(_ isEqualToSoft ast.index))
-                      .map {
-                        node =>
-                          NodeStrict(
-                            ast = node.data,
-                            source = CodeStrict(
-                              tree = tree,
-                              parsed = parsed
-                            )
-                          )
-                      }
-                }
+              case tree: Tree.Source =>
+                tree
+                  .rootNode
+                  .findLast(_.sourceIndex.exists(_ isEqualToSoft ast.index))
+                  .map {
+                    node =>
+                      NodeStrict(
+                        ast = node.data,
+                        source = CodeStrict(
+                          tree = tree,
+                          parsed = parsed
+                        )
+                      )
+                  }
             }
 
         case _ =>
