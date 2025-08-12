@@ -78,6 +78,7 @@ object Token {
   case object Plus                                            extends Operator("+") with Reserved with InfixOperator with Unary
   case object Asterisk                                        extends Operator("*") with Reserved with InfixOperator
   case object ForwardSlash                                    extends Operator("/") with Reserved with InfixOperator
+  case object BackSlash                                       extends Operator("\\") with Reserved with InfixOperator
   case object GreaterThan                                     extends Operator(">") with Reserved with InfixOperator
   case object LessThan                                        extends Operator("<") with Reserved with InfixOperator
   case object Equal                                           extends Operator("=") with Reserved

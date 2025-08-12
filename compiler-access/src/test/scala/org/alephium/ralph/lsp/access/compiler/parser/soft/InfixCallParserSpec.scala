@@ -128,4 +128,20 @@ class InfixCallParserSpec extends AnyWordSpec with Matchers {
 
   }
 
+  "back slash" in {
+    val ast =
+      parseInfixCall("""-1i \ 2i""")
+
+    ast shouldBe
+      SoftAST.InfixExpression(
+        index = indexOf(""">>-1i \ 2i<<"""),
+        leftExpression = Number(""">>-1i<< \ 2i"""),
+        preOperatorSpace = Some(Space("""-1i>> <<\ 2i""")),
+        operator = BackSlash("""-1i >>\<< 2i"""),
+        postOperatorSpace = Some(Space("""-1i \>> <<2i""")),
+        rightExpression = Number("""-1i \ >>2i<<""")
+      )
+
+  }
+
 }
