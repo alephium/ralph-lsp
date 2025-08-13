@@ -29,7 +29,7 @@ class GoToStructFieldSpec extends AnyWordSpec with Matchers {
       }
 
       "struct is defined within the contract" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract Test() {
             |
@@ -47,7 +47,7 @@ class GoToStructFieldSpec extends AnyWordSpec with Matchers {
 
       "duplicate struct field name and variable name" when {
         "variable is defined before the struct" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  let value = 1
@@ -58,7 +58,7 @@ class GoToStructFieldSpec extends AnyWordSpec with Matchers {
         }
 
         "variable is defined after the struct" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  let instance = Struct { v@@alue: 2 }
@@ -73,7 +73,7 @@ class GoToStructFieldSpec extends AnyWordSpec with Matchers {
 
   "struct field values" when {
     "variable is defined before the struct" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |{
           |  let >>value<< = 1
@@ -84,7 +84,7 @@ class GoToStructFieldSpec extends AnyWordSpec with Matchers {
     }
 
     "variable is defined after the struct" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |{
           |  let instance = Struct { value: v@@alue }

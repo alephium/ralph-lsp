@@ -28,7 +28,7 @@ object GoToDefImport {
   def apply(
       cursorIndex: Int,
       path: Node[SoftAST.Path, SoftAST],
-      dependency: Option[WorkspaceState.Compiled]): ArraySeq[SourceLocation.GoToDefSoft] =
+      dependency: Option[WorkspaceState.Compiled]): ArraySeq[SourceLocation.File] =
     path.parent match {
       case Some(Node(string: SoftAST.StringLiteral, _)) =>
         apply(
@@ -55,7 +55,7 @@ object GoToDefImport {
   def apply(
       cursorIndex: Int,
       string: SoftAST.StringLiteral,
-      dependency: Option[WorkspaceState.Compiled]): ArraySeq[SourceLocation.GoToDefSoft] =
+      dependency: Option[WorkspaceState.Compiled]): ArraySeq[SourceLocation.File] =
     dependency match {
       case Some(dependency) =>
         // Build a path containing all the sub-paths occurring before the cursor-index.

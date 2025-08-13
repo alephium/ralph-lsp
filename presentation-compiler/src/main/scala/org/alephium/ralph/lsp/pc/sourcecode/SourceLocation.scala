@@ -165,6 +165,44 @@ object SourceLocation extends StrictImplicitLogging {
     override def parsed: SourceCodeState.IsParsedAndCompiled =
       source.parsed
 
+    /**
+     * Converts this [[SoftAST]] result to Strict-AST's result.
+     *
+     * @return a node representing Strict-AST.
+     */
+    def toNodeStrict()(implicit logger: ClientLogger): Option[NodeStrict[Ast.Positioned]] =
+      source.parsed match {
+        case parsed: SourceCodeState.Parsed =>
+          parsed
+            .astStrict
+            .statements
+            .find(_.index containsSoft ast.index)
+            .flatMap {
+              case tree: Tree.Import =>
+                // NodeSoft and NodeStrict do not point to a `File`. Files (import go-to-def) are stored in the `File` type.
+                logger.error(s"Expected: ${Tree.Source.getClass.getName}. Actual: ${tree.getClass.getName}")
+                None
+
+              case tree: Tree.Source =>
+                tree
+                  .rootNode
+                  .findLast(_.sourceIndex.exists(_ isEqualToSoft ast.index))
+                  .map {
+                    node =>
+                      NodeStrict(
+                        ast = node.data,
+                        source = CodeStrict(
+                          tree = tree,
+                          parsed = parsed
+                        )
+                      )
+                  }
+            }
+
+        case _ =>
+          None
+      }
+
   }
 
   case class GoToTypeDef(

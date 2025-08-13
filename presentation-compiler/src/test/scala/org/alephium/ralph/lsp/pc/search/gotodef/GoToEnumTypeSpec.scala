@@ -38,7 +38,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
 
       "soft-parseable" when {
         "invalid enum values exist" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |enum >>En@@umType<< {
               |  Field0 = 0
@@ -51,7 +51,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
         }
 
         "enum exists without a body" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |enum >>En@@umType<<
               |""".stripMargin
@@ -59,7 +59,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
         }
 
         "duplicate enums exist" in {
-          goToDefinitionSoft() {
+          goToDefinition() {
             """
               |{
               |  enum EnumType
@@ -222,7 +222,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     }
 
     "enum is within function parameter" in {
-      goToDefinitionSoft()(
+      goToDefinition()(
         """
           |enum >>EnumType<< {
           |  Field0 = 0
@@ -293,7 +293,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
 
   "duplicates identifier" when {
     "enum is called" in {
-      goToDefinitionSoft()(
+      goToDefinition()(
         """
           |Contract Enum {
           |
@@ -311,7 +311,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
 
     "identifier is called" when {
       "cont and enum exists" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |Contract Enum {
             |
@@ -328,7 +328,7 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
       }
 
       "cont and enum do not exist" in {
-        goToDefinitionSoft()(
+        goToDefinition()(
           """
             |Contract >>Enum<< {
             |

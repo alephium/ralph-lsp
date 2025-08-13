@@ -12,7 +12,7 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
   "return self" when {
     "strict-parseable" when {
       "struct exists" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct >>MyStruc@@t<< {
             |  structField: Bool
@@ -22,7 +22,7 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
       }
 
       "duplicate structs exist" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |{
             |  struct MyStruct {
@@ -40,7 +40,7 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
 
     "soft-parseable" when {
       "struct exists" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct >>MyStruc@@t<<
             |""".stripMargin
@@ -48,7 +48,7 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
       }
 
       "duplicate structs exist" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |{
             |  struct MyStruct
@@ -62,7 +62,7 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
 
   "struct is accessed" when {
     "from contract parameter" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |struct >>MyStruct<< { }
           |
@@ -73,7 +73,7 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
 
     "from function parameter" when {
       "global" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct >>MyStruct<< { }
             |
@@ -87,7 +87,7 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
       }
 
       "local" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract Test {
             |
@@ -103,7 +103,7 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
 
     "from local variable" when {
       "global" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |struct >>MyStruct<< { }
             |
@@ -119,7 +119,7 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
       }
 
       "local" in {
-        goToDefinitionSoft() {
+        goToDefinition() {
           """
             |Contract Test {
             |
@@ -137,7 +137,7 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
   }
 
   "duplicate structs" in {
-    goToDefinitionSoft() {
+    goToDefinition() {
       """
         |struct >>MyStruct<< { }
         |
@@ -159,7 +159,7 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
 
   "nested structs" when {
     "single" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |struct >>Node<< {
           |  child: No@@de
@@ -169,7 +169,7 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
     }
 
     "duplicated" in {
-      goToDefinitionSoft() {
+      goToDefinition() {
         """
           |struct >>Node<< {}
           |

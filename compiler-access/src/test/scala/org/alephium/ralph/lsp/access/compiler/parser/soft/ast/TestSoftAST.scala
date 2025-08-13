@@ -215,6 +215,15 @@ object TestSoftAST {
       token = Token.ForwardSlash
     )
 
+  def BackSlash(code: String): SoftAST.TokenDocumented[Token.BackSlash.type] =
+    BackSlash(indexOf(code))
+
+  def BackSlash(index: SourceIndex): SoftAST.TokenDocumented[Token.BackSlash.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.BackSlash
+    )
+
   def GreaterThan(code: String): SoftAST.TokenDocumented[Token.GreaterThan.type] =
     GreaterThan(indexOf(code))
 

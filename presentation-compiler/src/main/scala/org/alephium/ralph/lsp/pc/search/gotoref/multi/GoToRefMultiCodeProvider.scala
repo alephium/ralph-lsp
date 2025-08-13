@@ -27,20 +27,18 @@ private[search] case object GoToRefMultiCodeProvider extends MultiCodeProvider[G
    * This function is used by the LSP to resolve “Go to References” requests across multiple workspaces.
    * For single-workspace search, use [[org.alephium.ralph.lsp.pc.search.gotoref.GoToRefCodeProvider]].
    *
-   * @param fileURI          The URI of the file where this search is executed.
-   * @param line             The line number where the search begins.
-   * @param character        The character offset within the line.
-   * @param enableSoftParser Whether to use a soft parser.
-   * @param isCancelled      Check whether the search should be cancelled.
-   * @param pcStates         Current presentation-compiler states of each workspace.
-   * @param settings         Provider-specific settings.
+   * @param fileURI     The URI of the file where this search is executed.
+   * @param line        The line number where the search begins.
+   * @param character   The character offset within the line.
+   * @param isCancelled Check whether the search should be cancelled.
+   * @param pcStates    Current presentation-compiler states of each workspace.
+   * @param settings    Provider-specific settings.
    * @return Either an error or search results.
    */
   override def search(
       fileURI: URI,
       line: Int,
       character: Int,
-      enableSoftParser: Boolean,
       isCancelled: IsCancelled,
       pcStates: PCStates,
       settings: GoToRefMultiSetting
@@ -53,7 +51,6 @@ private[search] case object GoToRefMultiCodeProvider extends MultiCodeProvider[G
         fileURI = fileURI,
         line = line,
         character = character,
-        enableSoftParser = false, // Reference search is currently not implemented for SoftAST.
         isCancelled = isCancelled,
         pcStates = pcStates,
         settings = ()

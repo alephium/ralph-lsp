@@ -24,7 +24,6 @@ private[search] case object CompletionMultiCodeProvider extends MultiCodeProvide
       fileURI: URI,
       line: Int,
       character: Int,
-      enableSoftParser: Boolean,
       isCancelled: IsCancelled,
       pcStates: PCStates,
       settings: Unit
