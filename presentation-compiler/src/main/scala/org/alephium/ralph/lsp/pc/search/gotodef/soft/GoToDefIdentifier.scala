@@ -88,6 +88,10 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         // TODO: Process struct field assignments - Issue https://github.com/alephium/ralph-lsp/issues/322
         Iterator.empty
 
+      case Some(Node(annotation: SoftAST.Annotation, _)) if annotation.identifier contains identNode.data =>
+        // TODO: Support jump-definition for annotations: https://github.com/alephium/ralph-lsp/issues/589
+        Iterator.empty
+
       case Some(Node(assignment: SoftAST.TypeAssignment, _)) if assignment.expressionLeft == identNode.data =>
         self()
 
@@ -122,7 +126,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           case Some(grandParentNode @ Node(_: SoftAST.Group[_, _, _], _)) =>
             grandParentNode.parent match {
               case Some(Node(_: SoftAST.Annotation, _)) =>
-                // TODO: Support jump-definition for annotations.
+                // TODO: Support jump-definition for annotations: https://github.com/alephium/ralph-lsp/issues/589
                 Iterator.empty
 
               case _ =>
