@@ -119,6 +119,17 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           case Some(Node(_: SoftAST.VariableDeclaration | _: SoftAST.Const, _)) =>
             self()
 
+          case Some(grandParentNode @ Node(_: SoftAST.Group[_, _, _], _)) =>
+            grandParentNode.parent match {
+              case Some(Node(_: SoftAST.Annotation, _)) =>
+                // TODO: Support jump-definition for annotations.
+                Iterator.empty
+
+              case _ =>
+                // invoke full scope search.
+                runFullSearch()
+            }
+
           case _ =>
             // invoke full scope search.
             runFullSearch()
