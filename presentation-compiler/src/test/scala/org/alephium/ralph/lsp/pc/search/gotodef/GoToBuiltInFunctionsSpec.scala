@@ -23,6 +23,19 @@ class GoToBuiltInFunctionsSpec extends AnyWordSpec with Matchers {
         expected = None
       )
     }
+
+    "invoked within an enum" when {
+      "enum" in {
+        goToDefBuiltIn(
+          code = """
+              |enum Test {
+              |  asse@@rt!()
+              |}
+              |""".stripMargin,
+          expected = None
+        )
+      }
+    }
   }
 
   "return non-empty" when {

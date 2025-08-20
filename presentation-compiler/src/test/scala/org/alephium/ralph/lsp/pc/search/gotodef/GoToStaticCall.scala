@@ -3,11 +3,62 @@
 
 package org.alephium.ralph.lsp.pc.search.gotodef
 
+import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 
 class GoToStaticCall extends AnyWordSpec with Matchers {
+
+  "return empty" when {
+    "encodeFields! is invoked" when {
+      "enum" in {
+        goToDefBuiltIn(
+          code = """
+              |Contract Test() {
+              |  
+              |  enum Target { }
+              |  
+              |  fn test() -> () {
+              |    Target.encodeFiel@@ds!()
+              |  }
+              |}
+              |""".stripMargin,
+          expected = None
+        )
+      }
+
+      "event" in {
+        goToDefBuiltIn(
+          code = """
+              |Contract Test() {
+              |
+              |  event Target(a: Type)
+              |
+              |  fn test() -> () {
+              |    Target.encodeFiel@@ds!()
+              |  }
+              |}
+              |""".stripMargin,
+          expected = None
+        )
+      }
+
+      "struct" in {
+        goToDefBuiltIn(
+          code = """
+              |struct Target { a: Type }
+              |
+              |Contract Test() {
+              |  fn test() -> () {
+              |    Target.encodeFiel@@ds!()
+              |  }
+              |}
+              |""".stripMargin,
+          expected = None
+        )
+      }
+    }
+  }
 
   "access single static functions" in {
     goToDefinition()(
