@@ -486,13 +486,13 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     // Inheritance search must include all built-in interfaces.
     val builtInTrees =
       sourceCode.part match {
-        case _: SoftAST.Template =>
-          // Built-in trees are only searchable for contracts
-          cache.builtInTrees
+        case _: SoftAST.Enum | _: SoftAST.Event | _: SoftAST.Struct =>
+          // Disable for enum, structs, events
+          ArraySeq.empty
 
         case _ =>
-          // Disable for enum, structs, events etc
-          ArraySeq.empty
+          // Allow built-in searches for everything else
+          cache.builtInTrees
       }
 
     // Merge both the actual inherited trees and the built-in trees.
