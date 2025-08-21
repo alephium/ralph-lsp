@@ -844,7 +844,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       sourceCode: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     // Check if the name matches the identifier.
-    if (!detectCallSyntax || (target.is_RefCall_Or_TypeAssignsType() && !target.isWithinEmit()))
+    if (!detectCallSyntax || (target.is_RefCall_TypeAssignsType_Or_MethodCall() && !target.isWithinEmit()))
       searchIdentifier(
         identifier = templateIdentifier.identifier,
         target = target,
