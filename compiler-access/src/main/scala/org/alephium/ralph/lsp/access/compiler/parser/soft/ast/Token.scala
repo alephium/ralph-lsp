@@ -62,6 +62,8 @@ object Token {
   case object PlusPlus                                        extends Operator("++") with Reserved with InfixOperator
   case object PlusEquals                                      extends Operator("+=") with Reserved with InfixOperator
   case object MinusEquals                                     extends Operator("-=") with Reserved with InfixOperator
+  case object MultiplyEquals                                  extends Operator("*=") with Reserved with InfixOperator
+  case object DivideEquals                                    extends Operator("/=") with Reserved with InfixOperator
   case object LessThanOrEqual                                 extends Operator("<=") with Reserved with InfixOperator
   case object NotEqual                                        extends Operator("!=") with Reserved with InfixOperator
   case object ForwardArrow                                    extends Operator("->") with Reserved

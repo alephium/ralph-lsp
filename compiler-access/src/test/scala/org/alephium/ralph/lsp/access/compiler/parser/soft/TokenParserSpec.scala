@@ -54,7 +54,7 @@ class TokenParserSpec extends AnyWordSpec {
       }
 
       "/" in {
-        Token.ForwardSlash.otherReservedTokensWithThisPrefix should contain only Token.DoubleForwardSlash
+        Token.ForwardSlash.otherReservedTokensWithThisPrefix should contain only (Token.DoubleForwardSlash, Token.DivideEquals)
       }
 
       "//" in {

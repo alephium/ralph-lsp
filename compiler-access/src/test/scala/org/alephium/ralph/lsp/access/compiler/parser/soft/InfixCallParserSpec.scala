@@ -4,7 +4,7 @@
 package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
 import org.scalatest.matchers.should.Matchers
@@ -128,20 +128,28 @@ class InfixCallParserSpec extends AnyWordSpec with Matchers {
 
   }
 
-  "back slash" in {
-    val ast =
-      parseInfixCall("""-1i \ 2i""")
+  "parse all infix operations" in {
+    Token.infix foreach {
+      infixToken =>
+        val operation = infixToken.lexeme
 
-    ast shouldBe
-      SoftAST.InfixExpression(
-        index = indexOf(""">>-1i \ 2i<<"""),
-        leftExpression = Number(""">>-1i<< \ 2i"""),
-        preOperatorSpace = Some(Space("""-1i>> <<\ 2i""")),
-        operator = BackSlash("""-1i >>\<< 2i"""),
-        postOperatorSpace = Some(Space("""-1i \>> <<2i""")),
-        rightExpression = Number("""-1i \ >>2i<<""")
-      )
+        val ast =
+          parseInfixCall(s"""-1i $operation 2i""")
 
+        // Use empty spaces of the same length as the infix-operation instead of the actual operation
+        // to avoid conflicts with the symbol `>> <<` when `a >> b` is used which results in `>>>><<`.
+        val operationSpace = " " * operation.length
+
+        ast shouldBe
+          SoftAST.InfixExpression(
+            index = indexOf(s""">>-1i $operationSpace 2i<<"""),
+            leftExpression = Number(s""">>-1i<< $operationSpace 2i"""),
+            preOperatorSpace = Some(Space(s"""-1i>> <<$operationSpace 2i""")),
+            operator = TokenDocumented(code = s"""-1i >>$operationSpace<< 2i""", token = infixToken),
+            postOperatorSpace = Some(Space(s"""-1i $operationSpace>> <<2i""")),
+            rightExpression = Number(s"""-1i $operationSpace >>2i<<""")
+          )
+    }
   }
 
 }
