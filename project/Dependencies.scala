@@ -13,7 +13,7 @@ object Dependencies {
   /** TEST */
   lazy val scalaTest  = "org.scalatest"     %% "scalatest"       % "3.2.19"   % Test
   lazy val scalaCheck = "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test
-  lazy val scalaMock  = "org.scalamock"     %% "scalamock"       % "7.3.3"    % Test
+  lazy val scalaMock  = "org.scalamock"     %% "scalamock"       % "7.4.1"    % Test
 
   /** Core */
   lazy val ralphc = "org.alephium" %% "alephium-ralphc" % Version.ralphc excludeAll (
