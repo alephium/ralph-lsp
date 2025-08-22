@@ -295,10 +295,12 @@ class GoToEnumTypeSpec extends AnyWordSpec with Matchers {
     "enum is called" in {
       goToDefinition()(
         """
-          |Contract Enum {
+          |Contract >>Enum<< {
           |
           |  enum >>Enum<< {}
           |  const Enum = 1
+          |  event Enum()
+          |  struct Enum {}
           |
           |  fn main() -> () {
           |     Enu@@m.One

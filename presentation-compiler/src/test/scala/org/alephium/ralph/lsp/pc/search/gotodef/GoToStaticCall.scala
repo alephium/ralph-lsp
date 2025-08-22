@@ -139,4 +139,17 @@ class GoToStaticCall extends AnyWordSpec with Matchers {
     }
   }
 
+  "issue #586" in {
+    // https://github.com/alephium/ralph-lsp/issues/586
+    goToDefinition() {
+      """
+        |Contract >>Test<< {
+        |  enum >>Test<< { }
+        |
+        |  @@Test.encodeFields!()
+        |}
+        |""".stripMargin
+    }
+  }
+
 }

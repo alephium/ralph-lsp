@@ -173,9 +173,9 @@ object SoftAST {
           false
       }
 
-    def is_RefCall_Or_TypeAssignsType(): Boolean =
+    def is_RefCall_TypeAssignsType_Or_MethodCall(): Boolean =
       node.parent match {
-        case Some(Node(_: SoftAST.ReferenceCall, _)) =>
+        case Some(Node(_: SoftAST.ReferenceCall | _: SoftAST.MethodCall, _)) =>
           true
 
         case Some(Node(assignment: SoftAST.TypeAssignment, _)) if assignment.expressionRight.contains(node) =>
