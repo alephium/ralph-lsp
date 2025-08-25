@@ -183,4 +183,16 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "selected constructor position is the 0^{th} character" ignore {
+    goToDefinition() {
+      """
+        |struct >>MyStruct<< {
+        |  field: Bool
+        |}
+        |
+        |@@MyStruct { field }
+        |""".stripMargin
+    }
+  }
+
 }
