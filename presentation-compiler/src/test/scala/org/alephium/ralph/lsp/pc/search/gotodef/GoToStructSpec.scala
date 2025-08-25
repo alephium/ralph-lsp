@@ -183,7 +183,8 @@ class GoToStructSpec extends AnyWordSpec with Matchers {
     }
   }
 
-  "selected constructor position is the 0^{th} character" ignore {
+  "Issue #597: Selected constructor position is the 0^{th} character" ignore {
+    // https://github.com/alephium/ralph-lsp/issues/597
     goToDefinition() {
       """
         |struct >>MyStruct<< {
