@@ -84,10 +84,6 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       )
 
     parent match {
-      case Some(Node(assignment: SoftAST.StructFieldAssignment, _)) if assignment.expressionLeft contains identNode.data =>
-        // TODO: Process struct field assignments - Issue https://github.com/alephium/ralph-lsp/issues/322
-        Iterator.empty
-
       case Some(Node(annotation: SoftAST.Annotation, _)) if annotation.identifier contains identNode.data =>
         // TODO: Support jump-definition for annotations: https://github.com/alephium/ralph-lsp/issues/589
         Iterator.empty
@@ -116,6 +112,15 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
       case Some(Node(map: SoftAST.MapAssignment, _)) if map.identifier == identNode.data =>
         self()
+
+      case Some(node @ Node(assignment: SoftAST.StructFieldAssignment, _)) if assignment.expressionLeft contains identNode.data =>
+        searchStructField(
+          structFieldLeftIdent = identNode,
+          structField = node.upcast(assignment),
+          workspace = cache.workspace,
+          sourceCode = sourceCode,
+          settings = settings
+        )
 
       case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
         node.parent match {
@@ -196,6 +201,176 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         runFullSearch()
     }
   }
+
+  /**
+   * Search for the struct-field names used on the left-hand-side of a struct-field assignment.
+   *
+   * {{{
+   *   struct MyStruct { >>field<<: Type}
+   *   MyStruct { @@field: value}
+   * }}}
+   *
+   * @param structFieldLeftIdent The identifier node representing the struct-field name.
+   *                             This is the left-hand-side of the [[SoftAST.StructFieldAssignment]], where the search was performed.
+   * @param structField          The struct-field containing the left identifier.
+   *                             The `leftExpression` of this `Node` is the struct-field.
+   * @param sourceCode           The block-part and its source code state where this search is executed.
+   * @param workspace            The workspace state where the source-code is located.
+   * @return Locations of all structs matching the struct-identifier and the field-name.
+   */
+  private def searchStructField(
+      structFieldLeftIdent: Node[SoftAST.Identifier, SoftAST],
+      structField: Node[SoftAST.StructFieldAssignment, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      workspace: WorkspaceState.IsSourceAware,
+      settings: GoToDefSetting
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    // First, find the struct matching the constructor `@@MyStruct {field: value}`
+    searchStruct(
+      structField = structField,
+      sourceCode = sourceCode,
+      workspace = workspace,
+      settings = settings
+    ) flatMap {
+      struct =>
+        // Finally, search the matching fields in each struct.
+        searchStructField(
+          struct = struct.ast,
+          field = structFieldLeftIdent,
+          sourceCode = struct.source
+        )
+    }
+
+  /**
+   * Search for `struct` definitions matching the constructor identifier used by the given
+   * struct-field assignment.
+   *
+   * {{{
+   *   struct MyStruct { >>field<<: Type}
+   *   MyStruct { @@field: value}
+   * }}}
+   *
+   * @param structField The struct-field assignment contained within the constructor.
+   * @param sourceCode  The block-part and its source code state where this search is executed.
+   * @param workspace   The workspace state where the source-code is located.
+   * @return Locations of all structs matching the assignment's constructor struct-identifier.
+   */
+  private def searchStruct(
+      structField: Node[SoftAST.StructFieldAssignment, SoftAST],
+      sourceCode: SourceLocation.CodeSoft,
+      workspace: WorkspaceState.IsSourceAware,
+      settings: GoToDefSetting
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.Struct]] =
+    structField.parent.flatMap(_.parent) match {
+      case Some(Node(constructor: SoftAST.StructConstructor, _)) =>
+        searchStruct(
+          constructor = constructor,
+          sourceCode = sourceCode,
+          workspace = workspace,
+          settings = settings
+        )
+
+      case _ =>
+        Iterator.empty
+    }
+
+  /**
+   * Search for `struct` definitions matching the given constructor identifier.
+   *
+   * {{{
+   *   struct >>MyStruct<< { field Type}
+   *   My@@Struct { field: value}
+   * }}}
+   *
+   * @param constructor The constructor whose identifier is used to search the matching struct definitions.
+   * @param sourceCode  The block-part and its source code state where this search is executed.
+   * @param workspace   The workspace state where the source-code is located.
+   * @return Locations of all structs matching the assignment's constructor struct-identifier.
+   */
+  private def searchStruct(
+      constructor: SoftAST.StructConstructor,
+      sourceCode: SourceLocation.CodeSoft,
+      workspace: WorkspaceState.IsSourceAware,
+      settings: GoToDefSetting
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.Struct]] = {
+    // Find all definitions that match the given constructor's identifier.
+    // Note: These could result in definitions that may not be structs.
+    val definitions =
+      CodeProvider
+        .goToDefSoft
+        .search(
+          linePosition = constructor.identifier.index.middle.toLineRange(sourceCode.parsed.code).from,
+          fileURI = sourceCode.parsed.fileURI,
+          workspace = workspace,
+          searchSettings = (SoftAST, settings)
+        )
+
+    // Collect the `struct`s.
+    definitions match {
+      case Some(Right(definition)) =>
+        definition flatMap {
+          case SourceLocation.NodeSoft(definitionName: SoftAST.CodeString, source) =>
+            // Collect only the structs.
+            source.part.toNode.findAtIndex(definitionName.index).flatMap(_.parent).collect {
+              case Node(struct: SoftAST.Struct, _) => // If the parent is a struct, collect it!
+                SourceLocation.NodeSoft(
+                  ast = struct,
+                  source = source
+                )
+            }
+
+          case definition: SourceLocation.GoToDefSoft =>
+            // FIXME: This will be removed once `goToDef` is enforced to always return `CodeString`.
+            logger.error(s"Invalid search result '$definition'. Expected `${classOf[SoftAST.CodeString].getSimpleName}`")
+            Iterator.empty
+        }
+
+      case Some(Left(error)) =>
+        logger.error(s"Error searching searching struct identifier '${constructor.identifier.toCode()}'. Reason: ${error.message}. FileURI: ${sourceCode.parsed.fileURI}")
+        Iterator.empty
+
+      case None =>
+        logger.trace(s"Struct '${constructor.identifier.toCode()}' not found. FileURI: ${sourceCode.parsed.fileURI}")
+        Iterator.empty
+    }
+  }
+
+  /**
+   * Search all matching structs-fields within the given `struct` definition.
+   *
+   * {{{
+   *   struct MyStruct {
+   *      >>field<<: Type1
+   *      >>field<<: Type2
+   *   }
+   *   MyStruct { @@field: value}
+   * }}}
+   *
+   * @param struct     The `struct` whose fields are searched.
+   * @param field      The field to locate with the given `struct`.
+   * @param sourceCode The block-part and its source code state where this search is executed.
+   * @return Locations of all match struct fields.
+   */
+  private def searchStructField(
+      struct: SoftAST.Struct,
+      field: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    struct
+      .params
+      .toNode
+      .walkDown
+      .collect {
+        case Node(SoftAST.TypeAssignment(_, _, ident: SoftAST.Identifier, _, _, _, _), _) =>
+          searchIdentifier(
+            identifier = ident,
+            target = field,
+            sourceCode = sourceCode
+          )
+      }
+      .flatten
 
   /**
    * Searches for occurrences of the given identifier node within the source code.

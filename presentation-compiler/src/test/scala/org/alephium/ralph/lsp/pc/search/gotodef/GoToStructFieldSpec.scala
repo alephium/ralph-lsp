@@ -95,4 +95,84 @@ class GoToStructFieldSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "go to the struct field" when {
+    "syntax is well defined" in {
+      goToDefinition() {
+        """
+          |struct MyStruct { >>field<<: Value }
+          |MyStruct { @@field: 123 }
+          |""".stripMargin
+      }
+    }
+
+    "field values are not provided" in {
+      goToDefinition() {
+        """
+          |struct MyStruct { >>field<< }
+          |MyStruct { @@field }
+          |""".stripMargin
+      }
+    }
+
+    "constructor's closing brace is missing" in {
+      goToDefinition() {
+        """
+          |struct MyStruct { >>field<< }
+          |MyStruct { @@field
+          |""".stripMargin
+      }
+    }
+
+    "definitions closing brace is missing" in {
+      goToDefinition() {
+        """
+          |struct MyStruct { >>field<<
+          |{MyStruct { @@field }
+          |""".stripMargin
+      }
+    }
+
+    "duplicate fields" in {
+      goToDefinition() {
+        """
+          |struct MyStruct {
+          |  >>field<<,
+          |  >>field<<,
+          |  ,
+          |  ,
+          |}
+          |
+          |MyStruct { @@field }
+          |""".stripMargin
+      }
+    }
+
+    "duplicate structs with duplicate fields" in {
+      goToDefinition() {
+        """
+          |struct MyStruct {
+          |  >>field<<,
+          |  ,
+          |  >>field<<,
+          |  ,
+          |}
+          |
+          |struct MyStruct {
+          |  >>field<<,
+          |  ,
+          |  >>field<<: Type,
+          |  ,
+          |  >>field<<,
+          |}
+          |
+          |struct MyStruct {
+          |  notThisGuy: Type
+          |}
+          |
+          |MyStruct { @@field }
+          |""".stripMargin
+      }
+    }
+  }
+
 }
