@@ -71,6 +71,24 @@ object TestSoftAST {
       token = Token.MinusEquals
     )
 
+  def MultiplyEquals(code: String): SoftAST.TokenDocumented[Token.MultiplyEquals.type] =
+    MultiplyEquals(indexOf(code))
+
+  def MultiplyEquals(index: SourceIndex): SoftAST.TokenDocumented[Token.MultiplyEquals.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.MultiplyEquals
+    )
+
+  def DivideEquals(code: String): SoftAST.TokenDocumented[Token.DivideEquals.type] =
+    DivideEquals(indexOf(code))
+
+  def DivideEquals(index: SourceIndex): SoftAST.TokenDocumented[Token.DivideEquals.type] =
+    TokenDocumented(
+      index = index,
+      token = Token.DivideEquals
+    )
+
   def LessThanOrEqual(code: String): SoftAST.TokenDocumented[Token.LessThanOrEqual.type] =
     LessThanOrEqual(indexOf(code))
 
@@ -861,6 +879,14 @@ object TestSoftAST {
 
   def CodeStringExpected(text: String): SoftAST.CodeStringExpected =
     SoftAST.CodeStringExpected(indexOf(text))
+
+  def TokenDocumented[T <: Token](
+      code: String,
+      token: T): SoftAST.TokenDocumented[T] =
+    TokenDocumented(
+      index = indexOf(code),
+      token = token
+    )
 
   def TokenDocumented[T <: Token](
       index: SourceIndex,
