@@ -144,12 +144,11 @@ object SourceIndexExtra {
 
     /** Calculates the middle/centre (average) position, favouring the floor value. */
     def middle: SourceIndex = {
-      val average = (sourceIndex.to.toDouble - sourceIndex.from) / 2.0
+      val average = (sourceIndex.to - sourceIndex.from) / 2
       val middle  = sourceIndex.from + average
-      val floor   = math.floor(middle)
 
       range(
-        from = floor.toInt,
+        from = middle,
         to = sourceIndex.to,
         fileURI = sourceIndex.fileURI
       )
