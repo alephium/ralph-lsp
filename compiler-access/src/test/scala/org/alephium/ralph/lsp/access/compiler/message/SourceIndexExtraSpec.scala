@@ -83,4 +83,60 @@ class SourceIndexExtraSpec extends AnyWordSpec with Matchers {
 
   }
 
+  "middle" when {
+    "mid ranged" in {
+      //   10   -    20
+      //        15 - 20
+      range(10, 20).middle shouldBe range(15, 20)
+    }
+
+    "zero ranged" in {
+      // 0   -   20
+      //    10 - 20
+      range(0, 20).middle shouldBe range(10, 20)
+    }
+
+    "width is 0" when {
+      "zero" in {
+        // 0 - 0
+        // 0 - 0
+        range(0, 0).middle shouldBe range(0, 0)
+      }
+
+      "non zero" in {
+        // 10 - 10
+        // 10 - 10
+        range(10, 10).middle shouldBe range(10, 10)
+      }
+    }
+
+    "width is 1" when {
+      "from is zero" in {
+        // 0 - 1
+        // 0 - 1
+        range(0, 1).middle shouldBe range(0, 1)
+      }
+
+      "non zero (1)" in {
+        // 10 - 11
+        // 10 - 11
+        range(10, 11).middle shouldBe range(10, 11)
+      }
+
+      "non-zero (2)" in {
+        // 1 - 2
+        // 1 - 2
+        range(1, 2).middle shouldBe range(1, 2)
+      }
+    }
+
+    "width is 2" when {
+      "from is zero" in {
+        // 0   -   2
+        //     1 - 2
+        range(0, 2).middle shouldBe range(1, 2)
+      }
+    }
+  }
+
 }

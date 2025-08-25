@@ -35,6 +35,16 @@ object SourceIndexExtra {
       fileURI = None
     )
 
+  @inline def range(
+      from: Int,
+      to: Int,
+      fileURI: Option[URI]): SourceIndex =
+    SourceIndex(
+      index = from,
+      width = to - from,
+      fileURI = fileURI
+    )
+
   /**
    * Sending negative index to the client would be incorrect.
    * This set the index to be an empty range.
@@ -131,6 +141,19 @@ object SourceIndexExtra {
 
     def width: Int =
       sourceIndex.width
+
+    /** Calculates the middle/centre (average) position, favouring the floor value. */
+    def middle: SourceIndex = {
+      val average = (sourceIndex.to.toDouble - sourceIndex.from) / 2.0
+      val middle  = sourceIndex.from + average
+      val floor   = math.floor(middle)
+
+      range(
+        from = floor.toInt,
+        to = sourceIndex.to,
+        fileURI = sourceIndex.fileURI
+      )
+    }
 
     /** Checks if the given index is within this SourceIndex's from and to index */
     def contains(index: Int): Boolean =
