@@ -206,8 +206,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * Search for the struct-field names used on the left-hand-side of a struct-field assignment.
    *
    * {{{
-   *   struct MyStruct { >>field<<: Type}
-   *   MyStruct { @@field: value}
+   *   struct MyStruct {
+   *     >>field<<: Type
+   *   }
+   *
+   *   MyStruct {
+   *     @@field: value // struct-field assignment
+   *       ↑___↑        // left-hand-side of the assignment
+   *   }
    * }}}
    *
    * @param structFieldLeftIdent The identifier node representing the struct-field name.
@@ -243,12 +249,54 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     }
 
   /**
+   * Search all matching structs-fields within the given `struct` definition.
+   *
+   * {{{
+   *   struct MyStruct {
+   *      >>field<<: Type1
+   *      >>field<<: Type2
+   *   }
+   *
+   *   MyStruct {
+   *     @@field: value
+   *   }
+   * }}}
+   *
+   * @param struct     The `struct` whose fields are searched.
+   * @param field      The field to locate with the given `struct`.
+   * @param sourceCode The block-part and its source code state where this search is executed.
+   * @return Locations of all match struct fields.
+   */
+  private def searchStructField(
+      struct: SoftAST.Struct,
+      field: Node[SoftAST.Identifier, SoftAST],
+      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    struct
+      .params
+      .toNode
+      .walkDown
+      .collect {
+        case Node(SoftAST.TypeAssignment(_, _, ident: SoftAST.Identifier, _, _, _, _), _) =>
+          searchIdentifier(
+            identifier = ident,
+            target = field,
+            sourceCode = sourceCode
+          )
+      }
+      .flatten
+
+  /**
    * Search for `struct` definitions matching the constructor identifier used by the given
    * struct-field assignment.
    *
    * {{{
-   *   struct MyStruct { >>field<<: Type}
-   *   MyStruct { @@field: value}
+   *   struct >>MyStruct<< {
+   *     field: Type
+   *   }
+   *
+   *   @@MyStruct {
+   *     @@field: value // struct-field assignment
+   *   }
    * }}}
    *
    * @param structField The struct-field assignment contained within the constructor.
@@ -281,8 +329,13 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * Search for `struct` definitions matching the given constructor identifier.
    *
    * {{{
-   *   struct >>MyStruct<< { field Type}
-   *   My@@Struct { field: value}
+   *   struct >>MyStruct<< {
+   *     field Type
+   *   }
+   *
+   *   My@@Struct { // struct constructor
+   *     field: value
+   *   }
    * }}}
    *
    * @param constructor The constructor whose identifier is used to search the matching struct definitions.
@@ -338,40 +391,6 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         Iterator.empty
     }
   }
-
-  /**
-   * Search all matching structs-fields within the given `struct` definition.
-   *
-   * {{{
-   *   struct MyStruct {
-   *      >>field<<: Type1
-   *      >>field<<: Type2
-   *   }
-   *   MyStruct { @@field: value}
-   * }}}
-   *
-   * @param struct     The `struct` whose fields are searched.
-   * @param field      The field to locate with the given `struct`.
-   * @param sourceCode The block-part and its source code state where this search is executed.
-   * @return Locations of all match struct fields.
-   */
-  private def searchStructField(
-      struct: SoftAST.Struct,
-      field: Node[SoftAST.Identifier, SoftAST],
-      sourceCode: SourceLocation.CodeSoft): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    struct
-      .params
-      .toNode
-      .walkDown
-      .collect {
-        case Node(SoftAST.TypeAssignment(_, _, ident: SoftAST.Identifier, _, _, _, _), _) =>
-          searchIdentifier(
-            identifier = ident,
-            target = field,
-            sourceCode = sourceCode
-          )
-      }
-      .flatten
 
   /**
    * Searches for occurrences of the given identifier node within the source code.
