@@ -263,18 +263,19 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       settings: GoToDefSetting
     )(implicit searchCache: SearchCache,
       logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.Struct]] =
-    structField.parent.flatMap(_.parent) match {
-      case Some(Node(constructor: SoftAST.StructConstructor, _)) =>
-        searchStruct(
-          constructor = constructor,
-          sourceCode = sourceCode,
-          workspace = workspace,
-          settings = settings
-        )
-
-      case _ =>
-        Iterator.empty
-    }
+    structField
+      .walkParents
+      .take(3) // Search at most 3 parents because this field could be within the tail of a Group, which has `StructConstructor` as its grandparent (3rd position up).
+      .collectFirst {
+        case Node(constructor: SoftAST.StructConstructor, _) =>
+          searchStruct(
+            constructor = constructor,
+            sourceCode = sourceCode,
+            workspace = workspace,
+            settings = settings
+          )
+      }
+      .getOrElse(Iterator.empty)
 
   /**
    * Search for `struct` definitions matching the given constructor identifier.
