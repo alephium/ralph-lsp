@@ -43,7 +43,7 @@ case object GoToDefCodeProviderSoft extends CodeProvider[SourceCodeState.IsParse
       case Right(softAST) =>
         // First, find the first code block where the cursorIndex belongs, i.e. [[SoftAST.BodyPartAST]].
         // In a well-defined code, this is expected to be a top level Contract [[SoftAST.Template]].
-        softAST.toNode.data.parts.find(_.index contains cursorIndex) match {
+        softAST.toNode.data.parts.findLast(_.index contains cursorIndex) match {
           case Some(blockPart) =>
             searchBlockPart(
               cursorIndex = cursorIndex,
