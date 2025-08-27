@@ -142,18 +142,6 @@ object SourceIndexExtra {
     def width: Int =
       sourceIndex.width
 
-    /** Calculates the middle/centre (average) position, favouring the floor value. */
-    def middle: SourceIndex = {
-      val average = (sourceIndex.to - sourceIndex.from) / 2
-      val middle  = sourceIndex.from + average
-
-      range(
-        from = middle,
-        to = sourceIndex.to,
-        fileURI = sourceIndex.fileURI
-      )
-    }
-
     /** Checks if the given index is within this SourceIndex's from and to index */
     def contains(index: Int): Boolean =
       index >= from && index <= to

@@ -356,7 +356,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       CodeProvider
         .goToDefSoft
         .search(
-          linePosition = constructor.identifier.index.middle.toLineRange(sourceCode.parsed.code).from,
+          linePosition = constructor.identifier.index.toLineRange(sourceCode.parsed.code).from,
           fileURI = sourceCode.parsed.fileURI,
           workspace = workspace,
           searchSettings = (SoftAST, settings)
