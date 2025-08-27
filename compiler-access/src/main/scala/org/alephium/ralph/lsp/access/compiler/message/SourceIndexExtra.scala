@@ -35,6 +35,16 @@ object SourceIndexExtra {
       fileURI = None
     )
 
+  @inline def range(
+      from: Int,
+      to: Int,
+      fileURI: Option[URI]): SourceIndex =
+    SourceIndex(
+      index = from,
+      width = to - from,
+      fileURI = fileURI
+    )
+
   /**
    * Sending negative index to the client would be incorrect.
    * This set the index to be an empty range.

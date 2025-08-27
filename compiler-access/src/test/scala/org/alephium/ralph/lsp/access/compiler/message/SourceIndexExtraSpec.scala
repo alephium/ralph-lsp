@@ -80,7 +80,6 @@ class SourceIndexExtraSpec extends AnyWordSpec with Matchers {
       range(5, 10) overlaps range(4, 10) shouldBe true
       range(5, 10) overlaps range(6, 9) shouldBe true
     }
-
   }
 
 }

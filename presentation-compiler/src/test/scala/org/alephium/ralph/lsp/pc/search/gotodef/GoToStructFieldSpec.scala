@@ -95,4 +95,302 @@ class GoToStructFieldSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  "go to the struct field" when {
+    "syntax is well defined" when {
+      "one struct field" in {
+        goToDefinition() {
+          """
+            |struct MyStruct { >>field<<: Value }
+            |MyStruct { @@field: 123 }
+            |""".stripMargin
+        }
+      }
+
+      "two struct field" when {
+        "first field is searched" in {
+          goToDefinition() {
+            """
+              |struct MyStruct {
+              |  >>field1<<: Value,
+              |  field2: Value
+              |}
+              |
+              |MyStruct {
+              |  @@field1: 123,
+              |  field2: 123
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "second field is searched" in {
+          goToDefinition() {
+            """
+              |struct MyStruct {
+              |  field1: Value,
+              |  >>field2<<: Value
+              |}
+              |
+              |MyStruct {
+              |  field1: 123,
+              |  f@@ield2: 123
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "nested struct's, first field is searched" in {
+          goToDefinition() {
+            """
+              |struct MyStruct {
+              |  >>field1<<: Value,
+              |  field2: Value,
+              |  field3: MyStruct
+              |}
+              |
+              |MyStruct {
+              |  field1: 123,
+              |  field2: 123,
+              |  field3:
+              |    MyStruct {
+              |      f@@ield1: Value,
+              |      field2: 123,
+              |    }
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "nested struct's, second field is searched" in {
+          goToDefinition() {
+            """
+              |struct MyStruct {
+              |  field1: Value,
+              |  >>field2<<: Value,
+              |  field3:
+              |}
+              |
+              |MyStruct {
+              |  field1: 123,
+              |  field2: 123,
+              |  field3:
+              |    MyStruct {
+              |      field1: Value,
+              |      f@@ield2: 123,
+              |    }
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "nested struct's, third field is searched with the third field's type param not defined" in {
+          goToDefinition() {
+            """
+              |struct MyStruct {
+              |  field1: Value,
+              |  field2: Value,
+              |  >>field3<<:
+              |}
+              |
+              |MyStruct {
+              |  field1: 123,
+              |  field2: ,
+              |  field3:
+              |    MyStruct {
+              |      field1: Value,
+              |      field2: ,
+              |      f@@ield3: 123,
+              |    }
+              |}
+              |""".stripMargin
+          }
+        }
+      }
+    }
+
+    "field values are not provided" when {
+      "one field" in {
+        goToDefinition() {
+          """
+            |struct MyStruct { >>field<< }
+            |MyStruct { @@field }
+            |""".stripMargin
+        }
+      }
+
+      "two fields" when {
+        "the first field is searched" in {
+          goToDefinition() {
+            """
+              |struct MyStruct {
+              |  >>field1<<,
+              |    field2
+              |}
+              |
+              |MyStruct {
+              |  @@field1,
+              |  field2
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "the second field is searched" in {
+          goToDefinition() {
+            """
+              |struct MyStruct {
+              |  field1,
+              |  >>field2<<
+              |}
+              |
+              |MyStruct {
+              |  field1, 
+              |  @@field2
+              |}
+              |""".stripMargin
+          }
+        }
+      }
+    }
+
+    "constructor's closing brace is missing" when {
+      "one field" in {
+        goToDefinition() {
+          """
+            |struct MyStruct { >>field<< }
+            |MyStruct { @@field
+            |""".stripMargin
+        }
+      }
+
+      "two fields" when {
+        "first field is searched" in {
+          goToDefinition() {
+            """
+              |struct MyStruct {
+              |  >>field1<<,
+              |  field2
+              |}
+              |
+              |MyStruct {
+              |  @@field1,
+              |  field2
+              |""".stripMargin
+          }
+        }
+
+        "second field is searched" in {
+          goToDefinition() {
+            """
+              |struct MyStruct {
+              |  field1,
+              |  >>field2<<
+              |}
+              |
+              |MyStruct {
+              |  field1,
+              |  @@field2
+              |""".stripMargin
+          }
+        }
+      }
+    }
+
+    "definitions closing brace is missing" in {
+      goToDefinition() {
+        """
+          |struct MyStruct { >>field<<
+          |{MyStruct { @@field }
+          |""".stripMargin
+      }
+    }
+
+    "duplicate fields" in {
+      goToDefinition() {
+        """
+          |struct MyStruct {
+          |  >>field<<,
+          |  >>field<<,
+          |  ,
+          |  ,
+          |}
+          |
+          |MyStruct { @@field }
+          |""".stripMargin
+      }
+    }
+
+    "duplicate structs with duplicate fields" when {
+      val duplicateStructs =
+        """
+          |struct MyStruct {
+          |  >>field<<
+          |}
+          |
+          |// with comma
+          |struct MyStruct {
+          |  >>field<<,
+          |}
+          |
+          |// no types
+          |struct MyStruct {
+          |  >>field<<,
+          |  >>field<<,
+          |}
+          |
+          |// type defined for the second
+          |struct MyStruct {
+          |  >>field<<,
+          |  >>field<<: Type,
+          |}
+          |
+          |// missing fields
+          |struct MyStruct {
+          |  >>field<<,
+          |  ,
+          |  >>field<<,
+          |  ,
+          |}
+          |
+          |// missing fields with one field type defined
+          |struct MyStruct {
+          |  >>field<<,
+          |  ,
+          |  >>field<<: Type,
+          |  ,
+          |  >>field<<,
+          |}
+          |
+          |// No matching field
+          |struct MyStruct {
+          |  notThisGuy: Type
+          |}
+          |
+          |""".stripMargin
+
+      "first field is searched" in {
+        goToDefinition() {
+          s"""
+            |$duplicateStructs
+            |
+            |MyStruct { @@field }
+            |""".stripMargin
+        }
+      }
+
+      "second field is searched" in {
+        goToDefinition() {
+          s"""
+            |$duplicateStructs
+            |
+            |MyStruct {
+            |  field,
+            |  @@field
+            |}
+            |""".stripMargin
+        }
+      }
+    }
+  }
+
 }
