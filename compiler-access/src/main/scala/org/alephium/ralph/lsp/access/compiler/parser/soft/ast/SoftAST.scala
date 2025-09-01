@@ -703,6 +703,12 @@ object SoftAST {
       expressionRight: ExpressionAST)
     extends ExpressionAST
 
+  sealed trait StructFieldBindingAST extends ExpressionAST {
+
+    def expressionLeft: ExpressionAST
+
+  }
+
   case class StructConstructorField(
       index: SourceIndex,
       expressionLeft: ExpressionAST,
@@ -710,7 +716,36 @@ object SoftAST {
       colon: TokenDocExpectedAST[Token.Colon.type],
       preExpressionSpace: Option[Space],
       expressionRight: ExpressionAST)
-    extends ExpressionAST
+    extends StructFieldBindingAST
+
+  case class StructDeconstructorField(
+      index: SourceIndex,
+      expressionLeft: ExpressionAST,
+      reference: Option[StructDeconstructorFieldReference])
+    extends StructFieldBindingAST
+
+  /**
+   * In a [[StructDeconstructorField]], the right-expression is optional.
+   *
+   * For example, in the following case, `field2` is redeclared as a new local variable, whereas `field1` remains a local variable.
+   * {{{
+   *   let MyStruct { field1, field2: >>reference<< }
+   * }}}
+   *
+   * This AST represents just that tail, including the colon:
+   *
+   * {{{
+   *   let MyStruct { field1, field2 : reference }
+   *                                 ↑_________↑
+   * }}}
+   */
+  case class StructDeconstructorFieldReference(
+      index: SourceIndex,
+      preColonSpace: Option[Space],
+      colon: TokenDocExpectedAST[Token.Colon.type],
+      preExpressionSpace: Option[Space],
+      expressionRight: ExpressionAST)
+    extends SoftAST
 
   case class AssetAssignment(
       index: SourceIndex,
@@ -883,12 +918,27 @@ object SoftAST {
       closeBracket: TokenDocExpectedAST[Token.BlockBracket.type])
     extends ExpressionAST
 
+  sealed trait StructBindingAST extends ExpressionAST {
+
+    def identifier: IdentifierAST
+    def preParamSpace: Option[Space]
+    def params: Group[Token.OpenCurly.type, Token.CloseCurly.type, Token.Comma.type]
+
+  }
+
   case class StructConstructor(
       index: SourceIndex,
       identifier: IdentifierAST,
       preParamSpace: Option[Space],
       params: Group[Token.OpenCurly.type, Token.CloseCurly.type, Token.Comma.type])
-    extends ExpressionAST
+    extends StructBindingAST
+
+  case class StructDeconstructor(
+      index: SourceIndex,
+      identifier: IdentifierAST,
+      preParamSpace: Option[Space],
+      params: Group[Token.OpenCurly.type, Token.CloseCurly.type, Token.Comma.type])
+    extends StructBindingAST
 
   case class ArrowAssignment(
       index: SourceIndex,
