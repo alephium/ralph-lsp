@@ -127,6 +127,27 @@ object SoftAST {
         .filterDown(_.data.index containsSoft index)
         .find(_.data.index == index)
 
+    /**
+     * Finds a node that exactly matches the given [[SoftAST]],
+     * starting the search from this node, traversing downwards.
+     *
+     * It filters out all subtrees that do not contain the target [[SourceIndex]],
+     * avoiding unnecessary visits.
+     *
+     * @note [[SoftAST]] does not set or use [[SourceIndex.fileURI]],
+     *       therefore, this field is expected to be [[None]] for all cases.
+     *
+     * @param ast The target [[SoftAST]] to find.
+     * @return The matched node.
+     */
+    final def findAST[A <: SoftAST](ast: A): Option[Node[A, SoftAST]] =
+      node
+        .filterDown(_.data.index containsSoft ast.index) // drop trees that do not contain this index
+        .collectFirst {
+          case node @ Node(thisAST, _) if thisAST == ast =>
+            node upcast thisAST.asInstanceOf[A]
+        }
+
   }
 
   implicit class NodeIdentifierExtensions(val node: Node[SoftAST.Identifier, SoftAST]) extends AnyVal {

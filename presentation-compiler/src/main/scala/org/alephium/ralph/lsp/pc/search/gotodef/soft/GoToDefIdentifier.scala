@@ -117,9 +117,10 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         searchStructField(
           structFieldLeftIdent = identNode,
           structField = node.upcast(assignment),
-          workspace = cache.workspace,
           sourceCode = sourceCode,
-          settings = settings
+          cache = cache,
+          settings = settings,
+          detectCallSyntax = true
         )
 
       case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
@@ -203,6 +204,10 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   }
 
   /**
+   * __Execution Plan__: Transform this search into a `struct` search.
+   *                     Once all the structs matching the constructor's or deconstructor's identifier are known,
+   *                     then search each `struct`'s fields using a simple iterator.
+   *
    * Search for the struct-field names used on the left-hand-side of a struct-field assignment.
    *
    * {{{
@@ -221,23 +226,25 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param structField          The struct-field containing the left identifier.
    *                             The `leftExpression` of this `Node` is the struct-field.
    * @param sourceCode           The block-part and its source code state where this search is executed.
-   * @param workspace            The workspace state where the source-code is located.
+   * @param cache                The workspace state and its cached trees.
+   * @param detectCallSyntax     If `true`, enables checking if the call syntax matches the identifier's access syntax.
    * @return Locations of all structs matching the struct-identifier and the field-name.
    */
   private def searchStructField(
       structFieldLeftIdent: Node[SoftAST.Identifier, SoftAST],
       structField: Node[SoftAST.StructFieldAssignment, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      workspace: WorkspaceState.IsSourceAware,
-      settings: GoToDefSetting
-    )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+      cache: WorkspaceSearchCache,
+      settings: GoToDefSetting,
+      detectCallSyntax: Boolean
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     // First, find the struct matching the constructor `@@MyStruct {field: value}`
     searchStruct(
       structField = structField,
       sourceCode = sourceCode,
-      workspace = workspace,
-      settings = settings
+      cache = cache,
+      settings = settings,
+      detectCallSyntax = detectCallSyntax
     ) flatMap {
       struct =>
         // Finally, search the matching fields in each struct.
@@ -299,18 +306,19 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    *   }
    * }}}
    *
-   * @param structField The struct-field assignment contained within the constructor.
-   * @param sourceCode  The block-part and its source code state where this search is executed.
-   * @param workspace   The workspace state where the source-code is located.
+   * @param structField      The struct-field assignment contained within the constructor.
+   * @param sourceCode       The block-part and its source code state where this search is executed.
+   * @param cache            The workspace state and its cached trees.
+   * @param detectCallSyntax If `true`, enables checking if the call syntax matches the identifier's access syntax.
    * @return Locations of all structs matching the assignment's constructor struct-identifier.
    */
   private def searchStruct(
       structField: Node[SoftAST.StructFieldAssignment, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
-      workspace: WorkspaceState.IsSourceAware,
-      settings: GoToDefSetting
-    )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.Struct]] =
+      cache: WorkspaceSearchCache,
+      settings: GoToDefSetting,
+      detectCallSyntax: Boolean
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.Struct]] =
     structField
       .walkParents
       .take(3) // Search at most 3 parents because this field could be within the tail of a Group, which has `StructConstructor` as its grandparent (3rd position up).
@@ -319,8 +327,9 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           searchStruct(
             constructor = constructor,
             sourceCode = sourceCode,
-            workspace = workspace,
-            settings = settings
+            cache = cache,
+            settings = settings,
+            detectCallSyntax = detectCallSyntax
           )
       }
       .getOrElse(Iterator.empty)
@@ -338,34 +347,31 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    *   }
    * }}}
    *
-   * @param constructor The constructor whose identifier is used to search the matching struct definitions.
-   * @param sourceCode  The block-part and its source code state where this search is executed.
-   * @param workspace   The workspace state where the source-code is located.
+   * @param constructor      The constructor whose identifier is used to search the matching struct definitions.
+   * @param sourceCode       The block-part and its source code state where this search is executed.
+   * @param cache            The workspace state and its cached trees.
+   * @param detectCallSyntax If `true`, enables checking if the call syntax matches the identifier's access syntax.
    * @return Locations of all structs matching the assignment's constructor struct-identifier.
    */
   private def searchStruct(
       constructor: SoftAST.StructConstructor,
       sourceCode: SourceLocation.CodeSoft,
-      workspace: WorkspaceState.IsSourceAware,
-      settings: GoToDefSetting
-    )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.Struct]] = {
-    // Find all definitions that match the given constructor's identifier.
-    // Note: These could result in definitions that may not be structs.
-    val definitions =
-      CodeProvider
-        .goToDefSoft
-        .search(
-          linePosition = constructor.identifier.index.toLineRange(sourceCode.parsed.code).from,
-          fileURI = sourceCode.parsed.fileURI,
-          workspace = workspace,
-          searchSettings = (SoftAST, settings)
-        )
-
-    // Collect the `struct`s.
-    definitions match {
-      case Some(Right(definition)) =>
-        definition flatMap {
+      cache: WorkspaceSearchCache,
+      settings: GoToDefSetting,
+      detectCallSyntax: Boolean
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.Struct]] =
+    // First, find this constructors' identifier `Node`.
+    constructor.toNode.findAST(constructor.identifier) match {
+      case Some(node @ Node(structIdent: SoftAST.Identifier, _)) =>
+        // Find all definitions that match the given constructor's identifier.
+        // Note: These could result in definitions that may not be structs.
+        search(
+          identNode = node upcast structIdent,
+          sourceCode = sourceCode,
+          cache = cache,
+          settings = settings,
+          detectCallSyntax = detectCallSyntax
+        ) flatMap {
           case SourceLocation.NodeSoft(definitionName: SoftAST.CodeString, source) =>
             // Collect only the structs.
             source.part.toNode.findAtIndex(definitionName.index).flatMap(_.parent).collect {
@@ -382,15 +388,16 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             Iterator.empty
         }
 
-      case Some(Left(error)) =>
-        logger.error(s"Error searching searching struct identifier '${constructor.identifier.toCode()}'. Reason: ${error.message}. FileURI: ${sourceCode.parsed.fileURI}")
+      case Some(Node(_: SoftAST.IdentifierAST, _)) =>
+        // Nothing to do here. The identifier is in an error syntax state.
+        logger.trace(s"Struct constructor's identifier '${constructor.identifier.toCode()}' is undefined. FileURI: ${sourceCode.parsed.fileURI}")
         Iterator.empty
 
       case None =>
-        logger.trace(s"Struct '${constructor.identifier.toCode()}' not found. FileURI: ${sourceCode.parsed.fileURI}")
+        // Not expected to occur in production. If it does occur, it's a bug.
+        logger.error(s"Struct constructor's identifier '${constructor.identifier.toCode()}' not found. FileURI: ${sourceCode.parsed.fileURI}")
         Iterator.empty
     }
-  }
 
   /**
    * Searches for occurrences of the given identifier node within the source code.
