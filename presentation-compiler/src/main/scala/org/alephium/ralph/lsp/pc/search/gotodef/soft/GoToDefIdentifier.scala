@@ -361,7 +361,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.Struct]] =
     // First, find this constructors' identifier `Node`.
-    constructor.toNode.findAST(constructor.identifier) match {
+    constructor.toNode.find(constructor.identifier) match {
       case Some(node @ Node(structIdent: SoftAST.Identifier, _)) =>
         // Find all definitions that match the given constructor's identifier.
         // Note: These could result in definitions that may not be structs.

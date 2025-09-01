@@ -140,7 +140,7 @@ object SoftAST {
      * @param ast The target [[SoftAST]] to find.
      * @return The matched node.
      */
-    final def findAST[A <: SoftAST](ast: A): Option[Node[A, SoftAST]] =
+    final def find[A <: SoftAST](ast: A): Option[Node[A, SoftAST]] =
       node
         .filterDown(_.data.index containsSoft ast.index) // drop trees that do not contain this index
         .collectFirst {
