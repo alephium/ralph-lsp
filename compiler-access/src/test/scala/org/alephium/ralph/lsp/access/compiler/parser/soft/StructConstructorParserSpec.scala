@@ -97,10 +97,10 @@ class StructConstructorParserSpec extends AnyWordSpec {
       val expressions = ast.params.expressions
       expressions should have size 2
 
-      expressions.head shouldBe a[SoftAST.StructFieldAssignment]
+      expressions.head shouldBe a[SoftAST.StructConstructorField]
       expressions.head.toCode() shouldBe "array: [1, 2, 3]"
 
-      expressions.last shouldBe a[SoftAST.StructFieldAssignment]
+      expressions.last shouldBe a[SoftAST.StructConstructorField]
       expressions.last.toCode() shouldBe "string: b`String`"
     }
   }
@@ -118,7 +118,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
           openToken = Some(OpenCurly("Customer >>{<< id: 01234, info: Info { phone: 56789 }}")),
           preHeadExpressionSpace = Some(Space("Customer {>> <<id: 01234, info: Info { phone: 56789 }}")),
           headExpression = Some(
-            SoftAST.StructFieldAssignment(
+            SoftAST.StructConstructorField(
               index = indexOf("Customer { >>id: 01234<<, info: Info { phone: 56789 }}"),
               expressionLeft = Identifier("Customer { >>id<<: 01234, info: Info { phone: 56789 }}"),
               preColonSpace = None,
@@ -133,7 +133,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
               index = indexOf("Customer { id: 01234>>, info: Info { phone: 56789 }<<}"),
               delimiter = Comma("Customer { id: 01234>>,<< info: Info { phone: 56789 }}"),
               preExpressionSpace = Some(Space("Customer { id: 01234,>> <<info: Info { phone: 56789 }}")),
-              expression = SoftAST.StructFieldAssignment(
+              expression = SoftAST.StructConstructorField(
                 index = indexOf("Customer { id: 01234, >>info: Info { phone: 56789 }<<}"),
                 expressionLeft = Identifier("Customer { id: 01234, >>info<<: Info { phone: 56789 }}"),
                 preColonSpace = None,
@@ -148,7 +148,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
                     openToken = Some(OpenCurly("Customer { id: 01234, info: Info >>{<< phone: 56789 }}")),
                     preHeadExpressionSpace = Some(Space("Customer { id: 01234, info: Info {>> <<phone: 56789 }}")),
                     headExpression = Some(
-                      SoftAST.StructFieldAssignment(
+                      SoftAST.StructConstructorField(
                         index = indexOf("Customer { id: 01234, info: Info { >>phone: 56789<< }}"),
                         expressionLeft = Identifier("Customer { id: 01234, info: Info { >>phone<<: 56789 }}"),
                         preColonSpace = None,
@@ -185,7 +185,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
             openToken = Some(OpenCurly("MyStruct >>{<<number: 1}")),
             preHeadExpressionSpace = None,
             headExpression = Some(
-              SoftAST.StructFieldAssignment(
+              SoftAST.StructConstructorField(
                 index = indexOf("MyStruct {>>number: 1<<}"),
                 expressionLeft = Identifier("MyStruct {>>number<<: 1}"),
                 preColonSpace = None,
@@ -216,7 +216,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
             openToken = Some(OpenCurly("MyStruct>>{<< name }")),
             preHeadExpressionSpace = Some(Space("MyStruct{>> <<name }")),
             headExpression = Some(
-              SoftAST.StructFieldAssignment(
+              SoftAST.StructConstructorField(
                 index = indexOf("MyStruct{ >>name <<}"),
                 expressionLeft = Identifier("MyStruct{ >>name<< }"),
                 preColonSpace = Some(Space("MyStruct{ name>> <<}")),
@@ -247,7 +247,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
             openToken = Some(OpenCurly("MyStruct>>{<< one, two:, three }")),
             preHeadExpressionSpace = Some(Space("MyStruct{>> <<one, two:, three }")),
             headExpression = Some(
-              SoftAST.StructFieldAssignment(
+              SoftAST.StructConstructorField(
                 index = indexOf("MyStruct{ >>one<<, two:, three }"),
                 expressionLeft = Identifier("MyStruct{ >>one<<, two:, three }"),
                 preColonSpace = None,
@@ -262,7 +262,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
                 index = indexOf("MyStruct{ one>>, two:<<, three }"),
                 delimiter = Comma("MyStruct{ one>>,<< two:, three }"),
                 preExpressionSpace = Some(Space("MyStruct{ one,>> <<two:, three }")),
-                expression = SoftAST.StructFieldAssignment(
+                expression = SoftAST.StructConstructorField(
                   index = indexOf("MyStruct{ one, >>two:<<, three }"),
                   expressionLeft = Identifier("MyStruct{ one, >>two<<:, three }"),
                   preColonSpace = None,
@@ -276,7 +276,7 @@ class StructConstructorParserSpec extends AnyWordSpec {
                 index = indexOf("MyStruct{ one, two:>>, three <<}"),
                 delimiter = Comma("MyStruct{ one, two:>>,<< three }"),
                 preExpressionSpace = Some(Space("MyStruct{ one, two:,>> <<three }")),
-                expression = SoftAST.StructFieldAssignment(
+                expression = SoftAST.StructConstructorField(
                   index = indexOf("MyStruct{ one, two:, >>three <<}"),
                   expressionLeft = Identifier("MyStruct{ one, two:, >>three<< }"),
                   preColonSpace = Some(Space("MyStruct{ one, two:, three>> <<}")),

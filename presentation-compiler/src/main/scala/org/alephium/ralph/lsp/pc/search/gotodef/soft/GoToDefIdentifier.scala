@@ -113,10 +113,10 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case Some(Node(map: SoftAST.MapAssignment, _)) if map.identifier == identNode.data =>
         self()
 
-      case Some(node @ Node(assignment: SoftAST.StructFieldAssignment, _)) if assignment.expressionLeft contains identNode.data =>
+      case Some(node @ Node(field: SoftAST.StructConstructorField, _)) if field.expressionLeft contains identNode.data =>
         searchStructField(
           structFieldLeftIdent = identNode,
-          structField = node.upcast(assignment),
+          structField = node.upcast(field),
           sourceCode = sourceCode,
           cache = cache,
           settings = settings,
@@ -222,7 +222,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * }}}
    *
    * @param structFieldLeftIdent The identifier node representing the struct-field name.
-   *                             This is the left-hand-side of the [[SoftAST.StructFieldAssignment]], where the search was performed.
+   *                             This is the left-hand-side of the [[SoftAST.StructConstructorField]], where the search was performed.
    * @param structField          The struct-field containing the left identifier.
    *                             The `leftExpression` of this `Node` is the struct-field.
    * @param sourceCode           The block-part and its source code state where this search is executed.
@@ -232,7 +232,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    */
   private def searchStructField(
       structFieldLeftIdent: Node[SoftAST.Identifier, SoftAST],
-      structField: Node[SoftAST.StructFieldAssignment, SoftAST],
+      structField: Node[SoftAST.StructConstructorField, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
@@ -313,7 +313,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @return Locations of all structs matching the assignment's constructor struct-identifier.
    */
   private def searchStruct(
-      structField: Node[SoftAST.StructFieldAssignment, SoftAST],
+      structField: Node[SoftAST.StructConstructorField, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       cache: WorkspaceSearchCache,
       settings: GoToDefSetting,

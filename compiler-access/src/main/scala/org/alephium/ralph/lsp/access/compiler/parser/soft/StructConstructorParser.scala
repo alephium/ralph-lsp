@@ -38,7 +38,7 @@ private object StructConstructorParser {
 
   private def expressions[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
-      StructFieldAssignmentParser.parse |
+      StructConstructorFieldParser.parse |
         UnresolvedParser.parseOrFail(stops: _*)
     }
 

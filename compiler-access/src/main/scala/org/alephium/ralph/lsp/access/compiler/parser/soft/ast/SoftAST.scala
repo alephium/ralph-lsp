@@ -703,7 +703,7 @@ object SoftAST {
       expressionRight: ExpressionAST)
     extends ExpressionAST
 
-  case class StructFieldAssignment(
+  case class StructConstructorField(
       index: SourceIndex,
       expressionLeft: ExpressionAST,
       preColonSpace: Option[Space],

@@ -8,9 +8,9 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-object StructFieldAssignmentParser {
+object StructConstructorFieldParser {
 
-  def parse[Unknown: P]: P[SoftAST.StructFieldAssignment] =
+  def parse[Unknown: P]: P[SoftAST.StructConstructorField] =
     P {
       Index ~
         ExpressionParser.parseSubset(leftExpression) ~
@@ -22,11 +22,11 @@ object StructFieldAssignmentParser {
     } flatMap {
       case (_, _: SoftAST.ExpressionExpected, _, _: SoftAST.TokenExpected[_], _, _: SoftAST.ExpressionAST, _) =>
         // If all parsers fail, fail this parser call.
-        Fail(s"Unable to parse ${classOf[SoftAST.StructFieldAssignment].getSimpleName}")
+        Fail(s"Unable to parse ${classOf[SoftAST.StructConstructorField].getSimpleName}")
 
       case (from, left, postIdentifierSpace, equalToken, postEqualSpace, right, to) =>
         val ast =
-          SoftAST.StructFieldAssignment(
+          SoftAST.StructConstructorField(
             index = range(from, to),
             expressionLeft = left,
             preColonSpace = postIdentifierSpace,
