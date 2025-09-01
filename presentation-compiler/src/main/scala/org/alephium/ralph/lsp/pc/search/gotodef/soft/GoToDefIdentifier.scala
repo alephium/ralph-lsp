@@ -381,11 +381,6 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
                   source = source
                 )
             }
-
-          case definition: SourceLocation.GoToDefSoft =>
-            // FIXME: This will be removed once `goToDef` is enforced to always return `CodeString`.
-            logger.error(s"Invalid search result '$definition'. Expected `${classOf[SoftAST.CodeString].getSimpleName}`")
-            Iterator.empty
         }
 
       case Some(Node(_: SoftAST.IdentifierAST, _)) =>
