@@ -7,7 +7,7 @@ import org.alephium.ralph.lsp.pc.search.TestCodeProvider._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class GoToStructFieldSpec extends AnyWordSpec with Matchers {
+class GoToStructField_From_StructFieldBindingSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "a struct field and an assignment value have duplicate names" when {
