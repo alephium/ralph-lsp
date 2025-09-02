@@ -113,15 +113,37 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case Some(Node(map: SoftAST.MapAssignment, _)) if map.identifier == identNode.data =>
         self()
 
-      case Some(node @ Node(field: SoftAST.StructConstructorField, _)) if field.expressionLeft contains identNode.data =>
+      case Some(node @ Node(field: SoftAST.StructFieldBindingAST, _)) =>
+        // This search occurred somewhere in a struct-field, could be within a struct constructor or a deconstructor.
         searchStructField(
-          structFieldLeftIdent = identNode,
+          identNode = identNode,
           structField = node.upcast(field),
           sourceCode = sourceCode,
           cache = cache,
           settings = settings,
           detectCallSyntax = true
         )
+
+      case Some(node @ Node(_: SoftAST.StructDeconstructorFieldReference, _)) =>
+        node.parent match {
+          // `StructDeconstructorFieldReference` is always contained within a `StructDeconstructorField`.
+          case Some(node @ Node(field: SoftAST.StructFieldBindingAST, _)) =>
+            // Execute a struct-field search.
+            searchStructField(
+              identNode = identNode,
+              structField = node.upcast(field),
+              cache = cache,
+              sourceCode = sourceCode,
+              settings = settings,
+              detectCallSyntax = true
+            )
+
+          case parent =>
+            // If the parent is not a struct field, then this is not a valid search state. Report error!
+            // This is unlike to occur in production because `StructDeconstructorFieldReference` is always created within a `StructFieldBindingAST`.
+            logger.error(s"Invalid search. Struct binding not available. Identifier: ${identNode.data}. Code: ${parent.map(_.data)}")
+            Iterator.empty
+        }
 
       case Some(node @ Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft == identNode.data =>
         node.parent match {
@@ -204,9 +226,9 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
   }
 
   /**
-   * __Execution Plan__: Transform this search into a `struct` search.
-   *                     Once all the structs matching the constructor's or deconstructor's identifier are known,
-   *                     then search each `struct`'s fields using a simple iterator.
+   * __Execution Plan__: First, transform this search into a `struct` search.
+   * Once all the structs matching the constructor's or deconstructor's identifier are known,
+   * then search each `struct`'s fields using a simple iterator.
    *
    * Search for the struct-field names used on the left-hand-side of a struct-field assignment.
    *
@@ -215,45 +237,91 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    *     >>field<<: Type
    *   }
    *
-   *   MyStruct {
-   *     @@field: value // struct-field assignment
-   *       ↑___↑        // left-hand-side of the assignment
-   *   }
+   *   let instance = MyStruct { @@field: value }
+   *                               ↑___↑ // left-hand-side of the struct-field assignment
+   *
+   *   let MyStruct { @@field: value } = instance
+   *                    ↑___↑ // left-hand-side of the struct-field assignment
    * }}}
    *
-   * @param structFieldLeftIdent The identifier node representing the struct-field name.
-   *                             This is the left-hand-side of the [[SoftAST.StructConstructorField]], where the search was performed.
-   * @param structField          The struct-field containing the left identifier.
-   *                             The `leftExpression` of this `Node` is the struct-field.
-   * @param sourceCode           The block-part and its source code state where this search is executed.
-   * @param cache                The workspace state and its cached trees.
-   * @param detectCallSyntax     If `true`, enables checking if the call syntax matches the identifier's access syntax.
+   * @param identNode        The identifier node representing the struct-field name (the identifier being searched).
+   *                         This is the left-hand-side of the [[SoftAST.StructConstructorField]], where the search was performed.
+   * @param structField      The struct-field containing the left identifier.
+   *                         The `leftExpression` of this [[Node]] is the struct-field.
+   * @param sourceCode       The block-part and its source code state where this search is executed.
+   * @param cache            The workspace state and its cached trees.
+   * @param detectCallSyntax If `true`, enables checking if the call syntax matches the identifier's access syntax.
    * @return Locations of all structs matching the struct-identifier and the field-name.
    */
   private def searchStructField(
-      structFieldLeftIdent: Node[SoftAST.Identifier, SoftAST],
-      structField: Node[SoftAST.StructConstructorField, SoftAST],
+      identNode: Node[SoftAST.Identifier, SoftAST],
+      structField: Node[SoftAST.StructFieldBindingAST, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    // First, find the struct matching the constructor `@@MyStruct {field: value}`
-    searchStruct(
-      structField = structField,
-      sourceCode = sourceCode,
-      cache = cache,
-      settings = settings,
-      detectCallSyntax = detectCallSyntax
-    ) flatMap {
-      struct =>
-        // Finally, search the matching fields in each struct.
-        searchStructField(
-          struct = struct.ast,
-          field = structFieldLeftIdent,
-          sourceCode = struct.source
-        )
-    }
+    // If the left side of the struct-field was searched, this search is the same for both struct constructor and deconstructor.
+    if (structField.data.expressionLeft contains identNode)
+      // Yes, the left side was searched.
+      // First, find the struct matching the constructor.
+      // Search `@@MyStruct { field: value }`
+      searchStruct(
+        structField = structField,
+        sourceCode = sourceCode,
+        cache = cache,
+        settings = settings,
+        detectCallSyntax = detectCallSyntax
+      ) flatMap {
+        struct =>
+          // Finally, search the matching fields in each struct.
+          // Search: `MyStruct { @@field: value }`
+          searchStructField(
+            struct = struct.ast,
+            field = identNode,
+            sourceCode = struct.source
+          )
+      }
+    else // The right side of the struct-field is being searched. It could be a struct constructor or deconstructor.
+      structField.data match {
+        case field: SoftAST.StructDeconstructorField => // It's a deconstructor
+          field.reference match {
+            case Some(reference) =>
+              if (reference.expressionRight contains identNode) {
+                Iterator.single(
+                  SourceLocation.NodeSoft(
+                    ast = identNode.data.code,
+                    source = sourceCode
+                  )
+                )
+              } else {
+                /*
+                 * Note: This is unlikely to occur in production, because `allowLeftShift` ensures it.
+                 * Description: If the searched token is neither the left nor the right expression, this is an invalid search.
+                 *              For example, suppose the search was executed on the semicolon `let Struct { left @@: right } = instance`,
+                 *              in that case, the search should've never gotten this far. This is therefore a bug, so log it for debugging.
+                 */
+                logger.error(s"Invalid search for struct deconstructor. Expected a valid struct field. Identifier: ${identNode.data}. Code: ${structField.data.toCode()}")
+                Iterator.empty
+              }
+
+            case None =>
+              logger.error(s"Invalid Search: Cannot execute search on nothing. Expected a valid struct field. Identifier: ${identNode.data}. Code: ${structField.data.toCode()}")
+              Iterator.empty
+          }
+
+        case _: SoftAST.StructConstructorField =>
+          // Otherwise, it's the right side of a struct constructor field.
+          // Nothing special here, it's a regular identifier referencing something defined in its scope.
+          // Execute a regular identifier search.
+          search(
+            identNode = identNode,
+            sourceCode = sourceCode,
+            cache = cache,
+            settings = settings,
+            detectCallSyntax = detectCallSyntax
+          )
+      }
 
   /**
    * Search all matching structs-fields within the given `struct` definition.
@@ -293,7 +361,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       .flatten
 
   /**
-   * Search for `struct` definitions matching the constructor identifier used by the given
+   * Search for `struct` definitions matching the constructor/deconstructor identifier used by the given
    * struct-field assignment.
    *
    * {{{
@@ -306,14 +374,14 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    *   }
    * }}}
    *
-   * @param structField      The struct-field assignment contained within the constructor.
+   * @param structField      The struct-field assignment contained within the constructor/deconstructor.
    * @param sourceCode       The block-part and its source code state where this search is executed.
    * @param cache            The workspace state and its cached trees.
    * @param detectCallSyntax If `true`, enables checking if the call syntax matches the identifier's access syntax.
-   * @return Locations of all structs matching the assignment's constructor struct-identifier.
+   * @return Locations of all structs matching the assignment's constructor/deconstructor struct-identifier.
    */
   private def searchStruct(
-      structField: Node[SoftAST.StructConstructorField, SoftAST],
+      structField: Node[SoftAST.StructFieldBindingAST, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
@@ -323,9 +391,9 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       .walkParents
       .take(3) // Search at most 3 parents because this field could be within the tail of a Group, which has `StructConstructor` as its grandparent (3rd position up).
       .collectFirst {
-        case Node(constructor: SoftAST.StructConstructor, _) =>
+        case Node(structBinding: SoftAST.StructBindingAST, _) =>
           searchStruct(
-            constructor = constructor,
+            structBinding = structBinding,
             sourceCode = sourceCode,
             cache = cache,
             settings = settings,
@@ -335,35 +403,34 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       .getOrElse(Iterator.empty)
 
   /**
-   * Search for `struct` definitions matching the given constructor identifier.
+   * Search for `struct` definitions matching the given constructor or deconstructor identifier.
    *
    * {{{
    *   struct >>MyStruct<< {
    *     field Type
    *   }
    *
-   *   My@@Struct { // struct constructor
-   *     field: value
-   *   }
+   *   let instance = My@@Struct { field: value } // Constructor
+   *   let My@@Struct { field } = instance        // Deconstructor
    * }}}
    *
-   * @param constructor      The constructor whose identifier is used to search the matching struct definitions.
+   * @param structBinding    The constructor/deconstructor whose identifier is used to search the matching struct definitions.
    * @param sourceCode       The block-part and its source code state where this search is executed.
    * @param cache            The workspace state and its cached trees.
    * @param detectCallSyntax If `true`, enables checking if the call syntax matches the identifier's access syntax.
-   * @return Locations of all structs matching the assignment's constructor struct-identifier.
+   * @return Locations of all structs matching the assignment's constructor/deconstructor struct-identifier.
    */
   private def searchStruct(
-      constructor: SoftAST.StructConstructor,
+      structBinding: SoftAST.StructBindingAST,
       sourceCode: SourceLocation.CodeSoft,
       cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
     )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.Struct]] =
-    // First, find this constructors' identifier `Node`.
-    constructor.toNode.find(constructor.identifier) match {
+    // First, find this constructor or deconstructor's identifier `Node`.
+    structBinding.toNode.find(structBinding.identifier) match {
       case Some(node @ Node(structIdent: SoftAST.Identifier, _)) =>
-        // Find all definitions that match the given constructor's identifier.
+        // Find all definitions that match the given constructor/deconstructor identifier.
         // Note: These could result in definitions that may not be structs.
         search(
           identNode = node upcast structIdent,
@@ -385,12 +452,12 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
       case Some(Node(_: SoftAST.IdentifierAST, _)) =>
         // Nothing to do here. The identifier is in an error syntax state.
-        logger.trace(s"Struct constructor's identifier '${constructor.identifier.toCode()}' is undefined. FileURI: ${sourceCode.parsed.fileURI}")
+        logger.trace(s"Struct constructor/deconstructor identifier '${structBinding.identifier.toCode()}' is undefined. FileURI: ${sourceCode.parsed.fileURI}")
         Iterator.empty
 
       case None =>
         // Not expected to occur in production. If it does occur, it's a bug.
-        logger.error(s"Struct constructor's identifier '${constructor.identifier.toCode()}' not found. FileURI: ${sourceCode.parsed.fileURI}")
+        logger.error(s"Struct constructor/deconstructor identifier '${structBinding.identifier.toCode()}' not found. FileURI: ${sourceCode.parsed.fileURI}")
         Iterator.empty
     }
 
@@ -1682,6 +1749,35 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           target = target,
           sourceCode = sourceCode
         )
+
+      case deconstructor: SoftAST.StructDeconstructor => // Only a deconstructor can create new references. Constructors cannot.
+        // Expand variable declarations with the deconstructor and search within the assignment,
+        // For example, expand the group in the syntax: `let MyStruct >>{ field1, field2: copy }<< = instance`
+        searchExpression(
+          expression = deconstructor.params, // Expand the group and search within it (deconstructed fields).
+          target = target,
+          sourceCode = sourceCode
+        )
+
+      case field: SoftAST.StructDeconstructorField => // Example syntax, `let MyStruct { >>left: right<< } = instance`
+        // A struct deconstructed field can contain new references.
+        field.reference match {
+          case Some(reference) =>
+            // `let MyStruct { left: >>right<< } = instance`
+            searchExpression(
+              expression = reference.expressionRight,
+              target = target,
+              sourceCode = sourceCode
+            )
+
+          case None =>
+            // `let MyStruct { >>left<< } = instance`
+            searchExpression(
+              expression = field.expressionLeft,
+              target = target,
+              sourceCode = sourceCode
+            )
+        }
 
       case identifier: SoftAST.Identifier if identifier.code.text == target.data.code.text =>
         // Check if the identifier matches the text in the selected `identNode`.
