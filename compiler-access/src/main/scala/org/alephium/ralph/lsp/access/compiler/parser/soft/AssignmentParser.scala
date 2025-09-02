@@ -71,6 +71,7 @@ private object AssignmentParser {
     P {
       MethodCallParser.parseOrFail |
         MutableBindingParser.parseOrFail |
+        StructDeconstructorParser.parseOrFail |
         TupleParser.parseOrFail(assertNonEmpty = true) |
         ArrayAccessParser.parseOrFail |
         IdentifierParser.parseOrFail

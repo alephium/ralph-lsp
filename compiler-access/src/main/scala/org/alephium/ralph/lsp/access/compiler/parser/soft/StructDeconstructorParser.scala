@@ -8,12 +8,9 @@ import fastparse.NoWhitespace.noWhitespaceImplicit
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
-private object StructConstructorParser {
+private object StructDeconstructorParser {
 
-  val stops: List[Token] =
-    TypeAssignmentGroupParser.stops(Token.CloseCurly)
-
-  def parseOrFail[Unknown: P]: P[SoftAST.StructConstructor] =
+  def parseOrFail[Unknown: P]: P[SoftAST.StructDeconstructor] =
     P {
       Index ~
         IdentifierParser.parseOrFail ~
@@ -28,7 +25,7 @@ private object StructConstructorParser {
         Index
     } map {
       case (from, identifier, preParamSpace, params, to) =>
-        SoftAST.StructConstructor(
+        SoftAST.StructDeconstructor(
           index = range(from, to),
           identifier = identifier,
           preParamSpace = preParamSpace,
@@ -38,8 +35,8 @@ private object StructConstructorParser {
 
   private def expressions[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
-      StructConstructorFieldParser.parse |
-        UnresolvedParser.parseOrFail(stops: _*)
+      StructDeconstructorFieldParser.parseOrFail |
+        UnresolvedParser.parseOrFail(StructConstructorParser.stops: _*)
     }
 
 }

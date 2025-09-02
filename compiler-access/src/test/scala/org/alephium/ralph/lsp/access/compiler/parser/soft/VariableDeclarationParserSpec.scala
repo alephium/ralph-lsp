@@ -246,4 +246,14 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
       )
   }
 
+  "struct deconstructor" in {
+    val ast =
+      parseVariableDeclaration("let MyStruct { field } = instance")
+
+    // Just assert that it's stored as a `StructDeconstructor`.
+    // No need to assert the full AST, which is already tested in `StructDeconstructorParserSpec`.
+    val structDeconstructor = ast.assignment.expressionLeft.asInstanceOf[SoftAST.StructDeconstructor]
+    structDeconstructor.toCode() shouldBe "MyStruct { field }"
+  }
+
 }
