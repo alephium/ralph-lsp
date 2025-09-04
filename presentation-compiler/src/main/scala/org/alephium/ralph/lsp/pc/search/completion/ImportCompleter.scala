@@ -18,7 +18,7 @@ private object ImportCompleter extends StrictImplicitLogging {
    *
    * @param cursorIndex The cursor position.
    * @param dependency  The dependency/dependant code to use for code completion.
-   * @param imported    The user imputed import statement.
+   * @param imported    The user imputed an import statement.
    * @return Import suggestions
    */
   def complete(
@@ -26,7 +26,7 @@ private object ImportCompleter extends StrictImplicitLogging {
       dependency: Option[WorkspaceState.Compiled],
       imported: Tree.Import
     )(implicit logger: ClientLogger): ArraySeq[Suggestion.File] =
-    if (imported.string.name.index contains cursorIndex) // suggest if cursor is between the quoted String
+    if (imported.string.name.index contains cursorIndex) // suggest if the cursor is between the quoted String
       dependency match {
         case Some(dependency) =>
           complete(
@@ -55,7 +55,7 @@ private object ImportCompleter extends StrictImplicitLogging {
                 case Some(importPath) => // user input import statement has some text
                   if (importPath.file.index contains cursorIndex) // does the cursorIndex belong to text after the forward slash?
                     dependencyIdentifier.path match {
-                      case Some(path) => // Yes it does and the path exists.
+                      case Some(path) => // Yes, it does, and the path exists.
                         path.file.value // Suggest only the file names e.g. `nft_interface`
 
                       case None =>

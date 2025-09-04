@@ -7,12 +7,12 @@ import org.alephium.ralph.lsp.utils.Node
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class NodeWalkDownSpec extends AnyWordSpec with Matchers {
+class NodeWalkSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "there is only a root node" in {
       val root = Node("root")
-      root.walkDown.map(_.data).toList should contain only "root"
+      root.walk.map(_.data).toList should contain only "root"
     }
 
     "there are child nodes but walking from last node" in {
@@ -30,7 +30,7 @@ class NodeWalkDownSpec extends AnyWordSpec with Matchers {
 
       lastNode.data shouldBe "Child-2"
 
-      lastNode.walkDown.map(_.data).toList should contain only "Child-2"
+      lastNode.walk.map(_.data).toList should contain only "Child-2"
     }
   }
 
@@ -38,7 +38,7 @@ class NodeWalkDownSpec extends AnyWordSpec with Matchers {
     val allNodes =
       TestNode
         .root
-        .walkDown
+        .walk
         .map(_.data)
         .toList
 

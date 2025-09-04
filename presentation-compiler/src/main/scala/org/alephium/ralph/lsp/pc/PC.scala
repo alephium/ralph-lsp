@@ -20,7 +20,7 @@ import scala.collection.immutable.ArraySeq
  *
  * To invoke a compilation, there are only two ways:
  *  - When a file is changed, use [[PC.changed]]
- *  - When files are deleted or created, or when changes span multiple files, use [[PC.events]]
+ *  - When files are deleted, created or when changes span multiple files, use [[PC.events]]
  */
 object PC extends StrictImplicitLogging {
 
@@ -42,7 +42,7 @@ object PC extends StrictImplicitLogging {
    *
    * @param fileURI The URI of the changed file.
    * @param code    An optional string containing the code of the changed file.
-   *                If this is [[None]], the file's content will fetched from disk.
+   *                If this is [[None]], the file's content will be fetched from disk.
    * @param pcState The current state of the presentation compiler.
    * @return Either an [[ErrorUnknownFileType]] if the file type is unknown,
    *         or an optional new [[PCState]] instance representing the updated compiler state.

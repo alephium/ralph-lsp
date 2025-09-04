@@ -14,7 +14,7 @@ object Node {
    *
    * @param data The data to be stored in the new node.
    * @tparam A The data type of the new node.
-   * @tparam B The data type of the child nodes, which must be a super type of `A`.
+   * @tparam B The data type of the child nodes, which must be a super type of [[A]].
    * @return A new `Node` instance with the specified data and no children.
    */
   @inline def apply[A, B >: A](data: A): Node[A, B] =
@@ -26,7 +26,7 @@ object Node {
    * @param data     The data to be stored in the new node.
    * @param children The child nodes of the new node.
    * @tparam A The data type of the new node.
-   * @tparam B The data type of the child nodes, which must be a super type of `A`.
+   * @tparam B The data type of the child nodes, which must be a super type of [[A]].
    * @return A new `Node` instance with the specified data and children.
    */
   @inline def apply[A, B >: A](
@@ -48,7 +48,7 @@ object Node {
  * A [[Node]] represents a single position within a tree.
  *
  * Each node allows tree traversal in both forward and backward directions
- * using the functions like [[walkDown]], [[walkParents]] and others.
+ * using the functions like [[walk]], [[walkParents]] and others.
  *
  * @param data     The data stored in this node.
  * @param children This node's child nodes.
@@ -75,14 +75,14 @@ case class Node[+A, B] private (
       }
 
   /** Walk down from current node reaching all it's children and grand-children */
-  def walkDown: Iterator[Node[B, B]] =
+  def walk: Iterator[Node[B, B]] =
     new Iterator[Node[B, B]] {
 
       private val iter =
         Iterator.single(self.asInstanceOf[Node[B, B]]) ++
           children
             .iterator
-            .flatMap(_.walkDown)
+            .flatMap(_.walk)
 
       override def hasNext: Boolean =
         iter.hasNext
@@ -97,7 +97,7 @@ case class Node[+A, B] private (
    *
    * When a parent node does not satisfy the predicate, it is filtered-out along with all of its children.
    */
-  def filterDown(f: Node[B, B] => Boolean): Iterator[Node[B, B]] =
+  def filter(f: Node[B, B] => Boolean): Iterator[Node[B, B]] =
     new Iterator[Node[B, B]] {
 
       private val iter = {
@@ -108,7 +108,7 @@ case class Node[+A, B] private (
           Iterator.single(selfCasted) ++
             children
               .iterator
-              .flatMap(_.filterDown(f))
+              .flatMap(_.filter(f))
         else
           Iterator.empty
       }
@@ -142,7 +142,7 @@ case class Node[+A, B] private (
 
       /** Filter out nodes that the caller has defined (claimed ownership) */
       private val iter =
-        self.filterDown {
+        self.filter {
           node =>
             if (pf isDefinedAt node) {
               queue enqueue pf(node)
@@ -169,6 +169,11 @@ case class Node[+A, B] private (
         queue.dequeue()
     }
 
+  /**
+   * Walks up the hierarchy of parent nodes starting from the current node.
+   *
+   * @return An iterator over the current node's parent nodes and their ancestors.
+   */
   def walkParents: Iterator[Node[B, B]] =
     new Iterator[Node[B, B]] {
 
@@ -191,15 +196,16 @@ case class Node[+A, B] private (
     }
 
   /**
-   * Find the last node for which this predicate is true.
+   * Find the last node from __ALL__ nodes for which this predicate is true.
    *
-   * This function is useful for find the closest node that contains a source-index.
+   * This function is useful for finding the closest node that contains a source-index.
    *
-   * Use [[findLastChild]] for depth-first search.
+   * @note This is currently only used for strict-AST.
+   *       Use [[findLast]] for a more efficient depth-first search.
    */
-  def findLast(f: B => Boolean): Option[Node[B, B]] =
+  def findLastFromAll(f: B => Boolean): Option[Node[B, B]] =
     self
-      .walkDown
+      .walk
       .foldLeft(Option.empty[Node[B, B]]) {
         case (closest, nextNode) =>
           if (f(nextNode.data))
@@ -214,14 +220,14 @@ case class Node[+A, B] private (
    * Finds the last node for which the predicate is true, skipping the node
    * and its children if the predicate fails for the parent node.
    */
-  def findLastChild(f: Node[B, B] => Boolean): Option[Node[B, B]] = {
+  def findLast(f: Node[B, B] => Boolean): Option[Node[B, B]] = {
     val selfCasted =
       self.asInstanceOf[Node[B, B]]
 
     if (f(selfCasted))
       children
         .iterator
-        .flatMap(_.findLastChild(f))
+        .flatMap(_.findLast(f))
         .foldLeft(Some(selfCasted)) {
           case (_, next) =>
             Some(next)

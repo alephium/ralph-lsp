@@ -156,7 +156,7 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
         val errors =
           varDec
             .toNode
-            .walkDown
+            .walk
             .map(_.data)
             .collect { // collect all errors
               case error: SoftAST.ErrorAST =>
@@ -172,7 +172,7 @@ class CommentParserSpec extends AnyWordSpec with Matchers {
         val comments =
           varDec
             .toNode
-            .walkDown
+            .walk
             .map(_.data)
             .collect { // collect all comment texts
               case comment: SoftAST.Comment =>

@@ -50,7 +50,7 @@ class AnnotationParserSpec extends AnyWordSpec with Matchers {
       val annotation =
         root
           .toNode
-          .walkDown
+          .walk
           .collectFirst {
             case Node(annotation: SoftAST.Annotation, _) =>
               annotation

@@ -148,14 +148,14 @@ class VariableDeclarationParserSpec extends AnyWordSpec with Matchers {
 
           // Variable declaration should be defined because `let` is defined.
           // But none of the left expressions should be an identifier
-          variable.toNode.walkDown.map(_.data).collect {
+          variable.toNode.walk.map(_.data).collect {
             case variableDeclaration: SoftAST.VariableDeclaration =>
               variableDeclaration.assignment.expressionLeft should not be a[SoftAST.Identifier]
               variableDeclaration
           } should not be empty
 
           // the tree should not contain any identifiers.
-          variable.toNode.walkDown.map(_.data).collect {
+          variable.toNode.walk.map(_.data).collect {
             case ident: SoftAST.Identifier =>
               ident
           } shouldBe empty

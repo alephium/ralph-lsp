@@ -16,7 +16,7 @@ object TestSoftAST {
     def assertNoErrors(): Assertion = {
       // There are no errors
       val errors =
-        ast.toNode.walkDown.collect {
+        ast.toNode.walk.collect {
           case Node(error: SoftAST.ErrorAST, _) =>
             error
         }

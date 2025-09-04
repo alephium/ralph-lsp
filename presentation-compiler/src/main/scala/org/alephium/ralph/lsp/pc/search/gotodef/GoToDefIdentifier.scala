@@ -1,11 +1,10 @@
 // Copyright (c) Alephium
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package org.alephium.ralph.lsp.pc.search.gotodef.soft
+package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
-import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefSetting, ScopeWalker}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.Node
@@ -34,7 +33,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting
     )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
+      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     searchParent(
       identNode = identNode,
       parent = identNode.parent,
@@ -65,7 +64,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       cache: WorkspaceSearchCache,
       settings: GoToDefSetting
     )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] = {
+      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     @inline def runFullSearch() =
       search(
         identNode = identNode,
@@ -349,7 +348,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     struct
       .params
       .toNode
-      .walkDown
+      .walk
       .collect {
         case Node(SoftAST.TypeAssignment(_, _, ident: SoftAST.Identifier, _, _, _, _), _) =>
           searchIdentifier(
@@ -543,7 +542,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     }
 
   /**
-   * Searches for occurrences of the given identifier node within global scope.
+   * Searches for occurrences of the given identifier node within the global scope.
    *
    * @param target The identifier node to search for.
    * @param tree   A tree within the global scope.
@@ -619,7 +618,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       enableAssignmentSearch: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     // Reference calls are then ones ending with parentheses, for example `refCall()`.
     // Reference calls should only search for function and contract calls, not variables.
-    ScopeWalker.walk(
+    ScopeWalker.collect(
       from = from,
       anchor = target.data.index
     ) {
@@ -652,7 +651,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         )
 
       case Node(assignment: SoftAST.Assignment, _) if enableAssignmentSearch && (!detectCallSyntax || !target.is_RefCall_StructCont_Or_TypeAssignsType()) =>
-        // Used for enums. Only enums contains immutable assignments, which are basically variable definitions.
+        // Used for enums. Only enums contain immutable assignments, which are basically variable definitions.
         searchExpression(
           expression = assignment,
           target = target,
@@ -915,7 +914,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     // Return the target identifier contained in the new tree.
     copiedTree
       .toNode
-      .walkDown
+      .walk
       .collectFirst {
         case node @ Node(ident: SoftAST.Identifier, _) if ident.code.text == target.data.code.text =>
           node.upcast(ident)
@@ -938,7 +937,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
-    // If the identifier belongs the function's block, search the parameters and the block.
+    // If the identifier belongs to the function's block, search the parameters and the block.
     val blockMatches =
       function.block match {
         case Some(block) if block.contains(target) =>
@@ -1099,7 +1098,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param templateIdentifier The template identifier to search.
    * @param target             The identifier being searched.
    * @param sourceCode         The source code state where the template identifier belongs.
-   * @param detectCallSyntax   If `true`, restricts the search to syntax the matches the template being operated on.
+   * @param detectCallSyntax   If `true`, restricts the search to syntax that matches the template being operated on.
    * @return An iterator over the locations of the definitions.
    */
   private def searchTemplateIdentifier(
@@ -1123,7 +1122,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param structIdentifier The struct identifier to search.
    * @param target           The identifier being searched.
    * @param sourceCode       The source code state where the struct identifier belongs.
-   * @param detectCallSyntax If `true`, restricts the search to syntax the matches the struct being operated on.
+   * @param detectCallSyntax If `true`, restricts the search to syntax that matches the struct being operated on.
    *                         For example, struct constructor or type assignment:
    *                         {{{
    *                           // Constructor
@@ -1345,7 +1344,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             .findAtIndex(right.index)
             .flatMap {
               node =>
-                node.walkDown.collectFirst {
+                node.walk.collectFirst {
                   case node @ Node(ident: SoftAST.Identifier, _) if right contains ident =>
                     node.upcast(ident)
                 }
@@ -1446,7 +1445,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param right            Right-hand side of the static call expression.
    * @param sourceCode       The source-code where this search was executed.
    * @param cache            Workspace state and its cached trees.
-   * @param detectCallSyntax If `true`, attemtps to match call-like syntax.
+   * @param detectCallSyntax If `true`, attempts to match call-like syntax.
    * @return Matched source-locations.
    */
   private def searchStaticCallSoft(

@@ -588,7 +588,7 @@ object SourceCodeSearcher extends StrictImplicitLogging {
   def findTxScriptMainFunction(sourceCode: SourceLocation.CodeStrict): Option[Node[Ast.FuncDef[_], Ast.Positioned]] =
     sourceCode.tree.ast match {
       case _: Ast.TxScript =>
-        sourceCode.tree.rootNode.walkDown.collectFirst {
+        sourceCode.tree.rootNode.walk.collectFirst {
           case functionNode @ Node(funcDef: Ast.FuncDef[_], _) if funcDef.name == AstExtra.TX_SCRIPT_MAIN_FUNCTION_NAME =>
             functionNode.upcast(funcDef)
         }

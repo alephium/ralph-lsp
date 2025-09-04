@@ -148,7 +148,7 @@ private object GoToRefTypeId extends StrictImplicitLogging {
     source
       .tree
       .rootNode
-      .walkDown
+      .walk
       .collect {
         case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumDef.id =>
           SourceLocation.NodeStrict(selector.enumId, source)
@@ -178,7 +178,7 @@ private object GoToRefTypeId extends StrictImplicitLogging {
     source
       .tree
       .rootNode
-      .walkDown
+      .walk
       .collect {
         case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == eventDef.id =>
           SourceLocation.NodeStrict(emitEvent.id, source)
@@ -214,7 +214,7 @@ private object GoToRefTypeId extends StrictImplicitLogging {
       .iterator
       .flatMap {
         code =>
-          code.tree.rootNode.walkDown.collect {
+          code.tree.rootNode.walk.collect {
             // this typeId should equal the searched typeId and a different object then itself.
             case Node(typeId: Ast.TypeId, _) if typeId == selectedTypId && typeId.ne(selectedTypId) =>
               SourceLocation.NodeStrict(

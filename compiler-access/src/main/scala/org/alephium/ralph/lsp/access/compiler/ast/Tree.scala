@@ -69,7 +69,7 @@ object Tree {
      * find the node closest to this source-index
      */
     def closest(index: Int): Option[Node[Ast.Positioned, Ast.Positioned]] =
-      rootNode.findLast(_.sourceIndex.exists(_ contains index))
+      rootNode.findLastFromAll(_.sourceIndex.exists(_ contains index))
 
   }
 

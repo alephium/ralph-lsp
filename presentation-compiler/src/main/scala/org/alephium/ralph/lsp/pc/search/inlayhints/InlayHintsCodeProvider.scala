@@ -98,7 +98,7 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
       logger: ClientLogger): Iterator[(SourceIndex, Option[Either[CompilerMessage.Error, Iterator[SourceLocation.GoToTypeDef]]])] =
     // Collect all identifiers in the assignment.
     node
-      .walkDown
+      .walk
       .collect {
         case Node(ident: Ast.Ident, _) =>
           ident.sourceIndex
@@ -169,7 +169,7 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
         case tree: Tree.Source =>
           tree
             .rootNode
-            .filterDown(_.data.sourceIndex.exists(_ overlaps searchRange))
+            .filter(_.data.sourceIndex.exists(_ overlaps searchRange))
             .collect {
               case node @ Node(varDef: Ast.VarDeclaration, _) =>
                 node.upcast(varDef)

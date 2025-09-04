@@ -126,7 +126,7 @@ private object GoToRefFuncId extends StrictImplicitLogging {
     sourceCode
       .tree
       .rootNode
-      .walkDown
+      .walk
       .collect {
         case Node(exp: Ast.CallExpr[_], _) if exp.id == funcId =>
           SourceLocation.NodeStrict(exp.id, sourceCode)
@@ -150,7 +150,7 @@ private object GoToRefFuncId extends StrictImplicitLogging {
       .iterator
       .flatMap {
         code =>
-          code.tree.rootNode.walkDown.collect {
+          code.tree.rootNode.walk.collect {
             case Node(call: Ast.ContractCallBase, _) if call.callId == funcId =>
               // function ID matches, but does it also match the type ID?
               call

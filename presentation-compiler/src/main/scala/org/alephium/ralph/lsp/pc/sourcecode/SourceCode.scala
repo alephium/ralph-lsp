@@ -36,7 +36,7 @@ private[pc] object SourceCode {
    *
    * @param sourceDirectory Directory to synchronise with
    * @param sourceCode      Collection to add missing source files
-   * @return Source files that are in-sync with files on disk.
+   * @return Source files that are in-sync with files on the disk.
    */
   def synchronise(
       sourceDirectory: URI,
@@ -109,8 +109,8 @@ private[pc] object SourceCode {
         error
 
       case error: SourceCodeState.ErrorCompilation =>
-        // This code contains compilations errors that might have been fixed.
-        // Since it is already parsed, return the existing parsed state, without reparsing.
+        // This code contains compilation errors that might have been fixed.
+        // Since it is already parsed, return the existing parsed state without reparsing.
         error.parsed
     }
 
@@ -173,7 +173,7 @@ private[pc] object SourceCode {
    * @param compilerOptions   Options to run for this compilation
    * @param workspaceErrorURI URI to report errors that contain no `fileURI`.
    * @param compiler          Target compiler
-   * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
+   * @return Workspace-level error if an error occurred without a target source-file, or else the next state for each source-code.
    */
   def compile(
       sourceCode: ArraySeq[SourceCodeState.Parsed],
@@ -225,7 +225,7 @@ private[pc] object SourceCode {
    * @param compilerOptions   Options to run for this compilation
    * @param workspaceErrorURI URI to report errors that contain no `fileURI`.
    * @param compiler          Target compiler
-   * @return Workspace-level error if an error occurred without a target source-file, or else next state for each source-code.
+   * @return Workspace-level error if an error occurred without a target source-file, or else the next state for each source-code.
    */
   private def compileSource(
       sourceTrees: ArraySeq[SourceLocation.CodeStrict],
@@ -237,7 +237,7 @@ private[pc] object SourceCode {
     val sourceTreesOnly =
       sourceTrees.map(_.tree)
 
-    // Compile only the source-code. Import statements are already expected to be processed and included in `importedTrees` collection.
+    // Compile only the source-code. Import statements are already expected to be processed and included in the `importedTrees` collection.
     val importedTreesOnly =
       importedTrees.map(_.tree)
 
