@@ -3,7 +3,9 @@
 
 package org.alephium.ralph.lsp.utils
 
+import scala.annotation.tailrec
 import scala.annotation.unchecked.uncheckedVariance
+import scala.collection.mutable
 
 object Node {
 
@@ -117,6 +119,54 @@ case class Node[+A, B] private (
       override def next(): Node[B, B] =
         iter.next()
 
+    }
+
+  /**
+   * Filters and maps tree nodes by applying the given partial function to each node.
+   *
+   *  - <b>__Case 1__ (Partial function is defined for a node)</b>:
+   *    In this case, the result of the partial function applied to the current node is collected, and the children are not traversed
+   *    because the caller claims ownership of this node and all of its children.
+   *
+   *  - <b>__Case 2__ (Partial function is not defined for a node)</b>:
+   *    In this case, the traversal continues into the children because the caller does not claim ownership of this node.
+   *    The same rules are applied recursively.
+   *
+   * @param pf The partial which filters and maps the collection.
+   * @tparam C The element type of the resulting collection.
+   * @return A collection of results from applying the partial function.
+   */
+  def collect[C](pf: PartialFunction[Node[B, B], C]): Iterator[C] =
+    new Iterator[C] {
+      private val queue = mutable.Queue.empty[C]
+
+      /** Filter out nodes that the caller has defined (claimed ownership) */
+      private val iter =
+        self.filterDown {
+          node =>
+            if (pf isDefinedAt node) {
+              queue enqueue pf(node)
+              false // The caller claimed ownership of this node by defining it, filter it out to skip processing its children.
+            } else {
+              true // this node is not defined, continue unwrapping it and processing its children.
+            }
+        }
+
+      @tailrec
+      override def hasNext: Boolean =
+        if (queue.isEmpty) {
+          if (iter.hasNext) {
+            iter.next() // The result of the filter does not matter, here we care about the contents of the queue.
+            hasNext
+          } else {
+            queue.nonEmpty // calling `iter.hasNext` could've added to the queue for final elements, do a final queue check.
+          }
+        } else {
+          true // The queue is not empty. Therefore, at least one element exists.
+        }
+
+      override def next(): C =
+        queue.dequeue()
     }
 
   def walkParents: Iterator[Node[B, B]] =
