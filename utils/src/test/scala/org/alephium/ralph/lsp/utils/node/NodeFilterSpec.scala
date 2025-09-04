@@ -7,7 +7,7 @@ import org.alephium.ralph.lsp.utils.Node
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class NodeFilterDownSpec extends AnyWordSpec with Matchers {
+class NodeFilterSpec extends AnyWordSpec with Matchers {
 
   "return empty" when {
     "the only node (root) is filtered out" when {
@@ -15,7 +15,7 @@ class NodeFilterDownSpec extends AnyWordSpec with Matchers {
         val root = Node("root")
 
         root
-          .filterDown {
+          .filter {
             node =>
               node.data shouldBe "root"
               false
@@ -41,7 +41,7 @@ class NodeFilterDownSpec extends AnyWordSpec with Matchers {
           )
 
         root
-          .filterDown {
+          .filter {
             case Node("Parent", _) =>
               false // Drop the parent
 
@@ -61,7 +61,7 @@ class NodeFilterDownSpec extends AnyWordSpec with Matchers {
       val root = Node("root")
 
       root
-        .filterDown {
+        .filter {
           _ =>
             true
         }
@@ -87,7 +87,7 @@ class NodeFilterDownSpec extends AnyWordSpec with Matchers {
         )
 
       root
-        .filterDown {
+        .filter {
           case Node("Child-2", _) =>
             // Drop Child-2 and expect all of its children must also be dropped
             false
@@ -103,7 +103,7 @@ class NodeFilterDownSpec extends AnyWordSpec with Matchers {
     "only the root and the last parent node are kept" in {
       TestNode
         .root
-        .filterDown {
+        .filter {
           case Node("1", _) =>
             true
 

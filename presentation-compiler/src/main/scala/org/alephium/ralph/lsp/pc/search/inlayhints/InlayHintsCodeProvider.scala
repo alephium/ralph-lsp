@@ -169,7 +169,7 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
         case tree: Tree.Source =>
           tree
             .rootNode
-            .filterDown(_.data.sourceIndex.exists(_ overlaps searchRange))
+            .filter(_.data.sourceIndex.exists(_ overlaps searchRange))
             .collect {
               case node @ Node(varDef: Ast.VarDeclaration, _) =>
                 node.upcast(varDef)

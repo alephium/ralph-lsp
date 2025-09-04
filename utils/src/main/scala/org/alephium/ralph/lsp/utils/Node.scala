@@ -97,7 +97,7 @@ case class Node[+A, B] private (
    *
    * When a parent node does not satisfy the predicate, it is filtered-out along with all of its children.
    */
-  def filterDown(f: Node[B, B] => Boolean): Iterator[Node[B, B]] =
+  def filter(f: Node[B, B] => Boolean): Iterator[Node[B, B]] =
     new Iterator[Node[B, B]] {
 
       private val iter = {
@@ -108,7 +108,7 @@ case class Node[+A, B] private (
           Iterator.single(selfCasted) ++
             children
               .iterator
-              .flatMap(_.filterDown(f))
+              .flatMap(_.filter(f))
         else
           Iterator.empty
       }
@@ -142,7 +142,7 @@ case class Node[+A, B] private (
 
       /** Filter out nodes that the caller has defined (claimed ownership) */
       private val iter =
-        self.filterDown {
+        self.filter {
           node =>
             if (pf isDefinedAt node) {
               queue enqueue pf(node)
