@@ -15,7 +15,7 @@ import org.alephium.ralph.lsp.utils.Node
 
 import scala.annotation.tailrec
 
-case object GoToDefCodeProviderSoft extends CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] with StrictImplicitLogging {
+case object GoToDefCodeProvider extends CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] with StrictImplicitLogging {
 
   /** @inheritdoc */
   override def searchLocal(
