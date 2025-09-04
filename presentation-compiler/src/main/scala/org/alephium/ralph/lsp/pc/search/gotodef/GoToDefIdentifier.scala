@@ -5,7 +5,6 @@ package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
-import org.alephium.ralph.lsp.pc.search.gotodef.{GoToDefSetting, ScopeWalker}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.Node
@@ -34,7 +33,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting
     )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
+      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     searchParent(
       identNode = identNode,
       parent = identNode.parent,
@@ -65,7 +64,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       cache: WorkspaceSearchCache,
       settings: GoToDefSetting
     )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] = {
+      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     @inline def runFullSearch() =
       search(
         identNode = identNode,
