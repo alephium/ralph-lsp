@@ -210,7 +210,7 @@ object CodeProvider {
       None
 
   /**
-   * Execute search at cursor position within the current workspace state.
+   * Execute search at the cursor position within the current workspace state.
    *
    * @param line      Line position in a document (zero-based).
    * @param character Character offset on a line in a document (zero-based).

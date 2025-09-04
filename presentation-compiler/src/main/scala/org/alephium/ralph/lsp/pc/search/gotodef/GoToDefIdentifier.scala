@@ -1445,7 +1445,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param right            Right-hand side of the static call expression.
    * @param sourceCode       The source-code where this search was executed.
    * @param cache            Workspace state and its cached trees.
-   * @param detectCallSyntax If `true`, attemtps to match call-like syntax.
+   * @param detectCallSyntax If `true`, attempts to match call-like syntax.
    * @return Matched source-locations.
    */
   private def searchStaticCallSoft(
