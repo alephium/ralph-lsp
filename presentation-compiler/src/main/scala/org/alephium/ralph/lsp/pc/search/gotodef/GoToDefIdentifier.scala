@@ -542,7 +542,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     }
 
   /**
-   * Searches for occurrences of the given identifier node within global scope.
+   * Searches for occurrences of the given identifier node within the global scope.
    *
    * @param target The identifier node to search for.
    * @param tree   A tree within the global scope.
@@ -937,7 +937,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
-    // If the identifier belongs the function's block, search the parameters and the block.
+    // If the identifier belongs to the function's block, search the parameters and the block.
     val blockMatches =
       function.block match {
         case Some(block) if block.contains(target) =>
@@ -1098,7 +1098,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param templateIdentifier The template identifier to search.
    * @param target             The identifier being searched.
    * @param sourceCode         The source code state where the template identifier belongs.
-   * @param detectCallSyntax   If `true`, restricts the search to syntax the matches the template being operated on.
+   * @param detectCallSyntax   If `true`, restricts the search to syntax that matches the template being operated on.
    * @return An iterator over the locations of the definitions.
    */
   private def searchTemplateIdentifier(
@@ -1122,7 +1122,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    * @param structIdentifier The struct identifier to search.
    * @param target           The identifier being searched.
    * @param sourceCode       The source code state where the struct identifier belongs.
-   * @param detectCallSyntax If `true`, restricts the search to syntax the matches the struct being operated on.
+   * @param detectCallSyntax If `true`, restricts the search to syntax that matches the struct being operated on.
    *                         For example, struct constructor or type assignment:
    *                         {{{
    *                           // Constructor

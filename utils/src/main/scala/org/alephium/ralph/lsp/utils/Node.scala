@@ -14,7 +14,7 @@ object Node {
    *
    * @param data The data to be stored in the new node.
    * @tparam A The data type of the new node.
-   * @tparam B The data type of the child nodes, which must be a super type of `A`.
+   * @tparam B The data type of the child nodes, which must be a super type of [[A]].
    * @return A new `Node` instance with the specified data and no children.
    */
   @inline def apply[A, B >: A](data: A): Node[A, B] =
@@ -26,7 +26,7 @@ object Node {
    * @param data     The data to be stored in the new node.
    * @param children The child nodes of the new node.
    * @tparam A The data type of the new node.
-   * @tparam B The data type of the child nodes, which must be a super type of `A`.
+   * @tparam B The data type of the child nodes, which must be a super type of [[A]].
    * @return A new `Node` instance with the specified data and children.
    */
   @inline def apply[A, B >: A](
@@ -193,7 +193,7 @@ case class Node[+A, B] private (
   /**
    * Find the last node for which this predicate is true.
    *
-   * This function is useful for find the closest node that contains a source-index.
+   * This function is useful for finding the closest node that contains a source-index.
    *
    * Use [[findLastChild]] for depth-first search.
    */

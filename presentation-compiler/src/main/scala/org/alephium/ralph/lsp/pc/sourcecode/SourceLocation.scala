@@ -13,7 +13,7 @@ import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
 import scala.collection.immutable.ArraySeq
 
-/** Represents a position within a source-file in parsed state. */
+/** Represents a position within a source-file in a parsed state. */
 sealed trait SourceLocation {
 
   def parsed: SourceCodeState.IsParsedAndCompiled
@@ -40,7 +40,7 @@ object SourceLocation extends StrictImplicitLogging {
               (sourceIndex.from, sourceIndex.to)
           }
 
-        // Report to debug cases where index is `None`
+        // Report to debug cases where the index is `None`
         if (index.isEmpty)
           logger.error(s"`${goToDef.getClass.getName}` contains `None` source-index. FileURI: `${goToDef.parsed.fileURI}`")
 
@@ -73,7 +73,7 @@ object SourceLocation extends StrictImplicitLogging {
   sealed trait GoToRenameSoft   extends GoToRename
 
   /**
-   * Result types for GoTo references location search results.
+   * Result types for GoTo reference location search results.
    */
   sealed trait GoToRef       extends GoTo
   sealed trait GoToRefStrict extends GoToRef
@@ -81,7 +81,7 @@ object SourceLocation extends StrictImplicitLogging {
 
   /**
    * Represents a source file ([[SourceCodeState.Parsed]]) without
-   * a target position. For eg: Used to provide jump definition for imported files.
+   * a target position. For e.g.: Used to provide jump definition for imported files.
    *
    * @param parsed The source file containing the positioned node.
    */
@@ -280,7 +280,7 @@ object SourceLocation extends StrictImplicitLogging {
 
   /**
    * Represents a single source tree ([[Tree.Source]]) within a source file ([[SourceCodeState.Parsed]]),
-   * which can contain multiple source trees such as contracts, scripts etc.
+   * which can contain multiple source trees such as contracts, scripts, etc.
    *
    * @param tree   The source tree within the parsed source file.
    * @param parsed The source file containing the source tree.
