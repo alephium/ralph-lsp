@@ -28,7 +28,7 @@ private[search] case object HoverCodeProvider extends CodeProvider[SourceCodeSta
     )(implicit searchCache: SearchCache,
       logger: ClientLogger): Iterator[SourceLocation.Hover] =
     CodeProvider
-      .goToDefSoft
+      .goToDef
       .searchLocal(
         cursorIndex = cursorIndex,
         sourceCode = sourceCode,

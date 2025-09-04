@@ -128,7 +128,7 @@ object CodeProvider {
     CodeCompletionProvider
 
   /** The go-to definition implementation of [[CodeProvider]]. */
-  implicit val goToDefSoft: CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] =
+  implicit val goToDef: CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] =
     GoToDefCodeProvider
 
   /** The go-to references implementation of [[CodeProvider]]. */
@@ -169,7 +169,7 @@ object CodeProvider {
       searchCache: SearchCache,
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     // Search on dependencies should only run for go-to definitions and hover requests. Code-completion is ignored.
-    if (provider == CodeProvider.goToDefSoft || provider == CodeProvider.goToRef || provider == CodeProvider.hover)
+    if (provider == CodeProvider.goToDef || provider == CodeProvider.goToRef || provider == CodeProvider.hover)
       workspace
         .build
         .dependencies
