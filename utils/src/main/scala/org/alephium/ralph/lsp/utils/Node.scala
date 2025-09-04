@@ -169,6 +169,11 @@ case class Node[+A, B] private (
         queue.dequeue()
     }
 
+  /**
+   * Walks up the hierarchy of parent nodes starting from the current node.
+   *
+   * @return An iterator over the current node's parent nodes and their ancestors.
+   */
   def walkParents: Iterator[Node[B, B]] =
     new Iterator[Node[B, B]] {
 
