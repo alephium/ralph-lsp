@@ -10,16 +10,16 @@ import org.alephium.ralph.lsp.utils.Node
 private[search] object ScopeWalker {
 
   /**
-   * Navigates the nodes within the scope of the `anchor` node, starting from the `from` node.
+   * Filters and collects the nodes within the scope of the `anchor` node, starting from the `from` node.
    *
    * @param from   The node where the search starts.
    * @param anchor The node which is being scoped and where the search ends.
    *               If the collected result is empty, nodes after the `anchor`'s position
    *               are processed until at least one item is collected.
    * @param pf     Only the Nodes defined by this partial function are collected.
-   * @return Nodes within the scope of the anchor AST.
+   * @return Nodes within the scope of the anchor [[SourceIndex]] that are also defined by the [[PartialFunction]].
    */
-  def walk[T](
+  def collect[T](
       from: Node[SoftAST, SoftAST],
       anchor: SourceIndex
     )(pf: PartialFunction[Node[SoftAST, SoftAST], Iterator[T]]): Iterator[T] = {

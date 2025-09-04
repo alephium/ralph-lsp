@@ -618,7 +618,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       enableAssignmentSearch: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     // Reference calls are then ones ending with parentheses, for example `refCall()`.
     // Reference calls should only search for function and contract calls, not variables.
-    ScopeWalker.walk(
+    ScopeWalker.collect(
       from = from,
       anchor = target.data.index
     ) {
