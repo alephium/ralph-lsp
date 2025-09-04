@@ -348,7 +348,6 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     struct
       .params
       .toNode
-      .walk
       .collect {
         case Node(SoftAST.TypeAssignment(_, _, ident: SoftAST.Identifier, _, _, _, _), _) =>
           searchIdentifier(
