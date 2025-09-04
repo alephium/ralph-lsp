@@ -651,7 +651,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         )
 
       case Node(assignment: SoftAST.Assignment, _) if enableAssignmentSearch && (!detectCallSyntax || !target.is_RefCall_StructCont_Or_TypeAssignsType()) =>
-        // Used for enums. Only enums contains immutable assignments, which are basically variable definitions.
+        // Used for enums. Only enums contain immutable assignments, which are basically variable definitions.
         searchExpression(
           expression = assignment,
           target = target,
