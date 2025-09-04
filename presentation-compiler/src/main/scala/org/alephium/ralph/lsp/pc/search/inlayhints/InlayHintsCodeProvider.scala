@@ -98,7 +98,7 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
       logger: ClientLogger): Iterator[(SourceIndex, Option[Either[CompilerMessage.Error, Iterator[SourceLocation.GoToTypeDef]]])] =
     // Collect all identifiers in the assignment.
     node
-      .walkDown
+      .walk
       .collect {
         case Node(ident: Ast.Ident, _) =>
           ident.sourceIndex

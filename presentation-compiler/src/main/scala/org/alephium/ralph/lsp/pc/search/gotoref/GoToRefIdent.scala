@@ -342,7 +342,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
     sourceCode
       .tree
       .rootNode
-      .walkDown
+      .walk
       .collect {
         case Node(ast: Ast.ContractInheritance, _) =>
           ast
@@ -431,7 +431,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
     sourceCode
       .tree
       .rootNode
-      .walkDown
+      .walk
       .collect {
         // find all the selections matching the enum and the enum's field type.
         case Node(selector: Ast.EnumFieldSelector[_], _) if selector.enumId == enumType && selector.field == enumField.ident =>
@@ -453,7 +453,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
     sourceCode
       .tree
       .rootNode
-      .walkDown
+      .walk
       .collect {
         // find all the event fields usages at given eventFieldIndex.
         case Node(emitEvent: Ast.EmitEvent[_], _) if emitEvent.id == eventDefId && eventFieldIndex < emitEvent.args.length =>
@@ -497,7 +497,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
       .iterator
       .flatMap {
         code =>
-          code.tree.rootNode.walkDown.collect {
+          code.tree.rootNode.walk.collect {
             case Node(mapCall: Ast.MapFuncCall, _) if mapCall.ident == ident =>
               SourceLocation.NodeStrict(mapCall.ident, code)
 
@@ -567,7 +567,7 @@ private object GoToRefIdent extends StrictImplicitLogging {
     )(implicit searchCache: SearchCache,
       logger: ClientLogger): Iterator[SourceLocation.NodeStrict[Ast.Ident]] =
     from
-      .walkDown
+      .walk
       .collect {
         // find all the selections matching the variable name.
         case Node(variable: Ast.Variable[_], _) if variable.id == definition =>

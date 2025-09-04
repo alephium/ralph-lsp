@@ -41,14 +41,14 @@ class NodeWalkParentsSpec extends AnyWordSpec with Matchers {
       val midNode1 =
         TestNode
           .root
-          .walkDown
+          .walk
           .find(_.data == "1-3-2-2-1")
           .value
 
       val midNode2 =
         TestNode
           .root
-          .walkDown
+          .walk
           .find(_.data == "1-3-2-2-2")
           .value
 
@@ -71,7 +71,7 @@ class NodeWalkParentsSpec extends AnyWordSpec with Matchers {
       val lastNode =
         TestNode
           .root
-          .walkDown
+          .walk
           .find(_.data == "1-4-2")
           .value
 

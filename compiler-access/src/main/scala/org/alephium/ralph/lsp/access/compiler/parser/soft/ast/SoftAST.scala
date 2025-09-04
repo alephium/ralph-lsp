@@ -74,7 +74,7 @@ object SoftAST {
   implicit class NodeSoftASTExtensions(val node: Node[SoftAST, SoftAST]) extends AnyVal {
 
     def toCode(): String =
-      node.walkDown.foldLeft("") {
+      node.walk.foldLeft("") {
         case (code, Node(ast: Code, _)) =>
           code + ast.text
 

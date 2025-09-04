@@ -39,7 +39,7 @@ object EnumFieldCompleter {
       .iterator
       .flatMap {
         sourceCode =>
-          sourceCode.tree.rootNode.walkDown.collect {
+          sourceCode.tree.rootNode.walk.collect {
             case Node(enumDef: ralph.Ast.EnumDef[_], _) if enumDef.id == enumId =>
               Suggestion.EnumFields(SourceLocation.NodeStrict(enumDef, sourceCode))
           }

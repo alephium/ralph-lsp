@@ -187,7 +187,7 @@ object TestParser {
   def testDeepCopy[A <: SoftAST](ast: A): A = {
     val newSourceIndex      = new SourceIndex(Random.nextInt(100), Random.nextInt(1000), None) // Generate a random SourceIndex
     val newAST              = ast.deepCopy(newSourceIndex)                                     // Copy the tree with new SourceIndex
-    val newASTSourceIndexes = newAST.toNode.walkDown.map(_.data.index).distinct.toList         // Collect distinct SourceIndexes from the update tree
+    val newASTSourceIndexes = newAST.toNode.walk.map(_.data.index).distinct.toList         // Collect distinct SourceIndexes from the update tree
     newASTSourceIndexes should contain only newSourceIndex // It should contain only the one new SourceIndex
     newAST
   }
@@ -203,7 +203,7 @@ object TestParser {
       ast: SoftAST): Option[SoftAST.Annotation] =
     ast
       .toNode
-      .walkDown
+      .walk
       .collectFirst {
         case Node(annotation @ SoftAST.Annotation(_, _, _, id: SoftAST.Identifier, _, _, _), _) if id.code.text == identifier =>
           annotation
@@ -212,7 +212,7 @@ object TestParser {
   def findFirstComment(ast: SoftAST): Option[SoftAST.Comments] =
     ast
       .toNode
-      .walkDown
+      .walk
       .collectFirst {
         case Node(comments @ SoftAST.Comments(_, _, _, _), _) =>
           comments

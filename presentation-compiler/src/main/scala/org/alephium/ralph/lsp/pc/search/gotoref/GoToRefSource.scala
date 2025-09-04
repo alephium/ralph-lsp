@@ -81,7 +81,7 @@ private object GoToRefSource extends StrictImplicitLogging {
         .source
         .tree
         .rootNode
-        .walkDown
+        .walk
         .find(_.data eq defLocation.ast) // find the node where this definition belongs.
 
     // Execute go-to references

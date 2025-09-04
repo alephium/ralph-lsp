@@ -123,7 +123,7 @@ object FunctionBodyCompleter {
       functionNode: Node[Ast.FuncDef[_], Ast.Positioned],
       sourceCode: SourceLocation.CodeStrict): Iterator[Suggestion.NodeAPI] =
     functionNode
-      .walkDown
+      .walk
       .filter(_.data.sourceIndex.exists(_.from <= cursorIndex))
       .collect {
         case Node(argument: Ast.Argument, _) =>
@@ -165,7 +165,7 @@ object FunctionBodyCompleter {
     sourceCode
       .tree
       .rootNode
-      .walkDown
+      .walk
       .collect {
         case node @ Node(argument: Ast.Argument, _) if node.parent.exists(_.data.isInstanceOf[Ast.ContractWithState]) =>
           // suggest template level arguments

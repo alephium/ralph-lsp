@@ -48,7 +48,7 @@ object Node {
  * A [[Node]] represents a single position within a tree.
  *
  * Each node allows tree traversal in both forward and backward directions
- * using the functions like [[walkDown]], [[walkParents]] and others.
+ * using the functions like [[walk]], [[walkParents]] and others.
  *
  * @param data     The data stored in this node.
  * @param children This node's child nodes.
@@ -75,14 +75,14 @@ case class Node[+A, B] private (
       }
 
   /** Walk down from current node reaching all it's children and grand-children */
-  def walkDown: Iterator[Node[B, B]] =
+  def walk: Iterator[Node[B, B]] =
     new Iterator[Node[B, B]] {
 
       private val iter =
         Iterator.single(self.asInstanceOf[Node[B, B]]) ++
           children
             .iterator
-            .flatMap(_.walkDown)
+            .flatMap(_.walk)
 
       override def hasNext: Boolean =
         iter.hasNext
@@ -199,7 +199,7 @@ case class Node[+A, B] private (
    */
   def findLast(f: B => Boolean): Option[Node[B, B]] =
     self
-      .walkDown
+      .walk
       .foldLeft(Option.empty[Node[B, B]]) {
         case (closest, nextNode) =>
           if (f(nextNode.data))

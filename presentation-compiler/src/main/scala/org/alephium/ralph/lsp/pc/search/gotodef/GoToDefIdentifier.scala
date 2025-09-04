@@ -348,7 +348,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     struct
       .params
       .toNode
-      .walkDown
+      .walk
       .collect {
         case Node(SoftAST.TypeAssignment(_, _, ident: SoftAST.Identifier, _, _, _, _), _) =>
           searchIdentifier(
@@ -914,7 +914,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
     // Return the target identifier contained in the new tree.
     copiedTree
       .toNode
-      .walkDown
+      .walk
       .collectFirst {
         case node @ Node(ident: SoftAST.Identifier, _) if ident.code.text == target.data.code.text =>
           node.upcast(ident)
@@ -1344,7 +1344,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             .findAtIndex(right.index)
             .flatMap {
               node =>
-                node.walkDown.collectFirst {
+                node.walk.collectFirst {
                   case node @ Node(ident: SoftAST.Identifier, _) if right contains ident =>
                     node.upcast(ident)
                 }
