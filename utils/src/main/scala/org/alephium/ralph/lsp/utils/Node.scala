@@ -191,13 +191,14 @@ case class Node[+A, B] private (
     }
 
   /**
-   * Find the last node for which this predicate is true.
+   * Find the last node from __ALL__ nodes for which this predicate is true.
    *
    * This function is useful for finding the closest node that contains a source-index.
    *
-   * Use [[findLastChild]] for depth-first search.
+   * @note This is currently only used for strict-AST.
+   *       Use [[findLast]] for a more efficient depth-first search.
    */
-  def findLast(f: B => Boolean): Option[Node[B, B]] =
+  def findLastFromAll(f: B => Boolean): Option[Node[B, B]] =
     self
       .walk
       .foldLeft(Option.empty[Node[B, B]]) {
@@ -214,14 +215,14 @@ case class Node[+A, B] private (
    * Finds the last node for which the predicate is true, skipping the node
    * and its children if the predicate fails for the parent node.
    */
-  def findLastChild(f: Node[B, B] => Boolean): Option[Node[B, B]] = {
+  def findLast(f: Node[B, B] => Boolean): Option[Node[B, B]] = {
     val selfCasted =
       self.asInstanceOf[Node[B, B]]
 
     if (f(selfCasted))
       children
         .iterator
-        .flatMap(_.findLastChild(f))
+        .flatMap(_.findLast(f))
         .foldLeft(Some(selfCasted)) {
           case (_, next) =>
             Some(next)

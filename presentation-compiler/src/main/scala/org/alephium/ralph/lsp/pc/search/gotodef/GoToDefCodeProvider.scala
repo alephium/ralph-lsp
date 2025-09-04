@@ -80,7 +80,7 @@ case object GoToDefCodeProvider extends CodeProvider[SourceCodeState.IsParsed, (
       allowLeftShift: Boolean
     )(implicit searchCache: SearchCache,
       logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
-    blockPart.toNode.findLastChild(_.data.index contains cursorIndex) match {
+    blockPart.toNode.findLast(_.data.index contains cursorIndex) match {
       case Some(Node(token: SoftAST.CodeToken[_], _)) =>
         if (allowLeftShift && token.index.from == cursorIndex)
           searchBlockPart(

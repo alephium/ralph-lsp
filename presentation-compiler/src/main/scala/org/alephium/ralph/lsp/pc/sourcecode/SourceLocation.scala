@@ -186,7 +186,7 @@ object SourceLocation extends StrictImplicitLogging {
               case tree: Tree.Source =>
                 tree
                   .rootNode
-                  .findLast(_.sourceIndex.exists(_ isEqualToSoft ast.index))
+                  .findLastFromAll(_.sourceIndex.exists(_ isEqualToSoft ast.index))
                   .map {
                     node =>
                       NodeStrict(
