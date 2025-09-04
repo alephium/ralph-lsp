@@ -187,7 +187,7 @@ object TestParser {
   def testDeepCopy[A <: SoftAST](ast: A): A = {
     val newSourceIndex      = new SourceIndex(Random.nextInt(100), Random.nextInt(1000), None) // Generate a random SourceIndex
     val newAST              = ast.deepCopy(newSourceIndex)                                     // Copy the tree with new SourceIndex
-    val newASTSourceIndexes = newAST.toNode.walk.map(_.data.index).distinct.toList         // Collect distinct SourceIndexes from the update tree
+    val newASTSourceIndexes = newAST.toNode.walk.map(_.data.index).distinct.toList             // Collect distinct SourceIndexes from the update tree
     newASTSourceIndexes should contain only newSourceIndex // It should contain only the one new SourceIndex
     newAST
   }
