@@ -71,17 +71,6 @@ private object TokenParser {
     }
 
   /**
-   * Parses all reserved tokens defined in [[Token.reserved]] and returns the first match.
-   *
-   * Prefix check is not required here because [[Token.reserved]] contains all tokens and are sorted.
-   */
-  def Reserved[Unknown: P](): P[Token.Reserved] =
-    ParserUtil.orTokenCombinator(
-      prefixCheck = false,
-      tokens = Token.reserved.iterator
-    )
-
-  /**
    * Parses all tokens of type [[Token.InfixOperator]] and also their comments.
    */
   def InfixOperatorOrFail[Unknown: P]: P[SoftAST.TokenDocumented[Token.InfixOperator]] =

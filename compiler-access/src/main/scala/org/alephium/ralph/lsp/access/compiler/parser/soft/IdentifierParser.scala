@@ -44,7 +44,7 @@ private object IdentifierParser {
         CommentParser.parseOrFail.? ~
         // disallow reserved names such as `let mut = 1`.
         // also handle cases where tail is the end of file `let mut`.
-        !(TokenParser.Reserved() ~ TokenParser.isBoundary()) ~
+        !(ReservedTokenParser.parseOrFail ~ TokenParser.isBoundary()) ~
         CodeParser.parseOrFail(isDevDefinedName.!) ~
         Index
     } map {
