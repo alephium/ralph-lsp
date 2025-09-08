@@ -129,6 +129,11 @@ object ReservedTokenParser {
       """!"""
     )
 
+//  /**
+//   * Use this function to print the tokens to paste into the above [[staticReservedToken]].
+//   *
+//   * TODO: Move this to a macro.
+//   */
 //  private def regenerate(): Unit = {
 //    val string =
 //      Token
