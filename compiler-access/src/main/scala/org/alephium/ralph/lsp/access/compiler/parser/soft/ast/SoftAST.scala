@@ -74,7 +74,7 @@ object SoftAST {
   implicit class NodeSoftASTExtensions(val node: Node[SoftAST, SoftAST]) extends AnyVal {
 
     def toCode(): String =
-      node.walkDown.foldLeft("") {
+      node.walk.foldLeft("") {
         case (code, Node(ast: Code, _)) =>
           code + ast.text
 
@@ -124,7 +124,7 @@ object SoftAST {
      */
     final def findAtIndex(index: SourceIndex): Option[Node[SoftAST, SoftAST]] =
       node
-        .filterDown(_.data.index containsSoft index)
+        .filter(_.data.index containsSoft index)
         .find(_.data.index == index)
 
     /**
@@ -142,7 +142,7 @@ object SoftAST {
      */
     final def find[A <: SoftAST](ast: A): Option[Node[A, SoftAST]] =
       node
-        .filterDown(_.data.index containsSoft ast.index) // drop trees that do not contain this index
+        .filter(_.data.index containsSoft ast.index) // drop trees that do not contain this index
         .collectFirst {
           case node @ Node(thisAST, _) if thisAST == ast =>
             node upcast thisAST.asInstanceOf[A]

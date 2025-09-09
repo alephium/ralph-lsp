@@ -102,7 +102,7 @@ class FnDecelerationSpec extends AnyWordSpec with Matchers {
       val functions =
         root
           .toNode
-          .walkDown
+          .walk
           .map(_.data)
           .collect {
             case function: SoftAST.Function =>

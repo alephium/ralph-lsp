@@ -8,7 +8,7 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.search.completion.{CodeCompletionProvider, Suggestion}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
-import org.alephium.ralph.lsp.pc.search.gotodef.soft.GoToDefCodeProviderSoft
+import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefCodeProvider
 import org.alephium.ralph.lsp.pc.search.gotoref.{GoToRefCodeProvider, GoToRefSetting}
 import org.alephium.ralph.lsp.pc.search.gototypedef.GoToTypeDefCodeProvider
 import org.alephium.ralph.lsp.pc.search.hover.HoverCodeProvider
@@ -128,8 +128,8 @@ object CodeProvider {
     CodeCompletionProvider
 
   /** The go-to definition implementation of [[CodeProvider]]. */
-  implicit val goToDefSoft: CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] =
-    GoToDefCodeProviderSoft
+  implicit val goToDef: CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] =
+    GoToDefCodeProvider
 
   /** The go-to references implementation of [[CodeProvider]]. */
   implicit val goToRef: CodeProvider[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict] =
@@ -169,7 +169,7 @@ object CodeProvider {
       searchCache: SearchCache,
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
     // Search on dependencies should only run for go-to definitions and hover requests. Code-completion is ignored.
-    if (provider == CodeProvider.goToDefSoft || provider == CodeProvider.goToRef || provider == CodeProvider.hover)
+    if (provider == CodeProvider.goToDef || provider == CodeProvider.goToRef || provider == CodeProvider.hover)
       workspace
         .build
         .dependencies
@@ -210,7 +210,7 @@ object CodeProvider {
       None
 
   /**
-   * Execute search at cursor position within the current workspace state.
+   * Execute search at the cursor position within the current workspace state.
    *
    * @param line      Line position in a document (zero-based).
    * @param character Character offset on a line in a document (zero-based).

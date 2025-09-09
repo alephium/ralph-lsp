@@ -1,13 +1,12 @@
 // Copyright (c) Alephium
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package org.alephium.ralph.lsp.pc.search.gotodef.soft
+package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.cache.SearchCache
-import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
@@ -16,7 +15,7 @@ import org.alephium.ralph.lsp.utils.Node
 
 import scala.annotation.tailrec
 
-case object GoToDefCodeProviderSoft extends CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] with StrictImplicitLogging {
+case object GoToDefCodeProvider extends CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.GoToDefSoft] with StrictImplicitLogging {
 
   /** @inheritdoc */
   override def searchLocal(
@@ -81,7 +80,7 @@ case object GoToDefCodeProviderSoft extends CodeProvider[SourceCodeState.IsParse
       allowLeftShift: Boolean
     )(implicit searchCache: SearchCache,
       logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
-    blockPart.toNode.findLastChild(_.data.index contains cursorIndex) match {
+    blockPart.toNode.findLast(_.data.index contains cursorIndex) match {
       case Some(Node(token: SoftAST.CodeToken[_], _)) =>
         if (allowLeftShift && token.index.from == cursorIndex)
           searchBlockPart(

@@ -23,7 +23,7 @@ private[search] case object GoToDefMultiCodeProvider extends MultiCodeProvider[U
    * Searches the definition location(s) for a symbol at the given position in a file.
    *
    * This function is used by the LSP to resolve “Go to Definition” requests across multiple workspaces.
-   * For single-workspace search, use [[org.alephium.ralph.lsp.pc.search.gotodef.soft.GoToDefCodeProviderSoft]].
+   * For single-workspace search, use [[org.alephium.ralph.lsp.pc.search.gotodef.GoToDefCodeProvider]].
    *
    * @param fileURI     The URI of the file where this search is executed.
    * @param line        The line number where the search begins.
