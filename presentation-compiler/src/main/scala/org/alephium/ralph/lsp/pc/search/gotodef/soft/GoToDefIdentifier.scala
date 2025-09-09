@@ -507,7 +507,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         detectCallSyntax = detectCallSyntax
       )
 
-    val result = (local.iterator ++ inherited ++ globals).distinct
+    val result = (local ++ inherited ++ globals).distinct
 
     if (detectCallSyntax && result.isEmpty)
       search(
@@ -616,7 +616,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean,
-      enableAssignmentSearch: Boolean): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+      enableAssignmentSearch: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     // Reference calls are then ones ending with parentheses, for example `refCall()`.
     // Reference calls should only search for function and contract calls, not variables.
     ScopeWalker.walk(
@@ -824,7 +824,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       target: Node[SoftAST.Identifier, SoftAST],
       inherited: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean
-    )(implicit logger: ClientLogger): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
     val virtualNode =
       buildVirtualNodeAtSourceEnd(
         target = target,
@@ -845,7 +845,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case None =>
         // This should not occur if the above AST has an identifier.
         logger.error(s"Error: Virtual `Identifier` not found. File: ${inherited.parsed.fileURI}")
-        Iterable.empty
+        Iterator.empty
     }
   }
 
@@ -1213,7 +1213,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       target: Node[SoftAST.Identifier, SoftAST],
       sourceCode: SourceLocation.CodeSoft,
       detectCallSyntax: Boolean,
-      enableAssignmentSearch: Boolean): Iterable[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+      enableAssignmentSearch: Boolean): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
     if (block contains target)
       searchLocal(
         from = block.toNode,
@@ -1223,7 +1223,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         enableAssignmentSearch = enableAssignmentSearch
       )
     else
-      Iterable.empty
+      Iterator.empty
 
   /**
    * Expands and searches the given group.
