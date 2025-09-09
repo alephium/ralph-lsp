@@ -52,13 +52,13 @@ object TestParser {
     runSoftParser(CommentParser.parseOrFail(_))(code)
 
   def parseReservedToken()(code: String): Token.Reserved =
-    runAnyParser(TokenParser.Reserved()(_))(code)
+    runAnyParser(ReservedTokenParser.parseOrFail(_))(code)
 
   def parseInfixOperatorOrFail(code: String): SoftAST.TokenDocumented[Token.InfixOperator] =
     runAnyParser(TokenParser.InfixOperatorOrFail(_))(code)
 
   def parseReservedTokenOrError()(code: String): Either[Parsed.Failure, Token.Reserved] =
-    runAnyParserOrError(TokenParser.Reserved()(_))(code)
+    runAnyParserOrError(ReservedTokenParser.parseOrFail(_))(code)
 
   def parseIdentifier(code: String): SoftAST.IdentifierAST =
     runSoftParser(IdentifierParser.parseOrFail(_))(code)
