@@ -17,7 +17,7 @@ class TokenParserSpec extends AnyWordSpec {
     "ForwardSlash" should {
       "not parse double forward slash as it is reserved for comments" in {
         assertThrows[Exception](
-          parseInfixOperatorOrFail("//")
+          parseInfixOperator("//")
         )
       }
     }
@@ -29,7 +29,7 @@ class TokenParserSpec extends AnyWordSpec {
 
         infixOperators foreach {
           infix =>
-            parseInfixOperatorOrFail(infix.lexeme) shouldBe
+            parseInfixOperator(infix.lexeme) shouldBe
               TokenDocumented(
                 index = range(0, infix.lexeme.length),
                 token = infix
