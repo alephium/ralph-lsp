@@ -71,17 +71,6 @@ private object TokenParser {
     }
 
   /**
-   * Parses all tokens of type [[Token.InfixOperator]] and also their comments.
-   */
-  def InfixOperatorOrFail[Unknown: P]: P[SoftAST.TokenDocumented[Token.InfixOperator]] =
-    P {
-      parseOrFailOneOf(
-        prefixCheck = false,
-        tokens = Token.infix.iterator
-      )
-    }
-
-  /**
    * Reads characters until at least one of the input tokens is matched.
    *
    * If none of the tokens are found, the parser fails.

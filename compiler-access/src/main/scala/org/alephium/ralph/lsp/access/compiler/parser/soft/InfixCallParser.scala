@@ -15,7 +15,7 @@ private object InfixCallParser {
       Index ~
         leftExpression ~
         SpaceParser.parseOrFail.? ~
-        TokenParser.InfixOperatorOrFail ~
+        InfixTokenParser.parseOrFail ~
         SpaceParser.parseOrFail.? ~
         ExpressionParser.parseSubset(rightExpression) ~
         Index
