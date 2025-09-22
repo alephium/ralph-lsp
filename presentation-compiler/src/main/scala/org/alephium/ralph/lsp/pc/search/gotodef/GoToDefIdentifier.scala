@@ -1235,6 +1235,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
    *                         return variables with the same name.
    * @return An iterator over definition search results.
    */
+  @tailrec
   private def searchGroup(
       group: Node[SoftAST.Group[_, _, _], SoftAST],
       identNode: Node[SoftAST.Identifier, SoftAST],
@@ -1242,17 +1243,74 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       cache: WorkspaceSearchCache,
       settings: GoToDefSetting,
       detectCallSyntax: Boolean
-    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
+    )(implicit logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    def self() =
+      Iterator.single(
+        SourceLocation.NodeSoft(
+          ast = identNode.data.code,
+          source = sourceCode
+        )
+      )
+
     group.parent match {
       case Some(Node(_: SoftAST.DeclarationAST | _: SoftAST.FunctionSignature, _)) =>
         // The identifier is defined within the group.
         // For example, `Contract MyContract(ident)`
-        Iterator.single(
-          SourceLocation.NodeSoft(
-            ast = identNode.data.code,
-            source = sourceCode
-          )
+        self()
+
+      case Some(Node(assignment: SoftAST.Assignment, _)) if assignment.expressionLeft contains identNode =>
+        // if the identifier is on the left of an assignment, it must be the definition,
+        // for example, `let (>>@@one<<, two) = (1, 2)`
+        self()
+
+      case Some(node @ Node(group @ (_: SoftAST.Group[_, _, _]), _)) if group contains identNode =>
+        // If this group is within another group (nested tupled), and it contains the identifier being searched, keep unwrapping the group
+        // because this group might be a tuple deconstructor, for example,
+        //
+        // let (a, b, (c, d, (>>@@e<<, f))) = ???
+        searchGroup(
+          group = node.upcast(group),
+          identNode = identNode,
+          sourceCode = sourceCode,
+          cache = cache,
+          settings = settings,
+          detectCallSyntax = detectCallSyntax
         )
+
+      case Some(node @ Node(tail @ (_: SoftAST.GroupTail[_]), _)) if tail contains identNode =>
+        // If this group-tail is within another group, and it contains the identifier being searched, keep unwrapping the group.
+        val group =
+          node.parent collectFirst {
+            case node @ Node(group: SoftAST.Group[_, _, _], _) =>
+              node upcast group
+          }
+
+        group match {
+          case Some(group) =>
+            // Search the unwrapped group, as it may contain the identifier
+            searchGroup(
+              group = group,
+              identNode = identNode,
+              sourceCode = sourceCode,
+              cache = cache,
+              settings = settings,
+              detectCallSyntax = detectCallSyntax
+            )
+
+          case None =>
+            // No parent group found, execute regular search.
+            // GroupTail is always contained with a Group, so this case should never occur.
+            // An independent `GroupTail` is never created by the parser.
+            logger.error(s"Independent ${classOf[SoftAST.GroupTail[_]].getSimpleName} found. Expected a parent ${classOf[SoftAST.Group[_, _, _]].getSimpleName}.")
+
+            search(
+              identNode = identNode,
+              sourceCode = sourceCode,
+              cache = cache,
+              settings = settings,
+              detectCallSyntax = detectCallSyntax
+            )
+        }
 
       case Some(node) =>
         /*
@@ -1286,6 +1344,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           detectCallSyntax = detectCallSyntax
         )
     }
+  }
 
   /**
    * Expands and searches the given [[SoftAST.MethodCall]].
