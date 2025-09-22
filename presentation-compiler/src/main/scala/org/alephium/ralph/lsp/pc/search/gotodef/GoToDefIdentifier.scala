@@ -1266,7 +1266,6 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       case Some(node @ Node(group @ (_: SoftAST.Group[_, _, _]), _)) if group contains identNode =>
         // If this group is within another group (nested tupled), and it contains the identifier being searched, keep unwrapping the group
         // because this group might be a tuple deconstructor, for example,
-        //
         // let (a, b, (c, d, (>>@@e<<, f))) = ???
         searchGroup(
           group = node.upcast(group),
@@ -1279,8 +1278,10 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
       case Some(node @ Node(tail @ (_: SoftAST.GroupTail[_]), _)) if tail contains identNode =>
         // If this group-tail is within another group, and it contains the identifier being searched, keep unwrapping the group.
+        // because this group might be a tuple deconstructor, for example,
+        // let (a, b, (c, d, (e, >>@@f<<))) = ???
         val group =
-          node.parent collectFirst {
+          node.parent collectFirst { // Find the parent group
             case node @ Node(group: SoftAST.Group[_, _, _], _) =>
               node upcast group
           }
@@ -1302,7 +1303,6 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
             // GroupTail is always contained with a Group, so this case should never occur.
             // An independent `GroupTail` is never created by the parser.
             logger.error(s"Independent ${classOf[SoftAST.GroupTail[_]].getSimpleName} found. Expected a parent ${classOf[SoftAST.Group[_, _, _]].getSimpleName}.")
-
             search(
               identNode = identNode,
               sourceCode = sourceCode,
