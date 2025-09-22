@@ -143,6 +143,32 @@ class GoToArgumentSpec extends AnyWordSpec with Matchers {
         }
       }
     }
+
+    "anonymous" when {
+      "identifier" in {
+        goToDefinition() {
+          """
+            |Contract Test() {
+            |  fn test(_: Bool) -> () {
+            |    @@_
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
+
+      "variable" in {
+        goToDefinition() {
+          """
+            |Contract Test() {
+            |  fn test(_: Bool) -> () {
+            |    let result = @@_
+            |  }
+            |}
+            |""".stripMargin
+        }
+      }
+    }
   }
 
   "return self" when {

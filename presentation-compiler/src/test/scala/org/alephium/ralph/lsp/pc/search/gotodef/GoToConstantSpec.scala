@@ -22,6 +22,21 @@ class GoToConstantSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       }
     }
+
+    "constant is anonymous" in {
+      goToDefinition() {
+        """
+          |const _ = 1
+          |
+          |Contract GoToConstant() {
+          |
+          |  pub fn function() -> () {
+          |    let my_constant = @@_
+          |  }
+          |}
+          |""".stripMargin
+      }
+    }
   }
 
   "return self" when {
