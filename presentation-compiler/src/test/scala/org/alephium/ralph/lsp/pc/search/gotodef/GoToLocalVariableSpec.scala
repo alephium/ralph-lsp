@@ -291,6 +291,21 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
         }
       }
+
+      "duplicate tuple elements" in {
+        goToDefinition() {
+          """
+            |let (>>one<<,
+            |             (>>one<<,
+            |              blah,
+            |              >>one<<,
+            |                       (>>one<<,
+            |                        >>one<<, not_this,
+            |                                           >>one<<), not_this)) = 1
+            |@@one
+            |""".stripMargin
+        }
+      }
     }
 
     "anonymous variable" when {
@@ -300,6 +315,72 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             |let >>@@_<< = 1
             |""".stripMargin
         }
+      }
+
+      "a tuple deconstructor" when {
+        "first element is selected" when {
+          "correct syntax" in {
+            goToDefinition() {
+              """
+                |let (>>@@_<<, _) = (1, 2)
+                |""".stripMargin
+            }
+          }
+
+          "error syntax" in {
+            goToDefinition() {
+              """
+                |let (>>@@_<<, _) = (1,
+                |""".stripMargin
+            }
+          }
+        }
+
+        "second element is selected" when {
+          "correct syntax" in {
+            goToDefinition() {
+              """
+                |let (_, >>@@_<<) = (1, 2)
+                |""".stripMargin
+            }
+          }
+
+          "error syntax" in {
+            goToDefinition() {
+              """
+                |let (_, >>@@_<<) = (1,
+                |""".stripMargin
+            }
+          }
+        }
+      }
+
+      "nested tuple deconstructor" in {
+        goToDefinition() {
+          """
+            |let (_, (_, _, (, >>@@_<<, _)) = 
+            |""".stripMargin
+        }
+      }
+    }
+
+    "search all self elements (jumps to self) of a deeply nested tuple" in {
+      val elements = List("one", "two", "three", "four", "five", "six", "seven", "eight", "night", "ten", "eleven")
+
+      def buildTest(element: String): String =
+        s"""
+           |Contract Test() {
+           |  fn test() -> () {
+           |    let (${elements(0)}, ${elements(1)}, (${elements(2)}, (${elements(3)}, ${elements(4)},
+           |         ${elements(5)}, (${elements(6)}, (${elements(7)}, ${elements(8)})), (${elements(9)}, ${elements(10)})))) = getTuple()
+           |  }
+           |}
+           |""".stripMargin.replaceFirst(element, s">>@@$element<<")
+
+      elements foreach {
+        element =>
+          val test = buildTest(element)
+          goToDefinition()(test) // Run test
       }
     }
   }
@@ -596,6 +677,28 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             |}
             |""".stripMargin
         )
+      }
+    }
+
+    "search all elements of a deeply nested tuple" in {
+      val elements = List("one", "two", "three", "four", "five", "six", "seven", "eight", "night", "ten", "eleven")
+
+      def buildTest(element: String): String =
+        s"""
+           |Contract Test() {
+           |  fn test() -> () {
+           |    let (${elements(0)}, ${elements(1)}, (${elements(2)}, (${elements(3)}, ${elements(4)},
+           |         ${elements(5)}, (${elements(6)}, (${elements(7)}, ${elements(8)})), (${elements(9)}, ${elements(10)})))) = getTuple()
+           |
+           |    @@$element
+           |  }
+           |}
+           |""".stripMargin.replaceFirst(element, s">>$element<<")
+
+      elements foreach {
+        element =>
+          val test = buildTest(element)
+          goToDefinition()(test) // Run test
       }
     }
   }
