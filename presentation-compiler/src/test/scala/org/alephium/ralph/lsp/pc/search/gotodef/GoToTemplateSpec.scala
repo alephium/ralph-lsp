@@ -22,6 +22,19 @@ class GoToTemplateSpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       }
     }
+
+    "typeId is anonymous" in {
+      goToDefinition() {
+        """
+          |Contract _() {
+          |
+          |  pub fn function(input: @@_) -> () {
+          |
+          |  }
+          |}
+          |""".stripMargin
+      }
+    }
   }
 
   "return self" when {

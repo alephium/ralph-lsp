@@ -52,6 +52,38 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
             |""".stripMargin
         )
       }
+
+      "variable is anonymous" when {
+        "used within another variable" in {
+          goToDefinition()(
+            """
+              |Contract GoToTest() {
+              |
+              |  fn function() -> () {
+              |    let _ = 1
+              |    let copy = @@_
+              |  }
+              |
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "used within tuple" in {
+          goToDefinition()(
+            """
+              |Contract GoToTest() {
+              |
+              |  fn function() -> () {
+              |    let _ = 1
+              |    let tuple = (1, 2, @@_, 3)
+              |  }
+              |
+              |}
+              |""".stripMargin
+          )
+        }
+      }
     }
 
     "variable exist within external scope" when {
@@ -256,6 +288,16 @@ class GoToLocalVariableSpec extends AnyWordSpec with Matchers {
         goToDefinition() {
           """
             |let (first, >>secon@@d<<) =
+            |""".stripMargin
+        }
+      }
+    }
+
+    "anonymous variable" when {
+      "a variable" in {
+        goToDefinition() {
+          """
+            |let >>@@_<< = 1
             |""".stripMargin
         }
       }

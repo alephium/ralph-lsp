@@ -4,7 +4,7 @@
 package org.alephium.ralph.lsp.pc.search.gotodef
 
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
-import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.Node
@@ -1778,13 +1778,19 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
         }
 
       case identifier: SoftAST.Identifier if identifier.code.text == target.data.code.text =>
-        // Check if the identifier matches the text in the selected `identNode`.
-        Iterator.single(
-          SourceLocation.NodeSoft(
-            ast = identifier.code,
-            source = sourceCode
+        // Skip anonymous identifiers (`_`).
+        // Ideally, this check would happen earlier for efficiency and at multiple places, but they should still allow self-searches for renaming,
+        // for example, `let @@_ = 1` should still result in `let >>_<< = 1`.
+        // Placing it here is simpler to maintain.
+        if (identifier.code.text == Token.Underscore.lexeme)
+          Iterator.empty
+        else // Check if the identifier matches the text in the selected `identNode`.
+          Iterator.single(
+            SourceLocation.NodeSoft(
+              ast = identifier.code,
+              source = sourceCode
+            )
           )
-        )
 
       case _ =>
         Iterator.empty

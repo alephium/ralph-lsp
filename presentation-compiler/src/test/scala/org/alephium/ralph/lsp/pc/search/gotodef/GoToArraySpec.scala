@@ -21,6 +21,18 @@ class GoToArraySpec extends AnyWordSpec with Matchers {
           |""".stripMargin
       )
     }
+
+    "anonymous" in {
+      goToDefinition()(
+        """
+          |Contract Test(_: [U256; 2])  {
+          |  fn main() -> () {
+          |    let head = @@_[0]
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
   }
 
   "return non-empty" when {

@@ -39,6 +39,19 @@ class AnnotationFieldSpec extends AnyWordSpec with Matchers {
         }
       }
 
+      "anonymous annotation value" when {
+        "with syntax errors" in {
+          goToDefinition() {
+            """
+              |{
+              |  let _ = 1
+              |  @annotation(property = @@_)
+              |}
+              |""".stripMargin
+          }
+        }
+      }
+
       /**
        * GROUP: Duplicate is a variable
        */
@@ -49,6 +62,17 @@ class AnnotationFieldSpec extends AnyWordSpec with Matchers {
               |{
               |  @annotation(propert@@y = value)
               |  let property = 1
+              |}
+              |""".stripMargin
+          }
+        }
+
+        "anonymous" in {
+          goToDefinition() {
+            """
+              |{
+              |  @annotation(propert@@y = value)
+              |  let _ = 1
               |}
               |""".stripMargin
           }
