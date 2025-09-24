@@ -71,7 +71,7 @@ class AnnotationFieldSpec extends AnyWordSpec with Matchers {
           goToDefinition() {
             """
               |{
-              |  @annotation(propert@@y = value)
+              |  @annotation(@@_ = value)
               |  let _ = 1
               |}
               |""".stripMargin
