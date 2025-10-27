@@ -86,15 +86,15 @@ object TestCodeProvider {
       code = code
     )
 
-  def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String*): List[SourceLocation.GoToRefStrict] =
-    goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
+  def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String*): List[SourceLocation.GoToRefSoft] =
+    goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToRefSetting), SourceLocation.GoToRefSoft](
       code = code.to(ArraySeq),
-      searchSettings = settings,
+      searchSettings = (SoftAST, settings),
       dependencyDownloaders = ArraySeq.empty
     )
 
-  def goToRename(code: String*): List[SourceLocation.GoToRenameStrict] =
-    goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
+  def goToRename(code: String*): List[SourceLocation.GoToRenameSoft] =
+    goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameSoft](
       code = code.to(ArraySeq),
       searchSettings = (),
       dependencyDownloaders = ArraySeq.empty
@@ -180,10 +180,10 @@ object TestCodeProvider {
       referenceReplacement: String,
       settings: GoToRefSetting = testGoToRefSetting
     )(code: String): Unit =
-    goToForAll[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
+    goToForAll[SourceCodeState.IsParsed, (SoftAST.type, GoToRefSetting), SourceLocation.GoToRefSoft](
       finder = referencesFinder,
       replacer = referenceReplacement,
-      settings = settings,
+      settings = (SoftAST, settings),
       code = code
     )
 
@@ -191,7 +191,7 @@ object TestCodeProvider {
       renameFinder: Regex,
       renameReplacer: String
     )(code: String): Unit =
-    goToForAll[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
+    goToForAll[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameSoft](
       finder = renameFinder,
       replacer = renameReplacer,
       settings = (),
@@ -407,11 +407,11 @@ object TestCodeProvider {
       dependency: String,
       workspace: String,
       settings: GoToRefSetting = testGoToRefSetting): Unit =
-    goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
+    goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToRefSetting), SourceLocation.GoToRefSoft](
       dependencyId = dependencyId,
       dependency = dependency,
       workspace = workspace,
-      searchSettings = settings
+      searchSettings = (SoftAST, settings)
     )
 
   def goToDefinitionOnDependency(

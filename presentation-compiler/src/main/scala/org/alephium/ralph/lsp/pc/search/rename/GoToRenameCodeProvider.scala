@@ -10,9 +10,9 @@ import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 
 /**
- * Implements [[CodeProvider]] that provides renaming results of type [[SourceLocation.GoToRenameStrict]].
+ * Implements [[CodeProvider]] that provides renaming results of type [[SourceLocation.GoToRenameSoft]].
  */
-private[search] case object GoToRenameCodeProvider extends CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict] {
+private[search] case object GoToRenameCodeProvider extends CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameSoft] {
 
   /** @inheritdoc */
   override def searchLocal(
@@ -21,7 +21,7 @@ private[search] case object GoToRenameCodeProvider extends CodeProvider[SourceCo
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: Unit
     )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Iterator[SourceLocation.GoToRenameStrict] =
+      logger: ClientLogger): Iterator[SourceLocation.GoToRenameSoft] =
     GoToRenameAll.rename(
       cursorIndex = cursorIndex,
       sourceCode = sourceCode,

@@ -114,7 +114,7 @@ object TestMultiCodeProvider extends ScalaFutures {
       file: FileAccess,
       compiler: CompilerAccess,
       ec: ExecutionContext): ArraySeq[(URI, LineRange)] =
-    goTo[GoToRefMultiSetting, SourceLocation.GoToRefStrict](
+    goTo[GoToRefMultiSetting, SourceLocation.GoToRefSoft](
       settings = settings,
       customDependency = Some((dependencyID, dependency.to(ArraySeq))),
       dependencyDownloaders = ArraySeq.empty,
@@ -157,7 +157,7 @@ object TestMultiCodeProvider extends ScalaFutures {
       file: FileAccess,
       compiler: CompilerAccess,
       ec: ExecutionContext): ArraySeq[(URI, LineRange)] =
-    goTo[Unit, SourceLocation.GoToRenameStrict](
+    goTo[Unit, SourceLocation.GoToRenameSoft](
       settings = (),
       customDependency = Some((dependencyID, dependency.to(ArraySeq))),
       dependencyDownloaders = ArraySeq.empty,

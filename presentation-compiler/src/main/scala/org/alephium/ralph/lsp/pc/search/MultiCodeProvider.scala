@@ -59,10 +59,10 @@ object MultiCodeProvider {
   implicit val goToDef: MultiCodeProvider[Unit, SourceLocation.GoToDef] =
     GoToDefMultiCodeProvider
 
-  implicit val goToRef: MultiCodeProvider[GoToRefMultiSetting, SourceLocation.GoToRefStrict] =
+  implicit val goToRef: MultiCodeProvider[GoToRefMultiSetting, SourceLocation.GoToRefSoft] =
     GoToRefMultiCodeProvider
 
-  implicit val rename: MultiCodeProvider[Unit, SourceLocation.GoToRenameStrict] =
+  implicit val rename: MultiCodeProvider[Unit, SourceLocation.GoToRenameSoft] =
     GoToRenameMultiCodeProvider
 
   implicit val completion: MultiCodeProvider[Unit, Suggestion] =

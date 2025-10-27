@@ -326,6 +326,19 @@ object WorkspaceSearcher {
   }
 
   /**
+   * Collects ALL parsed source code from the workspace and dependencies.
+   *
+   * @param workspace The workspace to collect parsed code for.
+   * @return All Parsed source files in all workspaces.
+   */
+  def collectAllIsParsed(workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceCodeState.IsParsed] = {
+    val dependencySources = workspace.build.dependencies.flatMap(_.sourceCode)
+    val workspaceSources  = workspace.sourceCode
+    val allSources        = workspaceSources ++ dependencySources
+    SourceCodeSearcher.collectIsParsed(allSources)
+  }
+
+  /**
    * Collects all parsed source files, excluding `std` dependency source files
    * that are not imported.
    *

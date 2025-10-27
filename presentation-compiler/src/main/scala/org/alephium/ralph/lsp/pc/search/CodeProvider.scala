@@ -132,11 +132,11 @@ object CodeProvider {
     GoToDefCodeProvider
 
   /** The go-to references implementation of [[CodeProvider]]. */
-  implicit val goToRef: CodeProvider[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict] =
+  implicit val goToRef: CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToRefSetting), SourceLocation.GoToRefSoft] =
     GoToRefCodeProvider
 
   /** The rename request implementation of [[CodeProvider]]. */
-  implicit val goToRename: CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict] =
+  implicit val goToRename: CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameSoft] =
     GoToRenameCodeProvider
 
   /** The go-to type implementation of [[CodeProvider]]. */
