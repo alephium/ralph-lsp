@@ -15,7 +15,7 @@ import java.net.URI
 import scala.collection.immutable.ArraySeq
 import scala.concurrent.{ExecutionContext, Future}
 
-case object GoToRenameMultiCodeProvider extends MultiCodeProvider[Unit, SourceLocation.GoToRenameStrict] with StrictImplicitLogging {
+case object GoToRenameMultiCodeProvider extends MultiCodeProvider[Unit, SourceLocation.GoToRenameSoft] with StrictImplicitLogging {
 
   /**
    * Searches for results to rename.
@@ -37,13 +37,13 @@ case object GoToRenameMultiCodeProvider extends MultiCodeProvider[Unit, SourceLo
       settings: Unit
     )(implicit searchCache: SearchCache,
       logger: ClientLogger,
-      ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[SourceLocation.GoToRenameStrict]]] =
+      ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[SourceLocation.GoToRenameSoft]]] =
     Future {
       pcStates.findContains(fileURI) match {
         case Some(state) =>
           val result =
             PCSearcher
-              .goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict](
+              .goTo[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameSoft](
                 fileURI = fileURI,
                 line = line,
                 character = character,

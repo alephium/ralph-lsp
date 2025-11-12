@@ -5,6 +5,7 @@ package org.alephium.ralph.lsp.pc.search.rename
 
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
@@ -33,7 +34,7 @@ private object GoToRenameAll extends StrictImplicitLogging {
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware
     )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Iterator[SourceLocation.GoToRenameStrict] = {
+      logger: ClientLogger): Iterator[SourceLocation.GoToRenameSoft] = {
     val references =
       collectReferences(
         cursorIndex = cursorIndex,
@@ -76,10 +77,10 @@ private object GoToRenameAll extends StrictImplicitLogging {
       sourceCode: SourceCodeState.Parsed,
       workspace: WorkspaceState.IsSourceAware
     )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Iterable[SourceLocation.GoToRenameStrict] = {
+      logger: ClientLogger): Iterable[SourceLocation.GoToRenameSoft] = {
     // collects all nodes that must be renamed
     val nodesToRename =
-      ListBuffer.empty[(SourceLocation.GoToRenameStrict, SourceIndex)]
+      ListBuffer.empty[(SourceLocation.GoToRenameSoft, SourceIndex)]
 
     // settings to run go-to-references on
     val searchSettings =
@@ -96,37 +97,30 @@ private object GoToRenameAll extends StrictImplicitLogging {
     // Start collect the nodes to rename
     def runCollect(
         cursorIndex: Int,
-        sourceCode: SourceCodeState.Parsed): Unit =
+        sourceCode: SourceCodeState.IsParsedAndCompiled): Unit =
       CodeProvider
         .goToRef
         .searchLocal(
           cursorIndex = cursorIndex,
-          sourceCode = sourceCode,
+          sourceCode = sourceCode.toIsParsed,
           workspace = workspace,
-          searchSettings = searchSettings
+          searchSettings = (SoftAST, searchSettings)
         )
         .foreach {
           case ref: SourceLocation.ImportName =>
             if (!nodesToRename.contains((ref, ref.name.index)))
               nodesToRename addOne (ref, ref.name.index)
 
-          case ref @ SourceLocation.NodeStrict(ast, _) =>
-            ast
-              .sourceIndex // Nodes without SourceIndex cannot be renamed.
-              .filter {
-                sourceIndex =>
-                  // ensure that nodes are only processed once
-                  !nodesToRename.contains((ref, sourceIndex))
-              }
-              .foreach {
-                sourceIndex =>
-                  nodesToRename addOne (ref, sourceIndex)
+          case ref @ SourceLocation.NodeSoft(ast, _) =>
+            val key = (ref, ast.index)
+            if (!nodesToRename.contains(key)) { // ensure that nodes are only processed once
+              nodesToRename addOne key
 
-                  runCollect(
-                    cursorIndex = sourceIndex.from,
-                    sourceCode = ref.source.parsed
-                  )
-              }
+              runCollect(
+                cursorIndex = ast.index.from,
+                sourceCode = ref.source.parsed
+              )
+            }
         }
 
     runCollect(
@@ -145,7 +139,7 @@ private object GoToRenameAll extends StrictImplicitLogging {
    * @return True if renaming is disallowed, false otherwise.
    */
   private def isRenamingDisallowed(
-      ref: SourceLocation.GoToRenameStrict,
+      ref: SourceLocation.GoToRenameSoft,
       build: BuildState.Compiled): Boolean = {
     val isOutsideWorkspace =
       !URIUtil.contains(

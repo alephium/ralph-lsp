@@ -5,6 +5,7 @@ package org.alephium.ralph.lsp.pc.search.gotoref.multi
 
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
+import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
 import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.{PCSearcher, PCStates}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
@@ -19,7 +20,7 @@ import java.net.URI
 import scala.collection.immutable.ArraySeq
 import scala.concurrent.{ExecutionContext, Future}
 
-private[search] case object GoToRefMultiCodeProvider extends MultiCodeProvider[GoToRefMultiSetting, SourceLocation.GoToRefStrict] with StrictImplicitLogging {
+private[search] case object GoToRefMultiCodeProvider extends MultiCodeProvider[GoToRefMultiSetting, SourceLocation.GoToRefSoft] with StrictImplicitLogging {
 
   /**
    * Searches the reference location(s) for a symbol at the given position in a file.
@@ -44,7 +45,7 @@ private[search] case object GoToRefMultiCodeProvider extends MultiCodeProvider[G
       settings: GoToRefMultiSetting
     )(implicit searchCache: SearchCache,
       logger: ClientLogger,
-      ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[SourceLocation.GoToRefStrict]]] =
+      ec: ExecutionContext): Future[Either[CompilerMessage.Error, ArraySeq[SourceLocation.GoToRefSoft]]] =
     MultiCodeProvider
       .goToDef
       .search(
@@ -104,7 +105,7 @@ private[search] case object GoToRefMultiCodeProvider extends MultiCodeProvider[G
       pcStates: PCStates
     )(implicit searchCache: SearchCache,
       logger: ClientLogger,
-      ec: ExecutionContext): Future[ArraySeq[SourceLocation.GoToRefStrict]] =
+      ec: ExecutionContext): Future[ArraySeq[SourceLocation.GoToRefSoft]] =
     definition.index match {
       case Some(index) =>
         val lineRange =
@@ -119,11 +120,11 @@ private[search] case object GoToRefMultiCodeProvider extends MultiCodeProvider[G
           .traverse(pcStates.states) {
             state =>
               Future {
-                PCSearcher.goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
+                PCSearcher.goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToRefSetting), SourceLocation.GoToRefSoft](
                   fileURI = definition.parsed.fileURI,
                   line = lineRange.from.line,
                   character = lineRange.from.character,
-                  searchSettings = settings,
+                  searchSettings = (SoftAST, settings),
                   isCancelled = isCancelled,
                   state = state
                 )
@@ -135,7 +136,7 @@ private[search] case object GoToRefMultiCodeProvider extends MultiCodeProvider[G
         // This occurs because `Ast.Positioned` contains optional `SourceIndex`.
         // This can be removed when the migration to `SoftAST` is complete.
         logger.error(s"GoToDef contains empty SourceIndex. File: ${definition.parsed.fileURI}")
-        Future.successful(ArraySeq.empty[SourceLocation.GoToRefStrict])
+        Future.successful(ArraySeq.empty[SourceLocation.GoToRefSoft])
     }
 
 }

@@ -111,7 +111,9 @@ object SourceLocation extends StrictImplicitLogging {
       name: Tree.Name,
       parsed: SourceCodeState.Parsed)
     extends GoToRefStrict
-       with GoToRenameStrict {
+       with GoToRefSoft
+       with GoToRenameStrict
+       with GoToRenameSoft {
 
     override def index: Option[SourceIndex] =
       Some(name.index)

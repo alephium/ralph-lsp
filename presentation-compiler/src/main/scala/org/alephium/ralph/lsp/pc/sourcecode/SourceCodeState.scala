@@ -79,6 +79,15 @@ object SourceCodeState {
 
     def astSoft: LazyVal[Either[FastParseError, SoftAST.RootBlock]]
 
+    def toIsParsed: IsParsed =
+      this match {
+        case parsed: IsParsed =>
+          parsed
+
+        case compiled: IsCompiled =>
+          compiled.parsed
+      }
+
   }
 
   sealed trait IsParsed extends IsParsedAndCompiled
