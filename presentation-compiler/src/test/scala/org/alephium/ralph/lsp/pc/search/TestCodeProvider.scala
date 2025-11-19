@@ -86,10 +86,38 @@ object TestCodeProvider {
       code = code
     )
 
-  def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String*): List[SourceLocation.GoToRefStrict] =
+  def goToReferences(settings: GoToRefSetting = testGoToRefSetting)(code: String*): List[SourceLocation.GoToRefSoft] = {
+    val strictResult = goToReferencesStrict(settings)(code: _*)
+    val softResult   = goToReferencesSoft(settings)(code: _*)
+
+    val strictKeyValue =
+      strictResult map {
+        strict =>
+          (strict.parsed.fileURI, strict.index.value)
+      }
+
+    val softKeyValue =
+      softResult map {
+        soft =>
+          (soft.parsed.fileURI, soft.index.value)
+      }
+
+    softKeyValue should contain allElementsOf strictKeyValue
+
+    softResult
+  }
+
+  def goToReferencesStrict(settings: GoToRefSetting = testGoToRefSetting)(code: String*): List[SourceLocation.GoToRefStrict] =
     goTo[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
       code = code.to(ArraySeq),
       searchSettings = settings,
+      dependencyDownloaders = ArraySeq.empty
+    )
+
+  def goToReferencesSoft(settings: GoToRefSetting = testGoToRefSetting)(code: String*): List[SourceLocation.GoToRefSoft] =
+    goTo[SourceCodeState.IsParsed, (SoftAST.type, GoToRefSetting), SourceLocation.GoToRefSoft](
+      code = code.to(ArraySeq),
+      searchSettings = (SoftAST, settings),
       dependencyDownloaders = ArraySeq.empty
     )
 
@@ -179,11 +207,41 @@ object TestCodeProvider {
       referencesFinder: Regex,
       referenceReplacement: String,
       settings: GoToRefSetting = testGoToRefSetting
+    )(code: String): Unit = {
+    goToReferencesStrictForAll(
+      referencesFinder = referencesFinder,
+      referenceReplacement = referenceReplacement,
+      settings = settings
+    )(code)
+
+    goToReferencesSoftForAll(
+      referencesFinder = referencesFinder,
+      referenceReplacement = referenceReplacement,
+      settings = settings
+    )(code)
+  }
+
+  def goToReferencesStrictForAll(
+      referencesFinder: Regex,
+      referenceReplacement: String,
+      settings: GoToRefSetting = testGoToRefSetting
     )(code: String): Unit =
     goToForAll[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict](
       finder = referencesFinder,
       replacer = referenceReplacement,
       settings = settings,
+      code = code
+    )
+
+  def goToReferencesSoftForAll(
+      referencesFinder: Regex,
+      referenceReplacement: String,
+      settings: GoToRefSetting = testGoToRefSetting
+    )(code: String): Unit =
+    goToForAll[SourceCodeState.IsParsed, (SoftAST.type, GoToRefSetting), SourceLocation.GoToRefSoft](
+      finder = referencesFinder,
+      replacer = referenceReplacement,
+      settings = (SoftAST, settings),
       code = code
     )
 

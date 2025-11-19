@@ -9,7 +9,7 @@ import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.search.completion.{CodeCompletionProvider, Suggestion}
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefSetting
 import org.alephium.ralph.lsp.pc.search.gotodef.GoToDefCodeProvider
-import org.alephium.ralph.lsp.pc.search.gotoref.{GoToRefCodeProvider, GoToRefSetting}
+import org.alephium.ralph.lsp.pc.search.gotoref.{GoToRefCodeProvider, GoToRefSetting, GoToRefSoftCodeProvider}
 import org.alephium.ralph.lsp.pc.search.gototypedef.GoToTypeDefCodeProvider
 import org.alephium.ralph.lsp.pc.search.hover.HoverCodeProvider
 import org.alephium.ralph.lsp.pc.search.inlayhints.InlayHintsCodeProvider
@@ -134,6 +134,10 @@ object CodeProvider {
   /** The go-to references implementation of [[CodeProvider]]. */
   implicit val goToRef: CodeProvider[SourceCodeState.Parsed, GoToRefSetting, SourceLocation.GoToRefStrict] =
     GoToRefCodeProvider
+
+  /** The [[SoftAST]] enabled go-to references implementation of [[CodeProvider]]. */
+  implicit val goToRefSoft: CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToRefSetting), SourceLocation.GoToRefSoft] =
+    GoToRefSoftCodeProvider
 
   /** The rename request implementation of [[CodeProvider]]. */
   implicit val goToRename: CodeProvider[SourceCodeState.Parsed, Unit, SourceLocation.GoToRenameStrict] =
