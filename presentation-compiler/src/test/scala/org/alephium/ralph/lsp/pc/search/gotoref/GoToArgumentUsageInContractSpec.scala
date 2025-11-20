@@ -109,7 +109,7 @@ class GoToArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
       "from the template" when {
         "parameter is defined in Parent" when {
           "there are no template argument duplicate names" in {
-            goToReferences() {
+            goToReferencesStrict() {
               """
                 |Abstract Contract Parent(param1@@: ParamType) {
                 |
@@ -161,7 +161,7 @@ class GoToArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
           }
 
           "there are duplicate names" in {
-            goToReferences() {
+            goToReferencesStrict() {
               """
                 |Abstract Contract Parent(param1@@: ParamType) {
                 |
@@ -189,7 +189,7 @@ class GoToArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
 
         "in Child" when {
           "parameter is defined in Child" in {
-            goToReferences() {
+            goToReferencesStrict() {
               """
                 |// Parent should not have any usages
                 |Abstract Contract Parent(param1: ParamType) {
@@ -221,7 +221,7 @@ class GoToArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
 
     "template argument overrides are included" when {
       "definition is selected" in {
-        goToReferences(settings = testGoToRefSetting.copy(includeTemplateArgumentOverrides = true)) {
+        goToReferencesStrict(settings = testGoToRefSetting.copy(includeTemplateArgumentOverrides = true)) {
           """
             |Abstract Contract Parent(>>para@@m1<<: ParamType) { }
             |
@@ -231,7 +231,7 @@ class GoToArgumentUsageInContractSpec extends AnyWordSpec with Matchers {
       }
 
       "overridden definition is selected" in {
-        goToReferences(settings = testGoToRefSetting.copy(includeTemplateArgumentOverrides = true)) {
+        goToReferencesStrict(settings = testGoToRefSetting.copy(includeTemplateArgumentOverrides = true)) {
           """
               |Abstract Contract Parent(>>param1<<: ParamType) { }
               |

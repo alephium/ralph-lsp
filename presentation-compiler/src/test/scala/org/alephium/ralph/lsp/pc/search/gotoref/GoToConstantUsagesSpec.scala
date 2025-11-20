@@ -80,7 +80,7 @@ class GoToConstantUsagesSpec extends AnyWordSpec with Matchers {
 
       "global constants" when {
         def doTest(contractName: String) =
-          goToReferences() {
+          goToReferencesStrict() {
             s"""
                |const MyCons@@tant = 0
                |const MyConstant_B = 1

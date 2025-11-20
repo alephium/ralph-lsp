@@ -60,7 +60,7 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
 
   "return non-empty for an event field" when {
     "it has a usage" in {
-      goToReferences() {
+      goToReferencesStrict() {
         """
           |Contract Test() {
           |
@@ -75,7 +75,7 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "it has multiple usages" in {
-      goToReferences() {
+      goToReferencesStrict() {
         """
           |Contract Test() {
           |
@@ -94,7 +94,7 @@ class GoToEventFieldUsageSpec extends AnyWordSpec with Matchers {
     }
 
     "there is inheritance" in {
-      goToReferences() {
+      goToReferencesStrict() {
         """
           |Abstract Contract Parent() {
           |
