@@ -24,40 +24,145 @@ class GoToTypeIdStructUsageSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "usage exists" when {
-      "within itself" in {
-        goToReferencesForAll(">>Foo<<".r, ">>Fo@@o<<")(
-          """
-            |struct Foo@@ {
-            |  x: U256,
-            |  mut foo: >>Foo<<
-            |}
-            |""".stripMargin
-        )
+      "within itself" when {
+        "strict parseable" in {
+          goToReferencesForAll(">>Foo<<".r, ">>Fo@@o<<")(
+            """
+              |struct Foo@@ {
+              |  x: U256,
+              |  mut foo: >>Foo<<
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "soft parseable" when {
+          "key is missing" in {
+            goToReferencesSoftForAll(">>Foo<<".r, ">>Fo@@o<<")(
+              """
+                |struct Foo@@ {
+                |  x: U256,
+                |  mut foo: >>Foo<<,
+                |  : >>Foo<<
+                |}
+                |""".stripMargin
+            )
+          }
+
+          "a previous key-value is missing" in {
+            goToReferencesSoftForAll(">>Foo<<".r, ">>Fo@@o<<")(
+              """
+                |struct Foo@@ {
+                |  x: U256,
+                |  :,       // missing key-value
+                |  : >>Foo<<
+                |}
+                |""".stripMargin
+            )
+          }
+
+          "struct's closing brace is missing" in {
+            goToReferencesSoftForAll(">>Foo<<".r, ">>Fo@@o<<")(
+              """
+                |struct Foo@@ {
+                |  x: U256,
+                |  :,       // missing key-value
+                |  : >>Foo<<
+                |""".stripMargin
+            )
+          }
+        }
       }
 
-      "within another struct" in {
-        goToReferencesForAll(">>Foo<<".r, ">>Fo@@o<<")(
-          """
-            |struct Foo@@ { x: U256 }
-            |struct Bar { mut foo: >>Foo<< }
-            |""".stripMargin
-        )
+      "within another struct" when {
+        "strict parseable" in {
+          goToReferencesForAll(">>Foo<<".r, ">>Fo@@o<<")(
+            """
+              |struct Foo@@ { x: U256 }
+              |struct Bar { mut foo: >>Foo<< }
+              |""".stripMargin
+          )
+        }
+
+        "soft parseable" when {
+          "struct values are not defined" in {
+            goToReferencesSoftForAll(">>Foo<<".r, ">>Fo@@o<<")(
+              """
+                |struct Foo@@
+                |struct Bar { mut foo: >>Foo<< }
+                |""".stripMargin
+            )
+          }
+
+          "key is not defined" in {
+            goToReferencesSoftForAll(">>Foo<<".r, ">>Fo@@o<<")(
+              """
+                |struct Foo@@
+                |struct Bar { : >>Foo<< }
+                |""".stripMargin
+            )
+          }
+
+          "tuple" when {
+            "second tuple type Foo is searched" in {
+              goToReferencesSoftForAll(">>Foo<<".r, ">>Fo@@o<<")(
+                """
+                  |struct Foo@@
+                  |struct Bar { key: (U256, >>Foo<<, Bar) }
+                  |""".stripMargin
+              )
+            }
+
+            "third tuple type Bar is searched" in {
+              goToReferencesSoftForAll(">>Bar<<".r, ">>Ba@@r<<")(
+                """
+                  |struct Foo
+                  |struct Bar@@ { key: (U256, Foo, >>Bar<<) }
+                  |""".stripMargin
+              )
+            }
+          }
+
+        }
       }
 
-      "within a contract" in {
-        goToReferencesForAll(">>Foo<<".r, ">>Fo@@o<<")(
-          """
-            |struct Foo@@ { x: U256 }
-            |
-            |Contract Test(foo: >>Foo<<) {
-            |
-            |  fn function(foo: >>Foo<<) -> () {
-            |    let foo = >>Foo<< { x: 1 }
-            |  }
-            |
-            |}
-            |""".stripMargin
-        )
+      "within a contract" when {
+        "strict parseable" in {
+          goToReferencesForAll(">>Foo<<".r, ">>Fo@@o<<")(
+            """
+              |struct Foo@@ { x: U256 }
+              |
+              |Contract Test(foo: >>Foo<<) {
+              |
+              |  fn function(foo: >>Foo<<) -> () {
+              |    let foo = >>Foo<< { x: 1 }
+              |  }
+              |
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "soft parseable" in {
+          goToReferencesSoftForAll(">>Foo<<".r, ">>Fo@@o<<")(
+            """
+              |struct Foo@@
+              |
+              |Contract Test(foo: >>Foo<<) {
+              |
+              |  >>Foo<<
+              |
+              |  fn function(foo: >>Foo<<) {
+              |    >>Foo<<
+              |    let foo = >>Foo<< { x: 1 }
+              |  }
+              |
+              |  >>Foo<<
+              |
+              |}
+              |""".stripMargin
+          )
+        }
       }
     }
   }

@@ -26,43 +26,96 @@ class GoToTypeIdContractUsageSpec extends AnyWordSpec with Matchers {
 
   "return non-empty" when {
     "usage exists" when {
-      "within itself" in {
-        goToReferencesForAll(">>This<<".r, ">>Thi@@s<<")(
-          """
-            |Contract This@@(
-            |                 this: >>This<<)
-            |                 extends >>This<<() {
-            |
-            |  fn main(param: >>This<<) -> () {
-            |    let test = >>This<<.encodeFields!()
-            |  }
-            |
-            |}
-            |""".stripMargin
-        )
+      "within itself" when {
+        "strict parseable" in {
+          goToReferencesForAll(">>This<<".r, ">>Thi@@s<<")(
+            """
+              |Contract This@@(
+              |                 this: >>This<<)
+              |                 extends >>This<<() {
+              |
+              |  fn main(param: >>This<<) -> () {
+              |    let test = >>This<<.encodeFields!()
+              |  }
+              |
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "soft parseable" in {
+          goToReferencesSoftForAll(">>This<<".r, ">>Thi@@s<<")(
+            """
+              |Contract This@@(
+              |                 this: >>This<<)
+              |                 extends >>This<<() {
+              |
+              |  >>This<<
+              |
+              |  fn main(param: >>This<<) -> () {
+              |    >>This<<
+              |    >>This<<.encodeFields!()
+              |  }
+              |
+              |  >>This<<
+              |}
+              |""".stripMargin
+          )
+        }
       }
 
-      "within another Contract" in {
-        goToReferencesForAll(">>This<<".r, ">>Thi@@s<<")(
-          """
-            |Contract This@@() {
-            |
-            |  fn main(param: Another) -> () {
-            |    let another = Another.encodeFields!()
-            |  }
-            |
-            |}
-            |
-            |Contract Another(this: >>This<<)
-            |   extends >>This<<() {
-            |
-            |  fn main(param: >>This<<) -> () {
-            |    let this = >>This<<.encodeFields!()
-            |  }
-            |
-            |}
-            |""".stripMargin
-        )
+      "within another Contract" when {
+        "strict parseable" in {
+          goToReferencesForAll(">>This<<".r, ">>Thi@@s<<")(
+            """
+              |Contract This@@() {
+              |
+              |  fn main(param: Another) -> () {
+              |    let another = Another.encodeFields!()
+              |  }
+              |
+              |}
+              |
+              |Contract Another(this: >>This<<)
+              |   extends >>This<<() {
+              |
+              |  fn main(param: >>This<<) -> () {
+              |    let this = >>This<<.encodeFields!()
+              |  }
+              |
+              |}
+              |""".stripMargin
+          )
+        }
+
+        "soft parseable" in {
+          goToReferencesSoftForAll(">>This<<".r, ">>Thi@@s<<")(
+            """
+              |Contract This@@ {
+              |
+              |  fn main(param: Another) -> () {
+              |    let another = Another.encodeFields!()
+              |  }
+              |
+              |}
+              |
+              |Contract Another(this: >>This<<)
+              |   extends >>This<<() {
+              |
+              |  >>This<<
+              |
+              |  fn main(: >>This<<) {
+              |    >>This<<
+              |    >>This<<.encodeFields!()
+              |    let this = >>This<<.encodeFields!()
+              |  }
+              |
+              |  >>This<<
+              |
+              |}
+              |""".stripMargin
+          )
+        }
       }
     }
   }
