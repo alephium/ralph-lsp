@@ -20,7 +20,9 @@ Java 11 or higher.
 
 # Install VSCode plugin
 
-`Ralph LSP` is available on the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=alephium.ralph-lsp).
+**Ralph LSP** is available on the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=alephium.ralph-lsp).
+
+If you use Cursor, follow the manual installation below.
 
 ### Manual Installation
 
