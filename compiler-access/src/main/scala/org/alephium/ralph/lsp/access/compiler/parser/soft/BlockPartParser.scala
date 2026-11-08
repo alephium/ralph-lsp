@@ -13,6 +13,7 @@ private object BlockPartParser {
       stop: Token*): P[SoftAST.BlockPartAST] =
     P {
       SpaceParser.parseOrFail |
+        TestDeclarationParser.parseOrFail |
         TemplateParser.parseOrFail |
         EventParser.parseOrFail |
         StructParser.parseOrFail |

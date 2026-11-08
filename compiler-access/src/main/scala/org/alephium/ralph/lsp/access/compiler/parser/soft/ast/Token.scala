@@ -153,6 +153,14 @@ object Token {
   case object Extends                                            extends Inheritance("extends") with Reserved
   case object Implements                                         extends Inheritance("implements") with Reserved
 
+  // Contextual testing keywords remain valid names outside a test declaration.
+  sealed abstract class TestClauseKeyword(override val lexeme: String) extends Token
+  case object With                                                     extends TestClauseKeyword("with")
+  case object Before                                                   extends TestClauseKeyword("before")
+  case object After                                                    extends TestClauseKeyword("after")
+  case object Approve                                                  extends TestClauseKeyword("approve")
+  case object Test                                                     extends Token { val lexeme = "test" }
+
   sealed abstract class Native(override val lexeme: String) extends Token
   case object Using                                         extends Native("using")
   case object Emit                                          extends Native("emit")
