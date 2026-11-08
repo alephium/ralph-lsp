@@ -33,14 +33,49 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting
     )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    searchParent(
-      identNode = identNode,
-      parent = identNode.parent,
-      sourceCode = sourceCode,
-      cache = searchCache.get(workspace),
-      settings = settings
-    )
+      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    val cache = searchCache.get(workspace)
+    def searchNode(node: Node[SoftAST.Identifier, SoftAST]) =
+      searchParent(node, node.parent, sourceCode, cache, settings)
+
+    // Without argument parentheses, an unfinished asset approval can be parsed as
+    // a struct constructor. Prefer an available callable for a lowercase name,
+    // but retain struct lookup when fields are explicit or no callable exists.
+    val call = incompleteApprovalCall(identNode).iterator.flatMap(searchNode).buffered
+    if (call.hasNext) call else searchNode(identNode)
+  }
+
+  private def incompleteApprovalCall(target: Node[SoftAST.Identifier, SoftAST]): Option[Node[SoftAST.Identifier, SoftAST]] =
+    target.parent match {
+      case Some(Node(constructor: SoftAST.StructConstructor, _))
+          if constructor.identifier == target.data && target.data.code.text.headOption.exists(_.isLower) && !target.isWithinEmit() &&
+            constructor.params.expressions.nonEmpty && constructor.params.expressions.forall {
+              case field: SoftAST.StructConstructorField => field.colon.isInstanceOf[SoftAST.TokenExpected[_]]
+              case _: SoftAST.Unresolved                 => true
+              case _                                     => false
+            } =>
+        val index = target.data.index
+        val call = SoftAST.ReferenceCall(
+          index = index,
+          reference = target.data.deepCopy(index),
+          preAssetApprovalSpace = None,
+          assetApproval = None,
+          preArgumentsSpace = None,
+          arguments = SoftAST.Group[Token.OpenParen.type, Token.CloseParen.type, Token.Comma.type](
+            index = index,
+            openToken = None,
+            preHeadExpressionSpace = None,
+            headExpression = None,
+            preTailExpressionSpace = None,
+            tailExpressions = Seq.empty,
+            closeToken = None
+          )
+        )
+        call.toNode.walk.collectFirst {
+          case node @ Node(identifier: SoftAST.Identifier, _) => node.upcast(identifier)
+        }
+      case _ => None
+    }
 
   /**
    * Searches definitions given the location of the identifier node [[SoftAST.Identifier]]
