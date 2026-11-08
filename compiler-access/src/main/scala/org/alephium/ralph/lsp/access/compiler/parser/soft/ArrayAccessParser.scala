@@ -24,11 +24,47 @@ object ArrayAccessParser {
    *  - In Scala: Index access must be on the same line.
    *  - In Java: Index access can be on a new line.
    */
+  private case class Access(
+      preOpenBracketSpace: Option[SoftAST.Space],
+      openBracket: SoftAST.TokenDocumented[Token.OpenBracket.type],
+      preAccessIndex: Option[SoftAST.Space],
+      accessIndex: SoftAST.ExpressionAST,
+      preCloseBracketSpace: Option[SoftAST.Space],
+      unresolved: Option[SoftAST.Unresolved],
+      closeBracket: SoftAST.TokenDocExpectedAST[Token.BlockBracket.type],
+      to: Int) {
+
+    def on(
+        array: SoftAST.ExpressionAST,
+        from: Int): SoftAST.ArrayAccess =
+      SoftAST.ArrayAccess(
+        index = range(from, to),
+        identifier = array,
+        preOpenBracketSpace = preOpenBracketSpace,
+        openBracket = openBracket,
+        preAccessIndex = preAccessIndex,
+        accessIndex = accessIndex,
+        preCloseBracketSpace = preCloseBracketSpace,
+        unresolved = unresolved,
+        closeBracket = closeBracket
+      )
+
+  }
+
   def parseOrFail[Unknown: P]: P[SoftAST.ArrayAccess] =
+    P(Index ~ IdentifierParser.parseOrFail ~ access.rep(1)) flatMap {
+      case (from, identifier, head :: tail) =>
+        Pass(tail.foldLeft(head.on(identifier, from)) {
+          case (array, next) => next.on(array, from)
+        })
+
+      case (_, _, accesses) =>
+        Fail(s"Expected at least one array access. Actual: ${accesses.size}")
+    }
+
+  private def access[Unknown: P]: P[Access] =
     P {
-      Index ~
-        IdentifierParser.parseOrFail ~
-        SpaceParser.parseOrFail.? ~
+      SpaceParser.parseOrFail.? ~
         TokenParser.parseOrFail(Token.OpenBracket) ~
         SpaceParser.parseOrFail.? ~
         ExpressionParser.parseSubset(expression) ~
@@ -37,24 +73,15 @@ object ArrayAccessParser {
         TokenParser.parse(Token.BlockBracket) ~
         Index
     } map {
-      case (from, identifier, preOpenBracketSpace, openBracket, preTypeSpace, accessIndex, preCloseBracketSpace, unresolved, closeBracket, to) =>
-        SoftAST.ArrayAccess(
-          index = range(from, to),
-          identifier = identifier,
-          preOpenBracketSpace = preOpenBracketSpace,
-          openBracket = openBracket,
-          preAccessIndex = preTypeSpace,
-          accessIndex = accessIndex,
-          preCloseBracketSpace = preCloseBracketSpace,
-          unresolved = unresolved,
-          closeBracket = closeBracket
-        )
+      case (preOpenBracketSpace, openBracket, preAccessIndex, accessIndex, preCloseBracketSpace, unresolved, closeBracket, to) =>
+        Access(preOpenBracketSpace, openBracket, preAccessIndex, accessIndex, preCloseBracketSpace, unresolved, closeBracket, to)
     }
 
   private def expression[Unknown: P]: P[SoftAST.ExpressionAST] =
     P {
       InfixCallParser.parseOrFail |
         MethodCallParser.parseOrFail |
+        ArrayAccessParser.parseOrFail |
         ReferenceCallParser.parseOrFail |
         ByteVecParser.parseOrFail |
         NumberParser.parseOrFail |

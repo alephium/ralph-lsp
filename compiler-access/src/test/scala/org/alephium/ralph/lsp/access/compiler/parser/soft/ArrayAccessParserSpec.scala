@@ -13,6 +13,58 @@ import org.scalatest.OptionValues._
 
 class ArrayAccessParserSpec extends AnyWordSpec with Matchers {
 
+  "parse chained accesses in execution order with exact source ranges" in {
+    val outer = parseArrayAccess("array[0][1][2]")
+    val middle = outer.identifier match {
+      case access: SoftAST.ArrayAccess => access
+      case other                       => fail(s"Expected nested access, got $other")
+    }
+    val inner = middle.identifier match {
+      case access: SoftAST.ArrayAccess => access
+      case other                       => fail(s"Expected nested access, got $other")
+    }
+    outer.index shouldBe indexOf(">>array[0][1][2]<<")
+    middle.index shouldBe indexOf(">>array[0][1]<<[2]")
+    inner.index shouldBe indexOf(">>array[0]<<[1][2]")
+    inner.identifier shouldBe Identifier(">>array<<[0][1][2]")
+    inner.accessIndex shouldBe Number("array[>>0<<][1][2]")
+    middle.accessIndex shouldBe Number("array[0][>>1<<][2]")
+    outer.accessIndex shouldBe Number("array[0][1][>>2<<]")
+  }
+
+  "preserve whitespace and nested access expressions" in {
+    Seq("array [0] \n [1]", "array[index[0]][1]").foreach {
+      code =>
+        val ast = parseArrayAccess(code)
+        ast.toCode() shouldBe code
+        ast.toNode.walk.exists(_.data.isInstanceOf[SoftAST.Unresolved]) shouldBe false
+    }
+  }
+
+  "recover missing indices and closing brackets in later dimensions" in {
+    val empty = parseArrayAccess("array[0][]")
+    empty.accessIndex shouldBe ExpressionExpected("array[0][>><<]")
+    val incomplete = parseArrayAccess("array[0][1")
+    incomplete.accessIndex shouldBe Number("array[0][>>1<<")
+    incomplete.closeBracket shouldBe SoftAST.TokenExpected(indexOf("array[0][1>><<"), Token.BlockBracket)
+  }
+
+  "retain a chained access as one expression inside an assignment" in {
+    val code = "let value = array[0][1]"
+    val root = parseSoft(code)
+    root.toCode() shouldBe code
+    val accesses = root
+      .toNode
+      .walk
+      .map(_.data)
+      .collect {
+        case access: SoftAST.ArrayAccess => access
+      }
+      .toSeq
+    accesses.map(_.toCode()) should contain allOf ("array[0][1]", "array[0]")
+    root.toNode.walk.exists(_.data.isInstanceOf[SoftAST.Unresolved]) shouldBe false
+  }
+
   "access index is missing" in {
     val ast =
       parseArrayAccess("array[]")

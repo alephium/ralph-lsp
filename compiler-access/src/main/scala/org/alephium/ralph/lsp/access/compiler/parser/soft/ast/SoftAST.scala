@@ -908,7 +908,7 @@ object SoftAST {
 
   case class ArrayAccess(
       index: SourceIndex,
-      identifier: Identifier,
+      identifier: ExpressionAST,
       preOpenBracketSpace: Option[Space],
       openBracket: TokenDocumented[Token.OpenBracket.type],
       preAccessIndex: Option[Space],
