@@ -30,3 +30,11 @@ on [Multi-Root Workspaces](https://code.visualstudio.com/docs/editor/workspaces/
 ## References
 
 <https://github.com/alephium>
+
+### Virtual documents and file history
+
+The language client selects on-disk `file:` documents. VS Code timeline snapshots
+use `vscode-local-history:` URIs and are not workspace source files; they remain
+viewable without being sent to the language server. The server also rejects
+non-file URIs at workspace lookup, so requests from other clients cannot trigger
+Java filesystem-provider lookup for virtual documents.
