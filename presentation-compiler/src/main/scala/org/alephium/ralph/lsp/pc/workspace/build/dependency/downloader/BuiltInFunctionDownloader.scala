@@ -9,7 +9,7 @@ import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.pc.workspace.build.dependency.{Dependency, DependencyID}
-import org.alephium.ralph.{BuiltIn, SourceIndex}
+import org.alephium.ralph.{BuiltIn, Parser, SourceIndex}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.Token
 
 import java.nio.file.Path
@@ -48,7 +48,7 @@ object BuiltInFunctionDownloader extends DependencyDownloader.Native {
       DependencyDownloader.defaultBuild(workspaceDir)
 
     val allSourceCode =
-      sourceCode.to(ArraySeq) :+ primitiveSourceCode
+      sourceCode.to(ArraySeq) :+ primitiveSourceCode :+ annotations(workspaceDir)
 
     val workspace =
       WorkspaceState.UnCompiled(
@@ -57,6 +57,39 @@ object BuiltInFunctionDownloader extends DependencyDownloader.Native {
       )
 
     Right(workspace)
+  }
+
+  /** Tooling signatures for native annotations, not callable built-in functions. */
+  private def annotations(workspaceDir: Path): SourceCodeState.UnCompiled = {
+    val usingKeys =
+      (Parser.FunctionUsingAnnotation.keys.toSeq ++ Parser.InterfaceUsingAnnotation.keys.toSeq).distinct
+    val stdKeys =
+      (Parser.InterfaceStdAnnotation.keys.toSeq ++ Parser.ContractStdAnnotation.keys.toSeq).distinct
+    def fields(keys: Seq[String]): String =
+      keys
+        .map {
+          key =>
+            val fieldType =
+              if (key == Parser.FunctionUsingAnnotation.useMethodIndexKey) "U256"
+              else if (key == "id") "ByteVec"
+              else "Bool"
+            s"$key: $fieldType"
+        }
+        .mkString(", ")
+
+    SourceCodeState.UnCompiled(
+      fileURI = workspaceDir.resolve(Dependency.ANNOTATION_FILE_NAME).toUri,
+      code = s"""// Native annotation reference. These signatures are tooling declarations, not functions to call.
+          |// @using configures function asset access, caller checks, field updates and method indices.
+          |// Interface @using supports methodSelector. assetsInContract also accepts enforced.
+          |// @std uses id on interfaces and enabled on contracts. @inline marks inline functions.
+          |Interface NativeAnnotations {
+          |  fn ${Parser.FunctionUsingAnnotation.id}(${fields(usingKeys)}) -> ()
+          |  fn ${Parser.FunctionInlineAnnotation.id}() -> ()
+          |  fn ${Parser.InterfaceStdAnnotation.id}(${fields(stdKeys)}) -> ()
+          |}
+          |""".stripMargin
+    )
   }
 
   /**

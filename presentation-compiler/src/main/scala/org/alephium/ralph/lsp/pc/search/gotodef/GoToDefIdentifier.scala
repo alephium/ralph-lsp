@@ -34,13 +34,29 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       settings: GoToDefSetting
     )(implicit searchCache: SearchCache,
       logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    searchParent(
-      identNode = identNode,
-      parent = identNode.parent,
-      sourceCode = sourceCode,
-      cache = searchCache.get(workspace),
-      settings = settings
-    )
+    identNode.walkParents.collectFirst {
+      case Node(annotation: SoftAST.Annotation, _) if annotation.identifier contains identNode.data =>
+        (annotation, Option.empty[SoftAST.Identifier])
+      case Node(annotation: SoftAST.Annotation, _)
+          if annotation
+            .tuple
+            .exists(_.expressions.exists {
+              case assignment: SoftAST.Assignment => assignment.expressionLeft contains identNode.data
+              case _                              => false
+            }) =>
+        (annotation, Some(identNode.data))
+    } match {
+      case Some((annotation, field)) =>
+        GoToDefAnnotation(annotation, field, workspace)
+      case None =>
+        searchParent(
+          identNode = identNode,
+          parent = identNode.parent,
+          sourceCode = sourceCode,
+          cache = searchCache.get(workspace),
+          settings = settings
+        )
+    }
 
   /**
    * Searches definitions given the location of the identifier node [[SoftAST.Identifier]]
@@ -84,7 +100,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
     parent match {
       case Some(Node(annotation: SoftAST.Annotation, _)) if annotation.identifier contains identNode.data =>
-        // TODO: Support jump-definition for annotations: https://github.com/alephium/ralph-lsp/issues/589
+        // Do not let unmatched annotation syntax fall back to ordinary local definitions.
         Iterator.empty
 
       case Some(Node(assignment: SoftAST.TypeAssignment, _)) if assignment.expressionLeft == identNode.data =>
@@ -153,7 +169,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           case Some(grandParentNode @ Node(_: SoftAST.Group[_, _, _], _)) =>
             grandParentNode.parent match {
               case Some(Node(_: SoftAST.Annotation, _)) =>
-                // TODO: Support jump-definition for annotations: https://github.com/alephium/ralph-lsp/issues/589
+                // Do not let unmatched annotation syntax fall back to ordinary local definitions.
                 Iterator.empty
 
               case _ =>
