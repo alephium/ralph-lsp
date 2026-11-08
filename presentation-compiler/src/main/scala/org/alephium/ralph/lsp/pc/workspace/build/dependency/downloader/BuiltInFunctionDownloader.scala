@@ -47,17 +47,29 @@ object BuiltInFunctionDownloader extends DependencyDownloader.Native {
     val build =
       DependencyDownloader.defaultBuild(workspaceDir)
 
-    val allSourceCode =
-      sourceCode.to(ArraySeq) :+ primitiveSourceCode
-
-    val workspace =
+    Right(
       WorkspaceState.UnCompiled(
         build = build,
-        sourceCode = allSourceCode
+        sourceCode = sourceCode.to(ArraySeq) :+ primitiveSourceCode :+ events(workspaceDir)
       )
-
-    Right(workspace)
+    )
   }
+
+  /**
+   * Debug is reserved by Ralphc and cannot be declared by user contracts.
+   * Represent its tooling metadata as a valid metadata struct so persisted
+   * dependency files can be reparsed without a synthetic strict syntax tree.
+   */
+  private def events(workspaceDir: Path): SourceCodeState.UnCompiled =
+    SourceCodeState.UnCompiled(
+      fileURI = workspaceDir.resolve(Dependency.EVENT_FILE_NAME).toUri,
+      code = """// Native compiler event metadata; this struct describes its encoded payload.
+          |// Debug accepts an interpolated string and is omitted from release bytecode.
+          |// The VM receives the encoded message as ByteVec, not ordinary event fields.
+          |Abstract Contract NativeEvents() {}
+          |struct Debug { message: ByteVec }
+          |""".stripMargin
+    )
 
   /**
    * Creates the built-in primitive source file.

@@ -7,7 +7,8 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.utils.Node
+import org.alephium.ralph.lsp.utils.{Node, URIUtil}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.pc.search.CodeProvider
@@ -754,19 +755,43 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
         case _ =>
           // Allow built-in searches for everything else
-          cache.builtInTrees
+          cache.builtInTrees.filter {
+            tree =>
+              // Native events are not candidates for the relaxed function/variable fallback.
+              URIUtil.getFileName(tree.parsed.fileURI) != Dependency.EVENT_FILE_NAME || target.isWithinEmit()
+          }
       }
 
-    // Merge both the actual inherited trees and the built-in trees.
+    // Persisted native event metadata uses valid struct declarations, but is
+    // eligible only for emit targets, never ordinary function/variable lookup.
+    val (nativeEvents, ordinaryBuiltIns) =
+      builtInTrees.partition(
+        tree => URIUtil.getFileName(tree.parsed.fileURI) == Dependency.EVENT_FILE_NAME
+      )
+    val eventMatches = nativeEvents.iterator.flatMap {
+      source =>
+        source
+          .part
+          .toNode
+          .walk
+          .collect {
+            case Node(metadata: SoftAST.Struct, _) => metadata.identifier
+          }
+          .flatMap(
+            name => searchIdentifier(name, target, source)
+          )
+    }
+
+    // Merge both the actual inherited trees and the ordinary built-in trees.
     val allInheritedTrees =
-      inheritedTrees.iterator ++ builtInTrees
+      inheritedTrees.iterator ++ ordinaryBuiltIns
 
     // Execute inheritance search.
     searchInheritance(
       target = target,
       inheritance = allInheritedTrees,
       detectCallSyntax = detectCallSyntax
-    )
+    ) ++ eventMatches
   }
 
   /**
