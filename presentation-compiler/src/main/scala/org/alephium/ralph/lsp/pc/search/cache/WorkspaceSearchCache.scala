@@ -5,7 +5,8 @@ package org.alephium.ralph.lsp.pc.search.cache
 
 import org.alephium.ralph.lsp.pc.sourcecode.SourceLocation
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
-import org.alephium.ralph.lsp.pc.workspace.build.dependency.DependencyID
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.{Dependency, DependencyID}
+import org.alephium.ralph.lsp.utils.URIUtil
 import org.alephium.ralph.lsp.utils.log.ClientLogger
 
 import scala.collection.immutable.ArraySeq
@@ -42,7 +43,9 @@ final class WorkspaceSearchCache(val workspace: WorkspaceState.IsSourceAware)(im
     ) match {
       case Some((builtIn, builtInTrees)) =>
         // Primitives should not be included within inheritance search.
-        builtInTrees.filter(!_.parsed.isPrimitive(builtIn))
+        builtInTrees.filter(
+          tree => !tree.parsed.isPrimitive(builtIn) && URIUtil.getFileName(tree.parsed.fileURI) != Dependency.ANNOTATION_FILE_NAME
+        )
 
       case None =>
         ArraySeq.empty
