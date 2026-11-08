@@ -31,19 +31,27 @@ private object ReferenceCallParser {
         IdentifierParser.parse(required) ~
         SpaceParser.parseOrFail.? ~
         AssetApprovalParser.parseOrFail.? ~
-        SpaceParser.parseOrFail.? ~
-        TupleParser.parse(required) ~
-        Index
-    } map {
-      case (from, identifier, preAssetApprovalSpace, assetApproval, preArgumentsSpace, arguments, to) =>
-        SoftAST.ReferenceCall(
-          index = range(from, to),
-          reference = identifier,
-          preAssetApprovalSpace = preAssetApprovalSpace,
-          assetApproval = assetApproval,
-          preArgumentsSpace = preArgumentsSpace,
-          arguments = arguments
-        )
+        SpaceParser.parseOrFail.?
+    } flatMap {
+      case (from, identifier, preAssetApprovalSpace, assetApproval, preArgumentsSpace) =>
+        // An arrow distinguishes asset approval from a struct constructor. Once it is
+        // present, keep the approval AST even while the call's argument tuple is missing.
+        val hasApprovalArrow =
+          assetApproval.exists(_.toNode.walk.exists(_.data.isInstanceOf[SoftAST.ArrowAssignment]))
+
+        P {
+          TupleParser.parse(required || hasApprovalArrow) ~ Index
+        } map {
+          case (arguments, to) =>
+            SoftAST.ReferenceCall(
+              index = range(from, to),
+              reference = identifier,
+              preAssetApprovalSpace = preAssetApprovalSpace,
+              assetApproval = assetApproval,
+              preArgumentsSpace = preArgumentsSpace,
+              arguments = arguments
+            )
+        }
     }
 
 }
