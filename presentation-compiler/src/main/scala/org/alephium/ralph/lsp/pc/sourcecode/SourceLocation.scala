@@ -207,7 +207,8 @@ object SourceLocation extends StrictImplicitLogging {
 
   case class GoToTypeDef(
       ast: Ast.TypeId,
-      source: CodeStrict)
+      source: CodeStrict,
+      inlayHintType: Option[String] = None)
     extends GoTo {
 
     override def index: Option[SourceIndex] =
