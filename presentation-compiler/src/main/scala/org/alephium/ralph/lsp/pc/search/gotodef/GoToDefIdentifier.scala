@@ -7,7 +7,8 @@ import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeSearcher, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
-import org.alephium.ralph.lsp.utils.Node
+import org.alephium.ralph.lsp.utils.{Node, URIUtil}
+import org.alephium.ralph.lsp.pc.workspace.build.dependency.Dependency
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 import org.alephium.ralph.SourceIndex
 import org.alephium.ralph.lsp.pc.search.CodeProvider
@@ -754,7 +755,11 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
 
         case _ =>
           // Allow built-in searches for everything else
-          cache.builtInTrees
+          cache.builtInTrees.filter {
+            tree =>
+              // Native events are not candidates for the relaxed function/variable fallback.
+              URIUtil.getFileName(tree.parsed.fileURI) != Dependency.EVENT_FILE_NAME || target.isWithinEmit()
+          }
       }
 
     // Merge both the actual inherited trees and the built-in trees.

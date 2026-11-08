@@ -22,6 +22,9 @@ import scala.collection.immutable.ArraySeq
 
 object Dependency {
 
+  val EVENT_FILE_NAME =
+    s"events.${CompilerAccess.RALPH_FILE_EXTENSION}"
+
   val PRIMITIVE_FILE_NAME =
     s"primitives.${CompilerAccess.RALPH_FILE_EXTENSION}"
 
