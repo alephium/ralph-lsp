@@ -328,6 +328,20 @@ object SoftAST {
 
   }
 
+  case class TestDeclaration(
+      index: SourceIndex,
+      keyword: TokenDocumented[Token.Test.type],
+      preNameSpace: Option[Space],
+      name: StringLiteral,
+      parts: Seq[SoftAST])
+    extends DeclarationAST
+
+  case class TestClause(
+      index: SourceIndex,
+      keyword: TokenDocumented[Token.TestClauseKeyword],
+      parts: Seq[SoftAST])
+    extends SoftAST
+
   case class Template(
       index: SourceIndex,
       annotations: Seq[Annotation],

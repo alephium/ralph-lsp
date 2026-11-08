@@ -18,6 +18,9 @@ object TestParser {
   def parseSoft(code: String): SoftAST.RootBlock =
     runSoftParser(SoftParser.parse(_))(code)
 
+  def parseTestDeclaration(code: String): SoftAST.TestDeclaration =
+    runSoftParser(TestDeclarationParser.parseOrFail(_))(code)
+
   def parseAnnotation(code: String): SoftAST.Annotation =
     runSoftParser(AnnotationParser.parseOrFail(_))(code)
 

@@ -33,7 +33,8 @@ private[search] object ScopeWalker {
           // This drops the node and its children in the same iteration, efficient, especially for multiline comments.
           Iterator.empty
 
-        case block @ Node(_: SoftAST.While | _: SoftAST.For | _: SoftAST.IfElse | _: SoftAST.Else | _: SoftAST.Block, _) if !block.data.contains(anchor) =>
+        case block @ Node(_: SoftAST.While | _: SoftAST.For | _: SoftAST.IfElse | _: SoftAST.Else | _: SoftAST.Block | _: SoftAST.TestDeclaration, _)
+            if !block.data.contains(anchor) =>
           // drop all child nodes
           Iterator.empty
 
