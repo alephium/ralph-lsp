@@ -58,6 +58,42 @@ case object GoToDefCodeProvider extends CodeProvider[SourceCodeState.IsParsed, (
         }
     }
 
+  /** Resolve existing identifier nodes through their cached parent chain, without an offset lookup. */
+  override def searchLocal(
+      ast: SoftAST,
+      sourceCode: SourceCodeState.IsParsed,
+      workspace: WorkspaceState.IsSourceAware,
+      searchSettings: (SoftAST.type, GoToDefSetting)
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[SourceLocation.GoToDefSoft] =
+    sourceCode.astSoft.fetch() match {
+      case Right(root) =>
+        // Initialise the cached parent links before using a node supplied directly by a caller.
+        val rootNode = root.toNode
+        val identifier = ast match {
+          case id: SoftAST.Identifier => Some(id.toNode.upcast(id))
+          case _: SoftAST.CodeString =>
+            ast.toNode.parent.collect {
+              case node @ Node(id: SoftAST.Identifier, _) => node.upcast(id)
+            }
+          case _ => None
+        }
+        identifier match {
+          case Some(node) =>
+            node
+              .walkParents
+              .collectFirst {
+                case Node(part: SoftAST.BlockPartAST, _) if part.toNode.parent.exists(_ eq rootNode) =>
+                  GoToDefIdentifier(node, SourceLocation.CodeSoft(part, sourceCode), workspace, searchSettings._2)
+              }
+              .iterator
+              .flatten
+          case None =>
+            searchLocal(ast.index.from, sourceCode, workspace, searchSettings)
+        }
+      case Left(_) => Iterator.empty
+    }
+
   /**
    * Searches the given bodyPart.
    *

@@ -14,7 +14,7 @@ import org.alephium.ralph.lsp.pc.search.gototypedef.GoToTypeDefCodeProvider
 import org.alephium.ralph.lsp.pc.search.hover.HoverCodeProvider
 import org.alephium.ralph.lsp.pc.search.inlayhints.InlayHintsCodeProvider
 import org.alephium.ralph.lsp.pc.search.rename.GoToRenameCodeProvider
-import org.alephium.ralph.lsp.pc.search.CodeProvider.{searchWorkspace, searchWorkspaceAndDependencies}
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
 import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
@@ -81,23 +81,61 @@ trait CodeProvider[S, I, O] extends Product {
     )(implicit provider: CodeProvider[S, I, O],
       searchCache: SearchCache,
       logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
-    // if the fileURI belongs to the workspace, then search just within that workspace
-    if (URIUtil.contains(workspace.build.contractURI, fileURI))
-      searchWorkspace[S, I, O](
-        line = line,
-        character = character,
-        fileURI = fileURI,
-        workspace = workspace,
-        searchSettings = searchSettings
-      )
-    else // else search all source files
-      searchWorkspaceAndDependencies[S, I, O](
-        line = line,
-        character = character,
-        fileURI = fileURI,
-        workspace = workspace,
-        searchSettings = searchSettings
-      )
+    CodeProvider.searchInWorkspace[S, I, O](fileURI, workspace, searchSettings) {
+      (parsed: S,
+          selectedWorkspace: WorkspaceState.IsSourceAware) =>
+        val state = parsed.asInstanceOf[SourceCodeState.IsParsed]
+        provider.searchLocal(
+          cursorIndex = StringUtil.computeIndex(state.code, line, character),
+          sourceCode = parsed,
+          workspace = selectedWorkspace,
+          searchSettings = searchSettings
+        )
+    }
+
+  /** Search an existing source offset without converting it through line coordinates. */
+  final def search(
+      cursorIndex: Int,
+      fileURI: URI,
+      workspace: WorkspaceState.IsSourceAware,
+      searchSettings: I
+    )(implicit provider: CodeProvider[S, I, O],
+      searchCache: SearchCache,
+      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
+    CodeProvider.searchInWorkspace[S, I, O](fileURI, workspace, searchSettings) {
+      (parsed: S,
+          selectedWorkspace: WorkspaceState.IsSourceAware) =>
+        provider.searchLocal(cursorIndex, parsed, selectedWorkspace, searchSettings)
+    }
+
+  /**
+   * Searches using an AST already obtained from the specified file's current parsed state.
+   * Soft providers can use its existing node context directly; strict providers use its offset.
+   * Workspace and dependency selection is identical to position-based search.
+   */
+  final def search(
+      ast: SoftAST,
+      fileURI: URI,
+      workspace: WorkspaceState.IsSourceAware,
+      searchSettings: I
+    )(implicit provider: CodeProvider[S, I, O],
+      searchCache: SearchCache,
+      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
+    CodeProvider.searchInWorkspace[S, I, O](fileURI, workspace, searchSettings) {
+      (parsed: S,
+          selectedWorkspace: WorkspaceState.IsSourceAware) =>
+        provider.searchLocal(ast, parsed, selectedWorkspace, searchSettings)
+    }
+
+  /** Local AST search. Override to avoid locating an already available syntax node again. */
+  def searchLocal(
+      ast: SoftAST,
+      sourceCode: S,
+      workspace: WorkspaceState.IsSourceAware,
+      searchSettings: I
+    )(implicit searchCache: SearchCache,
+      logger: ClientLogger): Iterator[O] =
+    searchLocal(ast.index.from, sourceCode, workspace, searchSettings)
 
   /**
    * Searches the source-code of a workspace at the given cursor index, excluding any workspace dependencies.
@@ -155,107 +193,42 @@ object CodeProvider {
   implicit val hover: CodeProvider[SourceCodeState.IsParsed, (SoftAST.type, GoToDefSetting), SourceLocation.Hover] =
     HoverCodeProvider
 
-  /**
-   * Executes search on dependencies and the workspace that can use this dependency.
-   *
-   * @param character Character offset on a line in a document (zero-based).
-   * @param fileURI   The text document's uri.
-   * @param workspace Current workspace state.
-   * @tparam O The type to search.
-   */
-  private def searchWorkspaceAndDependencies[S, I, O](
-      line: Int,
-      character: Int,
+  /** Select the workspace once for either a source position or an existing AST. */
+  private def searchInWorkspace[S, I, O](
       fileURI: URI,
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: I
-    )(implicit provider: CodeProvider[S, I, O],
-      searchCache: SearchCache,
-      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
-    // Search on dependencies should only run for go-to definitions and hover requests. Code-completion is ignored.
-    if (provider == CodeProvider.goToDef || provider == CodeProvider.goToRef || provider == CodeProvider.hover)
-      workspace
-        .build
-        .dependencies
-        .find { // find the dependency where this search was executed
-          dependency =>
-            URIUtil.contains(dependency.build.contractURI, fileURI)
-        }
-        .flatMap {
-          dependency =>
-            // merge all source files of all dependencies, because dependencies themselves could be interdependent.
-            val dependencySourceCode =
-              workspace
-                .build
-                .dependencies
-                .flatMap(_.sourceCode)
-
-            // merge all dependencies and workspace source-files.
-            val mergedSourceCode =
-              workspace.sourceCode ++ dependencySourceCode
-
-            // create one workspace with all source-code.
-            val mergedWorkspace =
+    )(run: (S, WorkspaceState.IsSourceAware) => Iterator[O]
+    )(implicit provider: CodeProvider[S, I, O]): Option[Either[CompilerMessage.Error, Iterator[O]]] = {
+    val selectedWorkspace: Option[WorkspaceState.IsSourceAware] =
+      if (URIUtil.contains(workspace.build.contractURI, fileURI))
+        Some(workspace)
+      else if (provider == CodeProvider.goToDef || provider == CodeProvider.goToRef || provider == CodeProvider.hover)
+        workspace
+          .build
+          .dependencies
+          .find(
+            dependency => URIUtil.contains(dependency.build.contractURI, fileURI)
+          )
+          .map {
+            dependency =>
               WorkspaceState.UnCompiled(
                 build = dependency.build,
-                sourceCode = mergedSourceCode
+                sourceCode = workspace.sourceCode ++ workspace.build.dependencies.flatMap(_.sourceCode)
               )
+          }
+      else
+        None
 
-            // execute search on that one workspace
-            searchWorkspace[S, I, O](
-              line = line,
-              character = character,
-              fileURI = fileURI,
-              workspace = mergedWorkspace,
-              searchSettings = searchSettings
-            )
-        }
-    else
-      None
-
-  /**
-   * Execute search at the cursor position within the current workspace state.
-   *
-   * @param line      Line position in a document (zero-based).
-   * @param character Character offset on a line in a document (zero-based).
-   * @param fileURI   The text document's uri.
-   * @param workspace Current workspace state.
-   * @tparam O The type to search.
-   */
-  private def searchWorkspace[S, I, O](
-      line: Int,
-      character: Int,
-      fileURI: URI,
-      workspace: WorkspaceState.IsSourceAware,
-      searchSettings: I
-    )(implicit provider: CodeProvider[S, I, O],
-      searchCache: SearchCache,
-      logger: ClientLogger): Option[Either[CompilerMessage.Error, Iterator[O]]] =
-    getParsedStateForCodeProvider(
-      fileURI = fileURI,
-      workspace = workspace,
-      searchSettings = searchSettings
-    ) map {
-      parsedOpt =>
-        parsedOpt map {
-          parsed =>
-            // fetch the requested index from line number and character number.
-            val cursorIndex =
-              StringUtil.computeIndex(
-                code = parsed.code,
-                line = line,
-                character = character
-              )
-
-            // execute the search
-            provider.searchLocal(
-              cursorIndex = cursorIndex,
-              sourceCode = parsed.asInstanceOf[S],
-              workspace = workspace,
-              searchSettings = searchSettings
-            )
-        }
+    selectedWorkspace.flatMap {
+      selected =>
+        getParsedStateForCodeProvider(fileURI, selected, searchSettings).map(
+          _.map(
+            parsed => run(parsed.asInstanceOf[S], selected)
+          )
+        )
     }
+  }
 
   /**
    * Finds the parsed state of the given file URI, based on the type of code provider being executed.

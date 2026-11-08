@@ -1645,7 +1645,7 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       CodeProvider
         .goToTypeDef
         .search(
-          linePosition = theType.index.toLineRange(sourceCode.parsed.code).from,
+          ast = theType,
           fileURI = sourceCode.parsed.fileURI,
           workspace = cache.workspace,
           searchSettings = ()
