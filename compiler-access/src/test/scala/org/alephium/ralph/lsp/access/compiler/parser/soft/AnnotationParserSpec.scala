@@ -7,12 +7,51 @@ import org.alephium.ralph.lsp.access.compiler.parser.soft.TestParser._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.TestSoftAST._
 import org.alephium.ralph.lsp.access.util.TestCodeUtil._
+import org.alephium.ralph.lsp.access.util.TestFastParse.assertIsFastParseError
 import org.alephium.ralph.lsp.utils.Node
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
 class AnnotationParserSpec extends AnyWordSpec with Matchers {
+
+  "parse digit-prefixed and grouped address-shaped annotation names" in {
+    Seq("1wassap", "wassap:1", "1wassap:12", "123").foreach {
+      name =>
+        val annotation = parseAnnotation(s"@$name")
+        annotation.identifier shouldBe Identifier(s"@>>$name<<")
+        annotation.index shouldBe indexOf(s">>@$name<<")
+        annotation.toCode() shouldBe s"@$name"
+    }
+  }
+
+  "retain regular annotation arguments" in {
+    val annotation = parseAnnotation("@using(preapprovedAssets = true)")
+    annotation.identifier shouldBe Identifier("@>>using<<(preapprovedAssets = true)")
+    annotation.tuple.value.toCode() shouldBe "(preapprovedAssets = true)"
+  }
+
+  "leave malformed group suffixes recoverable without swallowing the next declaration" in {
+    Seq(":", ":x", ":-1").foreach {
+      suffix =>
+        val code = s"@wassap$suffix\nfn next() {}"
+        val root = parseSoft(code)
+        root.toCode() shouldBe code
+        val annotation = root
+          .toNode
+          .walk
+          .collectFirst {
+            case Node(annotation: SoftAST.Annotation, _) => annotation
+          }
+          .value
+        annotation.identifier shouldBe Identifier(s"@>>wassap<<$suffix\nfn next() {}")
+        root.toNode.walk.exists(_.data.isInstanceOf[SoftAST.Function]) shouldBe true
+    }
+  }
+
+  "keep digit-prefixed names invalid for ordinary identifiers" in {
+    assertIsFastParseError(parseIdentifier("1wassap"))
+  }
 
   "error cases" should {
     "report missing identifier" in {

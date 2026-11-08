@@ -5,7 +5,7 @@ package org.alephium.ralph.lsp.access.compiler.parser.soft
 
 import fastparse._
 import fastparse.NoWhitespace.noWhitespaceImplicit
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.range
+import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.{point, range}
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.{SoftAST, Token}
 
 private object AnnotationParser {
@@ -27,7 +27,7 @@ private object AnnotationParser {
       Index ~
         TokenParser.parseOrFail(Token.At) ~
         SpaceParser.parseOrFail.? ~
-        IdentifierParser.parse ~
+        annotationIdentifier ~
         SpaceParser.parseOrFail.? ~
         TupleParser.parseOrFail(assertNonEmpty = true).? ~
         SpaceParser.parseOrFail.? ~
@@ -44,5 +44,28 @@ private object AnnotationParser {
           postTupleSpace = postTupleSpace
         )
     }
+
+  // Address-shaped expressions share the annotation syntax in the soft AST. Their names can
+  // begin with a digit and include a numeric group suffix; ordinary identifiers remain unchanged.
+  private def annotationIdentifier[Unknown: P]: P[SoftAST.IdentifierAST] =
+    P(Index ~ annotationIdentifierOrFail.?) map {
+      case (_, Some(identifier)) => identifier
+      case (from, None)          => SoftAST.IdentifierExpected(point(from))
+    }
+
+  private def annotationIdentifierOrFail[Unknown: P]: P[SoftAST.Identifier] =
+    P {
+      Index ~
+        CommentParser.parseOrFail.? ~
+        !(ReservedTokenParser.parseOrFail ~ TokenParser.isBoundary()) ~
+        CodeParser.parseOrFail(annotationName.!) ~
+        Index
+    } map {
+      case (from, documentation, code, to) =>
+        SoftAST.Identifier(range(from, to), documentation, code)
+    }
+
+  private def annotationName[Unknown: P]: P[Unit] =
+    P(CharIn("a-zA-Z0-9_") ~ CharIn("a-zA-Z0-9_!").rep ~ (":" ~ CharIn("0-9").rep(1)).?)
 
 }
