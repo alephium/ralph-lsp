@@ -32,64 +32,7 @@ object InfixTokenParser {
         )
     }
 
-  /**
-   * Parses all infix tokens defined in [[Token.infix]] and returns the first match.
-   *
-   * Prefix check is not required here because [[Token.infix]] contains all infix tokens and are sorted.
-   */
   private def infixToken[Unknown: P]: P[Token.InfixOperator] =
-    staticTokens.! flatMap {
-      string =>
-        Token.infix.find(_.lexeme == string) match {
-          case Some(token) =>
-            Pass(token)
-
-          case None =>
-            Fail(s"Unable to find infix token for string '$string'")
-        }
-    }
-
-  /**
-   * Static string parser is used for reserved tokens because it's faster.
-   *
-   * Test-cases will report if a token ([[Token.InfixOperator]]) is missing from this list.
-   *
-   * __Note__: The order is important here so use the following commented out `regenerate` function
-   *           to print the tokens to add in order.
-   *
-   * TODO: This parser should be macro generated for easier management when new tokens are added.
-   */
-  private def staticTokens[Unknown: P]: P[Unit] =
-    StringIn(
-      """|**|""",
-      """|-|""",
-      """|+|""",
-      """|*|""",
-      """||""",
-      """>>""",
-      """>=""",
-      """==""",
-      """<=""",
-      """<<""",
-      """/=""",
-      """-=""",
-      """+=""",
-      """++""",
-      """*=""",
-      """**""",
-      """&&""",
-      """!=""",
-      """|""",
-      """^""",
-      """\""",
-      """>""",
-      """<""",
-      """/""",
-      """-""",
-      """+""",
-      """*""",
-      """&""",
-      """%"""
-    )
+    TokenParsers.parse(Token.infix.toSeq, false)
 
 }

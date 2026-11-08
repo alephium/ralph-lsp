@@ -46,10 +46,7 @@ private object TemplateParser {
 
   private def typeDefinitions[Unknown: P]: P[SoftAST.TokenDocumented[Token.TemplateDefinition]] =
     P {
-      TokenParser.parseOrFailOneOf(
-        prefixCheck = false,
-        tokens = Iterator(Token.Contract, Token.TxScript, Token.AssetScript, Token.Interface)
-      )
+      TokenParser.parseOrFailWith(TokenParsers.parse(Token.templates, false))
     }
 
   private def abstractToken[Unknown: P]: P[SoftAST.Abstract] =

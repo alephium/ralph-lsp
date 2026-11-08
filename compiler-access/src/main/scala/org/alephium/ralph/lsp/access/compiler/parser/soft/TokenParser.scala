@@ -43,30 +43,22 @@ private object TokenParser {
         )
     }
 
-  /**
-   * Parses the first successful token from the given iterator of tokens, failing if none succeed.
-   *
-   * @param prefixCheck If `true`, performs the prefix check before parsing each token.
-   * @param tokens      The tokens to parse.
-   */
+  /** Runtime token collections cannot be expanded by a compile-time macro. */
   def parseOrFailOneOf[Unknown: P, T <: Token](
       prefixCheck: Boolean,
       tokens: Iterator[T]): P[SoftAST.TokenDocumented[T]] =
+    parseOrFailWith(ParserUtil.orTokenCombinator(prefixCheck, tokens))
+
+  /** Adds documentation and source ranges to a statically generated token parser. */
+  def parseOrFailWith[Unknown: P, T <: Token](parser: => P[T]): P[SoftAST.TokenDocumented[T]] =
     P {
-      Index ~
-        CommentParser.parseOrFail.? ~
-        Index ~
-        ParserUtil.orTokenCombinator(prefixCheck = prefixCheck, tokens = tokens) ~
-        Index
+      Index ~ CommentParser.parseOrFail.? ~ Index ~ parser ~ Index
     } map {
       case (commentFrom, documentation, tokenFrom, token, to) =>
         SoftAST.TokenDocumented(
           index = range(commentFrom, to),
           documentation = documentation,
-          code = SoftAST.CodeToken(
-            index = range(tokenFrom, to),
-            token = token
-          )
+          code = SoftAST.CodeToken(index = range(tokenFrom, to), token = token)
         )
     }
 

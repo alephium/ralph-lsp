@@ -14,10 +14,7 @@ private object BooleanParser {
 
   private def boolean[Unknown: P]: P[SoftAST.TokenDocumented[Token.PrimitiveBoolean]] =
     P {
-      TokenParser.parseOrFailOneOf(
-        prefixCheck = false,
-        tokens = Iterator(Token.True, Token.False)
-      )
+      TokenParser.parseOrFailWith(TokenParsers.parse(Token.booleans, false))
     }
 
 }

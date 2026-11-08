@@ -13,7 +13,7 @@ private object UnaryParser {
   def parseOrFail[Unknown: P]: P[SoftAST.Unary] =
     P {
       Index ~
-        TokenParser.parseOrFailOneOf(prefixCheck = true, tokens = Token.unary.iterator) ~
+        TokenParser.parseOrFailWith(TokenParsers.parse(Token.unary.toSeq, true)) ~
         SpaceParser.parseOrFail.? ~
         ExpressionParser.parse ~
         Index
