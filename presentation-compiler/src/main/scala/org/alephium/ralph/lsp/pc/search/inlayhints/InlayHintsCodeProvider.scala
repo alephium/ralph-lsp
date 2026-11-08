@@ -109,17 +109,12 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
       .flatten
       .map {
         varSourceIndex =>
-          // convert the SourceIndex to LineRange.
-          val varRange =
-            varSourceIndex.toLineRange(sourceCode.code)
-
           // Find all type definitions at the range.
           val typeDefinitions =
             CodeProvider
               .goToTypeDef
               .search(
-                line = varRange.from.line,
-                character = varRange.from.character,
+                cursorIndex = varSourceIndex.from,
                 fileURI = sourceCode.fileURI,
                 workspace = workspace,
                 searchSettings = ()

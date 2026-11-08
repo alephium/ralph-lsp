@@ -3,9 +3,7 @@
 
 package org.alephium.ralph.lsp.pc.search.gotoref
 
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra.SourceIndexExtension
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
-import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
@@ -38,9 +36,7 @@ private object GoToRefIdentifier extends StrictImplicitLogging {
       CodeProvider
         .goToDef
         .search( // find definitions for the token at the given `cursorIndex`.
-          // TODO: CodeProvider converts `LinePosition` to `cursorIndex` which here gets converted back to `LinePosition`.
-          //       Send `LinePosition` directly to `GoToRefSoftCodeProvider`.
-          linePosition = StringUtil.buildLineRange(sourceCode.code, cursorIndex, cursorIndex).from,
+          cursorIndex = cursorIndex,
           fileURI = sourceCode.fileURI,
           workspace = workspace,
           searchSettings = (SoftAST, searchSettings.goToDefSetting)
@@ -193,7 +189,7 @@ private object GoToRefIdentifier extends StrictImplicitLogging {
       CodeProvider
         .goToDef
         .search( // find definitions for the token at the given cursorIndex.
-          linePosition = identifier.index.toLineRange(isParsed.code).from,
+          ast = identifier,
           fileURI = isParsed.fileURI,
           workspace = workspace,
           searchSettings = (SoftAST, searchSettings.goToDefSetting)

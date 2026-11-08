@@ -4,7 +4,6 @@
 package org.alephium.ralph.lsp.pc.search.hover
 
 import org.alephium.ralph.{Ast, SourceIndex}
-import org.alephium.ralph.lsp.access.compiler.message.SourceIndexExtra._
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast._
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.search.cache.SearchCache
@@ -200,7 +199,7 @@ private case object HoverExpression extends StrictImplicitLogging {
     val typeDefs = CodeProvider
       .goToTypeDef
       .search(
-        linePosition = assignment.index.toLineRange(sourceCode.parsed.code).from,
+        ast = assignment,
         fileURI = sourceCode.parsed.fileURI,
         workspace = workspace,
         searchSettings = ()
