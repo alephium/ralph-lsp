@@ -1,0 +1,9 @@
+# Background reference indexing
+
+Soft-AST reference lookup indexes identifiers by name for each immutable workspace snapshot, including its dependencies. A query retrieves only matching name postings, then retains the existing go-to-definition checks to distinguish scopes, overloads, inheritance and unrelated declarations with the same spelling. Traversal order and declaration-inclusion behavior are preserved.
+
+The language server schedules construction when a source-aware workspace state is installed. Reinstalling an equal snapshot is a no-op. A single daemon worker handles all roots; there is no workspace polling or timer. New events cancel superseded work and remove queued obsolete tasks. Removing a workspace releases its active cache. Shutdown and exit cancel jobs, release snapshots and shut down the worker.
+
+A query that arrives before background construction completes computes or waits for the lazy index for its own snapshot. It never reads postings from another version. If a background construction is interrupted, its partial result is not published, and an in-flight query on the old snapshot can still compute that snapshot independently. Cancellation is checked between files, code blocks and AST nodes; parsing a single block is not itself interruptible. Background construction does not call the definition cache, mutate workspace state or perform I/O.
+
+The index costs memory proportional to the number of identifiers. Building a new snapshot walks its AST once; subsequent name lookups touch only those postings (plus semantic definition resolution). The active worker owner holds each root's current cache strongly. Older snapshots follow the existing search-cache lifetime and may remain reachable by in-flight requests. Direct presentation-compiler callers without server events still construct the same index lazily on their first query.

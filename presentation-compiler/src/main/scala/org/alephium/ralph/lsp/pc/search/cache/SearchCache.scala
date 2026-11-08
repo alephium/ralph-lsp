@@ -21,6 +21,11 @@ import java.util
  */
 case class SearchCache(maxWorkspaces: Int) extends WeakHashMapBase[WorkspaceState.IsSourceAware, WorkspaceSearchCache](new util.WeakHashMap(maxWorkspaces, 1)) {
 
+  val referenceIndexer: BackgroundReferenceIndexer = BackgroundReferenceIndexer()
+
+  def prepareReferenceIndex(workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger): Unit =
+    referenceIndexer.update(workspace, get(workspace))
+
   def get(
       workspace: WorkspaceState.IsSourceAware
     )(implicit logger: ClientLogger): WorkspaceSearchCache =

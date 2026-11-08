@@ -9,9 +9,8 @@ import org.alephium.ralph.lsp.access.util.StringUtil
 import org.alephium.ralph.lsp.pc.search.cache.SearchCache
 import org.alephium.ralph.lsp.pc.search.CodeProvider
 import org.alephium.ralph.lsp.pc.sourcecode.{SourceCodeState, SourceLocation}
-import org.alephium.ralph.lsp.pc.workspace.{WorkspaceSearcher, WorkspaceState}
+import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
-import org.alephium.ralph.lsp.utils.Node
 
 import scala.collection.immutable.ArraySeq
 
@@ -103,73 +102,19 @@ private object GoToRefIdentifier extends StrictImplicitLogging {
     if (definitions.isEmpty)
       ArraySeq.empty
     else
-      WorkspaceSearcher
-        .collectAllIsParsed(workspace)
-        .flatMap {
-          isParsed =>
-            searchSourceCodeReferences(
-              isParsed = isParsed,
-              definitions = definitions,
-              workspace = workspace,
-              searchSettings = searchSettings
-            )
+      searchCache
+        .get(workspace)
+        .referenceIndex
+        .candidates(definitions.map(_.ast.text))
+        .filter {
+          candidate =>
+            isMatchingIdentifier(candidate.ast, candidate.source.parsed, definitions, workspace, searchSettings)
         }
+        .map(
+          candidate => SourceLocation.NodeSoft(candidate.ast.code, candidate.source)
+        )
         .distinct
         .diff(definitions)
-
-  /**
-   * Searches all references to the given definitions across all code blocks within a single source code file.
-   *
-   * TODO: Performance optimisations is required here because this performs a naive linear scan
-   *       over the entire workspace - every source file, every code block in each file, and every
-   *       AST node within each block, and is therefore inefficient.
-   *       Suggestions:
-   *         - 1) Execute the search in parallel across all source files, and each code block within the source file.
-   *         - 2) Introduce an inverted-index-based cache.
-   *
-   * @param isParsed       The source code file to search.
-   * @param definitions    The definitions whose references should be searched.
-   * @param workspace      The workspace state where the source-code is located.
-   * @param searchSettings Provider-specific settings.
-   * @return All references for the given definitions.
-   */
-  private def searchSourceCodeReferences(
-      isParsed: SourceCodeState.IsParsed,
-      definitions: ArraySeq[SourceLocation.NodeSoft[SoftAST.CodeString]],
-      workspace: WorkspaceState.IsSourceAware,
-      searchSettings: GoToRefSetting
-    )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Seq[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    if (definitions.isEmpty)
-      Seq.empty
-    else
-      isParsed.astSoft.fetch() match {
-        case Right(block) =>
-          // TODO: Execute in parallel.
-          block.parts.flatMap {
-            part =>
-              // TODO: Replace `walk` with an inverted-index.
-              part.toNode.walk.collect {
-                case Node(ast: SoftAST.Identifier, _) if isMatchingIdentifier(ast, isParsed, definitions, workspace, searchSettings) =>
-                  SourceLocation.NodeSoft(
-                    ast = ast.code,
-                    source = SourceLocation.CodeSoft(
-                      part = part,
-                      parsed = isParsed
-                    )
-                  )
-              }
-          }
-
-        case Left(error) =>
-          logger.error {
-            s"""SoftParser Error: Failed to parse source code.
-               |File: ${isParsed.fileURI}
-               |Error Message: ${error.message}""".stripMargin
-          }
-
-          Seq.empty
-      }
 
   /**
    * Checks whether the given identifier is a reference to any of the provided definitions.
@@ -183,7 +128,7 @@ private object GoToRefIdentifier extends StrictImplicitLogging {
    */
   private def isMatchingIdentifier(
       identifier: SoftAST.Identifier,
-      isParsed: SourceCodeState.IsParsed,
+      isParsed: SourceCodeState.IsParsedAndCompiled,
       definitions: ArraySeq[SourceLocation.NodeSoft[SoftAST.CodeString]],
       workspace: WorkspaceState.IsSourceAware,
       searchSettings: GoToRefSetting
