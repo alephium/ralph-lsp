@@ -5,7 +5,6 @@ package org.alephium.ralph.lsp.pc.workspace.build.dependency.downloader
 
 import org.alephium.ralph.lsp.access.compiler.CompilerAccess
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
-import org.alephium.ralph.lsp.utils.LazyVal
 import org.alephium.ralph.lsp.utils.log.ClientLogger
 import org.alephium.ralph.lsp.pc.sourcecode.SourceCodeState
 import org.alephium.ralph.lsp.pc.workspace.WorkspaceState
@@ -48,44 +47,29 @@ object BuiltInFunctionDownloader extends DependencyDownloader.Native {
     val build =
       DependencyDownloader.defaultBuild(workspaceDir)
 
-    events(workspaceDir).left.map(ArraySeq(_)).map {
-      eventSourceCode =>
-        WorkspaceState.UnCompiled(
-          build = build,
-          sourceCode = sourceCode.to(ArraySeq) :+ primitiveSourceCode :+ eventSourceCode
-        )
-    }
+    Right(
+      WorkspaceState.UnCompiled(
+        build = build,
+        sourceCode = sourceCode.to(ArraySeq) :+ primitiveSourceCode :+ events(workspaceDir)
+      )
+    )
   }
 
   /**
    * Debug is reserved by Ralphc and cannot be declared by user contracts.
-   * Keep its tooling declaration in the soft tree only. The empty abstract contract
-   * remains in the strict tree so the dependency compiler retains this file.
-   * This does not change parsing or validation of user source files.
+   * Represent its tooling metadata as a valid metadata struct so persisted
+   * dependency files can be reparsed without a synthetic strict syntax tree.
    */
-  private def events(workspaceDir: Path): Either[CompilerMessage.AnyError, SourceCodeState.Parsed] = {
-    val fileURI     = workspaceDir.resolve(Dependency.EVENT_FILE_NAME).toUri
-    val declaration = "event Debug(message: ByteVec)"
-    val code =
-      s"""// Native compiler event; this contract is for code inspection only.
-         |// Debug accepts an interpolated string and is omitted from release bytecode.
-         |// The VM receives the encoded message as ByteVec, not ordinary event fields.
-         |Abstract Contract NativeEvents() {
-         |  $declaration
-         |}
-         |""".stripMargin
-    // Preserve all offsets while excluding the reserved declaration from strict compilation.
-    val strictCode = code.replace(declaration, " " * declaration.length)
-    CompilerAccess.ralphc.parseStrict(fileURI, strictCode).map {
-      strict =>
-        SourceCodeState.Parsed(
-          fileURI = fileURI,
-          code = code,
-          astStrict = strict,
-          astSoft = LazyVal(CompilerAccess.ralphc.parseSoft(code))
-        )
-    }
-  }
+  private def events(workspaceDir: Path): SourceCodeState.UnCompiled =
+    SourceCodeState.UnCompiled(
+      fileURI = workspaceDir.resolve(Dependency.EVENT_FILE_NAME).toUri,
+      code = """// Native compiler event metadata; this struct describes its encoded payload.
+          |// Debug accepts an interpolated string and is omitted from release bytecode.
+          |// The VM receives the encoded message as ByteVec, not ordinary event fields.
+          |Abstract Contract NativeEvents() {}
+          |struct Debug { message: ByteVec }
+          |""".stripMargin
+    )
 
   /**
    * Creates the built-in primitive source file.

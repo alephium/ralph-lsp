@@ -762,16 +762,36 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
           }
       }
 
-    // Merge both the actual inherited trees and the built-in trees.
+    // Persisted native event metadata uses valid struct declarations, but is
+    // eligible only for emit targets, never ordinary function/variable lookup.
+    val (nativeEvents, ordinaryBuiltIns) =
+      builtInTrees.partition(
+        tree => URIUtil.getFileName(tree.parsed.fileURI) == Dependency.EVENT_FILE_NAME
+      )
+    val eventMatches = nativeEvents.iterator.flatMap {
+      source =>
+        source
+          .part
+          .toNode
+          .walk
+          .collect {
+            case Node(metadata: SoftAST.Struct, _) => metadata.identifier
+          }
+          .flatMap(
+            name => searchIdentifier(name, target, source)
+          )
+    }
+
+    // Merge both the actual inherited trees and the ordinary built-in trees.
     val allInheritedTrees =
-      inheritedTrees.iterator ++ builtInTrees
+      inheritedTrees.iterator ++ ordinaryBuiltIns
 
     // Execute inheritance search.
     searchInheritance(
       target = target,
       inheritance = allInheritedTrees,
       detectCallSyntax = detectCallSyntax
-    )
+    ) ++ eventMatches
   }
 
   /**
