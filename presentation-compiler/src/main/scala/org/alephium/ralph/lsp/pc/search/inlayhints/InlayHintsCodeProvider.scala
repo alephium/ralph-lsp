@@ -57,10 +57,14 @@ private[search] case object InlayHintsCodeProvider extends CodeProvider[SourceCo
 
         case (sourceIndex, Some(Right(types))) =>
           // convert the types to TypeHint responses.
-          types map {
+          // Tuple navigation has one result per leaf declaration, but one aggregate hint.
+          types.toSeq.distinctBy[Either[SourceLocation.GoToTypeDef, String]] {
+            typeDef =>
+              typeDef.inlayHintType.map(Right(_)).getOrElse(Left(typeDef))
+          } map {
             typeDef =>
               val inlayHint =
-                s": ${typeDef.ast.name}"
+                s": ${typeDef.inlayHintType.getOrElse(typeDef.ast.name)}"
 
               val position =
                 SourceIndex(

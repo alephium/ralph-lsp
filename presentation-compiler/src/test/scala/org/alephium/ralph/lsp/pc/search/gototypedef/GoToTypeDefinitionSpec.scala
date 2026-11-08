@@ -11,6 +11,43 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class GoToTypeDefinitionSpec extends AnyWordSpec with Matchers {
 
+  "nested tuple type definitions" should {
+    "return real leaf declarations once without flattening the inferred hint shape" in {
+      goToTypeDef(
+        """
+          |Abstract Contract >>First<<() {}
+          |Abstract Contract >>Second<<() {}
+          |Contract Test(a: First, b: Second) {
+          |  fn values() -> (Bool, ((First, (Second, First)))) {
+          |    return (true, (a, (b, a)))
+          |  }
+          |  fn main() -> () {
+          |    let (_, tupl@@e) = values()
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "resolve a nested tuple variable at its use site" in {
+      goToTypeDef(
+        """
+          |Abstract Contract >>First<<() {}
+          |Abstract Contract >>Second<<() {}
+          |Contract Test(a: First, b: Second) {
+          |  fn values() -> (Bool, ((First, Second))) {
+          |    return (true, (a, b))
+          |  }
+          |  fn main() -> () {
+          |    let (_, tuple) = values()
+          |    let copy = tupl@@e
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
+  }
+
   "go-to variable type" when {
 
     /**

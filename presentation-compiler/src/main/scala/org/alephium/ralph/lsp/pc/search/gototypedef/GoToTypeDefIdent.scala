@@ -223,6 +223,9 @@ case object GoToTypeDefIdent extends StrictImplicitLogging {
                     None
                 }
 
+              case Type.Tuple(elements) if types.size == 1 && varDef.vars.size > 1 =>
+                elements.lift(indexOfTarget)
+
               case _ =>
                 // Fetch the `Type` at the position-index of the target.
                 types.lift(indexOfTarget)
@@ -253,18 +256,67 @@ case object GoToTypeDefIdent extends StrictImplicitLogging {
 
   private def searchTypes(
       types: Seq[Type],
-      workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.GoToTypeDef] =
-    WorkspaceSearcher
-      .collectTypes(
-        types = types,
-        workspace = workspace
-      )
-      .map {
+      workspace: WorkspaceState.IsSourceAware): ArraySeq[SourceLocation.GoToTypeDef] = {
+    val resolvedTypes = types.map(resolveTuples(_, workspace))
+    if (!resolvedTypes.exists(_.isTupleType)) {
+      WorkspaceSearcher.collectTypes(types, workspace).map {
         case (typeId, code) =>
-          SourceLocation.GoToTypeDef(
-            ast = typeId,
-            source = code
-          )
+          SourceLocation.GoToTypeDef(typeId, code)
       }
+    } else
+      resolvedTypes
+        .flatMap {
+          tpe =>
+            val display = tpe match {
+              case _: Type.Tuple => Some(displayType(tpe))
+              case _             => None
+            }
+            WorkspaceSearcher.collectTypes(leaves(tpe), workspace).map {
+              case (typeId, code) =>
+                SourceLocation.GoToTypeDef(typeId, code, display)
+            }
+        }
+        .distinct
+        .to(ArraySeq)
+  }
+
+  // Ralph lowers inferred tuples to synthetic structs in the compiled global state.
+  private def resolveTuples(
+      tpe: Type,
+      workspace: WorkspaceState.IsSourceAware): Type =
+    tpe match {
+      case Type.Struct(id) =>
+        val tuple = workspace match {
+          case compiled: WorkspaceState.IsCompiled =>
+            compiled.compilerRunGlobalState.flatMap(_.getStruct(id)).filter(_.isTupleType)
+          case _ => None
+        }
+        tuple
+          .map(
+            struct =>
+              Type.Tuple(
+                struct
+                  .fields
+                  .map(
+                    field => resolveTuples(field.tpe, workspace)
+                  )
+              )
+          )
+          .getOrElse(tpe)
+      case Type.Tuple(elements) => Type.Tuple(elements.map(resolveTuples(_, workspace)))
+      case other                => other
+    }
+
+  private def leaves(tpe: Type): Seq[Type] =
+    tpe match {
+      case Type.Tuple(elements) => elements.flatMap(leaves)
+      case other                => Seq(other)
+    }
+
+  private def displayType(tpe: Type): String =
+    tpe match {
+      case Type.Tuple(elements) => elements.map(displayType).mkString("(", ", ", ")")
+      case other                => other.signature
+    }
 
 }

@@ -9,6 +9,57 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class InlayHintsTupledVariableSpec extends AnyWordSpec with Matchers {
 
+  "nested tuples" should {
+    "display one complete hint for a tuple among multiple return values" in {
+      inlayHints(
+        """
+          |@@
+          |Contract Test() {
+          |  fn values() -> (Bool, ByteVec, ((Bool, U256))) {
+          |    return (true, #00, (true, 1))
+          |  }
+          |  fn main() -> () {
+          |    let (flag>>: Bool<<,
+          |         bytes>>: ByteVec<<,
+          |         tuple>>: (Bool, U256)<<) = values()
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "preserve recursive shape and repeated leaf types" in {
+      inlayHints(
+        """
+          |@@
+          |Contract Test() {
+          |  fn values() -> (Bool, ((Bool, (U256, Bool)))) {
+          |    return (true, (true, (1, false)))
+          |  }
+          |  fn main() -> () {
+          |    let (flag>>: Bool<<,
+          |         tuple>>: (Bool, (U256, Bool))<<) = values()
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
+
+    "select each element when destructuring a tuple expression" in {
+      inlayHints(
+        """
+          |@@
+          |Contract Test() {
+          |  fn main() -> () {
+          |    let (flag>>: Bool<<,
+          |         number>>: U256<<) = (true, 1)
+          |  }
+          |}
+          |""".stripMargin
+      )
+    }
+  }
+
   /**
    * **********************************
    * Test cases: Named tupled variable.
