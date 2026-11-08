@@ -262,10 +262,16 @@ object WorkspaceSearcher {
       types: Seq[Type],
       workspace: WorkspaceState.IsSourceAware): ArraySeq[(Ast.TypeId, SourceLocation.CodeStrict)] = {
     val workspaceTrees = collectAllTrees(workspace)
-    SourceCodeSearcher.collectTypes(
-      types = types,
-      workspaceSource = workspaceTrees
-    )
+    val builtIn        = workspace.build.findDependency(DependencyID.BuiltIn)
+    workspaceTrees.flatMap {
+      code =>
+        val primitiveSource = builtIn.exists(code.parsed.isPrimitive)
+        val matchingTypes = types.filter {
+          case Type.Bool | Type.U256 | Type.I256 | Type.Address | Type.ByteVec => primitiveSource
+          case _                                                               => !primitiveSource
+        }
+        SourceCodeSearcher.collectTypes(matchingTypes, code)
+    }
   }
 
   /**
