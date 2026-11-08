@@ -58,5 +58,8 @@ private[search] case object HoverCodeProvider extends CodeProvider[SourceCodeSta
               None
           }
       }
+      // Inherited and implementing declarations can render the same signature.
+      // Keep distinct signatures and documentation, but present identical content once.
+      .distinctBy(_.content.toCode())
 
 }

@@ -120,7 +120,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
     }
 
     "function is an interface function" should {
-      "aggregate multiple hover function information" in {
+      "aggregate distinct hover function information" in {
 
         /**
          *  This happen due to the soft parser, a compiler error is raised
@@ -144,11 +144,40 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
             |""".stripMargin)(
           expected = List(
             "fn function() -> ()",
-            "fn function(address: Address) -> ()",
-            "fn function() -> ()"
+            "fn function(address: Address) -> ()"
           ): _*
         )
       }
+    }
+
+    "show an overridden inherited signature only once" in {
+      val result = hover()(code = """
+          |Abstract Contract Parent() {
+          |  fn function() -> ()
+          |}
+          |Contract Child() extends Parent() {
+          |  fn function() -> () {}
+          |  fn main() -> () { func@@tion() }
+          |}
+          |""".stripMargin)(expected = "fn function() -> ()")
+      result should have size 1
+    }
+
+    "retain different documentation for otherwise identical inherited signatures" in {
+      val result = hover()(code = """
+          |Abstract Contract Parent() {
+          |  // Parent documentation
+          |  fn function() -> ()
+          |}
+          |Contract Child() extends Parent() {
+          |  // Child documentation
+          |  fn function() -> () {}
+          |  fn main() -> () { func@@tion() }
+          |}
+          |""".stripMargin)(
+        expected = List("// Child documentation\n  fn function() -> ()", "// Parent documentation\n  fn function() -> ()"): _*
+      )
+      result should have size 2
     }
 
     "function has documentation" in {
@@ -242,11 +271,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
               |  fn function() -> ()
               |}
               |""".stripMargin)(
-            expected = List(
-              "fn function() -> ()",
-              "fn function() -> ()",
-              "fn function() -> ()"
-            ): _*
+            expected = "fn function() -> ()"
           )
         }
 
@@ -348,11 +373,7 @@ class HoverFunctionSpec extends AnyWordSpec with Matchers {
             |  fn variable() -> ()
             |}
             |""".stripMargin)(
-          expected = List(
-            "fn variable() -> ()",
-            "fn variable() -> ()",
-            "fn variable() -> ()"
-          ): _*
+          expected = "fn variable() -> ()"
         )
       }
 
