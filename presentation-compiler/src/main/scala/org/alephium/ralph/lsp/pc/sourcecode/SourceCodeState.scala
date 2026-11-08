@@ -114,10 +114,16 @@ object SourceCodeState {
   /** The code is on disk */
   case class OnDisk(fileURI: URI) extends IsInitialised
 
+  /** A single evaluated previous soft parse; never retains a chain of lazy source states. */
+  case class SoftParseSnapshot(
+      code: String,
+      ast: SoftAST.RootBlock)
+
   /** The code is in memory but not parsed or compiled */
   case class UnCompiled(
       fileURI: URI,
-      code: String)
+      code: String,
+      previousSoft: Option[SoftParseSnapshot] = None)
     extends IsInitialised
        with IsAccessed
        with IsCodeAware

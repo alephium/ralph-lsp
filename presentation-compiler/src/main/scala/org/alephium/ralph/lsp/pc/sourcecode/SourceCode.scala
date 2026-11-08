@@ -70,14 +70,20 @@ private[pc] object SourceCode {
     )(implicit file: FileAccess,
       compiler: CompilerAccess): SourceCodeState =
     sourceState match {
-      case SourceCodeState.UnCompiled(fileURI, code) =>
+      case SourceCodeState.UnCompiled(fileURI, code, previousSoft) =>
+        val soft = LazyVal {
+          previousSoft match {
+            case Some(snapshot) => compiler.parseSoftIncremental(code, snapshot.code, snapshot.ast)
+            case None           => compiler.parseSoft(code)
+          }
+        }
         compiler.parseStrict(fileURI, code) match {
           case Left(error) =>
             SourceCodeState.ErrorParser(
               fileURI = fileURI,
               code = code,
               errors = Seq(error),
-              astSoft = LazyVal(compiler.parseSoft(code))
+              astSoft = soft
             )
 
           case Right(parsedCode) =>
@@ -85,7 +91,7 @@ private[pc] object SourceCode {
               fileURI = fileURI,
               code = code,
               astStrict = parsedCode,
-              astSoft = LazyVal(compiler.parseSoft(code))
+              astSoft = soft
             )
         }
 
@@ -132,9 +138,20 @@ private[pc] object SourceCode {
     )(implicit file: FileAccess): ArraySeq[SourceCodeState] =
     updatedCode match {
       case Some(newCode) =>
-        // new source code, store it as uncompiled.
+        // Only retain a parse that a previous request already evaluated. Do not force old lazy parses.
+        val previousSoft = sourceCode.find(_.fileURI == fileURI).flatMap {
+          case parsed: SourceCodeState.IsParsedAndCompiled if parsed.astSoft.isDefined =>
+            parsed
+              .astSoft
+              .fetch()
+              .toOption
+              .map(
+                ast => SourceCodeState.SoftParseSnapshot(parsed.code, ast)
+              )
+          case _ => None
+        }
         val newState =
-          SourceCodeState.UnCompiled(fileURI, newCode)
+          SourceCodeState.UnCompiled(fileURI, newCode, previousSoft)
 
         // update or add it to the existing collection
         sourceCode put newState

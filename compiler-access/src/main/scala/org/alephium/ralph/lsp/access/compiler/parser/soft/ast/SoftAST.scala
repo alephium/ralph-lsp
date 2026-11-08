@@ -1071,7 +1071,13 @@ object SoftAST {
    */
   def deepCopy[A <: SoftAST](
       newIndex: SourceIndex,
-      rootNode: A): A = {
+      rootNode: A): A =
+    copyWithIndices(rootNode)(
+      _ => newIndex
+    )
+
+  /** Copies syntax without sharing cached Node parent links, transforming each source index. */
+  def copyWithIndices[A <: SoftAST](rootNode: A)(mapIndex: SourceIndex => SourceIndex): A = {
 
     def copyOneField(field: Any): Any = {
       val copies = new ArrayBuffer[Any]()
@@ -1092,11 +1098,11 @@ object SoftAST {
         field: Any,
         copiedFields: ArrayBuffer[Any]): Unit =
       field match {
-        case _: SourceIndex =>
-          copiedFields addOne newIndex
+        case index: SourceIndex =>
+          copiedFields addOne mapIndex(index)
 
         case ast: SoftAST =>
-          copiedFields addOne ast.deepCopy(newIndex)
+          copiedFields addOne copyWithIndices(ast)(mapIndex)
 
         case Some(ast) =>
           val copy = copyOneField(ast)
