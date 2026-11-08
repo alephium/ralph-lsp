@@ -189,14 +189,19 @@ private object GoToRefIdentifier extends StrictImplicitLogging {
       searchSettings: GoToRefSetting
     )(implicit searchCache: SearchCache,
       logger: ClientLogger): Boolean =
-    if (definitions.exists(_.ast.text == identifier.code.text))
+    if (definitions.exists(_.ast.text == identifier.code.text) ||
+      (searchSettings.includeEventFieldReferences && identifier.toNode.walkParents.exists {
+        case node @ Node(call: SoftAST.ReferenceCall, _) =>
+          node.parent.exists(_.data.isInstanceOf[SoftAST.Emit]) && call.arguments.expressions.exists(_ eq identifier)
+        case _ => false
+      }))
       CodeProvider
         .goToDef
         .search( // find definitions for the token at the given cursorIndex.
           linePosition = identifier.index.toLineRange(isParsed.code).from,
           fileURI = isParsed.fileURI,
           workspace = workspace,
-          searchSettings = (SoftAST, searchSettings.goToDefSetting)
+          searchSettings = (SoftAST, searchSettings.goToDefSetting.copy(goToRefSetting = Some(searchSettings)))
         )
         .exists {
           case Right(thisDefinition) =>

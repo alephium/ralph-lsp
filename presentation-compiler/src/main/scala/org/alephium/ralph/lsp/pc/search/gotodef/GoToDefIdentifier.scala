@@ -33,14 +33,21 @@ private object GoToDefIdentifier extends StrictImplicitLogging {
       workspace: WorkspaceState.IsSourceAware,
       settings: GoToDefSetting
     )(implicit searchCache: SearchCache,
-      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] =
-    searchParent(
+      logger: ClientLogger): Iterator[SourceLocation.NodeSoft[SoftAST.CodeString]] = {
+    val definitions = searchParent(
       identNode = identNode,
       parent = identNode.parent,
       sourceCode = sourceCode,
       cache = searchCache.get(workspace),
       settings = settings
     )
+    settings.goToRefSetting match {
+      case None => definitions
+      case Some(referenceSettings) =>
+        val resolved = definitions.toVector
+        (resolved.iterator ++ GoToDefReference.search(identNode, sourceCode, searchCache.get(workspace), referenceSettings, resolved)).distinct
+    }
+  }
 
   /**
    * Searches definitions given the location of the identifier node [[SoftAST.Identifier]]

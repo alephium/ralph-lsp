@@ -3,6 +3,8 @@
 
 package org.alephium.ralph.lsp.pc.search.gotodef
 
+import org.alephium.ralph.lsp.pc.search.gotoref.GoToRefSetting
+
 /**
  * Settings that control go-to-definitions search behaviour.
  *
@@ -19,6 +21,7 @@ package org.alephium.ralph.lsp.pc.search.gotodef
  *                                     fn >>function()<< -> () { }
  *                                   }
  *                               }}}
+ * @param goToRefSetting         Optional reference-search context. Enables reference-related definitions without changing ordinary navigation.
  * @param includeInheritance     If `true`, inherited parameters are included in the search results.
  *                               If `false`, inherited parameters are excluded.
  *                               For example, in the following case, the `param` in the `Parent` contract
@@ -32,4 +35,5 @@ package org.alephium.ralph.lsp.pc.search.gotodef
  */
 case class GoToDefSetting(
     includeAbstractFuncDef: Boolean,
-    includeInheritance: Boolean)
+    includeInheritance: Boolean,
+    goToRefSetting: Option[GoToRefSetting] = None)
