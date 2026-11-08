@@ -48,7 +48,7 @@ object Token {
   /**
    * Represents tokens that are specifically reserved for use in Ralph's grammar.
    *
-   * These tokens cannot be used as identifier [[SoftAST.Identifier]].
+   * These tokens cannot be used as identifiers.
    */
   sealed trait Reserved      extends Token
   sealed trait Space         extends Token
@@ -194,5 +194,10 @@ object Token {
       .sealedInstancesOf[Unary]
       .toArray
       .sorted
+
+  val booleans: Seq[PrimitiveBoolean]    = EnumerationMacros.sealedInstancesOf[PrimitiveBoolean].toSeq.sorted
+  val units: Seq[PrimitiveUnit]          = EnumerationMacros.sealedInstancesOf[PrimitiveUnit].toSeq.sorted
+  val templates: Seq[TemplateDefinition] = EnumerationMacros.sealedInstancesOf[TemplateDefinition].toSeq.sorted
+  val inheritance: Seq[Inheritance]      = EnumerationMacros.sealedInstancesOf[Inheritance].toSeq.sorted
 
 }

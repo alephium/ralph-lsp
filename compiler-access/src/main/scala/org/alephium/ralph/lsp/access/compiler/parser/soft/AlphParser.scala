@@ -14,10 +14,7 @@ private object AlphParser {
 
   private def alph[Unknown: P]: P[SoftAST.TokenDocumented[Token.PrimitiveUnit]] =
     P {
-      TokenParser.parseOrFailOneOf(
-        prefixCheck = false,
-        tokens = Iterator(Token.AlphUppercase, Token.AlphLowercase)
-      )
+      TokenParser.parseOrFailWith(TokenParsers.parse(Token.units, false))
     }
 
 }

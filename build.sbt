@@ -81,6 +81,17 @@ lazy val utils =
         )
     )
 
+// Token definitions must be compiled before their lexemes are evaluated by the parser macro.
+lazy val `token-macros` =
+  project
+    .settings(
+      commonSettings,
+      libraryDependencies ++= Seq(
+        Dependencies.ralphc,
+        "org.scala-lang" % "scala-reflect" % scalaVersion.value
+      )
+    )
+
 lazy val `compiler-access` =
   project
     .settings(
@@ -95,7 +106,7 @@ lazy val `compiler-access` =
           Dependencies.scalaLogging
         )
     )
-    .dependsOn(utils)
+    .dependsOn(utils, `token-macros`)
 
 lazy val `presentation-compiler` =
   project
@@ -166,7 +177,7 @@ lazy val `ralph-lsp` =
       Compile / mainClass := Some(MAIN_CLASS)
     )
     .dependsOn(`lsp-server`)
-    .aggregate(`compiler-access`, `presentation-compiler`, `lsp-server`, utils)
+    .aggregate(`token-macros`, `compiler-access`, `presentation-compiler`, `lsp-server`, utils)
     .enablePlugins(JavaAppPackaging)
 
 lazy val downloadWeb3AndInstallStd = taskKey[Unit]("Download alephium-web3 source code and copy std interface to the correct resource folder")
