@@ -45,9 +45,9 @@ export function activate(context: ExtensionContext) {
 
     const clientOptions: LanguageClientOptions = {
         documentSelector: [
-            {pattern: '**/*.ral'},
-            {pattern: '**/alephium.config.ts'},
-            {language: 'json', pattern: '**/ralph.json'},
+            {scheme: 'file', pattern: '**/*.ral'},
+            {scheme: 'file', pattern: '**/alephium.config.ts'},
+            {scheme: 'file', language: 'json', pattern: '**/ralph.json'},
         ]
     };
 

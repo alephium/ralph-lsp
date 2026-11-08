@@ -7,6 +7,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.OptionValues._
 
+import java.net.URI
 import java.nio.file.Paths
 import scala.collection.immutable.ArraySeq
 import scala.util.Random
@@ -22,6 +23,16 @@ class PCStatesSpec extends AnyWordSpec with Matchers {
         .findContains(Paths.get(fileURI).toUri)
 
     "return None" when {
+      "a virtual document uses a scheme without a Java filesystem provider" in {
+        val states = TestPCStates.genPCStates(Iterable(Paths.get("/parent/child").toUri))
+        Seq("vscode-local-history", "git", "untitled").foreach {
+          scheme =>
+            val virtualURI = new URI(s"$scheme:/parent/child/code.ral")
+            states.findContains(virtualURI) shouldBe empty
+            states.get(virtualURI).isLeft shouldBe true
+        }
+      }
+
       "file does not belong a folder" in {
         testFind(
           foldURI = "/parent/child",

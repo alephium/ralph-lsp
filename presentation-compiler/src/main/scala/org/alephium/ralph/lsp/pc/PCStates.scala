@@ -64,29 +64,34 @@ case class PCStates(states: ArraySeq[PCState]) extends AnyVal {
    * Gets the [[PCState]] of a workspace that contains the given `fileURI`.
    */
   def findContains(fileURI: URI): Option[PCState] =
-    states find {
-      state =>
-        state.workspace match {
-          case workspace: WorkspaceState.IsSourceAware if CompilerAccess.isRalphFileExtension(fileURI) =>
-            /*
-             * When the workspace is source-aware and the file is a `.ral` source-file, the file must processed
-             * be within the configured `contractURI` or the configured `dependencyPath`. Any other file must not be processed.
-             *
-             * The check must on `contractURI` and `dependencyPath`, and not an upper level check on `state.workspace.workspaceURI`
-             * because if there is a "Workspace-A" containing a `dependencies` folders that it itself does not point to,
-             * but another "Workspace-B" uses "Workspace-A"'s `dependencies` path as its dependency, then simply
-             * invoking `state.workspace.workspaceURI contains fileURI` will return "Workspace-A"'s `PCState`
-             * which would be incorrect.
-             *
-             * TODO: Implement the above case as a test-case.
-             */
-            workspace.build.contractURI.contains(fileURI) || workspace.build.dependencyPath.contains(fileURI)
+    if (!isFileScheme(fileURI)) {
+      // Virtual editor documents (for example VS Code local history) do not
+      // belong to an on-disk workspace and have no Java filesystem provider.
+      None
+    } else
+      states find {
+        state =>
+          state.workspace match {
+            case workspace: WorkspaceState.IsSourceAware if CompilerAccess.isRalphFileExtension(fileURI) =>
+              /*
+               * When the workspace is source-aware and the file is a `.ral` source-file, the file must processed
+               * be within the configured `contractURI` or the configured `dependencyPath`. Any other file must not be processed.
+               *
+               * The check must on `contractURI` and `dependencyPath`, and not an upper level check on `state.workspace.workspaceURI`
+               * because if there is a "Workspace-A" containing a `dependencies` folders that it itself does not point to,
+               * but another "Workspace-B" uses "Workspace-A"'s `dependencies` path as its dependency, then simply
+               * invoking `state.workspace.workspaceURI contains fileURI` will return "Workspace-A"'s `PCState`
+               * which would be incorrect.
+               *
+               * TODO: Implement the above case as a test-case.
+               */
+              workspace.build.contractURI.contains(fileURI) || workspace.build.dependencyPath.contains(fileURI)
 
-          case _ =>
-            // If for some reason the workspace is not compiled, then the best we can do is search for it at the `workspaceURI` level.
-            state.workspace.workspaceURI contains fileURI
-        }
-    }
+            case _ =>
+              // If for some reason the workspace is not compiled, then the best we can do is search for it at the `workspaceURI` level.
+              state.workspace.workspaceURI contains fileURI
+          }
+      }
 
   /**
    * Gets the [[PCState]] for the workspace containing `fileURI`.
