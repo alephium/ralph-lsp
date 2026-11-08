@@ -66,4 +66,25 @@ class ReferenceCallParserSpec extends AnyWordSpec with Matchers {
       )
   }
 
+  "retain an approval when the call arguments are not yet written" in {
+    Seq("", "(", "()").foreach {
+      arguments =>
+        val code = s"function { user -> ALPH: amount }$arguments"
+        val ast  = parseReferenceCall(code)
+        ast.toCode() shouldBe code
+        ast.assetApproval.get.toCode() shouldBe "{ user -> ALPH: amount }"
+        ast.assetApproval.get.toNode.walk.exists(_.data.isInstanceOf[SoftAST.ArrowAssignment]) shouldBe true
+    }
+  }
+
+  "keep struct constructors distinct from unfinished asset approval calls" in {
+    Seq("Value {}", "Value { field: value }", "Value { field }").foreach {
+      code =>
+        val ast = parseSoft(code)
+        ast.toCode() shouldBe code
+        ast.toNode.walk.exists(_.data.isInstanceOf[SoftAST.StructConstructor]) shouldBe true
+        ast.toNode.walk.exists(_.data.isInstanceOf[SoftAST.ReferenceCall]) shouldBe false
+    }
+  }
+
 }
