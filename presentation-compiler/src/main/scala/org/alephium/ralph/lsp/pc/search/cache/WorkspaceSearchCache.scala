@@ -26,6 +26,9 @@ object WorkspaceSearchCache {
  */
 final class WorkspaceSearchCache(val workspace: WorkspaceState.IsSourceAware)(implicit logger: ClientLogger) {
 
+  /** Identifier postings are built once, on a worker or by a query that arrives first. */
+  lazy val referenceIndex: ReferenceIndex = ReferenceIndex.build(workspace)
+
   /**
    * All workspace source trees in-scope.
    */

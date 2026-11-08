@@ -147,8 +147,8 @@ object RalphLangServer extends StrictImplicitLogging {
 /**
  * The Ralph-LSP server.
  *
- * This class is the only one with mutable state in this repo.
- * All mutable state management occurs here.
+ * This class owns mutable protocol and workspace state.
+ * The background reference indexer owns snapshot caches and never mutates this state.
  */
 class RalphLangServer private (
     @volatile private var state: ServerState
@@ -626,6 +626,9 @@ class RalphLangServer private (
     thisServer.state.remove(fileURI) map {
       case (newState, removedPCStates) =>
         thisServer.state = newState
+        removedPCStates.foreach(
+          removed => searchCache.referenceIndexer.remove(removed.workspace.workspaceURI)
+        )
         removedPCStates
     }
 
@@ -640,6 +643,10 @@ class RalphLangServer private (
   private def putPCState(pcState: PCState): Unit =
     runSync {
       thisServer.state = thisServer.state.put(pcState)
+      pcState.workspace match {
+        case workspace: WorkspaceState.IsSourceAware => searchCache.prepareReferenceIndex(workspace)
+        case workspace                               => searchCache.referenceIndexer.remove(workspace.workspaceURI)
+      }
     }
 
   private def setClientAllowsWatchedFilesDynamicRegistration(allows: Boolean): Unit =
@@ -830,6 +837,7 @@ class RalphLangServer private (
         logger.info("Shutdown already in progress")
         logAndSend(ResponseError.ShutdownRequested)
       } else {
+        searchCache.referenceIndexer.close()
         thisServer.state = thisServer.state.copy(shutdownReceived = true)
         CompletableFuture.completedFuture(java.lang.Boolean.TRUE)
       }
@@ -838,6 +846,7 @@ class RalphLangServer private (
   def exitWithCode(): Int =
     runSync {
       logger.info("System exit initiated")
+      searchCache.referenceIndexer.close()
 
       thisServer.state.listener match {
         case Some(listener) =>
