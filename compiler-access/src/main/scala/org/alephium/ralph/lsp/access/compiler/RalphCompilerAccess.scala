@@ -10,7 +10,7 @@ import org.alephium.ralph.lsp.access.compiler.ast.Tree
 import org.alephium.ralph.lsp.access.compiler.message.CompilerMessage
 import org.alephium.ralph.lsp.access.compiler.message.error.FastParseError
 import org.alephium.ralph.lsp.access.compiler.parser.soft.ast.SoftAST
-import org.alephium.ralph.lsp.access.compiler.parser.soft.SoftParser
+import org.alephium.ralph.lsp.access.compiler.parser.soft.{IncrementalSoftParser, SoftParser}
 import org.alephium.ralph.lsp.access.util.TryUtil
 import org.alephium.ralph.lsp.utils.log.{ClientLogger, StrictImplicitLogging}
 
@@ -33,6 +33,15 @@ private object RalphCompilerAccess extends CompilerAccess with StrictImplicitLog
 
       case failure: Parsed.Failure =>
         Left(FastParseError(failure))
+    }
+
+  override def parseSoftIncremental(
+      code: String,
+      previousCode: String,
+      previous: SoftAST.RootBlock): Either[FastParseError, SoftAST.RootBlock] =
+    IncrementalSoftParser.parse(code, previousCode, previous) match {
+      case Parsed.Success(ast, _)  => Right(ast)
+      case failure: Parsed.Failure => Left(FastParseError(failure))
     }
 
   /** @inheritdoc */

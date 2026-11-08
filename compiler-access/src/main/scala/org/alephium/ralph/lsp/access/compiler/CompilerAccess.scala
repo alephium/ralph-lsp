@@ -43,6 +43,13 @@ trait CompilerAccess {
    */
   def parseSoft(code: String): Either[FastParseError, SoftAST.RootBlock]
 
+  /** Reuses previously parsed syntax where supported; other compiler implementations keep full parsing. */
+  def parseSoftIncremental(
+      code: String,
+      previousCode: String,
+      previous: SoftAST.RootBlock): Either[FastParseError, SoftAST.RootBlock] =
+    if (code == previousCode) Right(previous) else parseSoft(code)
+
   /**
    * Runs the parser phase.
    *
